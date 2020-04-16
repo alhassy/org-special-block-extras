@@ -1,13 +1,12 @@
-;;; org-special-block-extras.el   -*- lexical-binding: t; -*-
-;;; New custom blocks and links for Org-mode
-;;
+;;; org-special-block-extras.el --- New custom blocks and links for Org-mode   -*- lexical-binding: t; -*-
+
+;; Copyright (c) 2020 Musa Al-hassy
+
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 1.0
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "24.4"))
-;; Keywords: org, blocks, colors
+;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
-
-;; Copyright (c) 2020 Musa Al-hassy
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -66,32 +65,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 
-(defun org-special-block-extras/advice (backend blk contents info)
-  "Apply the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if
-   it is defined."
+(defun org-special-block-extras--advice (backend blk contents info)
+  "Invoke the appropriate custom block handler, if any.
+
+A given custom block BLK has a TYPE extracted from it, then we
+send the block CONTENTS along with the current export BACKEND to
+the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
+defined, otherwise, we leave the CONTENTS of the block as is."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras/%s" type))))
     (ignore-errors (apply handler backend contents nil))))
 
 (advice-add #'org-html-special-block :before-until
-            (-partial 'org-special-block-extras/advice 'html))
+            (-partial #'org-special-block-extras--advice 'html))
 
 (advice-add #'org-latex-special-block :before-until
-            (-partial 'org-special-block-extras/advice 'latex))
+            (-partial #'org-special-block-extras--advice 'latex))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Load support for 19 colour custom blocks
 
-(defvar org-special-block-extras/colors
+(defvar org-special-block-extras--colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(loop for colour in org-special-block-extras/colors
+(loop for colour in org-special-block-extras--colors
       do (eval (read (format
-                      "(defun org-special-block-extras/%s (backend contents)
+                      "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
                      (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
@@ -100,5 +103,7 @@
                       colour colour colour))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide 'org-special-block-extras)
-;;; org-special-block-extras.el end here
+
+;;; org-special-block-extras.el ends here

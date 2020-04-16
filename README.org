@@ -9,16 +9,15 @@
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp
-;;; org-special-block-extras.el   -*- lexical-binding: t; -*-
-;;; New custom blocks and links for Org-mode
-;;
+;;; org-special-block-extras.el --- New custom blocks and links for Org-mode   -*- lexical-binding: t; -*-
+
+;; Copyright (c) 2020 Musa Al-hassy
+
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 1.0
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "24.4"))
-;; Keywords: org, blocks, colors
+;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
-
-;; Copyright (c) 2020 Musa Al-hassy
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -189,18 +188,22 @@ The remaining sections are implementation matter.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 
-(defun org-special-block-extras/advice (backend blk contents info)
-  "Apply the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if
-   it is defined."
+(defun org-special-block-extras--advice (backend blk contents info)
+  "Invoke the appropriate custom block handler, if any.
+
+A given custom block BLK has a TYPE extracted from it, then we
+send the block CONTENTS along with the current export BACKEND to
+the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
+defined, otherwise, we leave the CONTENTS of the block as is."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras/%s" type))))
     (ignore-errors (apply handler backend contents nil))))
 
 (advice-add #'org-html-special-block :before-until
-            (-partial #'org-special-block-extras/advice 'html))
+            (-partial #'org-special-block-extras--advice 'html))
 
 (advice-add #'org-latex-special-block :before-until
-            (-partial #'org-special-block-extras/advice 'latex))
+            (-partial #'org-special-block-extras--advice 'latex))
 #+END_SRC
 
 * Colours
@@ -209,15 +212,15 @@ The remaining sections are implementation matter.
 ;;
 ;; Load support for 19 colour custom blocks
 
-(defvar org-special-block-extras/colors
+(defvar org-special-block-extras--colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(loop for colour in org-special-block-extras/colors
+(loop for colour in org-special-block-extras--colors
       do (eval (read (format
-                      "(defun org-special-block-extras/%s (backend contents)
+                      "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
                      (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
@@ -232,8 +235,10 @@ The remaining sections are implementation matter.
   :END:
 #+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide 'org-special-block-extras)
-;;; org-special-block-extras.el end here
+
+;;; org-special-block-extras.el ends here
 #+END_SRC
 * COMMENT Etc
   :PROPERTIES:
@@ -255,11 +260,74 @@ The remaining sections are implementation matter.
   :END:
 1. In Github repo: Create new file ⇒ License.txt ⇒ Select template ⇒ GNU 3
 2. Ensure first line ends with: -*- lexical-binding: t; -*-
-3. Use #' instead of ' for function symbols
-4. Create a recipe file by invoking: M-x package-build-create-recipe
+3. Include approriate standard keywords;
+   #+begin_src emacs-lisp
+(pp finder-known-keywords)
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   ((abbrev . "abbreviation handling, typing shortcuts, and macros")
+    (bib . "bibliography processors")
+    (c . "C and related programming languages")
+    (calendar . "calendar and time management tools")
+    (comm . "communications, networking, and remote file access")
+    (convenience . "convenience features for faster editing")
+    (data . "editing data (non-text) files")
+    (docs . "Emacs documentation facilities")
+    (emulations . "emulations of other editors")
+    (extensions . "Emacs Lisp language extensions")
+    (faces . "fonts and colors for text")
+    (files . "file editing and manipulation")
+    (frames . "Emacs frames and window systems")
+    (games . "games, jokes and amusements")
+    (hardware . "interfacing with system hardware")
+    (help . "Emacs help systems")
+    (hypermedia . "links between text or other media types")
+    (i18n . "internationalization and character-set support")
+    (internal . "code for Emacs internals, build process, defaults")
+    (languages . "specialized modes for editing programming languages")
+    (lisp . "Lisp support, including Emacs Lisp")
+    (local . "code local to your site")
+    (maint . "Emacs development tools and aids")
+    (mail . "email reading and posting")
+    (matching . "searching, matching, and sorting")
+    (mouse . "mouse support")
+    (multimedia . "images and sound")
+    (news . "USENET news reading and posting")
+    (outlines . "hierarchical outlining and note taking")
+    (processes . "processes, subshells, and compilation")
+    (terminals . "text terminals (ttys)")
+    (tex . "the TeX document formatter")
+    (tools . "programming tools")
+    (unix . "UNIX feature interfaces and emulators")
+    (vc . "version control")
+    (wp . "word processing"))
+   #+end_example
+4. Use #' instead of ' for function symbols
+5. Use ‘-’ as a separator, not ‘/’.
+6. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+7. Ensure that package-linter raises no issues; i.e., the following has no result.
+    #+BEGIN_SRC emacs-lisp
+(use-package package-lint)
+(-let [it "org-special-block-extras.el"]
+ (ignore-errors (kill-buffer it))
+ (find-file-other-window it)
+ (package-lint-buffer it))
+#+END_SRC
+8. Create a recipe file by invoking: M-x package-build-create-recipe
    - Place it in: melpa/recipes/
    - The name of the file should be the name of the package, no extension.
 
-   #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
-(org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
-#+END_SRC
+      #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
+   (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
+   #+END_SRC
+9. Ensure the recipe builds successfully:
+   #+BEGIN_SRC shell
+   cd ~/melpa; make recipes/org-special-block-extras
+   #+END_SRC
+
+8.
+
+(insert   package-build-archive-dir)
+/Users/musa/.emacs.d/elpa/packages/
