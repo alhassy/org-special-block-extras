@@ -1,0 +1,265 @@
+#+title: org-special-block-extras
+#+author: Musa Al-hassy
+#+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
+#+options: d:nil
+#+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+
+* Preamble :noexport:
+  :PROPERTIES:
+  :CUSTOM_ID: Preamble
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;; org-special-block-extras.el   -*- lexical-binding: t; -*-
+;;; New custom blocks and links for Org-mode
+;;
+;; Author: Musa Al-hassy <alhassy@gmail.com>
+;; Version: 1.0
+;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "24.4"))
+;; Keywords: org, blocks, colors
+;; URL: https://alhassy.github.io/org-special-block-extras
+
+;; Copyright (c) 2020 Musa Al-hassy
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Common operations such as colouring text for HTML and LaTeX
+;; backends are provided. Below is an example.
+;;
+;; #+begin_red org
+;; /This/
+;;       *text*
+;;              _is_
+;;                   red!
+;; #+end_red
+;;
+;; This file has been tangled from a literate, org-mode, file;
+;; and so contains further examples demonstrating the special
+;; blocks it introduces.
+;;
+;;
+;; The system is extensible:
+;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS/TYPE
+;; for a new custom block TYPE, which is then invoked.
+;; The handler takes three arguments:
+;; - CONTENTS: The string contents delimited by the custom block.
+;; - BACKEND:  The current exportation backend; e.g., 'html or 'latex.
+;; The handler must return a string.
+
+;;; Code:
+
+;; String and list manipulation libraries
+;; https://github.com/magnars/dash.el
+;; https://github.com/magnars/s.el
+
+(require 's)               ;; “The long lost Emacs string manipulation library”
+(require 'dash)            ;; “A modern list library for Emacs”
+(require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’, ‘-not’, ‘-partial’, etc.
+(require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
+(require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
+#+END_SRC
+* Example Use
+  :PROPERTIES:
+  :CUSTOM_ID: Example-Use
+  :END:
+
+User type something along the lines of the following.
+#+begin_example org
+#+begin_red org
+/This/
+      *text*
+             _is_
+                  red!
+#+end_red
+#+end_example
+
+Which generates /red/ text when exported to HTML and LaTeX,
+*while supporting Org markup*.
+
+#+begin_quote
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+#+end_quote
+
+#+caption: Write Org-markup once, generate for many backends ^_^
+[[file:images/colours.jpg]]
+
+:Examples:
+#+BEGIN_SRC emacs-lisp :results value :wrap no
+(s-join "\n\n"
+(loop for c in org-special-block-extras/colors
+      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
+#+END_SRC
+:End:
+
+#+latex: \newpage
+#+begin_black
+This text is black!
+#+end_black
+
+#+begin_blue
+This text is blue!
+#+end_blue
+
+#+begin_brown
+This text is brown!
+#+end_brown
+
+#+begin_cyan
+This text is cyan!
+#+end_cyan
+
+#+begin_darkgray
+This text is darkgray!
+#+end_darkgray
+
+#+begin_gray
+This text is gray!
+#+end_gray
+
+#+begin_green
+This text is green!
+#+end_green
+
+#+begin_lightgray
+This text is lightgray!
+#+end_lightgray
+
+#+begin_lime
+This text is lime!
+#+end_lime
+
+#+begin_magenta
+This text is magenta!
+#+end_magenta
+
+#+begin_olive
+This text is olive!
+#+end_olive
+
+#+begin_orange
+This text is orange!
+#+end_orange
+
+#+begin_pink
+This text is pink!
+#+end_pink
+
+#+begin_purple
+This text is purple!
+#+end_purple
+
+#+begin_red
+This text is red!
+#+end_red
+
+#+begin_teal
+This text is teal!
+#+end_teal
+
+#+begin_violet
+This text is violet!
+#+end_violet
+
+#+begin_white
+This text is white!
+#+end_white
+
+#+begin_yellow
+This text is yellow!
+#+end_yellow
+
+The remaining sections are implementation matter.
+* Core Utility
+  :PROPERTIES:
+  :CUSTOM_ID: Core-Utility
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Core utility
+
+(defun org-special-block-extras/advice (backend blk contents info)
+  "Apply the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if
+   it is defined."
+  (let* ((type    (nth 1 (nth 1 blk)))
+         (handler (intern (format "org-special-block-extras/%s" type))))
+    (ignore-errors (apply handler backend contents nil))))
+
+(advice-add #'org-html-special-block :before-until
+            (-partial #'org-special-block-extras/advice 'html))
+
+(advice-add #'org-latex-special-block :before-until
+            (-partial #'org-special-block-extras/advice 'latex))
+#+END_SRC
+
+* Colours
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Load support for 19 colour custom blocks
+
+(defvar org-special-block-extras/colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(loop for colour in org-special-block-extras/colors
+      do (eval (read (format
+                      "(defun org-special-block-extras/%s (backend contents)
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
+                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
+                     (t      \"org-special-block-extras: Unsupported backend\"))
+                     contents))"
+                      colour colour colour))))
+#+END_SRC
+
+* Postamble :noexport:
+  :PROPERTIES:
+  :CUSTOM_ID: Postamble
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(provide 'org-special-block-extras)
+;;; org-special-block-extras.el end here
+#+END_SRC
+* COMMENT Etc
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Etc
+  :END:
+
+  Likewise, regions surrounded by ‘#+BEGIN_COMMENT’ … ‘#+END_COMMENT’ are not exported.
+* COMMENT Images ---How To
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Images-How-To
+  :END:
+
+1. =eww-open-file= to open a local HTML file in Emacs
+2. Likewise open both the Org source and resulting PDF
+3. Take screenshot (•̀ᴗ•́)و
+* COMMENT MELPA Checks
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-MELPA-Checks
+  :END:
+1. In Github repo: Create new file ⇒ License.txt ⇒ Select template ⇒ GNU 3
+2. Ensure first line ends with: -*- lexical-binding: t; -*-
+3. Use #' instead of ' for function symbols
+4. Create a recipe file by invoking: M-x package-build-create-recipe
+   - Place it in: melpa/recipes/
+   - The name of the file should be the name of the package, no extension.
+
+   #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
+(org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
+#+END_SRC
