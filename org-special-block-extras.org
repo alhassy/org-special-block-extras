@@ -3,7 +3,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil
 #+EXPORT_FILE_NAME: README
-#+macro: blurb Twenty-five new custom block and link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-six new custom block and link types for Emacs' Org-mode ^_^
 
 * HTML & LaTeX Setup :ignore:
   :PROPERTIES:
@@ -20,25 +20,15 @@
 #+latex_header: \newunicodechar{′}{'}
 #+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
 
-# +HTML_HEAD: <link href="./org-notes-style.css" rel="stylesheet" type="text/css" />
-# http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css
-#
 # http://taopeng.me/org-notes-style/
 # #
-#+OPTIONS: html-style:nil html5-fancy:t
-# #
-#+HTML_DOCTYPE: html5
-#+HTML_HEAD: <meta http-equiv="X-UA-Compatible" content="IE=edge">
-#+HTML_HEAD: <meta name="viewport" content="width=device-width, initial-scale=1">
-# #
-#+HTML_HEAD: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
-
+#+HTML_HEAD: <link href="http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
 * Preamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp
-;;; org-special-block-extras.el --- Twenty-five new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-six new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -117,7 +107,7 @@ Which generates /red/ text when exported to HTML and LaTeX,
 *while supporting Org markup*.
 
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
 #+end_quote
 
 #+begin_center

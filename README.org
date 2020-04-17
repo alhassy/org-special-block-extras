@@ -1,17 +1,16 @@
-# Created 2020-04-17 Fri 11:51
+# Created 2020-04-17 Fri 12:02
 #+OPTIONS: toc:nil d:nil
 #+OPTIONS: d:nil
-#+OPTIONS: html-style:nil html5-fancy:t
 #+TITLE: org-special-block-extras
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-Twenty-five new custom block and link types for Emacs' Org-mode ^_^
+Twenty-six new custom block and link types for Emacs' Org-mode ^_^
 
 #+toc: headlines 2
 #+property: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+export_file_name: README
-#+macro: blurb Twenty-five new custom block and link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-six new custom block and link types for Emacs' Org-mode ^_^
 
 #+latex_header: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
 #+latex_header: \usepackage{newunicodechar}
@@ -23,12 +22,7 @@ Twenty-five new custom block and link types for Emacs' Org-mode ^_^
 #+latex_header: \newunicodechar{′}{'}
 #+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
 
-#+html_doctype: html5
-#+html_head: <meta http-equiv="X-UA-Compatible" content="IE=edge">
-#+html_head: <meta name="viewport" content="width=device-width, initial-scale=1">
-
-#+html_head: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
-
+#+html_head: <link href="http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
 * Example Use
 User type something along the lines of the following.
 #+begin_example org
@@ -44,7 +38,7 @@ Which generates /red/ text when exported to HTML and LaTeX,
 *while supporting Org markup*.
 
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
 #+end_quote
 
 #+begin_center
@@ -66,6 +60,20 @@ article may not render things as desired. )
 
 
 The remaining sections are implementation matter.
+#+begin_quote
+- [[#example-use][Example Use]]
+- [[#core-utility][Core Utility]]
+- [[#colours][Colours]]
+  - [[#examples][Examples]]
+- [[#parallel][Parallel]]
+- [[#argument-extraction][=:argument:= Extraction]]
+- [[#editor-comments][Editor Comments]]
+  - [[#examples-1][Examples]]
+- [[#folded-details][Folded Details]]
+  - [[#example][Example]]
+- [[#footnotes][Footnotes]]
+#+end_quote
+
 * Core Utility
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
