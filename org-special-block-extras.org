@@ -89,7 +89,7 @@ Which generates /red/ text when exported to HTML and LaTeX,
 *while supporting Org markup*.
 
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
 #+end_quote
 
 #+caption: Write Org-markup once, generate for many backends ^_^
@@ -403,20 +403,20 @@ inherit highlighting, so I shifted the number to being a prefix instead.
     #+END_SRC
 
     #+RESULTS:
-    |  • | Building   | package | org-special-block-extras | ...   |      |    |     |       |                                                       |
-    |  ✓ | Success:   |         |                          |       |      |    |     |       |                                                       |
-    | 16 | -rw-r--r-- |       1 | musa                     | staff | 4.3K | 16 | Apr | 19:54 | packages/org-special-block-extras-20200416.2349.el    |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 416B | 16 | Apr | 19:54 | packages/org-special-block-extras-20200416.2349.entry |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 969B | 16 | Apr | 19:54 | packages/org-special-block-extras-badge.svg           |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 669B | 16 | Apr | 19:54 | packages/org-special-block-extras-readme.txt          |
+    |  • | Building   | package | org-special-block-extras | ...   |      |    |     |       |                                                      |
+    |  ✓ | Success:   |         |                          |       |      |    |     |       |                                                      |
+    | 16 | -rw-r--r-- |       1 | musa                     | staff | 5.4K | 16 | Apr | 22:39 | packages/org-special-block-extras-20200417.238.el    |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 417B | 16 | Apr | 22:39 | packages/org-special-block-extras-20200417.238.entry |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 967B | 16 | Apr | 22:39 | packages/org-special-block-extras-badge.svg          |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 669B | 16 | Apr | 22:39 | packages/org-special-block-extras-readme.txt         |
 
 12. Ensure the package installs properly from within Emacs:
 
       #+BEGIN_SRC emacs-lisp
-(package-install-file "~/melpa/packages/org-special-block-extras-20200416.2349.el")
+(package-install-file "~/melpa/packages/org-special-block-extras-20200417.238.el")
 #+END_SRC
       #+RESULTS:
-: #s(package-desc org-special-block-extras (20200416 2349) "New custom blocks and links for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
+      : #s(package-desc org-special-block-extras (20200417 238) "Twenty-four new custom blocks for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
 
 12. [@12] Produce a dedicated pull request branch
 

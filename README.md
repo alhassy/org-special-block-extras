@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-16 Thu 22:37 -->
+<!-- 2020-04-16 Thu 22:46 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -249,13 +249,13 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#org3c28301">3. Colours</a></li>
+<li><a href="#orgeff9781">3. Colours</a></li>
 <li><a href="#Parallel">4. Parallel</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org4bbcd04" class="outline-2">
+<div id="outline-container-org76effbb" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -277,7 +277,7 @@ Which generates <i>red</i> text when exported to HTML and LaTeX,
 
 <blockquote>
 <p>
-This article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https://alhassy.github.io/org-special-block-extras/README.org">Org</a>!
+This article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras">HTML</a> or as pure <a href="https://alhassy.github.io/org-special-block-extras/README.org">Org</a>!
 </p>
 </blockquote>
 
@@ -388,7 +388,7 @@ The remaining sections are implementation matter.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb2e427b" class="outline-2">
+<div id="outline-container-org6beaaba" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <div class="org-src-container">
@@ -416,8 +416,8 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-org3c28301" class="outline-2">
-<h2 id="org3c28301"><span class="section-number-2">3</span> Colours</h2>
+<div id="outline-container-orgeff9781" class="outline-2">
+<h2 id="orgeff9781"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-3">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
@@ -444,7 +444,7 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-orgd9ce88f" class="outline-2">
+<div id="outline-container-org083c05d" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 <div style="column-rule-style:solid;column-count:2;"<p>
@@ -520,7 +520,7 @@ and are needed even if explicit columnbreaks are declared.</li>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-16 Thu 22:37</p>
+<p class="date">Created: 2020-04-16 Thu 22:46</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
