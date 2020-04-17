@@ -58,10 +58,6 @@
 (require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
 
-(s-join "\n\n"
-(loop for c in org-special-block-extras/colors
-      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 
@@ -71,16 +67,23 @@
 A given custom block BLK has a TYPE extracted from it, then we
 send the block CONTENTS along with the current export BACKEND to
 the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
-defined, otherwise, we leave the CONTENTS of the block as is."
+defined, otherwise, we leave the CONTENTS of the block as is.
+
+We also support the seemingly useless blocks that have no
+contents at all, not even an empty new line."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras--%s" type))))
-    (ignore-errors (apply handler backend contents nil))))
+    (ignore-errors (apply handler backend (or contents "") nil))))
 
 (advice-add #'org-html-special-block :before-until
             (-partial #'org-special-block-extras--advice 'html))
 
 (advice-add #'org-latex-special-block :before-until
             (-partial #'org-special-block-extras--advice 'latex))
+
+(s-join "\n\n"
+(loop for c in org-special-block-extras/colors
+      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -126,6 +129,95 @@ defined, otherwise, we leave the CONTENTS of the block as is."
 
 (defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
 (defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
+
+(defun org-special-block-extras--extract-arguments (contents &rest args)
+"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+
+Example usage:
+
+    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
+           (…extract-arguments contents 'k₀ … 'kₙ)]
+          body)
+
+Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
+‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
+with all ‘:kᵢ:’ lines stripped out.
+
++ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
++ If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
+  then it has value the empty string."
+  (let ((ctnts contents)
+        (values (loop for a in args
+                      for regex = (format ":%s:\\(.*\\)" a)
+                      for v = (cadr (s-match regex contents))
+                      collect (cons a v))))
+    (loop for a in args
+          for regex = (format ":%s:\\(.*\\)" a)
+          do (setq ctnts (s-replace-regexp regex "" ctnts)))
+    (cons ctnts values)))
+
+(defvar org-special-block-extras-hide-editor-comments nil
+  "Should editor comments be shown in the output or not.")
+
+(defun org-special-block-extras--edcomm (backend contents)
+"Format CONTENTS as an first-class editor comment according to BACKEND.
+
+The CONTENTS string has two optional argument switches:
+1. :ed: ⇒ To declare an editor of the comment.
+2. :replacewith: ⇒ [Nullary] The text preceding this clause
+   should be replaced by the text after it."
+  (-let* (
+           ;; Get arguments
+           ((contents₁ . (&alist 'ed))
+            (org-special-block-extras--extract-arguments contents 'ed))
+
+           ;; Strip out any <p> tags     
+           (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
+           (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
+
+           ;; Are we in the html backend?
+           (html? (equal backend 'html))
+
+           ;; fancy display style
+           (boxed (lambda (x)
+                    (if html?
+                        (concat "<span style=\"border-width:1px"
+                                 ";border-style:solid;padding:5px\">"
+                                 "<strong>" x "</strong></span>")
+                    (concat "\\fbox{\\bf " x "}"))))
+
+           ;; Is this a replacement clause?
+           ((this that) (s-split ":replacewith:" contents₁))
+           (replacement-clause? that) ;; There is a ‘that’
+           (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
+                              "\\underline{Replace:}"))
+           (with-keyword    (if html? "<u>With:</u>"
+                              "\\underline{With:}"))
+           (editor (format "[%s:%s"
+                           (if (s-blank? ed) "Editor Comment" ed)
+                           (if replacement-clause?
+                               replace-keyword
+                             "")))
+           (contents₂ (if replacement-clause?
+                          (format "%s %s %s" this
+                                  (funcall boxed with-keyword)
+                                  that)
+                        contents₁))
+
+           ;; “[Editor Comment:”
+           (edcomm-begin (funcall boxed editor))
+           ;; “]”
+           (edcomm-end (funcall boxed "]")))
+
+    (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+    (if org-special-block-extras-hide-editor-comments
+        ""
+      (format (pcase backend
+                (`html "<p> %s %s %s</p>")
+                (`latex "%s %s %s"))
+              edcomm-begin contents₂ edcomm-end))))
+
+(setq org-export-allow-bind-keywords t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

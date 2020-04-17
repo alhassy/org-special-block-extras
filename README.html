@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-17 Fri 09:12 -->
+<!-- 2020-04-17 Fri 10:19 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -193,7 +193,7 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
-<link href="https://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
+<link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -272,7 +272,7 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#org27b6885">3. Colours</a></li>
+<li><a href="#orgfc8f396">3. Colours</a></li>
 <li><a href="#Parallel">4. Parallel</a></li>
 <li><a href="#argument-Extraction">5. <code>:argument:</code> Extraction</a></li>
 <li><a href="#editor-comments">6. Editor Comments</a>
@@ -291,7 +291,7 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org1733799" class="outline-2">
+<div id="outline-container-org9c319b1" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -350,7 +350,7 @@ The remaining sections are implementation matter.
 </p>
 </div>
 </div>
-<div id="outline-container-orga453575" class="outline-2">
+<div id="outline-container-org4089590" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <div class="org-src-container">
@@ -381,8 +381,8 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-org27b6885" class="outline-2">
-<h2 id="org27b6885"><span class="section-number-2">3</span> Colours</h2>
+<div id="outline-container-orgfc8f396" class="outline-2">
+<h2 id="orgfc8f396"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-3">
 
 <div class="figure">
@@ -510,7 +510,7 @@ This text is yellow!
 </div>
 </div>
 
-<div id="outline-container-orga19c46a" class="outline-2">
+<div id="outline-container-orgcbcf73d" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 
@@ -598,12 +598,12 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-orgfd4e26a" class="outline-2">
+<div id="outline-container-orgec12f6b" class="outline-2">
 <h2 id="argument-Extraction"><span class="section-number-2">5</span> <code>:argument:</code> Extraction</h2>
 <div class="outline-text-2" id="text-argument-Extraction">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--extract-arguments</span> (contents <span style="color: #b58900; font-style: italic;">&amp;rest</span> args)
-<span style="color: #35a69c; font-style: italic;">"Return list of CONTENTS string with ARGS lines stripped out and values of ARGS.</span>
+<span style="color: #35a69c; font-style: italic;">"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.</span>
 
 <span style="color: #35a69c; font-style: italic;">Example usage:</span>
 
@@ -615,7 +615,7 @@ desired. )
 <span style="color: #35a69c; font-style: italic;">&#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; in the CONTENTS text and &#8216;contents&#8242;&#8217; is CONTENTS</span>
 <span style="color: #35a69c; font-style: italic;">with all &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; lines stripped out.</span>
 
-<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is not an argument in CONTENTS, then it is assigned value &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">nil</span><span style="color: #35a69c; font-style: italic;">&#8217;.</span>
+<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is not an argument in CONTENTS, then it is assigned value NIL.</span>
 <span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is an argument in CONTENTS but is not given a value in CONTENTS,</span>
 <span style="color: #35a69c; font-style: italic;">  then it has value the empty string."</span>
   (<span style="color: #859900; font-weight: bold;">let</span> ((ctnts contents)
@@ -632,7 +632,7 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-orgdd2025e" class="outline-2">
+<div id="outline-container-orgdae0dfc" class="outline-2">
 <h2 id="editor-comments"><span class="section-number-2">6</span> Editor Comments</h2>
 <div class="outline-text-2" id="text-editor-comments">
 <p>
@@ -749,7 +749,7 @@ indicating suggested alterations; see <a href="#coderef-inline" class="coderef" 
 </p>
 </div>
 
-<div id="outline-container-orge9cf0ff" class="outline-3">
+<div id="outline-container-org1dc7928" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">6.1</span> Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <p>
@@ -787,7 +787,7 @@ ensures is true.
 </table>
 </div>
 
-<div id="outline-container-org412404d" class="outline-4">
+<div id="outline-container-org6a07f00" class="outline-4">
 <h4 id="No-optional-arguments"><span class="section-number-4">6.1.1</span> No optional arguments</h4>
 <div class="outline-text-4" id="text-No-optional-arguments">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
@@ -797,7 +797,7 @@ ensures is true.
 </div>
 </div>
 
-<div id="outline-container-org2d8b127" class="outline-4">
+<div id="outline-container-org95b152d" class="outline-4">
 <h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">6.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
 <div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
@@ -816,7 +816,7 @@ Possibly with no contents:
 </div>
 </div>
 
-<div id="outline-container-orgef61e69" class="outline-4">
+<div id="outline-container-org1d90f6a" class="outline-4">
 <h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">6.1.3</span> Empty contents, no editor, nothing</h4>
 <div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
@@ -831,7 +831,7 @@ Possibly with an empty new line:
 </div>
 </div>
 
-<div id="outline-container-orgc3a484e" class="outline-4">
+<div id="outline-container-org6366bee" class="outline-4">
 <h4 id="With-a-replacewith-clause"><span class="section-number-4">6.1.4</span> With a <code>:replacewith:</code> clause</h4>
 <div class="outline-text-4" id="text-With-a-replacewith-clause">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
@@ -881,7 +881,7 @@ Completely lost one's train of thought.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-17 Fri 09:12</p>
+<p class="date">Created: 2020-04-17 Fri 10:19</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

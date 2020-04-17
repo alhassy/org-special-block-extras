@@ -10,16 +10,16 @@
 # http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css
 #
 # http://taopeng.me/org-notes-style/
-#+HTML_HEAD: <link href="https://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 
-#+macro: blurb A number of new custom blocks and link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-five new custom blocks and link types for Emacs' Org-mode ^_^
 
 * Preamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp
-;;; org-special-block-extras.el --- Twenty-four new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-five new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -357,7 +357,7 @@ desired. )
 
 #+BEGIN_SRC emacs-lisp
 (defun org-special-block-extras--extract-arguments (contents &rest args)
-"Return list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
 
 Example usage:
 
@@ -369,7 +369,7 @@ Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
 ‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
 with all ‘:kᵢ:’ lines stripped out.
 
-+ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value ‘nil’.
++ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
 + If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
   then it has value the empty string."
   (let ((ctnts contents)
@@ -665,6 +665,7 @@ The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
 6. Consider reading:
    https://github.com/bbatsov/emacs-lisp-style-guide#the-emacs-lisp-style-guide
 7. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+   - Symbols =nil, t= should not appear in single quotes.
 8. Ensure it byte-compiles without any problems.
 9. Ensure that package-linter raises no issues; i.e., the following has no result.
     #+BEGIN_SRC emacs-lisp
@@ -687,12 +688,7 @@ The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
     #+END_SRC
 
     #+RESULTS:
-    |  • | Building   | package | org-special-block-extras | ...   |      |    |     |       |                                                      |
-    |  ✓ | Success:   |         |                          |       |      |    |     |       |                                                      |
-    | 16 | -rw-r--r-- |       1 | musa                     | staff | 5.4K | 16 | Apr | 22:39 | packages/org-special-block-extras-20200417.238.el    |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 417B | 16 | Apr | 22:39 | packages/org-special-block-extras-20200417.238.entry |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 967B | 16 | Apr | 22:39 | packages/org-special-block-extras-badge.svg          |
-    |  8 | -rw-r--r-- |       1 | musa                     | staff | 669B | 16 | Apr | 22:39 | packages/org-special-block-extras-readme.txt         |
+    : • Building package org-special-block-extras ...
 
 12. Ensure the package installs properly from within Emacs:
 

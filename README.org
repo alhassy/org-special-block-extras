@@ -1,19 +1,21 @@
-# Created 2020-04-17 Fri 06:59
+# Created 2020-04-17 Fri 10:19
 #+OPTIONS: toc:nil d:nil
 #+OPTIONS: d:nil
 #+TITLE: org-special-block-extras
 #+AUTHOR: Musa Al-hassy
 #+export_file_name: README.org
 
-A number of new custom blocks and link types for Emacs' Org-mode ^_^
+Twenty-five new custom blocks and link types for Emacs' Org-mode ^_^
 
 #+toc: headlines 2
 #+property: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+latex_header: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
 
+#+export_file_name: README
+
 #+html_head: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 
-#+macro: blurb A number of new custom blocks and link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-five new custom blocks and link types for Emacs' Org-mode ^_^
 
 * Example Use
 User type something along the lines of the following.
@@ -30,8 +32,13 @@ Which generates /red/ text when exported to HTML and LaTeX,
 *while supporting Org markup*.
 
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
 #+end_quote
+
+#+begin_center
+( Since we're only considering HTML & LaTeX, the Github rendition of this
+article may not render things as desired. )
+#+end_center
 
 #+caption: Write Org-markup once, generate for many backends ^_^
 [[file:images/colours.jpg]]
@@ -39,14 +46,10 @@ This article may be read as a [[https://alhassy.github.io/org-special-block-extr
 #+caption: Displaying thoughts side-by-side ^_^
 [[file:images/parallel.png]]
 
-The remaining sections are implementation matter.
-#+begin_quote
-- [[#example-use][Example Use]]
-- [[#core-utility][Core Utility]]
-- [[#colours][Colours]]
-- [[#parallel][Parallel]]
-#+end_quote
+#+caption: “First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF
+[[file:images/edcomm.png]]
 
+The remaining sections are implementation matter.
 * Core Utility
 #+begin_src emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,10 +61,13 @@ The remaining sections are implementation matter.
 A given custom block BLK has a TYPE extracted from it, then we
 send the block CONTENTS along with the current export BACKEND to
 the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
-defined, otherwise, we leave the CONTENTS of the block as is."
+defined, otherwise, we leave the CONTENTS of the block as is.
+
+We also support the seemingly useless blocks that have no
+contents at all, not even an empty new line."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras--%s" type))))
-    (ignore-errors (apply handler backend contents nil))))
+    (ignore-errors (apply handler backend (or contents "") nil))))
 
 (advice-add #'org-html-special-block :before-until
             (-partial #'org-special-block-extras--advice 'html))
@@ -242,3 +248,210 @@ inherit highlighting, so I shifted the number to being a prefix instead.
 ( The [[https://www.gnu.org/software/emacs/manual/html_mono/eww.html][Emacs Web Wowser]], ~M-x eww~, does not display =parallel= environments as
 desired. )
 #+end_center
+
+* =:argument:= Extraction
+#+begin_src emacs-lisp
+(defun org-special-block-extras--extract-arguments (contents &rest args)
+"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+
+Example usage:
+
+    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
+           (…extract-arguments contents 'k₀ … 'kₙ)]
+          body)
+
+Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
+‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
+with all ‘:kᵢ:’ lines stripped out.
+
++ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
++ If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
+  then it has value the empty string."
+  (let ((ctnts contents)
+        (values (loop for a in args
+                      for regex = (format ":%s:\\(.*\\)" a)
+                      for v = (cadr (s-match regex contents))
+                      collect (cons a v))))
+    (loop for a in args
+          for regex = (format ":%s:\\(.*\\)" a)
+          do (setq ctnts (s-replace-regexp regex "" ctnts)))
+    (cons ctnts values)))
+#+end_src
+
+* Editor Comments
+#+latex_header: \usepackage{newunicodechar}
+#+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
+#+latex_header: \newunicodechar{₁}{\ensuremath{_1}}
+#+latex_header: \newunicodechar{₂}{\ensuremath{_2}}
+#+latex_header: \newunicodechar{ₙ}{\ensuremath{_n}}
+#+latex_header: \newunicodechar{ᵢ}{\ensuremath{_i}}
+#+latex_header: \newunicodechar{′}{'}
+#+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+
+
+“Editor Comments” are intended to be top-level first-class comments in an
+article that are inline with the surrounding text and are delimited in such a
+way that they are visible but drawing attention.  I first learned about this
+idea from Wolfram Kahl ---who introduced me to Emacs many years ago.
+
+In LaTeX, an =edcomm= appears inline with the text surrounding it.
+#+begin_edcomm
+:ed: Bobert
+org-mode is dope, yo!
+:replacewith:
+Org-mode is essentially a path toward enlightenment.
+#+end_edcomm
+Unfortunately, in the HTML rendition, the =edcomm= is its own paragraph and thus
+separated by new lines from its surrounding text.
+
+#+caption: In order: Chrome, Emacs Web Wowser, Org source, PDF
+[[file:images/edcomm.png]]
+
+| /Any new ---possibly empty--- inner lines in the =edcomm= are desirably preserved/ |
+
+#+begin_src emacs-lisp -n -r
+(defvar org-special-block-extras-hide-editor-comments nil
+  "Should editor comments be shown in the output or not.")
+
+(defun org-special-block-extras--edcomm (backend contents)
+"Format CONTENTS as an first-class editor comment according to BACKEND.
+
+The CONTENTS string has two optional argument switches:
+1. :ed: ⇒ To declare an editor of the comment.
+2. :replacewith: ⇒ [Nullary] The text preceding this clause
+   should be replaced by the text after it."
+  (-let* (
+           ;; Get arguments
+           ((contents₁ . (&alist 'ed))
+            (org-special-block-extras--extract-arguments contents 'ed))
+
+           ;; Strip out any <p> tags     (ref:inline)
+           (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
+           (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
+
+           ;; Are we in the html backend?
+           (html? (equal backend 'html))
+
+           ;; fancy display style
+           (boxed (lambda (x)
+                    (if html?
+                        (concat "<span style=\"border-width:1px"
+                                 ";border-style:solid;padding:5px\">"
+                                 "<strong>" x "</strong></span>")
+                    (concat "\\fbox{\\bf " x "}"))))
+
+           ;; Is this a replacement clause?
+           ((this that) (s-split ":replacewith:" contents₁))
+           (replacement-clause? that) ;; There is a ‘that’
+           (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
+                              "\\underline{Replace:}"))
+           (with-keyword    (if html? "<u>With:</u>"
+                              "\\underline{With:}"))
+           (editor (format "[%s:%s"
+                           (if (s-blank? ed) "Editor Comment" ed)
+                           (if replacement-clause?
+                               replace-keyword
+                             "")))
+           (contents₂ (if replacement-clause?
+                          (format "%s %s %s" this
+                                  (funcall boxed with-keyword)
+                                  that)
+                        contents₁))
+
+           ;; “[Editor Comment:”
+           (edcomm-begin (funcall boxed editor))
+           ;; “]”
+           (edcomm-end (funcall boxed "]")))
+
+    (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+    (if org-special-block-extras-hide-editor-comments
+        ""
+      (format (pcase backend
+                (`html "<p> %s %s %s</p>")
+                (`latex "%s %s %s"))
+              edcomm-begin contents₂ edcomm-end))))
+#+end_src
+
+#+results:
+: org-special-block-extras--edcomm
+
+
+In the HTML export, the =edcomm= special block is /not/ in-line with the text
+surrounding it ---ideally, it would be inline so that existing paragraphs are
+not split into multiple paragraphs but instead have an editor's comment
+indicating suggested alterations; see [[(inline)][Line (inline)]] above.
+
+** Examples
+Org-markup is supported, as expected.
+
+All editor comments are disabled by declaring, in your Org file:
+#+begin_example org
+,#+bind: org-special-block-extras-hide-editor-comments t
+#+end_example
+The =#+bind:= keyword makes Emacs variables buffer-local during export
+---it is evaluated /after/ any =src= blocks. To use it, one must declare in
+their Emacs init file the following line, which our ~edcomm~ utility
+ensures is true.
+#+begin_src emacs-lisp
+(setq org-export-allow-bind-keywords t)
+#+end_src
+
+| ( Remember to =C-c C-c= the =#+bind= to activate it, the first time it is written. ) |
+
+#+bind: org-special-block-extras-hide-editor-comments nil
+
+*** No optional arguments
+#+begin_edcomm
+/Please/ *change* _this_ section to be more, ya know, professional.
+#+end_edcomm
+
+*** Only declaring an =:ed:= ---editor
+#+begin_edcomm
+:ed: Bobert
+/Please/ *change* _this_ section to be more, ya know, professional.
+#+end_edcomm
+
+#+latex: \vspace{1em}\noindent
+Possibly with no contents:
+#+begin_edcomm
+:ed: Bobert
+#+end_edcomm
+
+*** Empty contents, no editor, nothing
+#+begin_edcomm
+nil#+end_edcomm
+
+#+latex: \vspace{1em}\noindent
+Possibly with an empty new line:
+#+begin_edcomm
+
+#+end_edcomm
+
+*** With a =:replacewith:= clause
+#+begin_edcomm
+The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
+:replacewith:
+A linear one-dimensional notation; e.g.,
+$(\Sigma i : 0..n \;\bullet\; i^2)$
+#+end_edcomm
+
+#+latex: \vspace{1em}\noindent
+Possibly “malformed” replacement clauses.
+
+1. Forget the thing to be replaced.
+   #+begin_edcomm
+   :replacewith:
+   A linear one-dimensional notation; e.g.,
+   $(\Sigma i : 0..n \;\bullet\; i^2)$
+   #+end_edcomm
+
+2. Forget the new replacement thing.
+   #+begin_edcomm
+   The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
+   :replacewith:
+   #+end_edcomm
+
+3. Completely lost one's train of thought.
+   #+begin_edcomm
+   :replacewith:
+   #+end_edcomm
