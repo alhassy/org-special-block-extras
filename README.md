@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-16 Thu 19:49 -->
+<!-- 2020-04-16 Thu 22:37 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -249,12 +249,13 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#org7899842">3. Colours</a></li>
+<li><a href="#org3c28301">3. Colours</a></li>
+<li><a href="#Parallel">4. Parallel</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orga6a9ead" class="outline-2">
+<div id="outline-container-org4bbcd04" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -387,14 +388,14 @@ The remaining sections are implementation matter.
 </p>
 </div>
 </div>
-<div id="outline-container-org674cc3b" class="outline-2">
+<div id="outline-container-orgb2e427b" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Core utility</span>
 
-(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--advice</span> (backend blk contents <span style="color: #b58900;">info</span>)
+(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--advice</span> (backend blk contents _)
   <span style="color: #35a69c; font-style: italic;">"Invoke the appropriate custom block handler, if any.</span>
 
 <span style="color: #35a69c; font-style: italic;">A given custom block BLK has a TYPE extracted from it, then we</span>
@@ -402,21 +403,21 @@ The remaining sections are implementation matter.
 <span style="color: #35a69c; font-style: italic;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is</span>
 <span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is."</span>
   (<span style="color: #859900; font-weight: bold;">let*</span> ((type    (<span style="color: #b58900;">nth</span> 1 (<span style="color: #b58900;">nth</span> 1 blk)))
-         (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras/%s"</span> type))))
+         (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras--%s"</span> type))))
     (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend contents nil))))
 
 (<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-html-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'org-special-block-extras--advice 'html))
+            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'html))
 
 (<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-latex-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'org-special-block-extras--advice 'latex))
+            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'latex))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org7899842" class="outline-2">
-<h2 id="org7899842"><span class="section-number-2">3</span> Colours</h2>
+<div id="outline-container-org3c28301" class="outline-2">
+<h2 id="org3c28301"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-3">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
@@ -429,7 +430,7 @@ The remaining sections are implementation matter.
           yellow)
   <span style="color: #35a69c; font-style: italic;">"Colours that should be available on all systems."</span>)
 
-(<span style="color: #859900; font-weight: bold;">loop</span> for colour in org-special-block-extras--colors
+(<span style="color: #859900; font-weight: bold;">loop</span> for colour in <span style="color: #268bd2;">org-special-block-extras--colors</span>
       <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">format</span>
                       <span style="color: #2aa198;">"(defun org-special-block-extras--%s (backend contents)</span>
 <span style="color: #2aa198;">                     (format (pcase backend</span>
@@ -442,10 +443,84 @@ The remaining sections are implementation matter.
 </div>
 </div>
 </div>
+
+<div id="outline-container-orgd9ce88f" class="outline-2">
+<h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
+<div class="outline-text-2" id="text-Parallel">
+<div style="column-rule-style:solid;column-count:2;"<p>
+<span class="underline">Example:</span>
+</p>
+<pre class="example">
+#+begin_3parallel org
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+</pre>
+
+<p>
+<span class="underline">Yields:</span>
+</p>
+<div style="column-rule-style:solid;column-count:3;"<p>
+one
+</p>
+
+<p>
+two
+</p>
+
+<p>
+three
+</p>
+</div>
+</div>
+
+<p>
+I initially used the names <code>paralell&lt;n&gt;</code> but names ending with a number did not
+inherit highlighting, so I shifted the number to being a prefix instead.
+</p>
+<ul class="org-ul">
+<li>For LaTeX, new lines are used to suggest opportunities for column breaks
+and are needed even if explicit columnbreaks are declared.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #96A7A9; font-style: italic;">;;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Parallel blocks: parallel&lt;n&gt;[NB] for n:2..5, optionally with &#8216;N&#8217;o &#8216;b&#8217;ar</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">in-between the columns.</span>
+<span style="color: #96A7A9; font-style: italic;">;;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Common case is to have three columns, and we want to avoid invoking the</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">attribute via org, so making this.</span>
+
+(<span style="color: #859900; font-weight: bold;">loop</span> for cols in '(<span style="color: #2aa198;">"1"</span> <span style="color: #2aa198;">"2"</span> <span style="color: #2aa198;">"3"</span> <span style="color: #2aa198;">"4"</span> <span style="color: #2aa198;">"5"</span>)
+      <span style="color: #b58900;">do</span> (<span style="color: #859900; font-weight: bold;">loop</span> for rule in '(<span style="color: #2aa198;">"solid"</span> <span style="color: #2aa198;">"none"</span>)
+      <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">concat</span>
+<span style="color: #2aa198;">"(defun org-special-block-extras--"</span> cols <span style="color: #2aa198;">"parallel"</span>
+(<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> rule <span style="color: #2aa198;">"solid"</span>) <span style="color: #2aa198;">""</span> <span style="color: #2aa198;">"NB"</span>)
+<span style="color: #2aa198;">"(backend contents)"</span>
+<span style="color: #2aa198;">"(format (pcase backend"</span>
+<span style="color: #2aa198;">"(`html \"&lt;div style=\\\"column-rule-style:"</span> rule <span style="color: #2aa198;">";column-count:"</span> cols <span style="color: #2aa198;">";\\\"%s&lt;/div&gt;\")"</span>
+<span style="color: #2aa198;">"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{"</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> rule <span style="color: #2aa198;">"solid"</span>) <span style="color: #2aa198;">"2"</span> <span style="color: #2aa198;">"0"</span>) <span style="color: #2aa198;">"pt}"</span>
+<span style="color: #2aa198;">"          \\\\begin{minipage}[t]{\\\\linewidth}"</span>
+<span style="color: #2aa198;">"          \\\\begin{multicols}{"</span> cols <span style="color: #2aa198;">"}"</span>
+<span style="color: #2aa198;">"          %s"</span>
+<span style="color: #2aa198;">"          \\\\end{multicols}\\\\end{minipage}\")) contents))"</span>)))))
+
+(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallel</span>   #'<span style="color: #b58900;">org-special-block-extras--2parallel</span>)
+(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallelNB</span> #'<span style="color: #b58900;">org-special-block-extras--2parallelNB</span>)
+</pre>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-16 Thu 19:49</p>
+<p class="date">Created: 2020-04-16 Thu 22:37</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

@@ -3,13 +3,14 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil
 #+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+#+EXPORT_FILE_NAME: README
 
 * Preamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp
-;;; org-special-block-extras.el --- New custom blocks and links for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-four new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -196,7 +197,7 @@ send the block CONTENTS along with the current export BACKEND to
 the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
 defined, otherwise, we leave the CONTENTS of the block as is."
   (let* ((type    (nth 1 (nth 1 blk)))
-         (handler (intern (format "org-special-block-extras/%s" type))))
+         (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend contents nil))))
 
 (advice-add #'org-html-special-block :before-until
@@ -229,6 +230,77 @@ defined, otherwise, we leave the CONTENTS of the block as is."
                       colour colour colour))))
 #+END_SRC
 
+* Parallel
+  :PROPERTIES:
+  :CUSTOM_ID: Parallel
+  :END:
+
+# 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
+
+#+LATEX_HEADER: \usepackage{multicol}
+
+#+begin_parallel org
+_Example:_
+#+begin_example org
+#+begin_3parallel org
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+#+end_example
+
+#+latex: \columnbreak
+_Yields:_
+#+begin_3parallel org
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+#+end_parallel
+
+I initially used the names =paralell<n>= but names ending with a number did not
+inherit highlighting, so I shifted the number to being a prefix instead.
++ For LaTeX, new lines are used to suggest opportunities for column breaks
+  and are needed even if explicit columnbreaks are declared.
+
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Parallel blocks: parallel<n>[NB] for n:2..5, optionally with ‘N’o ‘b’ar
+;; in-between the columns.
+;;
+;; Common case is to have three columns, and we want to avoid invoking the
+;; attribute via org, so making this.
+
+(loop for cols in '("1" "2" "3" "4" "5")
+      do (loop for rule in '("solid" "none")
+      do (eval (read (concat
+"(defun org-special-block-extras--" cols "parallel"
+(if (equal rule "solid") "" "NB")
+"(backend contents)"
+"(format (pcase backend"
+"(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
+"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
+"          \\\\begin{minipage}[t]{\\\\linewidth}"
+"          \\\\begin{multicols}{" cols "}"
+"          %s"
+"          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
+
+(defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
+(defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
+#+END_SRC
+#
+# Musa: If I use “<div …> %s</div>”, the ‘>’ causes some undesirable whitespace
+# in the first column. Hence, omitting it.
+
 * Postamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Postamble
@@ -260,7 +332,7 @@ defined, otherwise, we leave the CONTENTS of the block as is."
   :END:
 1. In Github repo: Create new file ⇒ License.txt ⇒ Select template ⇒ GNU 3
 2. Ensure first line ends with: -*- lexical-binding: t; -*-
-3. Include approriate standard keywords;
+3. Include appropriate standard keywords;
    #+begin_src emacs-lisp
 (pp finder-known-keywords)
    #+end_src
@@ -347,11 +419,20 @@ defined, otherwise, we leave the CONTENTS of the block as is."
 : #s(package-desc org-special-block-extras (20200416 2349) "New custom blocks and links for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
 
 12. [@12] Produce a dedicated pull request branch
-    -
 
-#+begin_src emacs-lisp
-(magit-status "~/melpa")
-#+end_src
+    #+begin_src emacs-lisp
+    (magit-status "~/melpa")
+    #+end_src
 
-+ Now =b c= to checkout a new branch.
-+ Push this branch on your melpa fork.
+    + Now =b c= to checkout a new branch.
+    + Push this branch on your melpa fork.
+    + Go to the https://github.com/melpa/ repo and
+      there'll be a big green PR button ^_^
+* COMMENT footer
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-footer
+  :END:
+
+# Local Variables:
+# eval: (add-hook 'after-save-hook (lambda () (ignore-errors (f-move "README.html" "README.md"))) nil 'local-to-this-file-please)
+# End:

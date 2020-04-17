@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- New custom blocks and links for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-four new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -73,7 +73,7 @@ send the block CONTENTS along with the current export BACKEND to
 the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
 defined, otherwise, we leave the CONTENTS of the block as is."
   (let* ((type    (nth 1 (nth 1 blk)))
-         (handler (intern (format "org-special-block-extras/%s" type))))
+         (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend contents nil))))
 
 (advice-add #'org-html-special-block :before-until
@@ -101,6 +101,31 @@ defined, otherwise, we leave the CONTENTS of the block as is."
                      (t      \"org-special-block-extras: Unsupported backend\"))
                      contents))"
                       colour colour colour))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Parallel blocks: parallel<n>[NB] for n:2..5, optionally with ‘N’o ‘b’ar
+;; in-between the columns.
+;;
+;; Common case is to have three columns, and we want to avoid invoking the
+;; attribute via org, so making this.
+
+(loop for cols in '("1" "2" "3" "4" "5")
+      do (loop for rule in '("solid" "none")
+      do (eval (read (concat
+"(defun org-special-block-extras--" cols "parallel"
+(if (equal rule "solid") "" "NB")
+"(backend contents)"
+"(format (pcase backend"
+"(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
+"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
+"          \\\\begin{minipage}[t]{\\\\linewidth}"
+"          \\\\begin{multicols}{" cols "}"
+"          %s"
+"          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
+
+(defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
+(defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
