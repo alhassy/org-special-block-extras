@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-17 Fri 07:03 -->
+<!-- 2020-04-17 Fri 09:12 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -193,7 +193,7 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
-<link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
+<link href="https://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -240,6 +240,28 @@ for the JavaScript code in this tag.
  }
 /*]]>*///-->
 </script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
 <div id="content">
@@ -250,13 +272,26 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#org3da40d3">3. Colours</a></li>
+<li><a href="#org27b6885">3. Colours</a></li>
 <li><a href="#Parallel">4. Parallel</a></li>
+<li><a href="#argument-Extraction">5. <code>:argument:</code> Extraction</a></li>
+<li><a href="#editor-comments">6. Editor Comments</a>
+<ul>
+<li><a href="#Examples">6.1. Examples</a>
+<ul>
+<li><a href="#No-optional-arguments">6.1.1. No optional arguments</a></li>
+<li><a href="#Only-declaring-an-ed-editor">6.1.2. Only declaring an <code>:ed:</code> &#x2014;editor</a></li>
+<li><a href="#Empty-contents-no-editor-nothing">6.1.3. Empty contents, no editor, nothing</a></li>
+<li><a href="#With-a-replacewith-clause">6.1.4. With a <code>:replacewith:</code> clause</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org7b5db33" class="outline-2">
+<div id="outline-container-org1733799" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -282,6 +317,13 @@ This article may be read as a <a href="https://alhassy.github.io/org-special-blo
 </p>
 </blockquote>
 
+<div class="org-center">
+<p>
+( Since we're only considering HTML &amp; LaTeX, the Github rendition of this
+article may not render things as desired. )
+</p>
+</div>
+
 
 <div class="figure">
 <p><img src="images/colours.jpg" alt="colours.jpg" />
@@ -296,12 +338,19 @@ This article may be read as a <a href="https://alhassy.github.io/org-special-blo
 <p><span class="figure-number">Figure 2: </span>Displaying thoughts side-by-side ^_^</p>
 </div>
 
+
+<div class="figure">
+<p><img src="images/edcomm.png" alt="edcomm.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>“First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
+</div>
+
 <p>
 The remaining sections are implementation matter.
 </p>
 </div>
 </div>
-<div id="outline-container-org8c909ab" class="outline-2">
+<div id="outline-container-orga453575" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <div class="org-src-container">
@@ -314,10 +363,13 @@ The remaining sections are implementation matter.
 <span style="color: #35a69c; font-style: italic;">A given custom block BLK has a TYPE extracted from it, then we</span>
 <span style="color: #35a69c; font-style: italic;">send the block CONTENTS along with the current export BACKEND to</span>
 <span style="color: #35a69c; font-style: italic;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is</span>
-<span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is."</span>
+<span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is.</span>
+
+<span style="color: #35a69c; font-style: italic;">We also support the seemingly useless blocks that have no</span>
+<span style="color: #35a69c; font-style: italic;">contents at all, not even an empty new line."</span>
   (<span style="color: #859900; font-weight: bold;">let*</span> ((type    (<span style="color: #b58900;">nth</span> 1 (<span style="color: #b58900;">nth</span> 1 blk)))
          (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras--%s"</span> type))))
-    (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend contents nil))))
+    (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend (<span style="color: #859900; font-weight: bold;">or</span> contents <span style="color: #2aa198;">""</span>) nil))))
 
 (<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-html-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
             (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'html))
@@ -329,8 +381,8 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-org3da40d3" class="outline-2">
-<h2 id="org3da40d3"><span class="section-number-2">3</span> Colours</h2>
+<div id="outline-container-org27b6885" class="outline-2">
+<h2 id="org27b6885"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-3">
 
 <div class="figure">
@@ -458,14 +510,14 @@ This text is yellow!
 </div>
 </div>
 
-<div id="outline-container-org4a208e8" class="outline-2">
+<div id="outline-container-orga19c46a" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 
 <div class="figure">
 <p><img src="images/parallel.png" alt="parallel.png" />
 </p>
-<p><span class="figure-number">Figure 4: </span>Displaying thoughts side-by-side ^_^</p>
+<p><span class="figure-number">Figure 5: </span>Displaying thoughts side-by-side ^_^</p>
 </div>
 
 <div style="column-rule-style:solid;column-count:2;"<p>
@@ -545,10 +597,291 @@ desired. )
 </div>
 </div>
 </div>
+
+<div id="outline-container-orgfd4e26a" class="outline-2">
+<h2 id="argument-Extraction"><span class="section-number-2">5</span> <code>:argument:</code> Extraction</h2>
+<div class="outline-text-2" id="text-argument-Extraction">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--extract-arguments</span> (contents <span style="color: #b58900; font-style: italic;">&amp;rest</span> args)
+<span style="color: #35a69c; font-style: italic;">"Return list of CONTENTS string with ARGS lines stripped out and values of ARGS.</span>
+
+<span style="color: #35a69c; font-style: italic;">Example usage:</span>
+
+<span style="color: #35a69c; font-style: italic;">    (-let [(contents&#8242; . (&amp;alist 'k&#8320; &#8230; 'k&#8345;))</span>
+<span style="color: #35a69c; font-style: italic;">           (&#8230;extract-arguments contents 'k&#8320; &#8230; 'k&#8345;)]</span>
+<span style="color: #35a69c; font-style: italic;">          body)</span>
+
+<span style="color: #35a69c; font-style: italic;">Within &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">body</span><span style="color: #35a69c; font-style: italic;">&#8217;, each &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">k&#7522;</span><span style="color: #35a69c; font-style: italic;">&#8217; refers to the &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">value</span><span style="color: #35a69c; font-style: italic;">&#8217; of argument</span>
+<span style="color: #35a69c; font-style: italic;">&#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; in the CONTENTS text and &#8216;contents&#8242;&#8217; is CONTENTS</span>
+<span style="color: #35a69c; font-style: italic;">with all &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; lines stripped out.</span>
+
+<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is not an argument in CONTENTS, then it is assigned value &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">nil</span><span style="color: #35a69c; font-style: italic;">&#8217;.</span>
+<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is an argument in CONTENTS but is not given a value in CONTENTS,</span>
+<span style="color: #35a69c; font-style: italic;">  then it has value the empty string."</span>
+  (<span style="color: #859900; font-weight: bold;">let</span> ((ctnts contents)
+        (<span style="color: #b58900;">values</span> (<span style="color: #859900; font-weight: bold;">loop</span> for a in args
+                      for regex <span style="color: #b58900;">=</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">":%s:</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">"</span> a)
+                      for v <span style="color: #b58900;">=</span> (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">s-match</span> regex contents))
+                      collect (<span style="color: #b58900;">cons</span> a v))))
+    (<span style="color: #859900; font-weight: bold;">loop</span> for a in args
+          for regex <span style="color: #b58900;">=</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">":%s:</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">"</span> a)
+          <span style="color: #b58900;">do</span> (<span style="color: #859900; font-weight: bold;">setq</span> ctnts (<span style="color: #b58900;">s-replace-regexp</span> regex <span style="color: #2aa198;">""</span> ctnts)))
+    (<span style="color: #b58900;">cons</span> ctnts <span style="color: #b58900;">values</span>)))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdd2025e" class="outline-2">
+<h2 id="editor-comments"><span class="section-number-2">6</span> Editor Comments</h2>
+<div class="outline-text-2" id="text-editor-comments">
+<p>
+“Editor Comments” are intended to be top-level first-class comments in an
+article that are inline with the surrounding text and are delimited in such a
+way that they are visible but drawing attention.  I first learned about this
+idea from Wolfram Kahl &#x2014;who introduced me to Emacs many years ago.
+</p>
+
+<p>
+In LaTeX, an <code>edcomm</code> appears inline with the text surrounding it.
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:&nbsp;<u>Replace:</u></strong></span>
+
+org-mode is dope, yo!
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>
+Org-mode is essentially a path toward enlightenment.
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+<p>
+Unfortunately, in the HTML rendition, the <code>edcomm</code> is its own paragraph and thus
+separated by new lines from its surrounding text.
+</p>
+
+
+<div class="figure">
+<p><img src="images/edcomm.png" alt="edcomm.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span>In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><i>Any new &#x2014;possibly empty&#x2014; inner lines in the <code>edcomm</code> are desirably preserved</i></td>
+</tr>
+</tbody>
+</table>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras-hide-editor-comments</span> nil
+<span class="linenr"> 2: </span>  <span style="color: #35a69c; font-style: italic;">"Should editor comments be shown in the output or not."</span>)
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span>(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--edcomm</span> (backend contents)
+<span class="linenr"> 5: </span><span style="color: #35a69c; font-style: italic;">"Format CONTENTS as an first-class editor comment according to BACKEND.</span>
+<span class="linenr"> 6: </span>
+<span class="linenr"> 7: </span><span style="color: #35a69c; font-style: italic;">The CONTENTS string has two optional argument switches:</span>
+<span class="linenr"> 8: </span><span style="color: #35a69c; font-style: italic;">1. :ed: &#8658; To declare an editor of the comment.</span>
+<span class="linenr"> 9: </span><span style="color: #35a69c; font-style: italic;">2. :replacewith: &#8658; [Nullary] The text preceding this clause</span>
+<span class="linenr">10: </span><span style="color: #35a69c; font-style: italic;">   should be replaced by the text after it."</span>
+<span class="linenr">11: </span>  (<span style="color: #859900; font-weight: bold;">-let*</span> (
+<span class="linenr">12: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Get arguments</span>
+<span class="linenr">13: </span>           ((contents&#8321; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'ed))
+<span class="linenr">14: </span>            (<span style="color: #b58900;">org-special-block-extras--extract-arguments</span> contents 'ed))
+<span class="linenr">15: </span>
+<span id="coderef-inline" class="coderef-off"><span class="linenr">16: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Strip out any &lt;p&gt; tags</span></span>
+<span class="linenr">17: </span>           (_ (<span style="color: #859900; font-weight: bold;">setq</span> contents&#8321; (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span> contents&#8321;)))
+<span class="linenr">18: </span>           (_ (<span style="color: #859900; font-weight: bold;">setq</span> contents&#8321; (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;/p&gt;"</span> <span style="color: #2aa198;">""</span> contents&#8321;)))
+<span class="linenr">19: </span>
+<span class="linenr">20: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Are we in the html backend?</span>
+<span class="linenr">21: </span>           (html? (<span style="color: #b58900;">equal</span> backend 'html))
+<span class="linenr">22: </span>
+<span class="linenr">23: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">fancy display style</span>
+<span class="linenr">24: </span>           (boxed (<span style="color: #859900; font-weight: bold;">lambda</span> (x)
+<span class="linenr">25: </span>                    (<span style="color: #859900; font-weight: bold;">if</span> html?
+<span class="linenr">26: </span>                        (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"&lt;span style=\"border-width:1px"</span>
+<span class="linenr">27: </span>                                 <span style="color: #2aa198;">";border-style:solid;padding:5px\"&gt;"</span>
+<span class="linenr">28: </span>                                 <span style="color: #2aa198;">"&lt;strong&gt;"</span> x <span style="color: #2aa198;">"&lt;/strong&gt;&lt;/span&gt;"</span>)
+<span class="linenr">29: </span>                    (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"\\fbox{\\bf "</span> x <span style="color: #2aa198;">"}"</span>))))
+<span class="linenr">30: </span>
+<span class="linenr">31: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Is this a replacement clause?</span>
+<span class="linenr">32: </span>           ((this that) (<span style="color: #b58900;">s-split</span> <span style="color: #2aa198;">":replacewith:"</span> contents&#8321;))
+<span class="linenr">33: </span>           (replacement-clause? that) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">There is a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">that</span><span style="color: #96A7A9; font-style: italic;">&#8217;</span>
+<span class="linenr">34: </span>           (replace-keyword (<span style="color: #859900; font-weight: bold;">if</span> html? <span style="color: #2aa198;">"&amp;nbsp;&lt;u&gt;Replace:&lt;/u&gt;"</span>
+<span class="linenr">35: </span>                              <span style="color: #2aa198;">"\\underline{Replace:}"</span>))
+<span class="linenr">36: </span>           (with-keyword    (<span style="color: #859900; font-weight: bold;">if</span> html? <span style="color: #2aa198;">"&lt;u&gt;With:&lt;/u&gt;"</span>
+<span class="linenr">37: </span>                              <span style="color: #2aa198;">"\\underline{With:}"</span>))
+<span class="linenr">38: </span>           (editor (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"[%s:%s"</span>
+<span class="linenr">39: </span>                           (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">s-blank?</span> ed) <span style="color: #2aa198;">"Editor Comment"</span> ed)
+<span class="linenr">40: </span>                           (<span style="color: #859900; font-weight: bold;">if</span> replacement-clause?
+<span class="linenr">41: </span>                               replace-keyword
+<span class="linenr">42: </span>                             <span style="color: #2aa198;">""</span>)))
+<span class="linenr">43: </span>           (contents&#8322; (<span style="color: #859900; font-weight: bold;">if</span> replacement-clause?
+<span class="linenr">44: </span>                          (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s %s %s"</span> this
+<span class="linenr">45: </span>                                  (<span style="color: #b58900;">funcall</span> boxed with-keyword)
+<span class="linenr">46: </span>                                  that)
+<span class="linenr">47: </span>                        contents&#8321;))
+<span class="linenr">48: </span>
+<span class="linenr">49: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;[Editor Comment:&#8221;</span>
+<span class="linenr">50: </span>           (edcomm-begin (<span style="color: #b58900;">funcall</span> boxed editor))
+<span class="linenr">51: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;]&#8221;</span>
+<span class="linenr">52: </span>           (edcomm-end (<span style="color: #b58900;">funcall</span> boxed <span style="color: #2aa198;">"]"</span>)))
+<span class="linenr">53: </span>
+<span class="linenr">54: </span>    (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-export-allow-bind-keywords</span> <span style="color: #268bd2;">t</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">So users can use &#8220;#+bind&#8221; immediately</span>
+<span class="linenr">55: </span>    (<span style="color: #859900; font-weight: bold;">if</span> <span style="color: #268bd2;">org-special-block-extras-hide-editor-comments</span>
+<span class="linenr">56: </span>        <span style="color: #2aa198;">""</span>
+<span class="linenr">57: </span>      (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">pcase</span> backend
+<span class="linenr">58: </span>                (`html <span style="color: #2aa198;">"&lt;p&gt; %s %s %s&lt;/p&gt;"</span>)
+<span class="linenr">59: </span>                (`latex <span style="color: #2aa198;">"%s %s %s"</span>))
+<span class="linenr">60: </span>              edcomm-begin contents&#8322; edcomm-end))))
+</pre>
+</div>
+
+<p>
+In the HTML export, the <code>edcomm</code> special block is <i>not</i> in-line with the text
+surrounding it &#x2014;ideally, it would be inline so that existing paragraphs are
+not split into multiple paragraphs but instead have an editor's comment
+indicating suggested alterations; see <a href="#coderef-inline" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-inline');" onmouseout="CodeHighlightOff(this, 'coderef-inline');">Line 16</a> above.
+</p>
+</div>
+
+<div id="outline-container-orge9cf0ff" class="outline-3">
+<h3 id="Examples"><span class="section-number-3">6.1</span> Examples</h3>
+<div class="outline-text-3" id="text-Examples">
+<p>
+Org-markup is supported, as expected.
+</p>
+
+<p>
+All editor comments are disabled by declaring, in your Org file:
+</p>
+<pre class="example">
+#+bind: org-special-block-extras-hide-editor-comments t
+</pre>
+<p>
+The <code>#+bind:</code> keyword makes Emacs variables buffer-local during export
+&#x2014;it is evaluated <i>after</i> any <code>src</code> blocks. To use it, one must declare in
+their Emacs init file the following line, which our <code>edcomm</code> utility
+ensures is true.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-export-allow-bind-keywords</span> <span style="color: #268bd2;">t</span>)
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">( Remember to <code>C-c C-c</code> the <code>#+bind</code> to activate it, the first time it is written. )</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div id="outline-container-org412404d" class="outline-4">
+<h4 id="No-optional-arguments"><span class="section-number-4">6.1.1</span> No optional arguments</h4>
+<div class="outline-text-4" id="text-No-optional-arguments">
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
+<i>Please</i> <b>change</b> <span class="underline">this</span> section to be more, ya know, professional.
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+</div>
+</div>
+
+<div id="outline-container-org2d8b127" class="outline-4">
+<h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">6.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
+<div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
+
+<i>Please</i> <b>change</b> <span class="underline">this</span> section to be more, ya know, professional.
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+<p>
+Possibly with no contents:
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
+
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+</div>
+</div>
+
+<div id="outline-container-orgef61e69" class="outline-4">
+<h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">6.1.3</span> Empty contents, no editor, nothing</h4>
+<div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+<p>
+Possibly with an empty new line:
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
+
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+</div>
+</div>
+
+<div id="outline-container-orgc3a484e" class="outline-4">
+<h4 id="With-a-replacewith-clause"><span class="section-number-4">6.1.4</span> With a <code>:replacewith:</code> clause</h4>
+<div class="outline-text-4" id="text-With-a-replacewith-clause">
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
+The two-dimensional notation; e.g., \(\sum_{i = 0}^n i^2\)
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>
+A linear one-dimensional notation; e.g.,
+\((\Sigma i : 0..n \;\bullet\; i^2)\)
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+<p>
+Possibly “malformed” replacement clauses.
+</p>
+
+<ol class="org-ol">
+<li><p>
+Forget the thing to be replaced.
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>
+A linear one-dimensional notation; e.g.,
+\((\Sigma i : 0..n \;\bullet\; i^2)\)
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p></li>
+
+<li><p>
+Forget the new replacement thing.
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
+The two-dimensional notation; e.g., \(\sum_{i = 0}^n i^2\)
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p></li>
+
+<li><p>
+Completely lost one's train of thought.
+</p>
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-17 Fri 07:03</p>
+<p class="date">Created: 2020-04-17 Fri 09:12</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
