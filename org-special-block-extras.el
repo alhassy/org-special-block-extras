@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- Twenty-four new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-five new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -81,10 +81,6 @@ contents at all, not even an empty new line."
 (advice-add #'org-latex-special-block :before-until
             (-partial #'org-special-block-extras--advice 'latex))
 
-(s-join "\n\n"
-(loop for c in org-special-block-extras/colors
-      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Load support for 19 colour custom blocks
@@ -104,6 +100,10 @@ contents at all, not even an empty new line."
                      (t      \"org-special-block-extras: Unsupported backend\"))
                      contents))"
                       colour colour colour))))
+
+(s-join "\n\n"
+(loop for c in org-special-block-extras/colors
+      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -218,6 +218,37 @@ The CONTENTS string has two optional argument switches:
               edcomm-begin contents₂ edcomm-end))))
 
 (setq org-export-allow-bind-keywords t)
+
+(defun org-special-block-extras--details (backend contents)
+"Format CONTENTS as a ‘folded region’ according to BACKEND.
+
+CONTENTS may have a ‘:title’ argument specifying a title for
+the folded region."
+(-let* (;; Get arguments
+        ((contents′ . (&alist 'title))
+         (org-special-block-extras--extract-arguments contents 'title)))
+  (when (s-blank? title) (setq title "Details"))
+  (setq title (s-trim title))
+  (format
+   (s-collapse-whitespace ;; Remove the whitespace only in the nicely presented
+                          ;; strings below
+    (pcase backend
+      (`html "<details class=\"code-details\">
+                 <summary>
+                   <strong>
+                     <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+                     </font>
+                   </strong>
+                 </summary>
+                 %s
+              </details>")
+      (`latex "\\begin{quote}
+                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]
+                   \\textbf{%s:}
+                   %s
+                 \\end{tcolorbox}
+               \\end{quote}"))
+    title contents′))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

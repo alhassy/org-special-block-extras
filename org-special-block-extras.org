@@ -2,17 +2,36 @@
 #+author: Musa Al-hassy
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil
-#+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
-
 #+EXPORT_FILE_NAME: README
+#+macro: blurb Twenty-five new custom block and link types for Emacs' Org-mode ^_^
+
+* HTML & LaTeX Setup :ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: HTML-LaTeX-Setup
+  :END:
+
+#+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+#+latex_header: \usepackage{newunicodechar}
+#+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
+#+latex_header: \newunicodechar{₁}{\ensuremath{_1}}
+#+latex_header: \newunicodechar{₂}{\ensuremath{_2}}
+#+latex_header: \newunicodechar{ₙ}{\ensuremath{_n}}
+#+latex_header: \newunicodechar{ᵢ}{\ensuremath{_i}}
+#+latex_header: \newunicodechar{′}{'}
+#+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
 
 # +HTML_HEAD: <link href="./org-notes-style.css" rel="stylesheet" type="text/css" />
 # http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css
 #
 # http://taopeng.me/org-notes-style/
+# #
+#+OPTIONS: html-style:nil html5-fancy:t
+# #
+#+HTML_DOCTYPE: html5
+#+HTML_HEAD: <meta http-equiv="X-UA-Compatible" content="IE=edge">
+#+HTML_HEAD: <meta name="viewport" content="width=device-width, initial-scale=1">
+# #
 #+HTML_HEAD: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
-
-#+macro: blurb Twenty-five new custom blocks and link types for Emacs' Org-mode ^_^
 
 * Preamble :noexport:
   :PROPERTIES:
@@ -116,8 +135,12 @@ article may not render things as desired. )
 #+caption: “First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF
 [[file:images/edcomm.png]]
 
+#+caption: Visually hiding, folding away, details
+[[file:images/details.png]]
+
+
 The remaining sections are implementation matter.
-* COMMENT Table of Contents :TOC:QUOTE:ignore:
+* Table of Contents :TOC:QUOTE:ignore:
   :PROPERTIES:
   :CUSTOM_ID: Table-of-Contents
   :END:
@@ -125,10 +148,14 @@ The remaining sections are implementation matter.
 - [[#example-use][Example Use]]
 - [[#core-utility][Core Utility]]
 - [[#colours][Colours]]
+  - [[#examples][Examples]]
 - [[#parallel][Parallel]]
 - [[#argument-extraction][=:argument:= Extraction]]
 - [[#editor-comments][Editor Comments]]
-  - [[#examples][Examples]]
+  - [[#examples-1][Examples]]
+- [[#folded-details][Folded Details]]
+  - [[#example][Example]]
+- [[#footnotes][Footnotes]]
 #+END_QUOTE
 
 * Core Utility
@@ -164,6 +191,32 @@ contents at all, not even an empty new line."
 
 [[file:images/colours.jpg]]
 
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Load support for 19 colour custom blocks
+
+(defvar org-special-block-extras--colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(loop for colour in org-special-block-extras--colors
+      do (eval (read (format
+                      "(defun org-special-block-extras--%s (backend contents)
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
+                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
+                     (t      \"org-special-block-extras: Unsupported backend\"))
+                     contents))"
+                      colour colour colour))))
+#+END_SRC
+
+** Examples
+   :PROPERTIES:
+   :CUSTOM_ID: Examples
+   :END:
 :Examples:
 #+BEGIN_SRC emacs-lisp :results value :wrap no
 (s-join "\n\n"
@@ -249,28 +302,6 @@ This text is white!
 This text is yellow!
 #+end_yellow
 
-#+BEGIN_SRC emacs-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Load support for 19 colour custom blocks
-
-(defvar org-special-block-extras--colors
-  '(black blue brown cyan darkgray gray green lightgray lime
-          magenta olive orange pink purple red teal violet white
-          yellow)
-  "Colours that should be available on all systems.")
-
-(loop for colour in org-special-block-extras--colors
-      do (eval (read (format
-                      "(defun org-special-block-extras--%s (backend contents)
-                     (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
-                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
-                     (t      \"org-special-block-extras: Unsupported backend\"))
-                     contents))"
-                      colour colour colour))))
-#+END_SRC
-
 * Parallel
   :PROPERTIES:
   :CUSTOM_ID: Parallel
@@ -309,6 +340,8 @@ two
 three
 #+end_3parallel
 #+end_parallel
+
+| =#+LATEX_HEADER: \usepackage{multicol}= |
 
 I initially used the names =paralell<n>= but names ending with a number did not
 inherit highlighting, so I shifted the number to being a prefix instead.
@@ -387,16 +420,6 @@ with all ‘:kᵢ:’ lines stripped out.
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
-
-#+latex_header: \usepackage{newunicodechar}
-#+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
-#+latex_header: \newunicodechar{₁}{\ensuremath{_1}}
-#+latex_header: \newunicodechar{₂}{\ensuremath{_2}}
-#+latex_header: \newunicodechar{ₙ}{\ensuremath{_n}}
-#+latex_header: \newunicodechar{ᵢ}{\ensuremath{_i}}
-#+latex_header: \newunicodechar{′}{'}
-#+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
-
 
 “Editor Comments” are intended to be top-level first-class comments in an
 article that are inline with the surrounding text and are delimited in such a
@@ -584,6 +607,108 @@ The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
 :replacewith:
 #+end_edcomm
 
+* Folded Details
+  :PROPERTIES:
+  :CUSTOM_ID: Folded-Details
+  :END:
+
+  # Removing the red box that appears in "minted" when using unicode.
+  # Src: https://tex.stackexchange.com/questions/343494/minted-red-box-around-greek-characters
+  #
+  #+LATEX_HEADER: \makeatletter
+  #+LATEX_HEADER: \AtBeginEnvironment{minted}{\dontdofcolorbox}
+  #+LATEX_HEADER: \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+  #+LATEX_HEADER: \makeatother
+
+
+#+latex_header: \newunicodechar{𝓃}{\ensuremath{n}}
+#+latex_header: \newunicodechar{⋯}{\ensuremath{\cdots}}
+
++ ‘Conversation-style’ articles, where the author asks the reader questions
+  whose answers are “folded away” so the reader can think about the exercise
+  before seeing the answer.
+
++ Hiding boring but important code snippets, such as a list of import
+  declarations or a tedious implementation.
+
+| =#+LATEX_HEADER: \usepackage{tcolorbox}= |
+
+#+caption: Visually hiding, folding away, details
+[[file:images/details.png]]
+
+#+BEGIN_SRC emacs-lisp -n -r
+(defun org-special-block-extras--details (backend contents)
+"Format CONTENTS as a ‘folded region’ according to BACKEND.
+
+CONTENTS may have a ‘:title’ argument specifying a title for
+the folded region."
+(-let* (;; Get arguments
+        ((contents′ . (&alist 'title))
+         (org-special-block-extras--extract-arguments contents 'title)))
+  (when (s-blank? title) (setq title "Details"))
+  (setq title (s-trim title))
+  (format
+   (s-collapse-whitespace ;; Remove the whitespace only in the nicely presented
+                          ;; strings below
+    (pcase backend
+      (`html "<details class=\"code-details\">
+                 <summary>
+                   <strong>
+                     <font face=\"Courier\" size=\"3\" color=\"green\"> %s
+                     </font>
+                   </strong>
+                 </summary>
+                 %s
+              </details>")
+      (`latex "\\begin{quote}
+                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]
+                   \\textbf{%s:}
+                   %s
+                 \\end{tcolorbox}
+               \\end{quote}")))
+    title contents′)))
+#+END_SRC
+
+#+latex_header: \usepackage{tcolorbox}
+
+We could use =\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
+...}}\end{quote}=; however, this does not work well with ~minted~, for coloured
+source blocks. Instead, we use ~tcolorbox~.
+
+** Example
+   :PROPERTIES:
+   :CUSTOM_ID: Example
+   :END:
+Reductions ---incidentally also called ‘folds’[fn:1]--- embody primitive
+recursion and thus computability. For example, what does the following compute
+when given a whole number 𝓃?
+#+BEGIN_SRC emacs-lisp :tangle no
+(-reduce #'/ (number-sequence 1.0 𝓃))
+#+END_SRC
+
+#+begin_details org
+:title: Solution
+Rather than guess-then-check, let's /calculate/!
+#+begin_src emacs-lisp :tangle no
+  (-reduce #'/ (number-sequence 1.0 𝓃))
+= ;; Lisp is strict: Evaluate inner-most expression
+  (-reduce #'/ '(1.0 2.0 3.0 … 𝓃))
+= ;; Evaluate left-associating reduction
+  (/ (/ (/ 1.0 2.0) ⋯) 𝓃)
+=;; Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))
+  (/ 1.0 (* 2.0 3.0 … 𝓃))
+#+END_SRC
+We have thus found that Lisp program to compute the inverse factorial of 𝓃,
+i.e., $\frac{1}{𝓃!}$.
+#+end_details
+
+Neato, let's do more super cool stuff ^_^
+
+#+begin_tiny
+(In the Emacs Web Wowser, folded regions are displayed unfolded similar to
+LaTeX.)
+#+end_tiny
+
 * Postamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Postamble
@@ -758,3 +883,11 @@ The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
 
 #+RESULTS: make-readme
 | TOC | noexport |
+
+* Footnotes
+  :PROPERTIES:
+  :CUSTOM_ID: Footnotes
+  :END:
+
+[fn:1] See [[http://www.cs.nott.ac.uk/~pszgmh/fold.pdf][/A tutorial on the universality and expressiveness of fold/]] and
+[[http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/urs.pdf][/Unifying Structured Recursion Schemes/]]

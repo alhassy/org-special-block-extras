@@ -1,198 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<!-- 2020-04-17 Fri 10:19 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- 2020-04-17 Fri 11:50 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>org-special-block-extras</title>
-<meta name="generator" content="Org mode" />
-<meta name="author" content="Musa Al-hassy" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
-  .title  { text-align: center;
-             margin-bottom: .2em; }
-  .subtitle { text-align: center;
-              font-size: medium;
-              font-weight: bold;
-              margin-top:0; }
-  .todo   { font-family: monospace; color: red; }
-  .done   { font-family: monospace; color: green; }
-  .priority { font-family: monospace; color: orange; }
-  .tag    { background-color: #eee; font-family: monospace;
-            padding: 2px; font-size: 80%; font-weight: normal; }
-  .timestamp { color: #bebebe; }
-  .timestamp-kwd { color: #5f9ea0; }
-  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
-  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
-  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
-  .underline { text-decoration: underline; }
-  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
-  p.verse { margin-left: 3%; }
-  pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
-    padding: 8pt;
-    font-family: monospace;
-    overflow: auto;
-    margin: 1.2em;
-  }
-  pre.src {
-    position: relative;
-    overflow: visible;
-    padding-top: 1.2em;
-  }
-  pre.src:before {
-    display: none;
-    position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
-    padding: 3px;
-    border: 1px solid black;
-  }
-  pre.src:hover:before { display: inline;}
-  /* Languages per Org manual */
-  pre.src-asymptote:before { content: 'Asymptote'; }
-  pre.src-awk:before { content: 'Awk'; }
-  pre.src-C:before { content: 'C'; }
-  /* pre.src-C++ doesn't work in CSS */
-  pre.src-clojure:before { content: 'Clojure'; }
-  pre.src-css:before { content: 'CSS'; }
-  pre.src-D:before { content: 'D'; }
-  pre.src-ditaa:before { content: 'ditaa'; }
-  pre.src-dot:before { content: 'Graphviz'; }
-  pre.src-calc:before { content: 'Emacs Calc'; }
-  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
-  pre.src-fortran:before { content: 'Fortran'; }
-  pre.src-gnuplot:before { content: 'gnuplot'; }
-  pre.src-haskell:before { content: 'Haskell'; }
-  pre.src-hledger:before { content: 'hledger'; }
-  pre.src-java:before { content: 'Java'; }
-  pre.src-js:before { content: 'Javascript'; }
-  pre.src-latex:before { content: 'LaTeX'; }
-  pre.src-ledger:before { content: 'Ledger'; }
-  pre.src-lisp:before { content: 'Lisp'; }
-  pre.src-lilypond:before { content: 'Lilypond'; }
-  pre.src-lua:before { content: 'Lua'; }
-  pre.src-matlab:before { content: 'MATLAB'; }
-  pre.src-mscgen:before { content: 'Mscgen'; }
-  pre.src-ocaml:before { content: 'Objective Caml'; }
-  pre.src-octave:before { content: 'Octave'; }
-  pre.src-org:before { content: 'Org mode'; }
-  pre.src-oz:before { content: 'OZ'; }
-  pre.src-plantuml:before { content: 'Plantuml'; }
-  pre.src-processing:before { content: 'Processing.js'; }
-  pre.src-python:before { content: 'Python'; }
-  pre.src-R:before { content: 'R'; }
-  pre.src-ruby:before { content: 'Ruby'; }
-  pre.src-sass:before { content: 'Sass'; }
-  pre.src-scheme:before { content: 'Scheme'; }
-  pre.src-screen:before { content: 'Gnu Screen'; }
-  pre.src-sed:before { content: 'Sed'; }
-  pre.src-sh:before { content: 'shell'; }
-  pre.src-sql:before { content: 'SQL'; }
-  pre.src-sqlite:before { content: 'SQLite'; }
-  /* additional languages in org.el's org-babel-load-languages alist */
-  pre.src-forth:before { content: 'Forth'; }
-  pre.src-io:before { content: 'IO'; }
-  pre.src-J:before { content: 'J'; }
-  pre.src-makefile:before { content: 'Makefile'; }
-  pre.src-maxima:before { content: 'Maxima'; }
-  pre.src-perl:before { content: 'Perl'; }
-  pre.src-picolisp:before { content: 'Pico Lisp'; }
-  pre.src-scala:before { content: 'Scala'; }
-  pre.src-shell:before { content: 'Shell Script'; }
-  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
-  /* additional language identifiers per "defun org-babel-execute"
-       in ob-*.el */
-  pre.src-cpp:before  { content: 'C++'; }
-  pre.src-abc:before  { content: 'ABC'; }
-  pre.src-coq:before  { content: 'Coq'; }
-  pre.src-groovy:before  { content: 'Groovy'; }
-  /* additional language identifiers from org-babel-shell-names in
-     ob-shell.el: ob-shell is the only babel language using a lambda to put
-     the execution function name together. */
-  pre.src-bash:before  { content: 'bash'; }
-  pre.src-csh:before  { content: 'csh'; }
-  pre.src-ash:before  { content: 'ash'; }
-  pre.src-dash:before  { content: 'dash'; }
-  pre.src-ksh:before  { content: 'ksh'; }
-  pre.src-mksh:before  { content: 'mksh'; }
-  pre.src-posh:before  { content: 'posh'; }
-  /* Additional Emacs modes also supported by the LaTeX listings package */
-  pre.src-ada:before { content: 'Ada'; }
-  pre.src-asm:before { content: 'Assembler'; }
-  pre.src-caml:before { content: 'Caml'; }
-  pre.src-delphi:before { content: 'Delphi'; }
-  pre.src-html:before { content: 'HTML'; }
-  pre.src-idl:before { content: 'IDL'; }
-  pre.src-mercury:before { content: 'Mercury'; }
-  pre.src-metapost:before { content: 'MetaPost'; }
-  pre.src-modula-2:before { content: 'Modula-2'; }
-  pre.src-pascal:before { content: 'Pascal'; }
-  pre.src-ps:before { content: 'PostScript'; }
-  pre.src-prolog:before { content: 'Prolog'; }
-  pre.src-simula:before { content: 'Simula'; }
-  pre.src-tcl:before { content: 'tcl'; }
-  pre.src-tex:before { content: 'TeX'; }
-  pre.src-plain-tex:before { content: 'Plain TeX'; }
-  pre.src-verilog:before { content: 'Verilog'; }
-  pre.src-vhdl:before { content: 'VHDL'; }
-  pre.src-xml:before { content: 'XML'; }
-  pre.src-nxml:before { content: 'XML'; }
-  /* add a generic configuration mode; LaTeX export needs an additional
-     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
-  pre.src-conf:before { content: 'Configuration File'; }
-
-  table { border-collapse:collapse; }
-  caption.t-above { caption-side: top; }
-  caption.t-bottom { caption-side: bottom; }
-  td, th { vertical-align:top;  }
-  th.org-right  { text-align: center;  }
-  th.org-left   { text-align: center;   }
-  th.org-center { text-align: center; }
-  td.org-right  { text-align: right;  }
-  td.org-left   { text-align: left;   }
-  td.org-center { text-align: center; }
-  dt { font-weight: bold; }
-  .footpara { display: inline; }
-  .footdef  { margin-bottom: 1em; }
-  .figure { padding: 1em; }
-  .figure p { text-align: center; }
-  .equation-container {
-    display: table;
-    text-align: center;
-    width: 100%;
-  }
-  .equation {
-    vertical-align: middle;
-  }
-  .equation-label {
-    display: table-cell;
-    text-align: right;
-    vertical-align: middle;
-  }
-  .inlinetask {
-    padding: 10px;
-    border: 2px solid gray;
-    margin: 10px;
-    background: #ffffcc;
-  }
-  #org-div-home-and-up
-   { text-align: right; font-size: 70%; white-space: nowrap; }
-  textarea { overflow-x: auto; }
-  .linenr { font-size: smaller }
-  .code-highlighted { background-color: #ffff00; }
-  .org-info-js_info-navigation { border-style: none; }
-  #org-info-js_console-label
-    { font-size: 10px; font-weight: bold; white-space: nowrap; }
-  .org-info-js_search-highlight
-    { background-color: #ffff00; color: #000000; font-weight: bold; }
-  .org-svg { width: 90%; }
-  /*]]>*/-->
-</style>
+<meta name="generator" content="Org mode">
+<meta name="author" content="Musa Al-hassy">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript">
 /*
@@ -265,14 +81,19 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<header>
 <h1 class="title">org-special-block-extras</h1>
-<div id="table-of-contents">
+</header><nav id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#orgfc8f396">3. Colours</a></li>
+<li><a href="#org12e83fd">3. Colours</a>
+<ul>
+<li><a href="#Examples">3.1. Examples</a></li>
+</ul>
+</li>
 <li><a href="#Parallel">4. Parallel</a></li>
 <li><a href="#argument-Extraction">5. <code>:argument:</code> Extraction</a></li>
 <li><a href="#editor-comments">6. Editor Comments</a>
@@ -287,11 +108,17 @@ for the JavaScript code in this tag.
 </li>
 </ul>
 </li>
+<li><a href="#Folded-Details">7. Folded Details</a>
+<ul>
+<li><a href="#Example">7.1. Example</a></li>
+</ul>
+</li>
 </ul>
 </div>
-</div>
+</nav>
 
-<div id="outline-container-org9c319b1" class="outline-2">
+
+<div id="outline-container-org506cb41" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -325,32 +152,40 @@ article may not render things as desired. )
 </div>
 
 
-<div class="figure">
-<p><img src="images/colours.jpg" alt="colours.jpg" />
-</p>
-<p><span class="figure-number">Figure 1: </span>Write Org-markup once, generate for many backends ^_^</p>
-</div>
+<figure>
+<img src="images/colours.jpg" alt="colours.jpg">
+
+<figcaption><span class="figure-number">Figure 1: </span>Write Org-markup once, generate for many backends ^_^</figcaption>
+</figure>
 
 
-<div class="figure">
-<p><img src="images/parallel.png" alt="parallel.png" />
-</p>
-<p><span class="figure-number">Figure 2: </span>Displaying thoughts side-by-side ^_^</p>
-</div>
+<figure>
+<img src="images/parallel.png" alt="parallel.png">
+
+<figcaption><span class="figure-number">Figure 2: </span>Displaying thoughts side-by-side ^_^</figcaption>
+</figure>
 
 
-<div class="figure">
-<p><img src="images/edcomm.png" alt="edcomm.png" />
-</p>
-<p><span class="figure-number">Figure 3: </span>“First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
-</div>
+<figure>
+<img src="images/edcomm.png" alt="edcomm.png">
+
+<figcaption><span class="figure-number">Figure 3: </span>“First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF</figcaption>
+</figure>
+
+
+<figure>
+<img src="images/details.png" alt="details.png">
+
+<figcaption><span class="figure-number">Figure 4: </span>Visually hiding, folding away, details</figcaption>
+</figure>
+
 
 <p>
 The remaining sections are implementation matter.
 </p>
 </div>
 </div>
-<div id="outline-container-org4089590" class="outline-2">
+<div id="outline-container-orgacf9e7d" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <div class="org-src-container">
@@ -381,15 +216,42 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-orgfc8f396" class="outline-2">
-<h2 id="orgfc8f396"><span class="section-number-2">3</span> Colours</h2>
+<div id="outline-container-org12e83fd" class="outline-2">
+<h2 id="org12e83fd"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-3">
 
-<div class="figure">
-<p><img src="images/colours.jpg" alt="colours.jpg" />
-</p>
+<figure>
+<img src="images/colours.jpg" alt="colours.jpg">
+
+</figure>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #96A7A9; font-style: italic;">;;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Load support for 19 colour custom blocks</span>
+
+(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--colors</span>
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  <span style="color: #35a69c; font-style: italic;">"Colours that should be available on all systems."</span>)
+
+(<span style="color: #859900; font-weight: bold;">loop</span> for colour in <span style="color: #268bd2;">org-special-block-extras--colors</span>
+      <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">format</span>
+                      <span style="color: #2aa198;">"(defun org-special-block-extras--%s (backend contents)</span>
+<span style="color: #2aa198;">                     (format (pcase backend</span>
+<span style="color: #2aa198;">                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")</span>
+<span style="color: #2aa198;">                     (`html  \"&lt;div style=\\\"color:%s;\\\"&gt;%%s&lt;/div&gt;\")</span>
+<span style="color: #2aa198;">                     (t      \"org-special-block-extras: Unsupported backend\"))</span>
+<span style="color: #2aa198;">                     contents))"</span>
+                      colour colour colour))))
+</pre>
+</div>
 </div>
 
+<div id="outline-container-org39afa8e" class="outline-3">
+<h3 id="Examples"><span class="section-number-3">3.1</span> Examples</h3>
+<div class="outline-text-3" id="text-Examples">
 <div style="color:black;"><p>
 This text is black!
 </p>
@@ -484,41 +346,19 @@ This text is white!
 This text is yellow!
 </p>
 </div>
-
-<div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
-<span style="color: #96A7A9; font-style: italic;">;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Load support for 19 colour custom blocks</span>
-
-(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--colors</span>
-  '(black blue brown cyan darkgray gray green lightgray lime
-          magenta olive orange pink purple red teal violet white
-          yellow)
-  <span style="color: #35a69c; font-style: italic;">"Colours that should be available on all systems."</span>)
-
-(<span style="color: #859900; font-weight: bold;">loop</span> for colour in <span style="color: #268bd2;">org-special-block-extras--colors</span>
-      <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">format</span>
-                      <span style="color: #2aa198;">"(defun org-special-block-extras--%s (backend contents)</span>
-<span style="color: #2aa198;">                     (format (pcase backend</span>
-<span style="color: #2aa198;">                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")</span>
-<span style="color: #2aa198;">                     (`html  \"&lt;div style=\\\"color:%s;\\\"&gt;%%s&lt;/div&gt;\")</span>
-<span style="color: #2aa198;">                     (t      \"org-special-block-extras: Unsupported backend\"))</span>
-<span style="color: #2aa198;">                     contents))"</span>
-                      colour colour colour))))
-</pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgcbcf73d" class="outline-2">
+<div id="outline-container-orga513068" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 
-<div class="figure">
-<p><img src="images/parallel.png" alt="parallel.png" />
-</p>
-<p><span class="figure-number">Figure 5: </span>Displaying thoughts side-by-side ^_^</p>
-</div>
+<figure>
+<img src="images/parallel.png" alt="parallel.png">
+
+<figcaption><span class="figure-number">Figure 6: </span>Displaying thoughts side-by-side ^_^</figcaption>
+</figure>
 
 <div style="column-rule-style:solid;column-count:2;"<p>
 <span class="underline">Example:</span>
@@ -551,6 +391,19 @@ three
 </p>
 </div>
 </div>
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><code>#+LATEX_HEADER: \usepackage{multicol}</code></td>
+</tr>
+</tbody>
+</table>
 
 <p>
 I initially used the names <code>paralell&lt;n&gt;</code> but names ending with a number did not
@@ -598,7 +451,7 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-orgec12f6b" class="outline-2">
+<div id="outline-container-org1c463fc" class="outline-2">
 <h2 id="argument-Extraction"><span class="section-number-2">5</span> <code>:argument:</code> Extraction</h2>
 <div class="outline-text-2" id="text-argument-Extraction">
 <div class="org-src-container">
@@ -632,7 +485,7 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-orgdae0dfc" class="outline-2">
+<div id="outline-container-org86e473e" class="outline-2">
 <h2 id="editor-comments"><span class="section-number-2">6</span> Editor Comments</h2>
 <div class="outline-text-2" id="text-editor-comments">
 <p>
@@ -658,17 +511,17 @@ separated by new lines from its surrounding text.
 </p>
 
 
-<div class="figure">
-<p><img src="images/edcomm.png" alt="edcomm.png" />
-</p>
-<p><span class="figure-number">Figure 6: </span>In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
-</div>
+<figure>
+<img src="images/edcomm.png" alt="edcomm.png">
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<figcaption><span class="figure-number">Figure 7: </span>In order: Chrome, Emacs Web Wowser, Org source, PDF</figcaption>
+</figure>
+
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -749,7 +602,7 @@ indicating suggested alterations; see <a href="#coderef-inline" class="coderef" 
 </p>
 </div>
 
-<div id="outline-container-org1dc7928" class="outline-3">
+<div id="outline-container-org8456c40" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">6.1</span> Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <p>
@@ -773,11 +626,11 @@ ensures is true.
 </pre>
 </div>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<table>
 
 
 <colgroup>
-<col  class="org-left" />
+<col  class="org-left">
 </colgroup>
 <tbody>
 <tr>
@@ -787,7 +640,7 @@ ensures is true.
 </table>
 </div>
 
-<div id="outline-container-org6a07f00" class="outline-4">
+<div id="outline-container-org0456d37" class="outline-4">
 <h4 id="No-optional-arguments"><span class="section-number-4">6.1.1</span> No optional arguments</h4>
 <div class="outline-text-4" id="text-No-optional-arguments">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
@@ -797,7 +650,7 @@ ensures is true.
 </div>
 </div>
 
-<div id="outline-container-org95b152d" class="outline-4">
+<div id="outline-container-org5bfa1b9" class="outline-4">
 <h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">6.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
 <div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
@@ -816,7 +669,7 @@ Possibly with no contents:
 </div>
 </div>
 
-<div id="outline-container-org1d90f6a" class="outline-4">
+<div id="outline-container-orgb4515a4" class="outline-4">
 <h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">6.1.3</span> Empty contents, no editor, nothing</h4>
 <div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
@@ -831,7 +684,7 @@ Possibly with an empty new line:
 </div>
 </div>
 
-<div id="outline-container-org6366bee" class="outline-4">
+<div id="outline-container-orgcf916b0" class="outline-4">
 <h4 id="With-a-replacewith-clause"><span class="section-number-4">6.1.4</span> With a <code>:replacewith:</code> clause</h4>
 <div class="outline-text-4" id="text-With-a-replacewith-clause">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
@@ -878,10 +731,142 @@ Completely lost one's train of thought.
 </div>
 </div>
 </div>
+
+<div id="outline-container-orgf3b392d" class="outline-2">
+<h2 id="Folded-Details"><span class="section-number-2">7</span> Folded Details</h2>
+<div class="outline-text-2" id="text-Folded-Details">
+<ul class="org-ul">
+<li>‘Conversation-style’ articles, where the author asks the reader questions
+whose answers are “folded away” so the reader can think about the exercise
+before seeing the answer.</li>
+
+<li>Hiding boring but important code snippets, such as a list of import
+declarations or a tedious implementation.</li>
+</ul>
+
+<table>
+
+
+<colgroup>
+<col  class="org-left">
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><code>#+LATEX_HEADER: \usepackage{tcolorbox}</code></td>
+</tr>
+</tbody>
+</table>
+
+
+<figure>
+<img src="images/details.png" alt="details.png">
+
+<figcaption><span class="figure-number">Figure 8: </span>Visually hiding, folding away, details</figcaption>
+</figure>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--details</span> (backend contents)
+<span class="linenr"> 2: </span><span style="color: #35a69c; font-style: italic;">"Format CONTENTS as a &#8216;folded region&#8217; according to BACKEND.</span>
+<span class="linenr"> 3: </span>
+<span class="linenr"> 4: </span><span style="color: #35a69c; font-style: italic;">CONTENTS may have a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:title</span><span style="color: #35a69c; font-style: italic;">&#8217; argument specifying a title for</span>
+<span class="linenr"> 5: </span><span style="color: #35a69c; font-style: italic;">the folded region."</span>
+<span class="linenr"> 6: </span>(<span style="color: #859900; font-weight: bold;">-let*</span> (<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Get arguments</span>
+<span class="linenr"> 7: </span>        ((contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'title))
+<span class="linenr"> 8: </span>         (<span style="color: #b58900;">org-special-block-extras--extract-arguments</span> contents 'title)))
+<span class="linenr"> 9: </span>  (<span style="color: #859900; font-weight: bold;">when</span> (<span style="color: #b58900;">s-blank?</span> title) (<span style="color: #859900; font-weight: bold;">setq</span> title <span style="color: #2aa198;">"Details"</span>))
+<span class="linenr">10: </span>  (<span style="color: #859900; font-weight: bold;">setq</span> title (<span style="color: #b58900;">s-trim</span> title))
+<span class="linenr">11: </span>  (<span style="color: #b58900;">format</span>
+<span class="linenr">12: </span>   (<span style="color: #b58900;">s-collapse-whitespace</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Remove the whitespace only in the nicely presented</span>
+<span class="linenr">13: </span>                          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">strings below</span>
+<span class="linenr">14: </span>    (<span style="color: #859900; font-weight: bold;">pcase</span> backend
+<span class="linenr">15: </span>      (`html <span style="color: #2aa198;">"&lt;details class=\"code-details\"&gt;</span>
+<span class="linenr">16: </span><span style="color: #2aa198;">                 &lt;summary&gt;</span>
+<span class="linenr">17: </span><span style="color: #2aa198;">                   &lt;strong&gt;</span>
+<span class="linenr">18: </span><span style="color: #2aa198;">                     &lt;font face=\"Courier\" size=\"3\" color=\"green\"&gt; %s</span>
+<span class="linenr">19: </span><span style="color: #2aa198;">                     &lt;/font&gt;</span>
+<span class="linenr">20: </span><span style="color: #2aa198;">                   &lt;/strong&gt;</span>
+<span class="linenr">21: </span><span style="color: #2aa198;">                 &lt;/summary&gt;</span>
+<span class="linenr">22: </span><span style="color: #2aa198;">                 %s</span>
+<span class="linenr">23: </span><span style="color: #2aa198;">              &lt;/details&gt;"</span>)
+<span class="linenr">24: </span>      (`latex <span style="color: #2aa198;">"\\begin{quote}</span>
+<span class="linenr">25: </span><span style="color: #2aa198;">                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]</span>
+<span class="linenr">26: </span><span style="color: #2aa198;">                   \\textbf{%s:}</span>
+<span class="linenr">27: </span><span style="color: #2aa198;">                   %s</span>
+<span class="linenr">28: </span><span style="color: #2aa198;">                 \\end{tcolorbox}</span>
+<span class="linenr">29: </span><span style="color: #2aa198;">               \\end{quote}"</span>)))
+<span class="linenr">30: </span>    title contents&#8242;)))
+</pre>
 </div>
+
+<p>
+We could use <code>\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
+...}}\end{quote}</code>; however, this does not work well with <code>minted</code>, for coloured
+source blocks. Instead, we use <code>tcolorbox</code>.
+</p>
+</div>
+
+<div id="outline-container-orgb989cdb" class="outline-3">
+<h3 id="Example"><span class="section-number-3">7.1</span> Example</h3>
+<div class="outline-text-3" id="text-Example">
+<p>
+Reductions &#x2014;incidentally also called ‘folds’<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>&#x2014; embody primitive
+recursion and thus computability. For example, what does the following compute
+when given a whole number 𝓃?
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> (<span style="color: #b58900;">number-sequence</span> 1.0 &#120003;))
+</pre>
+</div>
+
+<details class="code-details"> <summary> <strong> <font face="Courier" size="3" color="green"> Solution </font> </strong> </summary> <p>
+
+Rather than guess-then-check, let's <i>calculate</i>!
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">  (<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> (<span style="color: #b58900;">number-sequence</span> 1.0 &#120003;))
+<span style="color: #b58900;">=</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Lisp is strict: Evaluate inner-most expression</span>
+  (<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> '(1.0 2.0 3.0 &#8230; &#120003;))
+<span style="color: #b58900;">=</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Evaluate left-associating reduction</span>
+  (<span style="color: #b58900;">/</span> (<span style="color: #b58900;">/</span> (<span style="color: #b58900;">/</span> 1.0 2.0) &#8943;) &#120003;)
+<span style="color: #b58900;">=</span><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))</span>
+  (<span style="color: #b58900;">/</span> 1.0 (<span style="color: #b58900;">*</span> 2.0 3.0 &#8230; &#120003;))
+</pre>
+</div>
+<p>
+We have thus found that Lisp program to compute the inverse factorial of 𝓃,
+i.e., \(\frac{1}{𝓃!}\).
+</p>
+ </details>
+
+<p>
+Neato, let's do more super cool stuff ^_^
+</p>
+
+<div class="tiny">
+<p>
+(In the Emacs Web Wowser, folded regions are displayed unfolded similar to
+LaTeX.)
+</p>
+
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+See <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf"><i>A tutorial on the universality and expressiveness of fold</i></a> and
+<a href="http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/urs.pdf"><i>Unifying Structured Recursion Schemes</i></a>
+</p></div></div>
+
+
+</div>
+</div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-17 Fri 10:19</p>
+<p class="date">Created: 2020-04-17 Fri 11:50</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
