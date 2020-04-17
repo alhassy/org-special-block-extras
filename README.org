@@ -188,7 +188,7 @@ The remaining sections are implementation matter.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 
-(defun org-special-block-extras--advice (backend blk contents info)
+(defun org-special-block-extras--advice (backend blk contents _)
   "Invoke the appropriate custom block handler, if any.
 
 A given custom block BLK has a TYPE extracted from it, then we
@@ -306,8 +306,11 @@ defined, otherwise, we leave the CONTENTS of the block as is."
    #+end_example
 4. Use #' instead of ' for function symbols
 5. Use ‘-’ as a separator, not ‘/’.
-6. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
-7. Ensure that package-linter raises no issues; i.e., the following has no result.
+6. Consider reading:
+   https://github.com/bbatsov/emacs-lisp-style-guide#the-emacs-lisp-style-guide
+7. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+8. Ensure it byte-compiles without any problems.
+9. Ensure that package-linter raises no issues; i.e., the following has no result.
     #+BEGIN_SRC emacs-lisp
 (use-package package-lint)
 (-let [it "org-special-block-extras.el"]
@@ -315,19 +318,40 @@ defined, otherwise, we leave the CONTENTS of the block as is."
  (find-file-other-window it)
  (package-lint-buffer it))
 #+END_SRC
-8. Create a recipe file by invoking: M-x package-build-create-recipe
-   - Place it in: melpa/recipes/
-   - The name of the file should be the name of the package, no extension.
+10. Create a recipe file by invoking: M-x package-build-create-recipe
+    - Place it in: melpa/recipes/
+    - The name of the file should be the name of the package, no extension.
 
-      #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
-   (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
-   #+END_SRC
-9. Ensure the recipe builds successfully:
-   #+BEGIN_SRC shell
-   cd ~/melpa; make recipes/org-special-block-extras
-   #+END_SRC
+       #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
+    (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
+    #+END_SRC
+11. Ensure the recipe builds successfully:
+    #+BEGIN_SRC shell
+    cd ~/melpa; rm ~/melpa/packages/org-special-block-extras-*; make recipes/org-special-block-extras
+    #+END_SRC
 
-8.
+    #+RESULTS:
+    |  • | Building   | package | org-special-block-extras | ...   |      |    |     |       |                                                       |
+    |  ✓ | Success:   |         |                          |       |      |    |     |       |                                                       |
+    | 16 | -rw-r--r-- |       1 | musa                     | staff | 4.3K | 16 | Apr | 19:54 | packages/org-special-block-extras-20200416.2349.el    |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 416B | 16 | Apr | 19:54 | packages/org-special-block-extras-20200416.2349.entry |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 969B | 16 | Apr | 19:54 | packages/org-special-block-extras-badge.svg           |
+    |  8 | -rw-r--r-- |       1 | musa                     | staff | 669B | 16 | Apr | 19:54 | packages/org-special-block-extras-readme.txt          |
 
-(insert   package-build-archive-dir)
-/Users/musa/.emacs.d/elpa/packages/
+12. Ensure the package installs properly from within Emacs:
+
+      #+BEGIN_SRC emacs-lisp
+(package-install-file "~/melpa/packages/org-special-block-extras-20200416.2349.el")
+#+END_SRC
+      #+RESULTS:
+: #s(package-desc org-special-block-extras (20200416 2349) "New custom blocks and links for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
+
+12. [@12] Produce a dedicated pull request branch
+    -
+
+#+begin_src emacs-lisp
+(magit-status "~/melpa")
+#+end_src
+
++ Now =b c= to checkout a new branch.
++ Push this branch on your melpa fork.
