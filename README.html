@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-16 Thu 22:46 -->
+<!-- 2020-04-17 Fri 07:03 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -193,6 +193,7 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
+<link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -249,13 +250,13 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#Example-Use">1. Example Use</a></li>
 <li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#orgeff9781">3. Colours</a></li>
+<li><a href="#org3da40d3">3. Colours</a></li>
 <li><a href="#Parallel">4. Parallel</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org76effbb" class="outline-2">
+<div id="outline-container-org7b5db33" class="outline-2">
 <h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
 <div class="outline-text-2" id="text-Example-Use">
 <p>
@@ -277,7 +278,7 @@ Which generates <i>red</i> text when exported to HTML and LaTeX,
 
 <blockquote>
 <p>
-This article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras">HTML</a> or as pure <a href="https://alhassy.github.io/org-special-block-extras/README.org">Org</a>!
+This article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https://alhassy.github.io/org-special-block-extras/README.org">Org</a>!
 </p>
 </blockquote>
 
@@ -286,6 +287,55 @@ This article may be read as a <a href="https://alhassy.github.io/org-special-blo
 <p><img src="images/colours.jpg" alt="colours.jpg" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Write Org-markup once, generate for many backends ^_^</p>
+</div>
+
+
+<div class="figure">
+<p><img src="images/parallel.png" alt="parallel.png" />
+</p>
+<p><span class="figure-number">Figure 2: </span>Displaying thoughts side-by-side ^_^</p>
+</div>
+
+<p>
+The remaining sections are implementation matter.
+</p>
+</div>
+</div>
+<div id="outline-container-org8c909ab" class="outline-2">
+<h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
+<div class="outline-text-2" id="text-Core-Utility">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Core utility</span>
+
+(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--advice</span> (backend blk contents _)
+  <span style="color: #35a69c; font-style: italic;">"Invoke the appropriate custom block handler, if any.</span>
+
+<span style="color: #35a69c; font-style: italic;">A given custom block BLK has a TYPE extracted from it, then we</span>
+<span style="color: #35a69c; font-style: italic;">send the block CONTENTS along with the current export BACKEND to</span>
+<span style="color: #35a69c; font-style: italic;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is</span>
+<span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is."</span>
+  (<span style="color: #859900; font-weight: bold;">let*</span> ((type    (<span style="color: #b58900;">nth</span> 1 (<span style="color: #b58900;">nth</span> 1 blk)))
+         (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras--%s"</span> type))))
+    (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend contents nil))))
+
+(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-html-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
+            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'html))
+
+(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-latex-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
+            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'latex))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3da40d3" class="outline-2">
+<h2 id="org3da40d3"><span class="section-number-2">3</span> Colours</h2>
+<div class="outline-text-2" id="text-3">
+
+<div class="figure">
+<p><img src="images/colours.jpg" alt="colours.jpg" />
+</p>
 </div>
 
 <div style="color:black;"><p>
@@ -383,42 +433,6 @@ This text is yellow!
 </p>
 </div>
 
-<p>
-The remaining sections are implementation matter.
-</p>
-</div>
-</div>
-<div id="outline-container-org6beaaba" class="outline-2">
-<h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
-<div class="outline-text-2" id="text-Core-Utility">
-<div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Core utility</span>
-
-(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--advice</span> (backend blk contents _)
-  <span style="color: #35a69c; font-style: italic;">"Invoke the appropriate custom block handler, if any.</span>
-
-<span style="color: #35a69c; font-style: italic;">A given custom block BLK has a TYPE extracted from it, then we</span>
-<span style="color: #35a69c; font-style: italic;">send the block CONTENTS along with the current export BACKEND to</span>
-<span style="color: #35a69c; font-style: italic;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is</span>
-<span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is."</span>
-  (<span style="color: #859900; font-weight: bold;">let*</span> ((type    (<span style="color: #b58900;">nth</span> 1 (<span style="color: #b58900;">nth</span> 1 blk)))
-         (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras--%s"</span> type))))
-    (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend contents nil))))
-
-(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-html-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'html))
-
-(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-latex-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'latex))
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgeff9781" class="outline-2">
-<h2 id="orgeff9781"><span class="section-number-2">3</span> Colours</h2>
-<div class="outline-text-2" id="text-3">
 <div class="org-src-container">
 <pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
 <span style="color: #96A7A9; font-style: italic;">;;</span>
@@ -444,9 +458,16 @@ The remaining sections are implementation matter.
 </div>
 </div>
 
-<div id="outline-container-org083c05d" class="outline-2">
+<div id="outline-container-org4a208e8" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
+
+<div class="figure">
+<p><img src="images/parallel.png" alt="parallel.png" />
+</p>
+<p><span class="figure-number">Figure 4: </span>Displaying thoughts side-by-side ^_^</p>
+</div>
+
 <div style="column-rule-style:solid;column-count:2;"<p>
 <span class="underline">Example:</span>
 </p>
@@ -515,12 +536,19 @@ and are needed even if explicit columnbreaks are declared.</li>
 (<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallelNB</span> #'<span style="color: #b58900;">org-special-block-extras--2parallelNB</span>)
 </pre>
 </div>
+
+<div class="org-center">
+<p>
+( The <a href="https://www.gnu.org/software/emacs/manual/html_mono/eww.html">Emacs Web Wowser</a>, <code>M-x eww</code>, does not display <code>parallel</code> environments as
+desired. )
+</p>
+</div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-16 Thu 22:46</p>
+<p class="date">Created: 2020-04-17 Fri 07:03</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

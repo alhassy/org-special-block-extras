@@ -3,7 +3,16 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil
 #+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+
 #+EXPORT_FILE_NAME: README
+
+# +HTML_HEAD: <link href="./org-notes-style.css" rel="stylesheet" type="text/css" />
+# http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css
+#
+# http://taopeng.me/org-notes-style/
+#+HTML_HEAD: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
+
+#+macro: blurb A number of new custom blocks and link types for Emacs' Org-mode ^_^
 
 * Preamble :noexport:
   :PROPERTIES:
@@ -89,10 +98,56 @@ Which generates /red/ text when exported to HTML and LaTeX,
 *while supporting Org markup*.
 
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
 #+end_quote
 
 #+caption: Write Org-markup once, generate for many backends ^_^
+[[file:images/colours.jpg]]
+
+#+caption: Displaying thoughts side-by-side ^_^
+[[file:images/parallel.png]]
+# | ( I use prettify symbols mode ) |
+
+The remaining sections are implementation matter.
+* COMMENT Table of Contents :TOC:QUOTE:ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: Table-of-Contents
+  :END:
+#+BEGIN_QUOTE
+- [[#example-use][Example Use]]
+- [[#core-utility][Core Utility]]
+- [[#colours][Colours]]
+- [[#parallel][Parallel]]
+#+END_QUOTE
+
+* Core Utility
+  :PROPERTIES:
+  :CUSTOM_ID: Core-Utility
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Core utility
+
+(defun org-special-block-extras--advice (backend blk contents _)
+  "Invoke the appropriate custom block handler, if any.
+
+A given custom block BLK has a TYPE extracted from it, then we
+send the block CONTENTS along with the current export BACKEND to
+the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
+defined, otherwise, we leave the CONTENTS of the block as is."
+  (let* ((type    (nth 1 (nth 1 blk)))
+         (handler (intern (format "org-special-block-extras--%s" type))))
+    (ignore-errors (apply handler backend contents nil))))
+
+(advice-add #'org-html-special-block :before-until
+            (-partial #'org-special-block-extras--advice 'html))
+
+(advice-add #'org-latex-special-block :before-until
+            (-partial #'org-special-block-extras--advice 'latex))
+#+END_SRC
+
+* Colours
+
 [[file:images/colours.jpg]]
 
 :Examples:
@@ -180,34 +235,6 @@ This text is white!
 This text is yellow!
 #+end_yellow
 
-The remaining sections are implementation matter.
-* Core Utility
-  :PROPERTIES:
-  :CUSTOM_ID: Core-Utility
-  :END:
-#+BEGIN_SRC emacs-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Core utility
-
-(defun org-special-block-extras--advice (backend blk contents _)
-  "Invoke the appropriate custom block handler, if any.
-
-A given custom block BLK has a TYPE extracted from it, then we
-send the block CONTENTS along with the current export BACKEND to
-the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
-defined, otherwise, we leave the CONTENTS of the block as is."
-  (let* ((type    (nth 1 (nth 1 blk)))
-         (handler (intern (format "org-special-block-extras--%s" type))))
-    (ignore-errors (apply handler backend contents nil))))
-
-(advice-add #'org-html-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'html))
-
-(advice-add #'org-latex-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'latex))
-#+END_SRC
-
-* Colours
 #+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -236,6 +263,9 @@ defined, otherwise, we leave the CONTENTS of the block as is."
   :END:
 
 # 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
+
+#+caption: Displaying thoughts side-by-side ^_^
+[[file:images/parallel.png]]
 
 #+LATEX_HEADER: \usepackage{multicol}
 
@@ -301,6 +331,11 @@ inherit highlighting, so I shifted the number to being a prefix instead.
 # Musa: If I use “<div …> %s</div>”, the ‘>’ causes some undesirable whitespace
 # in the first column. Hence, omitting it.
 
+#+begin_center
+( The [[https://www.gnu.org/software/emacs/manual/html_mono/eww.html][Emacs Web Wowser]], ~M-x eww~, does not display =parallel= environments as
+desired. )
+#+end_center
+
 * Postamble :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Postamble
@@ -325,7 +360,8 @@ inherit highlighting, so I shifted the number to being a prefix instead.
 
 1. =eww-open-file= to open a local HTML file in Emacs
 2. Likewise open both the Org source and resulting PDF
-3. Take screenshot (•̀ᴗ•́)و
+3. M-x display-line-numbers-mode to turn off numbers
+4. Take screenshot (•̀ᴗ•́)و
 * COMMENT MELPA Checks
   :PROPERTIES:
   :CUSTOM_ID: COMMENT-MELPA-Checks
@@ -428,11 +464,54 @@ inherit highlighting, so I shifted the number to being a prefix instead.
     + Push this branch on your melpa fork.
     + Go to the https://github.com/melpa/ repo and
       there'll be a big green PR button ^_^
-* COMMENT footer
+* COMMENT Making ~README.org~
   :PROPERTIES:
-  :CUSTOM_ID: COMMENT-footer
+  :CUSTOM_ID: COMMENT-Making-README-org
   :END:
 
-# Local Variables:
-# eval: (add-hook 'after-save-hook (lambda () (ignore-errors (f-move "README.html" "README.md"))) nil 'local-to-this-file-please)
-# End:
+  Evaluate the following source block with ~C-c C-c~ to produce a ~README~ file.
+
+#+NAME: make-readme
+#+BEGIN_SRC emacs-lisp
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: README.org
+     # HTML: <h1> Easily Making CheatSheets with Org-mode </h1>
+     ,#+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     {{{blurb}}}
+
+    :Hide:
+    ,*The listing sheet, as PDF, can be found
+     [[file:CheatSheet.pdf][here]]*,
+     or as a [[file:CheatSheet_Portrait.pdf][single column portrait]],
+     while below is an unruly html rendition.
+
+     # Markdown links: [title](target)
+    :End:
+
+     ,#+TOC: headlines 2
+     ,#+INCLUDE: org-special-block-extras.org
+    ")
+
+    ;; No code execution on export
+    ;; ⟪ For a particular block, we use “:eval never-export” ⟫
+    ;;
+    (let ((org-export-use-babel nil))
+      (org-mode)
+      ; (org-md-export-to-markdown)
+      ; (package-install 'toc-org)
+      (toc-org-mode)
+      (toc-org-insert-toc)
+      ; (setq org-toc-noexport-regexp ".*:ignore:.*") MA: Doesn't work.
+      (setq org-export-exclude-tags (delete "TOC" org-export-exclude-tags))
+      ; (pop org-export-exclude-tags)
+      (org-org-export-to-org)
+      (add-to-list 'org-export-exclude-tags "TOC")
+      )
+)
+#+END_SRC
+
+#+RESULTS: make-readme
+| TOC | noexport |

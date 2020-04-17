@@ -1,0 +1,244 @@
+# Created 2020-04-17 Fri 06:59
+#+OPTIONS: toc:nil d:nil
+#+OPTIONS: d:nil
+#+TITLE: org-special-block-extras
+#+AUTHOR: Musa Al-hassy
+#+export_file_name: README.org
+
+A number of new custom blocks and link types for Emacs' Org-mode ^_^
+
+#+toc: headlines 2
+#+property: header-args:emacs-lisp :tangle org-special-block-extras.el
+#+latex_header: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+
+#+html_head: <link href="http://taopeng.me/org-notes-style/css/notes.css" rel="stylesheet" type="text/css" />
+
+#+macro: blurb A number of new custom blocks and link types for Emacs' Org-mode ^_^
+
+* Example Use
+User type something along the lines of the following.
+#+begin_example org
+,#+begin_red org
+/This/
+      ,*text*
+             _is_
+                  red!
+,#+end_red
+#+end_example
+
+Which generates /red/ text when exported to HTML and LaTeX,
+*while supporting Org markup*.
+
+#+begin_quote
+This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] or as pure [[https://alhassy.github.io/org-special-block-extras/README.org][Org]]!
+#+end_quote
+
+#+caption: Write Org-markup once, generate for many backends ^_^
+[[file:images/colours.jpg]]
+
+#+caption: Displaying thoughts side-by-side ^_^
+[[file:images/parallel.png]]
+
+The remaining sections are implementation matter.
+#+begin_quote
+- [[#example-use][Example Use]]
+- [[#core-utility][Core Utility]]
+- [[#colours][Colours]]
+- [[#parallel][Parallel]]
+#+end_quote
+
+* Core Utility
+#+begin_src emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Core utility
+
+(defun org-special-block-extras--advice (backend blk contents _)
+  "Invoke the appropriate custom block handler, if any.
+
+A given custom block BLK has a TYPE extracted from it, then we
+send the block CONTENTS along with the current export BACKEND to
+the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
+defined, otherwise, we leave the CONTENTS of the block as is."
+  (let* ((type    (nth 1 (nth 1 blk)))
+         (handler (intern (format "org-special-block-extras--%s" type))))
+    (ignore-errors (apply handler backend contents nil))))
+
+(advice-add #'org-html-special-block :before-until
+            (-partial #'org-special-block-extras--advice 'html))
+
+(advice-add #'org-latex-special-block :before-until
+            (-partial #'org-special-block-extras--advice 'latex))
+#+end_src
+
+* Colours
+
+[[file:images/colours.jpg]]
+
+#+latex: \newpage
+#+begin_black
+This text is black!
+#+end_black
+
+#+begin_blue
+This text is blue!
+#+end_blue
+
+#+begin_brown
+This text is brown!
+#+end_brown
+
+#+begin_cyan
+This text is cyan!
+#+end_cyan
+
+#+begin_darkgray
+This text is darkgray!
+#+end_darkgray
+
+#+begin_gray
+This text is gray!
+#+end_gray
+
+#+begin_green
+This text is green!
+#+end_green
+
+#+begin_lightgray
+This text is lightgray!
+#+end_lightgray
+
+#+begin_lime
+This text is lime!
+#+end_lime
+
+#+begin_magenta
+This text is magenta!
+#+end_magenta
+
+#+begin_olive
+This text is olive!
+#+end_olive
+
+#+begin_orange
+This text is orange!
+#+end_orange
+
+#+begin_pink
+This text is pink!
+#+end_pink
+
+#+begin_purple
+This text is purple!
+#+end_purple
+
+#+begin_red
+This text is red!
+#+end_red
+
+#+begin_teal
+This text is teal!
+#+end_teal
+
+#+begin_violet
+This text is violet!
+#+end_violet
+
+#+begin_white
+This text is white!
+#+end_white
+
+#+begin_yellow
+This text is yellow!
+#+end_yellow
+
+#+begin_src emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Load support for 19 colour custom blocks
+
+(defvar org-special-block-extras--colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(loop for colour in org-special-block-extras--colors
+      do (eval (read (format
+                      "(defun org-special-block-extras--%s (backend contents)
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
+                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
+                     (t      \"org-special-block-extras: Unsupported backend\"))
+                     contents))"
+                      colour colour colour))))
+#+end_src
+
+* Parallel
+#+caption: Displaying thoughts side-by-side ^_^
+[[file:images/parallel.png]]
+
+#+latex_header: \usepackage{multicol}
+
+#+begin_parallel
+_Example:_
+#+begin_example org
+,#+begin_3parallel org
+one
+
+,#+latex: \columnbreak
+two
+
+,#+latex: \columnbreak
+three
+,#+end_3parallel
+#+end_example
+
+#+latex: \columnbreak
+_Yields:_
+#+begin_3parallel
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+#+end_parallel
+
+I initially used the names =paralell<n>= but names ending with a number did not
+inherit highlighting, so I shifted the number to being a prefix instead.
+- For LaTeX, new lines are used to suggest opportunities for column breaks
+  and are needed even if explicit columnbreaks are declared.
+
+#+begin_src emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Parallel blocks: parallel<n>[NB] for n:2..5, optionally with ‘N’o ‘b’ar
+;; in-between the columns.
+;;
+;; Common case is to have three columns, and we want to avoid invoking the
+;; attribute via org, so making this.
+
+(loop for cols in '("1" "2" "3" "4" "5")
+      do (loop for rule in '("solid" "none")
+      do (eval (read (concat
+"(defun org-special-block-extras--" cols "parallel"
+(if (equal rule "solid") "" "NB")
+"(backend contents)"
+"(format (pcase backend"
+"(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
+"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
+"          \\\\begin{minipage}[t]{\\\\linewidth}"
+"          \\\\begin{multicols}{" cols "}"
+"          %s"
+"          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
+
+(defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
+(defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
+#+end_src
+
+#+begin_center
+( The [[https://www.gnu.org/software/emacs/manual/html_mono/eww.html][Emacs Web Wowser]], ~M-x eww~, does not display =parallel= environments as
+desired. )
+#+end_center
