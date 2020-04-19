@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- Twenty-five new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Twenty-six new custom blocks for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
@@ -19,12 +19,12 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
 ;; Common operations such as colouring text for HTML and LaTeX
-;; backends are provided. Below is an example.
+;; backends are provided.  Below is an example.
 ;;
 ;; #+begin_red org
 ;; /This/
@@ -54,7 +54,6 @@
 
 (require 's)               ;; “The long lost Emacs string manipulation library”
 (require 'dash)            ;; “A modern list library for Emacs”
-(require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’, ‘-not’, ‘-partial’, etc.
 (require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
 
@@ -76,10 +75,10 @@ contents at all, not even an empty new line."
     (ignore-errors (apply handler backend (or contents "") nil))))
 
 (advice-add #'org-html-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'html))
+            (apply-partially #'org-special-block-extras--advice 'html))
 
 (advice-add #'org-latex-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'latex))
+            (apply-partially #'org-special-block-extras--advice 'latex))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -91,19 +90,14 @@ contents at all, not even an empty new line."
           yellow)
   "Colours that should be available on all systems.")
 
-(loop for colour in org-special-block-extras--colors
+(cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
-                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
-                     (t      \"org-special-block-extras: Unsupported backend\"))
+                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\"))
                      contents))"
                       colour colour colour))))
-
-(s-join "\n\n"
-(loop for c in org-special-block-extras/colors
-      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -113,8 +107,8 @@ contents at all, not even an empty new line."
 ;; Common case is to have three columns, and we want to avoid invoking the
 ;; attribute via org, so making this.
 
-(loop for cols in '("1" "2" "3" "4" "5")
-      do (loop for rule in '("solid" "none")
+(cl-loop for cols in '("1" "2" "3" "4" "5")
+      do (cl-loop for rule in '("solid" "none")
       do (eval (read (concat
 "(defun org-special-block-extras--" cols "parallel"
 (if (equal rule "solid") "" "NB")
@@ -127,8 +121,8 @@ contents at all, not even an empty new line."
 "          %s"
 "          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
 
-(defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
-(defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
+(defalias 'org-special-block-extras--parallel   'org-special-block-extras--2parallel)
+(defalias 'org-special-block-extras--parallelNB 'org-special-block-extras--2parallelNB)
 
 (defun org-special-block-extras--extract-arguments (contents &rest args)
 "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
@@ -147,11 +141,11 @@ with all ‘:kᵢ:’ lines stripped out.
 + If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
   then it has value the empty string."
   (let ((ctnts contents)
-        (values (loop for a in args
+        (values (cl-loop for a in args
                       for regex = (format ":%s:\\(.*\\)" a)
                       for v = (cadr (s-match regex contents))
                       collect (cons a v))))
-    (loop for a in args
+    (cl-loop for a in args
           for regex = (format ":%s:\\(.*\\)" a)
           do (setq ctnts (s-replace-regexp regex "" ctnts)))
     (cons ctnts values)))
@@ -171,7 +165,7 @@ The CONTENTS string has two optional argument switches:
            ((contents₁ . (&alist 'ed))
             (org-special-block-extras--extract-arguments contents 'ed))
 
-           ;; Strip out any <p> tags     
+           ;; Strip out any <p> tags
            (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
            (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
 
@@ -247,8 +241,8 @@ the folded region."
                    \\textbf{%s:}
                    %s
                  \\end{tcolorbox}
-               \\end{quote}"))
-    title contents′))))
+               \\end{quote}")))
+    title contents′)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
