@@ -165,56 +165,56 @@ with all ‘:kᵢ:’ lines stripped out.
   "Should editor comments be shown in the output or not.")
 
 (defun org-special-block-extras--edcomm (backend contents)
-"Format CONTENTS as an first-class editor comment according to BACKEND.
+  "Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has two optional argument switches:
 1. :ed: ⇒ To declare an editor of the comment.
 2. :replacewith: ⇒ [Nullary] The text preceding this clause
    should be replaced by the text after it."
   (-let* (
-           ;; Get arguments
-           ((contents₁ . (&alist 'ed))
-            (org-special-block-extras--extract-arguments contents 'ed))
+          ;; Get arguments
+          ((contents₁ . (&alist 'ed))
+           (org-special-block-extras--extract-arguments contents 'ed))
 
-           ;; Strip out any <p> tags
-           (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
-           (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
+          ;; Strip out any <p> tags
+          (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
+          (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
 
-           ;; Are we in the html backend?
-           (html? (equal backend 'html))
+          ;; Are we in the html backend?
+          (html? (equal backend 'html))
 
-           ;; fancy display style
-           (boxed (lambda (x)
-                    (if html?
-                        (concat "<span style=\"border-width:1px"
-                                 ";border-style:solid;padding:5px\">"
-                                 "<strong>" x "</strong></span>")
-                    (concat "\\fbox{\\bf " x "}"))))
+          ;; fancy display style
+          (boxed (lambda (x)
+                   (if html?
+                       (concat "<span style=\"border-width:1px"
+                               ";border-style:solid;padding:5px\">"
+                               "<strong>" x "</strong></span>")
+                     (concat "\\fbox{\\bf " x "}"))))
 
-           ;; Is this a replacement clause?
-           ((this that) (s-split ":replacewith:" contents₁))
-           (replacement-clause? that) ;; There is a ‘that’
-           (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
-                              "\\underline{Replace:}"))
-           (with-keyword    (if html? "<u>With:</u>"
-                              "\\underline{With:}"))
-           (editor (format "[%s:%s"
-                           (if (s-blank? ed) "Editor Comment" ed)
-                           (if replacement-clause?
-                               replace-keyword
-                             "")))
-           (contents₂ (if replacement-clause?
-                          (format "%s %s %s" this
-                                  (funcall boxed with-keyword)
-                                  that)
-                        contents₁))
+          ;; Is this a replacement clause?
+          ((this that) (s-split ":replacewith:" contents₁))
+          (replacement-clause? that) ;; There is a ‘that’
+          (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
+                             "\\underline{Replace:}"))
+          (with-keyword    (if html? "<u>With:</u>"
+                             "\\underline{With:}"))
+          (editor (format "[%s:%s"
+                          (if (s-blank? ed) "Editor Comment" ed)
+                          (if replacement-clause?
+                              replace-keyword
+                            "")))
+          (contents₂ (if replacement-clause?
+                         (format "%s %s %s" this
+                                 (funcall boxed with-keyword)
+                                 that)
+                       contents₁))
 
-           ;; “[Editor Comment:”
-           (edcomm-begin (funcall boxed editor))
-           ;; “]”
-           (edcomm-end (funcall boxed "]")))
+          ;; “[Editor Comment:”
+          (edcomm-begin (funcall boxed editor))
+          ;; “]”
+          (edcomm-end (funcall boxed "]")))
 
-    (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+    ;; (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
     (if org-special-block-extras-hide-editor-comments
         ""
       (format (pcase backend
