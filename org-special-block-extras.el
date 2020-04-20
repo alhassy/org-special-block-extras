@@ -74,11 +74,25 @@ contents at all, not even an empty new line."
          (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend (or contents "") nil))))
 
-(advice-add #'org-html-special-block :before-until
-            (apply-partially #'org-special-block-extras--advice 'html))
 
-(advice-add #'org-latex-special-block :before-until
-            (apply-partially #'org-special-block-extras--advice 'latex))
+;;;###autoload
+(define-minor-mode org-special-block-extras-mode
+  "Provide twenty-six new custom blocks for Org-mode."
+  nil nil nil
+  (if org-special-block-extras-mode
+      (progn
+        (advice-add #'org-html-special-block :before-until
+                    (apply-partially #'org-special-block-extras--advice 'html))
+        (advice-add #'org-latex-special-block :before-until
+                    (apply-partially #'org-special-block-extras--advice 'latex))
+        (defalias #'org-special-block-extras--parallel
+          #'org-special-block-extras--2parallel)
+        (defalias #'org-special-block-extras--parallelNB
+          #'org-special-block-extras--2parallelNB))
+    (advice-remove #'org-html-special-block
+                (apply-partially #'org-special-block-extras--advice 'html))
+    (advice-remove #'org-latex-special-block
+                (apply-partially #'org-special-block-extras--advice 'latex))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -120,9 +134,6 @@ contents at all, not even an empty new line."
 "          \\\\begin{multicols}{" cols "}"
 "          %s"
 "          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
-
-(defalias 'org-special-block-extras--parallel   'org-special-block-extras--2parallel)
-(defalias 'org-special-block-extras--parallelNB 'org-special-block-extras--2parallelNB)
 
 (defun org-special-block-extras--extract-arguments (contents &rest args)
 "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
@@ -210,8 +221,6 @@ The CONTENTS string has two optional argument switches:
                 (`html "<p> %s %s %s</p>")
                 (`latex "%s %s %s"))
               edcomm-begin contents₂ edcomm-end))))
-
-(setq org-export-allow-bind-keywords t)
 
 (defun org-special-block-extras--details (backend contents)
 "Format CONTENTS as a ‘folded region’ according to BACKEND.
