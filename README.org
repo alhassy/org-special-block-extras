@@ -1,90 +1,437 @@
-# Created 2020-04-17 Fri 12:02
-#+OPTIONS: toc:nil d:nil
-#+OPTIONS: d:nil
-#+TITLE: org-special-block-extras
-#+AUTHOR: Musa Al-hassy
-#+export_file_name: README.org
-
-Twenty-six new custom block and link types for Emacs' Org-mode ^_^
-
-#+toc: headlines 2
-#+property: header-args:emacs-lisp :tangle org-special-block-extras.el
-#+export_file_name: README
+#+title: org-special-block-extras
+#+author: Musa Al-hassy
+#+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
+#+options: d:nil toc:nil
+#+EXPORT_FILE_NAME: README
 #+macro: blurb Twenty-six new custom block and link types for Emacs' Org-mode ^_^
 
-#+latex_header: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+:TODO:
+orange:TODO
+Get minimal markdown backend support, since the landingpage will likely be
+the github repo.
+:End:
+
+:28_blocks:
+21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
+5  ⇒ parallel blocks
+1  ⇒ editorial comments
+1  ⇒ details
+:End:
+:30_links:
+20 ⇒ 19 colours and the ‘colors’ type
+1  ⇒ editorial comments
+1  ⇒ link here
+8  ⇒ badges and socials
+:End:
+
+* HTML & LaTeX Setup :ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: HTML-LaTeX-Setup
+  :END:
+
 #+latex_header: \usepackage{newunicodechar}
+
+#+macro: newline @@latex: \newline@@
+
+#+latex_header: \newunicodechar{𝒳}{\ensuremath{\mathcal{X}}}
+#+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
+
+#+latex_header: \newunicodechar{⊕}{\ensuremath{\oplus}}
 #+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
 #+latex_header: \newunicodechar{₁}{\ensuremath{_1}}
 #+latex_header: \newunicodechar{₂}{\ensuremath{_2}}
 #+latex_header: \newunicodechar{ₙ}{\ensuremath{_n}}
+#+latex_header: \newunicodechar{ₖ}{\ensuremath{_k}}
 #+latex_header: \newunicodechar{ᵢ}{\ensuremath{_i}}
 #+latex_header: \newunicodechar{′}{'}
 #+latex_header: \newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+#+latex_header: \newunicodechar{𝒞}{\ensuremath{\mathcal{C}}}
+#+latex_header: \newunicodechar{∈}{\ensuremath{\in}}
 
-#+html_head: <link href="http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
-* Example Use
-User type something along the lines of the following.
-#+begin_example org
-,#+begin_red org
-/This/
-      ,*text*
-             _is_
-                  red!
-,#+end_red
-#+end_example
+#  (•̀ᴗ•́)و
+#+latex_header: \newunicodechar{و}{\ensuremath{;}}
+#+latex_header: \newunicodechar{•}{\ensuremath{\bullet}}
+#+latex_header: \newunicodechar{ᴗ}{\ensuremath{\smile}}
+#+latex_header: \newunicodechar{́}{\ensuremath{'}}
+#+latex_header: \newunicodechar{̀}{\ensuremath{`}}
+#+macro: smile @@latex:\^{}\_{}\^@@ @@html: (•̀ᴗ•́)و@@
 
-Which generates /red/ text when exported to HTML and LaTeX,
-*while supporting Org markup*.
+#+LATEX_HEADER: \usepackage{minted}
+# +LATEX_HEADER: \usepackage{tcolorbox}
+# +LATEX_HEADER: \usepackage{etoolbox}
+# +LATEX_HEADER: \def\mytitle{??? Program Code ???}
+# +LATEX_HEADER: \BeforeBeginEnvironment{minted}{\begin{tcolorbox}[title=\hfill \mytitle]}%
+# +LATEX_HEADER: \AfterEndEnvironment{minted}{\end{tcolorbox}}%
+# #
+# Before a code block, write {{{code(title-of-block)}}}
+# #
+# +MACRO: code     @@latex:\def\mytitle{$1}@@
+# #
+# let's always break newlines, with a ‘↪’ indicated new lines.
+# emacs-lisp is treated as common-lisp via minted
+# +LaTeX: \setminted[common-lisp]{fontsize=\footnotesize, breaklines}
+#+LaTeX: \setminted[common-lisp]{breaklines}
 
+# Removing the red box that appears in "minted" when using unicode.
+# Src: https://tex.stackexchange.com/questions/343494/minted-red-box-around-greek-characters
+#
+#+LATEX_HEADER: \makeatletter
+#+LATEX_HEADER: \AtBeginEnvironment{minted}{\dontdofcolorbox}
+#+LATEX_HEADER: \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+#+LATEX_HEADER: \makeatother
+
+#+latex_header: \newunicodechar{𝓃}{\ensuremath{n}}
+#+latex_header: \newunicodechar{⋯}{\ensuremath{\cdots}}
+
+#+LATEX_HEADER: \usepackage[dvipsnames]{xcolor} % named colours
+#+LATEX_HEADER: \hypersetup{colorlinks,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+# https://taopeng.me/org-notes-style/
+# #
+#+HTML_HEAD: <link href="https://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
+* Lisp Package Preamble                                            :noexport:
+  :PROPERTIES:
+  :CUSTOM_ID: Preamble
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;; org-special-block-extras.el --- Twenty-six new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+
+;; Copyright (c) 2020 Musa Al-hassy
+
+;; Author: Musa Al-hassy <alhassy@gmail.com>
+;; Version: 0.7
+;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0"))
+;; Keywords: org, blocks, colors, convenience
+;; URL: https://alhassy.github.io/org-special-block-extras
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Common operations such as colouring text for HTML and LaTeX
+;; backends are provided.  Below is an example.
+;;
+;; #+begin_red org
+;; /This/
+;;       *text*
+;;              _is_
+;;                   red!
+;; #+end_red
+;;
+;; This file has been tangled from a literate, org-mode, file;
+;; and so contains further examples demonstrating the special
+;; blocks it introduces.
+;;
+;;
+;; The system is extensible:
+;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS/TYPE
+;; for a new custom block TYPE, which is then invoked.
+;; The handler takes three arguments:
+;; - CONTENTS: The string contents delimited by the custom block.
+;; - BACKEND:  The current exportation backend; e.g., 'html or 'latex.
+;; The handler must return a string.
+
+;;; Code:
+
+;; String and list manipulation libraries
+;; https://github.com/magnars/dash.el
+;; https://github.com/magnars/s.el
+
+(require 's)               ;; “The long lost Emacs string manipulation library”
+(require 'dash)            ;; “A modern list library for Emacs”
+(require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
+(require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
+(require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
+                           ;; ‘-not’, ‘-partial’, etc.
+#+END_SRC
+
+#
+# #
+
+#+BEGIN_SRC emacs-lisp :noweb yes
+;;;###autoload
+(define-minor-mode org-special-block-extras-mode
+  "Provide twenty-six new custom blocks for Org-mode."
+  nil nil nil
+  (if org-special-block-extras-mode
+      (progn
+        <<enable-mode>>
+      ) ;; Must be on a new line; I'm using noweb-refs
+    <<disable-mode>>
+    )) ;; Must be on a new line; I'm using noweb-refs
+#+END_SRC
+# With noweb, we need those new lines; otherwise in “x <<y>> z” results in every
+# line of <<y>> being prefixed by x and postfixed by z.
+# #
+# See https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like
+
+* Abstract :ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: Example-Use
+  :END:
+
+#+begin_center
+/*Warning: Incomplete!*/
+#+end_center
+
+#+begin_center
+*Abstract*
+#+end_center
+#+begin_quote
+The aim is to write something once using Org-mode markup
+then generate the markup for multiple backends.
+That is, /*write once, generate many!*/
+
+In particular, we are concerned with /‘custom’, or ‘special’, blocks/ which
+delimit how a particular region of text is supposed to be formatted according to
+the possible export backends.  In some sense, special blocks are meta-blocks.
+Rather than writing text in, say, LaTeX environments using LaTeX commands or in
+HTML =div='s using HTML tags, we promote using Org-mode markup in special blocks
+---Org markup cannot be used explicitly within HTML or LaTeX environments.
+
+Consequently, we extend the number of block types available to the Emacs
+Org-mode user *without forcing the user* to learn HTML or LaTeX.
+Indeed, I am not a web developer and had to learn a number of HTML concepts
+in the process ---the average Org user should not have to do so.
+
+Similarly, we provide a number of ‘link types’ ~[[linktype:label][description]]~
+for producing in-line coloured text and SVG “badges”.
+
+We begin with the first two sections serving as mini-tutorials on special blocks
+and on link types. The special block setup we use is /extensible/ in that a new
+block named ~𝒞~ will automatically be supported if the user defines a function
+~org-special-block-extras--𝒞~ that formats the text of a block.  *The remaining
+sections are literate implementation matter, along with examples and
+screenshots.*
+
+In summary, we provide 20 colour block types and 20 colour link types,
+an ‘editor comment’ block type as well as a link type,
+a ‘details’ block type, a ‘parallel’ multiple columns view block type,
+a ‘link here’ link type, and 8 badge link types.
+That is, *we provide 28 block types and 30 link types*.
+#+end_quote
+
+#+begin_center org
+#+begin_tiny
+( Since we're only considering HTML & LaTeX, the Github rendition of this
+article may not render things as desired. )
+#+end_tiny
+#+end_center
 #+begin_quote
 This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
 #+end_quote
 
-#+begin_center
-( Since we're only considering HTML & LaTeX, the Github rendition of this
-article may not render things as desired. )
-#+end_center
+#+caption: Extensibility! /Plug and play support for new block types!/
+[[file:images/foo_block.png]]
 
+:Hide:
 #+caption: Write Org-markup once, generate for many backends ^_^
 [[file:images/colours.jpg]]
 
 #+caption: Displaying thoughts side-by-side ^_^
 [[file:images/parallel.png]]
+# | ( I use prettify symbols mode ) |
 
 #+caption: “First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF
 [[file:images/edcomm.png]]
 
 #+caption: Visually hiding, folding away, details
 [[file:images/details.png]]
+:End:
 
+#+latex: \newpage
+#+TOC: headlines 2
+#+latex: \newpage
 
-The remaining sections are implementation matter.
-#+begin_quote
-- [[#example-use][Example Use]]
-- [[#core-utility][Core Utility]]
+* Table of Contents :TOC:QUOTE:ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: Table-of-Contents
+  :END:
+#+BEGIN_QUOTE
+- [[#how-do-i-make-a-new-special-block----core-utility][/How do I make a new special block?/ ---Core Utility]]
+  - [[#what-is-a-special-block][/What is a special block?/]]
+  - [[#core-utility][Core Utility]]
+  - [[#argument-extraction][=:argument:= Extraction]]
+  - [[#an-example-special-block----foo][An Example Special Block ---=foo=]]
+  - [[#next-steps][Next Steps]]
+- [[#how-do-i-make-a-new-link-type][/How do I make a new link type?/]]
 - [[#colours][Colours]]
-  - [[#examples][Examples]]
+  - [[#org-special-block-extras--𝒞-where-𝒞--org-special-block-extras--colors][=org-special-block-extras--𝒞= where ~𝒞 ∈ org-special-block-extras--colors~]]
+  - [[#block-examples][Block Examples]]
+  - [[#colour-link-types][Colour Link Types]]
+  - [[#next-steps-1][Next Steps]]
 - [[#parallel][Parallel]]
-- [[#argument-extraction][=:argument:= Extraction]]
-- [[#editor-comments][Editor Comments]]
-  - [[#examples-1][Examples]]
-- [[#folded-details][Folded Details]]
   - [[#example][Example]]
+  - [[#next-steps-2][Next Steps]]
+- [[#editor-comments][Editor Comments]]
+  - [[#block-examples-1][Block Examples]]
+  - [[#link-type][Link Type]]
+- [[#folded-details][Folded Details]]
+  - [[#example-1][Example]]
+- [[#link-here-octoicon][/“Link Here!”/ OctoIcon]]
+- [[#badge-links][Badge Links]]
+  - [[#the-badge-link-and-derived-redditgithubtwitter-socials][The =badge= Link and derived Reddit/Github/Twitter socials]]
+  - [[#example-social-icons][Example Social Icons]]
+  - [[#example-badges][Example Badges]]
+  - [[#example-colours][Example Colours]]
+  - [[#example-badge-icons][Example Badge Icons]]
+  - [[#common-project-badges][Common Project Badges]]
+  - [[#next-steps-3][Next Steps]]
+- [[#summary][Summary]]
 - [[#footnotes][Footnotes]]
-#+end_quote
+#+END_QUOTE
 
-* Core Utility
-#+begin_src emacs-lisp
+* /How do I make a new special block?/ ---Core Utility
+  :PROPERTIES:
+  :CUSTOM_ID: Core-Utility
+  :END:
+
+** /What is a special block?/
+   :PROPERTIES:
+   :CUSTOM_ID: What-is-a-special-block
+   :END:
+
+Our goal is to turn Org blocks into LaTeX environments and HTML divs.
+
+Why not use LaTeX or HTML environments directly?
+   - Can no longer use Org markup in such settings.
+   - Committed to one specific export type.
+
+#+begin_3parallel org
+In general, a “special block” such as
+   #+begin_example org
+   #+begin_𝒳
+   I /love/ Emacs!
+   #+end_𝒳
+   #+end_example
+
+:columnbreak:
+
+   Exports to LaTeX as:
+   #+begin_src latex :tangle no :exports code
+   \begin{𝒳}
+   I \emph{love} Emacs!
+   \end{𝒳}
+   #+end_src
+
+:columnbreak:
+
+   Exports to HTML as:
+   #+begin_src html :tangle no
+   <div class="𝒳">
+   I <em>love</em> Emacs!
+   </div>
+   #+end_src
+#+end_3parallel
+
+#+begin_center
+/Notice that the standard org markup is also translated according to the export
+type./
+#+end_center
+
+If the ~𝒳~ environment exists in a backend ---e.g., by some ~\usepackage{⋯}~ or
+manually with {{{newline}}}
+~\newenvironment{𝒳}{⋯}{⋯}~ in LaTeX--- then the file will compile
+without error.  Otherwise, you need to ensure it exists ---e.g., by defining the
+backend formatting manually yourself.
+
+#+latex: \vspace{1em}
+#+begin_edcomm org
+:ed: Aside
+LaTeX packages that a user needs consistently are declared in the
+{{{newline}}} list ~org-latex-packages-alist~. See its documentation, with ~C-h o~,
+to learn more.  To export to your own LaTeX classes, ~C-h o org-latex-classes~.
+#+end_edcomm
+#+latex: \vspace{1em}
+
+A ~div~ tag defines a division or a section in an HTML document that is styled in
+a particular fashion or has JavaScript code applied to it.  For example
+---placing the following in an ~#+begin_export html ⋯ #+end_export~--- results in
+a section of text that is editable by the user ---i.e., one can just alter text
+in-place--- and its foreground colour is red, while its background colour is
+light blue, and it has an uninformative tooltip.
+#+begin_src html :tangle no
+<div contenteditable="true"
+     title="woah, a tool tip!"
+     style="color:red; background-color:lightblue">
+This is some text!
+</div>
+#+end_src
+
+To use a collection of style settings repeatedly, we may declare them in a =class=
+---which is just a an alias for the ;-separated list of =attribute:value=
+pairs. Then our ~div~'s refer to that particular ~class~ name.
+
+#+latex: \vspace{1em}
+#+begin_2parallel org
+For example, in an HTML export block, we may declare the following style class
+named ~red~.
+#+begin_example org
+#+begin_export html
+<style>
+.red { color:red; }
+</style>
+#+end_export
+#+end_example
+:columnbreak:
+Now, the above syntax with ~𝒳~ replaced by ~red~ works as desired in HTML export.
+
+#+latex: \vspace{1em}
+#+begin_red
+I /love/ Emacs!
+#+end_red
+
+#+latex: \vspace{1em}
+This, however, will not work if we want to produce LaTeX and so requires a
+duplication of efforts. We will declare such formatting once for each backend.
+
+#+end_2parallel
+
+** Core Utility
+   :PROPERTIES:
+   :CUSTOM_ID: Core-Utility
+   :END:
+
+:Hide:
+ #+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#+END_SRC
+:End:
 
+The simplest route is to ‘advise’ ---i.e., function patch or overload--- the Org
+export utility for special blocks to consider calling a method
+=org-special-block-extras--𝒳= whenever it encounters a special block named =𝒳=.
+#+BEGIN_SRC emacs-lisp :noweb-ref enable-mode :tangle no
+(advice-add #'org-html-special-block
+   :before-until (apply-partially #'org-special-block-extras--advice 'html))
+
+(advice-add #'org-latex-special-block
+   :before-until (apply-partially #'org-special-block-extras--advice 'latex))
+#+END_SRC
+
+#+RESULTS:
+
+Here is the actual advice:
+#+BEGIN_SRC emacs-lisp
 (defun org-special-block-extras--advice (backend blk contents _)
   "Invoke the appropriate custom block handler, if any.
 
 A given custom block BLK has a TYPE extracted from it, then we
 send the block CONTENTS along with the current export BACKEND to
-the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is
+the formatting function ORG-SPECIAL-BLOCK-EXTRAS--TYPE if it is
 defined, otherwise, we leave the CONTENTS of the block as is.
 
 We also support the seemingly useless blocks that have no
@@ -92,42 +439,385 @@ contents at all, not even an empty new line."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend (or contents "") nil))))
+#+END_SRC
 
-(advice-add #'org-html-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'html))
+#+RESULTS:
+: org-special-block-extras--advice
 
-(advice-add #'org-latex-special-block :before-until
-            (-partial #'org-special-block-extras--advice 'latex))
+#+latex: \noindent
+*To support a new block named 𝒳:*
+1. Define a function =org-special-block-extras--𝒳=.
+2. It must take two arguments:
+   - ~backend~ ⇒ A symbol such as ='html= or ='latex=,
+   - ~content~ ⇒ The string contents of the special block.
+3. The function must return a string, possibly depending on the backend being
+   exported to. The resulting string is inserted literally in the exported file.
+4. Test out your function as in =(org-special-block-extras--𝒳 'html "some input")=
+   ---this is a quick way to find errors.
+5. Enjoy ^_^
+
+#+begin_center
+If no such function is defined, we export =𝒳= blocks using the default
+mechanism, as discussed earlier, as a LaTeX environment or an HTML =div=.
+#+end_center
+
+#+latex: \noindent
+An example is provided at the end of this section.
+
+#+latex: \noindent
+Of-course, when the user disables our mode, then we remove such advice.
+#+BEGIN_SRC emacs-lisp :noweb-ref disable-mode :tangle no
+(advice-remove #'org-html-special-block
+               (apply-partially #'org-special-block-extras--advice 'html))
+
+(advice-remove #'org-latex-special-block
+               (apply-partially #'org-special-block-extras--advice 'latex))
+#+END_SRC
+
+#+RESULTS:
+
+** =:argument:= Extraction
+   :PROPERTIES:
+   :CUSTOM_ID: argument-Extraction
+   :END:
+
+As far as I can tell, there is no way to provide arguments to special blocks.
+As such, the following utility looks for lines of the form =:argument: value=
+within the contents of a block and returns an updated contents string that no
+longer has such lines followed by an association list of such argument-value
+pairs.
+
+ #+BEGIN_SRC emacs-lisp
+(defun org-special-block-extras--extract-arguments (contents &rest args)
+"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+
+Example usage:
+
+    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
+           (…extract-arguments contents 'k₀ … 'kₙ)]
+          body)
+
+Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
+‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
+with all ‘:kᵢ:’ lines stripped out.
+
++ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
++ If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
+  then it has value the empty string."
+  (let ((ctnts contents)
+        (values (cl-loop for a in args
+                         for regex = (format ":%s:\\(.*\\)" a)
+                         for v = (cadr (s-match regex contents))
+                         collect (cons a v))))
+    (cl-loop for a in args
+             for regex = (format ":%s:\\(.*\\)" a)
+             do (setq ctnts (s-replace-regexp regex "" ctnts)))
+    (cons ctnts values)))
+ #+END_SRC
+
+For example, we use this feature to indicate when a column break should happen
+in a =parallel= block and which person is making editorial remarks in an
+=edcomm= block.
+
+** An Example Special Block ---=foo=
+   :PROPERTIES:
+   :CUSTOM_ID: COMMENT-An-Example-Special-Block-foo
+   :END:
+
+Herein we show an example function =org-special-block-extras--𝒳= that makes use of
+arguments.  In a so-called =foo= block, all occurrences of the word =foo= are
+replaced by =bar= unless the argument =:replacement:= is given a value.
+
+[[file:images/foo_block.png]]
+
+#+begin_src emacs-lisp :tangle no
+(defun org-special-block-extras--foo (backend contents)
+  "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
+unless a ‘:replacement:’ is provided."
+  (-let [(contents′ . (&alist 'replacement))
+           (org-special-block-extras--extract-arguments contents 'replacement)]
+    (s-replace "foo" (or replacement "bar") contents′)))
 #+end_src
 
+Here's an example usage:
+#+begin_2parallel org
+#+begin_example org
+#+begin_foo
+:replacement: woah
+I am foo; Indeed FoO is what I fOo!
+#+end_foo
+#+end_example
+
+:columnbreak:
+
+#+begin_foo
+:replacement: woah
+I am foo; Indeed FoO is what I fOo!
+#+end_foo
+#+end_2parallel
+
+See the implementation matter of ~edcomm~ or ~parallel~ for a more involved definition
+that behaves differently depending on the export backend.
+
+** Next Steps
+
+[[color:orange][Going forward,]] it would be nice to have a set of switches that apply to all
+special blocks. For instance, ~:ignore:~ to simply bypass the user-defined
+behaviour of a block type, and ~:noexport:~ to zero-out a block upon export.
+These are super easy to do ---just need a few minutes to breath.  It may also be
+desirable to provide support for [[https://github.com/alhassy/emacs.d#html-folded-drawers][drawers]], and to ‘fuse’ the block-type and
+link-type approaches used here into one macro.
+
+* /How do I make a new link type?/
+  :PROPERTIES:
+  :CUSTOM_ID: Links
+  :END:
+
+Use =(org-link-set-parameters params)= to add a new link type
+---an older obsolete method is =org-add-link-type=.
+The list of all supported link types is =org-link-parameters=;
+its documentation identifies the possibilities for =params=.
+
+Let's produce an example link type, then discuss its code.
+
+Intended usage:
+Raw use example:salam and descriptive, [[example:hola][using ‘example’ link type]] ^_^
+[[file:images/example_link.png]]
+
+# The “(ref:𝓍𝓍𝓍)” declarations are for line number referencing and not
+# part of the Lisp code needed to produce the example link type.
+# Consult the HTML/PDF rendition of this file or tangle the block below.
+# #
+#+begin_src emacs-lisp -n -r :tangle no
+(org-link-set-parameters
+  ;; The name of the new link type, usage: “example:label”
+  "example"  (ref:extype)
+
+  ;; When you click on such links, “let me google that for you” happens
+  :follow (lambda (label) (browse-url (concat "https://lmgtfy.com/?q=" label))) (ref:exfollow)
+
+  ;; Upon export, make it a “let me google that for you” link
+  :export (lambda (label description backend)     (ref:exexport)
+            (format (pcase backend
+                      ('html "<a href=\"%s\">%s</a>")
+                      ('latex "\\href{%s}{%s}")
+                      (_ "I don’t know how to export that!"))
+                    (concat "https://lmgtfy.com/?q=" label)
+                    (or description label)))
+
+  ;; These links should *never* be folded in descriptive display;
+  ;; i.e., “[[example:lable][description]]” will always appear verbatim
+  ;; and not hide the first pair […].
+  ;; :display 'full (ref:exdisplay)
+
+  ;; The tooltip alongside a link
+  :help-echo (lambda (window object position)   (ref:exhelpecho)
+               (save-excursion
+                 (goto-char position)
+                 (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
+                          (cadr (org-element-context)))
+                         ;; (org-element-property :path (org-element-context))
+                         (description
+                          (when (equal format 'bracket)
+                            (copy-region-as-kill contents-begin contents-end)
+                            (substring-no-properties (car kill-ring)))))
+                   (format "“%s” :: Let me google “%s” for you -__-"
+                           (or description raw-link) (pp window)))))
+
+  ;; How should these links be displayed
+  :face '(:foreground "red" :weight bold    (ref:exface)
+          :underline "orange" :overline "orange"))
+#+end_src
+
++ Line [[(extype)]] ="example"= :: Add a new =example= link type.
+  - If the type already exists, update it with the given arguments.
+
+  The syntax for a raw link is =example:path=
+  and for the bracketed descriptive form ~[[example:path][description]]~.
+
+  - Some of my intended uses for links including colouring text and doing
+    nothing else, as such the terminology ‘path’ is not sufficiently generic and
+    so I use the designation ‘label’ instead.
+
++ Line [[(exfollow)]] =:follow= :: What should happen when a user clicks on such links?
+
+  This is a function taking the link path as the single argument and does
+  whatever is necessary to “follow the link”, for example find a file or display
+  a message. In our case, we open the user's browser and go to a particular URL.
+
++ Line [[(exexport)]] =:export= :: How should this link type be exported to HTML, LaTeX, etc?
+
+  This is a three-argument function that formats the link according to the given
+  backend, the resulting string value os placed literally into the exported
+  file. Its arguments are:
+
+  1. =label= ⇒ the path of the link, the text after the link type prefix
+  2. =description= ⇒ the description of the link, if any
+  3. =backend= ⇒ the export format, a symbol like =html= or =latex= or =ascii=.
+
+  In our example above, we return different values depending on the =backend=
+  value.
+
+  - If =:export= is not provided, default Org-link exportation happens.
+
++ Line [[(exdisplay)]] =:display= :: Should links be prettily folded away when a description
+  is provided?
+
++ Line [[(exhelpecho)]] =:help-echo= :: What should happen when the user's mouse is over
+  the link?
+
+  This is *either a string or a string-valued function* that takes the current
+  window, the current buffer object, and its position in the current window.
+
+  In our example link, we go to the position of the object, destructure the Org
+  link's properties using ~-let~, find the description of the link, if any, then
+  provide a string based on the link's path and description.
+
+  #+begin_details org
+  :title: =help-echo= is a general textual property
+
+  We may use ~help-echo~ to attach tooltips to arbitrary text in a file, as
+  follows. I have found this to be useful in [[https://alhassy.github.io/next-700-module-systems/prototype/package-former.html][*metaprogramming*]] to have
+  elaborated, generated, code shown as a tooltip attached to its named
+  specification.
+  #+begin_src emacs-lisp :tangle no
+;; Nearly instantaneous display of tooltips.
+(setq tooltip-delay 0)
+
+;; Give user 30 seconds before tooltip automatically disappears.
+(setq tooltip-hide-delay 300)
+
+(defun tooltipify (phrase notification &optional underline)
+  "Add a tooltip to every instance of PHRASE to show NOTIFICATION.
+
+We only add tooltips to PHRASE as a standalone word, not as a subword.
+
+If UNDERLINE is provided, we underline the given PHRASE so as to
+provide a visual clue that it has a tooltip attched to it.
+
+The PHRASE is taken literally; no regexp operators are recognised."
+  (assert (stringp phrase))
+  (assert (stringp notification))
+  (save-excursion  ;; Return cursour to current-point afterwards.
+    (goto-char 1)
+    ;; The \b are for empty-string at the start or end of a word.
+    (while (search-forward-regexp (format "\\b%s\\b" (regexp-quote phrase))
+                                  (point-max) t)
+      ;; (add-text-properties x y ps)
+      ;; ⇒ Override properties ps for all text between x and y.
+      (add-text-properties (match-beginning 0)
+                           (match-end 0)
+                           (list 'help-echo (s-trim notification)))))
+ ;; Example use
+(tooltipify
+  "Line"
+  "A sequential formatation of entities or the trace of a particle in linear motion")
+  #+end_src
+
+Useful info on tooltips:
++ [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Changing-Properties.html][Changing text properties ---GNU]]
++ [[http://kitchingroup.cheme.cmu.edu/blog/2013/04/12/Tool-tips-on-text-in-Emacs/][Tooltips on text in Emacs ---Kitchin]]
++ [[http://kitchingroup.cheme.cmu.edu/blog/2016/03/16/Getting-graphical-feedback-as-tooltips-in-Emacs/][Getting graphical feedback as tooltips in Emacs ---Kitchin]]
++ [[https://stackoverflow.com/questions/293853/defining-new-tooltips-in-emacs][Defining new tooltips in Emacs ---Stackoverflow]]
+
+  #+end_details
+
++ Line [[(exface)]] =:face= :: What textual properties do these links possess?
+
+  This is *either a face or a face-valued function* that takes the current link's
+  path label as the only argument. That is, we could change the face according
+  to the link's label ---which is what we will do for the =color= link type as in
+  =[[color:brown][hello]]= will be rendered in brown text.
+
+  - If ~:face~ is not provided, the default underlined blue face for Org links is used.
+  - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Faces.html][Learn more about faces!]]
+
++ More :: See =docs:org-link-parameters= for documentation on more parameters.
+
 * Colours
+  :PROPERTIES:
+  :CUSTOM_ID: Colours
+  :END:
+
+Let's develop blocks for colouring text and link types for inline
+colouring.
+- Use =M-x list-colors-display= to see a list of defined colour names.
+# Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
 
 [[file:images/colours.jpg]]
 
-#+begin_src emacs-lisp
+:Header:
+#+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Load support for 19 colour custom blocks
+;; Load support for 20 colour custom blocks and 20 colour link types
+#+END_SRC
+:End:
 
+** =org-special-block-extras--𝒞= where ~𝒞 ∈ org-special-block-extras--colors~
+   :PROPERTIES:
+   :CUSTOM_ID: org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors
+   :END:
+
+We declare a list of colors that should be available on most systems.  Then
+using this list, we evaluate the code necessary to produce the necessary
+functions that format special blocks.
+# - To add support for a colour =𝒞=, simply
+#   ~(push '𝒞 org-special-block-extras--colors)~.
+#
+#+BEGIN_SRC emacs-lisp
 (defvar org-special-block-extras--colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(loop for colour in org-special-block-extras--colors
+(cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")
-                     (`html  \"<div style=\\\"color:%s;\\\">%%s</div>\")
-                     (t      \"org-special-block-extras: Unsupported backend\"))
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
+                     (`html  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
                       colour colour colour))))
+#+END_SRC
+
+# (t      \"org-special-block-extras: Unsupported backend\")
+
+For faster experimentation between colours, we provide a generic =color= block
+that consumes a =:color:= argument.
+#+begin_src emacs-lisp
+(defun org-special-block-extras--color (backend contents)
+  "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
+  (-let* (((contents′ . (&alist 'color))
+           (org-special-block-extras--extract-arguments contents 'color))
+         (block-coloring
+          (intern (format "org-special-block-extras--%s" (s-trim color)))))
+    (if (member (intern (s-trim color)) org-special-block-extras--colors)
+        (funcall block-coloring backend contents′)
+      (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
 #+end_src
 
-** Examples
-#+latex: \newpage
+For example:
+#+begin_color org
+:color: green
+Hello, friends!
+#+end_color
+
+** Block Examples
+   :PROPERTIES:
+   :CUSTOM_ID: Examples
+   :END:
+:Examples:
+#+BEGIN_SRC emacs-lisp :results value :wrap no :tangle no
+(s-join "\n\n"
+(cl-loop for c in org-special-block-extras/colors
+      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
+#+END_SRC
+:End:
+
+# +latex: \newpage
+
+#+begin_parallel  org
 #+begin_black
 This text is black!
 #+end_black
@@ -204,57 +894,258 @@ This text is white!
 This text is yellow!
 #+end_yellow
 
-* Parallel
-#+caption: Displaying thoughts side-by-side ^_^
-[[file:images/parallel.png]]
-
-#+latex_header: \usepackage{multicol}
-
-#+begin_parallel
-_Example:_
-#+begin_example org
-,#+begin_3parallel org
-one
-
-,#+latex: \columnbreak
-two
-
-,#+latex: \columnbreak
-three
-,#+end_3parallel
-#+end_example
-
-#+latex: \columnbreak
-_Yields:_
-#+begin_3parallel
-one
-
-#+latex: \columnbreak
-two
-
-#+latex: \columnbreak
-three
-#+end_3parallel
 #+end_parallel
+** Colour Link Types
+   :PROPERTIES:
+   :CUSTOM_ID: Colour-Link-Types
+   :END:
 
-| =#+LATEX_HEADER: \usepackage{multicol}= |
+ We want the syntax =red:text= to /render/ ‘text’ with the colour red
+ in *both* the Emacs interface and in exported backends.
 
-I initially used the names =paralell<n>= but names ending with a number did not
-inherit highlighting, so I shifted the number to being a prefix instead.
-- For LaTeX, new lines are used to suggest opportunities for column breaks
-  and are needed even if explicit columnbreaks are declared.
+ [[file:images/colour_links.png]]
 
-#+begin_src emacs-lisp
+ #+begin_src emacs-lisp
+;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
+;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
+(cl-loop for colour in org-special-block-extras--colors
+         do (org-link-set-parameters
+             (format "%s" colour)
+              :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
+              :export `(lambda (label description backend)
+                        (-let [block-colouring
+                               (intern (format "org-special-block-extras--%s" (quote ,colour)))]
+                          (funcall block-colouring backend (or description label))))
+              :face `(:foreground ,(format "%s" colour))))
+
+;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Colour ‘text’ by 𝒞.
+;; If 𝒞 is an unsupported colour, ‘text’ is rendered in large font
+;; and surrounded by red lines.
+(org-link-set-parameters "color"
+   :follow (lambda (_))
+   :face (lambda (colour)
+           (if (member (intern colour) org-special-block-extras--colors)
+               `(:foreground ,(format "%s" colour))
+             `(:height 300
+               :underline (:color "red" :style wave)
+               :overline  "red" :strike-through "red")))
+ :help-echo (lambda (window object position)
+              (save-excursion
+                (goto-char position)
+                (-let* (((&plist :path) (cadr (org-element-context))))
+                  (if (member (intern path) org-special-block-extras--colors)
+                      "Colour links just colour the descriptive text"
+                    (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
+   :export (lambda (colour description backend)
+             (-let [block-colouring
+                    (intern (format "org-special-block-extras--%s" colour))]
+               (if (member (intern colour) org-special-block-extras--colors)
+                   (funcall block-colouring backend description)
+                 (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
+ #+end_src
+
+ Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is
+ brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
+
+ Also: If we try to use an unsupported colour ‘wombo’, we render the descriptive
+ text larger in Emacs along with a tooltip explaining why this is the case;
+ e.g.,
+ =[[color:wombo][hi]]=.
+
+** Next Steps
+   :PROPERTIES:
+   :CUSTOM_ID: Next-Steps
+   :END:
+ :Fails_idea:
+ Larger example:
+ #+begin_mathjax
+ red:\Sigma
+
+ #+end_mathjax
+ :End:
+
+ Before indicating desirable next steps, let us produce an incidentally useful
+ special block type.
+
+ #+latex: \vspace{1em}
+ We may use LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
+ =$=-symbols to obtain ${\color{red}x}$ and other commands to present mathematical
+ formulae in HTML.  This is known as the MathJax tool ---Emacs' default HTML
+ export includes it.
+
+ #+latex: \vspace{1em}
+ It is common to declare LaTeX definitions for convenience, but such
+ declarations occur within ~$~-delimiters and thereby produce undesirable extra
+ whitespace. We declare the ~latex_definitions~ block type which avoids
+ displaying such extra whitespace in the resulting HTML.
+
+ #+begin_src emacs-lisp
+(defun org-special-block-extras--latex-definitions (backend contents)
+  "Declare but do not display the CONTENTS according to the BACKEND."
+  (loop for (this that) in (-partition 2 '("<p>" ""
+                                           "</p>" ""
+                                           "\\{" "{"
+                                           "\\}" "}"))
+        do (setq contents (s-replace this that contents)))
+  (format (pcase backend
+            (`latex "%s")
+            (`html "<p style=\"display:none\">\\[%s\\]</p>"))
+          contents))
+ #+end_src
+- Org escapes ~{,}~ in LaTeX export, so we need to ‘unescape’ them.
+  This is clearly a hack.
+
+ Here is an example usage, where we declare ~\LL~ to produce a violet left
+ parenthesis. We then use these to produce an example of linear quantification
+ notation ---also known as Z-notation.
+ #+begin_latex-definitions
+\def\LL{\color{violet}(}
+\def\RR{\color{violet})}
+ #+end_latex-definitions
+ $$
+ {\color{teal}\bigoplus}
+ _{   {\color{violet} x}
+    = {\color{red} a}}
+ ^{\color{cyan} b}
+    {\color{brown}{\,f\, x}}
+ \quad=\quad
+            {\color{brown}{f\,\LL  {\color{red} a} \RR}}
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 1 \RR }}
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 2 \RR }}
+ \;{\color{teal}\oplus}\; \cdots
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL {\color{cyan} b} \RR}}
+ $$
+ | [[teal:⊕]]   | /Loop sequentially with loop-bodies fused using [[teal:⊕][⊕]]/ |
+ | /[[violet:x]]/ | /Use [[violet:x][x]] as the name of the current element/         |
+ | /[[red:a]]/    | /Start with [[violet:x][x]] being [[red:a][a]]/                             |
+ | /[[cyan:b]]/   | /End with [[violet:x][x]] being [[cyan:b][b]]/                               |
+ | /[[color:brown][f x]]/      | /At each [[violet:x][x]] value, compute [[color:brown][f x]]/                     |
+
+ # Note that /[[color:brown][f x]]/ is obtained by =/[[color:brown][f x]]/.=
+
+Unfortunately, MathJax does not easily support arbitrary HTML elements to occur
+within the =$=-delimiters ---see [[https://stackoverflow.com/questions/58883048/mathjax-or-similar-render-arbitrary-html-element-inside-expression][this]] and [[https://github.com/mathjax/MathJax/issues/1707][this]] for ‘workarounds’.  As such, the
+MathJax producing the Z-notation example is rather ugly whereas its subsequent
+explanatory table is prettier on the writer's side.
+
+:Verbatim_pasted_from_the_above_THIS_link:
+MathJax will not process math that contains HTML tags (other than a select few),
+so you will not be able to do the kind of replacements inside an expression like
+you are attempting to do here.
+
+#+begin_export html
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  CommonHTML: {
+    styles: {
+      //
+      // remove CSS for '.mjx-math *'
+      //
+      '.mjx-math *': {
+        display: null,
+        '-webkit-box-sizing': null,
+        '-moz-box-sizing': null,
+        'box-sizing': null,
+        'tex-align': null
+      },
+      //
+      // add CSS for .mjx-math span instead
+      //
+      '.mjx-math span': {
+        display: 'inline-block',
+        '-webkit-box-sizing': 'context-box !important',
+        '-moz-box-sizing': 'context-box !important',
+        'box-sizing': 'context-box !important',
+        'tex-align': 'left'
+      },
+      //
+      // override display for .mjx-char spans
+      //
+      'span.mjx-char': {
+        display: 'block'
+      }
+    }
+  }
+});
+MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
+  var MML = MathJax.ElementJax.mml;
+  var TEX = MathJax.InputJax.TeX;
+  TEX.Definitions.macros.insertHTML = 'InsertHTML';
+  TEX.Parse.Augment({
+    InsertHTML: function (name) {
+      var html = this.GetArgument(name).replace(/^\s*<!--\s*/,'').replace(/\s*-->\s*$/,'');
+      var span = MathJax.HTML.Element('mjx-reset', {style: {display:'inline-block'}});
+      span.innerHTML = html;  // serious security risk if users can enter math
+      span.setAttribute("xmlns","http://www.w3.org/1999/xhtml");
+      var mml = MML["annotation-xml"](MML.xml(span)).With({encoding:"application/xhtml+xml",isToken:true});
+      this.Push(MML.semantics(mml));
+    }
+  });
+});
+</script>
+<script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_CHTML" defer></script>
+
+<div style="xfont-size: 150%">
+$$x + \left(\,\insertHTML{<!--
+<table width="100" height="100"
+  style="display:inline-table; vertical-align:-.25em; background:red; border:5px solid green;
+  box-sizing:border-box !important">
+<tr><td style="text-align:center">abc</td></tr>
+</table>
+-->}\,\right) + y$$
+</div>
+
+
+$$x+\left(\insertHTML{<!--
+<i>this</i> is <b>html</b>
+-->}\right)+y$$
+#+end_export
+:End:
+
+ #+latex: \vspace{1em}
+[[color:orange][Going forward,]] it would be nice to easily have our colour links work within
+a mathematical special block.
+* Parallel
+  :PROPERTIES:
+  :CUSTOM_ID: Parallel
+  :END:
+
+:Header:
+#+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; Parallel blocks: parallel<n>[NB] for n:2..5, optionally with ‘N’o ‘b’ar
+;; Parallel blocks: 𝓃parallel[NB] for n:2..5, optionally with ‘N’o ‘b’ar
 ;; in-between the columns.
 ;;
 ;; Common case is to have three columns, and we want to avoid invoking the
 ;; attribute via org, so making this.
+#+END_SRC
+:End:
 
-(loop for cols in '("1" "2" "3" "4" "5")
-      do (loop for rule in '("solid" "none")
+We want to be able to reduce the amount of whitespace noise in our articles, and
+so use the =parallel= block to place ideas side-by-side ---with up to the chosen
+limit of 5 columns.
+
+#+caption: Displaying thoughts side-by-side ^_^ Top is browser, then Emacs, then PDF
+[[file:images/parallel.png]]
+
+#+LATEX_HEADER: \usepackage{multicol}
+| =#+LATEX_HEADER: \usepackage{multicol}= |
+
+I initially used the names =parallel𝓃= but names ending with a number =𝓃= did not
+inherit highlighting, so I shifted the number to being a prefix instead.
++ For LaTeX, new lines are used to suggest opportunities for column breaks
+  and are needed even if explicit columnbreaks are declared.
++ Use the nullary switch =:columnbreak:= to request a columnbreak; this has no
+  effect on HTML export since HTML describes how text should be formatted on a
+  browser, which can dynamically shrink and grow and thus it makes no sense to have
+  hard columnbreaks.
++ We also provide ~𝓃parallelNB~ for users who want ‘N’o ‘B’ar separator
+  between columns.
+
+#+BEGIN_SRC emacs-lisp
+(cl-loop for cols in '("1" "2" "3" "4" "5")
+      do (cl-loop for rule in '("solid" "none")
       do (eval (read (concat
 "(defun org-special-block-extras--" cols "parallel"
 (if (equal rule "solid") "" "NB")
@@ -265,54 +1156,83 @@ inherit highlighting, so I shifted the number to being a prefix instead.
 "          \\\\begin{minipage}[t]{\\\\linewidth}"
 "          \\\\begin{multicols}{" cols "}"
 "          %s"
-"          \\\\end{multicols}\\\\end{minipage}\")) contents))")))))
+"          \\\\end{multicols}\\\\end{minipage}\"))"
+"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
+contents)))")))))
+#+END_SRC
+#
+# Musa: If I use “<div …> %s</div>”, the ‘>’ causes some undesirable whitespace
+# in the first column. Hence, omitting it.
 
-(defalias #'org-special-block-extras--parallel   #'org-special-block-extras--2parallel)
-(defalias #'org-special-block-extras--parallelNB #'org-special-block-extras--2parallelNB)
-#+end_src
+We also use ~parallel~ as an alias for ~2parallel~.
+ #+BEGIN_SRC emacs-lisp :noweb-ref enable-mode :tangle no
+(defalias #'org-special-block-extras--parallel
+          #'org-special-block-extras--2parallel)
+
+(defalias #'org-special-block-extras--parallelNB
+          #'org-special-block-extras--2parallelNB)
+ #+END_SRC
+
+** Example
+   :PROPERTIES:
+   :CUSTOM_ID: Example
+   :END:
+#+begin_parallel org
+_Example:_
+#+begin_example org
+#+begin_3parallel org
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+#+end_example
+
+#+latex: \columnbreak
+_Yields:_
+#+begin_3parallel org
+one
+
+#+latex: \columnbreak
+two
+
+#+latex: \columnbreak
+three
+#+end_3parallel
+#+end_parallel
 
 #+begin_center
 ( The [[https://www.gnu.org/software/emacs/manual/html_mono/eww.html][Emacs Web Wowser]], ~M-x eww~, does not display =parallel= environments as
 desired. )
 #+end_center
 
-* =:argument:= Extraction
-#+begin_src emacs-lisp
-(defun org-special-block-extras--extract-arguments (contents &rest args)
-"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+** Next Steps
+   :PROPERTIES:
+   :CUSTOM_ID: Next-Steps
+   :END:
 
-Example usage:
+[[color:orange][Going forward,]] it would be desirable to have the columns take a specified
+percentage of the available width ---whereas currently it splits it uniformly.
+Such a feature would be useful in cases where one column is wide and the others
+are not.
 
-    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
-           (…extract-arguments contents 'k₀ … 'kₙ)]
-          body)
-
-Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
-‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
-with all ‘:kᵢ:’ lines stripped out.
-
-+ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
-+ If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
-  then it has value the empty string."
-  (let ((ctnts contents)
-        (values (loop for a in args
-                      for regex = (format ":%s:\\(.*\\)" a)
-                      for v = (cadr (s-match regex contents))
-                      collect (cons a v))))
-    (loop for a in args
-          for regex = (format ":%s:\\(.*\\)" a)
-          do (setq ctnts (s-replace-regexp regex "" ctnts)))
-    (cons ctnts values)))
-#+end_src
+# 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
 
 * Editor Comments
+  :PROPERTIES:
+  :CUSTOM_ID: editor-comments
+  :END:
+
 “Editor Comments” are intended to be top-level first-class comments in an
 article that are inline with the surrounding text and are delimited in such a
 way that they are visible but drawing attention.  I first learned about this
 idea from Wolfram Kahl ---who introduced me to Emacs many years ago.
 
 In LaTeX, an =edcomm= appears inline with the text surrounding it.
-#+begin_edcomm
+#+begin_edcomm org
 :ed: Bobert
 org-mode is dope, yo!
 :replacewith:
@@ -326,7 +1246,7 @@ separated by new lines from its surrounding text.
 
 | /Any new ---possibly empty--- inner lines in the =edcomm= are desirably preserved/ |
 
-#+begin_src emacs-lisp -n -r
+#+BEGIN_SRC emacs-lisp
 (defvar org-special-block-extras-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
 
@@ -342,7 +1262,7 @@ The CONTENTS string has two optional argument switches:
            ((contents₁ . (&alist 'ed))
             (org-special-block-extras--extract-arguments contents 'ed))
 
-           ;; Strip out any <p> tags     (ref:inline)
+           ;; Strip out any <p> tags
            (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
            (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
 
@@ -387,19 +1307,17 @@ The CONTENTS string has two optional argument switches:
                 (`html "<p> %s %s %s</p>")
                 (`latex "%s %s %s"))
               edcomm-begin contents₂ edcomm-end))))
-#+end_src
-
-#+results:
-: org-special-block-extras--edcomm
-
+#+END_SRC
 
 In the HTML export, the =edcomm= special block is /not/ in-line with the text
 surrounding it ---ideally, it would be inline so that existing paragraphs are
 not split into multiple paragraphs but instead have an editor's comment
-indicating suggested alterations; see [[(inline)][Line (inline)]] above.
+indicating suggested alterations.
 
-** Examples
-Org-markup is supported, as expected.
+** Block Examples
+   :PROPERTIES:
+   :CUSTOM_ID: Examples
+   :END:
 
 All editor comments are disabled by declaring, in your Org file:
 #+begin_example org
@@ -407,45 +1325,61 @@ All editor comments are disabled by declaring, in your Org file:
 #+end_example
 The =#+bind:= keyword makes Emacs variables buffer-local during export
 ---it is evaluated /after/ any =src= blocks. To use it, one must declare in
-their Emacs init file the following line, which our ~edcomm~ utility
+their Emacs init file the following line, which our mode
 ensures is true.
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref enable-mode
 (setq org-export-allow-bind-keywords t)
-#+end_src
+#+END_SRC
 
 | ( Remember to =C-c C-c= the =#+bind= to activate it, the first time it is written. ) |
 
 #+bind: org-special-block-extras-hide-editor-comments nil
 
 *** No optional arguments
-#+begin_edcomm
+    :PROPERTIES:
+    :CUSTOM_ID: No-optional-arguments
+    :END:
+
+#+begin_edcomm org
 /Please/ *change* _this_ section to be more, ya know, professional.
 #+end_edcomm
 
 *** Only declaring an =:ed:= ---editor
-#+begin_edcomm
+    :PROPERTIES:
+    :CUSTOM_ID: Only-declaring-an-ed-editor
+    :END:
+
+#+begin_edcomm org
 :ed: Bobert
 /Please/ *change* _this_ section to be more, ya know, professional.
 #+end_edcomm
 
 #+latex: \vspace{1em}\noindent
 Possibly with no contents:
-#+begin_edcomm
+#+begin_edcomm org
 :ed: Bobert
 #+end_edcomm
 
 *** Empty contents, no editor, nothing
-#+begin_edcomm
-nil#+end_edcomm
+    :PROPERTIES:
+    :CUSTOM_ID: Empty-contents-no-editor-nothing
+    :END:
+
+#+begin_edcomm org
+#+end_edcomm
 
 #+latex: \vspace{1em}\noindent
 Possibly with an empty new line:
-#+begin_edcomm
+#+begin_edcomm org
 
 #+end_edcomm
 
 *** With a =:replacewith:= clause
-#+begin_edcomm
+    :PROPERTIES:
+    :CUSTOM_ID: With-a-replacewith-clause
+    :END:
+
+#+begin_edcomm org
 The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
 :replacewith:
 A linear one-dimensional notation; e.g.,
@@ -456,38 +1390,70 @@ $(\Sigma i : 0..n \;\bullet\; i^2)$
 Possibly “malformed” replacement clauses.
 
 1. Forget the thing to be replaced.
-   #+begin_edcomm
-   :replacewith:
-   A linear one-dimensional notation; e.g.,
-   $(\Sigma i : 0..n \;\bullet\; i^2)$
-   #+end_edcomm
+   #+begin_edcomm org
+:replacewith:
+A linear one-dimensional notation; e.g.,
+$(\Sigma i : 0..n \;\bullet\; i^2)$
+#+end_edcomm
 
 2. Forget the new replacement thing.
-   #+begin_edcomm
-   The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
-   :replacewith:
-   #+end_edcomm
+   #+begin_edcomm org
+The two-dimensional notation; e.g., $\sum_{i = 0}^n i^2$
+:replacewith:
+#+end_edcomm
 
 3. Completely lost one's train of thought.
-   #+begin_edcomm
-   :replacewith:
-   #+end_edcomm
+   #+begin_edcomm org
+:replacewith:
+#+end_edcomm
+
+** Link Type
+   :PROPERTIES:
+   :CUSTOM_ID: Link-Type
+   :END:
+
+A block to make an editorial comment could be overkill in some cases; so we
+provide the =edcomm= link type.
+
+- Syntax: =[[edcomm:person_name][editorial remark]]=.
+- This link type exports the same as the =edcomm= block type;
+  however, in Emacs it is shown with an ‘angry’ ---bold--- red face.
+
+#+begin_src emacs-lisp -n -r :tangle no
+(org-link-set-parameters
+ "edcomm"
+  :follow (lambda (_))
+  :export (lambda (label description backend)
+            (org-special-block-extras--edcomm
+             backend
+             (format ":ed:%s\n%s" label description)))
+  :help-echo (lambda (window object position)
+               (save-excursion
+                 (goto-char position)
+                 (-let* [(&plist :path) (cadr (org-element-context))]
+                   (format "%s made this remark" (s-upcase path)))))
+  :face '(:foreground "red" :weight bold))
+#+end_src
+
+For example:
+[[edcomm:Jasim][Hello, where are you?]]
+
+The =:replacewith:= switch ---and usual Org markup--- also works with these links:
+[[edcomm:Qasim][/‘j’/ :replacewith: /‘q’/]]
 
 * Folded Details
-#+latex_header: \makeatletter
-#+latex_header: \AtBeginEnvironment{minted}{\dontdofcolorbox}
-#+latex_header: \def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
-#+latex_header: \makeatother
+  :PROPERTIES:
+  :CUSTOM_ID: Folded-Details
+  :END:
 
+Sometimes there is a remark or a code snippet that is useful to have, but not
+relevant to the discussion at hand and so we want to /fold away such details/.
 
-#+latex_header: \newunicodechar{𝓃}{\ensuremath{n}}
-#+latex_header: \newunicodechar{⋯}{\ensuremath{\cdots}}
-
-- ‘Conversation-style’ articles, where the author asks the reader questions
++ ‘Conversation-style’ articles, where the author asks the reader questions
   whose answers are “folded away” so the reader can think about the exercise
   before seeing the answer.
 
-- Hiding boring but important code snippets, such as a list of import
++ Hiding boring but important code snippets, such as a list of import
   declarations or a tedious implementation.
 
 | =#+LATEX_HEADER: \usepackage{tcolorbox}= |
@@ -495,7 +1461,7 @@ Possibly “malformed” replacement clauses.
 #+caption: Visually hiding, folding away, details
 [[file:images/details.png]]
 
-#+begin_src emacs-lisp -n -r
+#+BEGIN_SRC emacs-lisp -n -r
 (defun org-special-block-extras--details (backend contents)
 "Format CONTENTS as a ‘folded region’ according to BACKEND.
 
@@ -526,23 +1492,26 @@ the folded region."
                  \\end{tcolorbox}
                \\end{quote}")))
     title contents′)))
-#+end_src
+#+END_SRC
 
 #+latex_header: \usepackage{tcolorbox}
 
 We could use =\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
-...}}\end{quote}=; however, this does not work well with ~minted~, for coloured
+...}}\end{quote}=; however, this does not work well with [[https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted][minted]] for coloured
 source blocks. Instead, we use ~tcolorbox~.
 
 ** Example
-Reductions ---incidentally also called ‘folds’[fn:-1-1]--- embody primitive
+   :PROPERTIES:
+   :CUSTOM_ID: Example
+   :END:
+Reductions ---incidentally also called ‘folds’[fn:1]--- embody primitive
 recursion and thus computability. For example, what does the following compute
 when given a whole number 𝓃?
-#+begin_src emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle no
 (-reduce #'/ (number-sequence 1.0 𝓃))
-#+end_src
+#+END_SRC
 
-#+begin_details
+#+begin_details org
 :title: Solution
 Rather than guess-then-check, let's /calculate/!
 #+begin_src emacs-lisp :tangle no
@@ -553,17 +1522,685 @@ Rather than guess-then-check, let's /calculate/!
   (/ (/ (/ 1.0 2.0) ⋯) 𝓃)
 =;; Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))
   (/ 1.0 (* 2.0 3.0 … 𝓃))
-#+end_src
+#+END_SRC
 We have thus found that Lisp program to compute the inverse factorial of 𝓃,
 i.e., $\frac{1}{𝓃!}$.
 #+end_details
 
 Neato, let's do more super cool stuff ^_^
 
-#+begin_tiny
-(In the Emacs Web Wowser, folded regions are displayed unfolded similar to
-LaTeX.)
-#+end_tiny
+#+begin_footnotesize
+( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
+LaTeX. )
+#+end_footnotesize
+* /“Link Here!”/ OctoIcon
+  :PROPERTIES:
+  :CUSTOM_ID: Link-Here-OctoIcons
+  :END:
 
-[fn:-1-1] See [[http://www.cs.nott.ac.uk/~pszgmh/fold.pdf][/A tutorial on the universality and expressiveness of fold/]] and
+Use the syntax =link-here:name= to create an anchor link that alters the URL with
+=#name= as in “link-here:name”
+---it looks and behaves like the Github generated links for a heading.
+Use case: Sometimes you want to explicitly point to a particular location in an
+article, this is a possible way to do so.
+- Besides the HTML backend, such links are silently omitted.
+- SVGs obtained from: https://primer.style/octicons/
+
+#+begin_src emacs-lisp
+(org-link-set-parameters
+  "link-here"
+  :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
+  :export #'org-special-block-extras--link-here)
+
+(defun org-special-block-extras--link-here (label description backend)
+  "Export a link to the current location in an Org file.
+
+The LABEL determines the name of the link.
+
++ Only the syntax ‘link-here:label’ is supported.
++ Such links are displayed using an “octicon-link”
+  and so do not support the DESCRIPTION syntax
+  ‘[[link:label][description]]’.
++ Besides the HTML BACKEND, such links are silently omitted."
+    (pcase backend
+      (`html  (format (s-collapse-whitespace
+          "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
+          href=\"#%s\"><svg class=\"octicon octicon-link\" viewBox=\"0 0 16
+          16\" version=\"1.1\" width=\"16\" height=\"16\"
+          aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M4
+          9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0
+          1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8
+          4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2
+          2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64
+          1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0
+          3-1.69 3-3.5S14.5 6 13 6z\"></path></svg></a>") label label))
+      (_ "")))
+#+end_src
+
+E.g., link-here:example-location Neato ^_^
+
+[[color:orange][Going forward,]] it would be desirable to provide a non-whitespace alternative for
+the LaTeX rendition.  More usefully, before the HTML export hook, we could place
+such ‘link-here’ links before every org-title produce clickable org-headings,
+similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
+
+* Badge Links
+  :PROPERTIES:
+  :CUSTOM_ID: Badge-Links
+  :END:
+
+Badges provide a quick and colourful summary of key features of a project,
+such as whether it's maintained, its license, and if it's documented.
+# Badges are little coloured boxes; e.g., those found all over Github.  Such
+# eye-candy can be obtained from https://shields.io/, which has many examples.
+
+#+caption: An Emacs interface to https://shields.io/
+[[file:images/badges.png]]
+
+#+begin_quote
+As people who are passionate about writing great code we display "badges" in our
+code repositories to signal to fellow developers that we set ourselves high
+standards for the code we write, think of them as the software-equivalent of
+the brand on your jeans or other reliable product. --- [[https://github.com/dwyl/repo-badges][repo-badges]]
+#+end_quote
+
+:Header:
+#+begin_src emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The badge link types
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#+end_src
+:End:
+
+** The =badge= Link and derived Reddit/Github/Twitter socials
+   :PROPERTIES:
+   :CUSTOM_ID: The-badge-Link
+   :END:
+
+The implementation is a bit lengthy since it attempts to capture a useful
+portion of the shilelds.io badge interface.
+#+begin_src emacs-lisp
+(org-link-set-parameters "badge"
+  :follow (lambda (path) (--> (s-split "|" path)
+                         (or (nth 3 it) path)
+                         (browse-url it)))
+  :export #'org-special-block-extras--link--badge)
+
+(defvar org-special-block-extras--link--twitter-excitement
+  "This looks super neat ^_^ :"
+  "The string prefixing the URL being shared.")
+
+(defun org-special-block-extras--link--badge
+  (label description backend &optional social)
+  "Export a link presented as an SVG badge.
+
+The LABEL should be of the shape ‘key|value|color|url|logo’
+resulting in a badge “|key|value|” where the ‘key’
+is coloured grey and the ‘value’ is coloured ‘color’.
+
+The optional SOCIAL toggle indicates if we want an icon for
+Twitter, Reddit, Github, etc, instead of a badge.
+When SOCIAL is provided, we interpret LABEL as an atomic string.
+
++ Only the syntax ‘badge:key|value|color|url’ is supported.
+  - ‘key’ and ‘value’ have their underscores interpreted as spaces.
+     ⇒ Underscores are interpreted as spaces;
+     ⇒ ‘__’ is interpreted as an underscore;
+     ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
+  - ‘|color|url|logo’ are optional;
+     if ‘url’ is ‘|here’ then the resulting badge behaves
+     like ‘link-here:key’.
+  - ‘color’ may be: ‘brightgreen’ or ‘success’,
+                    ‘red’         or ‘important’,
+                    ‘orange’      or ‘critical’,
+                    ‘lightgrey’   or ‘inactive’,
+                    ‘blue’        or ‘informational’,
+            or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
++ Such links are displayed using a SVG badges
+  and so do not support the DESCRIPTION syntax
+  ‘[[link:label][description]]’.
++ Besides the HTML BACKEND, such links are silently omitted."
+  (-let* (((lbl msg clr url logo) (s-split "|" label))
+          (_ (unless (or (and lbl msg) social)
+               (error "%s\t⇒\tBadges are at least “badge:key|value”!" label)))
+          ;; Support dashes and other symbols
+          (_ (unless social
+               (setq lbl (s-replace "-" "--" lbl)
+                     msg (s-replace "-" "--" msg))
+               (setq lbl (url-hexify-string lbl)
+                     msg (url-hexify-string msg))))
+          (img (format "<img src=\"https://img.shields.io/badge/%s-%s-%s%s\">"
+                        lbl msg clr
+                        (if logo (concat "?logo=" logo) ""))))
+    (when social
+      (-->
+          `(("reddit"            "https://www.reddit.com/r/%s")
+            ("github/followers"  "https://www.github.com/%s?tab=followers")
+            ("github/forks"      "https://www.github.com/%s/fork")
+            ("github"            "https://www.github.com/%s")
+            ("twitter/follow"    "https://twitter.com/intent/follow?screen_name=%s")
+            ("twitter/url"
+             ,(format
+               "https://twitter.com/intent/tweet?text=%s:&url=%%s"
+               org-special-block-extras--link--twitter-excitement)
+             ,(format
+               "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
+               label)))
+        (--filter (s-starts-with? (first it) social) it)
+        (car it)
+        (or it (error "Badge: Unsupported social type “%s”" social))
+        (setq url (format (second it) label)
+              img (or (third it)
+                      (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
+                      social label)))))
+    (pcase backend
+        (`html (if url
+                 (if (equal url "here")
+                     (format "<a id=\"%s\" href=\"#%s\">%s</a>" lbl lbl img)
+                   (format "<a href=\"%s\">%s</a>" url img))
+               img))
+        (_ ""))))
+#+end_src
+
+We now form the specialised link types for social media.
+#+begin_src emacs-lisp
+(loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
+                             ("github/stars")
+                             ("github/watchers")
+                             ("github/followers")
+                             ("github/forks")
+                             ("twitter/follow")
+                             ("twitter/url?=url=" "tweet"))
+      for link′ = (or link (s-replace "/" "-" social))
+      do (org-link-set-parameters link′
+           :export (eval `(-cut org-special-block-extras--link--badge
+                         <> <> <> ,social))))
+#+end_src
+
+
+** Begin omitting from LaTeX output                                  :ignore:
+   :PROPERTIES:
+   :CUSTOM_ID: Begin-omitting-from-LaTeX-output
+   :END:
+#+latex: \iffalse
+** Example Social Icons
+   :PROPERTIES:
+   :CUSTOM_ID: Example-Social-Icons
+   :END:
+Syntax:
+#+begin_example org
+reddit-subscribe-to:exact-name-of-a-subreddit
+
+github-stars:user-name/repository-name
+
+github-watchers:user-name/repository-name
+
+github-forks:user-name/repository-name
+
+github-followers:user-name
+
+twitter-follow:user-name
+
+tweet:url
+#+end_example
+
+Here are some examples.
+
++ Things I like:
+  reddit-subscribe-to:emacs
+  reddit-subscribe-to:common_lisp
+  reddit-subscribe-to:coolguides
+  reddit-subscribe-to:shia
+  # reddit-subscribe-to:LispMemes
+  # reddit-subscribe-to:ProgrammerHumor
+
++ Info about my cheatsheets:
+  github-stars:alhassy/CheatSheet
+  github-watchers:alhassy/CheatSheet
+  github-forks:alhassy/CheatSheet
+  tweet:https://github.com/alhassy/org-special-block-extras
+
++ My profile:
+  github-followers:alhassy
+  twitter-follow:musa314
+
+** Example Badges
+   :PROPERTIES:
+   :CUSTOM_ID: Example-Badges
+   :END:
+
+The general syntax is as follows, with *only the first 2* are mandatory,
+with the colour defaulting to green, and the url and logo both to nil.
+We can thus have ~badge:label|message~
+#+begin_example org
+# Standard template
+badge:key|value|colour|url|logo
+
+# Minimal template
+badge:key|value
+
+# Only show a coloured logo pointed to its location
+badge:||colour|here|logo
+#+end_example
+
++ badge:key|value|informational|Here|Elixir
+  - Standard template; with URL pointing to current location which is named
+    =#key=
+
++ badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
+  - Use ‘_’ to denote spaces
+
++ badge:no_colour|given
+  - Only two items given: =badge:key|value=.
+
++ badge:empty_value||informational
+  - =badge:key||colour=
+
++ badge:|value
+  - No key; =badge:|value=
+
++ badge:||green
+  - No key; nor value: =badge:||green=
+
+** Example Colours
+   :PROPERTIES:
+   :CUSTOM_ID: Example-Colours
+   :END:
++ badge:|red|red badge:|critical|critical
++ badge:|blue|blue badge:|informational|informational
++ badge:|brightgreen|brightgreen badge:|success|success
++ badge:|orange|orange badge:|important|important
++ badge:|lightgrey|lightgrey badge:|inactive|inactive
++ badge:|green|green
++ badge:|yellowgreen|yellowgreen
++ badge:|yellow|yellow
++ badge:|blueviolet|blueviolet
++ badge:|ff69b4|ff69b4
++ badge:|9cf|9cf
++ ...
+
+Consult https://htmlcolorcodes.com/ to see the HEX code of any other colour you
+wish to use; e.g., badge:|1d8348|1d8348
+
+** Example Badge Icons
+   :PROPERTIES:
+   :CUSTOM_ID: Example-Badge-Icons
+   :END:
+
+ Here are a few free SVG icons for popular brands from https://simpleicons.org/.
+
+ + “Fire” ::
+    badge:||grey|here|Elixir
+    badge:||grey|here|tinder
+    badge:||grey|here|codeigniter
+    badge:||grey|here|prometheus
+    badge:||grey|here|sparkpost
+ + “Messaging” ::
+    badge:||grey|here|quip
+    badge:||grey|here|WeChat
+    badge:||grey|here|google-hangouts
+    badge:||grey|here|hackhands
+    badge:||grey|here|google-messages
+    badge:||grey|here|Tor
+    badge:||grey|here|Slack
+ + “Emacs” ::
+    badge:||white|here|gnu-emacs
+    badge:||white|here|spacemacs
+    badge:||grey|here|vim
+    badge:||grey|here|neovim
+    badge:||grey|here|gnu
+    badge:||grey|here|github
+    badge:||grey|here|acm
+    badge:||grey|here|wikipedia
+    badge:||grey|here|microsoft-excel
+    badge:||grey|here|microsoft-word
+    badge:||grey|here|dropbox
+    badge:||grey|here|google-scholar
+    badge:||grey|here|google
+    badge:||grey|here|google-translate
+    badge:||grey|here|ghost
+    badge:||grey|here|helm
+    badge:||grey|here|apache-openoffice
+    badge:||grey|here|buffer
+    # badge:||grey|here|adobe-fonts
+    #    badge:||grey|here|google-calendar
+ + “Social” ::
+    badge:||grey|here|google-cast
+    badge:||grey|here|youtube
+    badge:||grey|here|discord
+    badge:||grey|here|facebook
+    badge:||grey|here|google-hangouts
+    badge:||grey|here|whatsapp
+    badge:||grey|here|skype
+    badge:||grey|here|arXiv
+    badge:||grey|here|reddit
+    badge:||grey|here|stack-overflow
+    badge:||grey|here|stack-exchange
+    badge:||grey|here|linkedin
+    badge:||grey|here|twitter
+    badge:||grey|here|jabber
+ + “Lightbulb” ::
+    badge:||grey|here|lighthouse
+    badge:||grey|here|google-keep
+    badge:||grey|here|minds
+ + “Programming” ::
+    badge:||grey|here|git
+    badge:||grey|here|ruby
+    badge:||grey|here|scala
+    badge:||grey|here|OCaml
+    badge:||grey|here|javascript
+    badge:||grey|here|gnu-bash
+    badge:||grey|here|powershell
+    badge:||grey|here|LaTeX
+    badge:||grey|here|java
+    badge:||grey|here|kotlin
+    badge:||grey|here|haskell
+    badge:||grey|here|coffeescript
+    badge:||grey|here|purescript
+    badge:||grey|here|rust
+    badge:||grey|here|typescript
+    badge:||grey|here|css3
+    badge:||grey|here|python
+    badge:||grey|here|c
+    badge:||grey|here|clojure
+    badge:||grey|here|lua
+    badge:||grey|here|adobe-acrobat-reader
+    #   badge:||grey|here|c-+-+
+    # badge:||grey|here|perl
+    #    badge:||grey|here|c#
+ + “Miscellaneous” ::
+    badge:||grey|here|read-the-docs
+    badge:||grey|here|buy-me-a-coffee
+    badge:||grey|here|gimp
+    badge:||grey|here|mega
+    badge:||grey|here|nintendo-3ds
+    badge:||grey|here|paypal
+    badge:||grey|here|pinboard
+    badge:||grey|here|mocha
+    badge:||grey|here|Gitea
+    badge:||grey|here|instacart
+    badge:||grey|here|openStreetMap
+    badge:||grey|here|amazon
+    badge:||grey|here|svg
+    badge:||grey|here|rss
+    badge:||grey|here|swagger
+    badge:||grey|here|pastebin
+    badge:||grey|here|skyliner
+    badge:||grey|here|iTunes   badge:||grey|here|gulp
+      # badge:||grey|here|pokemon
+   # + “Music” ::
+   #    badge:||grey|here|1001-track-lists
+   #    badge:||grey|here|auda-city
+   #    badge:||grey|here|dribble
+   #    badge:||grey|here|leaflet
+   #    badge:||grey|here|youtube-gaming
+    badge:||grey|here|GIMP
+    badge:||grey|here|atom
+
+** Common Project Badges
+   :PROPERTIES:
+   :CUSTOM_ID: Common-Project-Badges
+   :END:
+
++ badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
+
++ badge:Org|9.3.6|blue|https://orgmode.org|gnu
+
++ [[badge:org-special-block-extras|1.0|informational|https://alhassy.github.io/org-special-block-extras/README.html|Gnu-Emacs][org-special-block-extras badge]]
+  # + twitter:https://github.com/alhassy/org-special-block-extras
++ [[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]]
+
++ [[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
+  badge:wiki|github|informational|here|wikipedia
+
++ badge:code_coverage|88%|green|here|codecov
+  badge:build|passing|success|here|azure-pipelines
+
++ badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
+
++ badge:author|musa_al-hassy|purple|https://alhassy.github.io/|gimp
+
++ [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
+
++ badge:issue_tracking|github|informational|here|github
+
++ badge:help_forum|discourse|informational|here|discourse
+
++ badge:social_chat|gitter|informational|https://gitter.im/explore|gitter
+
++ badge:Maintained?|yes|success
+  badge:Maintained?|no|critical
+  badge:No_Maintenance_Intended|×|critical|http://unmaintained.tech/
+  ---Interesting!
+
++ badge:website|up|success
+  badge:website|down|critical
+
++ badge:Ask_me|anything|1abc9c
+  badge:contributions|welcome|green|https://github.com/alhassy/org-special-block-extras/issues
++ badge:Made_with|Python,_LaTeX,_MathJax,_and_Emacs_Org-mode|1f425
+** End omitting from LaTeX output                                            :ignore:
+   :PROPERTIES:
+   :CUSTOM_ID: End-omitting-from-LaTeX-output
+   :END:
+ #+latex: \fi
+** Next Steps
+   :PROPERTIES:
+   :CUSTOM_ID: Next-Steps
+   :END:
+
+[[color:orange][Going forward,]] it would be desirable to provide non-whitespace alternatives
+for the LaTeX backend. {{{newline}}}
+[[edcomm:Author][That is why no examples are shown in the PDF]] It would
+also be useful to have badges redirect to their URL, if any, upon a user's
+click. Finally, it may be useful to colour the =|=-separated fields of a badge
+link and provide a tooltip indicating which value corresponds to which
+field. This would make the interface more welcoming to new users.
+
+* Summary
+  :PROPERTIES:
+  :CUSTOM_ID: Summary
+  :END:
+
+Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=, =gray=, =green=,
+=lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
+=yellow=. Let =𝓃= be any number from =1..5=.
+
+| Idea               | Block         | Link       | Switches            |
+|--------------------+---------------+------------+---------------------|
+| Colours            | =𝒞=             | =𝒞=, =color:𝒞= | =:color:=             |
+| Parallel           | =𝓃parallel[NB]= | -          | =:columnbreak:=       |
+| Editorial Comments | =edcomm=        | =edcomm=     | =:ed:=, =:replacewith:= |
+| Folded Details     | =details=       | -          | =:title:=             |
+| Link Here          | -             | =link-here=  | -                   |
+| Badges             | -             | =badge=      | -                   |
+
+There are also the social badge links:
+=reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
+github-watchers=, =twitter-follow=, and =tweet=.
+
+* Lisp Postamble                                                   :noexport:
+  :PROPERTIES:
+  :CUSTOM_ID: Postamble
+  :END:
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(provide 'org-special-block-extras)
+
+;;; org-special-block-extras.el ends here
+#+END_SRC
+* COMMENT Etc
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Etc
+  :END:
+
+  Likewise, regions surrounded by ‘#+BEGIN_COMMENT’ … ‘#+END_COMMENT’ are not
+  exported.
+
+* COMMENT Images ---How To
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Images-How-To
+  :END:
+
+1. =eww-open-file= to open a local HTML file in Emacs
+2. Likewise open both the Org source and resulting PDF
+3. M-x display-line-numbers-mode to turn off numbers
+4. Take screenshot {{{smile}}}
+
+* COMMENT MELPA Checks
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-MELPA-Checks
+  :END:
+1. In Github repo: Create new file ⇒ License.txt ⇒ Select template ⇒ GNU 3
+2. Ensure first line ends with: -*- lexical-binding: t; -*-
+3. Include appropriate standard keywords;
+   #+begin_src emacs-lisp
+(pp finder-known-keywords)
+   #+end_src
+
+   #+RESULTS:
+   #+begin_example
+   ((abbrev . "abbreviation handling, typing shortcuts, and macros")
+    (bib . "bibliography processors")
+    (c . "C and related programming languages")
+    (calendar . "calendar and time management tools")
+    (comm . "communications, networking, and remote file access")
+    (convenience . "convenience features for faster editing")
+    (data . "editing data (non-text) files")
+    (docs . "Emacs documentation facilities")
+    (emulations . "emulations of other editors")
+    (extensions . "Emacs Lisp language extensions")
+    (faces . "fonts and colors for text")
+    (files . "file editing and manipulation")
+    (frames . "Emacs frames and window systems")
+    (games . "games, jokes and amusements")
+    (hardware . "interfacing with system hardware")
+    (help . "Emacs help systems")
+    (hypermedia . "links between text or other media types")
+    (i18n . "internationalization and character-set support")
+    (internal . "code for Emacs internals, build process, defaults")
+    (languages . "specialized modes for editing programming languages")
+    (lisp . "Lisp support, including Emacs Lisp")
+    (local . "code local to your site")
+    (maint . "Emacs development tools and aids")
+    (mail . "email reading and posting")
+    (matching . "searching, matching, and sorting")
+    (mouse . "mouse support")
+    (multimedia . "images and sound")
+    (news . "USENET news reading and posting")
+    (outlines . "hierarchical outlining and note taking")
+    (processes . "processes, subshells, and compilation")
+    (terminals . "text terminals (ttys)")
+    (tex . "the TeX document formatter")
+    (tools . "programming tools")
+    (unix . "UNIX feature interfaces and emulators")
+    (vc . "version control")
+    (wp . "word processing"))
+   #+end_example
+4. Use #' instead of ' for function symbols
+5. Use ‘-’ as a separator, not ‘/’.
+6. Consider reading:
+   https://github.com/bbatsov/emacs-lisp-style-guide#the-emacs-lisp-style-guide
+7. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+   - Symbols =nil, t= should not appear in single quotes.
+8. Ensure it byte-compiles without any problems.
+9. Ensure that package-linter raises no issues; i.e., the following has no result.
+    #+BEGIN_SRC emacs-lisp
+(use-package package-lint)
+(-let [it "org-special-block-extras.el"]
+ (ignore-errors (kill-buffer it))
+ (find-file-other-window it)
+ (package-lint-buffer it))
+#+END_SRC
+10. Create a recipe file by invoking: M-x package-build-create-recipe
+    - Place it in: melpa/recipes/
+    - The name of the file should be the name of the package, no extension.
+
+       #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
+    (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
+    #+END_SRC
+11. Ensure the recipe builds successfully:
+    #+BEGIN_SRC shell
+    cd ~/melpa; rm ~/melpa/packages/org-special-block-extras-*; make recipes/org-special-block-extras
+    #+END_SRC
+
+    #+RESULTS:
+    : • Building package org-special-block-extras ...
+
+12. Ensure the package installs properly from within Emacs:
+
+      #+BEGIN_SRC emacs-lisp
+(package-install-file "~/melpa/packages/org-special-block-extras-20200417.238.el")
+#+END_SRC
+      #+RESULTS:
+      : #s(package-desc org-special-block-extras (20200417 238) "Twenty-four new custom blocks for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
+
+13. [@13] Produce a dedicated pull request branch
+
+    #+begin_src emacs-lisp
+    (magit-status "~/melpa")
+    #+end_src
+
+    + Now =b c= to checkout a new branch.
+    + Push this branch on your melpa fork.
+    + Go to the https://github.com/melpa/ repo and
+      there'll be a big green PR button ^_^
+* COMMENT Making ~README.org~
+  :PROPERTIES:
+  :CUSTOM_ID: COMMENT-Making-README-org
+  :END:
+
+  Evaluate the following source block with ~C-c C-c~ to produce a ~README~ file.
+
+#+NAME: make-readme
+#+BEGIN_SRC emacs-lisp
+(with-temp-buffer
+    (insert
+    "#+EXPORT_FILE_NAME: README.org
+     # HTML: <h1> Easily Making CheatSheets with Org-mode </h1>
+     ,#+OPTIONS: toc:nil d:nil
+     # Toc is displayed below at a strategic position.
+
+     {{{blurb}}}
+
+    :Hide:
+    ,*The listing sheet, as PDF, can be found
+     [[file:CheatSheet.pdf][here]]*,
+     or as a [[file:CheatSheet_Portrait.pdf][single column portrait]],
+     while below is an unruly html rendition.
+
+     # Markdown links: [title](target)
+    :End:
+
+     ,#+TOC: headlines 2
+     ,#+INCLUDE: org-special-block-extras.org
+    ")
+
+    ;; No code execution on export
+    ;; ⟪ For a particular block, we use “:eval never-export” ⟫
+    ;;
+    (let ((org-export-use-babel nil))
+      (org-mode)
+      ; (org-md-export-to-markdown)
+      ; (package-install 'toc-org)
+      (toc-org-mode)
+      (toc-org-insert-toc)
+      (setq org-export-exclude-tags (delete "TOC" org-export-exclude-tags))
+      ; (pop org-export-exclude-tags)
+      (org-org-export-to-org)
+      (add-to-list 'org-export-exclude-tags "TOC")
+      )
+)
+#+END_SRC
+
+#+RESULTS: make-readme
+| TOC | noexport |
+
+* Footnotes
+  :PROPERTIES:
+  :CUSTOM_ID: Footnotes
+  :END:
+
+[fn:1] See [[http://www.cs.nott.ac.uk/~pszgmh/fold.pdf][/A tutorial on the universality and expressiveness of fold/]] and
 [[http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/urs.pdf][/Unifying Structured Recursion Schemes/]]

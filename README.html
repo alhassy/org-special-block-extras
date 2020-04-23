@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-17 Fri 12:03 -->
+<!-- 2020-04-23 Thu 02:53 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -193,7 +193,7 @@
   .org-svg { width: 90%; }
   /*]]>*/-->
 </style>
-<link href="http://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
+<link href="https://alhassy.github.io/next-700-module-systems/prototype/org-notes-style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -266,282 +266,1118 @@ for the JavaScript code in this tag.
 <body>
 <div id="content">
 <h1 class="title">org-special-block-extras</h1>
-<div id="table-of-contents">
-<h2>Table of Contents</h2>
-<div id="text-table-of-contents">
-<ul>
-<li><a href="#Example-Use">1. Example Use</a></li>
-<li><a href="#Core-Utility">2. Core Utility</a></li>
-<li><a href="#orga66f0c0">3. Colours</a>
-<ul>
-<li><a href="#Examples">3.1. Examples</a></li>
-</ul>
-</li>
-<li><a href="#Parallel">4. Parallel</a></li>
-<li><a href="#argument-Extraction">5. <code>:argument:</code> Extraction</a></li>
-<li><a href="#editor-comments">6. Editor Comments</a>
-<ul>
-<li><a href="#Examples">6.1. Examples</a>
-<ul>
-<li><a href="#No-optional-arguments">6.1.1. No optional arguments</a></li>
-<li><a href="#Only-declaring-an-ed-editor">6.1.2. Only declaring an <code>:ed:</code> &#x2014;editor</a></li>
-<li><a href="#Empty-contents-no-editor-nothing">6.1.3. Empty contents, no editor, nothing</a></li>
-<li><a href="#With-a-replacewith-clause">6.1.4. With a <code>:replacewith:</code> clause</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#Folded-Details">7. Folded Details</a>
-<ul>
-<li><a href="#Example">7.1. Example</a></li>
-</ul>
-</li>
-</ul>
-</div>
+
+<div class="org-center">
+<p>
+<i><b>Warning: Incomplete!</b></i>
+</p>
 </div>
 
-<div id="outline-container-org80a56bf" class="outline-2">
-<h2 id="Example-Use"><span class="section-number-2">1</span> Example Use</h2>
-<div class="outline-text-2" id="text-Example-Use">
+<div class="org-center">
 <p>
-User type something along the lines of the following.
+<b>Abstract</b>
 </p>
-<pre class="example">
-#+begin_red org
-/This/
-      *text*
-             _is_
-                  red!
-#+end_red
-</pre>
-
+</div>
+<blockquote>
 <p>
-Which generates <i>red</i> text when exported to HTML and LaTeX,
-<b>while supporting Org markup</b>.
+The aim is to write something once using Org-mode markup
+then generate the markup for multiple backends.
+That is, <i><b>write once, generate many!</b></i>
 </p>
 
+<p>
+In particular, we are concerned with <i>‘custom’, or ‘special’, blocks</i> which
+delimit how a particular region of text is supposed to be formatted according to
+the possible export backends.  In some sense, special blocks are meta-blocks.
+Rather than writing text in, say, LaTeX environments using LaTeX commands or in
+HTML <code>div</code>'s using HTML tags, we promote using Org-mode markup in special blocks
+&#x2014;Org markup cannot be used explicitly within HTML or LaTeX environments.
+</p>
+
+<p>
+Consequently, we extend the number of block types available to the Emacs
+Org-mode user <b>without forcing the user</b> to learn HTML or LaTeX.
+Indeed, I am not a web developer and had to learn a number of HTML concepts
+in the process &#x2014;the average Org user should not have to do so.
+</p>
+
+<p>
+Similarly, we provide a number of ‘link types’ <code>[[linktype:label][description]]</code>
+for producing in-line coloured text and SVG “badges”.
+</p>
+
+<p>
+We begin with the first two sections serving as mini-tutorials on special blocks
+and on link types. The special block setup we use is <i>extensible</i> in that a new
+block named <code>𝒞</code> will automatically be supported if the user defines a function
+<code>org-special-block-extras--𝒞</code> that formats the text of a block.  *The remaining
+sections are literate implementation matter, along with examples and
+screenshots.*
+</p>
+
+<p>
+In summary, we provide 20 colour block types and 20 colour link types,
+an ‘editor comment’ block type as well as a link type,
+a ‘details’ block type, a ‘parallel’ multiple columns view block type,
+a ‘link here’ link type, and 8 badge link types.
+That is, <b>we provide 28 block types and 30 link types</b>.
+</p>
+</blockquote>
+
+<div class="org-center">
+<div class="tiny">
+<p>
+( Since we're only considering HTML &amp; LaTeX, the Github rendition of this
+article may not render things as desired. )
+</p>
+
+</div>
+</div>
 <blockquote>
 <p>
 This article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!
 </p>
 </blockquote>
 
+
+<div class="figure">
+<p><img src="images/foo_block.png" alt="foo_block.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>Extensibility! <i>Plug and play support for new block types!</i></p>
+</div>
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#Core-Utility">1. <i>How do I make a new special block?</i> &#x2014;Core Utility</a>
+<ul>
+<li><a href="#What-is-a-special-block">1.1. <i>What is a special block?</i></a></li>
+<li><a href="#Core-Utility">1.2. Core Utility</a></li>
+<li><a href="#argument-Extraction">1.3. <code>:argument:</code> Extraction</a></li>
+<li><a href="#COMMENT-An-Example-Special-Block-foo">1.4. An Example Special Block ---<code>foo</code></a></li>
+<li><a href="#org24979ba">1.5. Next Steps</a></li>
+</ul>
+</li>
+<li><a href="#Links">2. <i>How do I make a new link type?</i></a></li>
+<li><a href="#Colours">3. Colours</a>
+<ul>
+<li><a href="#org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors">3.1. <code>org-special-block-extras--𝒞</code> where <code>𝒞 ∈ org-special-block-extras--colors</code></a></li>
+<li><a href="#Examples">3.2. Block Examples</a></li>
+<li><a href="#Colour-Link-Types">3.3. Colour Link Types</a></li>
+<li><a href="#Next-Steps">3.4. Next Steps</a></li>
+</ul>
+</li>
+<li><a href="#Parallel">4. Parallel</a>
+<ul>
+<li><a href="#Example">4.1. Example</a></li>
+<li><a href="#Next-Steps">4.2. Next Steps</a></li>
+</ul>
+</li>
+<li><a href="#editor-comments">5. Editor Comments</a>
+<ul>
+<li><a href="#Examples">5.1. Block Examples</a></li>
+<li><a href="#Link-Type">5.2. Link Type</a></li>
+</ul>
+</li>
+<li><a href="#Folded-Details">6. Folded Details</a>
+<ul>
+<li><a href="#Example">6.1. Example</a></li>
+</ul>
+</li>
+<li><a href="#Link-Here-OctoIcons">7. <i>“Link Here!”</i> OctoIcon</a></li>
+<li><a href="#Badge-Links">8. Badge Links</a>
+<ul>
+<li><a href="#The-badge-Link">8.1. The <code>badge</code> Link and derived Reddit/Github/Twitter socials</a></li>
+<li><a href="#Example-Social-Icons">8.2. Example Social Icons</a></li>
+<li><a href="#Example-Badges">8.3. Example Badges</a></li>
+<li><a href="#Example-Colours">8.4. Example Colours</a></li>
+<li><a href="#Example-Badge-Icons">8.5. Example Badge Icons</a></li>
+<li><a href="#Common-Project-Badges">8.6. Common Project Badges</a></li>
+<li><a href="#Next-Steps">8.7. Next Steps</a></li>
+</ul>
+</li>
+<li><a href="#Summary">9. Summary</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgbea0307" class="outline-2">
+<h2 id="Core-Utility"><span class="section-number-2">1</span> <i>How do I make a new special block?</i> &#x2014;Core Utility</h2>
+<div class="outline-text-2" id="text-Core-Utility">
+</div>
+
+<div id="outline-container-orgcf38e0b" class="outline-3">
+<h3 id="What-is-a-special-block"><span class="section-number-3">1.1</span> <i>What is a special block?</i></h3>
+<div class="outline-text-3" id="text-What-is-a-special-block">
+<p>
+Our goal is to turn Org blocks into LaTeX environments and HTML divs.
+</p>
+
+<p>
+Why not use LaTeX or HTML environments directly?
+</p>
+<ul class="org-ul">
+<li>Can no longer use Org markup in such settings.</li>
+<li>Committed to one specific export type.</li>
+</ul>
+
+<div style="column-rule-style:solid;column-count:3;"<p>
+In general, a “special block” such as
+</p>
+<pre class="example">
+   #+begin_𝒳
+   I /love/ Emacs!
+   #+end_𝒳
+</pre>
+
+<p>
+
+</p>
+
+<p>
+Exports to LaTeX as:
+</p>
+<div class="org-src-container">
+<pre class="src src-latex">   <span style="color: #51afef;">\begin</span>{<span style="color: #5cEfFF;">&#119987;</span>}
+   I <span style="color: #51afef;">\emph</span>{<span style="font-style: italic;">love</span>} Emacs!
+   <span style="color: #51afef;">\end</span>{<span style="color: #5cEfFF;">&#119987;</span>}
+</pre>
+</div>
+
+<p>
+
+</p>
+
+<p>
+Exports to HTML as:
+</p>
+<div class="org-src-container">
+<pre class="src src-html">   &lt;<span style="color: #5cEfFF;">div</span> <span style="color: #DFDFDF;">class</span>=<span style="color: #7bc275;">"&#119987;"</span>&gt;
+   I &lt;<span style="color: #5cEfFF;">em</span>&gt;<span style="font-style: italic;">love</span>&lt;/<span style="color: #5cEfFF;">em</span>&gt; Emacs!
+   &lt;/<span style="color: #5cEfFF;">div</span>&gt;
+</pre>
+</div>
+</div>
+
 <div class="org-center">
 <p>
-( Since we're only considering HTML &amp; LaTeX, the Github rendition of this
-article may not render things as desired. )
+<i>Notice that the standard org markup is also translated according to the export
+type.</i>
 </p>
 </div>
-
-
-<div class="figure">
-<p><img src="images/colours.jpg" alt="colours.jpg" />
-</p>
-<p><span class="figure-number">Figure 1: </span>Write Org-markup once, generate for many backends ^_^</p>
-</div>
-
-
-<div class="figure">
-<p><img src="images/parallel.png" alt="parallel.png" />
-</p>
-<p><span class="figure-number">Figure 2: </span>Displaying thoughts side-by-side ^_^</p>
-</div>
-
-
-<div class="figure">
-<p><img src="images/edcomm.png" alt="edcomm.png" />
-</p>
-<p><span class="figure-number">Figure 3: </span>“First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
-</div>
-
-
-<div class="figure">
-<p><img src="images/details.png" alt="details.png" />
-</p>
-<p><span class="figure-number">Figure 4: </span>Visually hiding, folding away, details</p>
-</div>
-
 
 <p>
-The remaining sections are implementation matter.
+If the <code>𝒳</code> environment exists in a backend &#x2014;e.g., by some <code>\usepackage{⋯}</code> or
+manually with
+<code>\newenvironment{𝒳}{⋯}{⋯}</code> in LaTeX&#x2014; then the file will compile
+without error.  Otherwise, you need to ensure it exists &#x2014;e.g., by defining the
+backend formatting manually yourself.
+</p>
+
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Aside:</strong></span>
+
+LaTeX packages that a user needs consistently are declared in the
+ list <code>org-latex-packages-alist</code>. See its documentation, with <code>C-h o</code>,
+to learn more.  To export to your own LaTeX classes, <code>C-h o org-latex-classes</code>.
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+<p>
+A <code>div</code> tag defines a division or a section in an HTML document that is styled in
+a particular fashion or has JavaScript code applied to it.  For example
+&#x2014;placing the following in an <code>#+begin_export html ⋯ #+end_export</code>&#x2014; results in
+a section of text that is editable by the user &#x2014;i.e., one can just alter text
+in-place&#x2014; and its foreground colour is red, while its background colour is
+light blue, and it has an uninformative tooltip.
+</p>
+<div class="org-src-container">
+<pre class="src src-html">&lt;<span style="color: #5cEfFF;">div</span> <span style="color: #DFDFDF;">contenteditable</span>=<span style="color: #7bc275;">"true"</span>
+     <span style="color: #DFDFDF;">title</span>=<span style="color: #7bc275;">"woah, a tool tip!"</span>
+     <span style="color: #DFDFDF;">style</span>=<span style="color: #7bc275;">"color:red; background-color:lightblue"</span>&gt;
+This is <span style="text-decoration: underline;">some</span> text!
+&lt;/<span style="color: #5cEfFF;">div</span>&gt;
+</pre>
+</div>
+
+<p>
+To use a collection of style settings repeatedly, we may declare them in a <code>class</code>
+&#x2014;which is just a an alias for the ;-separated list of <code>attribute:value</code>
+pairs. Then our <code>div</code>'s refer to that particular <code>class</code> name.
+</p>
+
+<div style="column-rule-style:solid;column-count:2;"<p>
+For example, in an HTML export block, we may declare the following style class
+named <code>red</code>.
+</p>
+<pre class="example">
+#+begin_export html
+&lt;style&gt;
+.red { color:red; }
+&lt;/style&gt;
+#+end_export
+</pre>
+<p>
+
+Now, the above syntax with <code>𝒳</code> replaced by <code>red</code> works as desired in HTML export.
+</p>
+
+<span style="color:red;"><p>
+I <i>love</i> Emacs!
+</p>
+</span>
+
+<p>
+This, however, will not work if we want to produce LaTeX and so requires a
+duplication of efforts. We will declare such formatting once for each backend.
 </p>
 </div>
 </div>
-<div id="outline-container-orgd2d0e84" class="outline-2">
-<h2 id="Core-Utility"><span class="section-number-2">2</span> Core Utility</h2>
-<div class="outline-text-2" id="text-Core-Utility">
+</div>
+
+<div id="outline-container-org4608a49" class="outline-3">
+<h3 id="Core-Utility"><span class="section-number-3">1.2</span> Core Utility</h3>
+<div class="outline-text-3" id="text-Core-Utility">
+<p>
+The simplest route is to ‘advise’ &#x2014;i.e., function patch or overload&#x2014; the Org
+export utility for special blocks to consider calling a method
+<code>org-special-block-extras--𝒳</code> whenever it encounters a special block named <code>𝒳</code>.
+</p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Core utility</span>
+<pre class="src src-emacs-lisp">(<span style="color: #5cEfFF;">advice-add</span> #'<span style="color: #5cEfFF;">org-html-special-block</span>
+   <span style="color: #C57BDB;">:before-until</span> (<span style="color: #5cEfFF;">apply-partially</span> #'<span style="color: #5cEfFF;">org-special-block-extras--advice</span> 'html))
 
-(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--advice</span> (backend blk contents _)
-  <span style="color: #35a69c; font-style: italic;">"Invoke the appropriate custom block handler, if any.</span>
+(<span style="color: #5cEfFF;">advice-add</span> #'<span style="color: #5cEfFF;">org-latex-special-block</span>
+   <span style="color: #C57BDB;">:before-until</span> (<span style="color: #5cEfFF;">apply-partially</span> #'<span style="color: #5cEfFF;">org-special-block-extras--advice</span> 'latex))
+</pre>
+</div>
 
-<span style="color: #35a69c; font-style: italic;">A given custom block BLK has a TYPE extracted from it, then we</span>
-<span style="color: #35a69c; font-style: italic;">send the block CONTENTS along with the current export BACKEND to</span>
-<span style="color: #35a69c; font-style: italic;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS/TYPE if it is</span>
-<span style="color: #35a69c; font-style: italic;">defined, otherwise, we leave the CONTENTS of the block as is.</span>
+<p>
+Here is the actual advice:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--advice</span> (backend blk contents _)
+  <span style="color: #7e7e87;">"Invoke the appropriate custom block handler, if any.</span>
 
-<span style="color: #35a69c; font-style: italic;">We also support the seemingly useless blocks that have no</span>
-<span style="color: #35a69c; font-style: italic;">contents at all, not even an empty new line."</span>
-  (<span style="color: #859900; font-weight: bold;">let*</span> ((type    (<span style="color: #b58900;">nth</span> 1 (<span style="color: #b58900;">nth</span> 1 blk)))
-         (handler (<span style="color: #b58900;">intern</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"org-special-block-extras--%s"</span> type))))
-    (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend (<span style="color: #859900; font-weight: bold;">or</span> contents <span style="color: #2aa198;">""</span>) nil))))
+<span style="color: #7e7e87;">A given custom block BLK has a TYPE extracted from it, then we</span>
+<span style="color: #7e7e87;">send the block CONTENTS along with the current export BACKEND to</span>
+<span style="color: #7e7e87;">the formatting function ORG-SPECIAL-BLOCK-EXTRAS--TYPE if it is</span>
+<span style="color: #7e7e87;">defined, otherwise, we leave the CONTENTS of the block as is.</span>
 
-(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-html-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'html))
+<span style="color: #7e7e87;">We also support the seemingly useless blocks that have no</span>
+<span style="color: #7e7e87;">contents at all, not even an empty new line."</span>
+  (<span style="color: #51afef;">let*</span> ((type    (<span style="color: #5cEfFF;">nth</span> 1 (<span style="color: #5cEfFF;">nth</span> 1 blk)))
+         (handler (<span style="color: #5cEfFF;">intern</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"org-special-block-extras--%s"</span> type))))
+    (<span style="color: #51afef;">ignore-errors</span> (<span style="color: #5cEfFF;">apply</span> handler backend (<span style="color: #51afef;">or</span> contents <span style="color: #7bc275;">""</span>) nil))))
+</pre>
+</div>
 
-(<span style="color: #b58900;">advice-add</span> #'<span style="color: #b58900;">org-latex-special-block</span> <span style="color: #d33682; font-style: italic;">:before-until</span>
-            (<span style="color: #b58900;">-partial</span> #'<span style="color: #b58900;">org-special-block-extras--advice</span> 'latex))
+<p>
+<b>To support a new block named 𝒳:</b>
+</p>
+<ol class="org-ol">
+<li>Define a function <code>org-special-block-extras--𝒳</code>.</li>
+<li>It must take two arguments:
+<ul class="org-ul">
+<li><code>backend</code> ⇒ A symbol such as <code>'html</code> or <code>'latex</code>,</li>
+<li><code>content</code> ⇒ The string contents of the special block.</li>
+</ul></li>
+<li>The function must return a string, possibly depending on the backend being
+exported to. The resulting string is inserted literally in the exported file.</li>
+<li>Test out your function as in <code>(org-special-block-extras--𝒳 'html "some input")</code>
+&#x2014;this is a quick way to find errors.</li>
+<li>Enjoy ^_^</li>
+</ol>
+
+<div class="org-center">
+<p>
+If no such function is defined, we export <code>𝒳</code> blocks using the default
+mechanism, as discussed earlier, as a LaTeX environment or an HTML <code>div</code>.
+</p>
+</div>
+
+<p>
+An example is provided at the end of this section.
+</p>
+
+<p>
+Of-course, when the user disables our mode, then we remove such advice.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #5cEfFF;">advice-remove</span> #'<span style="color: #5cEfFF;">org-html-special-block</span>
+               (<span style="color: #5cEfFF;">apply-partially</span> #'<span style="color: #5cEfFF;">org-special-block-extras--advice</span> 'html))
+
+(<span style="color: #5cEfFF;">advice-remove</span> #'<span style="color: #5cEfFF;">org-latex-special-block</span>
+               (<span style="color: #5cEfFF;">apply-partially</span> #'<span style="color: #5cEfFF;">org-special-block-extras--advice</span> 'latex))
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orga66f0c0" class="outline-2">
-<h2 id="orga66f0c0"><span class="section-number-2">3</span> Colours</h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-orgc2c3602" class="outline-3">
+<h3 id="argument-Extraction"><span class="section-number-3">1.3</span> <code>:argument:</code> Extraction</h3>
+<div class="outline-text-3" id="text-argument-Extraction">
+<p>
+As far as I can tell, there is no way to provide arguments to special blocks.
+As such, the following utility looks for lines of the form <code>:argument: value</code>
+within the contents of a block and returns an updated contents string that no
+longer has such lines followed by an association list of such argument-value
+pairs.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--extract-arguments</span> (contents <span style="color: #FCCE7B;">&amp;rest</span> args)
+<span style="color: #7e7e87;">"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.</span>
+
+<span style="color: #7e7e87;">Example usage:</span>
+
+<span style="color: #7e7e87;">    (-let [(contents&#8242; . (&amp;alist 'k&#8320; &#8230; 'k&#8345;))</span>
+<span style="color: #7e7e87;">           (&#8230;extract-arguments contents 'k&#8320; &#8230; 'k&#8345;)]</span>
+<span style="color: #7e7e87;">          body)</span>
+
+<span style="color: #7e7e87;">Within &#8216;</span><span style="color: #a991f1;">body</span><span style="color: #7e7e87;">&#8217;, each &#8216;</span><span style="color: #a991f1;">k&#7522;</span><span style="color: #7e7e87;">&#8217; refers to the &#8216;</span><span style="color: #a991f1;">value</span><span style="color: #7e7e87;">&#8217; of argument</span>
+<span style="color: #7e7e87;">&#8216;</span><span style="color: #a991f1;">:k&#7522;:</span><span style="color: #7e7e87;">&#8217; in the CONTENTS text and &#8216;contents&#8242;&#8217; is CONTENTS</span>
+<span style="color: #7e7e87;">with all &#8216;</span><span style="color: #a991f1;">:k&#7522;:</span><span style="color: #7e7e87;">&#8217; lines stripped out.</span>
+
+<span style="color: #7e7e87;">+ If &#8216;</span><span style="color: #a991f1;">:k:</span><span style="color: #7e7e87;">&#8217; is not an argument in CONTENTS, then it is assigned value NIL.</span>
+<span style="color: #7e7e87;">+ If &#8216;</span><span style="color: #a991f1;">:k:</span><span style="color: #7e7e87;">&#8217; is an argument in CONTENTS but is not given a value in CONTENTS,</span>
+<span style="color: #7e7e87;">  then it has value the empty string."</span>
+  (<span style="color: #51afef;">let</span> ((ctnts contents)
+        (<span style="color: #5cEfFF;">values</span> (<span style="color: #51afef;">cl-loop</span> for a in args
+                         for regex <span style="color: #5cEfFF;">=</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">":%s:</span><span style="color: #C57BDB; font-weight: bold;">\\</span><span style="color: #C57BDB; font-weight: bold;">(</span><span style="color: #7bc275;">.*</span><span style="color: #C57BDB; font-weight: bold;">\\</span><span style="color: #C57BDB; font-weight: bold;">)</span><span style="color: #7bc275;">"</span> a)
+                         for v <span style="color: #5cEfFF;">=</span> (<span style="color: #5cEfFF;">cadr</span> (<span style="color: #5cEfFF;">s-match</span> regex contents))
+                         collect (<span style="color: #5cEfFF;">cons</span> a v))))
+    (<span style="color: #51afef;">cl-loop</span> for a in args
+             for regex <span style="color: #5cEfFF;">=</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">":%s:</span><span style="color: #C57BDB; font-weight: bold;">\\</span><span style="color: #C57BDB; font-weight: bold;">(</span><span style="color: #7bc275;">.*</span><span style="color: #C57BDB; font-weight: bold;">\\</span><span style="color: #C57BDB; font-weight: bold;">)</span><span style="color: #7bc275;">"</span> a)
+             <span style="color: #5cEfFF;">do</span> (<span style="color: #51afef;">setq</span> ctnts (<span style="color: #5cEfFF;">s-replace-regexp</span> regex <span style="color: #7bc275;">""</span> ctnts)))
+    (<span style="color: #5cEfFF;">cons</span> ctnts <span style="color: #5cEfFF;">values</span>)))
+</pre>
+</div>
+
+<p>
+For example, we use this feature to indicate when a column break should happen
+in a <code>parallel</code> block and which person is making editorial remarks in an
+<code>edcomm</code> block.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5673b4b" class="outline-3">
+<h3 id="COMMENT-An-Example-Special-Block-foo"><span class="section-number-3">1.4</span> An Example Special Block ---<code>foo</code></h3>
+<div class="outline-text-3" id="text-COMMENT-An-Example-Special-Block-foo">
+<p>
+Herein we show an example function <code>org-special-block-extras--𝒳</code> that makes use of
+arguments.  In a so-called <code>foo</code> block, all occurrences of the word <code>foo</code> are
+replaced by <code>bar</code> unless the argument <code>:replacement:</code> is given a value.
+</p>
+
+
+<div class="figure">
+<p><img src="images/foo_block.png" alt="foo_block.png" />
+</p>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--foo</span> (backend contents)
+  <span style="color: #7e7e87;">"The FOO block type replaces all occurances of &#8216;</span><span style="color: #a991f1;">foo</span><span style="color: #7e7e87;">&#8217; with &#8216;</span><span style="color: #a991f1;">bar</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">unless a &#8216;</span><span style="color: #a991f1;">:replacement:</span><span style="color: #7e7e87;">&#8217; is provided."</span>
+  (<span style="color: #51afef;">-let</span> [(contents&#8242; . (<span style="color: #FCCE7B;">&amp;alist</span> 'replacement))
+           (<span style="color: #5cEfFF;">org-special-block-extras--extract-arguments</span> contents 'replacement)]
+    (<span style="color: #5cEfFF;">s-replace</span> <span style="color: #7bc275;">"foo"</span> (<span style="color: #51afef;">or</span> replacement <span style="color: #7bc275;">"bar"</span>) contents&#8242;)))
+</pre>
+</div>
+
+<p>
+Here's an example usage:
+</p>
+<div style="column-rule-style:solid;column-count:2;"<pre class="example">
+#+begin_foo
+:replacement: woah
+I am foo; Indeed FoO is what I fOo!
+#+end_foo
+</pre>
+
+<p>
+
+</p>
+
+<p>
+
+I am  woah; Indeed  woah is what I  woah!
+</p>
+</div>
+
+<p>
+See the implementation matter of <code>edcomm</code> or <code>parallel</code> for a more involved definition
+that behaves differently depending on the export backend.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org24979ba" class="outline-3">
+<h3 id="org24979ba"><span class="section-number-3">1.5</span> Next Steps</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+<span style="color:orange;">Going forward,</span> it would be nice to have a set of switches that apply to all
+special blocks. For instance, <code>:ignore:</code> to simply bypass the user-defined
+behaviour of a block type, and <code>:noexport:</code> to zero-out a block upon export.
+These are super easy to do &#x2014;just need a few minutes to breath.  It may also be
+desirable to provide support for <a href="https://github.com/alhassy/emacs.d#html-folded-drawers">drawers</a>, and to ‘fuse’ the block-type and
+link-type approaches used here into one macro.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8c5e250" class="outline-2">
+<h2 id="Links"><span class="section-number-2">2</span> <i>How do I make a new link type?</i></h2>
+<div class="outline-text-2" id="text-Links">
+<p>
+Use <code>(org-link-set-parameters params)</code> to add a new link type
+&#x2014;an older obsolete method is <code>org-add-link-type</code>.
+The list of all supported link types is <code>org-link-parameters</code>;
+its documentation identifies the possibilities for <code>params</code>.
+</p>
+
+<p>
+Let's produce an example link type, then discuss its code.
+</p>
+
+<p>
+Intended usage:
+Raw use <a href="https://lmgtfy.com/?q=salam">salam</a> and descriptive, <a href="https://lmgtfy.com/?q=hola">using ‘example’ link type</a> ^_^
+<img src="images/example_link.png" alt="example_link.png" />
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #5cEfFF;">org-link-set-parameters</span>
+<span class="linenr"> 2: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">The name of the new link type, usage: &#8220;example:label&#8221;</span>
+<span id="coderef-extype" class="coderef-off"><span class="linenr"> 3: </span>  <span style="color: #7bc275;">"example"</span></span>
+<span class="linenr"> 4: </span>
+<span class="linenr"> 5: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">When you click on such links, &#8220;let me google that for you&#8221; happens</span>
+<span id="coderef-exfollow" class="coderef-off"><span class="linenr"> 6: </span>  <span style="color: #C57BDB;">:follow</span> (<span style="color: #51afef;">lambda</span> (label) (<span style="color: #5cEfFF;">browse-url</span> (<span style="color: #5cEfFF;">concat</span> <span style="color: #7bc275;">"https://lmgtfy.com/?q="</span> label)))</span>
+<span class="linenr"> 7: </span>
+<span class="linenr"> 8: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">Upon export, make it a &#8220;let me google that for you&#8221; link</span>
+<span id="coderef-exexport" class="coderef-off"><span class="linenr"> 9: </span>  <span style="color: #C57BDB;">:export</span> (<span style="color: #51afef;">lambda</span> (label description backend)</span>
+<span class="linenr">10: </span>            (<span style="color: #5cEfFF;">format</span> (<span style="color: #51afef;">pcase</span> backend
+<span class="linenr">11: </span>                      ('html <span style="color: #7bc275;">"&lt;a href=\"%s\"&gt;%s&lt;/a&gt;"</span>)
+<span class="linenr">12: </span>                      ('latex <span style="color: #7bc275;">"\\href{%s}{%s}"</span>)
+<span class="linenr">13: </span>                      (_ <span style="color: #7bc275;">"I don&#8217;t know how to export that!"</span>))
+<span class="linenr">14: </span>                    (<span style="color: #5cEfFF;">concat</span> <span style="color: #7bc275;">"https://lmgtfy.com/?q="</span> label)
+<span class="linenr">15: </span>                    (<span style="color: #51afef;">or</span> description label)))
+<span class="linenr">16: </span>
+<span class="linenr">17: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">These links should *never* be folded in descriptive display;</span>
+<span class="linenr">18: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">i.e., &#8220;[[example:lable][description]]&#8221; will always appear verbatim</span>
+<span class="linenr">19: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">and not hide the first pair [&#8230;].</span>
+<span id="coderef-exdisplay" class="coderef-off"><span class="linenr">20: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">:display 'full</span></span>
+<span class="linenr">21: </span>
+<span class="linenr">22: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">The tooltip alongside a link</span>
+<span id="coderef-exhelpecho" class="coderef-off"><span class="linenr">23: </span>  <span style="color: #C57BDB;">:help-echo</span> (<span style="color: #51afef;">lambda</span> (window object <span style="color: #5cEfFF;">position</span>)</span>
+<span class="linenr">24: </span>               (<span style="color: #51afef;">save-excursion</span>
+<span class="linenr">25: </span>                 (<span style="color: #5cEfFF;">goto-char</span> <span style="color: #5cEfFF;">position</span>)
+<span class="linenr">26: </span>                 (<span style="color: #51afef;">-let*</span> (((<span style="color: #FCCE7B;">&amp;plist</span> <span style="color: #C57BDB;">:path</span> <span style="color: #C57BDB;">:format</span> <span style="color: #C57BDB;">:raw-link</span> <span style="color: #C57BDB;">:contents-begin</span> <span style="color: #C57BDB;">:contents-end</span>)
+<span class="linenr">27: </span>                          (<span style="color: #5cEfFF;">cadr</span> (<span style="color: #5cEfFF;">org-element-context</span>)))
+<span class="linenr">28: </span>                         <span style="color: #62686E;">;; </span><span style="color: #62686E;">(org-element-property :path (org-element-context))</span>
+<span class="linenr">29: </span>                         (description
+<span class="linenr">30: </span>                          (<span style="color: #51afef;">when</span> (<span style="color: #5cEfFF;">equal</span> <span style="color: #5cEfFF;">format</span> 'bracket)
+<span class="linenr">31: </span>                            (<span style="color: #5cEfFF;">copy-region-as-kill</span> contents-begin contents-end)
+<span class="linenr">32: </span>                            (<span style="color: #5cEfFF;">substring-no-properties</span> (<span style="color: #5cEfFF;">car</span> <span style="color: #DFDFDF;">kill-ring</span>)))))
+<span class="linenr">33: </span>                   (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"&#8220;%s&#8221; :: Let me google &#8220;%s&#8221; for you -__-"</span>
+<span class="linenr">34: </span>                           (<span style="color: #51afef;">or</span> description raw-link) (<span style="color: #5cEfFF;">pp</span> window)))))
+<span class="linenr">35: </span>
+<span class="linenr">36: </span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">How should these links be displayed</span>
+<span id="coderef-exface" class="coderef-off"><span class="linenr">37: </span>  <span style="color: #C57BDB;">:face</span> '(<span style="color: #C57BDB;">:foreground</span> <span style="color: #7bc275;">"red"</span> <span style="color: #C57BDB;">:weight</span> <span style="color: #bbc2cf; background-color: #242730;">bold</span></span>
+<span class="linenr">38: </span>          <span style="color: #C57BDB;">:underline</span> <span style="color: #7bc275;">"orange"</span> <span style="color: #C57BDB;">:overline</span> <span style="color: #7bc275;">"orange"</span>))
+</pre>
+</div>
+
+<dl class="org-dl">
+<dt>Line <a href="#coderef-extype" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-extype');" onmouseout="CodeHighlightOff(this, 'coderef-extype');">3</a> <code>"example"</code></dt><dd><p>
+Add a new <code>example</code> link type.
+</p>
+<ul class="org-ul">
+<li>If the type already exists, update it with the given arguments.</li>
+</ul>
+
+<p>
+The syntax for a raw link is <code>example:path</code>
+and for the bracketed descriptive form <code>[[example:path][description]]</code>.
+</p>
+
+<ul class="org-ul">
+<li>Some of my intended uses for links including colouring text and doing
+nothing else, as such the terminology ‘path’ is not sufficiently generic and
+so I use the designation ‘label’ instead.</li>
+</ul></dd>
+
+<dt>Line <a href="#coderef-exfollow" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-exfollow');" onmouseout="CodeHighlightOff(this, 'coderef-exfollow');">6</a> <code>:follow</code></dt><dd><p>
+What should happen when a user clicks on such links?
+</p>
+
+<p>
+This is a function taking the link path as the single argument and does
+whatever is necessary to “follow the link”, for example find a file or display
+a message. In our case, we open the user's browser and go to a particular URL.
+</p></dd>
+
+<dt>Line <a href="#coderef-exexport" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-exexport');" onmouseout="CodeHighlightOff(this, 'coderef-exexport');">9</a> <code>:export</code></dt><dd><p>
+How should this link type be exported to HTML, LaTeX, etc?
+</p>
+
+<p>
+This is a three-argument function that formats the link according to the given
+backend, the resulting string value os placed literally into the exported
+file. Its arguments are:
+</p>
+
+<ol class="org-ol">
+<li><code>label</code> ⇒ the path of the link, the text after the link type prefix</li>
+<li><code>description</code> ⇒ the description of the link, if any</li>
+<li><code>backend</code> ⇒ the export format, a symbol like <code>html</code> or <code>latex</code> or <code>ascii</code>.</li>
+</ol>
+
+<p>
+In our example above, we return different values depending on the <code>backend</code>
+value.
+</p>
+
+<ul class="org-ul">
+<li>If <code>:export</code> is not provided, default Org-link exportation happens.</li>
+</ul></dd>
+
+<dt>Line <a href="#coderef-exdisplay" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-exdisplay');" onmouseout="CodeHighlightOff(this, 'coderef-exdisplay');">20</a> <code>:display</code></dt><dd>Should links be prettily folded away when a description
+is provided?</dd>
+
+<dt>Line <a href="#coderef-exhelpecho" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-exhelpecho');" onmouseout="CodeHighlightOff(this, 'coderef-exhelpecho');">23</a> <code>:help-echo</code></dt><dd><p>
+What should happen when the user's mouse is over
+the link?
+</p>
+
+<p>
+This is <b>either a string or a string-valued function</b> that takes the current
+window, the current buffer object, and its position in the current window.
+</p>
+
+<p>
+In our example link, we go to the position of the object, destructure the Org
+link's properties using <code>-let</code>, find the description of the link, if any, then
+provide a string based on the link's path and description.
+</p>
+
+<details class="code-details"> <summary> <strong> <font face="Courier" size="3" color="green"> <code>help-echo</code> is a general textual property </font> </strong> </summary> <p>
+
+</p>
+
+<p>
+We may use <code>help-echo</code> to attach tooltips to arbitrary text in a file, as
+follows. I have found this to be useful in <a href="https://alhassy.github.io/next-700-module-systems/prototype/package-former.html"><b>metaprogramming</b></a> to have
+elaborated, generated, code shown as a tooltip attached to its named
+specification.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #62686E;">;; </span><span style="color: #62686E;">Nearly instantaneous display of tooltips.</span>
+(<span style="color: #51afef;">setq</span> <span style="color: #5cEfFF;">tooltip-delay</span> 0)
+
+<span style="color: #62686E;">;; </span><span style="color: #62686E;">Give user 30 seconds before tooltip automatically disappears.</span>
+(<span style="color: #51afef;">setq</span> <span style="color: #DFDFDF;">tooltip-hide-delay</span> 300)
+
+(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">tooltipify</span> (phrase notification <span style="color: #FCCE7B;">&amp;optional</span> <span style="color: #bbc2cf; background-color: #242730;">underline</span>)
+  <span style="color: #7e7e87;">"Add a tooltip to every instance of PHRASE to show NOTIFICATION.</span>
+
+<span style="color: #7e7e87;">We only add tooltips to PHRASE as a standalone word, not as a subword.</span>
+
+<span style="color: #7e7e87;">If UNDERLINE is provided, we underline the given PHRASE so as to</span>
+<span style="color: #7e7e87;">provide a visual clue that it has a tooltip attched to it.</span>
+
+<span style="color: #7e7e87;">The PHRASE is taken literally; no regexp operators are recognised."</span>
+  (<span style="color: #51afef;">assert</span> (<span style="color: #5cEfFF;">stringp</span> phrase))
+  (<span style="color: #51afef;">assert</span> (<span style="color: #5cEfFF;">stringp</span> notification))
+  (<span style="color: #51afef;">save-excursion</span>  <span style="color: #62686E;">;; </span><span style="color: #62686E;">Return cursour to current-point afterwards.</span>
+    (<span style="color: #5cEfFF;">goto-char</span> 1)
+    <span style="color: #62686E;">;; </span><span style="color: #62686E;">The \b are for empty-string at the start or end of a word.</span>
+    (<span style="color: #51afef;">while</span> (<span style="color: #5cEfFF;">search-forward-regexp</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"\\b%s\\b"</span> (<span style="color: #5cEfFF;">regexp-quote</span> phrase))
+                                  (<span style="color: #5cEfFF;">point-max</span>) <span style="color: #DFDFDF;">t</span>)
+      <span style="color: #62686E;">;; </span><span style="color: #62686E;">(add-text-properties x y ps)</span>
+      <span style="color: #62686E;">;; </span><span style="color: #62686E;">&#8658; Override properties ps for all text between x and y.</span>
+      (<span style="color: #5cEfFF;">add-text-properties</span> (<span style="color: #5cEfFF;">match-beginning</span> 0)
+                           (<span style="color: #5cEfFF;">match-end</span> 0)
+                           (<span style="color: #5cEfFF;">list</span> 'help-echo (<span style="color: #5cEfFF;">s-trim</span> notification)))))
+ <span style="color: #62686E;">;; </span><span style="color: #62686E;">Example use</span>
+(<span style="color: #5cEfFF;">tooltipify</span>
+  <span style="color: #7bc275;">"Line"</span>
+  <span style="color: #7bc275;">"A sequential formatation of entities or the trace of a particle in linear motion"</span>)
+</pre>
+</div>
+
+<p>
+Useful info on tooltips:
+</p>
+<ul class="org-ul">
+<li><a href="https://www.gnu.org/software/emacs/manual/html_node/elisp/Changing-Properties.html">Changing text properties &#x2014;GNU</a></li>
+<li><a href="http://kitchingroup.cheme.cmu.edu/blog/2013/04/12/Tool-tips-on-text-in-Emacs/">Tooltips on text in Emacs &#x2014;Kitchin</a></li>
+<li><a href="http://kitchingroup.cheme.cmu.edu/blog/2016/03/16/Getting-graphical-feedback-as-tooltips-in-Emacs/">Getting graphical feedback as tooltips in Emacs &#x2014;Kitchin</a></li>
+<li><a href="https://stackoverflow.com/questions/293853/defining-new-tooltips-in-emacs">Defining new tooltips in Emacs &#x2014;Stackoverflow</a></li>
+</ul>
+ </details></dd>
+
+<dt>Line <a href="#coderef-exface" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-exface');" onmouseout="CodeHighlightOff(this, 'coderef-exface');">37</a> <code>:face</code></dt><dd><p>
+What textual properties do these links possess?
+</p>
+
+<p>
+This is <b>either a face or a face-valued function</b> that takes the current link's
+path label as the only argument. That is, we could change the face according
+to the link's label &#x2014;which is what we will do for the <code>color</code> link type as in
+<code>[[color:brown][hello]]</code> will be rendered in brown text.
+</p>
+
+<ul class="org-ul">
+<li>If <code>:face</code> is not provided, the default underlined blue face for Org links is used.</li>
+<li><a href="https://www.gnu.org/software/emacs/manual/html_node/elisp/Faces.html">Learn more about faces!</a></li>
+</ul></dd>
+
+<dt>More</dt><dd>See <code>docs:org-link-parameters</code> for documentation on more parameters.</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-orgbfa9b8d" class="outline-2">
+<h2 id="Colours"><span class="section-number-2">3</span> Colours</h2>
+<div class="outline-text-2" id="text-Colours">
+<p>
+Let's develop blocks for colouring text and link types for inline
+colouring.
+</p>
+<ul class="org-ul">
+<li>Use <code>M-x list-colors-display</code> to see a list of defined colour names.</li>
+</ul>
+
 
 <div class="figure">
 <p><img src="images/colours.jpg" alt="colours.jpg" />
 </p>
 </div>
+</div>
+
+<div id="outline-container-org61fcc4d" class="outline-3">
+<h3 id="org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors"><span class="section-number-3">3.1</span> <code>org-special-block-extras--𝒞</code> where <code>𝒞 ∈ org-special-block-extras--colors</code></h3>
+<div class="outline-text-3" id="text-org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors">
+<p>
+We declare a list of colors that should be available on most systems.  Then
+using this list, we evaluate the code necessary to produce the necessary
+functions that format special blocks.
+</p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
-<span style="color: #96A7A9; font-style: italic;">;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Load support for 19 colour custom blocks</span>
-
-(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--colors</span>
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defvar</span> <span style="color: #DFDFDF;">org-special-block-extras--colors</span>
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
-  <span style="color: #35a69c; font-style: italic;">"Colours that should be available on all systems."</span>)
+  <span style="color: #7e7e87;">"Colours that should be available on all systems."</span>)
 
-(<span style="color: #859900; font-weight: bold;">loop</span> for colour in <span style="color: #268bd2;">org-special-block-extras--colors</span>
-      <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">format</span>
-                      <span style="color: #2aa198;">"(defun org-special-block-extras--%s (backend contents)</span>
-<span style="color: #2aa198;">                     (format (pcase backend</span>
-<span style="color: #2aa198;">                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\")</span>
-<span style="color: #2aa198;">                     (`html  \"&lt;div style=\\\"color:%s;\\\"&gt;%%s&lt;/div&gt;\")</span>
-<span style="color: #2aa198;">                     (t      \"org-special-block-extras: Unsupported backend\"))</span>
-<span style="color: #2aa198;">                     contents))"</span>
+(<span style="color: #51afef;">cl-loop</span> for colour in <span style="color: #DFDFDF;">org-special-block-extras--colors</span>
+      <span style="color: #5cEfFF;">do</span> (<span style="color: #5cEfFF;">eval</span> (<span style="color: #5cEfFF;">read</span> (<span style="color: #5cEfFF;">format</span>
+                      <span style="color: #7bc275;">"(defun org-special-block-extras--%s (backend contents)</span>
+<span style="color: #7bc275;">                     (format (pcase backend</span>
+<span style="color: #7bc275;">                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")</span>
+<span style="color: #7bc275;">                     (`html  \"&lt;span style=\\\"color:%s;\\\"&gt;%%s&lt;/span&gt;\"))</span>
+<span style="color: #7bc275;">                     contents))"</span>
                       colour colour colour))))
 </pre>
 </div>
+
+<p>
+For faster experimentation between colours, we provide a generic <code>color</code> block
+that consumes a <code>:color:</code> argument.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--color</span> (backend contents)
+  <span style="color: #7e7e87;">"Format CONTENTS according to the &#8216;</span><span style="color: #a991f1;">:color:</span><span style="color: #7e7e87;">&#8217; they specify for BACKEND."</span>
+  (<span style="color: #51afef;">-let*</span> (((contents&#8242; . (<span style="color: #FCCE7B;">&amp;alist</span> 'color))
+           (<span style="color: #5cEfFF;">org-special-block-extras--extract-arguments</span> contents 'color))
+         (block-coloring
+          (<span style="color: #5cEfFF;">intern</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"org-special-block-extras--%s"</span> (<span style="color: #5cEfFF;">s-trim</span> color)))))
+    (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">member</span> (<span style="color: #5cEfFF;">intern</span> (<span style="color: #5cEfFF;">s-trim</span> color)) <span style="color: #DFDFDF;">org-special-block-extras--colors</span>)
+        (<span style="color: #5cEfFF;">funcall</span> block-coloring backend contents&#8242;)
+      (<span style="color: #FCCE7B;">error</span> <span style="color: #7bc275;">"Error: &#8220;#+begin_color:%s&#8221; &#8658; Unsupported colour!"</span> color))))
+</pre>
 </div>
 
-<div id="outline-container-org14e84dd" class="outline-3">
-<h3 id="Examples"><span class="section-number-3">3.1</span> Examples</h3>
+<p>
+For example:
+</p>
+<span style="color:green;"><p>
+
+Hello, friends!
+</p>
+</span>
+</div>
+</div>
+
+<div id="outline-container-orgf8426b8" class="outline-3">
+<h3 id="Examples"><span class="section-number-3">3.2</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
-<div style="color:black;"><p>
+<div style="column-rule-style:solid;column-count:2;"<span style="color:black;"><p>
 This text is black!
 </p>
-</div>
+</span>
 
-<div style="color:blue;"><p>
+<span style="color:blue;"><p>
 This text is blue!
 </p>
-</div>
+</span>
 
-<div style="color:brown;"><p>
+<span style="color:brown;"><p>
 This text is brown!
 </p>
-</div>
+</span>
 
-<div style="color:cyan;"><p>
+<span style="color:cyan;"><p>
 This text is cyan!
 </p>
-</div>
+</span>
 
-<div style="color:darkgray;"><p>
+<span style="color:darkgray;"><p>
 This text is darkgray!
 </p>
-</div>
+</span>
 
-<div style="color:gray;"><p>
+<span style="color:gray;"><p>
 This text is gray!
 </p>
-</div>
+</span>
 
-<div style="color:green;"><p>
+<span style="color:green;"><p>
 This text is green!
 </p>
-</div>
+</span>
 
-<div style="color:lightgray;"><p>
+<span style="color:lightgray;"><p>
 This text is lightgray!
 </p>
-</div>
+</span>
 
-<div style="color:lime;"><p>
+<span style="color:lime;"><p>
 This text is lime!
 </p>
-</div>
+</span>
 
-<div style="color:magenta;"><p>
+<span style="color:magenta;"><p>
 This text is magenta!
 </p>
-</div>
+</span>
 
-<div style="color:olive;"><p>
+<span style="color:olive;"><p>
 This text is olive!
 </p>
-</div>
+</span>
 
-<div style="color:orange;"><p>
+<span style="color:orange;"><p>
 This text is orange!
 </p>
-</div>
+</span>
 
-<div style="color:pink;"><p>
+<span style="color:pink;"><p>
 This text is pink!
 </p>
-</div>
+</span>
 
-<div style="color:purple;"><p>
+<span style="color:purple;"><p>
 This text is purple!
 </p>
-</div>
+</span>
 
-<div style="color:red;"><p>
+<span style="color:red;"><p>
 This text is red!
 </p>
-</div>
+</span>
 
-<div style="color:teal;"><p>
+<span style="color:teal;"><p>
 This text is teal!
 </p>
-</div>
+</span>
 
-<div style="color:violet;"><p>
+<span style="color:violet;"><p>
 This text is violet!
 </p>
-</div>
+</span>
 
-<div style="color:white;"><p>
+<span style="color:white;"><p>
 This text is white!
 </p>
+</span>
+
+<span style="color:yellow;"><p>
+This text is yellow!
+</p>
+</span>
+</div>
+</div>
+</div>
+<div id="outline-container-orgad548ef" class="outline-3">
+<h3 id="Colour-Link-Types"><span class="section-number-3">3.3</span> Colour Link Types</h3>
+<div class="outline-text-3" id="text-Colour-Link-Types">
+<p>
+We want the syntax <code>red:text</code> to <i>render</i> ‘text’ with the colour red
+in <b>both</b> the Emacs interface and in exported backends.
+</p>
+
+
+<div class="figure">
+<p><img src="images/colour_links.png" alt="colour_links.png" />
+</p>
 </div>
 
-<div style="color:yellow;"><p>
-This text is yellow!
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #62686E;">;; </span><span style="color: #62686E;">[[&#119966;:text&#8320;][text&#8321;]] &#8658; Colour &#8216;</span><span style="color: #a991f1;">text&#8342;</span><span style="color: #62686E;">&#8217; by &#119966;, where k is 1, if present, otherwise 0.</span>
+<span style="color: #62686E;">;; </span><span style="color: #62686E;">If text&#8321; is present, it is suggested to use &#8216;</span><span style="color: #a991f1;">color:&#119966;</span><span style="color: #62686E;">&#8217;, defined below.</span>
+(<span style="color: #51afef;">cl-loop</span> for colour in <span style="color: #DFDFDF;">org-special-block-extras--colors</span>
+         <span style="color: #5cEfFF;">do</span> (<span style="color: #5cEfFF;">org-link-set-parameters</span>
+             (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"%s"</span> colour)
+              <span style="color: #C57BDB;">:follow</span> `(<span style="color: #51afef;">lambda</span> (path) (<span style="color: #5cEfFF;">message</span> <span style="color: #7bc275;">"Colouring &#8220;%s&#8221; %s."</span> path (<span style="color: #51afef;">quote</span> ,colour)))
+              <span style="color: #C57BDB;">:export</span> `(<span style="color: #51afef;">lambda</span> (label description backend)
+                        (<span style="color: #51afef;">-let</span> [block-colouring
+                               (<span style="color: #5cEfFF;">intern</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"org-special-block-extras--%s"</span> (<span style="color: #51afef;">quote</span> ,colour)))]
+                          (<span style="color: #5cEfFF;">funcall</span> block-colouring backend (<span style="color: #51afef;">or</span> description label))))
+              <span style="color: #C57BDB;">:face</span> `(<span style="color: #C57BDB;">:foreground</span> ,(<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"%s"</span> colour))))
+
+<span style="color: #62686E;">;; </span><span style="color: #62686E;">Generic &#8216;</span><span style="color: #a991f1;">color</span><span style="color: #62686E;">&#8217; link type [[color:&#119966;][text]] &#8658; Colour &#8216;</span><span style="color: #a991f1;">text</span><span style="color: #62686E;">&#8217; by &#119966;.</span>
+<span style="color: #62686E;">;; </span><span style="color: #62686E;">If &#119966; is an unsupported colour, &#8216;</span><span style="color: #a991f1;">text</span><span style="color: #62686E;">&#8217; is rendered in large font</span>
+<span style="color: #62686E;">;; </span><span style="color: #62686E;">and surrounded by red lines.</span>
+(<span style="color: #5cEfFF;">org-link-set-parameters</span> <span style="color: #7bc275;">"color"</span>
+   <span style="color: #C57BDB;">:follow</span> (<span style="color: #51afef;">lambda</span> (_))
+   <span style="color: #C57BDB;">:face</span> (<span style="color: #51afef;">lambda</span> (colour)
+           (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">member</span> (<span style="color: #5cEfFF;">intern</span> colour) <span style="color: #DFDFDF;">org-special-block-extras--colors</span>)
+               `(<span style="color: #C57BDB;">:foreground</span> ,(<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"%s"</span> colour))
+             `(<span style="color: #C57BDB;">:height</span> 300
+               <span style="color: #C57BDB;">:underline</span> (<span style="color: #C57BDB;">:color</span> <span style="color: #7bc275;">"red"</span> <span style="color: #C57BDB;">:style</span> wave)
+               <span style="color: #C57BDB;">:overline</span>  <span style="color: #7bc275;">"red"</span> <span style="color: #C57BDB;">:strike-through</span> <span style="color: #7bc275;">"red"</span>)))
+ <span style="color: #C57BDB;">:help-echo</span> (<span style="color: #51afef;">lambda</span> (window object <span style="color: #5cEfFF;">position</span>)
+              (<span style="color: #51afef;">save-excursion</span>
+                (<span style="color: #5cEfFF;">goto-char</span> <span style="color: #5cEfFF;">position</span>)
+                (<span style="color: #51afef;">-let*</span> (((<span style="color: #FCCE7B;">&amp;plist</span> <span style="color: #C57BDB;">:path</span>) (<span style="color: #5cEfFF;">cadr</span> (<span style="color: #5cEfFF;">org-element-context</span>))))
+                  (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">member</span> (<span style="color: #5cEfFF;">intern</span> path) <span style="color: #DFDFDF;">org-special-block-extras--colors</span>)
+                      <span style="color: #7bc275;">"Colour links just colour the descriptive text"</span>
+                    (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"Error: &#8220;color:%s&#8221; &#8658; Unsupported colour!"</span> path)))))
+   <span style="color: #C57BDB;">:export</span> (<span style="color: #51afef;">lambda</span> (colour description backend)
+             (<span style="color: #51afef;">-let</span> [block-colouring
+                    (<span style="color: #5cEfFF;">intern</span> (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"org-special-block-extras--%s"</span> colour))]
+               (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">member</span> (<span style="color: #5cEfFF;">intern</span> colour) <span style="color: #DFDFDF;">org-special-block-extras--colors</span>)
+                   (<span style="color: #5cEfFF;">funcall</span> block-colouring backend description)
+                 (<span style="color: #FCCE7B;">error</span> <span style="color: #7bc275;">"Error: &#8220;color:%s&#8221; &#8658; Unsupported colour!"</span> colour)))))
+</pre>
+</div>
+
+<p>
+Observe: <span style="color:red;">this</span> <span style="color:green;">is</span> <span style="color:cyan;">super</span> <span style="color:teal;">neato</span>, <span style="color:purple;">amigos</span>! and <span style="color:brown;">this is
+brown ‘color’ link</span> and <span style="color:orange;">this one is an orange ‘color’ link!</span>
+</p>
+
+<p>
+Also: If we try to use an unsupported colour ‘wombo’, we render the descriptive
+text larger in Emacs along with a tooltip explaining why this is the case;
+e.g.,
+<code>[[color:wombo][hi]]</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3823f87" class="outline-3">
+<h3 id="Next-Steps"><span class="section-number-3">3.4</span> Next Steps</h3>
+<div class="outline-text-3" id="text-Next-Steps">
+<p>
+Before indicating desirable next steps, let us produce an incidentally useful
+special block type.
+</p>
+
+<p>
+We may use LaTeX-style commands such as <code>{\color{red} x}</code> by enclosing them in
+<code>$</code>-symbols to obtain \({\color{red}x}\) and other commands to present mathematical
+formulae in HTML.  This is known as the MathJax tool &#x2014;Emacs' default HTML
+export includes it.
+</p>
+
+<p>
+It is common to declare LaTeX definitions for convenience, but such
+declarations occur within <code>$</code>-delimiters and thereby produce undesirable extra
+whitespace. We declare the <code>latex_definitions</code> block type which avoids
+displaying such extra whitespace in the resulting HTML.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--latex-definitions</span> (backend contents)
+  <span style="color: #7e7e87;">"Declare but do not display the CONTENTS according to the BACKEND."</span>
+  (<span style="color: #51afef;">loop</span> for (this that) in (<span style="color: #5cEfFF;">-partition</span> 2 '(<span style="color: #7bc275;">"&lt;p&gt;"</span> <span style="color: #7bc275;">""</span>
+                                           <span style="color: #7bc275;">"&lt;/p&gt;"</span> <span style="color: #7bc275;">""</span>
+                                           <span style="color: #7bc275;">"\\{"</span> <span style="color: #7bc275;">"{"</span>
+                                           <span style="color: #7bc275;">"\\}"</span> <span style="color: #7bc275;">"}"</span>))
+        <span style="color: #5cEfFF;">do</span> (<span style="color: #51afef;">setq</span> contents (<span style="color: #5cEfFF;">s-replace</span> this that contents)))
+  (<span style="color: #5cEfFF;">format</span> (<span style="color: #51afef;">pcase</span> backend
+            (`latex <span style="color: #7bc275;">"%s"</span>)
+            (`html <span style="color: #7bc275;">"&lt;p style=\"display:none\"&gt;\\[</span><span style="color: #a991f1;">%s\\</span><span style="color: #7bc275;">]&lt;/p&gt;"</span>))
+          contents))
+</pre>
+</div>
+<ul class="org-ul">
+<li><p>
+Org escapes <code>{,}</code> in LaTeX export, so we need to ‘unescape’ them.
+This is clearly a hack.
+</p>
+
+<p>
+Here is an example usage, where we declare <code>\LL</code> to produce a violet left
+parenthesis. We then use these to produce an example of linear quantification
+notation &#x2014;also known as Z-notation.
+</p>
+<p style="display:none">\[
+\def\LL{\color{violet}(}
+\def\RR{\color{violet})}
+
+\]</p>
+<p>
+\[
+ {\color{teal}\bigoplus}
+ _{   {\color{violet} x}
+    = {\color{red} a}}
+ ^{\color{cyan} b}
+    {\color{brown}{\,f\, x}}
+ \quad=\quad
+            {\color{brown}{f\,\LL  {\color{red} a} \RR}}
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 1 \RR }}
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 2 \RR }}
+ \;{\color{teal}\oplus}\; \cdots
+ \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL {\color{cyan} b} \RR}}
+ \]
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><span style="color:teal;">⊕</span></td>
+<td class="org-left"><i>Loop sequentially with loop-bodies fused using <span style="color:teal;">⊕</span></i></td>
+</tr>
+
+<tr>
+<td class="org-left"><i><span style="color:violet;">x</span></i></td>
+<td class="org-left"><i>Use <span style="color:violet;">x</span> as the name of the current element</i></td>
+</tr>
+
+<tr>
+<td class="org-left"><i><span style="color:red;">a</span></i></td>
+<td class="org-left"><i>Start with <span style="color:violet;">x</span> being <span style="color:red;">a</span></i></td>
+</tr>
+
+<tr>
+<td class="org-left"><i><span style="color:cyan;">b</span></i></td>
+<td class="org-left"><i>End with <span style="color:violet;">x</span> being <span style="color:cyan;">b</span></i></td>
+</tr>
+
+<tr>
+<td class="org-left"><i><span style="color:brown;">f x</span></i></td>
+<td class="org-left"><i>At each <span style="color:violet;">x</span> value, compute <span style="color:brown;">f x</span></i></td>
+</tr>
+</tbody>
+</table></li>
+</ul>
+
+<p>
+Unfortunately, MathJax does not easily support arbitrary HTML elements to occur
+within the <code>$</code>-delimiters &#x2014;see <a href="https://stackoverflow.com/questions/58883048/mathjax-or-similar-render-arbitrary-html-element-inside-expression">this</a> and <a href="https://github.com/mathjax/MathJax/issues/1707">this</a> for ‘workarounds’.  As such, the
+MathJax producing the Z-notation example is rather ugly whereas its subsequent
+explanatory table is prettier on the writer's side.
+</p>
+
+<p>
+<span style="color:orange;">Going forward,</span> it would be nice to easily have our colour links work within
+a mathematical special block.
 </p>
 </div>
 </div>
 </div>
-</div>
-
-<div id="outline-container-org5095dfd" class="outline-2">
+<div id="outline-container-orgd8186e9" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
+<p>
+We want to be able to reduce the amount of whitespace noise in our articles, and
+so use the <code>parallel</code> block to place ideas side-by-side &#x2014;with up to the chosen
+limit of 5 columns.
+</p>
+
 
 <div class="figure">
 <p><img src="images/parallel.png" alt="parallel.png" />
 </p>
-<p><span class="figure-number">Figure 6: </span>Displaying thoughts side-by-side ^_^</p>
+<p><span class="figure-number">Figure 5: </span>Displaying thoughts side-by-side ^_^ Top is browser, then Emacs, then PDF</p>
 </div>
 
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><code>#+LATEX_HEADER: \usepackage{multicol}</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+I initially used the names <code>parallel𝓃</code> but names ending with a number <code>𝓃</code> did not
+inherit highlighting, so I shifted the number to being a prefix instead.
+</p>
+<ul class="org-ul">
+<li>For LaTeX, new lines are used to suggest opportunities for column breaks
+and are needed even if explicit columnbreaks are declared.</li>
+<li>Use the nullary switch <code>:columnbreak:</code> to request a columnbreak; this has no
+effect on HTML export since HTML describes how text should be formatted on a
+browser, which can dynamically shrink and grow and thus it makes no sense to have
+hard columnbreaks.</li>
+<li>We also provide <code>𝓃parallelNB</code> for users who want ‘N’o ‘B’ar separator
+between columns.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">cl-loop</span> for cols in '(<span style="color: #7bc275;">"1"</span> <span style="color: #7bc275;">"2"</span> <span style="color: #7bc275;">"3"</span> <span style="color: #7bc275;">"4"</span> <span style="color: #7bc275;">"5"</span>)
+      <span style="color: #5cEfFF;">do</span> (<span style="color: #51afef;">cl-loop</span> for rule in '(<span style="color: #7bc275;">"solid"</span> <span style="color: #7bc275;">"none"</span>)
+      <span style="color: #5cEfFF;">do</span> (<span style="color: #5cEfFF;">eval</span> (<span style="color: #5cEfFF;">read</span> (<span style="color: #5cEfFF;">concat</span>
+<span style="color: #7bc275;">"(defun org-special-block-extras--"</span> cols <span style="color: #7bc275;">"parallel"</span>
+(<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">equal</span> rule <span style="color: #7bc275;">"solid"</span>) <span style="color: #7bc275;">""</span> <span style="color: #7bc275;">"NB"</span>)
+<span style="color: #7bc275;">"(backend contents)"</span>
+<span style="color: #7bc275;">"(format (pcase backend"</span>
+<span style="color: #7bc275;">"(`html \"&lt;div style=\\\"column-rule-style:"</span> rule <span style="color: #7bc275;">";column-count:"</span> cols <span style="color: #7bc275;">";\\\"%s&lt;/div&gt;\")"</span>
+<span style="color: #7bc275;">"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{"</span> (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">equal</span> rule <span style="color: #7bc275;">"solid"</span>) <span style="color: #7bc275;">"2"</span> <span style="color: #7bc275;">"0"</span>) <span style="color: #7bc275;">"pt}"</span>
+<span style="color: #7bc275;">"          \\\\begin{minipage}[t]{\\\\linewidth}"</span>
+<span style="color: #7bc275;">"          \\\\begin{multicols}{"</span> cols <span style="color: #7bc275;">"}"</span>
+<span style="color: #7bc275;">"          %s"</span>
+<span style="color: #7bc275;">"          \\\\end{multicols}\\\\end{minipage}\"))"</span>
+<span style="color: #7bc275;">"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")</span>
+<span style="color: #7bc275;">contents)))"</span>)))))
+</pre>
+</div>
+
+<p>
+We also use <code>parallel</code> as an alias for <code>2parallel</code>.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defalias</span> #'<span style="color: #5cEfFF;">org-special-block-extras--parallel</span>
+          #'<span style="color: #5cEfFF;">org-special-block-extras--2parallel</span>)
+
+(<span style="color: #51afef;">defalias</span> #'<span style="color: #5cEfFF;">org-special-block-extras--parallelNB</span>
+          #'<span style="color: #5cEfFF;">org-special-block-extras--2parallelNB</span>)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgcbd39ff" class="outline-3">
+<h3 id="Example"><span class="section-number-3">4.1</span> Example</h3>
+<div class="outline-text-3" id="text-Example">
 <div style="column-rule-style:solid;column-count:2;"<p>
 <span class="underline">Example:</span>
 </p>
@@ -574,56 +1410,6 @@ three
 </div>
 </div>
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-</colgroup>
-<tbody>
-<tr>
-<td class="org-left"><code>#+LATEX_HEADER: \usepackage{multicol}</code></td>
-</tr>
-</tbody>
-</table>
-
-<p>
-I initially used the names <code>paralell&lt;n&gt;</code> but names ending with a number did not
-inherit highlighting, so I shifted the number to being a prefix instead.
-</p>
-<ul class="org-ul">
-<li>For LaTeX, new lines are used to suggest opportunities for column breaks
-and are needed even if explicit columnbreaks are declared.</li>
-</ul>
-
-<div class="org-src-container">
-<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
-<span style="color: #96A7A9; font-style: italic;">;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Parallel blocks: parallel&lt;n&gt;[NB] for n:2..5, optionally with &#8216;N&#8217;o &#8216;b&#8217;ar</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">in-between the columns.</span>
-<span style="color: #96A7A9; font-style: italic;">;;</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Common case is to have three columns, and we want to avoid invoking the</span>
-<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">attribute via org, so making this.</span>
-
-(<span style="color: #859900; font-weight: bold;">loop</span> for cols in '(<span style="color: #2aa198;">"1"</span> <span style="color: #2aa198;">"2"</span> <span style="color: #2aa198;">"3"</span> <span style="color: #2aa198;">"4"</span> <span style="color: #2aa198;">"5"</span>)
-      <span style="color: #b58900;">do</span> (<span style="color: #859900; font-weight: bold;">loop</span> for rule in '(<span style="color: #2aa198;">"solid"</span> <span style="color: #2aa198;">"none"</span>)
-      <span style="color: #b58900;">do</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">read</span> (<span style="color: #b58900;">concat</span>
-<span style="color: #2aa198;">"(defun org-special-block-extras--"</span> cols <span style="color: #2aa198;">"parallel"</span>
-(<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> rule <span style="color: #2aa198;">"solid"</span>) <span style="color: #2aa198;">""</span> <span style="color: #2aa198;">"NB"</span>)
-<span style="color: #2aa198;">"(backend contents)"</span>
-<span style="color: #2aa198;">"(format (pcase backend"</span>
-<span style="color: #2aa198;">"(`html \"&lt;div style=\\\"column-rule-style:"</span> rule <span style="color: #2aa198;">";column-count:"</span> cols <span style="color: #2aa198;">";\\\"%s&lt;/div&gt;\")"</span>
-<span style="color: #2aa198;">"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{"</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> rule <span style="color: #2aa198;">"solid"</span>) <span style="color: #2aa198;">"2"</span> <span style="color: #2aa198;">"0"</span>) <span style="color: #2aa198;">"pt}"</span>
-<span style="color: #2aa198;">"          \\\\begin{minipage}[t]{\\\\linewidth}"</span>
-<span style="color: #2aa198;">"          \\\\begin{multicols}{"</span> cols <span style="color: #2aa198;">"}"</span>
-<span style="color: #2aa198;">"          %s"</span>
-<span style="color: #2aa198;">"          \\\\end{multicols}\\\\end{minipage}\")) contents))"</span>)))))
-
-(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallel</span>   #'<span style="color: #b58900;">org-special-block-extras--2parallel</span>)
-(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallelNB</span> #'<span style="color: #b58900;">org-special-block-extras--2parallelNB</span>)
-</pre>
-</div>
-
 <div class="org-center">
 <p>
 ( The <a href="https://www.gnu.org/software/emacs/manual/html_mono/eww.html">Emacs Web Wowser</a>, <code>M-x eww</code>, does not display <code>parallel</code> environments as
@@ -633,42 +1419,21 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-orgfe18d26" class="outline-2">
-<h2 id="argument-Extraction"><span class="section-number-2">5</span> <code>:argument:</code> Extraction</h2>
-<div class="outline-text-2" id="text-argument-Extraction">
-<div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--extract-arguments</span> (contents <span style="color: #b58900; font-style: italic;">&amp;rest</span> args)
-<span style="color: #35a69c; font-style: italic;">"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.</span>
-
-<span style="color: #35a69c; font-style: italic;">Example usage:</span>
-
-<span style="color: #35a69c; font-style: italic;">    (-let [(contents&#8242; . (&amp;alist 'k&#8320; &#8230; 'k&#8345;))</span>
-<span style="color: #35a69c; font-style: italic;">           (&#8230;extract-arguments contents 'k&#8320; &#8230; 'k&#8345;)]</span>
-<span style="color: #35a69c; font-style: italic;">          body)</span>
-
-<span style="color: #35a69c; font-style: italic;">Within &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">body</span><span style="color: #35a69c; font-style: italic;">&#8217;, each &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">k&#7522;</span><span style="color: #35a69c; font-style: italic;">&#8217; refers to the &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">value</span><span style="color: #35a69c; font-style: italic;">&#8217; of argument</span>
-<span style="color: #35a69c; font-style: italic;">&#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; in the CONTENTS text and &#8216;contents&#8242;&#8217; is CONTENTS</span>
-<span style="color: #35a69c; font-style: italic;">with all &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k&#7522;:</span><span style="color: #35a69c; font-style: italic;">&#8217; lines stripped out.</span>
-
-<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is not an argument in CONTENTS, then it is assigned value NIL.</span>
-<span style="color: #35a69c; font-style: italic;">+ If &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:k:</span><span style="color: #35a69c; font-style: italic;">&#8217; is an argument in CONTENTS but is not given a value in CONTENTS,</span>
-<span style="color: #35a69c; font-style: italic;">  then it has value the empty string."</span>
-  (<span style="color: #859900; font-weight: bold;">let</span> ((ctnts contents)
-        (<span style="color: #b58900;">values</span> (<span style="color: #859900; font-weight: bold;">loop</span> for a in args
-                      for regex <span style="color: #b58900;">=</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">":%s:</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">"</span> a)
-                      for v <span style="color: #b58900;">=</span> (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">s-match</span> regex contents))
-                      collect (<span style="color: #b58900;">cons</span> a v))))
-    (<span style="color: #859900; font-weight: bold;">loop</span> for a in args
-          for regex <span style="color: #b58900;">=</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">":%s:</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">"</span> a)
-          <span style="color: #b58900;">do</span> (<span style="color: #859900; font-weight: bold;">setq</span> ctnts (<span style="color: #b58900;">s-replace-regexp</span> regex <span style="color: #2aa198;">""</span> ctnts)))
-    (<span style="color: #b58900;">cons</span> ctnts <span style="color: #b58900;">values</span>)))
-</pre>
+<div id="outline-container-orgb065052" class="outline-3">
+<h3 id="Next-Steps"><span class="section-number-3">4.2</span> Next Steps</h3>
+<div class="outline-text-3" id="text-Next-Steps">
+<p>
+<span style="color:orange;">Going forward,</span> it would be desirable to have the columns take a specified
+percentage of the available width &#x2014;whereas currently it splits it uniformly.
+Such a feature would be useful in cases where one column is wide and the others
+are not.
+</p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgf4a8c24" class="outline-2">
-<h2 id="editor-comments"><span class="section-number-2">6</span> Editor Comments</h2>
+<div id="outline-container-org3b897a4" class="outline-2">
+<h2 id="editor-comments"><span class="section-number-2">5</span> Editor Comments</h2>
 <div class="outline-text-2" id="text-editor-comments">
 <p>
 “Editor Comments” are intended to be top-level first-class comments in an
@@ -696,7 +1461,7 @@ separated by new lines from its surrounding text.
 <div class="figure">
 <p><img src="images/edcomm.png" alt="edcomm.png" />
 </p>
-<p><span class="figure-number">Figure 7: </span>In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
+<p><span class="figure-number">Figure 6: </span>In order: Chrome, Emacs Web Wowser, Org source, PDF</p>
 </div>
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -713,66 +1478,66 @@ separated by new lines from its surrounding text.
 </table>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras-hide-editor-comments</span> nil
-<span class="linenr"> 2: </span>  <span style="color: #35a69c; font-style: italic;">"Should editor comments be shown in the output or not."</span>)
-<span class="linenr"> 3: </span>
-<span class="linenr"> 4: </span>(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--edcomm</span> (backend contents)
-<span class="linenr"> 5: </span><span style="color: #35a69c; font-style: italic;">"Format CONTENTS as an first-class editor comment according to BACKEND.</span>
-<span class="linenr"> 6: </span>
-<span class="linenr"> 7: </span><span style="color: #35a69c; font-style: italic;">The CONTENTS string has two optional argument switches:</span>
-<span class="linenr"> 8: </span><span style="color: #35a69c; font-style: italic;">1. :ed: &#8658; To declare an editor of the comment.</span>
-<span class="linenr"> 9: </span><span style="color: #35a69c; font-style: italic;">2. :replacewith: &#8658; [Nullary] The text preceding this clause</span>
-<span class="linenr">10: </span><span style="color: #35a69c; font-style: italic;">   should be replaced by the text after it."</span>
-<span class="linenr">11: </span>  (<span style="color: #859900; font-weight: bold;">-let*</span> (
-<span class="linenr">12: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Get arguments</span>
-<span class="linenr">13: </span>           ((contents&#8321; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'ed))
-<span class="linenr">14: </span>            (<span style="color: #b58900;">org-special-block-extras--extract-arguments</span> contents 'ed))
-<span class="linenr">15: </span>
-<span id="coderef-inline" class="coderef-off"><span class="linenr">16: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Strip out any &lt;p&gt; tags</span></span>
-<span class="linenr">17: </span>           (_ (<span style="color: #859900; font-weight: bold;">setq</span> contents&#8321; (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span> contents&#8321;)))
-<span class="linenr">18: </span>           (_ (<span style="color: #859900; font-weight: bold;">setq</span> contents&#8321; (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;/p&gt;"</span> <span style="color: #2aa198;">""</span> contents&#8321;)))
-<span class="linenr">19: </span>
-<span class="linenr">20: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Are we in the html backend?</span>
-<span class="linenr">21: </span>           (html? (<span style="color: #b58900;">equal</span> backend 'html))
-<span class="linenr">22: </span>
-<span class="linenr">23: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">fancy display style</span>
-<span class="linenr">24: </span>           (boxed (<span style="color: #859900; font-weight: bold;">lambda</span> (x)
-<span class="linenr">25: </span>                    (<span style="color: #859900; font-weight: bold;">if</span> html?
-<span class="linenr">26: </span>                        (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"&lt;span style=\"border-width:1px"</span>
-<span class="linenr">27: </span>                                 <span style="color: #2aa198;">";border-style:solid;padding:5px\"&gt;"</span>
-<span class="linenr">28: </span>                                 <span style="color: #2aa198;">"&lt;strong&gt;"</span> x <span style="color: #2aa198;">"&lt;/strong&gt;&lt;/span&gt;"</span>)
-<span class="linenr">29: </span>                    (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"\\fbox{\\bf "</span> x <span style="color: #2aa198;">"}"</span>))))
-<span class="linenr">30: </span>
-<span class="linenr">31: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Is this a replacement clause?</span>
-<span class="linenr">32: </span>           ((this that) (<span style="color: #b58900;">s-split</span> <span style="color: #2aa198;">":replacewith:"</span> contents&#8321;))
-<span class="linenr">33: </span>           (replacement-clause? that) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">There is a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">that</span><span style="color: #96A7A9; font-style: italic;">&#8217;</span>
-<span class="linenr">34: </span>           (replace-keyword (<span style="color: #859900; font-weight: bold;">if</span> html? <span style="color: #2aa198;">"&amp;nbsp;&lt;u&gt;Replace:&lt;/u&gt;"</span>
-<span class="linenr">35: </span>                              <span style="color: #2aa198;">"\\underline{Replace:}"</span>))
-<span class="linenr">36: </span>           (with-keyword    (<span style="color: #859900; font-weight: bold;">if</span> html? <span style="color: #2aa198;">"&lt;u&gt;With:&lt;/u&gt;"</span>
-<span class="linenr">37: </span>                              <span style="color: #2aa198;">"\\underline{With:}"</span>))
-<span class="linenr">38: </span>           (editor (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"[%s:%s"</span>
-<span class="linenr">39: </span>                           (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">s-blank?</span> ed) <span style="color: #2aa198;">"Editor Comment"</span> ed)
-<span class="linenr">40: </span>                           (<span style="color: #859900; font-weight: bold;">if</span> replacement-clause?
-<span class="linenr">41: </span>                               replace-keyword
-<span class="linenr">42: </span>                             <span style="color: #2aa198;">""</span>)))
-<span class="linenr">43: </span>           (contents&#8322; (<span style="color: #859900; font-weight: bold;">if</span> replacement-clause?
-<span class="linenr">44: </span>                          (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s %s %s"</span> this
-<span class="linenr">45: </span>                                  (<span style="color: #b58900;">funcall</span> boxed with-keyword)
-<span class="linenr">46: </span>                                  that)
-<span class="linenr">47: </span>                        contents&#8321;))
-<span class="linenr">48: </span>
-<span class="linenr">49: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;[Editor Comment:&#8221;</span>
-<span class="linenr">50: </span>           (edcomm-begin (<span style="color: #b58900;">funcall</span> boxed editor))
-<span class="linenr">51: </span>           <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#8220;]&#8221;</span>
-<span class="linenr">52: </span>           (edcomm-end (<span style="color: #b58900;">funcall</span> boxed <span style="color: #2aa198;">"]"</span>)))
-<span class="linenr">53: </span>
-<span class="linenr">54: </span>    (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-export-allow-bind-keywords</span> <span style="color: #268bd2;">t</span>) <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">So users can use &#8220;#+bind&#8221; immediately</span>
-<span class="linenr">55: </span>    (<span style="color: #859900; font-weight: bold;">if</span> <span style="color: #268bd2;">org-special-block-extras-hide-editor-comments</span>
-<span class="linenr">56: </span>        <span style="color: #2aa198;">""</span>
-<span class="linenr">57: </span>      (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">pcase</span> backend
-<span class="linenr">58: </span>                (`html <span style="color: #2aa198;">"&lt;p&gt; %s %s %s&lt;/p&gt;"</span>)
-<span class="linenr">59: </span>                (`latex <span style="color: #2aa198;">"%s %s %s"</span>))
-<span class="linenr">60: </span>              edcomm-begin contents&#8322; edcomm-end))))
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">defvar</span> <span style="color: #DFDFDF;">org-special-block-extras-hide-editor-comments</span> nil
+  <span style="color: #7e7e87;">"Should editor comments be shown in the output or not."</span>)
+
+(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--edcomm</span> (backend contents)
+<span style="color: #7e7e87;">"Format CONTENTS as an first-class editor comment according to BACKEND.</span>
+
+<span style="color: #7e7e87;">The CONTENTS string has two optional argument switches:</span>
+<span style="color: #7e7e87;">1. :ed: &#8658; To declare an editor of the comment.</span>
+<span style="color: #7e7e87;">2. :replacewith: &#8658; [Nullary] The text preceding this clause</span>
+<span style="color: #7e7e87;">   should be replaced by the text after it."</span>
+  (<span style="color: #51afef;">-let*</span> (
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">Get arguments</span>
+           ((contents&#8321; . (<span style="color: #FCCE7B;">&amp;alist</span> 'ed))
+            (<span style="color: #5cEfFF;">org-special-block-extras--extract-arguments</span> contents 'ed))
+
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">Strip out any &lt;p&gt; tags</span>
+           (_ (<span style="color: #51afef;">setq</span> contents&#8321; (<span style="color: #5cEfFF;">s-replace-regexp</span> <span style="color: #7bc275;">"&lt;p&gt;"</span> <span style="color: #7bc275;">""</span> contents&#8321;)))
+           (_ (<span style="color: #51afef;">setq</span> contents&#8321; (<span style="color: #5cEfFF;">s-replace-regexp</span> <span style="color: #7bc275;">"&lt;/p&gt;"</span> <span style="color: #7bc275;">""</span> contents&#8321;)))
+
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">Are we in the html backend?</span>
+           (html? (<span style="color: #5cEfFF;">equal</span> backend 'html))
+
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">fancy display style</span>
+           (boxed (<span style="color: #51afef;">lambda</span> (x)
+                    (<span style="color: #51afef;">if</span> html?
+                        (<span style="color: #5cEfFF;">concat</span> <span style="color: #7bc275;">"&lt;span style=\"border-width:1px"</span>
+                                 <span style="color: #7bc275;">";border-style:solid;padding:5px\"&gt;"</span>
+                                 <span style="color: #7bc275;">"&lt;strong&gt;"</span> x <span style="color: #7bc275;">"&lt;/strong&gt;&lt;/span&gt;"</span>)
+                    (<span style="color: #5cEfFF;">concat</span> <span style="color: #7bc275;">"\\fbox{\\bf "</span> x <span style="color: #7bc275;">"}"</span>))))
+
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">Is this a replacement clause?</span>
+           ((this that) (<span style="color: #5cEfFF;">s-split</span> <span style="color: #7bc275;">":replacewith:"</span> contents&#8321;))
+           (replacement-clause? that) <span style="color: #62686E;">;; </span><span style="color: #62686E;">There is a &#8216;</span><span style="color: #a991f1;">that</span><span style="color: #62686E;">&#8217;</span>
+           (replace-keyword (<span style="color: #51afef;">if</span> html? <span style="color: #7bc275;">"&amp;nbsp;&lt;u&gt;Replace:&lt;/u&gt;"</span>
+                              <span style="color: #7bc275;">"\\underline{Replace:}"</span>))
+           (with-keyword    (<span style="color: #51afef;">if</span> html? <span style="color: #7bc275;">"&lt;u&gt;With:&lt;/u&gt;"</span>
+                              <span style="color: #7bc275;">"\\underline{With:}"</span>))
+           (editor (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"[%s:%s"</span>
+                           (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">s-blank?</span> ed) <span style="color: #7bc275;">"Editor Comment"</span> ed)
+                           (<span style="color: #51afef;">if</span> replacement-clause?
+                               replace-keyword
+                             <span style="color: #7bc275;">""</span>)))
+           (contents&#8322; (<span style="color: #51afef;">if</span> replacement-clause?
+                          (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"%s %s %s"</span> this
+                                  (<span style="color: #5cEfFF;">funcall</span> boxed with-keyword)
+                                  that)
+                        contents&#8321;))
+
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">&#8220;[Editor Comment:&#8221;</span>
+           (edcomm-begin (<span style="color: #5cEfFF;">funcall</span> boxed editor))
+           <span style="color: #62686E;">;; </span><span style="color: #62686E;">&#8220;]&#8221;</span>
+           (edcomm-end (<span style="color: #5cEfFF;">funcall</span> boxed <span style="color: #7bc275;">"]"</span>)))
+
+    (<span style="color: #51afef;">setq</span> <span style="color: #DFDFDF;">org-export-allow-bind-keywords</span> <span style="color: #DFDFDF;">t</span>) <span style="color: #62686E;">;; </span><span style="color: #62686E;">So users can use &#8220;#+bind&#8221; immediately</span>
+    (<span style="color: #51afef;">if</span> <span style="color: #DFDFDF;">org-special-block-extras-hide-editor-comments</span>
+        <span style="color: #7bc275;">""</span>
+      (<span style="color: #5cEfFF;">format</span> (<span style="color: #51afef;">pcase</span> backend
+                (`html <span style="color: #7bc275;">"&lt;p&gt; %s %s %s&lt;/p&gt;"</span>)
+                (`latex <span style="color: #7bc275;">"%s %s %s"</span>))
+              edcomm-begin contents&#8322; edcomm-end))))
 </pre>
 </div>
 
@@ -780,17 +1545,13 @@ separated by new lines from its surrounding text.
 In the HTML export, the <code>edcomm</code> special block is <i>not</i> in-line with the text
 surrounding it &#x2014;ideally, it would be inline so that existing paragraphs are
 not split into multiple paragraphs but instead have an editor's comment
-indicating suggested alterations; see <a href="#coderef-inline" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-inline');" onmouseout="CodeHighlightOff(this, 'coderef-inline');">Line 16</a> above.
+indicating suggested alterations.
 </p>
 </div>
 
-<div id="outline-container-org6d0bac4" class="outline-3">
-<h3 id="Examples"><span class="section-number-3">6.1</span> Examples</h3>
+<div id="outline-container-orgda5fd3f" class="outline-3">
+<h3 id="Examples"><span class="section-number-3">5.1</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
-<p>
-Org-markup is supported, as expected.
-</p>
-
 <p>
 All editor comments are disabled by declaring, in your Org file:
 </p>
@@ -800,11 +1561,11 @@ All editor comments are disabled by declaring, in your Org file:
 <p>
 The <code>#+bind:</code> keyword makes Emacs variables buffer-local during export
 &#x2014;it is evaluated <i>after</i> any <code>src</code> blocks. To use it, one must declare in
-their Emacs init file the following line, which our <code>edcomm</code> utility
+their Emacs init file the following line, which our mode
 ensures is true.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-export-allow-bind-keywords</span> <span style="color: #268bd2;">t</span>)
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">setq</span> <span style="color: #DFDFDF;">org-export-allow-bind-keywords</span> <span style="color: #DFDFDF;">t</span>)
 </pre>
 </div>
 
@@ -822,8 +1583,8 @@ ensures is true.
 </table>
 </div>
 
-<div id="outline-container-org3ac9f7a" class="outline-4">
-<h4 id="No-optional-arguments"><span class="section-number-4">6.1.1</span> No optional arguments</h4>
+<div id="outline-container-org4b22ead" class="outline-4">
+<h4 id="No-optional-arguments"><span class="section-number-4">5.1.1</span> No optional arguments</h4>
 <div class="outline-text-4" id="text-No-optional-arguments">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
 <i>Please</i> <b>change</b> <span class="underline">this</span> section to be more, ya know, professional.
@@ -832,8 +1593,8 @@ ensures is true.
 </div>
 </div>
 
-<div id="outline-container-orga759654" class="outline-4">
-<h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">6.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
+<div id="outline-container-org3b32724" class="outline-4">
+<h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">5.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
 <div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
 
@@ -851,8 +1612,8 @@ Possibly with no contents:
 </div>
 </div>
 
-<div id="outline-container-org492ec49" class="outline-4">
-<h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">6.1.3</span> Empty contents, no editor, nothing</h4>
+<div id="outline-container-orgd3db852" class="outline-4">
+<h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">5.1.3</span> Empty contents, no editor, nothing</h4>
 <div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
 
@@ -866,8 +1627,8 @@ Possibly with an empty new line:
 </div>
 </div>
 
-<div id="outline-container-orgf511351" class="outline-4">
-<h4 id="With-a-replacewith-clause"><span class="section-number-4">6.1.4</span> With a <code>:replacewith:</code> clause</h4>
+<div id="outline-container-orgdfb6479" class="outline-4">
+<h4 id="With-a-replacewith-clause"><span class="section-number-4">5.1.4</span> With a <code>:replacewith:</code> clause</h4>
 <div class="outline-text-4" id="text-With-a-replacewith-clause">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
 The two-dimensional notation; e.g., \(\sum_{i = 0}^n i^2\)
@@ -912,11 +1673,61 @@ Completely lost one's train of thought.
 </div>
 </div>
 </div>
+
+<div id="outline-container-orgcccab0f" class="outline-3">
+<h3 id="Link-Type"><span class="section-number-3">5.2</span> Link Type</h3>
+<div class="outline-text-3" id="text-Link-Type">
+<p>
+A block to make an editorial comment could be overkill in some cases; so we
+provide the <code>edcomm</code> link type.
+</p>
+
+<ul class="org-ul">
+<li>Syntax: <code>[[edcomm:person_name][editorial remark]]</code>.</li>
+<li>This link type exports the same as the <code>edcomm</code> block type;
+however, in Emacs it is shown with an ‘angry’ &#x2014;bold&#x2014; red face.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #5cEfFF;">org-link-set-parameters</span>
+<span class="linenr"> 2: </span> <span style="color: #7bc275;">"edcomm"</span>
+<span class="linenr"> 3: </span>  <span style="color: #C57BDB;">:follow</span> (<span style="color: #51afef;">lambda</span> (_))
+<span class="linenr"> 4: </span>  <span style="color: #C57BDB;">:export</span> (<span style="color: #51afef;">lambda</span> (label description backend)
+<span class="linenr"> 5: </span>            (<span style="color: #5cEfFF;">org-special-block-extras--edcomm</span>
+<span class="linenr"> 6: </span>             backend
+<span class="linenr"> 7: </span>             (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">":ed:%s\n%s"</span> label description)))
+<span class="linenr"> 8: </span>  <span style="color: #C57BDB;">:help-echo</span> (<span style="color: #51afef;">lambda</span> (window object <span style="color: #5cEfFF;">position</span>)
+<span class="linenr"> 9: </span>               (<span style="color: #51afef;">save-excursion</span>
+<span class="linenr">10: </span>                 (<span style="color: #5cEfFF;">goto-char</span> <span style="color: #5cEfFF;">position</span>)
+<span class="linenr">11: </span>                 (<span style="color: #51afef;">-let*</span> [(<span style="color: #FCCE7B;">&amp;plist</span> <span style="color: #C57BDB;">:path</span>) (<span style="color: #5cEfFF;">cadr</span> (<span style="color: #5cEfFF;">org-element-context</span>))]
+<span class="linenr">12: </span>                   (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"%s made this remark"</span> (<span style="color: #5cEfFF;">s-upcase</span> path)))))
+<span class="linenr">13: </span>  <span style="color: #C57BDB;">:face</span> '(<span style="color: #C57BDB;">:foreground</span> <span style="color: #7bc275;">"red"</span> <span style="color: #C57BDB;">:weight</span> <span style="color: #bbc2cf; background-color: #242730;">bold</span>))
+</pre>
 </div>
 
-<div id="outline-container-org89f83ac" class="outline-2">
-<h2 id="Folded-Details"><span class="section-number-2">7</span> Folded Details</h2>
+<p>
+For example:
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Jasim:</strong></span>
+Hello, where are you? <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+</p>
+
+<p>
+The <code>:replacewith:</code> switch &#x2014;and usual Org markup&#x2014; also works with these links:
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Qasim:&nbsp;<u>Replace:</u></strong></span>
+<i>‘j’</i>  <span style="border-width:1px;border-style:solid;padding:5px"><strong><u>With:</u></strong></span>  <i>‘q’</i> <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org597390b" class="outline-2">
+<h2 id="Folded-Details"><span class="section-number-2">6</span> Folded Details</h2>
 <div class="outline-text-2" id="text-Folded-Details">
+<p>
+Sometimes there is a remark or a code snippet that is useful to have, but not
+relevant to the discussion at hand and so we want to <i>fold away such details</i>.
+</p>
+
 <ul class="org-ul">
 <li>‘Conversation-style’ articles, where the author asks the reader questions
 whose answers are “folded away” so the reader can think about the exercise
@@ -943,52 +1754,52 @@ declarations or a tedious implementation.</li>
 <div class="figure">
 <p><img src="images/details.png" alt="details.png" />
 </p>
-<p><span class="figure-number">Figure 8: </span>Visually hiding, folding away, details</p>
+<p><span class="figure-number">Figure 7: </span>Visually hiding, folding away, details</p>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--details</span> (backend contents)
-<span class="linenr"> 2: </span><span style="color: #35a69c; font-style: italic;">"Format CONTENTS as a &#8216;folded region&#8217; according to BACKEND.</span>
+<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--details</span> (backend contents)
+<span class="linenr"> 2: </span><span style="color: #7e7e87;">"Format CONTENTS as a &#8216;folded region&#8217; according to BACKEND.</span>
 <span class="linenr"> 3: </span>
-<span class="linenr"> 4: </span><span style="color: #35a69c; font-style: italic;">CONTENTS may have a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:title</span><span style="color: #35a69c; font-style: italic;">&#8217; argument specifying a title for</span>
-<span class="linenr"> 5: </span><span style="color: #35a69c; font-style: italic;">the folded region."</span>
-<span class="linenr"> 6: </span>(<span style="color: #859900; font-weight: bold;">-let*</span> (<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Get arguments</span>
-<span class="linenr"> 7: </span>        ((contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'title))
-<span class="linenr"> 8: </span>         (<span style="color: #b58900;">org-special-block-extras--extract-arguments</span> contents 'title)))
-<span class="linenr"> 9: </span>  (<span style="color: #859900; font-weight: bold;">when</span> (<span style="color: #b58900;">s-blank?</span> title) (<span style="color: #859900; font-weight: bold;">setq</span> title <span style="color: #2aa198;">"Details"</span>))
-<span class="linenr">10: </span>  (<span style="color: #859900; font-weight: bold;">setq</span> title (<span style="color: #b58900;">s-trim</span> title))
-<span class="linenr">11: </span>  (<span style="color: #b58900;">format</span>
-<span class="linenr">12: </span>   (<span style="color: #b58900;">s-collapse-whitespace</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Remove the whitespace only in the nicely presented</span>
-<span class="linenr">13: </span>                          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">strings below</span>
-<span class="linenr">14: </span>    (<span style="color: #859900; font-weight: bold;">pcase</span> backend
-<span class="linenr">15: </span>      (`html <span style="color: #2aa198;">"&lt;details class=\"code-details\"&gt;</span>
-<span class="linenr">16: </span><span style="color: #2aa198;">                 &lt;summary&gt;</span>
-<span class="linenr">17: </span><span style="color: #2aa198;">                   &lt;strong&gt;</span>
-<span class="linenr">18: </span><span style="color: #2aa198;">                     &lt;font face=\"Courier\" size=\"3\" color=\"green\"&gt; %s</span>
-<span class="linenr">19: </span><span style="color: #2aa198;">                     &lt;/font&gt;</span>
-<span class="linenr">20: </span><span style="color: #2aa198;">                   &lt;/strong&gt;</span>
-<span class="linenr">21: </span><span style="color: #2aa198;">                 &lt;/summary&gt;</span>
-<span class="linenr">22: </span><span style="color: #2aa198;">                 %s</span>
-<span class="linenr">23: </span><span style="color: #2aa198;">              &lt;/details&gt;"</span>)
-<span class="linenr">24: </span>      (`latex <span style="color: #2aa198;">"\\begin{quote}</span>
-<span class="linenr">25: </span><span style="color: #2aa198;">                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]</span>
-<span class="linenr">26: </span><span style="color: #2aa198;">                   \\textbf{%s:}</span>
-<span class="linenr">27: </span><span style="color: #2aa198;">                   %s</span>
-<span class="linenr">28: </span><span style="color: #2aa198;">                 \\end{tcolorbox}</span>
-<span class="linenr">29: </span><span style="color: #2aa198;">               \\end{quote}"</span>)))
+<span class="linenr"> 4: </span><span style="color: #7e7e87;">CONTENTS may have a &#8216;</span><span style="color: #a991f1;">:title</span><span style="color: #7e7e87;">&#8217; argument specifying a title for</span>
+<span class="linenr"> 5: </span><span style="color: #7e7e87;">the folded region."</span>
+<span class="linenr"> 6: </span>(<span style="color: #51afef;">-let*</span> (<span style="color: #62686E;">;; </span><span style="color: #62686E;">Get arguments</span>
+<span class="linenr"> 7: </span>        ((contents&#8242; . (<span style="color: #FCCE7B;">&amp;alist</span> 'title))
+<span class="linenr"> 8: </span>         (<span style="color: #5cEfFF;">org-special-block-extras--extract-arguments</span> contents 'title)))
+<span class="linenr"> 9: </span>  (<span style="color: #51afef;">when</span> (<span style="color: #5cEfFF;">s-blank?</span> title) (<span style="color: #51afef;">setq</span> title <span style="color: #7bc275;">"Details"</span>))
+<span class="linenr">10: </span>  (<span style="color: #51afef;">setq</span> title (<span style="color: #5cEfFF;">s-trim</span> title))
+<span class="linenr">11: </span>  (<span style="color: #5cEfFF;">format</span>
+<span class="linenr">12: </span>   (<span style="color: #5cEfFF;">s-collapse-whitespace</span> <span style="color: #62686E;">;; </span><span style="color: #62686E;">Remove the whitespace only in the nicely presented</span>
+<span class="linenr">13: </span>                          <span style="color: #62686E;">;; </span><span style="color: #62686E;">strings below</span>
+<span class="linenr">14: </span>    (<span style="color: #51afef;">pcase</span> backend
+<span class="linenr">15: </span>      (`html <span style="color: #7bc275;">"&lt;details class=\"code-details\"&gt;</span>
+<span class="linenr">16: </span><span style="color: #7bc275;">                 &lt;summary&gt;</span>
+<span class="linenr">17: </span><span style="color: #7bc275;">                   &lt;strong&gt;</span>
+<span class="linenr">18: </span><span style="color: #7bc275;">                     &lt;font face=\"Courier\" size=\"3\" color=\"green\"&gt; %s</span>
+<span class="linenr">19: </span><span style="color: #7bc275;">                     &lt;/font&gt;</span>
+<span class="linenr">20: </span><span style="color: #7bc275;">                   &lt;/strong&gt;</span>
+<span class="linenr">21: </span><span style="color: #7bc275;">                 &lt;/summary&gt;</span>
+<span class="linenr">22: </span><span style="color: #7bc275;">                 %s</span>
+<span class="linenr">23: </span><span style="color: #7bc275;">              &lt;/details&gt;"</span>)
+<span class="linenr">24: </span>      (`latex <span style="color: #7bc275;">"\\begin{quote}</span>
+<span class="linenr">25: </span><span style="color: #7bc275;">                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]</span>
+<span class="linenr">26: </span><span style="color: #7bc275;">                   \\textbf{%s:}</span>
+<span class="linenr">27: </span><span style="color: #7bc275;">                   %s</span>
+<span class="linenr">28: </span><span style="color: #7bc275;">                 \\end{tcolorbox}</span>
+<span class="linenr">29: </span><span style="color: #7bc275;">               \\end{quote}"</span>)))
 <span class="linenr">30: </span>    title contents&#8242;)))
 </pre>
 </div>
 
 <p>
 We could use <code>\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
-...}}\end{quote}</code>; however, this does not work well with <code>minted</code>, for coloured
+...}}\end{quote}</code>; however, this does not work well with <a href="https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted">minted</a> for coloured
 source blocks. Instead, we use <code>tcolorbox</code>.
 </p>
 </div>
 
-<div id="outline-container-org946d2e2" class="outline-3">
-<h3 id="Example"><span class="section-number-3">7.1</span> Example</h3>
+<div id="outline-container-orgec4ec86" class="outline-3">
+<h3 id="Example"><span class="section-number-3">6.1</span> Example</h3>
 <div class="outline-text-3" id="text-Example">
 <p>
 Reductions &#x2014;incidentally also called ‘folds’<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>&#x2014; embody primitive
@@ -996,7 +1807,7 @@ recursion and thus computability. For example, what does the following compute
 when given a whole number 𝓃?
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> (<span style="color: #b58900;">number-sequence</span> 1.0 &#120003;))
+<pre class="src src-emacs-lisp">(<span style="color: #5cEfFF;">-reduce</span> #'<span style="color: #5cEfFF;">/</span> (<span style="color: #5cEfFF;">number-sequence</span> 1.0 &#120003;))
 </pre>
 </div>
 
@@ -1005,13 +1816,13 @@ when given a whole number 𝓃?
 Rather than guess-then-check, let's <i>calculate</i>!
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">  (<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> (<span style="color: #b58900;">number-sequence</span> 1.0 &#120003;))
-<span style="color: #b58900;">=</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Lisp is strict: Evaluate inner-most expression</span>
-  (<span style="color: #b58900;">-reduce</span> #'<span style="color: #b58900;">/</span> '(1.0 2.0 3.0 &#8230; &#120003;))
-<span style="color: #b58900;">=</span> <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Evaluate left-associating reduction</span>
-  (<span style="color: #b58900;">/</span> (<span style="color: #b58900;">/</span> (<span style="color: #b58900;">/</span> 1.0 2.0) &#8943;) &#120003;)
-<span style="color: #b58900;">=</span><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))</span>
-  (<span style="color: #b58900;">/</span> 1.0 (<span style="color: #b58900;">*</span> 2.0 3.0 &#8230; &#120003;))
+<pre class="src src-emacs-lisp">  (<span style="color: #5cEfFF;">-reduce</span> #'<span style="color: #5cEfFF;">/</span> (<span style="color: #5cEfFF;">number-sequence</span> 1.0 &#120003;))
+<span style="color: #5cEfFF;">=</span> <span style="color: #62686E;">;; </span><span style="color: #62686E;">Lisp is strict: Evaluate inner-most expression</span>
+  (<span style="color: #5cEfFF;">-reduce</span> #'<span style="color: #5cEfFF;">/</span> '(1.0 2.0 3.0 &#8230; &#120003;))
+<span style="color: #5cEfFF;">=</span> <span style="color: #62686E;">;; </span><span style="color: #62686E;">Evaluate left-associating reduction</span>
+  (<span style="color: #5cEfFF;">/</span> (<span style="color: #5cEfFF;">/</span> (<span style="color: #5cEfFF;">/</span> 1.0 2.0) &#8943;) &#120003;)
+<span style="color: #5cEfFF;">=</span><span style="color: #62686E;">;; </span><span style="color: #62686E;">Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))</span>
+  (<span style="color: #5cEfFF;">/</span> 1.0 (<span style="color: #5cEfFF;">*</span> 2.0 3.0 &#8230; &#120003;))
 </pre>
 </div>
 <p>
@@ -1024,14 +1835,586 @@ i.e., \(\frac{1}{𝓃!}\).
 Neato, let's do more super cool stuff ^_^
 </p>
 
-<div class="tiny">
+<div class="footnotesize">
 <p>
-(In the Emacs Web Wowser, folded regions are displayed unfolded similar to
-LaTeX.)
+( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
+LaTeX. )
 </p>
 
 </div>
 </div>
+</div>
+</div>
+<div id="outline-container-org2007607" class="outline-2">
+<h2 id="Link-Here-OctoIcons"><span class="section-number-2">7</span> <i>“Link Here!”</i> OctoIcon</h2>
+<div class="outline-text-2" id="text-Link-Here-OctoIcons">
+<p>
+Use the syntax <code>link-here:name</code> to create an anchor link that alters the URL with
+<code>#name</code> as in “<a class="anchor" aria-hidden="true" id="name" href="#name"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>”
+&#x2014;it looks and behaves like the Github generated links for a heading.
+Use case: Sometimes you want to explicitly point to a particular location in an
+article, this is a possible way to do so.
+</p>
+<ul class="org-ul">
+<li>Besides the HTML backend, such links are silently omitted.</li>
+<li>SVGs obtained from: <a href="https://primer.style/octicons/">https://primer.style/octicons/</a></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #5cEfFF;">org-link-set-parameters</span>
+  <span style="color: #7bc275;">"link-here"</span>
+  <span style="color: #C57BDB;">:follow</span> (<span style="color: #51afef;">lambda</span> (path) (<span style="color: #5cEfFF;">message</span> <span style="color: #7bc275;">"This is a local anchor link named &#8220;%s&#8221;"</span> path))
+  <span style="color: #C57BDB;">:export</span> #'org-special-block-extras--link-here)
+
+(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--link-here</span> (label description backend)
+  <span style="color: #7e7e87;">"Export a link to the current location in an Org file.</span>
+
+<span style="color: #7e7e87;">The LABEL determines the name of the link.</span>
+
+<span style="color: #7e7e87;">+ Only the syntax &#8216;</span><span style="color: #a991f1;">link-here:label</span><span style="color: #7e7e87;">&#8217; is supported.</span>
+<span style="color: #7e7e87;">+ Such links are displayed using an &#8220;octicon-link&#8221;</span>
+<span style="color: #7e7e87;">  and so do not support the DESCRIPTION syntax</span>
+<span style="color: #7e7e87;">  &#8216;[[link:label][description]]&#8217;.</span>
+<span style="color: #7e7e87;">+ Besides the HTML BACKEND, such links are silently omitted."</span>
+    (<span style="color: #51afef;">pcase</span> backend
+      (`html  (<span style="color: #5cEfFF;">format</span> (<span style="color: #5cEfFF;">s-collapse-whitespace</span>
+          <span style="color: #7bc275;">"&lt;a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"</span>
+<span style="color: #7bc275;">          href=\"#%s\"&gt;&lt;svg class=\"octicon octicon-link\" viewBox=\"0 0 16</span>
+<span style="color: #7bc275;">          16\" version=\"1.1\" width=\"16\" height=\"16\"</span>
+<span style="color: #7bc275;">          aria-hidden=\"true\"&gt;&lt;path fill-rule=\"evenodd\" d=\"M4</span>
+<span style="color: #7bc275;">          9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0</span>
+<span style="color: #7bc275;">          1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8</span>
+<span style="color: #7bc275;">          4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2</span>
+<span style="color: #7bc275;">          2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64</span>
+<span style="color: #7bc275;">          1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0</span>
+<span style="color: #7bc275;">          3-1.69 3-3.5S14.5 6 13 6z\"&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;"</span>) label label))
+      (_ <span style="color: #7bc275;">""</span>)))
+</pre>
+</div>
+
+<p>
+E.g., <a class="anchor" aria-hidden="true" id="example-location" href="#example-location"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> Neato ^_^
+</p>
+
+<p>
+<span style="color:orange;">Going forward,</span> it would be desirable to provide a non-whitespace alternative for
+the LaTeX rendition.  More usefully, before the HTML export hook, we could place
+such ‘link-here’ links before every org-title produce clickable org-headings,
+similar to Github's &#x2014;the necessary ingredients are likely <a href="https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors">here</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0cd72ac" class="outline-2">
+<h2 id="Badge-Links"><span class="section-number-2">8</span> Badge Links</h2>
+<div class="outline-text-2" id="text-Badge-Links">
+<p>
+Badges provide a quick and colourful summary of key features of a project,
+such as whether it's maintained, its license, and if it's documented.
+</p>
+
+
+<div class="figure">
+<p><img src="images/badges.png" alt="badges.png" />
+</p>
+<p><span class="figure-number">Figure 8: </span>An Emacs interface to <a href="https://shields.io/">https://shields.io/</a></p>
+</div>
+
+<blockquote>
+<p>
+As people who are passionate about writing great code we display "badges" in our
+code repositories to signal to fellow developers that we set ourselves high
+standards for the code we write, think of them as the software-equivalent of
+the brand on your jeans or other reliable product. &#x2014; <a href="https://github.com/dwyl/repo-badges">repo-badges</a>
+</p>
+</blockquote>
+</div>
+
+<div id="outline-container-org5b11b04" class="outline-3">
+<h3 id="The-badge-Link"><span class="section-number-3">8.1</span> The <code>badge</code> Link and derived Reddit/Github/Twitter socials</h3>
+<div class="outline-text-3" id="text-The-badge-Link">
+<p>
+The implementation is a bit lengthy since it attempts to capture a useful
+portion of the shilelds.io badge interface.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #5cEfFF;">org-link-set-parameters</span> <span style="color: #7bc275;">"badge"</span>
+  <span style="color: #C57BDB;">:follow</span> (<span style="color: #51afef;">lambda</span> (path) (<span style="color: #51afef;">--&gt;</span> (<span style="color: #5cEfFF;">s-split</span> <span style="color: #7bc275;">"|"</span> path)
+                         (<span style="color: #51afef;">or</span> (<span style="color: #5cEfFF;">nth</span> 3 it) path)
+                         (<span style="color: #5cEfFF;">browse-url</span> it)))
+  <span style="color: #C57BDB;">:export</span> #'<span style="color: #5cEfFF;">org-special-block-extras--link--badge</span>)
+
+(<span style="color: #51afef;">defvar</span> <span style="color: #DFDFDF;">org-special-block-extras--link--twitter-excitement</span>
+  <span style="color: #7bc275;">"This looks super neat ^_^ :"</span>
+  <span style="color: #7e7e87;">"The string prefixing the URL being shared."</span>)
+
+(<span style="color: #51afef;">defun</span> <span style="color: #5cEfFF;">org-special-block-extras--link--badge</span>
+  (label description backend <span style="color: #FCCE7B;">&amp;optional</span> social)
+  <span style="color: #7e7e87;">"Export a link presented as an SVG badge.</span>
+
+<span style="color: #7e7e87;">The LABEL should be of the shape &#8216;</span><span style="color: #a991f1;">key|value|color|url|logo</span><span style="color: #7e7e87;">&#8217;</span>
+<span style="color: #7e7e87;">resulting in a badge &#8220;|key|value|&#8221; where the &#8216;</span><span style="color: #a991f1;">key</span><span style="color: #7e7e87;">&#8217;</span>
+<span style="color: #7e7e87;">is coloured grey and the &#8216;</span><span style="color: #a991f1;">value</span><span style="color: #7e7e87;">&#8217; is coloured &#8216;</span><span style="color: #a991f1;">color</span><span style="color: #7e7e87;">&#8217;.</span>
+
+<span style="color: #7e7e87;">The optional SOCIAL toggle indicates if we want an icon for</span>
+<span style="color: #7e7e87;">Twitter, Reddit, Github, etc, instead of a badge.</span>
+<span style="color: #7e7e87;">When SOCIAL is provided, we interpret LABEL as an atomic string.</span>
+
+<span style="color: #7e7e87;">+ Only the syntax &#8216;</span><span style="color: #a991f1;">badge:key|value|color|url</span><span style="color: #7e7e87;">&#8217; is supported.</span>
+<span style="color: #7e7e87;">  - &#8216;</span><span style="color: #a991f1;">key</span><span style="color: #7e7e87;">&#8217; and &#8216;</span><span style="color: #a991f1;">value</span><span style="color: #7e7e87;">&#8217; have their underscores interpreted as spaces.</span>
+<span style="color: #7e7e87;">     &#8658; Underscores are interpreted as spaces;</span>
+<span style="color: #7e7e87;">     &#8658; &#8216;</span><span style="color: #a991f1;">__</span><span style="color: #7e7e87;">&#8217; is interpreted as an underscore;</span>
+<span style="color: #7e7e87;">     &#8658; &#8216;|&#8217; is not a valid substring, but &#8216;-, %, ?&#8217; are okay.</span>
+<span style="color: #7e7e87;">  - &#8216;</span><span style="color: #a991f1;">|color|url|logo</span><span style="color: #7e7e87;">&#8217; are optional;</span>
+<span style="color: #7e7e87;">     if &#8216;</span><span style="color: #a991f1;">url</span><span style="color: #7e7e87;">&#8217; is &#8216;</span><span style="color: #a991f1;">|here</span><span style="color: #7e7e87;">&#8217; then the resulting badge behaves</span>
+<span style="color: #7e7e87;">     like &#8216;</span><span style="color: #a991f1;">link-here:key</span><span style="color: #7e7e87;">&#8217;.</span>
+<span style="color: #7e7e87;">  - &#8216;</span><span style="color: #a991f1;">color</span><span style="color: #7e7e87;">&#8217; may be: &#8216;</span><span style="color: #a991f1;">brightgreen</span><span style="color: #7e7e87;">&#8217; or &#8216;</span><span style="color: #a991f1;">success</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">                    &#8216;</span><span style="color: #a991f1;">red</span><span style="color: #7e7e87;">&#8217;         or &#8216;</span><span style="color: #a991f1;">important</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">                    &#8216;</span><span style="color: #a991f1;">orange</span><span style="color: #7e7e87;">&#8217;      or &#8216;</span><span style="color: #a991f1;">critical</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">                    &#8216;</span><span style="color: #a991f1;">lightgrey</span><span style="color: #7e7e87;">&#8217;   or &#8216;</span><span style="color: #a991f1;">inactive</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">                    &#8216;</span><span style="color: #a991f1;">blue</span><span style="color: #7e7e87;">&#8217;        or &#8216;</span><span style="color: #a991f1;">informational</span><span style="color: #7e7e87;">&#8217;,</span>
+<span style="color: #7e7e87;">            or &#8216;</span><span style="color: #a991f1;">green</span><span style="color: #7e7e87;">&#8217;, &#8216;</span><span style="color: #a991f1;">yellowgreen</span><span style="color: #7e7e87;">&#8217;, &#8216;</span><span style="color: #a991f1;">yellow</span><span style="color: #7e7e87;">&#8217;, &#8216;</span><span style="color: #a991f1;">blueviolet</span><span style="color: #7e7e87;">&#8217;, &#8216;</span><span style="color: #a991f1;">ff69b4</span><span style="color: #7e7e87;">&#8217;, etc.</span>
+<span style="color: #7e7e87;">+ Such links are displayed using a SVG badges</span>
+<span style="color: #7e7e87;">  and so do not support the DESCRIPTION syntax</span>
+<span style="color: #7e7e87;">  &#8216;[[link:label][description]]&#8217;.</span>
+<span style="color: #7e7e87;">+ Besides the HTML BACKEND, such links are silently omitted."</span>
+  (<span style="color: #51afef;">-let*</span> (((lbl msg clr url logo) (<span style="color: #5cEfFF;">s-split</span> <span style="color: #7bc275;">"|"</span> label))
+          (_ (<span style="color: #51afef;">unless</span> (<span style="color: #51afef;">or</span> (<span style="color: #51afef;">and</span> lbl msg) social)
+               (<span style="color: #FCCE7B;">error</span> <span style="color: #7bc275;">"%s\t&#8658;\tBadges are at least &#8220;badge:key|value&#8221;!"</span> label)))
+          <span style="color: #62686E;">;; </span><span style="color: #62686E;">Support dashes and other symbols</span>
+          (_ (<span style="color: #51afef;">unless</span> social
+               (<span style="color: #51afef;">setq</span> lbl (<span style="color: #5cEfFF;">s-replace</span> <span style="color: #7bc275;">"-"</span> <span style="color: #7bc275;">"--"</span> lbl)
+                     msg (<span style="color: #5cEfFF;">s-replace</span> <span style="color: #7bc275;">"-"</span> <span style="color: #7bc275;">"--"</span> msg))
+               (<span style="color: #51afef;">setq</span> lbl (<span style="color: #5cEfFF;">url-hexify-string</span> lbl)
+                     msg (<span style="color: #5cEfFF;">url-hexify-string</span> msg))))
+          (img (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"&lt;img src=\"https://img.shields.io/badge/%s-%s-%s%s\"&gt;"</span>
+                        lbl msg clr
+                        (<span style="color: #51afef;">if</span> logo (<span style="color: #5cEfFF;">concat</span> <span style="color: #7bc275;">"?logo="</span> logo) <span style="color: #7bc275;">""</span>))))
+    (<span style="color: #51afef;">when</span> social
+      (<span style="color: #51afef;">--&gt;</span>
+          `((<span style="color: #7bc275;">"reddit"</span>            <span style="color: #7bc275;">"https://www.reddit.com/r/%s"</span>)
+            (<span style="color: #7bc275;">"github/followers"</span>  <span style="color: #7bc275;">"https://www.github.com/%s?tab=followers"</span>)
+            (<span style="color: #7bc275;">"github/forks"</span>      <span style="color: #7bc275;">"https://www.github.com/%s/fork"</span>)
+            (<span style="color: #7bc275;">"github"</span>            <span style="color: #7bc275;">"https://www.github.com/%s"</span>)
+            (<span style="color: #7bc275;">"twitter/follow"</span>    <span style="color: #7bc275;">"https://twitter.com/intent/follow?screen_name=%s"</span>)
+            (<span style="color: #7bc275;">"twitter/url"</span>
+             ,(<span style="color: #5cEfFF;">format</span>
+               <span style="color: #7bc275;">"https://twitter.com/intent/tweet?text=%s:&amp;url=%%s"</span>
+               <span style="color: #DFDFDF;">org-special-block-extras--link--twitter-excitement</span>)
+             ,(<span style="color: #5cEfFF;">format</span>
+               <span style="color: #7bc275;">"&lt;img src=\"https://img.shields.io/twitter/url?url=%s\"&gt;"</span>
+               label)))
+        (<span style="color: #51afef;">--filter</span> (<span style="color: #5cEfFF;">s-starts-with?</span> (<span style="color: #5cEfFF;">first</span> it) social) it)
+        (<span style="color: #5cEfFF;">car</span> it)
+        (<span style="color: #51afef;">or</span> it (<span style="color: #FCCE7B;">error</span> <span style="color: #7bc275;">"Badge: Unsupported social type &#8220;%s&#8221;"</span> social))
+        (<span style="color: #51afef;">setq</span> url (<span style="color: #5cEfFF;">format</span> (<span style="color: #5cEfFF;">second</span> it) label)
+              img (<span style="color: #51afef;">or</span> (<span style="color: #5cEfFF;">third</span> it)
+                      (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"&lt;img src=\"https://img.shields.io/%s/%s?style=social\"&gt;"</span>
+                      social label)))))
+    (<span style="color: #51afef;">pcase</span> backend
+        (`html (<span style="color: #51afef;">if</span> url
+                 (<span style="color: #51afef;">if</span> (<span style="color: #5cEfFF;">equal</span> url <span style="color: #7bc275;">"here"</span>)
+                     (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"&lt;a id=\"%s\" href=\"#%s\"&gt;%s&lt;/a&gt;"</span> lbl lbl img)
+                   (<span style="color: #5cEfFF;">format</span> <span style="color: #7bc275;">"&lt;a href=\"%s\"&gt;%s&lt;/a&gt;"</span> url img))
+               img))
+        (_ <span style="color: #7bc275;">""</span>))))
+</pre>
+</div>
+
+<p>
+We now form the specialised link types for social media.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #51afef;">loop</span> for (social <span style="color: #bbc2cf; background-color: #242730;">link</span>) in '((<span style="color: #7bc275;">"reddit/subreddit-subscribers"</span> <span style="color: #7bc275;">"reddit-subscribe-to"</span>)
+                             (<span style="color: #7bc275;">"github/stars"</span>)
+                             (<span style="color: #7bc275;">"github/watchers"</span>)
+                             (<span style="color: #7bc275;">"github/followers"</span>)
+                             (<span style="color: #7bc275;">"github/forks"</span>)
+                             (<span style="color: #7bc275;">"twitter/follow"</span>)
+                             (<span style="color: #7bc275;">"twitter/url?=url="</span> <span style="color: #7bc275;">"tweet"</span>))
+      for <span style="color: #bbc2cf; background-color: #242730;">link</span>&#8242; <span style="color: #5cEfFF;">=</span> (<span style="color: #51afef;">or</span> <span style="color: #bbc2cf; background-color: #242730;">link</span> (<span style="color: #5cEfFF;">s-replace</span> <span style="color: #7bc275;">"/"</span> <span style="color: #7bc275;">"-"</span> social))
+      <span style="color: #5cEfFF;">do</span> (<span style="color: #5cEfFF;">org-link-set-parameters</span> <span style="color: #bbc2cf; background-color: #242730;">link</span>&#8242;
+           <span style="color: #C57BDB;">:export</span> (<span style="color: #5cEfFF;">eval</span> `(<span style="color: #51afef;">-cut</span> <span style="color: #5cEfFF;">org-special-block-extras--link--badge</span>
+                         &lt;&gt; &lt;&gt; &lt;&gt; ,social))))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div class="outline-text-2" id="text-Badge-Links">
+</div>
+<div id="outline-container-org64ac169" class="outline-3">
+<h3 id="Example-Social-Icons"><span class="section-number-3">8.2</span> Example Social Icons</h3>
+<div class="outline-text-3" id="text-Example-Social-Icons">
+<p>
+Syntax:
+</p>
+<pre class="example">
+reddit-subscribe-to:exact-name-of-a-subreddit
+
+github-stars:user-name/repository-name
+
+github-watchers:user-name/repository-name
+
+github-forks:user-name/repository-name
+
+github-followers:user-name
+
+twitter-follow:user-name
+
+tweet:url
+</pre>
+
+<p>
+Here are some examples.
+</p>
+
+<ul class="org-ul">
+<li>Things I like:
+<a href="https://www.reddit.com/r/emacs"><img src="https://img.shields.io/reddit/subreddit-subscribers/emacs?style=social"></a>
+<a href="https://www.reddit.com/r/common_lisp"><img src="https://img.shields.io/reddit/subreddit-subscribers/common_lisp?style=social"></a>
+<a href="https://www.reddit.com/r/coolguides"><img src="https://img.shields.io/reddit/subreddit-subscribers/coolguides?style=social"></a>
+<a href="https://www.reddit.com/r/shia"><img src="https://img.shields.io/reddit/subreddit-subscribers/shia?style=social"></a></li>
+
+<li>Info about my cheatsheets:
+<a href="https://www.github.com/alhassy/CheatSheet"><img src="https://img.shields.io/github/stars/alhassy/CheatSheet?style=social"></a>
+<a href="https://www.github.com/alhassy/CheatSheet"><img src="https://img.shields.io/github/watchers/alhassy/CheatSheet?style=social"></a>
+<a href="https://www.github.com/alhassy/CheatSheet/fork"><img src="https://img.shields.io/github/forks/alhassy/CheatSheet?style=social"></a>
+<a href="https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و ::&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a></li>
+
+<li>My profile:
+<a href="https://www.github.com/alhassy?tab=followers"><img src="https://img.shields.io/github/followers/alhassy?style=social"></a>
+<a href="https://twitter.com/intent/follow?screen_name=musa314"><img src="https://img.shields.io/twitter/follow/musa314?style=social"></a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org01343f8" class="outline-3">
+<h3 id="Example-Badges"><span class="section-number-3">8.3</span> Example Badges</h3>
+<div class="outline-text-3" id="text-Example-Badges">
+<p>
+The general syntax is as follows, with <b>only the first 2</b> are mandatory,
+with the colour defaulting to green, and the url and logo both to nil.
+We can thus have <code>badge:label|message</code>
+</p>
+<pre class="example">
+# Standard template
+badge:key|value|colour|url|logo
+
+# Minimal template
+badge:key|value
+
+# Only show a coloured logo pointed to its location
+badge:||colour|here|logo
+</pre>
+
+<ul class="org-ul">
+<li><a href="Here"><img src="https://img.shields.io/badge/key-value-informational?logo=Elixir"></a>
+<ul class="org-ul">
+<li>Standard template; with URL pointing to current location which is named
+<code>#key</code></li>
+</ul></li>
+
+<li><a id="example_with_spaces%2C_--%2C_and_%25" href="#example_with_spaces%2C_--%2C_and_%25"><img src="https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange"></a>
+<ul class="org-ul">
+<li>Use ‘_’ to denote spaces</li>
+</ul></li>
+
+<li><img src="https://img.shields.io/badge/no_colour-given-nil">
+<ul class="org-ul">
+<li>Only two items given: <code>badge:key|value</code>.</li>
+</ul></li>
+
+<li><img src="https://img.shields.io/badge/empty_value--informational">
+<ul class="org-ul">
+<li><code>badge:key||colour</code></li>
+</ul></li>
+
+<li><img src="https://img.shields.io/badge/-value-nil">
+<ul class="org-ul">
+<li>No key; <code>badge:|value</code></li>
+</ul></li>
+
+<li><img src="https://img.shields.io/badge/--green">
+<ul class="org-ul">
+<li>No key; nor value: <code>badge:||green</code></li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org8952cf2" class="outline-3">
+<h3 id="Example-Colours"><span class="section-number-3">8.4</span> Example Colours</h3>
+<div class="outline-text-3" id="text-Example-Colours">
+<ul class="org-ul">
+<li><img src="https://img.shields.io/badge/-red-red"> <img src="https://img.shields.io/badge/-critical-critical"></li>
+<li><img src="https://img.shields.io/badge/-blue-blue"> <img src="https://img.shields.io/badge/-informational-informational"></li>
+<li><img src="https://img.shields.io/badge/-brightgreen-brightgreen"> <img src="https://img.shields.io/badge/-success-success"></li>
+<li><img src="https://img.shields.io/badge/-orange-orange"> <img src="https://img.shields.io/badge/-important-important"></li>
+<li><img src="https://img.shields.io/badge/-lightgrey-lightgrey"> <img src="https://img.shields.io/badge/-inactive-inactive"></li>
+<li><img src="https://img.shields.io/badge/-green-green"></li>
+<li><img src="https://img.shields.io/badge/-yellowgreen-yellowgreen"></li>
+<li><img src="https://img.shields.io/badge/-yellow-yellow"></li>
+<li><img src="https://img.shields.io/badge/-blueviolet-blueviolet"></li>
+<li><img src="https://img.shields.io/badge/-ff69b4-ff69b4"></li>
+<li><img src="https://img.shields.io/badge/-9cf-9cf"></li>
+<li>&#x2026;</li>
+</ul>
+
+<p>
+Consult <a href="https://htmlcolorcodes.com/">https://htmlcolorcodes.com/</a> to see the HEX code of any other colour you
+wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
+</p>
+</div>
+</div>
+
+<div id="outline-container-org6632ef6" class="outline-3">
+<h3 id="Example-Badge-Icons"><span class="section-number-3">8.5</span> Example Badge Icons</h3>
+<div class="outline-text-3" id="text-Example-Badge-Icons">
+<p>
+Here are a few free SVG icons for popular brands from <a href="https://simpleicons.org/">https://simpleicons.org/</a>.
+</p>
+
+<dl class="org-dl">
+<dt>“Fire”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=Elixir"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=tinder"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=codeigniter"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=prometheus"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=sparkpost"></a></dd>
+<dt>“Messaging”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=quip"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=WeChat"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-hangouts"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=hackhands"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-messages"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=Tor"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=Slack"></a></dd>
+<dt>“Emacs”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--white?logo=gnu-emacs"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--white?logo=spacemacs"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=vim"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=neovim"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=gnu"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=github"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=acm"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=wikipedia"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=microsoft-excel"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=microsoft-word"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=dropbox"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-scholar"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-translate"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=ghost"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=helm"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=apache-openoffice"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=buffer"></a></dd>
+<dt>“Social”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-cast"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=youtube"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=discord"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=facebook"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-hangouts"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=whatsapp"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=skype"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=arXiv"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=reddit"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=stack-overflow"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=stack-exchange"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=linkedin"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=twitter"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=jabber"></a></dd>
+<dt>“Lightbulb”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=lighthouse"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=google-keep"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=minds"></a></dd>
+<dt>“Programming”</dt><dd><a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=git"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=ruby"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=scala"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=OCaml"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=javascript"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=gnu-bash"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=powershell"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=LaTeX"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=java"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=kotlin"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=haskell"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=coffeescript"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=purescript"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=rust"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=typescript"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=css3"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=python"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=c"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=clojure"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=lua"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=adobe-acrobat-reader"></a></dd>
+<dt>“Miscellaneous”</dt><dd><p>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=read-the-docs"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=buy-me-a-coffee"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=gimp"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=mega"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=nintendo-3ds"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=paypal"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=pinboard"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=mocha"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=Gitea"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=instacart"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=openStreetMap"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=amazon"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=svg"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=rss"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=swagger"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=pastebin"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=skyliner"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=iTunes"></a>   <a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=gulp"></a>
+</p>
+
+<p>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=GIMP"></a>
+<a id="" href="#"><img src="https://img.shields.io/badge/--grey?logo=atom"></a>
+</p></dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-orgb98b639" class="outline-3">
+<h3 id="Common-Project-Badges"><span class="section-number-3">8.6</span> Common Project Badges</h3>
+<div class="outline-text-3" id="text-Common-Project-Badges">
+<ul class="org-ul">
+<li><a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs"></a></li>
+
+<li><a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu"></a></li>
+
+<li><a href="https://alhassy.github.io/org-special-block-extras/README.html"><img src="https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs"></a></li>
+<li><a href="https://github.com/alhassy/emacs.d#use-package-the-start-of-initel"><img src="https://img.shields.io/badge/melpa-pending-critical?logo=github"></a></li>
+
+<li><a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
+<a id="wiki" href="#wiki"><img src="https://img.shields.io/badge/wiki-github-informational?logo=wikipedia"></a></li>
+
+<li><a id="code_coverage" href="#code_coverage"><img src="https://img.shields.io/badge/code_coverage-88%25-green?logo=codecov"></a>
+<a id="build" href="#build"><img src="https://img.shields.io/badge/build-passing-success?logo=azure-pipelines"></a></li>
+
+<li><a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a></li>
+
+<li><a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=gimp"></a></li>
+
+<li><a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a></li>
+
+<li><a id="issue_tracking" href="#issue_tracking"><img src="https://img.shields.io/badge/issue_tracking-github-informational?logo=github"></a></li>
+
+<li><a id="help_forum" href="#help_forum"><img src="https://img.shields.io/badge/help_forum-discourse-informational?logo=discourse"></a></li>
+
+<li><a href="https://gitter.im/explore"><img src="https://img.shields.io/badge/social_chat-gitter-informational?logo=gitter"></a></li>
+
+<li><img src="https://img.shields.io/badge/Maintained%3F-yes-success">
+<img src="https://img.shields.io/badge/Maintained%3F-no-critical">
+<a href="http://unmaintained.tech/"><img src="https://img.shields.io/badge/No_Maintenance_Intended-%C3%97-critical"></a>
+&#x2014;Interesting!</li>
+
+<li><img src="https://img.shields.io/badge/website-up-success">
+<img src="https://img.shields.io/badge/website-down-critical"></li>
+
+<li><img src="https://img.shields.io/badge/Ask_me-anything-1abc9c">
+<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green"></a></li>
+<li><img src="https://img.shields.io/badge/Made_with-Python%2C_LaTeX%2C_MathJax%2C_and_Emacs_Org--mode-1f425"></li>
+</ul>
+</div>
+</div>
+<div class="outline-text-2" id="text-Badge-Links">
+</div>
+<div id="outline-container-org945cf36" class="outline-3">
+<h3 id="Next-Steps"><span class="section-number-3">8.7</span> Next Steps</h3>
+<div class="outline-text-3" id="text-Next-Steps">
+<p>
+<span style="color:orange;">Going forward,</span> it would be desirable to provide non-whitespace alternatives
+for the LaTeX backend.
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Author:</strong></span>
+That is why no examples are shown in the PDF <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p> It would
+also be useful to have badges redirect to their URL, if any, upon a user's
+click. Finally, it may be useful to colour the <code>|</code>-separated fields of a badge
+link and provide a tooltip indicating which value corresponds to which
+field. This would make the interface more welcoming to new users.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6505b86" class="outline-2">
+<h2 id="Summary"><span class="section-number-2">9</span> Summary</h2>
+<div class="outline-text-2" id="text-Summary">
+<p>
+Let <code>𝒞</code> be any of the following: <code>black</code>, <code>blue</code>, <code>brown</code>, <code>cyan</code>, <code>darkgray</code>, <code>gray</code>, <code>green</code>,
+<code>lightgray</code>, <code>lime</code>, <code>magenta</code>, <code>olive orange</code>, <code>pink</code>, <code>purple</code>, <code>red</code>, <code>teal</code>, <code>violet</code>, <code>white</code>,
+<code>yellow</code>. Let <code>𝓃</code> be any number from <code>1..5</code>.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Idea</th>
+<th scope="col" class="org-left">Block</th>
+<th scope="col" class="org-left">Link</th>
+<th scope="col" class="org-left">Switches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Colours</td>
+<td class="org-left"><code>𝒞</code></td>
+<td class="org-left"><code>𝒞</code>, <code>color:𝒞</code></td>
+<td class="org-left"><code>:color:</code></td>
+</tr>
+
+<tr>
+<td class="org-left">Parallel</td>
+<td class="org-left"><code>𝓃parallel[NB]</code></td>
+<td class="org-left">-</td>
+<td class="org-left"><code>:columnbreak:</code></td>
+</tr>
+
+<tr>
+<td class="org-left">Editorial Comments</td>
+<td class="org-left"><code>edcomm</code></td>
+<td class="org-left"><code>edcomm</code></td>
+<td class="org-left"><code>:ed:</code>, <code>:replacewith:</code></td>
+</tr>
+
+<tr>
+<td class="org-left">Folded Details</td>
+<td class="org-left"><code>details</code></td>
+<td class="org-left">-</td>
+<td class="org-left"><code>:title:</code></td>
+</tr>
+
+<tr>
+<td class="org-left">Link Here</td>
+<td class="org-left">-</td>
+<td class="org-left"><code>link-here</code></td>
+<td class="org-left">-</td>
+</tr>
+
+<tr>
+<td class="org-left">Badges</td>
+<td class="org-left">-</td>
+<td class="org-left"><code>badge</code></td>
+<td class="org-left">-</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+There are also the social badge links:
+<code>reddit-subscribe-to</code>, <code>github-followers</code>, <code>github-forks</code>, <code>github-stars,
+github-watchers</code>, <code>twitter-follow</code>, and <code>tweet</code>.
+</p>
 </div>
 </div>
 <div id="footnotes">
@@ -1048,7 +2431,7 @@ See <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf"><i>A tutorial on the uni
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-17 Fri 12:03</p>
+<p class="date">Created: 2020-04-23 Thu 02:53</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
