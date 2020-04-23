@@ -142,7 +142,7 @@ with all ‘:kᵢ:’ lines stripped out.
                       "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (`html  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
                       colour colour colour))))
 
@@ -201,8 +201,8 @@ with all ‘:kᵢ:’ lines stripped out.
                                            "\\}" "}"))
         do (setq contents (s-replace this that contents)))
   (format (pcase backend
-            (`latex "%s")
-            (`html "<p style=\"display:none\">\\[%s\\]</p>"))
+            ('html "<p style=\"display:none\">\\[%s\\]</p>")
+            (_ "%s"))
           contents))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -286,9 +286,23 @@ The CONTENTS string has two optional argument switches:
     (if org-special-block-extras-hide-editor-comments
         ""
       (format (pcase backend
-                (`html "<p> %s %s %s</p>")
-                (`latex "%s %s %s"))
+                ('latex "%s %s %s")
+                (_ "<p> %s %s %s</p>"))
               edcomm-begin contents₂ edcomm-end))))
+
+(org-link-set-parameters
+ "edcomm"
+  :follow (lambda (_))
+  :export (lambda (label description backend)
+            (org-special-block-extras--edcomm
+             backend
+             (format ":ed:%s\n%s" label description)))
+  :help-echo (lambda (window object position)
+               (save-excursion
+                 (goto-char position)
+                 (-let* [(&plist :path) (cadr (org-element-context))]
+                   (format "%s made this remark" (s-upcase path)))))
+  :face '(:foreground "red" :weight bold))
 
 (defun org-special-block-extras--details (backend contents)
 "Format CONTENTS as a ‘folded region’ according to BACKEND.

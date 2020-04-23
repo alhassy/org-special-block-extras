@@ -3,7 +3,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil toc:nil
 #+EXPORT_FILE_NAME: README
-#+macro: blurb Twenty-six new custom block and link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-eight new custom block and 30 link types for Emacs' Org-mode ^_^
 
 :TODO:
 orange:TODO
@@ -229,15 +229,17 @@ article may not render things as desired. )
 #+end_tiny
 #+end_center
 #+begin_quote
-This article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
 #+end_quote
 
 #+caption: Extensibility! /Plug and play support for new block types!/
 [[file:images/foo_block.png]]
 
-:Hide:
+# :Hide:
 #+caption: Write Org-markup once, generate for many backends ^_^
 [[file:images/colours.jpg]]
+
+[[file:images/colour_links.png]]
 
 #+caption: Displaying thoughts side-by-side ^_^
 [[file:images/parallel.png]]
@@ -248,51 +250,20 @@ This article may be read as a [[https://alhassy.github.io/org-special-block-extr
 
 #+caption: Visually hiding, folding away, details
 [[file:images/details.png]]
-:End:
+
+#+caption: An Emacs interface to https://shields.io/
+[[file:images/badges.png]]
+
+#+begin_quote
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+#+end_quote
+# :End:
 
 #+latex: \newpage
 #+TOC: headlines 2
 #+latex: \newpage
 
-* Table of Contents :TOC:QUOTE:ignore:
-  :PROPERTIES:
-  :CUSTOM_ID: Table-of-Contents
-  :END:
-#+BEGIN_QUOTE
-- [[#how-do-i-make-a-new-special-block----core-utility][/How do I make a new special block?/ ---Core Utility]]
-  - [[#what-is-a-special-block][/What is a special block?/]]
-  - [[#core-utility][Core Utility]]
-  - [[#argument-extraction][=:argument:= Extraction]]
-  - [[#an-example-special-block----foo][An Example Special Block ---=foo=]]
-  - [[#next-steps][Next Steps]]
-- [[#how-do-i-make-a-new-link-type][/How do I make a new link type?/]]
-- [[#colours][Colours]]
-  - [[#org-special-block-extras--𝒞-where-𝒞--org-special-block-extras--colors][=org-special-block-extras--𝒞= where ~𝒞 ∈ org-special-block-extras--colors~]]
-  - [[#block-examples][Block Examples]]
-  - [[#colour-link-types][Colour Link Types]]
-  - [[#next-steps-1][Next Steps]]
-- [[#parallel][Parallel]]
-  - [[#example][Example]]
-  - [[#next-steps-2][Next Steps]]
-- [[#editor-comments][Editor Comments]]
-  - [[#block-examples-1][Block Examples]]
-  - [[#link-type][Link Type]]
-- [[#folded-details][Folded Details]]
-  - [[#example-1][Example]]
-- [[#link-here-octoicon][/“Link Here!”/ OctoIcon]]
-- [[#badge-links][Badge Links]]
-  - [[#the-badge-link-and-derived-redditgithubtwitter-socials][The =badge= Link and derived Reddit/Github/Twitter socials]]
-  - [[#example-social-icons][Example Social Icons]]
-  - [[#example-badges][Example Badges]]
-  - [[#example-colours][Example Colours]]
-  - [[#example-badge-icons][Example Badge Icons]]
-  - [[#common-project-badges][Common Project Badges]]
-  - [[#next-steps-3][Next Steps]]
-- [[#summary][Summary]]
-- [[#footnotes][Footnotes]]
-#+END_QUOTE
-
-* /How do I make a new special block?/ ---Core Utility
+* COMMENT /How do I make a new special block?/ ---Core Utility
   :PROPERTIES:
   :CUSTOM_ID: Core-Utility
   :END:
@@ -568,7 +539,7 @@ These are super easy to do ---just need a few minutes to breath.  It may also be
 desirable to provide support for [[https://github.com/alhassy/emacs.d#html-folded-drawers][drawers]], and to ‘fuse’ the block-type and
 link-type approaches used here into one macro.
 
-* /How do I make a new link type?/
+* COMMENT /How do I make a new link type?/
   :PROPERTIES:
   :CUSTOM_ID: Links
   :END:
@@ -628,6 +599,7 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
   :face '(:foreground "red" :weight bold    (ref:exface)
           :underline "orange" :overline "orange"))
 #+end_src
+
 
 + Line [[(extype)]] ="example"= :: Add a new =example= link type.
   - If the type already exists, update it with the given arguments.
@@ -734,7 +706,7 @@ Useful info on tooltips:
 
 + More :: See =docs:org-link-parameters= for documentation on more parameters.
 
-* Colours
+* COMMENT Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
   :END:
@@ -776,7 +748,7 @@ functions that format special blocks.
                       "(defun org-special-block-extras--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (`html  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
                       colour colour colour))))
 #+END_SRC
@@ -900,8 +872,8 @@ This text is yellow!
    :CUSTOM_ID: Colour-Link-Types
    :END:
 
- We want the syntax =red:text= to /render/ ‘text’ with the colour red
- in *both* the Emacs interface and in exported backends.
+We want the syntax =red:text= to /render/ ‘text’ with the colour red
+in *both* the Emacs interface and in exported backends.
 
  [[file:images/colour_links.png]]
 
@@ -944,13 +916,16 @@ This text is yellow!
                  (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
  #+end_src
 
- Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is
- brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
+ #+RESULTS:
+
+Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
 
  Also: If we try to use an unsupported colour ‘wombo’, we render the descriptive
  text larger in Emacs along with a tooltip explaining why this is the case;
  e.g.,
  =[[color:wombo][hi]]=.
+
+( Markdown does not support colour; go look at the HTML or PDF! )
 
 ** Next Steps
    :PROPERTIES:
@@ -988,10 +963,14 @@ This text is yellow!
                                            "\\}" "}"))
         do (setq contents (s-replace this that contents)))
   (format (pcase backend
-            (`latex "%s")
-            (`html "<p style=\"display:none\">\\[%s\\]</p>"))
+            ('html "<p style=\"display:none\">\\[%s\\]</p>")
+            (_ "%s"))
           contents))
  #+end_src
+
+ #+RESULTS:
+ : org-special-block-extras--latex-definitions
+
 - Org escapes ~{,}~ in LaTeX export, so we need to ‘unescape’ them.
   This is clearly a hack.
 
@@ -1022,6 +1001,8 @@ This text is yellow!
  | /[[color:brown][f x]]/      | /At each [[violet:x][x]] value, compute [[color:brown][f x]]/                     |
 
  # Note that /[[color:brown][f x]]/ is obtained by =/[[color:brown][f x]]/.=
+
+( Markdown does not support MathJax; go look at the HTML or PDF! )
 
 Unfortunately, MathJax does not easily support arbitrary HTML elements to occur
 within the =$=-delimiters ---see [[https://stackoverflow.com/questions/58883048/mathjax-or-similar-render-arbitrary-html-element-inside-expression][this]] and [[https://github.com/mathjax/MathJax/issues/1707][this]] for ‘workarounds’.  As such, the
@@ -1105,7 +1086,7 @@ $$x+\left(\insertHTML{<!--
  #+latex: \vspace{1em}
 [[color:orange][Going forward,]] it would be nice to easily have our colour links work within
 a mathematical special block.
-* Parallel
+* COMMENT Parallel
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
@@ -1221,7 +1202,7 @@ are not.
 
 # 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
 
-* Editor Comments
+* COMMENT Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
@@ -1304,10 +1285,13 @@ The CONTENTS string has two optional argument switches:
     (if org-special-block-extras-hide-editor-comments
         ""
       (format (pcase backend
-                (`html "<p> %s %s %s</p>")
-                (`latex "%s %s %s"))
+                ('latex "%s %s %s")
+                (_ "<p> %s %s %s</p>"))
               edcomm-begin contents₂ edcomm-end))))
 #+END_SRC
+
+#+RESULTS:
+: org-special-block-extras--edcomm
 
 In the HTML export, the =edcomm= special block is /not/ in-line with the text
 surrounding it ---ideally, it would be inline so that existing paragraphs are
@@ -1419,7 +1403,7 @@ provide the =edcomm= link type.
 - This link type exports the same as the =edcomm= block type;
   however, in Emacs it is shown with an ‘angry’ ---bold--- red face.
 
-#+begin_src emacs-lisp -n -r :tangle no
+#+begin_src emacs-lisp -n -r
 (org-link-set-parameters
  "edcomm"
   :follow (lambda (_))
@@ -1435,13 +1419,15 @@ provide the =edcomm= link type.
   :face '(:foreground "red" :weight bold))
 #+end_src
 
+#+RESULTS:
+
 For example:
 [[edcomm:Jasim][Hello, where are you?]]
 
 The =:replacewith:= switch ---and usual Org markup--- also works with these links:
 [[edcomm:Qasim][/‘j’/ :replacewith: /‘q’/]]
 
-* Folded Details
+* COMMENT Folded Details
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -1533,7 +1519,7 @@ Neato, let's do more super cool stuff ^_^
 ( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
 LaTeX. )
 #+end_footnotesize
-* /“Link Here!”/ OctoIcon
+* COMMENT /“Link Here!”/ OctoIcon
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -1584,7 +1570,7 @@ the LaTeX rendition.  More usefully, before the HTML export hook, we could place
 such ‘link-here’ links before every org-title produce clickable org-headings,
 similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
 
-* Badge Links
+* COMMENT Badge Links
   :PROPERTIES:
   :CUSTOM_ID: Badge-Links
   :END:
@@ -1997,7 +1983,7 @@ click. Finally, it may be useful to colour the =|=-separated fields of a badge
 link and provide a tooltip indicating which value corresponds to which
 field. This would make the interface more welcoming to new users.
 
-* Summary
+* COMMENT Summary
   :PROPERTIES:
   :CUSTOM_ID: Summary
   :END:
@@ -2019,7 +2005,7 @@ There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
 github-watchers=, =twitter-follow=, and =tweet=.
 
-* Lisp Postamble                                                   :noexport:
+* COMMENT Lisp Postamble                                                   :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Postamble
   :END:
@@ -2157,7 +2143,7 @@ github-watchers=, =twitter-follow=, and =tweet=.
 #+BEGIN_SRC emacs-lisp
 (with-temp-buffer
     (insert
-    "#+EXPORT_FILE_NAME: README.org
+    "#+EXPORT_FILE_NAME: README.md
      # HTML: <h1> Easily Making CheatSheets with Org-mode </h1>
      ,#+OPTIONS: toc:nil d:nil
      # Toc is displayed below at a strategic position.
@@ -2173,7 +2159,7 @@ github-watchers=, =twitter-follow=, and =tweet=.
      # Markdown links: [title](target)
     :End:
 
-     ,#+TOC: headlines 2
+     ,# +TOC: headlines 2
      ,#+INCLUDE: org-special-block-extras.org
     ")
 
@@ -2182,13 +2168,13 @@ github-watchers=, =twitter-follow=, and =tweet=.
     ;;
     (let ((org-export-use-babel nil))
       (org-mode)
-      ; (org-md-export-to-markdown)
+      (org-md-export-to-markdown)
       ; (package-install 'toc-org)
-      (toc-org-mode)
-      (toc-org-insert-toc)
+      ; (toc-org-mode)
+      ; (toc-org-insert-toc)
       (setq org-export-exclude-tags (delete "TOC" org-export-exclude-tags))
       ; (pop org-export-exclude-tags)
-      (org-org-export-to-org)
+      ; (org-org-export-to-org)
       (add-to-list 'org-export-exclude-tags "TOC")
       )
 )
