@@ -2328,7 +2328,7 @@ The incantation below sets up the required magic to make this happen.
 
 <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
 
-<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.10.0.min.js\"></script>
+<script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
 
  <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
 
