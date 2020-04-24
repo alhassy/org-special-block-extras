@@ -54,10 +54,8 @@
 > and block and link types for making documentation-glossary entries.
 > That is, **we provide 29 block types and 32 link types**.
 
-<div class="org-center">
 > The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!  &#x2014;or visit
 > the [repo](https://github.com/alhassy/org-special-block-extras). Installation instructions are [below](#Summary).
-</div>
 
 ![img](images/foo_block.png "Extensibility! *Plug and play support for new block types!*")
 
