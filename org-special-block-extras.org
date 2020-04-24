@@ -3,7 +3,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
 #+options: d:nil toc:nil
 #+EXPORT_FILE_NAME: README
-#+macro: blurb Twenty-eight new custom block and 30 link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^
 
 :TODO:
 orange:TODO
@@ -11,17 +11,19 @@ Get minimal markdown backend support, since the landingpage will likely be
 the github repo.
 :End:
 
-:28_blocks:
+:29_blocks:
 21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
 5  ⇒ parallel blocks
 1  ⇒ editorial comments
 1  ⇒ details
+1  ⇒ documentation
 :End:
-:30_links:
+:32_links:
 20 ⇒ 19 colours and the ‘colors’ type
 1  ⇒ editorial comments
 1  ⇒ link here
 8  ⇒ badges and socials
+2  ⇒ doc and show
 :End:
 
 * HTML & LaTeX Setup :ignore:
@@ -34,8 +36,11 @@ the github repo.
 #+macro: newline @@latex: \newline@@
 
 #+latex_header: \newunicodechar{𝒳}{\ensuremath{\mathcal{X}}}
+#+latex_header: \newunicodechar{ℒ}{\ensuremath{\mathcal{L}}}
 #+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
 
+#+latex_header: \newunicodechar{τ}{\ensuremath{\tau}}
+#+latex_header: \newunicodechar{→}{\ensuremath{\to}}
 #+latex_header: \newunicodechar{⊕}{\ensuremath{\oplus}}
 #+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
 #+latex_header: \newunicodechar{₁}{\ensuremath{_1}}
@@ -94,12 +99,12 @@ the github repo.
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp
-;;; org-special-block-extras.el --- Twenty-six new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 31 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 0.7
+;; Version: 0.9
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -218,55 +223,96 @@ screenshots.*
 In summary, we provide 20 colour block types and 20 colour link types,
 an ‘editor comment’ block type as well as a link type,
 a ‘details’ block type, a ‘parallel’ multiple columns view block type,
-a ‘link here’ link type, and 8 badge link types.
-That is, *we provide 28 block types and 30 link types*.
+a ‘link here’ link type, 8 badge link types,
+and block and link types for making documentation-glossary entries.
+That is, *we provide 29 block types and 32 link types*.
 #+end_quote
 
 #+begin_center org
-#+begin_tiny
-( Since we're only considering HTML & LaTeX, the Github rendition of this
-article may not render things as desired. )
-#+end_tiny
-#+end_center
 #+begin_quote
 The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
+#+end_center
 
 #+caption: Extensibility! /Plug and play support for new block types!/
 [[file:images/foo_block.png]]
 
-# :Hide:
-#+caption: Write Org-markup once, generate for many backends ^_^
+#+latex: \newpage
+/First, a gallery of what's possible!/
+
+| *Write Org-markup once, generate for many backends ^_^* |
 [[file:images/colours.jpg]]
 
 [[file:images/colour_links.png]]
 
-#+caption: Displaying thoughts side-by-side ^_^
+#+latex: \newpage
+| *Displaying thoughts side-by-side ^_^* |
 [[file:images/parallel.png]]
 # | ( I use prettify symbols mode ) |
 
-#+caption: “First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF
+#+latex: \newpage
+| *“First-class editor comments” In order: Chrome, Emacs Web Wowser, Org source, PDF* |
 [[file:images/edcomm.png]]
 
-#+caption: Visually hiding, folding away, details
+#+latex: \newpage
+| *Visually hiding, folding away, details* |
 [[file:images/details.png]]
 
-#+caption: An Emacs interface to https://shields.io/
+#+latex: \newpage
+| *An Emacs interface to https://shields.io/* |
 [[file:images/badges.png]]
+
+# +latex: \newpage
+| *Tooltips for documentation and glossary items --in the browser!* |
+[[file:images/tooltips_browser.png]]
+
+# +latex: \newpage
+| *Tooltips for documentation and glossary items --in Emacs!* |
+[[file:images/tooltips_emacs.png]]
+
+# +latex: \newpage
+| *Tooltips for documentation and glossary items --in the PDF!* |
+[[file:images/tooltips_pdf.png]]
+
+# +latex: \newpage
+| *Declaring documentation-glossary items* |
+[[file:images/tooltips_declaration.png]]
 
 #+begin_quote
 The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
-# :End:
 
 #+latex: \newpage
 #+TOC: headlines 2
 #+latex: \newpage
 
-* COMMENT /How do I make a new special block?/ ---Core Utility
+* /How do I make a new special block?/ ---Core Utility
   :PROPERTIES:
   :CUSTOM_ID: Core-Utility
   :END:
+
+  An Org mode block is a region of text surrounded by =#+BEGIN_𝒳 … #+END_𝒳=; they
+  serve various purposes as summarised in the table below.  However, we shall
+  *use such blocks to execute arbitrary code on their contents*.
+
+  | 𝒳       | Description                                        |
+  |---------+----------------------------------------------------|
+  | =example= | Format text verbatim, leaving markup as is         |
+  | =src=     | Format source code                                 |
+  | =center=  | Centre text                                        |
+  | =quote=   | Format text as a quotation                         |
+  | =tiny=    | Render text in a small font; likewise =footnotesize= |
+  | =comment= | Completely omit the text from export               |
+
+  - They can be folded and unfolded in Emacs by pressing TAB in the =#+BEGIN= line.
+  - The contents of blocks can be highlighted as if they were of language ℒ such
+    as =org, html, latex, haskell, lisp, python, …= by writing =#+BEGIN_𝒳 ℒ= on the
+    starting line, where ~𝒳~ is the name of the block type.
+  - You can ‘zoom in temporarily’, /narrowing/ your focus to only on a particular
+    block, with ~org-narrow-to-element~, ~C-x n e~, to make your window only show
+    the block.  Then use ~C-x n w~ to /widen/ your vision of the buffer's contents.
 
 ** /What is a special block?/
    :PROPERTIES:
@@ -490,6 +536,19 @@ For example, we use this feature to indicate when a column break should happen
 in a =parallel= block and which person is making editorial remarks in an
 =edcomm= block.
 
+Why the =:𝒳:= notation? At the start of a line, a string of this form is coloured
+---I don't recall why that is--- and that's a good enough reason to make use of
+such an existing support.
+
+#+begin_edcomm
+:ed: Aside
+In org-mode, ‘drawers’ are pieces of text that begin with
+=:my_drawer_name:= on a line by itself and end with =:end:= on a line by itself, and
+these delimiters allow us to fold away such regions and possibly exclude them
+from export. That is, drawers act as a light-weight form of blocks. Anyhow, Org
+colours drawer delimiters,
+#+end_edcomm
+
 ** An Example Special Block ---=foo=
    :PROPERTIES:
    :CUSTOM_ID: COMMENT-An-Example-Special-Block-foo
@@ -509,6 +568,9 @@ unless a ‘:replacement:’ is provided."
            (org-special-block-extras--extract-arguments contents 'replacement)]
     (s-replace "foo" (or replacement "bar") contents′)))
 #+end_src
+
+#+RESULTS:
+: org-special-block-extras--foo
 
 Here's an example usage:
 #+begin_2parallel org
@@ -531,6 +593,9 @@ See the implementation matter of ~edcomm~ or ~parallel~ for a more involved defi
 that behaves differently depending on the export backend.
 
 ** Next Steps
+   :PROPERTIES:
+   :CUSTOM_ID: Next-Steps
+   :END:
 
 [[color:orange][Going forward,]] it would be nice to have a set of switches that apply to all
 special blocks. For instance, ~:ignore:~ to simply bypass the user-defined
@@ -539,7 +604,7 @@ These are super easy to do ---just need a few minutes to breath.  It may also be
 desirable to provide support for [[https://github.com/alhassy/emacs.d#html-folded-drawers][drawers]], and to ‘fuse’ the block-type and
 link-type approaches used here into one macro.
 
-* COMMENT /How do I make a new link type?/
+* /How do I make a new link type?/
   :PROPERTIES:
   :CUSTOM_ID: Links
   :END:
@@ -704,17 +769,20 @@ Useful info on tooltips:
   - If ~:face~ is not provided, the default underlined blue face for Org links is used.
   - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Faces.html][Learn more about faces!]]
 
-+ More :: See =docs:org-link-parameters= for documentation on more parameters.
++ More :: See =org-link-parameters= for documentation on more parameters.
 
-* COMMENT Colours
+* Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
   :END:
 
 Let's develop blocks for colouring text and link types for inline
 colouring.
-- Use =M-x list-colors-display= to see a list of defined colour names.
-# Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
+- Use =M-x list-colors-display= to see a list of defined colour names in Emacs
+  ---see [[http://muug.ca/mirror/ctan/macros/latex/contrib/xcolor/xcolor.pdf][xcolor]] for the LaTeX side and [[https://htmlcolorcodes.com/color-names/][htmlcolorcodes.com]] for the HTML side, or
+  just visit http://latexcolor.com/ for both.
+  # Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
+
 
 [[file:images/colours.jpg]]
 
@@ -733,9 +801,20 @@ colouring.
 We declare a list of colors that should be available on most systems.  Then
 using this list, we evaluate the code necessary to produce the necessary
 functions that format special blocks.
+
 # - To add support for a colour =𝒞=, simply
 #   ~(push '𝒞 org-special-block-extras--colors)~.
-#
+# #
+
+By default, Org uses the ~graphicx~ LaTeX package which let's us colour text
+---see its documentation [[http://ctan.mirror.rafal.ca/macros/latex/required/graphics/grfguide.pdf][here]].  For example, in an ~#+begin_export latex~ block,
+the following produces blue coloured text.
+#+begin_example latex
+{  \color{blue}  This is a sample text in blue.  }
+#+end_example
+Below, we format colour block types to essentially format block contents like
+this.
+
 #+BEGIN_SRC emacs-lisp
 (defvar org-special-block-extras--colors
   '(black blue brown cyan darkgray gray green lightgray lime
@@ -928,9 +1007,10 @@ Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:bro
 ( Markdown does not support colour; go look at the HTML or PDF! )
 
 ** Next Steps
-   :PROPERTIES:
-   :CUSTOM_ID: Next-Steps
-   :END:
+  :PROPERTIES:
+  :CUSTOM_ID: Next-Steps-colours
+  :END:
+
  :Fails_idea:
  Larger example:
  #+begin_mathjax
@@ -1086,7 +1166,22 @@ $$x+\left(\insertHTML{<!--
  #+latex: \vspace{1em}
 [[color:orange][Going forward,]] it would be nice to easily have our colour links work within
 a mathematical special block.
-* COMMENT Parallel
+
+#+latex: \vspace{1em}
+[[color:orange][Moreover,]] it would be nice to extend the =color= block type to take multiple
+arguments, say, by a switch =:colors: c₁ c₂ … cₙ= such that:
+
+| /n/ | Behaviour                                                                          |
+|---+------------------------------------------------------------------------------------|
+| 0 | No colouring; likewise if =:colors:= is absent altogether                            |
+| 1 | Colour all entries using the given colour c₁                                       |
+| /n/ | Paragraph --region separated by a new line-- =i= is coloured by =cₖ= where =k = i mod n= |
+
+Besides having a colourful article, another usage I envision for this
+generalisation would be when rendering text in multiple languages; e.g., use red
+and blue to interleave a Arabic poetry with its English translation.
+
+* Parallel
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
@@ -1191,9 +1286,9 @@ desired. )
 #+end_center
 
 ** Next Steps
-   :PROPERTIES:
-   :CUSTOM_ID: Next-Steps
-   :END:
+  :PROPERTIES:
+  :CUSTOM_ID: Next-Steps-parallel
+  :END:
 
 [[color:orange][Going forward,]] it would be desirable to have the columns take a specified
 percentage of the available width ---whereas currently it splits it uniformly.
@@ -1202,7 +1297,7 @@ are not.
 
 # 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
 
-* COMMENT Editor Comments
+* Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
@@ -1427,7 +1522,7 @@ For example:
 The =:replacewith:= switch ---and usual Org markup--- also works with these links:
 [[edcomm:Qasim][/‘j’/ :replacewith: /‘q’/]]
 
-* COMMENT Folded Details
+* Folded Details
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -1519,7 +1614,7 @@ Neato, let's do more super cool stuff ^_^
 ( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
 LaTeX. )
 #+end_footnotesize
-* COMMENT /“Link Here!”/ OctoIcon
+* /“Link Here!”/ OctoIcon
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -1570,7 +1665,7 @@ the LaTeX rendition.  More usefully, before the HTML export hook, we could place
 such ‘link-here’ links before every org-title produce clickable org-headings,
 similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
 
-* COMMENT Badge Links
+* Badge Links
   :PROPERTIES:
   :CUSTOM_ID: Badge-Links
   :END:
@@ -1971,9 +2066,9 @@ wish to use; e.g., badge:|1d8348|1d8348
    :END:
  #+latex: \fi
 ** Next Steps
-   :PROPERTIES:
-   :CUSTOM_ID: Next-Steps
-   :END:
+  :PROPERTIES:
+  :CUSTOM_ID: Next-Steps-badges
+  :END:
 
 [[color:orange][Going forward,]] it would be desirable to provide non-whitespace alternatives
 for the LaTeX backend. {{{newline}}}
@@ -1983,7 +2078,427 @@ click. Finally, it may be useful to colour the =|=-separated fields of a badge
 link and provide a tooltip indicating which value corresponds to which
 field. This would make the interface more welcoming to new users.
 
-* COMMENT Summary
+* Tooltips for Glossaries, Dictionaries, and Documentation
+  :PROPERTIES:
+  :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
+  :END:
+
+Let's make a link type =doc= that shows a tooltip documentation ---e.g., glossary
+or abbreviation--- for a given label.
+
+E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
+
+#+caption: Tooltips for documentation and glossary items --in the browser!
+[[file:images/tooltips_browser.png]]
+
+#+caption: Tooltips for documentation and glossary items --in Emacs!
+[[file:images/tooltips_emacs.png]]
+
+#+caption: Tooltips for documentation and glossary items --in the PDF!
+[[file:images/tooltips_pdf.png]]
+
+#+caption: Declaring documentation-glossary items
+[[file:images/tooltips_declaration.png]]
+
+** The =doc= link type
+   :PROPERTIES:
+   :CUSTOM_ID: The-doc-link-type
+   :END:
+We begin by making use of a list of documentation-glossary entries
+---a lightweight database of information, if you will.
+#+begin_src emacs-lisp
+(defvar org-specical-blocks-extras--docs nil
+  "An alist of (label name description) entries; our glossary.
+
+Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
+#+end_src
+
+For example, we may use =add-to-list= to add an entry only if it is not already in
+the list.
+#+begin_src emacs-lisp
+(add-to-list 'org-specical-blocks-extras--docs
+  '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
+#+end_src
+
+We may wish to use Emacs' ~documentation~ command to retrieve entries ---this is
+useful for an online article that refers to unfamiliar Emacs terms ;-) To avoid
+copy-pasting documentation entries from one location to another, users may
+declare a fallback method. Besides Emacs' =documentation=, the fallback can be
+refer to a user's personal ‘global glossary’ variable ---which may live in their
+Emacs' init file.
+#+begin_src emacs-lisp
+(defvar org-specical-blocks-extras--docs-fallback
+  (lambda (label) (list label label (documentation (intern label))))
+  "The fallback method to retriving documentation or glossary entries.")
+#+end_src
+
+Let's keep track of where documentation comes from ---either the current
+article or from the fallback--- so that we may process it later on.
+#+begin_src emacs-lisp
+(defvar org-specical-blocks-extras--docs-GLOSSARY nil
+  "Which words are actually cited in the current article.
+
+We use this listing to actually print a glossary using
+‘show:GLOSSARY’.")
+#+end_src
+
+Now HTML exporting such links as tooltips and displaying them in Emacs as
+tooltips happens in two stages: First we check the documentation, if there is no
+entry, we try the fallback ---if that falls, an error is reported at export
+time. E.g., upon export =doc:wombo= will produce a no-entry error.
+
+#+begin_src emacs-lisp
+(-let [name&doc
+       (lambda (lbl)
+         (-let [(_ name doc) (assoc lbl org-specical-blocks-extras--docs)]
+           ;; If there is no documentation, try the fallback.
+           (unless doc
+             (setq doc
+                   (condition-case nil
+                       (funcall org-specical-blocks-extras--docs-fallback lbl)
+                     (error (error
+                             "Error: No documentation-glossary entry for “%s”!"
+                             lbl))))
+             (setq name (nth 1 doc))
+             (setq doc (nth 2 doc)))
+           (list name doc)))]
+
+(org-link-set-parameters
+ "doc"
+ :follow (lambda (_) ())
+ :export
+   `(lambda (label description backend)
+     (-let [(name docs) (funcall ,name&doc label)]
+       (add-to-list 'org-specical-blocks-extras--docs-GLOSSARY
+                    (list label name docs))
+       (setq name (or description name))
+       (pcase backend
+         (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
+                         ;; Preserve newlines and preserve whitespace
+                         (s-replace "  " "&emsp;" (s-replace "\n" "<br>" docs))
+                         name))
+         ;; Make the current word refer to its glosary entry;
+         ;; also declare the location that the glossary should refer back to.
+         (`latex (format (concat "\\hyperref"
+                                 "[org-special-block-extras-glossary-%s]{%s}"
+                                "\\label{org-special-block-extras-glossary"
+                                "-declaration-site-%s}")
+                         label name label)))))
+  :help-echo
+  `(lambda (window object position)
+    (save-excursion
+      (goto-char position)
+      (-let* (((&plist :path) (cadr (org-element-context)))
+              ((name doc) (funcall ,name&doc path)))
+        (format "[%s] %s :: %s" path name doc))))))
+#+end_src
+
+#+RESULTS:
+| :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (assoc lbl org-specical-blocks-extras--docs)] (unless doc (setq doc (condition-case nil (funcall org-specical-blocks-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-specical-blocks-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (s-replace    &emsp; (s-replace |
+
+#+begin_edcomm org
+:ed: Warning
+=-let*= may crash when there are macro calls involved;
+ e.g., ~(-let* [x (or 1 2)] x) ⇒ nil~! Woah! Not cool.
+
+# (-let* [x (or 1 2)] x) ⇒ nil!
+#+end_edcomm
+
+  # Our mode highlights documented text, with tooltips, as red.
+  # #+begin_src emacs-lisp :noweb-ref enable-mode
+  # (setq org-html-head-extra
+  #       (concat org-html-head-extra
+  #               (format "<style> abbr {color: red;} </style>")))
+  #     #+end_src
+
+** Documentation Blocks
+   :PROPERTIES:
+   :CUSTOM_ID: Documentation-Blocks
+   :END:
+
+Things look great at the HTML side and on the Emacs side for *consuming*
+documented text.  Besides being inconvenient, we cannot with good conscious
+force the average user to write Lisp as we did for the doc:cat entry. We turn to
+the problem of *producing* documentation entries with a block type interface:
+#+begin_example org
+#+begin_documentation
+:name: Existential Angst
+:label: ex-angst
+A negative feeling arising from freedom and responsibility.
+
+Also known as /Existential Dread/ and /Existential Anxiety/.
+#+end_documentation
+#+end_example
+#+begin_documentation
+:name: Existential Angst
+:label: ex-angst
+A negative feeling arising from freedom and responsibility.
+
+Also known as /Existential Dread/ and /Existential Anxiety/.
+#+end_documentation
+Now =doc:ex-angst= gives us doc:ex-angst,
+or using a description: [[doc:ex-angst][“existence is pain”?]]
+
+#+begin_quote
+As it stands, Emacs tooltips *only* appear after an export has happened:
+The export updates the dictionary variable which is used for the tooltips
+utility.
+
+Moreover, a documentation block may have multiple entries ---the =:name:= argument
+must appear first, then the =:label:=, and the remaining text is the
+description-documentation of the given name.
+#+end_quote
+
+#+BEGIN_SRC emacs-lisp
+(defun org-special-block-extras--documentation (_ contents)
+  "Register the dictionary entries in CONTENTS to the dictionary variable.
+
+The dictionary variable is ‘org-specical-blocks-extras--docs’.
+
+Documentation blocks are not shown upon export."
+  ;; Strip out any <p> tags
+  ;; Musa: Make these three lines part of the core utility?
+  (setq contents (substring-no-properties contents))
+  (setq contents (s-replace-regexp "<p>" "" contents))
+  (setq contents (s-replace-regexp "</p>" "" contents))
+  (setq contents (s-trim contents))
+  (loop for entry in (cdr (s-split ":name:" contents))
+        do   (-let [(contents′ . (&alist 'label 'name))
+                    (org-special-block-extras--extract-arguments
+                     (s-concat ":name:" entry) 'label 'name)]
+               (unless (and label name)
+                 (error (message-box (concat "#+begin_documentation: "
+                           "Ensure both :label: and :name: are in the entry. "
+                            "\n\n " contents))))
+    (add-to-list 'org-specical-blocks-extras--docs (list (s-trim label) name
+                                                         (s-trim contents′)))))
+  ;; The special block is not shown upon export.
+  "")
+  #+END_SRC
+
+** Examples
+   :PROPERTIES:
+   :CUSTOM_ID: Examples
+   :END:
+
+#+begin_documentation org
+:name: Natural Transformation
+:label: nat-trans
+
+Natural transformations are essentially polymorphic functions that make /no/
+choices according to the input type; e.g., =reverse : List τ → List τ= makes no
+choices depending on the type ~τ~.
+
+:name: Category Theory
+:label: cat
+A theory of typed  composition; e.g., typed monoids.
+#+end_documentation
+
+| Supported                            | Example          |
+|--------------------------------------+------------------|
+| No description                       | doc:cat          |
+| With description and code font       | [[doc:nat-trans][=polymorphism=]]   |
+| Fallback; e.g., arbitrary ELisp Docs | doc:thread-first |
+
+Notice how hovering over items makes them appear, but to make them disappear you
+should click on them or scroll away.  This is ideal when one wants to have
+multiple ‘definitions’ visible ;-)
+
+** [[https://iamceege.github.io/tooltipster/#triggers][Tooltipster]] ---Fast, Sleek, & Beautiful Tooltips
+   :PROPERTIES:
+   :CUSTOM_ID: tooltipster
+   :END:
+
+Thus far, Org entities are converted into HTML tags such as =<i>= for italicised
+text. However, HTML's default tooltip utility ---using ~title="⋯"~ in a ~div~---
+does not render arbitrary HTML elements. Moreover, the default tooltip utility
+is rather slow. As such, we move to using [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]].
+The incantation below sets up the required magic to make this happen.
+
+#+begin_src emacs-lisp :noweb-ref enable-mode
+(defvar org-specical-block-extras--html-setup nil
+  "Has the necessary HTML beeen added?")
+
+(unless org-specical-block-extras--html-setup
+  (setq org-specical-block-extras--html-setup t)
+(setq org-html-head-extra
+ (concat org-html-head-extra
+"
+<link rel=\"stylesheet\" type=\"text/css\" href=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+
+<link rel=\"stylesheet\" type=\"text/css\" href=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+
+<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.10.0.min.js\"></script>
+
+ <script type=\"text/javascript\"            src=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+
+  <script>
+         $(document).ready(function() {
+             $('.tooltip').tooltipster({
+                 theme: 'tooltipster-punk',
+                 contentAsHTML: true,
+                 animation: 'grow',
+                 delay: [100,500],
+                 // trigger: 'click'
+                 trigger: 'custom',
+                 triggerOpen: {
+                     mouseenter: true
+                 },
+                 triggerClose: {
+                     originClick: true,
+                     scroll: true
+                 }
+ });
+         });
+     </script>
+
+<style>
+   abbr {color: red;}
+
+   .tooltip { border-bottom: 1px dotted #000;
+              color:red;
+              text-decoration: none;}
+</style>
+")))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_example
+
+    <link rel="stylesheet" type="text/css" href="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css"/>
+
+    <link rel="stylesheet" type="text/css" href="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" />
+
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
+
+     <script type="text/javascript"            src="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js"></script>
+
+      <script>
+             $(document).ready(function() {
+                 $('.tooltip').tooltipster({
+                     theme: 'tooltipster-punk',
+                     contentAsHTML: true,
+                     animation: 'grow',
+                     delay: [100,500],
+                     // trigger: 'click'
+                     trigger: 'custom',
+                     triggerOpen: {
+                         mouseenter: true
+                     },
+                     triggerClose: {
+                         originClick: true,
+                         scroll: true
+                     }
+     });
+             });
+         </script>
+
+    <style>
+       abbr {color: red;}
+
+       .tooltip { border-bottom: 1px dotted #000;
+                  color:red;
+                  text-decoration: none;}
+    </style>
+    #+end_example
+** Wait, what about the LaTeX?
+   :PROPERTIES:
+   :CUSTOM_ID: hola
+   :END:
+
+   A PDF is essentially a fancy piece of paper, so tooltips will take on the
+   form of glossary entries: Using =doc:𝒳= will result in the word =𝒳= being printed
+   as a hyperlink to a glossary entry, which you the user will eventually
+   declare using =show:GLOSSARY=; moreover, the glossary entry will also have a
+   link back to where the =doc:𝒳= was declared.
+   E.g., doc:defmacro and doc:lambda.
+
+   We make a ~show:𝒳~ link type to print the value of the variable =𝒳=
+   as follows, with =GLOSSARY= being a reserved name.
+ #+begin_src emacs-lisp :tangle no
+(let ((whatdo (lambda (x)
+                (message (format
+                          (concat "The value of variable  %s  will be placed "
+                                  "here literally upon export, "
+                                  "which is: \n\n %s")
+                          (s-upcase x)
+                          (if (equal x "GLOSSARY")
+                              (format "A cleaned up presentation of ...\n%s"
+                                      org-specical-blocks-extras--docs-GLOSSARY)
+                          (pp (eval (intern x)))))))))
+  (org-link-set-parameters
+    "show"
+    :face '(:underline "green")
+    :follow whatdo
+    :help-echo `(lambda (window object position)
+                  (save-excursion
+                    (goto-char position)
+                    (-let [(&plist :path) (cadr (org-element-context))]
+                      (funcall ,whatdo path))))
+    :export
+    (lambda (label description backend)
+      (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
+            ((equal 'html backend) "") ;; Do not print glossary in HTML
+            (_
+             (-let ((fstr (concat "\\vspace{1em}\\phantomsection"
+                                 "\\textbf{%s}\\quad"
+                                 "\\label{org-special-block-extras-glossary-%s}"
+                                 "%s See page "
+                                 "\\pageref{org-special-block-extras"
+                                 "-glossary-declaration-site-%s}"))
+                    (preserve ;; preserve whitespace
+                     (lambda (x)
+                       (s-replace "\n" " \\newline{\\color{white}.}"
+                                  (s-replace "  " " \\quad "
+                                             ;; Hack!
+                                             (s-replace "&" "\\&" x))))))
+               (s-join "\n\n"
+                       (loop for (label name doc)
+                             in org-specical-blocks-extras--docs-GLOSSARY
+                             collect (format fstr name label
+                                             (funcall preserve doc)
+                                             label)))))))))
+ #+end_src
+
+ #+RESULTS:
+ | :follow | (lambda (x) (message (format (concat The value of variable  %s  will be placed  here literally upon export,  which is: |
+
+
+
+ As an example, we know have generic sentences:
+ | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^= |
+ |----------------------------------------------------------------------------|
+ | My name is show:user-full-name and I am using Emacs show:emacs-version ^_^ |
+
+ For example, here is a word whose documentation is obtained from Emacs
+ rather than me being written: doc:thread-last.
+ If you click on it, in the LaTeX output, you will be directed to the glossary
+ at the end of this article ---glossaries are not printed in HTML rendering.
+
+ /Neato! The whitespace in the documentation is preserved in the LaTeX output as
+ is the case for HTML./
+
+** Next Steps
+  :PROPERTIES:
+  :CUSTOM_ID: Next-Steps-tooltips
+  :END:
+
+[[color:orange][Going forward,]] it'd be nice to have URLs work well upon export for =documentation=
+block types; whereas they currently break the HTML export.
+- If an entry is referenced multiple times, such as doc:cat, then it would be
+  nice if the glossary referred to the pages of all such locations rather than
+  just the final one.
+- The glossary current prints in order of appearance; we may want to have
+  the option to print it in a sorted fashion.
+- Perhaps use the line activation feature to provide link tooltips
+  immediately rather than rely on exportation.
+- The =show= link type could accept an arbitrary Lisp expression as
+  a bracketed link.
+- When one clicks on a =doc= documentation link, it would be nice to ‘jump’
+  to its associated =#+begin_documentation= declaration block in the current
+  buffer, if possible.
+
+* Summary
   :PROPERTIES:
   :CUSTOM_ID: Summary
   :END:
@@ -1992,20 +2507,25 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=. Let =𝓃= be any number from =1..5=.
 
-| Idea               | Block         | Link       | Switches            |
-|--------------------+---------------+------------+---------------------|
-| Colours            | =𝒞=             | =𝒞=, =color:𝒞= | =:color:=             |
-| Parallel           | =𝓃parallel[NB]= | -          | =:columnbreak:=       |
-| Editorial Comments | =edcomm=        | =edcomm=     | =:ed:=, =:replacewith:= |
-| Folded Details     | =details=       | -          | =:title:=             |
-| Link Here          | -             | =link-here=  | -                   |
-| Badges             | -             | =badge=      | -                   |
+| Idea                   | Block         | Link       | Switches            |
+|------------------------+---------------+------------+---------------------|
+| Colours                | =𝒞=             | =𝒞=, =color:𝒞= | =:color:=             |
+| Parallel               | =𝓃parallel[NB]= | -          | =:columnbreak:=       |
+| Editorial Comments     | =edcomm=        | =edcomm=     | =:ed:=, =:replacewith:= |
+| Folded Details         | =details=       | -          | =:title:=             |
+| Link Here              | -             | =link-here=  | -                   |
+| Badges                 | -             | =badge=      | -                   |
+| Documentation-Glossary | =documentation= | =doc=, =show=  | =:name:=, =:label:=     |
 
 There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
 github-watchers=, =twitter-follow=, and =tweet=.
 
-* COMMENT Lisp Postamble                                                   :noexport:
+
+[[color:orange][Going forward,]] it'd be nice to a centralised ‘user manual’ which may be
+consulted rather than reading the literate implementation above.
+
+* Lisp Postamble                                                   :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Postamble
   :END:
@@ -2016,24 +2536,6 @@ github-watchers=, =twitter-follow=, and =tweet=.
 
 ;;; org-special-block-extras.el ends here
 #+END_SRC
-* COMMENT Etc
-  :PROPERTIES:
-  :CUSTOM_ID: COMMENT-Etc
-  :END:
-
-  Likewise, regions surrounded by ‘#+BEGIN_COMMENT’ … ‘#+END_COMMENT’ are not
-  exported.
-
-* COMMENT Images ---How To
-  :PROPERTIES:
-  :CUSTOM_ID: COMMENT-Images-How-To
-  :END:
-
-1. =eww-open-file= to open a local HTML file in Emacs
-2. Likewise open both the Org source and resulting PDF
-3. M-x display-line-numbers-mode to turn off numbers
-4. Take screenshot {{{smile}}}
-
 * COMMENT MELPA Checks
   :PROPERTIES:
   :CUSTOM_ID: COMMENT-MELPA-Checks
@@ -2183,6 +2685,15 @@ github-watchers=, =twitter-follow=, and =tweet=.
 #+RESULTS: make-readme
 | TOC | noexport |
 
+* Glossary                                                           :ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: Glossary
+  :END:
+
+#+latex: \section*{Glossary}
+#+latex: \addcontentsline{toc}{section}{Glossary}
+
+ show:GLOSSARY
 * Footnotes
   :PROPERTIES:
   :CUSTOM_ID: Footnotes
