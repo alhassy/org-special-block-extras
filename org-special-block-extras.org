@@ -239,7 +239,7 @@ That is, *we provide 29 block types and 32 link types*.
 #+end_quote
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!  ---or visit
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] ---or visit
 the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
 #+end_quote
 
@@ -288,7 +288,7 @@ the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation 
 [[file:images/tooltips_declaration.png]]
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!  ---or visit
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] ---or visit
 the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
 #+end_quote
 
@@ -2479,7 +2479,7 @@ block types; whereas they currently break the HTML export.
   :END:
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]]!
 ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
 
