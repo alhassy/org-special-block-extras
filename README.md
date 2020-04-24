@@ -1,4 +1,4 @@
-<h1> Twenty-nine new custom block and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
+<h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
 
 <div class="org-center">
 ***Warning: Incomplete!***
@@ -192,3 +192,145 @@
 
 
 # Table of Contents
+
+1.  [Summary](#Summary)
+    1.  [Installation Instructions](#Installation-Instructions)
+    2.  [Minimal working example](#Minimal-working-example)
+    3.  [Bye!](#Bye)
+
+
+# Summary
+
+Let `𝒞` be any of the following: `black`, `blue`, `brown`, `cyan`, `darkgray`, `gray`, `green`,
+`lightgray`, `lime`, `magenta`, `olive orange`, `pink`, `purple`, `red`, `teal`, `violet`, `white`,
+`yellow`. Let `𝓃` be any number from `1..5`.
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Idea</th>
+<th scope="col" class="org-left">Block</th>
+<th scope="col" class="org-left">Link</th>
+<th scope="col" class="org-left">Switches</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="org-left">Colours</td>
+<td class="org-left">`𝒞`</td>
+<td class="org-left">`𝒞`, `color:𝒞`</td>
+<td class="org-left">`:color:`</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Parallel</td>
+<td class="org-left">`𝓃parallel[NB]`</td>
+<td class="org-left">-</td>
+<td class="org-left">`:columnbreak:`</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Editorial Comments</td>
+<td class="org-left">`edcomm`</td>
+<td class="org-left">`edcomm`</td>
+<td class="org-left">`:ed:`, `:replacewith:`</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Folded Details</td>
+<td class="org-left">`details`</td>
+<td class="org-left">-</td>
+<td class="org-left">`:title:`</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Link Here</td>
+<td class="org-left">-</td>
+<td class="org-left">`link-here`</td>
+<td class="org-left">-</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Badges</td>
+<td class="org-left">-</td>
+<td class="org-left">`badge`</td>
+<td class="org-left">-</td>
+</tr>
+
+
+<tr>
+<td class="org-left">Documentation-Glossary</td>
+<td class="org-left">`documentation`</td>
+<td class="org-left">`doc`, `show`</td>
+<td class="org-left">`:name:`, `:label:`</td>
+</tr>
+</tbody>
+</table>
+
+There are also the social badge links:
+`reddit-subscribe-to`, `github-followers`, `github-forks`, `github-stars,
+github-watchers`, `twitter-follow`, and `tweet`.
+
+<span style="color:orange;">Going forward,</span> it'd be nice to a centralised ‘user manual’ which may be
+consulted rather than reading the literate implementation above.
+
+
+## Installation Instructions
+
+    ;; ⟨0⟩ Download the org-special-block-extras.el file manually or using quelpa
+    (quelpa '(org-special-block-extras :fetcher github :repo
+    "alhassy/org-special-block-extras"))
+
+    ;; ⟨1⟩ Have this always active in Org buffers
+    (add-hook #'org-mode-hook #'org-special-block-extras-mode)
+
+    ;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
+
+
+## Minimal working example
+
+    #+begin_parallel
+    Name this file test.org, then write something like doc:loop
+    now press =C-c C-e h o= and your browser will open a pretty
+    document. Hover over the previous “loop” and you'll see its
+    documentation!
+
+    Now the right column, has a first-class editorial comment
+    and an SVG badge.
+
+    #+begin_edcomm
+    Super neat stuff!
+    #+end_edcomm
+
+    badge:thanks|for_reading
+
+    tweet:https://github.com/alhassy/org-special-block-extras
+
+    badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+    #+end_parallel
+
+
+## Bye!
+
+<thanks|for_reading>
+
+https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و::&url=https://github.com/alhassy/org-special-block-extras
+
+https://www.buymeacoffee.com/alhassy

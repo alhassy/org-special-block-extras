@@ -1712,7 +1712,7 @@ portion of the shilelds.io badge interface.
   :export #'org-special-block-extras--link--badge)
 
 (defvar org-special-block-extras--link--twitter-excitement
-  "This looks super neat ^_^ :"
+  "This looks super neat (•̀ᴗ•́)و:"
   "The string prefixing the URL being shared.")
 
 (defun org-special-block-extras--link--badge
@@ -1784,7 +1784,9 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
                      (format "<a id=\"%s\" href=\"#%s\">%s</a>" lbl lbl img)
                    (format "<a href=\"%s\">%s</a>" url img))
                img))
-        (_ ""))))
+        ('latex "")
+        ;; Markdown syntx: [![image title](url to get image)](url to go to on click)
+        (_ "[![badge:%s](%s)](%s)" lbl img url))))
 #+end_src
 
 We now form the specialised link types for social media.
@@ -1801,7 +1803,6 @@ We now form the specialised link types for social media.
            :export (eval `(-cut org-special-block-extras--link--badge
                          <> <> <> ,social))))
 #+end_src
-
 
 ** Begin omitting from LaTeX output                                  :ignore:
    :PROPERTIES:
@@ -2484,9 +2485,61 @@ There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
 github-watchers=, =twitter-follow=, and =tweet=.
 
-
 [[color:orange][Going forward,]] it'd be nice to a centralised ‘user manual’ which may be
 consulted rather than reading the literate implementation above.
+
+** Installation Instructions
+   :PROPERTIES:
+   :CUSTOM_ID: Installation-Instructions
+   :END:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+;; ⟨0⟩ Download the org-special-block-extras.el file manually or using quelpa
+(quelpa '(org-special-block-extras :fetcher github :repo
+"alhassy/org-special-block-extras"))
+
+;; ⟨1⟩ Have this always active in Org buffers
+(add-hook #'org-mode-hook #'org-special-block-extras-mode)
+
+;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
+#+END_SRC
+
+** Minimal working example
+   :PROPERTIES:
+   :CUSTOM_ID: Minimal-working-example
+   :END:
+#+begin_example org
+#+begin_parallel
+Name this file test.org, then write something like doc:loop
+now press =C-c C-e h o= and your browser will open a pretty
+document. Hover over the previous “loop” and you'll see its
+documentation!
+
+Now the right column, has a first-class editorial comment
+and an SVG badge.
+
+#+begin_edcomm
+Super neat stuff!
+#+end_edcomm
+
+badge:thanks|for_reading
+
+tweet:https://github.com/alhassy/org-special-block-extras
+
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+#+end_parallel
+#+end_example
+
+** Bye!
+   :PROPERTIES:
+   :CUSTOM_ID: Bye
+   :END:
+
+badge:thanks|for_reading
+
+tweet:https://github.com/alhassy/org-special-block-extras
+
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 
 * Lisp Postamble                                                   :noexport:
   :PROPERTIES:
@@ -2611,15 +2664,12 @@ consulted rather than reading the literate implementation above.
 (with-temp-buffer
     (insert
     "#+EXPORT_FILE_NAME: README.md
-     # HTML: <h1> Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^ </h1>
-
-     ,#+OPTIONS: toc:nil d:nil
-     ,#+INCLUDE: org-special-block-extras.org::*Abstract
+     # HTML: <h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
+     #+OPTIONS: toc:nil d:nil
+     #+INCLUDE: \"org-special-block-extras.org::*Abstract\"
+     # INCLUDE: \"org-special-block-extras.org::*Summary\"
+     HELLO!
     ")
-
-    ;; No code execution on export
-    ;; ⟪ For a particular block, we use “:eval never-export” ⟫
-    ;;
     (let ((org-export-use-babel nil)
       (org-mode)
       (org-md-export-to-markdown))))
