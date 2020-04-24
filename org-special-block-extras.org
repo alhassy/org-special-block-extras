@@ -105,7 +105,7 @@ the github repo.
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 0.9
-;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0"))
+;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -159,6 +159,10 @@ the github repo.
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
 (require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
                            ;; ‘-not’, ‘-partial’, etc.
+
+(require 'org)
+(require 'ox-latex)
+(require 'ox-html)
 #+END_SRC
 
 #
@@ -658,7 +662,7 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
                             (copy-region-as-kill contents-begin contents-end)
                             (substring-no-properties (car kill-ring)))))
                    (format "“%s” :: Let me google “%s” for you -__-"
-                           (or description raw-link) (pp window)))))
+                          raw-link (or description raw-link))))
 
   ;; How should these links be displayed
   :face '(:foreground "red" :weight bold    (ref:exface)
@@ -980,7 +984,7 @@ in *both* the Emacs interface and in exported backends.
              `(:height 300
                :underline (:color "red" :style wave)
                :overline  "red" :strike-through "red")))
- :help-echo (lambda (window object position)
+ :help-echo (lambda (_ __ position)
               (save-excursion
                 (goto-char position)
                 (-let* (((&plist :path) (cadr (org-element-context))))
@@ -1037,7 +1041,7 @@ Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:bro
  #+begin_src emacs-lisp
 (defun org-special-block-extras--latex-definitions (backend contents)
   "Declare but do not display the CONTENTS according to the BACKEND."
-  (loop for (this that) in (-partition 2 '("<p>" ""
+  (cl-loop for (this that) in (-partition 2 '("<p>" ""
                                            "</p>" ""
                                            "\\{" "{"
                                            "\\}" "}"))
@@ -1242,10 +1246,10 @@ contents)))")))))
 
 We also use ~parallel~ as an alias for ~2parallel~.
  #+BEGIN_SRC emacs-lisp :noweb-ref enable-mode :tangle no
-(defalias #'org-special-block-extras--parallel
+(defalias 'org-special-block-extras--parallel
           #'org-special-block-extras--2parallel)
 
-(defalias #'org-special-block-extras--parallelNB
+(defalias 'org-special-block-extras--parallelNB
           #'org-special-block-extras--2parallelNB)
  #+END_SRC
 
@@ -1506,10 +1510,10 @@ provide the =edcomm= link type.
             (org-special-block-extras--edcomm
              backend
              (format ":ed:%s\n%s" label description)))
-  :help-echo (lambda (window object position)
+  :help-echo (lambda (_ __ position)
                (save-excursion
                  (goto-char position)
-                 (-let* [(&plist :path) (cadr (org-element-context))]
+                 (-let [(&plist :path) (cadr (org-element-context))]
                    (format "%s made this remark" (s-upcase path)))))
   :face '(:foreground "red" :weight bold))
 #+end_src
@@ -1633,7 +1637,7 @@ article, this is a possible way to do so.
   :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
   :export #'org-special-block-extras--link-here)
 
-(defun org-special-block-extras--link-here (label description backend)
+(defun org-special-block-extras--link-here (label _ backend)
   "Export a link to the current location in an Org file.
 
 The LABEL determines the name of the link.
@@ -1712,7 +1716,7 @@ portion of the shilelds.io badge interface.
   "The string prefixing the URL being shared.")
 
 (defun org-special-block-extras--link--badge
-  (label description backend &optional social)
+  (label _ backend &optional social)
   "Export a link presented as an SVG badge.
 
 The LABEL should be of the shape ‘key|value|color|url|logo’
@@ -1767,11 +1771,11 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
              ,(format
                "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                label)))
-        (--filter (s-starts-with? (first it) social) it)
+        (--filter (s-starts-with? (cl-first it) social) it)
         (car it)
         (or it (error "Badge: Unsupported social type “%s”" social))
-        (setq url (format (second it) label)
-              img (or (third it)
+        (setq url (format (cl-second it) label)
+              img (or (cl-third it)
                       (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
                       social label)))))
     (pcase backend
@@ -1785,7 +1789,7 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
 
 We now form the specialised link types for social media.
 #+begin_src emacs-lisp
-(loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
+(cl-loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
                              ("github/stars")
                              ("github/watchers")
                              ("github/followers")
@@ -2107,7 +2111,7 @@ E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
 We begin by making use of a list of documentation-glossary entries
 ---a lightweight database of information, if you will.
 #+begin_src emacs-lisp
-(defvar org-specical-blocks-extras--docs nil
+(defvar org-special-block-extras--docs nil
   "An alist of (label name description) entries; our glossary.
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
@@ -2116,7 +2120,7 @@ Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
 #+begin_src emacs-lisp
-(add-to-list 'org-specical-blocks-extras--docs
+(add-to-list 'org-special-block-extras--docs
   '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
 #+end_src
 
@@ -2127,7 +2131,7 @@ declare a fallback method. Besides Emacs' =documentation=, the fallback can be
 refer to a user's personal ‘global glossary’ variable ---which may live in their
 Emacs' init file.
 #+begin_src emacs-lisp
-(defvar org-specical-blocks-extras--docs-fallback
+(defvar org-special-block-extras--docs-fallback
   (lambda (label) (list label label (documentation (intern label))))
   "The fallback method to retriving documentation or glossary entries.")
 #+end_src
@@ -2135,7 +2139,7 @@ Emacs' init file.
 Let's keep track of where documentation comes from ---either the current
 article or from the fallback--- so that we may process it later on.
 #+begin_src emacs-lisp
-(defvar org-specical-blocks-extras--docs-GLOSSARY nil
+(defvar org-special-block-extras--docs-GLOSSARY nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
@@ -2150,12 +2154,12 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
 #+begin_src emacs-lisp
 (-let [name&doc
        (lambda (lbl)
-         (-let [(_ name doc) (assoc lbl org-specical-blocks-extras--docs)]
+         (-let [(_ name doc) (assoc lbl org-special-block-extras--docs)]
            ;; If there is no documentation, try the fallback.
            (unless doc
              (setq doc
                    (condition-case nil
-                       (funcall org-specical-blocks-extras--docs-fallback lbl)
+                       (funcall org-special-block-extras--docs-fallback lbl)
                      (error (error
                              "Error: No documentation-glossary entry for “%s”!"
                              lbl))))
@@ -2169,7 +2173,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
  :export
    `(lambda (label description backend)
      (-let [(name docs) (funcall ,name&doc label)]
-       (add-to-list 'org-specical-blocks-extras--docs-GLOSSARY
+       (add-to-list 'org-special-block-extras--docs-GLOSSARY
                     (list label name docs))
        (setq name (or description name))
        (pcase backend
@@ -2185,7 +2189,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
                                 "-declaration-site-%s}")
                          label name label)))))
   :help-echo
-  `(lambda (window object position)
+  `(lambda (_ __ position)
     (save-excursion
       (goto-char position)
       (-let* (((&plist :path) (cadr (org-element-context)))
@@ -2193,8 +2197,6 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
         (format "[%s] %s :: %s" path name doc))))))
 #+end_src
 
-#+RESULTS:
-| :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (assoc lbl org-specical-blocks-extras--docs)] (unless doc (setq doc (condition-case nil (funcall org-specical-blocks-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-specical-blocks-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (s-replace    &emsp; (s-replace |
 
 #+begin_edcomm org
 :ed: Warning
@@ -2253,7 +2255,7 @@ description-documentation of the given name.
 (defun org-special-block-extras--documentation (_ contents)
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
-The dictionary variable is ‘org-specical-blocks-extras--docs’.
+The dictionary variable is ‘org-special-block-extras--docs’.
 
 Documentation blocks are not shown upon export."
   ;; Strip out any <p> tags
@@ -2262,7 +2264,7 @@ Documentation blocks are not shown upon export."
   (setq contents (s-replace-regexp "<p>" "" contents))
   (setq contents (s-replace-regexp "</p>" "" contents))
   (setq contents (s-trim contents))
-  (loop for entry in (cdr (s-split ":name:" contents))
+  (cl-loop for entry in (cdr (s-split ":name:" contents))
         do   (-let [(contents′ . (&alist 'label 'name))
                     (org-special-block-extras--extract-arguments
                      (s-concat ":name:" entry) 'label 'name)]
@@ -2270,7 +2272,7 @@ Documentation blocks are not shown upon export."
                  (error (message-box (concat "#+begin_documentation: "
                            "Ensure both :label: and :name: are in the entry. "
                             "\n\n " contents))))
-    (add-to-list 'org-specical-blocks-extras--docs (list (s-trim label) name
+    (add-to-list 'org-special-block-extras--docs (list (s-trim label) name
                                                          (s-trim contents′)))))
   ;; The special block is not shown upon export.
   "")
@@ -2316,11 +2318,11 @@ is rather slow. As such, we move to using [[https://iamceege.github.io/tooltipst
 The incantation below sets up the required magic to make this happen.
 
 #+begin_src emacs-lisp :noweb-ref enable-mode
-(defvar org-specical-block-extras--html-setup nil
+(defvar org-special-block-extras--html-setup nil
   "Has the necessary HTML beeen added?")
 
-(unless org-specical-block-extras--html-setup
-  (setq org-specical-block-extras--html-setup t)
+(unless org-special-block-extras--html-setup
+  (setq org-special-block-extras--html-setup t)
 (setq org-html-head-extra
  (concat org-html-head-extra
 "
@@ -2385,13 +2387,13 @@ The incantation below sets up the required magic to make this happen.
                           (s-upcase x)
                           (if (equal x "GLOSSARY")
                               (format "A cleaned up presentation of ...\n%s"
-                                      org-specical-blocks-extras--docs-GLOSSARY)
+                                      org-special-block-extras--docs-GLOSSARY)
                           (pp (eval (intern x)))))))))
   (org-link-set-parameters
     "show"
     :face '(:underline "green")
     :follow whatdo
-    :help-echo `(lambda (window object position)
+    :help-echo `(lambda (_ __ position)
                   (save-excursion
                     (goto-char position)
                     (-let [(&plist :path) (cadr (org-element-context))]
@@ -2414,8 +2416,8 @@ The incantation below sets up the required magic to make this happen.
                                              ;; Hack!
                                              (s-replace "&" "\\&" x))))))
                (s-join "\n\n"
-                       (loop for (label name doc)
-                             in org-specical-blocks-extras--docs-GLOSSARY
+                       (cl-loop for (label name doc)
+                             in org-special-block-extras--docs-GLOSSARY
                              collect (format fstr name label
                                              (funcall preserve doc)
                                              label)))))))))
@@ -2551,25 +2553,27 @@ consulted rather than reading the literate implementation above.
 5. Use ‘-’ as a separator, not ‘/’.
 6. Consider reading:
    https://github.com/bbatsov/emacs-lisp-style-guide#the-emacs-lisp-style-guide
-7. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+6. Use cl-loop, cl-first, cl-second, cl-third instead of loop, first, second, third
+7. byte-compile and address any concerns
+8. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
    - Symbols =nil, t= should not appear in single quotes.
-8. Ensure it byte-compiles without any problems.
-9. Ensure that package-linter raises no issues; i.e., the following has no result.
-    #+BEGIN_SRC emacs-lisp
-(use-package package-lint)
-(-let [it "org-special-block-extras.el"]
- (ignore-errors (kill-buffer it))
- (find-file-other-window it)
- (package-lint-buffer it))
-#+END_SRC
-10. Create a recipe file by invoking: M-x package-build-create-recipe
+9. Ensure it byte-compiles without any problems.
+10. Ensure that package-linter raises no issues; i.e., the following has no result.
+     #+BEGIN_SRC emacs-lisp
+ (use-package package-lint)
+ (-let [it "org-special-block-extras.el"]
+  (ignore-errors (kill-buffer it))
+  (find-file-other-window it)
+  (package-lint-buffer it))
+ #+END_SRC
+11. Create a recipe file by invoking: M-x package-build-create-recipe
     - Place it in: melpa/recipes/
     - The name of the file should be the name of the package, no extension.
 
        #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
     (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
     #+END_SRC
-11. Ensure the recipe builds successfully:
+12. Ensure the recipe builds successfully:
     #+BEGIN_SRC shell
     cd ~/melpa; rm ~/melpa/packages/org-special-block-extras-*; make recipes/org-special-block-extras
     #+END_SRC
@@ -2577,7 +2581,7 @@ consulted rather than reading the literate implementation above.
     #+RESULTS:
     : • Building package org-special-block-extras ...
 
-12. Ensure the package installs properly from within Emacs:
+13. Ensure the package installs properly from within Emacs:
 
       #+BEGIN_SRC emacs-lisp
 (package-install-file "~/melpa/packages/org-special-block-extras-20200417.238.el")

@@ -1,10 +1,10 @@
-;;; org-special-block-extras.el --- Twenty-six new custom blocks for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 31 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 0.7
-;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0"))
+;; Version: 0.9
+;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -59,6 +59,10 @@
 (require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
                            ;; ‘-not’, ‘-partial’, etc.
 
+(require 'org)
+(require 'ox-latex)
+(require 'ox-html)
+
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
   "Provide twenty-six new custom blocks for Org-mode."
@@ -70,12 +74,56 @@
         
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
-        (defalias #'org-special-block-extras--parallel
+        (defalias 'org-special-block-extras--parallel
                   #'org-special-block-extras--2parallel)
         
-        (defalias #'org-special-block-extras--parallelNB
+        (defalias 'org-special-block-extras--parallelNB
                   #'org-special-block-extras--2parallelNB)
         (setq org-export-allow-bind-keywords t)
+        (defvar org-special-block-extras--html-setup nil
+          "Has the necessary HTML beeen added?")
+        
+        (unless org-special-block-extras--html-setup
+          (setq org-special-block-extras--html-setup t)
+        (setq org-html-head-extra
+         (concat org-html-head-extra
+        "
+        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+        
+        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+        
+        <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
+        
+         <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+        
+          <script>
+                 $(document).ready(function() {
+                     $('.tooltip').tooltipster({
+                         theme: 'tooltipster-punk',
+                         contentAsHTML: true,
+                         animation: 'grow',
+                         delay: [100,500],
+                         // trigger: 'click'
+                         trigger: 'custom',
+                         triggerOpen: {
+                             mouseenter: true
+                         },
+                         triggerClose: {
+                             originClick: true,
+                             scroll: true
+                         }
+         });
+                 });
+             </script>
+        
+        <style>
+           abbr {color: red;}
+        
+           .tooltip { border-bottom: 1px dotted #000;
+                      color:red;
+                      text-decoration: none;}
+        </style>
+        ")))
       ) ;; Must be on a new line; I'm using noweb-refs
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
@@ -179,7 +227,7 @@ with all ‘:kᵢ:’ lines stripped out.
              `(:height 300
                :underline (:color "red" :style wave)
                :overline  "red" :strike-through "red")))
- :help-echo (lambda (window object position)
+ :help-echo (lambda (_ __ position)
               (save-excursion
                 (goto-char position)
                 (-let* (((&plist :path) (cadr (org-element-context))))
@@ -195,7 +243,7 @@ with all ‘:kᵢ:’ lines stripped out.
 
 (defun org-special-block-extras--latex-definitions (backend contents)
   "Declare but do not display the CONTENTS according to the BACKEND."
-  (loop for (this that) in (-partition 2 '("<p>" ""
+  (cl-loop for (this that) in (-partition 2 '("<p>" ""
                                            "</p>" ""
                                            "\\{" "{"
                                            "\\}" "}"))
@@ -297,10 +345,10 @@ The CONTENTS string has two optional argument switches:
             (org-special-block-extras--edcomm
              backend
              (format ":ed:%s\n%s" label description)))
-  :help-echo (lambda (window object position)
+  :help-echo (lambda (_ __ position)
                (save-excursion
                  (goto-char position)
-                 (-let* [(&plist :path) (cadr (org-element-context))]
+                 (-let [(&plist :path) (cadr (org-element-context))]
                    (format "%s made this remark" (s-upcase path)))))
   :face '(:foreground "red" :weight bold))
 
@@ -340,7 +388,7 @@ the folded region."
   :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
   :export #'org-special-block-extras--link-here)
 
-(defun org-special-block-extras--link-here (label description backend)
+(defun org-special-block-extras--link-here (label _ backend)
   "Export a link to the current location in an Org file.
 
 The LABEL determines the name of the link.
@@ -379,7 +427,7 @@ The LABEL determines the name of the link.
   "The string prefixing the URL being shared.")
 
 (defun org-special-block-extras--link--badge
-  (label description backend &optional social)
+  (label _ backend &optional social)
   "Export a link presented as an SVG badge.
 
 The LABEL should be of the shape ‘key|value|color|url|logo’
@@ -434,11 +482,11 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
              ,(format
                "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                label)))
-        (--filter (s-starts-with? (first it) social) it)
+        (--filter (s-starts-with? (cl-first it) social) it)
         (car it)
         (or it (error "Badge: Unsupported social type “%s”" social))
-        (setq url (format (second it) label)
-              img (or (third it)
+        (setq url (format (cl-second it) label)
+              img (or (cl-third it)
                       (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
                       social label)))))
     (pcase backend
@@ -449,7 +497,7 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
                img))
         (_ ""))))
 
-(loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
+(cl-loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
                              ("github/stars")
                              ("github/watchers")
                              ("github/followers")
@@ -460,6 +508,138 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
       do (org-link-set-parameters link′
            :export (eval `(-cut org-special-block-extras--link--badge
                          <> <> <> ,social))))
+
+(defvar org-special-block-extras--docs nil
+  "An alist of (label name description) entries; our glossary.
+
+Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
+
+(add-to-list 'org-special-block-extras--docs
+  '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
+
+(defvar org-special-block-extras--docs-fallback
+  (lambda (label) (list label label (documentation (intern label))))
+  "The fallback method to retriving documentation or glossary entries.")
+
+(defvar org-special-block-extras--docs-GLOSSARY nil
+  "Which words are actually cited in the current article.
+
+We use this listing to actually print a glossary using
+‘show:GLOSSARY’.")
+
+(-let [name&doc
+       (lambda (lbl)
+         (-let [(_ name doc) (assoc lbl org-special-block-extras--docs)]
+           ;; If there is no documentation, try the fallback.
+           (unless doc
+             (setq doc
+                   (condition-case nil
+                       (funcall org-special-block-extras--docs-fallback lbl)
+                     (error (error
+                             "Error: No documentation-glossary entry for “%s”!"
+                             lbl))))
+             (setq name (nth 1 doc))
+             (setq doc (nth 2 doc)))
+           (list name doc)))]
+
+(org-link-set-parameters
+ "doc"
+ :follow (lambda (_) ())
+ :export
+   `(lambda (label description backend)
+     (-let [(name docs) (funcall ,name&doc label)]
+       (add-to-list 'org-special-block-extras--docs-GLOSSARY
+                    (list label name docs))
+       (setq name (or description name))
+       (pcase backend
+         (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
+                         ;; Preserve newlines and preserve whitespace
+                         (s-replace "  " "&emsp;" (s-replace "\n" "<br>" docs))
+                         name))
+         ;; Make the current word refer to its glosary entry;
+         ;; also declare the location that the glossary should refer back to.
+         (`latex (format (concat "\\hyperref"
+                                 "[org-special-block-extras-glossary-%s]{%s}"
+                                "\\label{org-special-block-extras-glossary"
+                                "-declaration-site-%s}")
+                         label name label)))))
+  :help-echo
+  `(lambda (_ __ position)
+    (save-excursion
+      (goto-char position)
+      (-let* (((&plist :path) (cadr (org-element-context)))
+              ((name doc) (funcall ,name&doc path)))
+        (format "[%s] %s :: %s" path name doc))))))
+
+(defun org-special-block-extras--documentation (_ contents)
+  "Register the dictionary entries in CONTENTS to the dictionary variable.
+
+The dictionary variable is ‘org-special-block-extras--docs’.
+
+Documentation blocks are not shown upon export."
+  ;; Strip out any <p> tags
+  ;; Musa: Make these three lines part of the core utility?
+  (setq contents (substring-no-properties contents))
+  (setq contents (s-replace-regexp "<p>" "" contents))
+  (setq contents (s-replace-regexp "</p>" "" contents))
+  (setq contents (s-trim contents))
+  (cl-loop for entry in (cdr (s-split ":name:" contents))
+        do   (-let [(contents′ . (&alist 'label 'name))
+                    (org-special-block-extras--extract-arguments
+                     (s-concat ":name:" entry) 'label 'name)]
+               (unless (and label name)
+                 (error (message-box (concat "#+begin_documentation: "
+                           "Ensure both :label: and :name: are in the entry. "
+                            "\n\n " contents))))
+    (add-to-list 'org-special-block-extras--docs (list (s-trim label) name
+                                                         (s-trim contents′)))))
+  ;; The special block is not shown upon export.
+  "")
+
+(defvar org-special-block-extras--html-setup nil
+  "Has the necessary HTML beeen added?")
+
+(unless org-special-block-extras--html-setup
+  (setq org-special-block-extras--html-setup t)
+(setq org-html-head-extra
+ (concat org-html-head-extra
+"
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+
+<script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
+
+ <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+
+  <script>
+         $(document).ready(function() {
+             $('.tooltip').tooltipster({
+                 theme: 'tooltipster-punk',
+                 contentAsHTML: true,
+                 animation: 'grow',
+                 delay: [100,500],
+                 // trigger: 'click'
+                 trigger: 'custom',
+                 triggerOpen: {
+                     mouseenter: true
+                 },
+                 triggerClose: {
+                     originClick: true,
+                     scroll: true
+                 }
+ });
+         });
+     </script>
+
+<style>
+   abbr {color: red;}
+
+   .tooltip { border-bottom: 1px dotted #000;
+              color:red;
+              text-decoration: none;}
+</style>
+")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
