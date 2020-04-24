@@ -2324,13 +2324,13 @@ The incantation below sets up the required magic to make this happen.
 (setq org-html-head-extra
  (concat org-html-head-extra
 "
-<link rel=\"stylesheet\" type=\"text/css\" href=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
 
-<link rel=\"stylesheet\" type=\"text/css\" href=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
 
 <script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.10.0.min.js\"></script>
 
- <script type=\"text/javascript\"            src=\"http://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+ <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
 
   <script>
          $(document).ready(function() {
@@ -2362,45 +2362,6 @@ The incantation below sets up the required magic to make this happen.
 ")))
     #+end_src
 
-    #+RESULTS:
-    #+begin_example
-
-    <link rel="stylesheet" type="text/css" href="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css"/>
-
-    <link rel="stylesheet" type="text/css" href="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" />
-
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.0.min.js"></script>
-
-     <script type="text/javascript"            src="http://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js"></script>
-
-      <script>
-             $(document).ready(function() {
-                 $('.tooltip').tooltipster({
-                     theme: 'tooltipster-punk',
-                     contentAsHTML: true,
-                     animation: 'grow',
-                     delay: [100,500],
-                     // trigger: 'click'
-                     trigger: 'custom',
-                     triggerOpen: {
-                         mouseenter: true
-                     },
-                     triggerClose: {
-                         originClick: true,
-                         scroll: true
-                     }
-     });
-             });
-         </script>
-
-    <style>
-       abbr {color: red;}
-
-       .tooltip { border-bottom: 1px dotted #000;
-                  color:red;
-                  text-decoration: none;}
-    </style>
-    #+end_example
 ** Wait, what about the LaTeX?
    :PROPERTIES:
    :CUSTOM_ID: hola
@@ -2646,44 +2607,21 @@ consulted rather than reading the literate implementation above.
 (with-temp-buffer
     (insert
     "#+EXPORT_FILE_NAME: README.md
-     # HTML: <h1> Easily Making CheatSheets with Org-mode </h1>
+     # HTML: <h1> Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^ </h1>
+
      ,#+OPTIONS: toc:nil d:nil
-     # Toc is displayed below at a strategic position.
-
-     {{{blurb}}}
-
-    :Hide:
-    ,*The listing sheet, as PDF, can be found
-     [[file:CheatSheet.pdf][here]]*,
-     or as a [[file:CheatSheet_Portrait.pdf][single column portrait]],
-     while below is an unruly html rendition.
-
-     # Markdown links: [title](target)
-    :End:
-
-     ,# +TOC: headlines 2
-     ,#+INCLUDE: org-special-block-extras.org
+     ,#+INCLUDE: org-special-block-extras.org::*Abstract
     ")
 
     ;; No code execution on export
     ;; ⟪ For a particular block, we use “:eval never-export” ⟫
     ;;
-    (let ((org-export-use-babel nil))
+    (let ((org-export-use-babel nil)
       (org-mode)
-      (org-md-export-to-markdown)
-      ; (package-install 'toc-org)
-      ; (toc-org-mode)
-      ; (toc-org-insert-toc)
-      (setq org-export-exclude-tags (delete "TOC" org-export-exclude-tags))
-      ; (pop org-export-exclude-tags)
-      ; (org-org-export-to-org)
-      (add-to-list 'org-export-exclude-tags "TOC")
-      )
-)
+      (org-md-export-to-markdown))))
 #+END_SRC
 
 #+RESULTS: make-readme
-| TOC | noexport |
 
 * Glossary                                                           :ignore:
   :PROPERTIES:
