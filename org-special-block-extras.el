@@ -423,7 +423,7 @@ The LABEL determines the name of the link.
   :export #'org-special-block-extras--link--badge)
 
 (defvar org-special-block-extras--link--twitter-excitement
-  "This looks super neat ^_^ :"
+  "This looks super neat (•̀ᴗ•́)و:"
   "The string prefixing the URL being shared.")
 
 (defun org-special-block-extras--link--badge
@@ -478,7 +478,9 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
             ("twitter/url"
              ,(format
                "https://twitter.com/intent/tweet?text=%s:&url=%%s"
-               org-special-block-extras--link--twitter-excitement)
+               (s-replace "%" "%%"
+                          (url-hexify-string
+                           org-special-block-extras--link--twitter-excitement)))
              ,(format
                "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                label)))
@@ -490,12 +492,16 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
                       (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
                       social label)))))
     (pcase backend
-        (`html (if url
+        ('html (if url
                  (if (equal url "here")
                      (format "<a id=\"%s\" href=\"#%s\">%s</a>" lbl lbl img)
                    (format "<a href=\"%s\">%s</a>" url img))
                img))
-        (_ ""))))
+        ('latex "")
+        ;; Markdown syntax: [![image title](url to get image)](url to go to on click)
+        (_
+         (setq img (s-chop-suffix "\">" (s-chop-prefix "<img src=\"" img)))
+         (format "[![badge:%s](%s)](%s)" lbl img url)))))
 
 (cl-loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
                              ("github/stars")
@@ -640,6 +646,49 @@ Documentation blocks are not shown upon export."
               text-decoration: none;}
 </style>
 ")))
+
+(let ((whatdo (lambda (x)
+                (message (format
+                          (concat "The value of variable  %s  will be placed "
+                                  "here literally upon export, "
+                                  "which is: \n\n %s")
+                          (s-upcase x)
+                          (if (equal x "GLOSSARY")
+                              (format "A cleaned up presentation of ...\n%s"
+                                      org-special-block-extras--docs-GLOSSARY)
+                          (pp (eval (intern x)))))))))
+  (org-link-set-parameters
+    "show"
+    :face '(:underline "green")
+    :follow whatdo
+    :help-echo `(lambda (_ __ position)
+                  (save-excursion
+                    (goto-char position)
+                    (-let [(&plist :path) (cadr (org-element-context))]
+                      (funcall ,whatdo path))))
+    :export
+    (lambda (label description backend)
+      (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
+            ((equal 'html backend) "") ;; Do not print glossary in HTML
+            (_
+             (-let ((fstr (concat "\\vspace{1em}\\phantomsection"
+                                 "\\textbf{%s}\\quad"
+                                 "\\label{org-special-block-extras-glossary-%s}"
+                                 "%s See page "
+                                 "\\pageref{org-special-block-extras"
+                                 "-glossary-declaration-site-%s}"))
+                    (preserve ;; preserve whitespace
+                     (lambda (x)
+                       (s-replace "\n" " \\newline{\\color{white}.}"
+                                  (s-replace "  " " \\quad "
+                                             ;; Hack!
+                                             (s-replace "&" "\\&" x))))))
+               (s-join "\n\n"
+                       (cl-loop for (label name doc)
+                             in org-special-block-extras--docs-GLOSSARY
+                             collect (format fstr name label
+                                             (funcall preserve doc)
+                                             label)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

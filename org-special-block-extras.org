@@ -5,12 +5,6 @@
 #+EXPORT_FILE_NAME: README
 #+macro: blurb Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^
 
-:TODO:
-orange:TODO
-Get minimal markdown backend support, since the landingpage will likely be
-the github repo.
-:End:
-
 :29_blocks:
 21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
 5  ⇒ parallel blocks
@@ -191,7 +185,19 @@ the github repo.
   :END:
 
 #+begin_center
-/*Warning: Incomplete!*/
+
+badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
+badge:Org|9.3.6|blue|https://orgmode.org|gnu
+
+[[badge:org-special-block-extras|1.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
+[[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]]
+[[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
+[[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
+tweet:https://github.com/alhassy/org-special-block-extras
+badge:contributions|welcome|green|https://github.com/alhassy/org-special-block-extras/issues
+
+badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 #+end_center
 
 #+begin_center
@@ -234,8 +240,8 @@ That is, *we provide 29 block types and 32 link types*.
 
 #+begin_center org
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
----or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!  ---or visit
+the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
 #+end_quote
 #+end_center
 
@@ -284,8 +290,8 @@ The full article may be read as a [[https://alhassy.github.io/org-special-block-
 [[file:images/tooltips_declaration.png]]
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
----or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!  ---or visit
+the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
 #+end_quote
 
 #+latex: \newpage
@@ -564,6 +570,7 @@ replaced by =bar= unless the argument =:replacement:= is given a value.
 
 [[file:images/foo_block.png]]
 
+#+name: foo-block
 #+begin_src emacs-lisp :tangle no
 (defun org-special-block-extras--foo (backend contents)
   "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
@@ -572,6 +579,9 @@ unless a ‘:replacement:’ is provided."
            (org-special-block-extras--extract-arguments contents 'replacement)]
     (s-replace "foo" (or replacement "bar") contents′)))
 #+end_src
+
+#+RESULTS: foo-block
+: org-special-block-extras--foo
 
 #+RESULTS:
 : org-special-block-extras--foo
@@ -628,6 +638,7 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
 # part of the Lisp code needed to produce the example link type.
 # Consult the HTML/PDF rendition of this file or tangle the block below.
 # #
+#+name: example-link
 #+begin_src emacs-lisp -n -r :tangle no
 (org-link-set-parameters
   ;; The name of the new link type, usage: “example:label”
@@ -662,13 +673,14 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
                             (copy-region-as-kill contents-begin contents-end)
                             (substring-no-properties (car kill-ring)))))
                    (format "“%s” :: Let me google “%s” for you -__-"
-                          raw-link (or description raw-link))))
+                          raw-link (or description raw-link)))))
 
   ;; How should these links be displayed
   :face '(:foreground "red" :weight bold    (ref:exface)
           :underline "orange" :overline "orange"))
 #+end_src
 
+#+RESULTS: example-link
 
 + Line [[(extype)]] ="example"= :: Add a new =example= link type.
   - If the type already exists, update it with the given arguments.
@@ -754,6 +766,8 @@ The PHRASE is taken literally; no regexp operators are recognised."
   "Line"
   "A sequential formatation of entities or the trace of a particle in linear motion")
   #+end_src
+
+  We will use the tooltip doc:documentation later on ^_^
 
 Useful info on tooltips:
 + [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Changing-Properties.html][Changing text properties ---GNU]]
@@ -1674,6 +1688,7 @@ similar to Github's ---the necessary ingredients are likely [[https://github.com
   :CUSTOM_ID: Badge-Links
   :END:
 
+link-here:badges
 Badges provide a quick and colourful summary of key features of a project,
 such as whether it's maintained, its license, and if it's documented.
 # Badges are little coloured boxes; e.g., those found all over Github.  Such
@@ -1767,7 +1782,9 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
             ("twitter/url"
              ,(format
                "https://twitter.com/intent/tweet?text=%s:&url=%%s"
-               org-special-block-extras--link--twitter-excitement)
+               (s-replace "%" "%%"
+                          (url-hexify-string
+                           org-special-block-extras--link--twitter-excitement)))
              ,(format
                "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                label)))
@@ -1779,14 +1796,16 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
                       (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
                       social label)))))
     (pcase backend
-        (`html (if url
+        ('html (if url
                  (if (equal url "here")
                      (format "<a id=\"%s\" href=\"#%s\">%s</a>" lbl lbl img)
                    (format "<a href=\"%s\">%s</a>" url img))
                img))
         ('latex "")
-        ;; Markdown syntx: [![image title](url to get image)](url to go to on click)
-        (_ "[![badge:%s](%s)](%s)" lbl img url))))
+        ;; Markdown syntax: [![image title](url to get image)](url to go to on click)
+        (_
+         (setq img (s-chop-suffix "\">" (s-chop-prefix "<img src=\"" img)))
+         (format "[![badge:%s](%s)](%s)" lbl img url)))))
 #+end_src
 
 We now form the specialised link types for social media.
@@ -2090,7 +2109,6 @@ field. This would make the interface more welcoming to new users.
 
 Let's make a link type =doc= that shows a tooltip documentation ---e.g., glossary
 or abbreviation--- for a given label.
-
 E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
 
 #+caption: Tooltips for documentation and glossary items --in the browser!
@@ -2117,6 +2135,7 @@ We begin by making use of a list of documentation-glossary entries
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 #+end_src
+
 
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
@@ -2197,7 +2216,6 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
               ((name doc) (funcall ,name&doc path)))
         (format "[%s] %s :: %s" path name doc))))))
 #+end_src
-
 
 #+begin_edcomm org
 :ed: Warning
@@ -2379,7 +2397,7 @@ The incantation below sets up the required magic to make this happen.
 
    We make a ~show:𝒳~ link type to print the value of the variable =𝒳=
    as follows, with =GLOSSARY= being a reserved name.
- #+begin_src emacs-lisp :tangle no
+ #+begin_src emacs-lisp
 (let ((whatdo (lambda (x)
                 (message (format
                           (concat "The value of variable  %s  will be placed "
@@ -2424,11 +2442,6 @@ The incantation below sets up the required magic to make this happen.
                                              label)))))))))
  #+end_src
 
- #+RESULTS:
- | :follow | (lambda (x) (message (format (concat The value of variable  %s  will be placed  here literally upon export,  which is: |
-
-
-
  As an example, we know have generic sentences:
  | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^= |
  |----------------------------------------------------------------------------|
@@ -2467,6 +2480,12 @@ block types; whereas they currently break the HTML export.
   :CUSTOM_ID: Summary
   :END:
 
+#+begin_quote
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] or as pure [[https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org][Org]]!
+---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+#+end_quote
+
+link-here:summary
 Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=, =gray=, =green=,
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=. Let =𝓃= be any number from =1..5=.
@@ -2536,9 +2555,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
    :END:
 
 badge:thanks|for_reading
-
 tweet:https://github.com/alhassy/org-special-block-extras
-
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 
 * Lisp Postamble                                                   :noexport:
@@ -2693,3 +2710,13 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 
 [fn:1] See [[http://www.cs.nott.ac.uk/~pszgmh/fold.pdf][/A tutorial on the universality and expressiveness of fold/]] and
 [[http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/urs.pdf][/Unifying Structured Recursion Schemes/]]
+
+* COMMENT Footer
+  :PROPERTIES:
+  :CUSTOM_ID: Footer
+  :END:
+# Local Variables:
+# eval: (save-excursion (org-babel-goto-named-src-block "example-link")
+# (org-babel-execute-src-block))
+# eval: (save-excursion (org-babel-goto-named-src-block "foo-block") (org-babel-execute-src-block))
+# End:

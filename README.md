@@ -1,7 +1,20 @@
 <h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
 
 <div class="org-center">
-***Warning: Incomplete!***
+
+
+[![badge:Emacs](https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs)](https://www.gnu.org/software/emacs)
+[![badge:Org](https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu)](https://orgmode.org)
+
+[![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
+[![badge:melpa](https://img.shields.io/badge/melpa-pending-critical?logo=github)](https://github.com/alhassy/emacs.d#use-package-the-start-of-initel)
+[![badge:license](https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![badge:docs](https://img.shields.io/badge/docs-literate-success?logo=read-the-docs)](https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like)
+[![badge:https://github.com/alhassy/org-special-block-extras](https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras)](https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras)
+[![badge:contributions](https://img.shields.io/badge/contributions-welcome-green)](https://github.com/alhassy/org-special-block-extras/issues)
+
+[![badge:author](https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds)](https://alhassy.github.io/)
+[![badge:](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee)](https://www.buymeacoffee.com/alhassy)
 </div>
 
 <div class="org-center">
@@ -42,8 +55,8 @@
 > That is, **we provide 29 block types and 32 link types**.
 
 <div class="org-center">
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!
-> &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!  &#x2014;or visit
+> the [repo](https://github.com/alhassy/org-special-block-extras). Installation instructions are [below](#Summary).
 </div>
 
 ![img](images/foo_block.png "Extensibility! *Plug and play support for new block types!*")
@@ -187,8 +200,8 @@
 
 ![img](images/tooltips_declaration.png)
 
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!
-> &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!  &#x2014;or visit
+> the [repo](https://github.com/alhassy/org-special-block-extras). Installation instructions are [below](#Summary).
 
 
 # Table of Contents
@@ -199,7 +212,13 @@
     3.  [Bye!](#Bye)
 
 
+<a id="Summary"></a>
+
 # Summary
+
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) or as pure [Org](https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org)!
+> &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+
 
 Let `𝒞` be any of the following: `black`, `blue`, `brown`, `cyan`, `darkgray`, `gray`, `green`,
 `lightgray`, `lime`, `magenta`, `olive orange`, `pink`, `purple`, `red`, `teal`, `violet`, `white`,
@@ -329,8 +348,6 @@ consulted rather than reading the literate implementation above.
 
 ## Bye!
 
-<thanks|for_reading>
-
-https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و::&url=https://github.com/alhassy/org-special-block-extras
-
-https://www.buymeacoffee.com/alhassy
+[![badge:thanks](https://img.shields.io/badge/thanks-for_reading-nil)](nil)
+[![badge:https://github.com/alhassy/org-special-block-extras](https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras)](https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras)
+[![badge:](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee)](https://www.buymeacoffee.com/alhassy)

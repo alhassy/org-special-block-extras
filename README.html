@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-24 Fri 00:52 -->
+<!-- 2020-04-24 Fri 17:54 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -305,7 +305,26 @@ for the JavaScript code in this tag.
 
 <div class="org-center">
 <p>
-<i><b>Warning: Incomplete!</b></i>
+
+</p>
+
+<p>
+<a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs"></a>
+<a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu"></a>
+</p>
+
+<p>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs"></a>
+<a href="https://github.com/alhassy/emacs.d#use-package-the-start-of-initel"><img src="https://img.shields.io/badge/melpa-pending-critical?logo=github"></a>
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
+<a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green"></a>
+</p>
+
+<p>
+<a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
 </p>
 </div>
 
@@ -364,8 +383,8 @@ That is, <b>we provide 29 block types and 32 link types</b>.
 <div class="org-center">
 <blockquote>
 <p>
-The full article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!
-&#x2014;or visit the <a href="https://github.com/alhassy/org-special-block-extras">repo</a>.
+The full article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!  &#x2014;or visit
+the <a href="https://github.com/alhassy/org-special-block-extras">repo</a>. Installation instructions are <a href="#Summary">below</a>.
 </p>
 </blockquote>
 </div>
@@ -551,8 +570,8 @@ The full article may be read as a <a href="https://alhassy.github.io/org-special
 
 <blockquote>
 <p>
-The full article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!
-&#x2014;or visit the <a href="https://github.com/alhassy/org-special-block-extras">repo</a>.
+The full article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!  &#x2014;or visit
+the <a href="https://github.com/alhassy/org-special-block-extras">repo</a>. Installation instructions are <a href="#Summary">below</a>.
 </p>
 </blockquote>
 
@@ -617,12 +636,18 @@ The full article may be read as a <a href="https://alhassy.github.io/org-special
 <li><a href="#Next-Steps-tooltips">9.6. Next Steps</a></li>
 </ul>
 </li>
-<li><a href="#Summary">10. Summary</a></li>
+<li><a href="#Summary">10. Summary</a>
+<ul>
+<li><a href="#Installation-Instructions">10.1. Installation Instructions</a></li>
+<li><a href="#Minimal-working-example">10.2. Minimal working example</a></li>
+<li><a href="#Bye">10.3. Bye!</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgd85ed94" class="outline-2">
+<div id="outline-container-orge80f64f" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">1</span> <i>How do I make a new special block?</i> &#x2014;Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <p>
@@ -689,7 +714,7 @@ the block.  Then use <code>C-x n w</code> to <i>widen</i> your vision of the buf
 </ul>
 </div>
 
-<div id="outline-container-org29a56ab" class="outline-3">
+<div id="outline-container-org1f5478a" class="outline-3">
 <h3 id="What-is-a-special-block"><span class="section-number-3">1.1</span> <i>What is a special block?</i></h3>
 <div class="outline-text-3" id="text-What-is-a-special-block">
 <p>
@@ -816,7 +841,7 @@ duplication of efforts. We will declare such formatting once for each backend.
 </div>
 </div>
 
-<div id="outline-container-orgf45301a" class="outline-3">
+<div id="outline-container-orgd42b3b7" class="outline-3">
 <h3 id="Core-Utility"><span class="section-number-3">1.2</span> Core Utility</h3>
 <div class="outline-text-3" id="text-Core-Utility">
 <p>
@@ -895,7 +920,7 @@ Of-course, when the user disables our mode, then we remove such advice.
 </div>
 </div>
 
-<div id="outline-container-org2b999fd" class="outline-3">
+<div id="outline-container-orgf831b9f" class="outline-3">
 <h3 id="argument-Extraction"><span class="section-number-3">1.3</span> <code>:argument:</code> Extraction</h3>
 <div class="outline-text-3" id="text-argument-Extraction">
 <p>
@@ -959,7 +984,7 @@ colours drawer delimiters,
 </div>
 </div>
 
-<div id="outline-container-orga34bccc" class="outline-3">
+<div id="outline-container-org53636b7" class="outline-3">
 <h3 id="COMMENT-An-Example-Special-Block-foo"><span class="section-number-3">1.4</span> An Example Special Block ---<code>foo</code></h3>
 <div class="outline-text-3" id="text-COMMENT-An-Example-Special-Block-foo">
 <p>
@@ -975,7 +1000,7 @@ replaced by <code>bar</code> unless the argument <code>:replacement:</code> is g
 </div>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
+<pre class="src src-emacs-lisp" id="org0ca9637">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
   <span style="color: #35a69c; font-style: italic;">"The FOO block type replaces all occurances of &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">foo</span><span style="color: #35a69c; font-style: italic;">&#8217; with &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">bar</span><span style="color: #35a69c; font-style: italic;">&#8217;,</span>
 <span style="color: #35a69c; font-style: italic;">unless a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:replacement:</span><span style="color: #35a69c; font-style: italic;">&#8217; is provided."</span>
   (<span style="color: #859900; font-weight: bold;">-let</span> [(contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'replacement))
@@ -983,6 +1008,11 @@ replaced by <code>bar</code> unless the argument <code>:replacement:</code> is g
     (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"foo"</span> (<span style="color: #859900; font-weight: bold;">or</span> replacement <span style="color: #2aa198;">"bar"</span>) contents&#8242;)))
 </pre>
 </div>
+
+<pre class="example">
+org-special-block-extras--foo
+</pre>
+
 
 <p>
 Here's an example usage:
@@ -1011,7 +1041,7 @@ that behaves differently depending on the export backend.
 </div>
 </div>
 
-<div id="outline-container-org074aaad" class="outline-3">
+<div id="outline-container-org5fc468a" class="outline-3">
 <h3 id="Next-Steps"><span class="section-number-3">1.5</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps">
 <p>
@@ -1026,7 +1056,7 @@ link-type approaches used here into one macro.
 </div>
 </div>
 
-<div id="outline-container-orgecab355" class="outline-2">
+<div id="outline-container-orgfdadf7d" class="outline-2">
 <h2 id="Links"><span class="section-number-2">2</span> <i>How do I make a new link type?</i></h2>
 <div class="outline-text-2" id="text-Links">
 <p>
@@ -1047,7 +1077,7 @@ Raw use <a href="https://lmgtfy.com/?q=salam">salam</a> and descriptive, <a href
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
+<pre class="src src-emacs-lisp" id="orgcd609ac"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
 <span class="linenr"> 2: </span>  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">The name of the new link type, usage: &#8220;example:label&#8221;</span>
 <span id="coderef-extype" class="coderef-off"><span class="linenr"> 3: </span>  <span style="color: #2aa198;">"example"</span></span>
 <span class="linenr"> 4: </span>
@@ -1080,14 +1110,13 @@ Raw use <a href="https://lmgtfy.com/?q=salam">salam</a> and descriptive, <a href
 <span class="linenr">31: </span>                            (<span style="color: #b58900;">copy-region-as-kill</span> contents-begin contents-end)
 <span class="linenr">32: </span>                            (<span style="color: #b58900;">substring-no-properties</span> (<span style="color: #b58900;">car</span> <span style="color: #268bd2;">kill-ring</span>)))))
 <span class="linenr">33: </span>                   (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"&#8220;%s&#8221; :: Let me google &#8220;%s&#8221; for you -__-"</span>
-<span class="linenr">34: </span>                           (<span style="color: #859900; font-weight: bold;">or</span> description raw-link) (<span style="color: #b58900;">pp</span> window)))))
+<span class="linenr">34: </span>                          raw-link (<span style="color: #859900; font-weight: bold;">or</span> description raw-link)))))
 <span class="linenr">35: </span>
 <span class="linenr">36: </span>  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">How should these links be displayed</span>
 <span id="coderef-exface" class="coderef-off"><span class="linenr">37: </span>  <span style="color: #d33682; font-style: italic;">:face</span> '(<span style="color: #d33682; font-style: italic;">:foreground</span> <span style="color: #2aa198;">"red"</span> <span style="color: #d33682; font-style: italic;">:weight</span> <span style="color: #556b72; background-color: #FDF6E3;">bold</span></span>
 <span class="linenr">38: </span>          <span style="color: #d33682; font-style: italic;">:underline</span> <span style="color: #2aa198;">"orange"</span> <span style="color: #d33682; font-style: italic;">:overline</span> <span style="color: #2aa198;">"orange"</span>))
 </pre>
 </div>
-
 
 <dl class="org-dl">
 <dt>Line <a href="#coderef-extype" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-extype');" onmouseout="CodeHighlightOff(this, 'coderef-extype');">3</a> <code>"example"</code></dt><dd><p>
@@ -1208,6 +1237,10 @@ specification.
 </div>
 
 <p>
+We will use the tooltip <abbr class="tooltip" title="Return the documentation string of FUNCTION.<br>Unless a non-nil second argument RAW is given, the<br>string is passed through ‘substitute-command-keys’.<br><br>(fn FUNCTION &optional RAW)">documentation</abbr> later on ^_^
+</p>
+
+<p>
 Useful info on tooltips:
 </p>
 <ul class="org-ul">
@@ -1239,7 +1272,7 @@ to the link's label &#x2014;which is what we will do for the <code>color</code> 
 </div>
 </div>
 
-<div id="outline-container-org1d26d30" class="outline-2">
+<div id="outline-container-org198c601" class="outline-2">
 <h2 id="Colours"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-Colours">
 <p>
@@ -1260,7 +1293,7 @@ just visit <a href="http://latexcolor.com/">http://latexcolor.com/</a> for both.
 </div>
 </div>
 
-<div id="outline-container-orgcb89d78" class="outline-3">
+<div id="outline-container-org7a30da1" class="outline-3">
 <h3 id="org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors"><span class="section-number-3">3.1</span> <code>org-special-block-extras--𝒞</code> where <code>𝒞 ∈ org-special-block-extras--colors</code></h3>
 <div class="outline-text-3" id="text-org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors">
 <p>
@@ -1328,7 +1361,7 @@ Hello, friends!
 </div>
 </div>
 
-<div id="outline-container-org87e7e01" class="outline-3">
+<div id="outline-container-orgc244ca9" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">3.2</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <div style="column-rule-style:solid;column-count:2;"<span style="color:black;"><p>
@@ -1428,7 +1461,7 @@ This text is yellow!
 </div>
 </div>
 </div>
-<div id="outline-container-org0022fa9" class="outline-3">
+<div id="outline-container-orgd638962" class="outline-3">
 <h3 id="Colour-Link-Types"><span class="section-number-3">3.3</span> Colour Link Types</h3>
 <div class="outline-text-3" id="text-Colour-Link-Types">
 <p>
@@ -1466,7 +1499,7 @@ in <b>both</b> the Emacs interface and in exported backends.
              `(<span style="color: #d33682; font-style: italic;">:height</span> 300
                <span style="color: #d33682; font-style: italic;">:underline</span> (<span style="color: #d33682; font-style: italic;">:color</span> <span style="color: #2aa198;">"red"</span> <span style="color: #d33682; font-style: italic;">:style</span> wave)
                <span style="color: #d33682; font-style: italic;">:overline</span>  <span style="color: #2aa198;">"red"</span> <span style="color: #d33682; font-style: italic;">:strike-through</span> <span style="color: #2aa198;">"red"</span>)))
- <span style="color: #d33682; font-style: italic;">:help-echo</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (window object <span style="color: #b58900;">position</span>)
+ <span style="color: #d33682; font-style: italic;">:help-echo</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_ __ <span style="color: #b58900;">position</span>)
               (<span style="color: #859900; font-weight: bold;">save-excursion</span>
                 (<span style="color: #b58900;">goto-char</span> <span style="color: #b58900;">position</span>)
                 (<span style="color: #859900; font-weight: bold;">-let*</span> (((<span style="color: #b58900; font-style: italic;">&amp;plist</span> <span style="color: #d33682; font-style: italic;">:path</span>) (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">org-element-context</span>))))
@@ -1499,7 +1532,7 @@ e.g.,
 </div>
 </div>
 
-<div id="outline-container-orgc7b37d7" class="outline-3">
+<div id="outline-container-org281d7dd" class="outline-3">
 <h3 id="Next-Steps-colours"><span class="section-number-3">3.4</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-colours">
 <p>
@@ -1524,7 +1557,7 @@ displaying such extra whitespace in the resulting HTML.
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--latex-definitions</span> (backend contents)
   <span style="color: #35a69c; font-style: italic;">"Declare but do not display the CONTENTS according to the BACKEND."</span>
-  (<span style="color: #859900; font-weight: bold;">loop</span> for (this that) in (<span style="color: #b58900;">-partition</span> 2 '(<span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span>
+  (<span style="color: #859900; font-weight: bold;">cl-loop</span> for (this that) in (<span style="color: #b58900;">-partition</span> 2 '(<span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span>
                                            <span style="color: #2aa198;">"&lt;/p&gt;"</span> <span style="color: #2aa198;">""</span>
                                            <span style="color: #2aa198;">"\\{"</span> <span style="color: #2aa198;">"{"</span>
                                            <span style="color: #2aa198;">"\\}"</span> <span style="color: #2aa198;">"}"</span>))
@@ -1666,7 +1699,7 @@ and blue to interleave a Arabic poetry with its English translation.
 </div>
 </div>
 
-<div id="outline-container-orga5ce6b1" class="outline-2">
+<div id="outline-container-org886921a" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 <p>
@@ -1733,16 +1766,16 @@ between columns.</li>
 We also use <code>parallel</code> as an alias for <code>2parallel</code>.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallel</span>
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defalias</span> '<span style="color: #b58900;">org-special-block-extras--parallel</span>
           #'<span style="color: #b58900;">org-special-block-extras--2parallel</span>)
 
-(<span style="color: #859900; font-weight: bold;">defalias</span> #'<span style="color: #b58900;">org-special-block-extras--parallelNB</span>
+(<span style="color: #859900; font-weight: bold;">defalias</span> '<span style="color: #b58900;">org-special-block-extras--parallelNB</span>
           #'<span style="color: #b58900;">org-special-block-extras--2parallelNB</span>)
 </pre>
 </div>
 </div>
 
-<div id="outline-container-org1e4fc75" class="outline-3">
+<div id="outline-container-org40e1fef" class="outline-3">
 <h3 id="Example"><span class="section-number-3">4.1</span> Example</h3>
 <div class="outline-text-3" id="text-Example">
 <div style="column-rule-style:solid;column-count:2;"<p>
@@ -1786,7 +1819,7 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-org01db21c" class="outline-3">
+<div id="outline-container-org2e46667" class="outline-3">
 <h3 id="Next-Steps-parallel"><span class="section-number-3">4.2</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-parallel">
 <p>
@@ -1799,7 +1832,7 @@ are not.
 </div>
 </div>
 
-<div id="outline-container-org9b25633" class="outline-2">
+<div id="outline-container-org6affaaf" class="outline-2">
 <h2 id="editor-comments"><span class="section-number-2">5</span> Editor Comments</h2>
 <div class="outline-text-2" id="text-editor-comments">
 <p>
@@ -1916,7 +1949,7 @@ indicating suggested alterations.
 </p>
 </div>
 
-<div id="outline-container-org75d2ce9" class="outline-3">
+<div id="outline-container-org72999d9" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">5.1</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <p>
@@ -1950,7 +1983,7 @@ ensures is true.
 </table>
 </div>
 
-<div id="outline-container-org5f05378" class="outline-4">
+<div id="outline-container-orgf2564d7" class="outline-4">
 <h4 id="No-optional-arguments"><span class="section-number-4">5.1.1</span> No optional arguments</h4>
 <div class="outline-text-4" id="text-No-optional-arguments">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
@@ -1960,7 +1993,7 @@ ensures is true.
 </div>
 </div>
 
-<div id="outline-container-org30458d5" class="outline-4">
+<div id="outline-container-org82f44d6" class="outline-4">
 <h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">5.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
 <div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
@@ -1979,7 +2012,7 @@ Possibly with no contents:
 </div>
 </div>
 
-<div id="outline-container-orgd903fbc" class="outline-4">
+<div id="outline-container-orgb6e71d1" class="outline-4">
 <h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">5.1.3</span> Empty contents, no editor, nothing</h4>
 <div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
@@ -1994,7 +2027,7 @@ Possibly with an empty new line:
 </div>
 </div>
 
-<div id="outline-container-orgae2c6e4" class="outline-4">
+<div id="outline-container-org3eecdc5" class="outline-4">
 <h4 id="With-a-replacewith-clause"><span class="section-number-4">5.1.4</span> With a <code>:replacewith:</code> clause</h4>
 <div class="outline-text-4" id="text-With-a-replacewith-clause">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
@@ -2041,7 +2074,7 @@ Completely lost one's train of thought.
 </div>
 </div>
 
-<div id="outline-container-org696c1dd" class="outline-3">
+<div id="outline-container-orgaf0033a" class="outline-3">
 <h3 id="Link-Type"><span class="section-number-3">5.2</span> Link Type</h3>
 <div class="outline-text-3" id="text-Link-Type">
 <p>
@@ -2063,10 +2096,10 @@ however, in Emacs it is shown with an ‘angry’ &#x2014;bold&#x2014; red face.
 <span class="linenr"> 5: </span>            (<span style="color: #b58900;">org-special-block-extras--edcomm</span>
 <span class="linenr"> 6: </span>             backend
 <span class="linenr"> 7: </span>             (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">":ed:%s\n%s"</span> label description)))
-<span class="linenr"> 8: </span>  <span style="color: #d33682; font-style: italic;">:help-echo</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (window object <span style="color: #b58900;">position</span>)
+<span class="linenr"> 8: </span>  <span style="color: #d33682; font-style: italic;">:help-echo</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_ __ <span style="color: #b58900;">position</span>)
 <span class="linenr"> 9: </span>               (<span style="color: #859900; font-weight: bold;">save-excursion</span>
 <span class="linenr">10: </span>                 (<span style="color: #b58900;">goto-char</span> <span style="color: #b58900;">position</span>)
-<span class="linenr">11: </span>                 (<span style="color: #859900; font-weight: bold;">-let*</span> [(<span style="color: #b58900; font-style: italic;">&amp;plist</span> <span style="color: #d33682; font-style: italic;">:path</span>) (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">org-element-context</span>))]
+<span class="linenr">11: </span>                 (<span style="color: #859900; font-weight: bold;">-let</span> [(<span style="color: #b58900; font-style: italic;">&amp;plist</span> <span style="color: #d33682; font-style: italic;">:path</span>) (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">org-element-context</span>))]
 <span class="linenr">12: </span>                   (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s made this remark"</span> (<span style="color: #b58900;">s-upcase</span> path)))))
 <span class="linenr">13: </span>  <span style="color: #d33682; font-style: italic;">:face</span> '(<span style="color: #d33682; font-style: italic;">:foreground</span> <span style="color: #2aa198;">"red"</span> <span style="color: #d33682; font-style: italic;">:weight</span> <span style="color: #556b72; background-color: #FDF6E3;">bold</span>))
 </pre>
@@ -2087,7 +2120,7 @@ The <code>:replacewith:</code> switch &#x2014;and usual Org markup&#x2014; also 
 </div>
 </div>
 
-<div id="outline-container-orgabebe5d" class="outline-2">
+<div id="outline-container-org6c4421b" class="outline-2">
 <h2 id="Folded-Details"><span class="section-number-2">6</span> Folded Details</h2>
 <div class="outline-text-2" id="text-Folded-Details">
 <p>
@@ -2165,7 +2198,7 @@ source blocks. Instead, we use <code>tcolorbox</code>.
 </p>
 </div>
 
-<div id="outline-container-org68a1df1" class="outline-3">
+<div id="outline-container-orgd9c7a4b" class="outline-3">
 <h3 id="Example"><span class="section-number-3">6.1</span> Example</h3>
 <div class="outline-text-3" id="text-Example">
 <p>
@@ -2212,7 +2245,7 @@ LaTeX. )
 </div>
 </div>
 </div>
-<div id="outline-container-orgcf837e2" class="outline-2">
+<div id="outline-container-org3eed7c2" class="outline-2">
 <h2 id="Link-Here-OctoIcons"><span class="section-number-2">7</span> <i>“Link Here!”</i> OctoIcon</h2>
 <div class="outline-text-2" id="text-Link-Here-OctoIcons">
 <p>
@@ -2233,7 +2266,7 @@ article, this is a possible way to do so.
   <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (path) (<span style="color: #b58900;">message</span> <span style="color: #2aa198;">"This is a local anchor link named &#8220;%s&#8221;"</span> path))
   <span style="color: #d33682; font-style: italic;">:export</span> #'<span style="color: #b58900;">org-special-block-extras--link-here</span>)
 
-(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--link-here</span> (label description backend)
+(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--link-here</span> (label _ backend)
   <span style="color: #35a69c; font-style: italic;">"Export a link to the current location in an Org file.</span>
 
 <span style="color: #35a69c; font-style: italic;">The LABEL determines the name of the link.</span>
@@ -2272,10 +2305,11 @@ similar to Github's &#x2014;the necessary ingredients are likely <a href="https:
 </div>
 </div>
 
-<div id="outline-container-org3f0bff9" class="outline-2">
+<div id="outline-container-org3063cef" class="outline-2">
 <h2 id="Badge-Links"><span class="section-number-2">8</span> Badge Links</h2>
 <div class="outline-text-2" id="text-Badge-Links">
 <p>
+<a class="anchor" aria-hidden="true" id="badges" href="#badges"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
 Badges provide a quick and colourful summary of key features of a project,
 such as whether it's maintained, its license, and if it's documented.
 </p>
@@ -2297,7 +2331,7 @@ the brand on your jeans or other reliable product. &#x2014; <a href="https://git
 </blockquote>
 </div>
 
-<div id="outline-container-org2130c19" class="outline-3">
+<div id="outline-container-orga119b41" class="outline-3">
 <h3 id="The-badge-Link"><span class="section-number-3">8.1</span> The <code>badge</code> Link and derived Reddit/Github/Twitter socials</h3>
 <div class="outline-text-3" id="text-The-badge-Link">
 <p>
@@ -2312,11 +2346,11 @@ portion of the shilelds.io badge interface.
   <span style="color: #d33682; font-style: italic;">:export</span> #'<span style="color: #b58900;">org-special-block-extras--link--badge</span>)
 
 (<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--link--twitter-excitement</span>
-  <span style="color: #2aa198;">"This looks super neat ^_^ :"</span>
+  <span style="color: #2aa198;">"This looks super neat (&#8226;&#768;&#7447;&#8226;&#769;)&#1608;:"</span>
   <span style="color: #35a69c; font-style: italic;">"The string prefixing the URL being shared."</span>)
 
 (<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--link--badge</span>
-  (label description backend <span style="color: #b58900; font-style: italic;">&amp;optional</span> social)
+  (label _ backend <span style="color: #b58900; font-style: italic;">&amp;optional</span> social)
   <span style="color: #35a69c; font-style: italic;">"Export a link presented as an SVG badge.</span>
 
 <span style="color: #35a69c; font-style: italic;">The LABEL should be of the shape &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">key|value|color|url|logo</span><span style="color: #35a69c; font-style: italic;">&#8217;</span>
@@ -2367,24 +2401,30 @@ portion of the shilelds.io badge interface.
             (<span style="color: #2aa198;">"twitter/url"</span>
              ,(<span style="color: #b58900;">format</span>
                <span style="color: #2aa198;">"https://twitter.com/intent/tweet?text=%s:&amp;url=%%s"</span>
-               <span style="color: #268bd2;">org-special-block-extras--link--twitter-excitement</span>)
+               (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"%"</span> <span style="color: #2aa198;">"%%"</span>
+                          (<span style="color: #b58900;">url-hexify-string</span>
+                           <span style="color: #268bd2;">org-special-block-extras--link--twitter-excitement</span>)))
              ,(<span style="color: #b58900;">format</span>
                <span style="color: #2aa198;">"&lt;img src=\"https://img.shields.io/twitter/url?url=%s\"&gt;"</span>
                label)))
-        (<span style="color: #859900; font-weight: bold;">--filter</span> (<span style="color: #b58900;">s-starts-with?</span> (<span style="color: #b58900;">first</span> it) social) it)
+        (<span style="color: #859900; font-weight: bold;">--filter</span> (<span style="color: #b58900;">s-starts-with?</span> (<span style="color: #b58900;">cl-first</span> it) social) it)
         (<span style="color: #b58900;">car</span> it)
         (<span style="color: #859900; font-weight: bold;">or</span> it (<span style="color: #b58900;">error</span> <span style="color: #2aa198;">"Badge: Unsupported social type &#8220;%s&#8221;"</span> social))
-        (<span style="color: #859900; font-weight: bold;">setq</span> url (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">second</span> it) label)
-              img (<span style="color: #859900; font-weight: bold;">or</span> (<span style="color: #b58900;">third</span> it)
+        (<span style="color: #859900; font-weight: bold;">setq</span> url (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">cl-second</span> it) label)
+              img (<span style="color: #859900; font-weight: bold;">or</span> (<span style="color: #b58900;">cl-third</span> it)
                       (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"&lt;img src=\"https://img.shields.io/%s/%s?style=social\"&gt;"</span>
                       social label)))))
     (<span style="color: #859900; font-weight: bold;">pcase</span> backend
-        (`html (<span style="color: #859900; font-weight: bold;">if</span> url
+        ('html (<span style="color: #859900; font-weight: bold;">if</span> url
                  (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> url <span style="color: #2aa198;">"here"</span>)
                      (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"&lt;a id=\"%s\" href=\"#%s\"&gt;%s&lt;/a&gt;"</span> lbl lbl img)
                    (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"&lt;a href=\"%s\"&gt;%s&lt;/a&gt;"</span> url img))
                img))
-        (_ <span style="color: #2aa198;">""</span>))))
+        ('latex <span style="color: #2aa198;">""</span>)
+        <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Markdown syntax: [![image title](url to get image)](url to go to on click)</span>
+        (_
+         (<span style="color: #859900; font-weight: bold;">setq</span> img (<span style="color: #b58900;">s-chop-suffix</span> <span style="color: #2aa198;">"\"&gt;"</span> (<span style="color: #b58900;">s-chop-prefix</span> <span style="color: #2aa198;">"&lt;img src=\""</span> img)))
+         (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"[![badge:%s](%s)](%s)"</span> lbl img url)))))
 </pre>
 </div>
 
@@ -2392,7 +2432,7 @@ portion of the shilelds.io badge interface.
 We now form the specialised link types for social media.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">loop</span> for (social <span style="color: #556b72; background-color: #FDF6E3;">link</span>) in '((<span style="color: #2aa198;">"reddit/subreddit-subscribers"</span> <span style="color: #2aa198;">"reddit-subscribe-to"</span>)
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">cl-loop</span> for (social <span style="color: #556b72; background-color: #FDF6E3;">link</span>) in '((<span style="color: #2aa198;">"reddit/subreddit-subscribers"</span> <span style="color: #2aa198;">"reddit-subscribe-to"</span>)
                              (<span style="color: #2aa198;">"github/stars"</span>)
                              (<span style="color: #2aa198;">"github/watchers"</span>)
                              (<span style="color: #2aa198;">"github/followers"</span>)
@@ -2408,10 +2448,9 @@ We now form the specialised link types for social media.
 </div>
 </div>
 
-
 <div class="outline-text-2" id="text-Badge-Links">
 </div>
-<div id="outline-container-orge2f7756" class="outline-3">
+<div id="outline-container-org4950e30" class="outline-3">
 <h3 id="Example-Social-Icons"><span class="section-number-3">8.2</span> Example Social Icons</h3>
 <div class="outline-text-3" id="text-Example-Social-Icons">
 <p>
@@ -2448,7 +2487,7 @@ Here are some examples.
 <a href="https://www.github.com/alhassy/CheatSheet"><img src="https://img.shields.io/github/stars/alhassy/CheatSheet?style=social"></a>
 <a href="https://www.github.com/alhassy/CheatSheet"><img src="https://img.shields.io/github/watchers/alhassy/CheatSheet?style=social"></a>
 <a href="https://www.github.com/alhassy/CheatSheet/fork"><img src="https://img.shields.io/github/forks/alhassy/CheatSheet?style=social"></a>
-<a href="https://twitter.com/intent/tweet?text=This looks super neat ^_^ ::&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a></li>
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a></li>
 
 <li>My profile:
 <a href="https://www.github.com/alhassy?tab=followers"><img src="https://img.shields.io/github/followers/alhassy?style=social"></a>
@@ -2457,7 +2496,7 @@ Here are some examples.
 </div>
 </div>
 
-<div id="outline-container-org535606a" class="outline-3">
+<div id="outline-container-org0f996ff" class="outline-3">
 <h3 id="Example-Badges"><span class="section-number-3">8.3</span> Example Badges</h3>
 <div class="outline-text-3" id="text-Example-Badges">
 <p>
@@ -2511,7 +2550,7 @@ badge:||colour|here|logo
 </div>
 </div>
 
-<div id="outline-container-orgd77efb8" class="outline-3">
+<div id="outline-container-orgfd3f562" class="outline-3">
 <h3 id="Example-Colours"><span class="section-number-3">8.4</span> Example Colours</h3>
 <div class="outline-text-3" id="text-Example-Colours">
 <ul class="org-ul">
@@ -2536,7 +2575,7 @@ wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
 </div>
 </div>
 
-<div id="outline-container-org35ca241" class="outline-3">
+<div id="outline-container-org3ed6c6e" class="outline-3">
 <h3 id="Example-Badge-Icons"><span class="section-number-3">8.5</span> Example Badge Icons</h3>
 <div class="outline-text-3" id="text-Example-Badge-Icons">
 <p>
@@ -2641,7 +2680,7 @@ Here are a few free SVG icons for popular brands from <a href="https://simpleico
 </div>
 </div>
 
-<div id="outline-container-orgb9dd30d" class="outline-3">
+<div id="outline-container-org948a99a" class="outline-3">
 <h3 id="Common-Project-Badges"><span class="section-number-3">8.6</span> Common Project Badges</h3>
 <div class="outline-text-3" id="text-Common-Project-Badges">
 <ul class="org-ul">
@@ -2686,7 +2725,7 @@ Here are a few free SVG icons for popular brands from <a href="https://simpleico
 </div>
 <div class="outline-text-2" id="text-Badge-Links">
 </div>
-<div id="outline-container-org129dea2" class="outline-3">
+<div id="outline-container-org89ad9d5" class="outline-3">
 <h3 id="Next-Steps-badges"><span class="section-number-3">8.7</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-badges">
 <p>
@@ -2703,15 +2742,12 @@ field. This would make the interface more welcoming to new users.
 </div>
 </div>
 
-<div id="outline-container-org47f6867" class="outline-2">
+<div id="outline-container-org974cb4d" class="outline-2">
 <h2 id="Tooltips-for-Glossaries-Dictionaries-and-Documentation"><span class="section-number-2">9</span> Tooltips for Glossaries, Dictionaries, and Documentation</h2>
 <div class="outline-text-2" id="text-Tooltips-for-Glossaries-Dictionaries-and-Documentation">
 <p>
 Let's make a link type <code>doc</code> that shows a tooltip documentation &#x2014;e.g., glossary
 or abbreviation&#x2014; for a given label.
-</p>
-
-<p>
 E.g., user-declared <abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids."> Category Theory</abbr> and Emacs-retrieved <abbr class="tooltip" title="The Common Lisp ‘loop’ macro.<br>Valid clauses include:<br>&emsp;For clauses:<br>&emsp;&emsp;for VAR from/upfrom/downfrom EXPR1 to/upto/downto/above/below EXPR2 [by EXPR3]<br>&emsp;&emsp;for VAR = EXPR1 then EXPR2<br>&emsp;&emsp;for VAR in/on/in-ref LIST [by FUNC]<br>&emsp;&emsp;for VAR across/across-ref ARRAY<br>&emsp;&emsp;for VAR being:<br>&emsp;&emsp;&emsp;the elements of/of-ref SEQUENCE [using (index VAR2)]<br>&emsp;&emsp;&emsp;the symbols [of OBARRAY]<br>&emsp;&emsp;&emsp;the hash-keys/hash-values of HASH-TABLE [using (hash-values/hash-keys V2)]<br>&emsp;&emsp;&emsp;the key-codes/key-bindings/key-seqs of KEYMAP [using (key-bindings VAR2)]<br>&emsp;&emsp;&emsp;the overlays/intervals [of BUFFER] [from POS1] [to POS2]<br>&emsp;&emsp;&emsp;the frames/buffers<br>&emsp;&emsp;&emsp;the windows [of FRAME]<br>&emsp;Iteration clauses:<br>&emsp;&emsp;repeat INTEGER<br>&emsp;&emsp;while/until/always/never/thereis CONDITION<br>&emsp;Accumulation clauses:<br>&emsp;&emsp;collect/append/nconc/concat/vconcat/count/sum/maximize/minimize FORM<br>&emsp;&emsp;&emsp;[into VAR]<br>&emsp;Miscellaneous clauses:<br>&emsp;&emsp;with VAR = INIT<br>&emsp;&emsp;if/when/unless COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...]<br>&emsp;&emsp;named NAME<br>&emsp;&emsp;initially/finally [do] EXPRS...<br>&emsp;&emsp;do EXPRS...<br>&emsp;&emsp;[finally] return EXPR<br><br>For more details, see Info node ‘(cl)Loop Facility’.<br><br>(fn CLAUSE...)">loop</abbr> and <abbr class="tooltip" title="Thread FORMS elements as the last argument of their successor.<br>Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>&emsp;&emsp;&emsp;(/ 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent to:<br>&emsp;&emsp;(+ 40 (- (/ 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list before<br>threading.<br><br>(fn &rest FORMS)">thread-last</abbr> ^_^
 </p>
 
@@ -2744,7 +2780,7 @@ E.g., user-declared <abbr class="tooltip" title="A theory of typed&emsp;composit
 </div>
 </div>
 
-<div id="outline-container-org8c4c963" class="outline-3">
+<div id="outline-container-org68346c1" class="outline-3">
 <h3 id="The-doc-link-type"><span class="section-number-3">9.1</span> The <code>doc</code> link type</h3>
 <div class="outline-text-3" id="text-The-doc-link-type">
 <p>
@@ -2752,19 +2788,20 @@ We begin by making use of a list of documentation-glossary entries
 &#x2014;a lightweight database of information, if you will.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-specical-blocks-extras--docs</span> nil
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--docs</span> nil
   <span style="color: #35a69c; font-style: italic;">"An alist of (label name description) entries; our glossary.</span>
 
 <span style="color: #35a69c; font-style: italic;">Example use: (-let [(name description) (cdr (assoc 'label docs))] &#8943;)"</span>)
 </pre>
 </div>
 
+
 <p>
 For example, we may use <code>add-to-list</code> to add an entry only if it is not already in
 the list.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-specical-blocks-extras--docs</span>
+<pre class="src src-emacs-lisp">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span>
   '(<span style="color: #2aa198;">"cat"</span> <span style="color: #2aa198;">"Category Theory"</span> <span style="color: #2aa198;">"A theory of typed  composition; e.g., typed monoids."</span>))
 </pre>
 </div>
@@ -2778,7 +2815,7 @@ refer to a user's personal ‘global glossary’ variable &#x2014;which may live
 Emacs' init file.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-specical-blocks-extras--docs-fallback</span>
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--docs-fallback</span>
   (<span style="color: #859900; font-weight: bold;">lambda</span> (label) (<span style="color: #b58900;">list</span> label label (<span style="color: #b58900;">documentation</span> (<span style="color: #b58900;">intern</span> label))))
   <span style="color: #35a69c; font-style: italic;">"The fallback method to retriving documentation or glossary entries."</span>)
 </pre>
@@ -2789,7 +2826,7 @@ Let's keep track of where documentation comes from &#x2014;either the current
 article or from the fallback&#x2014; so that we may process it later on.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-specical-blocks-extras--docs-GLOSSARY</span> nil
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--docs-GLOSSARY</span> nil
   <span style="color: #35a69c; font-style: italic;">"Which words are actually cited in the current article.</span>
 
 <span style="color: #35a69c; font-style: italic;">We use this listing to actually print a glossary using</span>
@@ -2807,12 +2844,12 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">-let</span> [name&amp;doc
        (<span style="color: #859900; font-weight: bold;">lambda</span> (lbl)
-         (<span style="color: #859900; font-weight: bold;">-let</span> [(_ name doc) (<span style="color: #b58900;">assoc</span> lbl <span style="color: #268bd2;">org-specical-blocks-extras--docs</span>)]
+         (<span style="color: #859900; font-weight: bold;">-let</span> [(_ name doc) (<span style="color: #b58900;">assoc</span> lbl <span style="color: #268bd2;">org-special-block-extras--docs</span>)]
            <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">If there is no documentation, try the fallback.</span>
            (<span style="color: #859900; font-weight: bold;">unless</span> doc
              (<span style="color: #859900; font-weight: bold;">setq</span> doc
                    (<span style="color: #859900; font-weight: bold;">condition-case</span> nil
-                       (<span style="color: #b58900;">funcall</span> <span style="color: #268bd2;">org-specical-blocks-extras--docs-fallback</span> lbl)
+                       (<span style="color: #b58900;">funcall</span> <span style="color: #268bd2;">org-special-block-extras--docs-fallback</span> lbl)
                      (<span style="color: #b58900;">error</span> (<span style="color: #b58900;">error</span>
                              <span style="color: #2aa198;">"Error: No documentation-glossary entry for &#8220;%s&#8221;!"</span>
                              lbl))))
@@ -2825,14 +2862,14 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_) ())
  <span style="color: #d33682; font-style: italic;">:export</span>
    `(<span style="color: #859900; font-weight: bold;">lambda</span> (label description backend)
-     (<span style="color: #859900; font-weight: bold;">-let</span> [(name <span style="color: #268bd2;">docs</span>) (<span style="color: #b58900;">funcall</span> ,name&amp;doc label)]
-       (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-specical-blocks-extras--docs-GLOSSARY</span>
-                    (<span style="color: #b58900;">list</span> label name <span style="color: #268bd2;">docs</span>))
+     (<span style="color: #859900; font-weight: bold;">-let</span> [(name docs) (<span style="color: #b58900;">funcall</span> ,name&amp;doc label)]
+       (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs-GLOSSARY</span>
+                    (<span style="color: #b58900;">list</span> label name docs))
        (<span style="color: #859900; font-weight: bold;">setq</span> name (<span style="color: #859900; font-weight: bold;">or</span> description name))
        (<span style="color: #859900; font-weight: bold;">pcase</span> backend
          (`html  (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"&lt;abbr class=\"tooltip\" title=\"%s\"&gt;%s&lt;/abbr&gt;"</span>
                          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Preserve newlines and preserve whitespace</span>
-                         (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"  "</span> <span style="color: #2aa198;">"&amp;emsp;"</span> (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n"</span> <span style="color: #2aa198;">"&lt;br&gt;"</span> <span style="color: #268bd2;">docs</span>))
+                         (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"  "</span> <span style="color: #2aa198;">"&amp;emsp;"</span> (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n"</span> <span style="color: #2aa198;">"&lt;br&gt;"</span> docs))
                          name))
          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Make the current word refer to its glosary entry;</span>
          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">also declare the location that the glossary should refer back to.</span>
@@ -2842,7 +2879,7 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
                                 <span style="color: #2aa198;">"-declaration-site-%s}"</span>)
                          label name label)))))
   <span style="color: #d33682; font-style: italic;">:help-echo</span>
-  `(<span style="color: #859900; font-weight: bold;">lambda</span> (window object <span style="color: #b58900;">position</span>)
+  `(<span style="color: #859900; font-weight: bold;">lambda</span> (_ __ <span style="color: #b58900;">position</span>)
     (<span style="color: #859900; font-weight: bold;">save-excursion</span>
       (<span style="color: #b58900;">goto-char</span> <span style="color: #b58900;">position</span>)
       (<span style="color: #859900; font-weight: bold;">-let*</span> (((<span style="color: #b58900; font-style: italic;">&amp;plist</span> <span style="color: #d33682; font-style: italic;">:path</span>) (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">org-element-context</span>)))
@@ -2860,7 +2897,7 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
 </div>
 </div>
 
-<div id="outline-container-org7ab6ba7" class="outline-3">
+<div id="outline-container-orgb9ae349" class="outline-3">
 <h3 id="Documentation-Blocks"><span class="section-number-3">9.2</span> Documentation Blocks</h3>
 <div class="outline-text-3" id="text-Documentation-Blocks">
 <p>
@@ -2879,8 +2916,8 @@ Also known as /Existential Dread/ and /Existential Anxiety/.
 #+end_documentation
 </pre>
 <p>
-Now <code>doc:ex-angst</code> gives us <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br>Also known as *Existential Dread* and *Existential Anxiety*."> Existential Angst</abbr>,
-or using a description: <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br>Also known as *Existential Dread* and *Existential Anxiety*.">“existence is pain”?</abbr>
+Now <code>doc:ex-angst</code> gives us <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br><br><br>Also known as <i>Existential Dread</i> and <i>Existential Anxiety</i>."> Existential Angst</abbr>,
+or using a description: <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br><br><br>Also known as <i>Existential Dread</i> and <i>Existential Anxiety</i>.">“existence is pain”?</abbr>
 </p>
 
 <blockquote>
@@ -2901,7 +2938,7 @@ description-documentation of the given name.
 <pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--documentation</span> (_ contents)
   <span style="color: #35a69c; font-style: italic;">"Register the dictionary entries in CONTENTS to the dictionary variable.</span>
 
-<span style="color: #35a69c; font-style: italic;">The dictionary variable is &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">org-specical-blocks-extras--docs</span><span style="color: #35a69c; font-style: italic;">&#8217;.</span>
+<span style="color: #35a69c; font-style: italic;">The dictionary variable is &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">org-special-block-extras--docs</span><span style="color: #35a69c; font-style: italic;">&#8217;.</span>
 
 <span style="color: #35a69c; font-style: italic;">Documentation blocks are not shown upon export."</span>
   <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Strip out any &lt;p&gt; tags</span>
@@ -2910,7 +2947,7 @@ description-documentation of the given name.
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span> contents))
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;/p&gt;"</span> <span style="color: #2aa198;">""</span> contents))
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">s-trim</span> contents))
-  (<span style="color: #859900; font-weight: bold;">loop</span> for entry in (<span style="color: #b58900;">cdr</span> (<span style="color: #b58900;">s-split</span> <span style="color: #2aa198;">":name:"</span> contents))
+  (<span style="color: #859900; font-weight: bold;">cl-loop</span> for entry in (<span style="color: #b58900;">cdr</span> (<span style="color: #b58900;">s-split</span> <span style="color: #2aa198;">":name:"</span> contents))
         <span style="color: #b58900;">do</span>   (<span style="color: #859900; font-weight: bold;">-let</span> [(contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'label 'name))
                     (<span style="color: #b58900;">org-special-block-extras--extract-arguments</span>
                      (<span style="color: #b58900;">s-concat</span> <span style="color: #2aa198;">":name:"</span> entry) 'label 'name)]
@@ -2918,7 +2955,7 @@ description-documentation of the given name.
                  (<span style="color: #b58900;">error</span> (<span style="color: #b58900;">message-box</span> (<span style="color: #b58900;">concat</span> <span style="color: #2aa198;">"#+begin_documentation: "</span>
                            <span style="color: #2aa198;">"Ensure both :label: and :name: are in the entry. "</span>
                             <span style="color: #2aa198;">"\n\n "</span> contents))))
-    (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-specical-blocks-extras--docs</span> (<span style="color: #b58900;">list</span> (<span style="color: #b58900;">s-trim</span> label) name
+    (<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span> (<span style="color: #b58900;">list</span> (<span style="color: #b58900;">s-trim</span> label) name
                                                          (<span style="color: #b58900;">s-trim</span> contents&#8242;)))))
   <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">The special block is not shown upon export.</span>
   <span style="color: #2aa198;">""</span>)
@@ -2927,7 +2964,7 @@ description-documentation of the given name.
 </div>
 </div>
 
-<div id="outline-container-orgb5ef480" class="outline-3">
+<div id="outline-container-orgab37c7a" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">9.3</span> Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 
@@ -2953,7 +2990,7 @@ description-documentation of the given name.
 
 <tr>
 <td class="org-left">With description and code font</td>
-<td class="org-left"><abbr class="tooltip" title="Natural transformations are essentially polymorphic functions that make *no*<br>choices according to the input type; e.g., `reverse : List τ → List τ` makes no<br>choices depending on the type `τ`."><code>polymorphism</code></abbr></td>
+<td class="org-left"><abbr class="tooltip" title="Natural transformations are essentially polymorphic functions that make <i>no</i><br>choices according to the input type; e.g., <code>reverse : List τ → List τ</code> makes no<br>choices depending on the type <code>τ</code>."><code>polymorphism</code></abbr></td>
 </tr>
 
 <tr>
@@ -2971,7 +3008,7 @@ multiple ‘definitions’ visible ;-)
 </div>
 </div>
 
-<div id="outline-container-orgea7a9f6" class="outline-3">
+<div id="outline-container-org594cf01" class="outline-3">
 <h3 id="tooltipster"><span class="section-number-3">9.4</span> <a href="https://iamceege.github.io/tooltipster/#triggers">Tooltipster</a> &#x2014;Fast, Sleek, &amp; Beautiful Tooltips</h3>
 <div class="outline-text-3" id="text-tooltipster">
 <p>
@@ -2983,11 +3020,11 @@ The incantation below sets up the required magic to make this happen.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-specical-block-extras--html-setup</span> nil
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span> nil
   <span style="color: #35a69c; font-style: italic;">"Has the necessary HTML beeen added?"</span>)
 
-(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">org-specical-block-extras--html-setup</span>
-  (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-specical-block-extras--html-setup</span> <span style="color: #268bd2;">t</span>)
+(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span>
+  (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span> <span style="color: #268bd2;">t</span>)
 (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-html-head-extra</span>
  (<span style="color: #b58900;">concat</span> <span style="color: #268bd2;">org-html-head-extra</span>
 <span style="color: #2aa198;">"</span>
@@ -3032,7 +3069,7 @@ The incantation below sets up the required magic to make this happen.
 </div>
 </div>
 
-<div id="outline-container-org6ce6b89" class="outline-3">
+<div id="outline-container-org1b27da8" class="outline-3">
 <h3 id="hola"><span class="section-number-3">9.5</span> Wait, what about the LaTeX?</h3>
 <div class="outline-text-3" id="text-hola">
 <p>
@@ -3057,13 +3094,13 @@ as follows, with <code>GLOSSARY</code> being a reserved name.
                           (<span style="color: #b58900;">s-upcase</span> x)
                           (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> x <span style="color: #2aa198;">"GLOSSARY"</span>)
                               (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"A cleaned up presentation of ...\n%s"</span>
-                                      <span style="color: #268bd2;">org-specical-blocks-extras--docs-GLOSSARY</span>)
+                                      <span style="color: #268bd2;">org-special-block-extras--docs-GLOSSARY</span>)
                           (<span style="color: #b58900;">pp</span> (<span style="color: #b58900;">eval</span> (<span style="color: #b58900;">intern</span> x)))))))))
   (<span style="color: #b58900;">org-link-set-parameters</span>
     <span style="color: #2aa198;">"show"</span>
     <span style="color: #d33682; font-style: italic;">:face</span> '(<span style="color: #d33682; font-style: italic;">:underline</span> <span style="color: #2aa198;">"green"</span>)
     <span style="color: #d33682; font-style: italic;">:follow</span> whatdo
-    <span style="color: #d33682; font-style: italic;">:help-echo</span> `(<span style="color: #859900; font-weight: bold;">lambda</span> (window object <span style="color: #b58900;">position</span>)
+    <span style="color: #d33682; font-style: italic;">:help-echo</span> `(<span style="color: #859900; font-weight: bold;">lambda</span> (_ __ <span style="color: #b58900;">position</span>)
                   (<span style="color: #859900; font-weight: bold;">save-excursion</span>
                     (<span style="color: #b58900;">goto-char</span> <span style="color: #b58900;">position</span>)
                     (<span style="color: #859900; font-weight: bold;">-let</span> [(<span style="color: #b58900; font-style: italic;">&amp;plist</span> <span style="color: #d33682; font-style: italic;">:path</span>) (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">org-element-context</span>))]
@@ -3086,15 +3123,13 @@ as follows, with <code>GLOSSARY</code> being a reserved name.
                                              <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Hack!</span>
                                              (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"&amp;"</span> <span style="color: #2aa198;">"\\&amp;"</span> x))))))
                (<span style="color: #b58900;">s-join</span> <span style="color: #2aa198;">"\n\n"</span>
-                       (<span style="color: #859900; font-weight: bold;">loop</span> for (label name doc)
-                             in <span style="color: #268bd2;">org-specical-blocks-extras--docs-GLOSSARY</span>
+                       (<span style="color: #859900; font-weight: bold;">cl-loop</span> for (label name doc)
+                             in <span style="color: #268bd2;">org-special-block-extras--docs-GLOSSARY</span>
                              collect (<span style="color: #b58900;">format</span> fstr name label
                                              (<span style="color: #b58900;">funcall</span> preserve doc)
                                              label)))))))))
 </pre>
 </div>
-
-
 
 <p>
 As an example, we know have generic sentences:
@@ -3131,7 +3166,7 @@ is the case for HTML.</i>
 </div>
 </div>
 
-<div id="outline-container-org5d49e86" class="outline-3">
+<div id="outline-container-orga63fb48" class="outline-3">
 <h3 id="Next-Steps-tooltips"><span class="section-number-3">9.6</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-tooltips">
 <p>
@@ -3156,10 +3191,18 @@ buffer, if possible.</li>
 </div>
 </div>
 
-<div id="outline-container-org2bf4bd7" class="outline-2">
+<div id="outline-container-orgc38635e" class="outline-2">
 <h2 id="Summary"><span class="section-number-2">10</span> Summary</h2>
 <div class="outline-text-2" id="text-Summary">
+<blockquote>
 <p>
+The full article may be read as a <a href="https://alhassy.github.io/org-special-block-extras/README.pdf">PDF</a> or as <a href="https://alhassy.github.io/org-special-block-extras/README.html">HTML</a> or as pure <a href="https:/raw.githubusercontent.com/alhassy/org-special-block-extras/master/org-special-block-extras.org">Org</a>!
+&#x2014;or visit the <a href="https://github.com/alhassy/org-special-block-extras">repo</a>.
+</p>
+</blockquote>
+
+<p>
+<a class="anchor" aria-hidden="true" id="summary" href="#summary"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
 Let <code>𝒞</code> be any of the following: <code>black</code>, <code>blue</code>, <code>brown</code>, <code>cyan</code>, <code>darkgray</code>, <code>gray</code>, <code>green</code>,
 <code>lightgray</code>, <code>lime</code>, <code>magenta</code>, <code>olive orange</code>, <code>pink</code>, <code>purple</code>, <code>red</code>, <code>teal</code>, <code>violet</code>, <code>white</code>,
 <code>yellow</code>. Let <code>𝓃</code> be any number from <code>1..5</code>.
@@ -3243,11 +3286,65 @@ There are also the social badge links:
 github-watchers</code>, <code>twitter-follow</code>, and <code>tweet</code>.
 </p>
 
-
 <p>
 <span style="color:orange;">Going forward,</span> it'd be nice to a centralised ‘user manual’ which may be
 consulted rather than reading the literate implementation above.
 </p>
+</div>
+
+<div id="outline-container-orga56f7e5" class="outline-3">
+<h3 id="Installation-Instructions"><span class="section-number-3">10.1</span> Installation Instructions</h3>
+<div class="outline-text-3" id="text-Installation-Instructions">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#10216;0&#10217; Download the org-special-block-extras.el file manually or using quelpa</span>
+(<span style="color: #b58900;">quelpa</span> '(org-special-block-extras <span style="color: #d33682; font-style: italic;">:fetcher</span> github <span style="color: #d33682; font-style: italic;">:repo</span>
+<span style="color: #2aa198;">"alhassy/org-special-block-extras"</span>))
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#10216;1&#10217; Have this always active in Org buffers</span>
+(<span style="color: #b58900;">add-hook</span> #'<span style="color: #268bd2;">org-mode-hook</span> #'<span style="color: #b58900;">org-special-block-extras-mode</span>)
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">&#10216;1&#8242;&#10217; Or use: &#8220;M-x org-special-block-extras-mode&#8221; to turn it on/off</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5fcea0f" class="outline-3">
+<h3 id="Minimal-working-example"><span class="section-number-3">10.2</span> Minimal working example</h3>
+<div class="outline-text-3" id="text-Minimal-working-example">
+<pre class="example">
+#+begin_parallel
+Name this file test.org, then write something like doc:loop
+now press =C-c C-e h o= and your browser will open a pretty
+document. Hover over the previous “loop” and you'll see its
+documentation!
+
+Now the right column, has a first-class editorial comment
+and an SVG badge.
+
+#+begin_edcomm
+Super neat stuff!
+#+end_edcomm
+
+badge:thanks|for_reading
+
+tweet:https://github.com/alhassy/org-special-block-extras
+
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+#+end_parallel
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org81892ba" class="outline-3">
+<h3 id="Bye"><span class="section-number-3">10.3</span> Bye!</h3>
+<div class="outline-text-3" id="text-Bye">
+<p>
+<img src="https://img.shields.io/badge/thanks-for_reading-nil">
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+</p>
+</div>
 </div>
 </div>
 
@@ -3268,7 +3365,7 @@ See <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf"><i>A tutorial on the uni
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-24 Fri 00:52</p>
+<p class="date">Created: 2020-04-24 Fri 17:54</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
