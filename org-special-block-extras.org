@@ -34,6 +34,8 @@
 #+LATEX_HEADER: \usepackage[hmargin=15mm,top=15mm,bottom=15mm]{geometry}
 
 #+latex_header: \newunicodechar{τ}{\ensuremath{\tau}}
+#+latex_header: \newunicodechar{⟨}{\ensuremath{\langle}}
+#+latex_header: \newunicodechar{⟩}{\ensuremath{\rangle}}
 #+latex_header: \newunicodechar{→}{\ensuremath{\to}}
 #+latex_header: \newunicodechar{⊕}{\ensuremath{\oplus}}
 #+latex_header: \newunicodechar{₀}{\ensuremath{_0}}
@@ -51,9 +53,8 @@
 #+latex_header: \newunicodechar{و}{\ensuremath{;}}
 #+latex_header: \newunicodechar{•}{\ensuremath{\bullet}}
 #+latex_header: \newunicodechar{ᴗ}{\ensuremath{\smile}}
-#+latex_header: \newunicodechar{́}{\ensuremath{'}}
-#+latex_header: \newunicodechar{̀}{\ensuremath{`}}
-#+macro: smile @@latex:\^{}\_{}\^@@ @@html: (•̀ᴗ•́)و@@
+#+latex_header: \newunicodechar{́}{\ensuremath{}}
+#+latex_header: \newunicodechar{̀}{\ensuremath{}}
 
 #+LATEX_HEADER: \usepackage{minted}
 # +LATEX_HEADER: \usepackage{tcolorbox}
@@ -2134,6 +2135,9 @@ We begin by making use of a list of documentation-glossary entries
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 #+end_src
 
+#+RESULTS:
+: org-special-block-extras--docs
+
 
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
@@ -2141,6 +2145,9 @@ the list.
 (add-to-list 'org-special-block-extras--docs
   '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
 #+end_src
+
+#+RESULTS:
+| nat-trans | Natural Transformation | Natural transformations are essentially polymorphic functions that make \emph{no} |
 
 We may wish to use Emacs' ~documentation~ command to retrieve entries ---this is
 useful for an online article that refers to unfamiliar Emacs terms ;-) To avoid
@@ -2163,6 +2170,9 @@ article or from the fallback--- so that we may process it later on.
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
 #+end_src
+
+#+RESULTS:
+: org-special-block-extras--docs-GLOSSARY
 
 Now HTML exporting such links as tooltips and displaying them in Emacs as
 tooltips happens in two stages: First we check the documentation, if there is no
