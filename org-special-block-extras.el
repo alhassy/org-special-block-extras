@@ -185,6 +185,7 @@ with all ‘:kᵢ:’ lines stripped out.
           yellow)
   "Colours that should be available on all systems.")
 
+(eval-when-compile
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
@@ -192,7 +193,7 @@ with all ‘:kᵢ:’ lines stripped out.
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
                      (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
-                      colour colour colour))))
+                      colour colour colour)))))
 
 (defun org-special-block-extras--color (backend contents)
   "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
@@ -261,6 +262,7 @@ with all ‘:kᵢ:’ lines stripped out.
 ;; Common case is to have three columns, and we want to avoid invoking the
 ;; attribute via org, so making this.
 
+(eval-when-compile
 (cl-loop for cols in '("1" "2" "3" "4" "5")
       do (cl-loop for rule in '("solid" "none")
       do (eval (read (concat
@@ -275,7 +277,7 @@ with all ‘:kᵢ:’ lines stripped out.
 "          %s"
 "          \\\\end{multicols}\\\\end{minipage}\"))"
 "(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
-contents)))")))))
+contents)))"))))))
 
 (defvar org-special-block-extras-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
@@ -648,7 +650,7 @@ Documentation blocks are not shown upon export."
 ")))
 
 (let ((whatdo (lambda (x)
-                (message (format
+                (message
                           (concat "The value of variable  %s  will be placed "
                                   "here literally upon export, "
                                   "which is: \n\n %s")
@@ -656,7 +658,7 @@ Documentation blocks are not shown upon export."
                           (if (equal x "GLOSSARY")
                               (format "A cleaned up presentation of ...\n%s"
                                       org-special-block-extras--docs-GLOSSARY)
-                          (pp (eval (intern x)))))))))
+                          (pp (eval (intern x))))))))
   (org-link-set-parameters
     "show"
     :face '(:underline "green")
@@ -667,10 +669,10 @@ Documentation blocks are not shown upon export."
                     (-let [(&plist :path) (cadr (org-element-context))]
                       (funcall ,whatdo path))))
     :export
-    (lambda (label description backend)
+    (lambda (label _description backend)
       (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
             ((equal 'html backend) "") ;; Do not print glossary in HTML
-            (_
+            (t
              (-let ((fstr (concat "\\vspace{1em}\\phantomsection"
                                  "\\textbf{%s}\\quad"
                                  "\\label{org-special-block-extras-glossary-%s}"

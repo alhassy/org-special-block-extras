@@ -839,6 +839,7 @@ this.
           yellow)
   "Colours that should be available on all systems.")
 
+(eval-when-compile
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
@@ -846,7 +847,7 @@ this.
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
                      (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
-                      colour colour colour))))
+                      colour colour colour)))))
 #+END_SRC
 
 # (t      \"org-special-block-extras: Unsupported backend\")
@@ -1237,6 +1238,7 @@ inherit highlighting, so I shifted the number to being a prefix instead.
   between columns.
 
 #+BEGIN_SRC emacs-lisp
+(eval-when-compile
 (cl-loop for cols in '("1" "2" "3" "4" "5")
       do (cl-loop for rule in '("solid" "none")
       do (eval (read (concat
@@ -1251,7 +1253,7 @@ inherit highlighting, so I shifted the number to being a prefix instead.
 "          %s"
 "          \\\\end{multicols}\\\\end{minipage}\"))"
 "(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
-contents)))")))))
+contents)))"))))))
 #+END_SRC
 #
 # Musa: If I use “<div …> %s</div>”, the ‘>’ causes some undesirable whitespace
@@ -2407,7 +2409,7 @@ The incantation below sets up the required magic to make this happen.
    as follows, with =GLOSSARY= being a reserved name.
  #+begin_src emacs-lisp
 (let ((whatdo (lambda (x)
-                (message (format
+                (message
                           (concat "The value of variable  %s  will be placed "
                                   "here literally upon export, "
                                   "which is: \n\n %s")
@@ -2415,7 +2417,7 @@ The incantation below sets up the required magic to make this happen.
                           (if (equal x "GLOSSARY")
                               (format "A cleaned up presentation of ...\n%s"
                                       org-special-block-extras--docs-GLOSSARY)
-                          (pp (eval (intern x)))))))))
+                          (pp (eval (intern x))))))))
   (org-link-set-parameters
     "show"
     :face '(:underline "green")
@@ -2426,10 +2428,10 @@ The incantation below sets up the required magic to make this happen.
                     (-let [(&plist :path) (cadr (org-element-context))]
                       (funcall ,whatdo path))))
     :export
-    (lambda (label description backend)
+    (lambda (label _description backend)
       (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
             ((equal 'html backend) "") ;; Do not print glossary in HTML
-            (_
+            (t
              (-let ((fstr (concat "\\vspace{1em}\\phantomsection"
                                  "\\textbf{%s}\\quad"
                                  "\\label{org-special-block-extras-glossary-%s}"
