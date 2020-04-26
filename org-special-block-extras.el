@@ -63,6 +63,9 @@
 (require 'ox-latex)
 (require 'ox-html)
 
+(declare-function org-special-block-extras--2parallel "org-special-block-extras" t t)
+(declare-function org-special-block-extras--2parallelNB "org-special-block-extras" t t)
+
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
   "Provide twenty-six new custom blocks for Org-mode."
@@ -70,64 +73,64 @@
   (if org-special-block-extras-mode
       (progn
         (advice-add #'org-html-special-block
-           :before-until (apply-partially #'org-special-block-extras--advice 'html))
-        
+                    :before-until (apply-partially #'org-special-block-extras--advice 'html))
+
         (advice-add #'org-latex-special-block
-           :before-until (apply-partially #'org-special-block-extras--advice 'latex))
+                    :before-until (apply-partially #'org-special-block-extras--advice 'latex))
         (defalias 'org-special-block-extras--parallel
-                  #'org-special-block-extras--2parallel)
-        
+          #'org-special-block-extras--2parallel)
+
         (defalias 'org-special-block-extras--parallelNB
-                  #'org-special-block-extras--2parallelNB)
+          #'org-special-block-extras--2parallelNB)
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--html-setup nil
           "Has the necessary HTML beeen added?")
-        
+
         (unless org-special-block-extras--html-setup
           (setq org-special-block-extras--html-setup t)
-        (setq org-html-head-extra
-         (concat org-html-head-extra
-        "
-        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
-        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
-        <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
-        
-         <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
-          <script>
-                 $(document).ready(function() {
-                     $('.tooltip').tooltipster({
-                         theme: 'tooltipster-punk',
-                         contentAsHTML: true,
-                         animation: 'grow',
-                         delay: [100,500],
-                         // trigger: 'click'
-                         trigger: 'custom',
-                         triggerOpen: {
-                             mouseenter: true
-                         },
-                         triggerClose: {
-                             originClick: true,
-                             scroll: true
-                         }
-         });
-                 });
-             </script>
-        
-        <style>
-           abbr {color: red;}
-        
-           .tooltip { border-bottom: 1px dotted #000;
-                      color:red;
-                      text-decoration: none;}
-        </style>
-        ")))
-      ) ;; Must be on a new line; I'm using noweb-refs
+          (setq org-html-head-extra
+                (concat org-html-head-extra
+                        "
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+
+<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+
+<script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
+
+<script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+
+<script>
+$(document).ready(function() {
+                          $('.tooltip').tooltipster({
+                                                    theme: 'tooltipster-punk',
+                                                    contentAsHTML: true,
+                                                    animation: 'grow',
+                                                    delay: [100,500],
+                                                    // trigger: 'click'
+                                                    trigger: 'custom',
+                                                    triggerOpen: {
+                                                    mouseenter: true
+                                                    },
+                                                    triggerClose: {
+                                                    originClick: true,
+                                                    scroll: true
+                                                    }
+                                                    });
+                          });
+</script>
+
+<style>
+abbr {color: red;}
+
+.tooltip { border-bottom: 1px dotted #000;
+color:red;
+text-decoration: none;}
+</style>
+")))
+        ) ;; Must be on a new line; I'm using noweb-refs
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-    
+
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     )) ;; Must be on a new line; I'm using noweb-refs
@@ -151,13 +154,13 @@ contents at all, not even an empty new line."
     (ignore-errors (apply handler backend (or contents "") nil))))
 
 (defun org-special-block-extras--extract-arguments (contents &rest args)
-"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+  "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
 
 Example usage:
 
-    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
-           (…extract-arguments contents 'k₀ … 'kₙ)]
-          body)
+\(-let [(contents′ . (&alist 'k₀ … 'kₙ))
+       (…extract-arguments contents 'k₀ … 'kₙ)]
+  body)
 
 Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
 ‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
@@ -165,7 +168,7 @@ with all ‘:kᵢ:’ lines stripped out.
 
 + If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
 + If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
-  then it has value the empty string."
+then it has value the empty string."
   (let ((ctnts contents)
         (values (cl-loop for a in args
                          for regex = (format ":%s:\\(.*\\)" a)
@@ -185,15 +188,14 @@ with all ‘:kᵢ:’ lines stripped out.
           yellow)
   "Colours that should be available on all systems.")
 
-(eval-when-compile
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
-                     (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
-                     contents))"
-                      colour colour colour)))))
+                         (format (pcase backend
+                                   (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
+                                   (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                                       contents))"
+                      colour colour colour))))
 
 (defun org-special-block-extras--color (backend contents)
   "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
@@ -262,7 +264,6 @@ with all ‘:kᵢ:’ lines stripped out.
 ;; Common case is to have three columns, and we want to avoid invoking the
 ;; attribute via org, so making this.
 
-(eval-when-compile
 (cl-loop for cols in '("1" "2" "3" "4" "5")
       do (cl-loop for rule in '("solid" "none")
       do (eval (read (concat
@@ -271,16 +272,16 @@ with all ‘:kᵢ:’ lines stripped out.
 "(backend contents)"
 "(format (pcase backend"
 "(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
-"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
-"          \\\\begin{minipage}[t]{\\\\linewidth}"
-"          \\\\begin{multicols}{" cols "}"
-"          %s"
-"          \\\\end{multicols}\\\\end{minipage}\"))"
-"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
-contents)))"))))))
+        "(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
+        "          \\\\begin{minipage}[t]{\\\\linewidth}"
+        "          \\\\begin{multicols}{" cols "}"
+        "          %s"
+        "          \\\\end{multicols}\\\\end{minipage}\"))"
+        "(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
+contents)))")))))
 
-(defvar org-special-block-extras-hide-editor-comments nil
-  "Should editor comments be shown in the output or not.")
+                         (defvar org-special-block-extras-hide-editor-comments nil
+                           "Should editor comments be shown in the output or not.")
 
 (defun org-special-block-extras--edcomm (backend contents)
 "Format CONTENTS as an first-class editor comment according to BACKEND.
