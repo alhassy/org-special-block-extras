@@ -7,7 +7,8 @@
 [![badge:Org](https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu)](https://orgmode.org)
 
 [![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
-[![badge:melpa](https://img.shields.io/badge/melpa-pending-critical?logo=github)](https://github.com/alhassy/emacs.d#use-package-the-start-of-initel)
+[![badge:melpa](https://img.shields.io/badge/melpa-2020%2F04%2F26-purple?logo=github)](https://melpa.org/#/org-special-block-extras)
+
 [![badge:license](https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![badge:docs](https://img.shields.io/badge/docs-literate-success?logo=read-the-docs)](https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like)
 [![badge:https://github.com/alhassy/org-special-block-extras](https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras)](https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras)
@@ -54,8 +55,8 @@
 > and block and link types for making documentation-glossary entries.
 > That is, **we provide 29 block types and 32 link types**.
 
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) &#x2014;or visit
-> the [repo](https://github.com/alhassy/org-special-block-extras). Installation instructions are [below](#Summary).
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> Installation instructions are [below](#Summary).
 
 ![img](images/foo_block.png "Extensibility! *Plug and play support for new block types!*")
 
@@ -198,8 +199,8 @@
 
 ![img](images/tooltips_declaration.png)
 
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html) &#x2014;or visit
-> the [repo](https://github.com/alhassy/org-special-block-extras). Installation instructions are [below](#Summary).
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> Installation instructions are [below](#Summary).
 
 
 # Table of Contents
@@ -214,8 +215,7 @@
 
 # Summary
 
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/README.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras/README.html)!
-> &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
 
 
 Let `𝒞` be any of the following: `black`, `blue`, `brown`, `cyan`, `darkgray`, `gray`, `green`,
@@ -246,7 +246,7 @@ Let `𝒞` be any of the following: `black`, `blue`, `brown`, `cyan`, `darkgray`
 <tbody>
 <tr>
 <td class="org-left">Colours</td>
-<td class="org-left">`𝒞`</td>
+<td class="org-left">`𝒞`, `latex-definitions`</td>
 <td class="org-left">`𝒞`, `color:𝒞`</td>
 <td class="org-left">`:color:`</td>
 </tr>
@@ -311,6 +311,8 @@ consulted rather than reading the literate implementation above.
 
 ## Installation Instructions
 
+Manually or using [quelpa](https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source):
+
     ;; ⟨0⟩ Download the org-special-block-extras.el file manually or using quelpa
     (quelpa '(org-special-block-extras :fetcher github :repo
     "alhassy/org-special-block-extras"))
@@ -319,6 +321,22 @@ consulted rather than reading the literate implementation above.
     (add-hook #'org-mode-hook #'org-special-block-extras-mode)
 
     ;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
+
+**Or** with [use-package](https://github.com/alhassy/emacs.d#use-package-the-start-of-initel):
+
+    (use-package org-special-block-extras
+      :ensure t
+      :hook (org-mode . org-special-block-extras-mode))
+
+Then, provide support for a new type of special block named `foo` that, say
+replaces all words *foo* in a block, by declaring the following.
+
+    (defun org-special-block-extras--foo (backend contents)
+      "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
+    unless a ‘:replacement:’ is provided."
+      (-let [(contents′ . (&alist 'replacement))
+               (org-special-block-extras--extract-arguments contents 'replacement)]
+        (s-replace "foo" (or replacement "bar") contents′)))
 
 
 ## Minimal working example
@@ -341,6 +359,8 @@ consulted rather than reading the literate implementation above.
     tweet:https://github.com/alhassy/org-special-block-extras
 
     badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+    doc:thread-first
     #+end_parallel
 
 

@@ -1,8 +1,8 @@
 #+title: org-special-block-extras
 #+author: Musa Al-hassy
-#+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el
+#+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el :exports code
 #+options: d:nil toc:nil
-#+EXPORT_FILE_NAME: README
+#+EXPORT_FILE_NAME: index
 #+macro: blurb Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^
 
 :29_blocks:
@@ -94,12 +94,12 @@
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp  :noweb yes
-;;; org-special-block-extras.el --- 29 new custom blocks & 31 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 32 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 0.9
+;; Version: 1.0
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -135,12 +135,15 @@
 ;;
 ;;
 ;; The system is extensible:
-;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS/TYPE
+;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS--TYPE
 ;; for a new custom block TYPE, which is then invoked.
 ;; The handler takes three arguments:
 ;; - CONTENTS: The string contents delimited by the custom block.
 ;; - BACKEND:  The current exportation backend; e.g., 'html or 'latex.
 ;; The handler must return a string.
+;;
+;; Full documentation can be found at
+;; https://alhassy.github.io/org-special-block-extras
 
 ;;; Code:
 
@@ -193,7 +196,8 @@ badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.3.6|blue|https://orgmode.org|gnu
 
 [[badge:org-special-block-extras|1.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
-[[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]]
+[[badge:melpa|2020/04/26|purple|https://melpa.org/#/org-special-block-extras|github][melpa badge]]
+
 [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
 [[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
 tweet:https://github.com/alhassy/org-special-block-extras
@@ -242,8 +246,8 @@ That is, *we provide 29 block types and 32 link types*.
 #+end_quote
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] ---or visit
-the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+Installation instructions are [[#Summary][below]].
 #+end_quote
 
 #+caption: Extensibility! /Plug and play support for new block types!/
@@ -291,8 +295,8 @@ the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation 
 [[file:images/tooltips_declaration.png]]
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]] ---or visit
-the [[https://github.com/alhassy/org-special-block-extras][repo]]. Installation instructions are [[#Summary][below]].
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+Installation instructions are [[#Summary][below]].
 #+end_quote
 
 #+latex: \newpage
@@ -584,9 +588,6 @@ unless a ‘:replacement:’ is provided."
 #+RESULTS: foo-block
 : org-special-block-extras--foo
 
-#+RESULTS:
-: org-special-block-extras--foo
-
 Here's an example usage:
 #+begin_2parallel org
 #+begin_example org
@@ -680,8 +681,6 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
   :face '(:foreground "red" :weight bold    (ref:exface)
           :underline "orange" :overline "orange"))
 #+end_src
-
-#+RESULTS: example-link
 
 + Line [[(extype)]] ="example"= :: Add a new =example= link type.
   - If the type already exists, update it with the given arguments.
@@ -2143,10 +2142,6 @@ We begin by making use of a list of documentation-glossary entries
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 #+end_src
 
-#+RESULTS:
-: org-special-block-extras--docs
-
-
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
 #+begin_src emacs-lisp
@@ -2155,7 +2150,6 @@ the list.
 #+end_src
 
 #+RESULTS:
-| nat-trans | Natural Transformation | Natural transformations are essentially polymorphic functions that make \emph{no} |
 
 We may wish to use Emacs' ~documentation~ command to retrieve entries ---this is
 useful for an online article that refers to unfamiliar Emacs terms ;-) To avoid
@@ -2179,9 +2173,6 @@ We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
 #+end_src
 
-#+RESULTS:
-: org-special-block-extras--docs-GLOSSARY
-
 Now HTML exporting such links as tooltips and displaying them in Emacs as
 tooltips happens in two stages: First we check the documentation, if there is no
 entry, we try the fallback ---if that falls, an error is reported at export
@@ -2196,8 +2187,8 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
              (setq doc
                    (condition-case nil
                        (funcall org-special-block-extras--docs-fallback lbl)
-                     (error (error
-                             "Error: No documentation-glossary entry for “%s”!"
+                     (error
+                      (error "Error: No documentation-glossary entry for “%s”!"
                              lbl))))
              (setq name (nth 1 doc))
              (setq doc (nth 2 doc)))
@@ -2295,6 +2286,7 @@ The dictionary variable is ‘org-special-block-extras--docs’.
 Documentation blocks are not shown upon export."
   ;; Strip out any <p> tags
   ;; Musa: Make these three lines part of the core utility?
+  (message-box "hola")
   (setq contents (substring-no-properties contents))
   (setq contents (s-replace-regexp "<p>" "" contents))
   (setq contents (s-replace-regexp "</p>" "" contents))
@@ -2305,10 +2297,10 @@ Documentation blocks are not shown upon export."
                      (s-concat ":name:" entry) 'label 'name)]
                (unless (and label name)
                  (error (message-box (concat "#+begin_documentation: "
-                           "Ensure both :label: and :name: are in the entry. "
+                           "Ensure the entry has a :name followed by a :label "
                             "\n\n " contents))))
-    (add-to-list 'org-special-block-extras--docs (list (s-trim label) name
-                                                         (s-trim contents′)))))
+               (add-to-list 'org-special-block-extras--docs
+                            (mapcar #'s-trim (list label name contents′)))))
   ;; The special block is not shown upon export.
   "")
   #+END_SRC
@@ -2352,7 +2344,7 @@ does not render arbitrary HTML elements. Moreover, the default tooltip utility
 is rather slow. As such, we move to using [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]].
 The incantation below sets up the required magic to make this happen.
 
-#+begin_src emacs-lisp :noweb-ref enable-mode
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
 (defvar org-special-block-extras--html-setup nil
   "Has the necessary HTML beeen added?")
 
@@ -2434,7 +2426,7 @@ The incantation below sets up the required magic to make this happen.
                     (-let [(&plist :path) (cadr (org-element-context))]
                       (funcall ,whatdo path))))
     :export
-    (lambda (label _description backend)
+     (lambda (label _description backend)
       (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
             ((equal 'html backend) "") ;; Do not print glossary in HTML
             (t
@@ -2454,7 +2446,7 @@ The incantation below sets up the required magic to make this happen.
                        (cl-loop for (label name doc)
                              in org-special-block-extras--docs-GLOSSARY
                              collect (format fstr name label
-                                             (funcall preserve doc)
+                                             (when doc (funcall preserve doc))
                                              label)))))))))
  #+end_src
 
@@ -2470,6 +2462,19 @@ The incantation below sets up the required magic to make this happen.
 
  /Neato! The whitespace in the documentation is preserved in the LaTeX output as
  is the case for HTML./
+
+ If we decide to erase a =doc:𝒳=, then it should not longer appear in the
+ printed glossary listing. Likewise, a =documentation= block has its Org markup
+ exported according to the backend being exported to, hence if we decide to
+ switch between different backends then only the first rendition will be used
+ /unless/ we erase the database each time after export.
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+;; Actual used glossary entries depends on the buffer; so clean up after each export
+(advice-add #'org-export-dispatch
+  :after (lambda (&rest _)
+  (setq org-special-block-extras--docs-GLOSSARY nil
+        org-special-block-extras--docs nil)))
+#+end_src
 
 ** Next Steps
   :PROPERTIES:
@@ -2497,8 +2502,7 @@ block types; whereas they currently break the HTML export.
   :END:
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/README.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras/README.html][HTML]]!
----or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
 
 link-here:summary
@@ -2506,15 +2510,15 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=. Let =𝓃= be any number from =1..5=.
 
-| Idea                   | Block         | Link       | Switches            |
-|------------------------+---------------+------------+---------------------|
-| Colours                | =𝒞=             | =𝒞=, =color:𝒞= | =:color:=             |
-| Parallel               | =𝓃parallel[NB]= | -          | =:columnbreak:=       |
-| Editorial Comments     | =edcomm=        | =edcomm=     | =:ed:=, =:replacewith:= |
-| Folded Details         | =details=       | -          | =:title:=             |
-| Link Here              | -             | =link-here=  | -                   |
-| Badges                 | -             | =badge=      | -                   |
-| Documentation-Glossary | =documentation= | =doc=, =show=  | =:name:=, =:label:=     |
+| Idea                   | Block                | Link       | Switches            |
+|------------------------+----------------------+------------+---------------------|
+| Colours                | =𝒞=, =latex-definitions= | =𝒞=, =color:𝒞= | =:color:=             |
+| Parallel               | =𝓃parallel[NB]=        | -          | =:columnbreak:=       |
+| Editorial Comments     | =edcomm=               | =edcomm=     | =:ed:=, =:replacewith:= |
+| Folded Details         | =details=              | -          | =:title:=             |
+| Link Here              | -                    | =link-here=  | -                   |
+| Badges                 | -                    | =badge=      | -                   |
+| Documentation-Glossary | =documentation=        | =doc=, =show=  | =:name:=, =:label:=     |
 
 There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
@@ -2528,6 +2532,7 @@ consulted rather than reading the literate implementation above.
    :CUSTOM_ID: Installation-Instructions
    :END:
 
+Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source][quelpa]]:
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; ⟨0⟩ Download the org-special-block-extras.el file manually or using quelpa
 (quelpa '(org-special-block-extras :fetcher github :repo
@@ -2537,6 +2542,24 @@ consulted rather than reading the literate implementation above.
 (add-hook #'org-mode-hook #'org-special-block-extras-mode)
 
 ;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
+#+END_SRC
+
+*Or* with [[https://github.com/alhassy/emacs.d#use-package-the-start-of-initel][use-package]]:
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package org-special-block-extras
+  :ensure t
+  :hook (org-mode . org-special-block-extras-mode))
+#+END_SRC
+
+Then, provide support for a new type of special block named =foo= that, say
+replaces all words /foo/ in a block, by declaring the following.
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun org-special-block-extras--foo (backend contents)
+  "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
+unless a ‘:replacement:’ is provided."
+  (-let [(contents′ . (&alist 'replacement))
+           (org-special-block-extras--extract-arguments contents 'replacement)]
+    (s-replace "foo" (or replacement "bar") contents′)))
 #+END_SRC
 
 ** Minimal working example
@@ -2562,6 +2585,8 @@ badge:thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
 
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+doc:thread-first
 #+end_parallel
 #+end_example
 
@@ -2589,6 +2614,8 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
   :PROPERTIES:
   :CUSTOM_ID: COMMENT-MELPA-Checks
   :END:
+https://github.com/riscy/melpazoid
+
 1. In Github repo: Create new file ⇒ License.txt ⇒ Select template ⇒ GNU 3
 2. Ensure first line ends with: -*- lexical-binding: t; -*-
 3. Include appropriate standard keywords;
@@ -2685,7 +2712,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
     + Push this branch on your melpa fork.
     + Go to the https://github.com/melpa/ repo and
       there'll be a big green PR button ^_^
-* COMMENT Making ~README.org~
+* Making ~README.org~
   :PROPERTIES:
   :CUSTOM_ID: COMMENT-Making-README-org
   :END:
@@ -2698,8 +2725,8 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
     (insert
     "#+EXPORT_FILE_NAME: README.md
      # HTML: <h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
-     #+OPTIONS: toc:nil d:nil
-     #+INCLUDE: \"org-special-block-extras.org::*Abstract\"
+     ,#+OPTIONS: toc:nil d:nil
+     ,#+INCLUDE: \"org-special-block-extras.org::*Abstract\"
      # INCLUDE: \"org-special-block-extras.org::*Summary\"
      HELLO!
     ")
@@ -2708,7 +2735,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
       (org-md-export-to-markdown))))
 #+END_SRC
 
-#+RESULTS: make-readme
+*Then* use =grip= to see that this looks reasonable.
 
 * Glossary                                                           :ignore:
   :PROPERTIES:

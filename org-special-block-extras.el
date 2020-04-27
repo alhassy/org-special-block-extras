@@ -1,9 +1,9 @@
-;;; org-special-block-extras.el --- 29 new custom blocks & 31 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 32 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 0.9
+;; Version: 1.0
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -39,12 +39,15 @@
 ;;
 ;;
 ;; The system is extensible:
-;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS/TYPE
+;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS--TYPE
 ;; for a new custom block TYPE, which is then invoked.
 ;; The handler takes three arguments:
 ;; - CONTENTS: The string contents delimited by the custom block.
 ;; - BACKEND:  The current exportation backend; e.g., 'html or 'latex.
 ;; The handler must return a string.
+;;
+;; Full documentation can be found at
+;; https://alhassy.github.io/org-special-block-extras
 
 ;;; Code:
 
@@ -91,42 +94,47 @@
           (setq org-html-head-extra
                 (concat org-html-head-extra
                         "
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
 
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
 
-<script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
+        <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
 
-<script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+         <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
 
-<script>
-$(document).ready(function() {
-                          $('.tooltip').tooltipster({
-                                                    theme: 'tooltipster-punk',
-                                                    contentAsHTML: true,
-                                                    animation: 'grow',
-                                                    delay: [100,500],
-                                                    // trigger: 'click'
-                                                    trigger: 'custom',
-                                                    triggerOpen: {
-                                                    mouseenter: true
-                                                    },
-                                                    triggerClose: {
-                                                    originClick: true,
-                                                    scroll: true
-                                                    }
-                                                    });
-                          });
-</script>
+          <script>
+                 $(document).ready(function() {
+                     $('.tooltip').tooltipster({
+                         theme: 'tooltipster-punk',
+                         contentAsHTML: true,
+                         animation: 'grow',
+                         delay: [100,500],
+                         // trigger: 'click'
+                         trigger: 'custom',
+                         triggerOpen: {
+                             mouseenter: true
+                         },
+                         triggerClose: {
+                             originClick: true,
+                             scroll: true
+                         }
+         });
+                 });
+             </script>
 
-<style>
-abbr {color: red;}
+        <style>
+           abbr {color: red;}
 
-.tooltip { border-bottom: 1px dotted #000;
-color:red;
-text-decoration: none;}
-</style>
-")))
+           .tooltip { border-bottom: 1px dotted #000;
+                      color:red;
+                      text-decoration: none;}
+        </style>
+        ")))
+        ;; Actual used glossary entries depends on the buffer; so clean up after each export
+        (advice-add #'org-export-dispatch
+                    :after (lambda (&rest _)
+                             (setq org-special-block-extras--docs-GLOSSARY nil
+                                   org-special-block-extras--docs nil)))
         ) ;; Must be on a new line; I'm using noweb-refs
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
@@ -154,13 +162,13 @@ contents at all, not even an empty new line."
     (ignore-errors (apply handler backend (or contents "") nil))))
 
 (defun org-special-block-extras--extract-arguments (contents &rest args)
-  "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
+"Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
 
 Example usage:
 
-\(-let [(contents′ . (&alist 'k₀ … 'kₙ))
-       (…extract-arguments contents 'k₀ … 'kₙ)]
-  body)
+    (-let [(contents′ . (&alist 'k₀ … 'kₙ))
+           (…extract-arguments contents 'k₀ … 'kₙ)]
+          body)
 
 Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument
 ‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS
@@ -168,7 +176,7 @@ with all ‘:kᵢ:’ lines stripped out.
 
 + If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.
 + If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,
-then it has value the empty string."
+  then it has value the empty string."
   (let ((ctnts contents)
         (values (cl-loop for a in args
                          for regex = (format ":%s:\\(.*\\)" a)
@@ -191,10 +199,10 @@ then it has value the empty string."
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
                       "(defun org-special-block-extras--%s (backend contents)
-                         (format (pcase backend
-                                   (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                                   (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
-                                       contents))"
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
+                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                     contents))"
                       colour colour colour))))
 
 (defun org-special-block-extras--color (backend contents)
@@ -272,16 +280,16 @@ then it has value the empty string."
 "(backend contents)"
 "(format (pcase backend"
 "(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
-        "(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
-        "          \\\\begin{minipage}[t]{\\\\linewidth}"
-        "          \\\\begin{multicols}{" cols "}"
-        "          %s"
-        "          \\\\end{multicols}\\\\end{minipage}\"))"
-        "(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
+"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
+"          \\\\begin{minipage}[t]{\\\\linewidth}"
+"          \\\\begin{multicols}{" cols "}"
+"          %s"
+"          \\\\end{multicols}\\\\end{minipage}\"))"
+"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
 contents)))")))))
 
-                         (defvar org-special-block-extras-hide-editor-comments nil
-                           "Should editor comments be shown in the output or not.")
+(defvar org-special-block-extras-hide-editor-comments nil
+  "Should editor comments be shown in the output or not.")
 
 (defun org-special-block-extras--edcomm (backend contents)
 "Format CONTENTS as an first-class editor comment according to BACKEND.
@@ -544,8 +552,8 @@ We use this listing to actually print a glossary using
              (setq doc
                    (condition-case nil
                        (funcall org-special-block-extras--docs-fallback lbl)
-                     (error (error
-                             "Error: No documentation-glossary entry for “%s”!"
+                     (error
+                      (error "Error: No documentation-glossary entry for “%s”!"
                              lbl))))
              (setq name (nth 1 doc))
              (setq doc (nth 2 doc)))
@@ -588,67 +596,23 @@ The dictionary variable is ‘org-special-block-extras--docs’.
 Documentation blocks are not shown upon export."
   ;; Strip out any <p> tags
   ;; Musa: Make these three lines part of the core utility?
+  (message-box "hola")
   (setq contents (substring-no-properties contents))
   (setq contents (s-replace-regexp "<p>" "" contents))
   (setq contents (s-replace-regexp "</p>" "" contents))
   (setq contents (s-trim contents))
   (cl-loop for entry in (cdr (s-split ":name:" contents))
-        do   (-let [(contents′ . (&alist 'label 'name))
-                    (org-special-block-extras--extract-arguments
-                     (s-concat ":name:" entry) 'label 'name)]
-               (unless (and label name)
-                 (error (message-box (concat "#+begin_documentation: "
-                           "Ensure both :label: and :name: are in the entry. "
-                            "\n\n " contents))))
-    (add-to-list 'org-special-block-extras--docs (list (s-trim label) name
-                                                         (s-trim contents′)))))
+           do   (-let [(contents′ . (&alist 'label 'name))
+                       (org-special-block-extras--extract-arguments
+                        (s-concat ":name:" entry) 'label 'name)]
+                  (unless (and label name)
+                    (error (message-box (concat "#+begin_documentation: "
+                                                "Ensure the entry has a :name followed by a :label "
+                                                "\n\n " contents))))
+                  (add-to-list 'org-special-block-extras--docs
+                               (mapcar #'s-trim (list label name contents′)))))
   ;; The special block is not shown upon export.
   "")
-
-(defvar org-special-block-extras--html-setup nil
-  "Has the necessary HTML beeen added?")
-
-(unless org-special-block-extras--html-setup
-  (setq org-special-block-extras--html-setup t)
-(setq org-html-head-extra
- (concat org-html-head-extra
-"
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
-<script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
-
- <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
-  <script>
-         $(document).ready(function() {
-             $('.tooltip').tooltipster({
-                 theme: 'tooltipster-punk',
-                 contentAsHTML: true,
-                 animation: 'grow',
-                 delay: [100,500],
-                 // trigger: 'click'
-                 trigger: 'custom',
-                 triggerOpen: {
-                     mouseenter: true
-                 },
-                 triggerClose: {
-                     originClick: true,
-                     scroll: true
-                 }
- });
-         });
-     </script>
-
-<style>
-   abbr {color: red;}
-
-   .tooltip { border-bottom: 1px dotted #000;
-              color:red;
-              text-decoration: none;}
-</style>
-")))
 
 (let ((whatdo (lambda (x)
                 (message
@@ -670,7 +634,7 @@ Documentation blocks are not shown upon export."
                     (-let [(&plist :path) (cadr (org-element-context))]
                       (funcall ,whatdo path))))
     :export
-    (lambda (label _description backend)
+     (lambda (label _description backend)
       (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
             ((equal 'html backend) "") ;; Do not print glossary in HTML
             (t
@@ -690,7 +654,7 @@ Documentation blocks are not shown upon export."
                        (cl-loop for (label name doc)
                              in org-special-block-extras--docs-GLOSSARY
                              collect (format fstr name label
-                                             (funcall preserve doc)
+                                             (when doc (funcall preserve doc))
                                              label)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
