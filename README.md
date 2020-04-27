@@ -6,8 +6,13 @@
 [![badge:Emacs](https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs)](https://www.gnu.org/software/emacs)
 [![badge:Org](https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu)](https://orgmode.org)
 
+<span>
+
 [![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
-[![badge:melpa](https://img.shields.io/badge/melpa-2020%2F04%2F26-purple?logo=github)](https://melpa.org/#/org-special-block-extras)
+
+<a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
+
+</span>
 
 [![badge:license](https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![badge:docs](https://img.shields.io/badge/docs-literate-success?logo=read-the-docs)](https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like)

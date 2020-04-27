@@ -212,8 +212,10 @@
 badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.3.6|blue|https://orgmode.org|gnu
 
+#+html: <span>
 [[badge:org-special-block-extras|1.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
-[[badge:melpa|2020/04/26|purple|https://melpa.org/#/org-special-block-extras|github][melpa badge]]
+#+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
+#+html: </span>
 
 [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
 [[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
