@@ -23,28 +23,42 @@
 
 ;;; Commentary:
 
-;; Common operations such as colouring text for HTML and LaTeX
-;; backends are provided.  Below is an example.
+;; This library provides common desirable features using the Org interface for
+;; blocks and links:
 ;;
-;; #+begin_red org
-;; /This/
-;;       *text*
-;;              _is_
-;;                   red!
-;; #+end_red
+;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
+;;  easily extendable; below is an example.
 ;;
-;; This file has been tangled from a literate, org-mode, file;
-;; and so contains further examples demonstrating the special
-;; blocks it introduces.
+;;             #+begin_red org
+;;             /This/
+;;                   *text*
+;;                          _is_
+;;                               red!
+;;             #+end_red
 ;;
+;; 2. Multiple columns: Regions of text are exported into multiple side-by-side
+;; columns
 ;;
-;; The system is extensible:
-;; Users register a handler ORG-SPECIAL-BLOCK-EXTRAS--TYPE
-;; for a new custom block TYPE, which is then invoked.
-;; The handler takes three arguments:
-;; - CONTENTS: The string contents delimited by the custom block.
-;; - BACKEND:  The current exportation backend; e.g., 'html or 'latex.
-;; The handler must return a string.
+;; 3. Edcomms: First-class visible editor comments
+;;
+;; 4. Details: Regions of text can be folded away in HTML
+;;
+;; 5. Badges: SVG badges have the pleasant syntax
+;; badge:key|value|colour|url|logo; only the first two are necessary.
+;;
+;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
+;; documentation-backend, including user-defined entries; e.g., doc:thread-first
+;; retrives the documentation for thread-first and attachs it as a tooltip to
+;; the text in the HTML export and as a glossary entry in the LaTeX export
+;;
+;; Finally, the system is extensible: Users just define a method
+;; ORG-SPECIAL-BLOCK-EXTRAS--TYPE for a new custom block TYPE, which is then
+;; invoked.  The handler takes three arguments: - CONTENTS: The string contents
+;; delimited by the custom block.  - BACKEND: The current exportation backend;
+;; e.g., 'html or 'latex.  The handler must return a string.
+;;
+;; This file has been tangled from a literate, org-mode, file; and so contains
+;; further examples demonstrating the special blocks it introduces.
 ;;
 ;; Full documentation can be found at
 ;; https://alhassy.github.io/org-special-block-extras
@@ -76,32 +90,36 @@
   (if org-special-block-extras-mode
       (progn
         (advice-add #'org-html-special-block
-                    :before-until (apply-partially #'org-special-block-extras--advice 'html))
-
+           :before-until (apply-partially #'org-special-block-extras--advice 'html))
+        
         (advice-add #'org-latex-special-block
-                    :before-until (apply-partially #'org-special-block-extras--advice 'latex))
-        (defalias 'org-special-block-extras--parallel
-          #'org-special-block-extras--2parallel)
-
-        (defalias 'org-special-block-extras--parallelNB
-          #'org-special-block-extras--2parallelNB)
+           :before-until (apply-partially #'org-special-block-extras--advice 'latex))
+         (defalias 'org-special-block-extras--parallel
+                          #'org-special-block-extras--2parallel)
+        
+                (defalias 'org-special-block-extras--parallelNB
+                          #'org-special-block-extras--2parallelNB)
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--html-setup nil
           "Has the necessary HTML beeen added?")
-
+        
         (unless org-special-block-extras--html-setup
           (setq org-special-block-extras--html-setup t)
-          (setq org-html-head-extra
-                (concat org-html-head-extra
-                        "
+        (setq org-html-head-extra
+         (concat org-html-head-extra
+        "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
+        
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
-        <script type=\"text/javascript\" src=\"https://code.jquery.com/jquery-1.10.0.min.js\"></script>
-
+        
+        <script type=\"text/javascript\">
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
+            }
+        </script>
+        
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
+        
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -121,10 +139,10 @@
          });
                  });
              </script>
-
+        
         <style>
            abbr {color: red;}
-
+        
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -132,13 +150,13 @@
         ")))
         ;; Actual used glossary entries depends on the buffer; so clean up after each export
         (advice-add #'org-export-dispatch
-                    :after (lambda (&rest _)
-                             (setq org-special-block-extras--docs-GLOSSARY nil
-                                   org-special-block-extras--docs nil)))
-        ) ;; Must be on a new line; I'm using noweb-refs
+          :after (lambda (&rest _)
+          (setq org-special-block-extras--docs-GLOSSARY nil
+                org-special-block-extras--docs nil)))
+      ) ;; Must be on a new line; I'm using noweb-refs
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-
+    
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     )) ;; Must be on a new line; I'm using noweb-refs
@@ -602,15 +620,15 @@ Documentation blocks are not shown upon export."
   (setq contents (s-replace-regexp "</p>" "" contents))
   (setq contents (s-trim contents))
   (cl-loop for entry in (cdr (s-split ":name:" contents))
-           do   (-let [(contents′ . (&alist 'label 'name))
-                       (org-special-block-extras--extract-arguments
-                        (s-concat ":name:" entry) 'label 'name)]
-                  (unless (and label name)
-                    (error (message-box (concat "#+begin_documentation: "
-                                                "Ensure the entry has a :name followed by a :label "
-                                                "\n\n " contents))))
-                  (add-to-list 'org-special-block-extras--docs
-                               (mapcar #'s-trim (list label name contents′)))))
+        do   (-let [(contents′ . (&alist 'label 'name))
+                    (org-special-block-extras--extract-arguments
+                     (s-concat ":name:" entry) 'label 'name)]
+               (unless (and label name)
+                 (error (message-box (concat "#+begin_documentation: "
+                           "Ensure the entry has a :name followed by a :label "
+                            "\n\n " contents))))
+               (add-to-list 'org-special-block-extras--docs
+                            (mapcar #'s-trim (list label name contents′)))))
   ;; The special block is not shown upon export.
   "")
 
