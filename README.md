@@ -346,27 +346,33 @@ replaces all words *foo* in a block, by declaring the following.
 
 ## Minimal working example
 
+The following example showcases the prominent features of this library.
+
     #+begin_parallel
-    Name this file test.org, then write something like doc:loop
-    now press =C-c C-e h o= and your browser will open a pretty
-    document. Hover over the previous “loop” and you'll see its
-    documentation!
+    [[color:orange][Are you excited to learn some Lisp?]] blue:yes!
 
-    Now the right column, has a first-class editorial comment
-    and an SVG badge.
+    Pop-quiz: How does doc:apply work?
+    #+end_parallel
 
-    #+begin_edcomm
-    Super neat stuff!
-    #+end_edcomm
+    #+begin_details
+    Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
+
+    [[edcomm:Musa][Ain't that cool?]]
+
+    [[color:purple][We can apply a function to a list of arguments!]]
+    #+end_details
+
+    #+LATEX_HEADER: \usepackage{multicol}
+    #+LATEX_HEADER: \usepackage{tcolorbox}
+    #+latex: In the LaTeX output, we have a glossary.
+
+    show:GLOSSARY
 
     badge:thanks|for_reading
 
     tweet:https://github.com/alhassy/org-special-block-extras
 
     badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-
-    doc:thread-first
-    #+end_parallel
 
 
 ## Bye!
