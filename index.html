@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-04-28 Tue 12:55 -->
+<!-- 2020-05-02 Sat 16:55 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -230,6 +230,73 @@
               color:red;
               text-decoration: none;}
 </style>
+
+        <style>
+        /* From: https://endlessparentheses.com/public/css/endless.css */
+        /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+        kbd
+        {
+          -moz-border-radius: 6px;
+          -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          -webkit-border-radius: 6px;
+          -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          background-color: #f7f7f7;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          color: #333;
+          display: inline-block;
+          font-family: 'Droid Sans Mono', monospace;
+          font-size: 80%;
+          font-weight: normal;
+          line-height: inherit;
+          margin: 0 .1em;
+          padding: .08em .4em;
+          text-shadow: 0 1px 0 #fff;
+          word-spacing: -4px;
+
+          box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+        }
+        </style>
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css"/>
+
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" />
+
+        <script type="text/javascript">
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape('%3Cscript src="https://code.jquery.com/jquery-1.10.0.min.js"%3E%3C/script%3E'));
+            }
+        </script>
+
+         <script type="text/javascript"            src="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js"></script>
+
+          <script>
+                 $(document).ready(function() {
+                     $('.tooltip').tooltipster({
+                         theme: 'tooltipster-punk',
+                         contentAsHTML: true,
+                         animation: 'grow',
+                         delay: [100,500],
+                         // trigger: 'click'
+                         trigger: 'custom',
+                         triggerOpen: {
+                             mouseenter: true
+                         },
+                         triggerClose: {
+                             originClick: true,
+                             scroll: true
+                         }
+         });
+                 });
+             </script>
+
+        <style>
+           abbr {color: red;}
+
+           .tooltip { border-bottom: 1px dotted #000;
+                      color:red;
+                      text-decoration: none;}
+        </style>
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
@@ -314,8 +381,9 @@ for the JavaScript code in this tag.
 
 <span>
 <p>
-<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs"></a>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-1.2-informational?logo=Gnu-Emacs"></a>
 </p>
+
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 </span>
 
@@ -380,7 +448,7 @@ an ‘editor comment’ block type as well as a link type,
 a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 a ‘link here’ link type, 8 badge link types,
 and block and link types for making documentation-glossary entries.
-That is, <b>we provide 29 block types and 32 link types</b>.
+That is, <b>we provide 29 block types and 34 link types</b>.
 </p>
 </blockquote>
 
@@ -578,7 +646,7 @@ Installation instructions are <a href="#Summary">below</a>.
 </blockquote>
 
 <div id="table-of-contents">
-<h2>Table of Contents</h2>
+<h2><a href="javascript:window.scrollTo(0,0)" style="color: black !important; border-bottom: none !important;" class="tooltip" title="Go to the top of the page"> Ξ </a></h2>
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#Core-Utility">1. <i>How do I make a new special block?</i> &#x2014;Core Utility</a>
@@ -616,40 +684,41 @@ Installation instructions are <a href="#Summary">below</a>.
 <li><a href="#Example">6.1. Example</a></li>
 </ul>
 </li>
-<li><a href="#Link-Here-OctoIcons">7. <i>“Link Here!”</i> OctoIcon</a></li>
-<li><a href="#Badge-Links">8. Badge Links</a>
+<li><a href="#">7. Nice Keystroke Renditions: kbd:C-h_h</a></li>
+<li><a href="#Link-Here-OctoIcons">8. <i>“Link Here!”</i> &amp; OctoIcons</a></li>
+<li><a href="#Badge-Links">9. Badge Links</a>
 <ul>
-<li><a href="#The-badge-Link">8.1. The <code>badge</code> Link and derived Reddit/Github/Twitter socials</a></li>
-<li><a href="#Example-Social-Icons">8.2. Example Social Icons</a></li>
-<li><a href="#Example-Badges">8.3. Example Badges</a></li>
-<li><a href="#Example-Colours">8.4. Example Colours</a></li>
-<li><a href="#Example-Badge-Icons">8.5. Example Badge Icons</a></li>
-<li><a href="#Common-Project-Badges">8.6. Common Project Badges</a></li>
-<li><a href="#Next-Steps-badges">8.7. Next Steps</a></li>
+<li><a href="#The-badge-Link">9.1. The <code>badge</code> Link and derived Reddit/Github/Twitter socials</a></li>
+<li><a href="#Example-Social-Icons">9.2. Example Social Icons</a></li>
+<li><a href="#Example-Badges">9.3. Example Badges</a></li>
+<li><a href="#Example-Colours">9.4. Example Colours</a></li>
+<li><a href="#Example-Badge-Icons">9.5. Example Badge Icons</a></li>
+<li><a href="#Common-Project-Badges">9.6. Common Project Badges</a></li>
+<li><a href="#Next-Steps-badges">9.7. Next Steps</a></li>
 </ul>
 </li>
-<li><a href="#Tooltips-for-Glossaries-Dictionaries-and-Documentation">9. Tooltips for Glossaries, Dictionaries, and Documentation</a>
+<li><a href="#Tooltips-for-Glossaries-Dictionaries-and-Documentation">10. Tooltips for Glossaries, Dictionaries, and Documentation</a>
 <ul>
-<li><a href="#The-doc-link-type">9.1. The <code>doc</code> link type</a></li>
-<li><a href="#Documentation-Blocks">9.2. Documentation Blocks</a></li>
-<li><a href="#tooltips-Examples">9.3. Examples</a></li>
-<li><a href="#tooltipster">9.4. Tooltipster &#x2014;Fast, Sleek, &amp; Beautiful Tooltips</a></li>
-<li><a href="#hola">9.5. Wait, what about the LaTeX?</a></li>
-<li><a href="#Next-Steps-tooltips">9.6. Next Steps</a></li>
+<li><a href="#The-doc-link-type">10.1. The <code>doc</code> link type</a></li>
+<li><a href="#Documentation-Blocks">10.2. Documentation Blocks</a></li>
+<li><a href="#tooltips-Examples">10.3. Examples</a></li>
+<li><a href="#tooltipster">10.4. Tooltipster &#x2014;Fast, Sleek, &amp; Beautiful Tooltips</a></li>
+<li><a href="#hola">10.5. Wait, what about the LaTeX?</a></li>
+<li><a href="#Next-Steps-tooltips">10.6. Next Steps</a></li>
 </ul>
 </li>
-<li><a href="#Summary">10. Summary</a>
+<li><a href="#Summary">11. Summary</a>
 <ul>
-<li><a href="#Installation-Instructions">10.1. Installation Instructions</a></li>
-<li><a href="#Minimal-working-example">10.2. Minimal working example</a></li>
-<li><a href="#Bye">10.3. Bye!</a></li>
+<li><a href="#Installation-Instructions">11.1. Installation Instructions</a></li>
+<li><a href="#Minimal-working-example">11.2. Minimal working example</a></li>
+<li><a href="#Bye">11.3. Bye!</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org8201b86" class="outline-2">
+<div id="outline-container-org8bae50d" class="outline-2">
 <h2 id="Core-Utility"><span class="section-number-2">1</span> <i>How do I make a new special block?</i> &#x2014;Core Utility</h2>
 <div class="outline-text-2" id="text-Core-Utility">
 <p>
@@ -690,7 +759,12 @@ serve various purposes as summarised in the table below.  However, we shall
 
 <tr>
 <td class="org-left"><code>quote</code></td>
-<td class="org-left">Format text as a quotation</td>
+<td class="org-left">Format text as a quotation &#x2014;ignore line breaks</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>verse</code></td>
+<td class="org-left">Every line is appended with a line break</td>
 </tr>
 
 <tr>
@@ -713,10 +787,16 @@ starting line, where <code>𝒳</code> is the name of the block type.</li>
 <li>You can ‘zoom in temporarily’, <i>narrowing</i> your focus to only on a particular
 block, with <code>org-narrow-to-element</code>, <code>C-x n e</code>, to make your window only show
 the block.  Then use <code>C-x n w</code> to <i>widen</i> your vision of the buffer's contents.</li>
+<li>Verbatim environments <code>src</code> and <code>example</code> may be followed by switch <code>-n</code> to
+display line numbers for their contents.</li>
 </ul>
+
+<p>
+I use <a href="https://github.com/alhassy/emacs.d#org-mode-templates-a-reason-i-generate-templates-">snippets in my init</a> to quickly insert special blocks (•̀ᴗ•́)و
+</p>
 </div>
 
-<div id="outline-container-orgbf915b9" class="outline-3">
+<div id="outline-container-org061029f" class="outline-3">
 <h3 id="What-is-a-special-block"><span class="section-number-3">1.1</span> <i>What is a special block?</i></h3>
 <div class="outline-text-3" id="text-What-is-a-special-block">
 <p>
@@ -730,6 +810,15 @@ Why not use LaTeX or HTML environments directly?
 <li>Can no longer use Org markup in such settings.</li>
 <li>Committed to one specific export type.</li>
 </ul>
+
+<p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Aside:</strong></span>
+
+The export syntax <code>@@backend: 𝒳@@</code> inserts text 𝒳 literally as-is precisely when
+the current backend being exported to is <code>backend</code>. This is useful for inserting
+<code>html</code> snippets or <code>latex</code> commands. We can use <code>@@comment: 𝒳@@</code> to mimic inline
+comments ;-)  &#x2014;Since there is [hopefully] no backend named <code>comment</code>.
+
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
 
 <div style="column-rule-style:solid;column-count:3;"<p>
 In general, a “special block” such as
@@ -843,7 +932,7 @@ duplication of efforts. We will declare such formatting once for each backend.
 </div>
 </div>
 
-<div id="outline-container-orgdd16420" class="outline-3">
+<div id="outline-container-org5d31784" class="outline-3">
 <h3 id="Core-Utility"><span class="section-number-3">1.2</span> Core Utility</h3>
 <div class="outline-text-3" id="text-Core-Utility">
 <p>
@@ -879,6 +968,11 @@ Here is the actual advice:
     (<span style="color: #859900; font-weight: bold;">ignore-errors</span> (<span style="color: #b58900;">apply</span> handler backend (<span style="color: #859900; font-weight: bold;">or</span> contents <span style="color: #2aa198;">""</span>) nil))))
 </pre>
 </div>
+
+<pre class="example">
+org-special-block-extras--advice
+</pre>
+
 
 <p>
 <b>To support a new block named 𝒳:</b>
@@ -922,7 +1016,7 @@ Of-course, when the user disables our mode, then we remove such advice.
 </div>
 </div>
 
-<div id="outline-container-org7a25de9" class="outline-3">
+<div id="outline-container-org4ed566a" class="outline-3">
 <h3 id="argument-Extraction"><span class="section-number-3">1.3</span> <code>:argument:</code> Extraction</h3>
 <div class="outline-text-3" id="text-argument-Extraction">
 <p>
@@ -986,7 +1080,7 @@ colours drawer delimiters,
 </div>
 </div>
 
-<div id="outline-container-org0e22227" class="outline-3">
+<div id="outline-container-org776842c" class="outline-3">
 <h3 id="COMMENT-An-Example-Special-Block-foo"><span class="section-number-3">1.4</span> An Example Special Block ---<code>foo</code></h3>
 <div class="outline-text-3" id="text-COMMENT-An-Example-Special-Block-foo">
 <p>
@@ -1002,7 +1096,7 @@ replaced by <code>bar</code> unless the argument <code>:replacement:</code> is g
 </div>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgf467b53">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
+<pre class="src src-emacs-lisp" id="orgdc861d4">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
   <span style="color: #35a69c; font-style: italic;">"The FOO block type replaces all occurances of &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">foo</span><span style="color: #35a69c; font-style: italic;">&#8217; with &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">bar</span><span style="color: #35a69c; font-style: italic;">&#8217;,</span>
 <span style="color: #35a69c; font-style: italic;">unless a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:replacement:</span><span style="color: #35a69c; font-style: italic;">&#8217; is provided."</span>
   (<span style="color: #859900; font-weight: bold;">-let</span> [(contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'replacement))
@@ -1010,6 +1104,28 @@ replaced by <code>bar</code> unless the argument <code>:replacement:</code> is g
     (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"foo"</span> (<span style="color: #859900; font-weight: bold;">or</span> replacement <span style="color: #2aa198;">"bar"</span>) contents&#8242;)))
 </pre>
 </div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">:follow</td>
+<td class="org-left">(lambda (_) nil)</td>
+<td class="org-left">:export</td>
+<td class="org-left">(lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (assoc lbl org-special-block-extras&#x2013;docs)] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras&#x2013;docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras&#x2013;docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format &lt;abbr class="tooltip" title="%s"&gt;%s&lt;/abbr&gt; (s-replace    &amp;emsp; (s-replace</td>
+</tr>
+</tbody>
+</table>
 
 <p>
 Here's an example usage:
@@ -1025,13 +1141,10 @@ I am foo; Indeed FoO is what I fOo!
 
 </p>
 
-<div class="foo">
 <p>
-:replacement: woah
-I am foo; Indeed FoO is what I fOo!
-</p>
 
-</div>
+I am  woah; Indeed  woah is what I  woah!
+</p>
 </div>
 
 <p>
@@ -1041,7 +1154,7 @@ that behaves differently depending on the export backend.
 </div>
 </div>
 
-<div id="outline-container-orgcacb86a" class="outline-3">
+<div id="outline-container-org2a982c4" class="outline-3">
 <h3 id="Next-Steps"><span class="section-number-3">1.5</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps">
 <p>
@@ -1056,7 +1169,7 @@ link-type approaches used here into one macro.
 </div>
 </div>
 
-<div id="outline-container-org8a64655" class="outline-2">
+<div id="outline-container-orga6858c4" class="outline-2">
 <h2 id="Links"><span class="section-number-2">2</span> <i>How do I make a new link type?</i></h2>
 <div class="outline-text-2" id="text-Links">
 <p>
@@ -1077,7 +1190,7 @@ Raw use <a href="https://lmgtfy.com/?q=salam">salam</a> and descriptive, <a href
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org7761900"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
+<pre class="src src-emacs-lisp" id="org7eb7db7"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
 <span class="linenr"> 2: </span>  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">The name of the new link type, usage: &#8220;example:label&#8221;</span>
 <span id="coderef-extype" class="coderef-off"><span class="linenr"> 3: </span>  <span style="color: #2aa198;">"example"</span></span>
 <span class="linenr"> 4: </span>
@@ -1272,7 +1385,7 @@ to the link's label &#x2014;which is what we will do for the <code>color</code> 
 </div>
 </div>
 
-<div id="outline-container-orga4a07a7" class="outline-2">
+<div id="outline-container-orgae1f7c0" class="outline-2">
 <h2 id="Colours"><span class="section-number-2">3</span> Colours</h2>
 <div class="outline-text-2" id="text-Colours">
 <p>
@@ -1293,7 +1406,7 @@ just visit <a href="http://latexcolor.com/">http://latexcolor.com/</a> for both.
 </div>
 </div>
 
-<div id="outline-container-org9f132af" class="outline-3">
+<div id="outline-container-orgc0be921" class="outline-3">
 <h3 id="org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors"><span class="section-number-3">3.1</span> <code>org-special-block-extras--𝒞</code> where <code>𝒞 ∈ org-special-block-extras--colors</code></h3>
 <div class="outline-text-3" id="text-org-special-block-extras-𝒞-where-𝒞-org-special-block-extras-colors">
 <p>
@@ -1361,7 +1474,7 @@ Hello, friends!
 </div>
 </div>
 
-<div id="outline-container-org08897fb" class="outline-3">
+<div id="outline-container-org2ebe130" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">3.2</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <div style="column-rule-style:solid;column-count:2;"<span style="color:black;"><p>
@@ -1461,7 +1574,7 @@ This text is yellow!
 </div>
 </div>
 </div>
-<div id="outline-container-orgff6f53f" class="outline-3">
+<div id="outline-container-org391e2d6" class="outline-3">
 <h3 id="Colour-Link-Types"><span class="section-number-3">3.3</span> Colour Link Types</h3>
 <div class="outline-text-3" id="text-Colour-Link-Types">
 <p>
@@ -1532,7 +1645,7 @@ e.g.,
 </div>
 </div>
 
-<div id="outline-container-org4cdd65e" class="outline-3">
+<div id="outline-container-orgf9e33a1" class="outline-3">
 <h3 id="Next-Steps-colours"><span class="section-number-3">3.4</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-colours">
 <p>
@@ -1568,6 +1681,11 @@ displaying such extra whitespace in the resulting HTML.
           contents))
 </pre>
 </div>
+
+<pre class="example">
+org-special-block-extras--latex-definitions
+</pre>
+
 
 <ul class="org-ul">
 <li><p>
@@ -1699,7 +1817,7 @@ and blue to interleave a Arabic poetry with its English translation.
 </div>
 </div>
 
-<div id="outline-container-orgbae8b78" class="outline-2">
+<div id="outline-container-org79e1ecc" class="outline-2">
 <h2 id="Parallel"><span class="section-number-2">4</span> Parallel</h2>
 <div class="outline-text-2" id="text-Parallel">
 <p>
@@ -1782,7 +1900,7 @@ mode activation &#x2014;after such functions have been declared.
 </div>
 </div>
 
-<div id="outline-container-org805249a" class="outline-3">
+<div id="outline-container-org4d8bcb8" class="outline-3">
 <h3 id="Example"><span class="section-number-3">4.1</span> Example</h3>
 <div class="outline-text-3" id="text-Example">
 <div style="column-rule-style:solid;column-count:2;"<p>
@@ -1826,7 +1944,7 @@ desired. )
 </div>
 </div>
 
-<div id="outline-container-org8c5ecd3" class="outline-3">
+<div id="outline-container-orgf642996" class="outline-3">
 <h3 id="Next-Steps-parallel"><span class="section-number-3">4.2</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-parallel">
 <p>
@@ -1839,7 +1957,7 @@ are not.
 </div>
 </div>
 
-<div id="outline-container-org55661a2" class="outline-2">
+<div id="outline-container-org348a3ca" class="outline-2">
 <h2 id="editor-comments"><span class="section-number-2">5</span> Editor Comments</h2>
 <div class="outline-text-2" id="text-editor-comments">
 <p>
@@ -1948,6 +2066,11 @@ separated by new lines from its surrounding text.
 </pre>
 </div>
 
+<pre class="example">
+org-special-block-extras--edcomm
+</pre>
+
+
 <p>
 In the HTML export, the <code>edcomm</code> special block is <i>not</i> in-line with the text
 surrounding it &#x2014;ideally, it would be inline so that existing paragraphs are
@@ -1956,7 +2079,7 @@ indicating suggested alterations.
 </p>
 </div>
 
-<div id="outline-container-orgbf5134c" class="outline-3">
+<div id="outline-container-orgbfac215" class="outline-3">
 <h3 id="Examples"><span class="section-number-3">5.1</span> Block Examples</h3>
 <div class="outline-text-3" id="text-Examples">
 <p>
@@ -1990,7 +2113,7 @@ ensures is true.
 </table>
 </div>
 
-<div id="outline-container-org79647b6" class="outline-4">
+<div id="outline-container-org42c62b2" class="outline-4">
 <h4 id="No-optional-arguments"><span class="section-number-4">5.1.1</span> No optional arguments</h4>
 <div class="outline-text-4" id="text-No-optional-arguments">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>
@@ -2000,7 +2123,7 @@ ensures is true.
 </div>
 </div>
 
-<div id="outline-container-orgae0e321" class="outline-4">
+<div id="outline-container-org5d7f381" class="outline-4">
 <h4 id="Only-declaring-an-ed-editor"><span class="section-number-4">5.1.2</span> Only declaring an <code>:ed:</code> &#x2014;editor</h4>
 <div class="outline-text-4" id="text-Only-declaring-an-ed-editor">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[ Bobert:</strong></span>
@@ -2019,7 +2142,7 @@ Possibly with no contents:
 </div>
 </div>
 
-<div id="outline-container-org61ee36c" class="outline-4">
+<div id="outline-container-org179e115" class="outline-4">
 <h4 id="Empty-contents-no-editor-nothing"><span class="section-number-4">5.1.3</span> Empty contents, no editor, nothing</h4>
 <div class="outline-text-4" id="text-Empty-contents-no-editor-nothing">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:</strong></span>  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
@@ -2034,7 +2157,7 @@ Possibly with an empty new line:
 </div>
 </div>
 
-<div id="outline-container-org264fb54" class="outline-4">
+<div id="outline-container-org138d6cc" class="outline-4">
 <h4 id="With-a-replacewith-clause"><span class="section-number-4">5.1.4</span> With a <code>:replacewith:</code> clause</h4>
 <div class="outline-text-4" id="text-With-a-replacewith-clause">
 <p> <span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Comment:&nbsp;<u>Replace:</u></strong></span>
@@ -2081,7 +2204,7 @@ Completely lost one's train of thought.
 </div>
 </div>
 
-<div id="outline-container-orga4eb7f9" class="outline-3">
+<div id="outline-container-orgb676367" class="outline-3">
 <h3 id="Link-Type"><span class="section-number-3">5.2</span> Link Type</h3>
 <div class="outline-text-3" id="text-Link-Type">
 <p>
@@ -2127,7 +2250,7 @@ The <code>:replacewith:</code> switch &#x2014;and usual Org markup&#x2014; also 
 </div>
 </div>
 
-<div id="outline-container-orga5070df" class="outline-2">
+<div id="outline-container-org33c147e" class="outline-2">
 <h2 id="Folded-Details"><span class="section-number-2">6</span> Folded Details</h2>
 <div class="outline-text-2" id="text-Folded-Details">
 <p>
@@ -2205,7 +2328,7 @@ source blocks. Instead, we use <code>tcolorbox</code>.
 </p>
 </div>
 
-<div id="outline-container-orgc8a9939" class="outline-3">
+<div id="outline-container-org87b7cca" class="outline-3">
 <h3 id="Example"><span class="section-number-3">6.1</span> Example</h3>
 <div class="outline-text-3" id="text-Example">
 <p>
@@ -2252,55 +2375,228 @@ LaTeX. )
 </div>
 </div>
 </div>
-<div id="outline-container-org15b17d1" class="outline-2">
-<h2 id="Link-Here-OctoIcons"><span class="section-number-2">7</span> <i>“Link Here!”</i> OctoIcon</h2>
-<div class="outline-text-2" id="text-Link-Here-OctoIcons">
+<div id="outline-container-orgab21396" class="outline-2">
+<h2 id=""><span class="section-number-2">7</span> Nice Keystroke Renditions: <kbd> C-h h </kbd></h2>
+<div class="outline-text-2" id="text-">
 <p>
-Use the syntax <code>link-here:name</code> to create an anchor link that alters the URL with
-<code>#name</code> as in “<a class="anchor" aria-hidden="true" id="name" href="#name"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>”
-&#x2014;it looks and behaves like the Github generated links for a heading.
-Use case: Sometimes you want to explicitly point to a particular location in an
-article, this is a possible way to do so.
+Anyone who writes <i>about</i> Emacs will likely want to mention keystrokes in an
+aesthetically pleasing way, such as <kbd> C-u 80 - </kbd> to insert 80 dashes
+or <kbd> C-c C-e h o </kbd> to export an Org-mode file to HTML.
 </p>
+
 <ul class="org-ul">
-<li>Besides the HTML backend, such links are silently omitted.</li>
-<li>SVGs obtained from: <a href="https://primer.style/octicons/">https://primer.style/octicons/</a></li>
+<li>If there is a description, we render it in keystroke style.</li>
+<li>If there is only a label, we translate underscores into spaces.</li>
 </ul>
+
+
+<div class="figure">
+<p><img src="./images/kbd.png" alt="kbd.png" />
+</p>
+</div>
 
 <div class="org-src-container">
 <pre class="src src-emacs-lisp">(<span style="color: #b58900;">org-link-set-parameters</span>
-  <span style="color: #2aa198;">"link-here"</span>
-  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (path) (<span style="color: #b58900;">message</span> <span style="color: #2aa198;">"This is a local anchor link named &#8220;%s&#8221;"</span> path))
-  <span style="color: #d33682; font-style: italic;">:export</span> #'<span style="color: #b58900;">org-special-block-extras--link-here</span>)
-
-(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--link-here</span> (label _ backend)
-  <span style="color: #35a69c; font-style: italic;">"Export a link to the current location in an Org file.</span>
-
-<span style="color: #35a69c; font-style: italic;">The LABEL determines the name of the link.</span>
-
-<span style="color: #35a69c; font-style: italic;">+ Only the syntax &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">link-here:label</span><span style="color: #35a69c; font-style: italic;">&#8217; is supported.</span>
-<span style="color: #35a69c; font-style: italic;">+ Such links are displayed using an &#8220;octicon-link&#8221;</span>
-<span style="color: #35a69c; font-style: italic;">  and so do not support the DESCRIPTION syntax</span>
-<span style="color: #35a69c; font-style: italic;">  &#8216;[[link:label][description]]&#8217;.</span>
-<span style="color: #35a69c; font-style: italic;">+ Besides the HTML BACKEND, such links are silently omitted."</span>
-    (<span style="color: #859900; font-weight: bold;">pcase</span> backend
-      (`html  (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">s-collapse-whitespace</span>
-          <span style="color: #2aa198;">"&lt;a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"</span>
-<span style="color: #2aa198;">          href=\"#%s\"&gt;&lt;svg class=\"octicon octicon-link\" viewBox=\"0 0 16</span>
-<span style="color: #2aa198;">          16\" version=\"1.1\" width=\"16\" height=\"16\"</span>
-<span style="color: #2aa198;">          aria-hidden=\"true\"&gt;&lt;path fill-rule=\"evenodd\" d=\"M4</span>
-<span style="color: #2aa198;">          9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0</span>
-<span style="color: #2aa198;">          1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8</span>
-<span style="color: #2aa198;">          4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2</span>
-<span style="color: #2aa198;">          2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64</span>
-<span style="color: #2aa198;">          1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0</span>
-<span style="color: #2aa198;">          3-1.69 3-3.5S14.5 6 13 6z\"&gt;&lt;/path&gt;&lt;/svg&gt;&lt;/a&gt;"</span>) label label))
-      (_ <span style="color: #2aa198;">""</span>)))
+ <span style="color: #2aa198;">"kbd"</span>
+  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_))
+  <span style="color: #d33682; font-style: italic;">:export</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (label description backend)
+            (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">pcase</span> backend
+                      ('html <span style="color: #2aa198;">"&lt;kbd&gt; %s &lt;/kbd&gt;"</span>)
+                      ('latex <span style="color: #2aa198;">"\texttt{%s}"</span>)
+                      (_ <span style="color: #2aa198;">"%s"</span>))
+                    (<span style="color: #859900; font-weight: bold;">or</span> description (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"_"</span> <span style="color: #2aa198;">" "</span> label)))))
 </pre>
 </div>
 
 <p>
-E.g., <a class="anchor" aria-hidden="true" id="example-location" href="#example-location"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> Neato ^_^
+The following styling rule is used to make the keystrokes displayed nicely.
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--kbd-html-setup</span> nil
+  <span style="color: #35a69c; font-style: italic;">"Has the necessary keyboard styling HTML beeen added?"</span>)
+
+(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">org-special-block-extras--kbd-html-setup</span>
+  (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--kbd-html-setup</span> <span style="color: #268bd2;">t</span>)
+(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-html-head-extra</span>
+ (<span style="color: #b58900;">concat</span> <span style="color: #268bd2;">org-html-head-extra</span>
+<span style="color: #2aa198;">"</span>
+<span style="color: #2aa198;">&lt;style&gt;</span>
+<span style="color: #2aa198;">/* From: https://endlessparentheses.com/public/css/endless.css */</span>
+<span style="color: #2aa198;">/* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */</span>
+<span style="color: #2aa198;">kbd</span>
+<span style="color: #2aa198;">{</span>
+<span style="color: #2aa198;">  -moz-border-radius: 6px;</span>
+<span style="color: #2aa198;">  -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;</span>
+<span style="color: #2aa198;">  -webkit-border-radius: 6px;</span>
+<span style="color: #2aa198;">  -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;</span>
+<span style="color: #2aa198;">  background-color: #f7f7f7;</span>
+<span style="color: #2aa198;">  border: 1px solid #ccc;</span>
+<span style="color: #2aa198;">  border-radius: 6px;</span>
+<span style="color: #2aa198;">  box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;</span>
+<span style="color: #2aa198;">  color: #333;</span>
+<span style="color: #2aa198;">  display: inline-block;</span>
+<span style="color: #2aa198;">  font-family: 'Droid Sans Mono', monospace;</span>
+<span style="color: #2aa198;">  font-size: 80%;</span>
+<span style="color: #2aa198;">  font-weight: normal;</span>
+<span style="color: #2aa198;">  line-height: inherit;</span>
+<span style="color: #2aa198;">  margin: 0 .1em;</span>
+<span style="color: #2aa198;">  padding: .08em .4em;</span>
+<span style="color: #2aa198;">  text-shadow: 0 1px 0 #fff;</span>
+<span style="color: #2aa198;">  word-spacing: -4px;</span>
+
+<span style="color: #2aa198;">  box-shadow: 2px 2px 2px #222; /* </span><span style="color: #dc8cc3;">MA</span><span style="color: #2aa198;">: An extra I've added. */</span>
+<span style="color: #2aa198;">}</span>
+<span style="color: #2aa198;">&lt;/style&gt;"</span>)))
+</pre>
+</div>
+
+<p>
+<span style="color:orange;">Going forward</span>, it would be nice to render <code>kbd:𝒳</code> links in a pretty way
+within Emacs itself.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org36a419b" class="outline-2">
+<h2 id="Link-Here-OctoIcons"><span class="section-number-2">8</span> <i>“Link Here!”</i> &amp; OctoIcons</h2>
+<div class="outline-text-2" id="text-Link-Here-OctoIcons">
+<p>
+Use the syntax <code>link-here:name</code> to create an anchor link that alters the URL with
+<code>#name</code> as in “<a class="anchor" aria-hidden="true" id="name" href="#name"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>”
+&#x2014;it looks and behaves like the Github generated links for a heading.
+Use case: Sometimes you want to explicitly point to a particular location in an
+article, such as within a <code>#+begin_details</code> block, this is a possible way to do so.
+</p>
+
+<p>
+Likewise, get OctoIcons with the syntax <code>octoicon:𝒳</code> where <code>𝒳</code> is one of <code>home,
+link, mail, report, tag, clock</code>: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0 1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12 14z"></path></svg>, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg>, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 16" width="14" height="16"><path fill-rule="evenodd" d="M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1 5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3 4-3v6z"></path></svg>,
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4 4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6 6h2v2H7V8zm0-5h2v4H7V3z"></path></svg>, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 16" width="15" height="16"><path fill-rule="evenodd" d="M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1 3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41 0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38 7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59 1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73 4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z"></path></svg>, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 16" width="14" height="16"><path fill-rule="evenodd" d="M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7z"></path></svg>.
+</p>
+
+<ul class="org-ul">
+<li>Within <code>octoicon:𝒳</code> and <code>link-here:𝒳</code> the label <code>𝒳</code> determines the
+OctoIcon shown and the name of the local link to be created, respectively.
+<ul class="org-ul">
+<li>Descriptions, as in <code>[[link:label][description]]</code>, are ignored.</li>
+</ul></li>
+<li>Besides the HTML backend, such links are silently omitted.</li>
+</ul>
+
+<details class="code-details"> <summary> <strong> <font face="Courier" size="3" color="green"> Six OctoIcons </font> </strong> </summary> <p>
+
+</p>
+
+<p>
+The following SVGs are obtained from: <a href="https://primer.style/octicons/">https://primer.style/octicons/</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span>
+ <span style="color: #268bd2;">org-special-block-extras--supported-octoicons</span>
+ (<span style="color: #b58900;">-partition</span> 2
+ '(
+   home
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16</span>
+<span style="color: #2aa198;">   16\" width=\"16\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0</span>
+<span style="color: #2aa198;">   1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12</span>
+<span style="color: #2aa198;">   14z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>
+
+   <span style="color: #556b72; background-color: #FDF6E3;">link</span>
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16</span>
+<span style="color: #2aa198;">   16\" width=\"16\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69</span>
+<span style="color: #2aa198;">   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10</span>
+<span style="color: #2aa198;">   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0</span>
+<span style="color: #2aa198;">   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5</span>
+<span style="color: #2aa198;">   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55</span>
+<span style="color: #2aa198;">   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>
+
+   <span style="color: #b58900;">mail</span>
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14</span>
+<span style="color: #2aa198;">   16\" width=\"14\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45</span>
+<span style="color: #2aa198;">   1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1</span>
+<span style="color: #2aa198;">   5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3</span>
+<span style="color: #2aa198;">   4-3v6z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>
+
+   report
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16</span>
+<span style="color: #2aa198;">   16\" width=\"16\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4</span>
+<span style="color: #2aa198;">   4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6</span>
+<span style="color: #2aa198;">   6h2v2H7V8zm0-5h2v4H7V3z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>
+
+   tag
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 15</span>
+<span style="color: #2aa198;">   16\" width=\"15\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1</span>
+<span style="color: #2aa198;">   3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41</span>
+<span style="color: #2aa198;">   0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38</span>
+<span style="color: #2aa198;">   7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59</span>
+<span style="color: #2aa198;">   1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73</span>
+<span style="color: #2aa198;">   4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>
+
+   clock
+   <span style="color: #2aa198;">"&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14</span>
+<span style="color: #2aa198;">   16\" width=\"14\" height=\"16\"&gt;&lt;path fill-rule=\"evenodd\"</span>
+<span style="color: #2aa198;">   d=\"M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56</span>
+<span style="color: #2aa198;">   5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7</span>
+<span style="color: #2aa198;">   5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14</span>
+<span style="color: #2aa198;">   7-7-3.14-7-7-7z\"&gt;&lt;/path&gt;&lt;/svg&gt;"</span>))
+
+<span style="color: #35a69c; font-style: italic;">"An association list of supported OctoIcons.</span>
+
+<span style="color: #35a69c; font-style: italic;">Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))"</span>)
+</pre>
+</div>
+ </details>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Show an OctoIcon: home, link, mail, report, tag, clock</span>
+(<span style="color: #b58900;">org-link-set-parameters</span>
+  <span style="color: #2aa198;">"octoicon"</span>
+  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_))
+  <span style="color: #d33682; font-style: italic;">:export</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (icon _ backend)
+    (<span style="color: #859900; font-weight: bold;">pcase</span> backend
+      (`html  (<span style="color: #b58900;">format</span>
+               (<span style="color: #b58900;">s-collapse-whitespace</span>
+                (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">assoc</span> (<span style="color: #b58900;">intern</span> icon)
+                             <span style="color: #268bd2;">org-special-block-extras--supported-octoicons</span>)))))
+      (_ <span style="color: #2aa198;">""</span>))))
+
+<span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Export a link to the current location in an Org file.</span>
+(<span style="color: #b58900;">org-link-set-parameters</span>
+  <span style="color: #2aa198;">"link-here"</span>
+  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (path) (<span style="color: #b58900;">message</span> <span style="color: #2aa198;">"This is a local anchor link named &#8220;%s&#8221;"</span> path))
+  <span style="color: #d33682; font-style: italic;">:export</span>  (<span style="color: #859900; font-weight: bold;">lambda</span> (label _ backend)
+    (<span style="color: #859900; font-weight: bold;">pcase</span> backend
+      (`html  (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">s-collapse-whitespace</span>
+          <span style="color: #2aa198;">"&lt;a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"</span>
+<span style="color: #2aa198;">          href=\"#%s\"&gt;%s&lt;/a&gt;"</span>)
+                      label label (<span style="color: #b58900;">cadr</span> (<span style="color: #b58900;">assoc</span> '<span style="color: #556b72; background-color: #FDF6E3;">link</span>
+                              <span style="color: #268bd2;">org-special-block-extras--supported-octoicons</span>))))
+      (_ <span style="color: #2aa198;">""</span>))))
+</pre>
+</div>
+
+<p>
+E.g., <a class="anchor" aria-hidden="true" id="example-location" href="#example-location"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> Neato ^_^
 </p>
 
 <p>
@@ -2309,14 +2605,27 @@ the LaTeX rendition.  More usefully, before the HTML export hook, we could place
 such ‘link-here’ links before every org-title produce clickable org-headings,
 similar to Github's &#x2014;the necessary ingredients are likely <a href="https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors">here</a>.
 </p>
+
+<p>
+<span style="color:orange;">Moreover</span>, it may be useful to have <code>octoicon:𝒳|url</code> so the resulting
+OctoIcon is optionally a link to the given <code>url</code>. Another direction
+would be to support more, if not all, the possible OctoIcons.
+</p>
 </div>
 </div>
 
-<div id="outline-container-org3250a93" class="outline-2">
-<h2 id="Badge-Links"><span class="section-number-2">8</span> Badge Links</h2>
+<div id="outline-container-org9d933b1" class="outline-2">
+<h2 id="Badge-Links"><span class="section-number-2">9</span> Badge Links</h2>
 <div class="outline-text-2" id="text-Badge-Links">
 <p>
-<a class="anchor" aria-hidden="true" id="badges" href="#badges"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+<a class="anchor" aria-hidden="true" id="badges" href="#badges"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
 Badges provide a quick and colourful summary of key features of a project,
 such as whether it's maintained, its license, and if it's documented.
 </p>
@@ -2325,7 +2634,7 @@ such as whether it's maintained, its license, and if it's documented.
 <div class="figure">
 <p><img src="images/badges.png" alt="badges.png" />
 </p>
-<p><span class="figure-number">Figure 18: </span>An Emacs interface to <a href="https://shields.io/">https://shields.io/</a></p>
+<p><span class="figure-number">Figure 19: </span>An Emacs interface to <a href="https://shields.io/">https://shields.io/</a></p>
 </div>
 
 <blockquote>
@@ -2338,8 +2647,8 @@ the brand on your jeans or other reliable product. &#x2014; <a href="https://git
 </blockquote>
 </div>
 
-<div id="outline-container-org5a70f41" class="outline-3">
-<h3 id="The-badge-Link"><span class="section-number-3">8.1</span> The <code>badge</code> Link and derived Reddit/Github/Twitter socials</h3>
+<div id="outline-container-org382fae7" class="outline-3">
+<h3 id="The-badge-Link"><span class="section-number-3">9.1</span> The <code>badge</code> Link and derived Reddit/Github/Twitter socials</h3>
 <div class="outline-text-3" id="text-The-badge-Link">
 <p>
 The implementation is a bit lengthy since it attempts to capture a useful
@@ -2457,8 +2766,8 @@ We now form the specialised link types for social media.
 
 <div class="outline-text-2" id="text-Badge-Links">
 </div>
-<div id="outline-container-org2fe8b6f" class="outline-3">
-<h3 id="Example-Social-Icons"><span class="section-number-3">8.2</span> Example Social Icons</h3>
+<div id="outline-container-orgb0cd8d9" class="outline-3">
+<h3 id="Example-Social-Icons"><span class="section-number-3">9.2</span> Example Social Icons</h3>
 <div class="outline-text-3" id="text-Example-Social-Icons">
 <p>
 Syntax:
@@ -2503,8 +2812,8 @@ Here are some examples.
 </div>
 </div>
 
-<div id="outline-container-org7940bf5" class="outline-3">
-<h3 id="Example-Badges"><span class="section-number-3">8.3</span> Example Badges</h3>
+<div id="outline-container-org3148bb1" class="outline-3">
+<h3 id="Example-Badges"><span class="section-number-3">9.3</span> Example Badges</h3>
 <div class="outline-text-3" id="text-Example-Badges">
 <p>
 The general syntax is as follows, with <b>only the first 2</b> are mandatory,
@@ -2557,8 +2866,8 @@ badge:||colour|here|logo
 </div>
 </div>
 
-<div id="outline-container-org3a6afeb" class="outline-3">
-<h3 id="Example-Colours"><span class="section-number-3">8.4</span> Example Colours</h3>
+<div id="outline-container-orgb02b7b0" class="outline-3">
+<h3 id="Example-Colours"><span class="section-number-3">9.4</span> Example Colours</h3>
 <div class="outline-text-3" id="text-Example-Colours">
 <ul class="org-ul">
 <li><img src="https://img.shields.io/badge/-red-red"> <img src="https://img.shields.io/badge/-critical-critical"></li>
@@ -2582,8 +2891,8 @@ wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
 </div>
 </div>
 
-<div id="outline-container-org042a684" class="outline-3">
-<h3 id="Example-Badge-Icons"><span class="section-number-3">8.5</span> Example Badge Icons</h3>
+<div id="outline-container-org8ffdeb8" class="outline-3">
+<h3 id="Example-Badge-Icons"><span class="section-number-3">9.5</span> Example Badge Icons</h3>
 <div class="outline-text-3" id="text-Example-Badge-Icons">
 <p>
 Here are a few free SVG icons for popular brands from <a href="https://simpleicons.org/">https://simpleicons.org/</a>.
@@ -2687,8 +2996,8 @@ Here are a few free SVG icons for popular brands from <a href="https://simpleico
 </div>
 </div>
 
-<div id="outline-container-orgbb39f67" class="outline-3">
-<h3 id="Common-Project-Badges"><span class="section-number-3">8.6</span> Common Project Badges</h3>
+<div id="outline-container-org81466de" class="outline-3">
+<h3 id="Common-Project-Badges"><span class="section-number-3">9.6</span> Common Project Badges</h3>
 <div class="outline-text-3" id="text-Common-Project-Badges">
 <ul class="org-ul">
 <li><a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs"></a></li>
@@ -2732,8 +3041,8 @@ Here are a few free SVG icons for popular brands from <a href="https://simpleico
 </div>
 <div class="outline-text-2" id="text-Badge-Links">
 </div>
-<div id="outline-container-org38c2d48" class="outline-3">
-<h3 id="Next-Steps-badges"><span class="section-number-3">8.7</span> Next Steps</h3>
+<div id="outline-container-org673646e" class="outline-3">
+<h3 id="Next-Steps-badges"><span class="section-number-3">9.7</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-badges">
 <p>
 <span style="color:orange;">Going forward,</span> it would be desirable to provide non-whitespace alternatives
@@ -2749,8 +3058,8 @@ field. This would make the interface more welcoming to new users.
 </div>
 </div>
 
-<div id="outline-container-org0fac32a" class="outline-2">
-<h2 id="Tooltips-for-Glossaries-Dictionaries-and-Documentation"><span class="section-number-2">9</span> Tooltips for Glossaries, Dictionaries, and Documentation</h2>
+<div id="outline-container-org3bb7f35" class="outline-2">
+<h2 id="Tooltips-for-Glossaries-Dictionaries-and-Documentation"><span class="section-number-2">10</span> Tooltips for Glossaries, Dictionaries, and Documentation</h2>
 <div class="outline-text-2" id="text-Tooltips-for-Glossaries-Dictionaries-and-Documentation">
 <p>
 Let's make a link type <code>doc</code> that shows a tooltip documentation &#x2014;e.g., glossary
@@ -2762,33 +3071,33 @@ E.g., user-declared <abbr class="tooltip" title="A theory of typed&emsp;composit
 <div class="figure">
 <p><img src="images/tooltips_browser.png" alt="tooltips_browser.png" />
 </p>
-<p><span class="figure-number">Figure 19: </span>Tooltips for documentation and glossary items &#x2013;in the browser!</p>
+<p><span class="figure-number">Figure 20: </span>Tooltips for documentation and glossary items &#x2013;in the browser!</p>
 </div>
 
 
 <div class="figure">
 <p><img src="images/tooltips_emacs.png" alt="tooltips_emacs.png" />
 </p>
-<p><span class="figure-number">Figure 20: </span>Tooltips for documentation and glossary items &#x2013;in Emacs!</p>
+<p><span class="figure-number">Figure 21: </span>Tooltips for documentation and glossary items &#x2013;in Emacs!</p>
 </div>
 
 
 <div class="figure">
 <p><img src="images/tooltips_pdf.png" alt="tooltips_pdf.png" />
 </p>
-<p><span class="figure-number">Figure 21: </span>Tooltips for documentation and glossary items &#x2013;in the PDF!</p>
+<p><span class="figure-number">Figure 22: </span>Tooltips for documentation and glossary items &#x2013;in the PDF!</p>
 </div>
 
 
 <div class="figure">
 <p><img src="images/tooltips_declaration.png" alt="tooltips_declaration.png" />
 </p>
-<p><span class="figure-number">Figure 22: </span>Declaring documentation-glossary items</p>
+<p><span class="figure-number">Figure 23: </span>Declaring documentation-glossary items</p>
 </div>
 </div>
 
-<div id="outline-container-org3d5386d" class="outline-3">
-<h3 id="The-doc-link-type"><span class="section-number-3">9.1</span> The <code>doc</code> link type</h3>
+<div id="outline-container-orga880f1b" class="outline-3">
+<h3 id="The-doc-link-type"><span class="section-number-3">10.1</span> The <code>doc</code> link type</h3>
 <div class="outline-text-3" id="text-The-doc-link-type">
 <p>
 We begin by making use of a list of documentation-glossary entries
@@ -2807,7 +3116,7 @@ For example, we may use <code>add-to-list</code> to add an entry only if it is n
 the list.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span>
+<pre class="src src-emacs-lisp" id="org5b04cc8">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span>
   '(<span style="color: #2aa198;">"cat"</span> <span style="color: #2aa198;">"Category Theory"</span> <span style="color: #2aa198;">"A theory of typed  composition; e.g., typed monoids."</span>))
 </pre>
 </div>
@@ -2848,7 +3157,7 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">-let</span> [name&amp;doc
+<pre class="src src-emacs-lisp" id="org26b84a6">(<span style="color: #859900; font-weight: bold;">-let</span> [name&amp;doc
        (<span style="color: #859900; font-weight: bold;">lambda</span> (lbl)
          (<span style="color: #859900; font-weight: bold;">-let</span> [(_ name doc) (<span style="color: #b58900;">assoc</span> lbl <span style="color: #268bd2;">org-special-block-extras--docs</span>)]
            <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">If there is no documentation, try the fallback.</span>
@@ -2903,8 +3212,8 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
 </div>
 </div>
 
-<div id="outline-container-org89e6901" class="outline-3">
-<h3 id="Documentation-Blocks"><span class="section-number-3">9.2</span> Documentation Blocks</h3>
+<div id="outline-container-org1ac896b" class="outline-3">
+<h3 id="Documentation-Blocks"><span class="section-number-3">10.2</span> Documentation Blocks</h3>
 <div class="outline-text-3" id="text-Documentation-Blocks">
 <p>
 Things look great at the HTML side and on the Emacs side for <b>consuming</b>
@@ -2922,7 +3231,7 @@ Also known as /Existential Dread/ and /Existential Anxiety/.
 #+end_documentation
 </pre>
 <p>
-Now <code>doc:ex-angst</code> gives us <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br><br><br>Also known as <i>Existential Dread</i> and <i>Existential Anxiety</i>."> Existential Angst</abbr>,
+Now <code>doc:ex-angst</code> gives us <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br><br><br>Also known as <i>Existential Dread</i> and <i>Existential Anxiety</i>.">Existential Angst</abbr>,
 or using a description: <abbr class="tooltip" title="A negative feeling arising from freedom and responsibility.<br><br><br><br>Also known as <i>Existential Dread</i> and <i>Existential Anxiety</i>.">“existence is pain”?</abbr>
 </p>
 
@@ -2949,7 +3258,6 @@ description-documentation of the given name.
 <span style="color: #35a69c; font-style: italic;">Documentation blocks are not shown upon export."</span>
   <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Strip out any &lt;p&gt; tags</span>
   <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">Musa: Make these three lines part of the core utility?</span>
-  (<span style="color: #b58900;">message-box</span> <span style="color: #2aa198;">"hola"</span>)
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">substring-no-properties</span> contents))
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;p&gt;"</span> <span style="color: #2aa198;">""</span> contents))
   (<span style="color: #859900; font-weight: bold;">setq</span> contents (<span style="color: #b58900;">s-replace-regexp</span> <span style="color: #2aa198;">"&lt;/p&gt;"</span> <span style="color: #2aa198;">""</span> contents))
@@ -2971,8 +3279,8 @@ description-documentation of the given name.
 </div>
 </div>
 
-<div id="outline-container-org6d4ed1d" class="outline-3">
-<h3 id="tooltips-Examples"><span class="section-number-3">9.3</span> Examples</h3>
+<div id="outline-container-org0ee612f" class="outline-3">
+<h3 id="tooltips-Examples"><span class="section-number-3">10.3</span> Examples</h3>
 <div class="outline-text-3" id="text-tooltips-Examples">
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -2992,7 +3300,7 @@ description-documentation of the given name.
 <tbody>
 <tr>
 <td class="org-left">No description</td>
-<td class="org-left"><abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids."> Category Theory</abbr></td>
+<td class="org-left"><abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids.">Category Theory</abbr></td>
 </tr>
 
 <tr>
@@ -3015,8 +3323,8 @@ multiple ‘definitions’ visible ;-)
 </div>
 </div>
 
-<div id="outline-container-org1419322" class="outline-3">
-<h3 id="tooltipster"><span class="section-number-3">9.4</span> <a href="https://iamceege.github.io/tooltipster/#triggers">Tooltipster</a> &#x2014;Fast, Sleek, &amp; Beautiful Tooltips</h3>
+<div id="outline-container-org88b4016" class="outline-3">
+<h3 id="tooltipster"><span class="section-number-3">10.4</span> <a href="https://iamceege.github.io/tooltipster/#triggers">Tooltipster</a> &#x2014;Fast, Sleek, &amp; Beautiful Tooltips</h3>
 <div class="outline-text-3" id="text-tooltipster">
 <p>
 Thus far, Org entities are converted into HTML tags such as <code>&lt;i&gt;</code> for italicised
@@ -3027,11 +3335,11 @@ The incantation below sets up the required magic to make this happen.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span> nil
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defvar</span> <span style="color: #268bd2;">org-special-block-extras--tooltip-html-setup</span> nil
   <span style="color: #35a69c; font-style: italic;">"Has the necessary HTML beeen added?"</span>)
 
-(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span>
-  (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--html-setup</span> <span style="color: #268bd2;">t</span>)
+(<span style="color: #859900; font-weight: bold;">unless</span> <span style="color: #268bd2;">org-special-block-extras--tooltip-html-setup</span>
+  (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--tooltip-html-setup</span> <span style="color: #268bd2;">t</span>)
 (<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-html-head-extra</span>
  (<span style="color: #b58900;">concat</span> <span style="color: #268bd2;">org-html-head-extra</span>
 <span style="color: #2aa198;">"</span>
@@ -3086,8 +3394,8 @@ library. Multiple imports lead to broken features.
 </div>
 </div>
 
-<div id="outline-container-org208bf88" class="outline-3">
-<h3 id="hola"><span class="section-number-3">9.5</span> Wait, what about the LaTeX?</h3>
+<div id="outline-container-orgf571f8b" class="outline-3">
+<h3 id="hola"><span class="section-number-3">10.5</span> Wait, what about the LaTeX?</h3>
 <div class="outline-text-3" id="text-hola">
 <p>
 A PDF is essentially a fancy piece of paper, so tooltips will take on the
@@ -3199,15 +3507,15 @@ switch between different backends then only the first rendition will be used
 </div>
 </div>
 
-<div id="outline-container-org717f61b" class="outline-3">
-<h3 id="Next-Steps-tooltips"><span class="section-number-3">9.6</span> Next Steps</h3>
+<div id="outline-container-orge30d2c0" class="outline-3">
+<h3 id="Next-Steps-tooltips"><span class="section-number-3">10.6</span> Next Steps</h3>
 <div class="outline-text-3" id="text-Next-Steps-tooltips">
 <p>
 <span style="color:orange;">Going forward,</span> it'd be nice to have URLs work well upon export for <code>documentation</code>
 block types; whereas they currently break the HTML export.
 </p>
 <ul class="org-ul">
-<li>If an entry is referenced multiple times, such as <abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids."> Category Theory</abbr>, then it would be
+<li>If an entry is referenced multiple times, such as <abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids.">Category Theory</abbr>, then it would be
 nice if the glossary referred to the pages of all such locations rather than
 just the final one.</li>
 <li>The glossary current prints in order of appearance; we may want to have
@@ -3224,8 +3532,8 @@ buffer, if possible.</li>
 </div>
 </div>
 
-<div id="outline-container-org316db75" class="outline-2">
-<h2 id="Summary"><span class="section-number-2">10</span> Summary</h2>
+<div id="outline-container-org0101590" class="outline-2">
+<h2 id="Summary"><span class="section-number-2">11</span> Summary</h2>
 <div class="outline-text-2" id="text-Summary">
 <blockquote>
 <p>
@@ -3234,7 +3542,14 @@ The full article may be read as a <a href="https://alhassy.github.io/org-special
 </blockquote>
 
 <p>
-<a class="anchor" aria-hidden="true" id="summary" href="#summary"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+<a class="anchor" aria-hidden="true" id="summary" href="#summary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
 Let <code>𝒞</code> be any of the following: <code>black</code>, <code>blue</code>, <code>brown</code>, <code>cyan</code>, <code>darkgray</code>, <code>gray</code>, <code>green</code>,
 <code>lightgray</code>, <code>lime</code>, <code>magenta</code>, <code>olive orange</code>, <code>pink</code>, <code>purple</code>, <code>red</code>, <code>teal</code>, <code>violet</code>, <code>white</code>,
 <code>yellow</code>. Let <code>𝓃</code> be any number from <code>1..5</code>.
@@ -3290,9 +3605,16 @@ Let <code>𝒞</code> be any of the following: <code>black</code>, <code>blue</c
 </tr>
 
 <tr>
-<td class="org-left">Link Here</td>
+<td class="org-left">Keystrokes</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left"><code>kbd</code></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">OctoIcons &amp; Link Here</td>
 <td class="org-left">-</td>
-<td class="org-left"><code>link-here</code></td>
+<td class="org-left"><code>octoicon, link-here</code></td>
 <td class="org-left">-</td>
 </tr>
 
@@ -3324,8 +3646,8 @@ consulted rather than reading the literate implementation above.
 </p>
 </div>
 
-<div id="outline-container-orgd924b06" class="outline-3">
-<h3 id="Installation-Instructions"><span class="section-number-3">10.1</span> Installation Instructions</h3>
+<div id="outline-container-orge0cc646" class="outline-3">
+<h3 id="Installation-Instructions"><span class="section-number-3">11.1</span> Installation Instructions</h3>
 <div class="outline-text-3" id="text-Installation-Instructions">
 <p>
 Manually or using <a href="https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source">quelpa</a>:
@@ -3368,8 +3690,8 @@ replaces all words <i>foo</i> in a block, by declaring the following.
 </div>
 </div>
 
-<div id="outline-container-org04686f2" class="outline-3">
-<h3 id="Minimal-working-example"><span class="section-number-3">10.2</span> Minimal working example</h3>
+<div id="outline-container-org76cd862" class="outline-3">
+<h3 id="Minimal-working-example"><span class="section-number-3">11.2</span> Minimal working example</h3>
 <div class="outline-text-3" id="text-Minimal-working-example">
 <p>
 The following example showcases the prominent features of this library.
@@ -3383,12 +3705,15 @@ Pop-quiz: How does doc:apply work?
 #+end_parallel
 
 #+begin_details
+link-here:solution
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[edcomm:Musa][Ain't that cool?]]
 
 [[color:purple][We can apply a function to a list of arguments!]]
 #+end_details
+
+octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 
 #+LATEX_HEADER: \usepackage{multicol}
 #+LATEX_HEADER: \usepackage{tcolorbox}
@@ -3405,8 +3730,8 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 </div>
 </div>
 
-<div id="outline-container-org8eb6f4d" class="outline-3">
-<h3 id="Bye"><span class="section-number-3">10.3</span> Bye!</h3>
+<div id="outline-container-org7d3d9c0" class="outline-3">
+<h3 id="Bye"><span class="section-number-3">11.3</span> Bye!</h3>
 <div class="outline-text-3" id="text-Bye">
 <p>
 <img src="https://img.shields.io/badge/thanks-for_reading-nil">
@@ -3434,7 +3759,7 @@ See <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf"><i>A tutorial on the uni
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2020-04-28 Tue 12:55</p>
+<p class="date">Created: 2020-05-02 Sat 16:55</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

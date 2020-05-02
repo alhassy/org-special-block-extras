@@ -1,9 +1,10 @@
+# -*- eval: (my/execute-startup-blocks) -*-
 #+title: org-special-block-extras
 #+author: Musa Al-hassy
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el :exports code
 #+options: d:nil toc:nil
 #+EXPORT_FILE_NAME: index
-#+macro: blurb Twenty-nine new custom block and 32 link types for Emacs' Org-mode ^_^
+#+macro: blurb Twenty-nine new custom block and 34 link types for Emacs' Org-mode ^_^
 
 :29_blocks:
 21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
@@ -12,12 +13,15 @@
 1  ⇒ details
 1  ⇒ documentation
 :End:
-:32_links:
+:34_links:
 20 ⇒ 19 colours and the ‘colors’ type
 1  ⇒ editorial comments
 1  ⇒ link here
 8  ⇒ badges and socials
 2  ⇒ doc and show
+----
+1 ⇒ kbd
+1 ⇒ octoicon
 :End:
 
 # +TOC: headlines 2
@@ -97,12 +101,12 @@
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp  :noweb yes
-;;; org-special-block-extras.el --- 29 new custom blocks & 32 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.0
+;; Version: 1.2
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -188,7 +192,7 @@
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide twenty-six new custom blocks for Org-mode."
+    "Provide 29 new custom blocks & 34 link types for Org-mode."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
@@ -213,7 +217,8 @@ badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.3.6|blue|https://orgmode.org|gnu
 
 #+html: <span>
-[[badge:org-special-block-extras|1.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
+[[badge:org-special-block-extras|1.2|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
+
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
 
@@ -261,7 +266,7 @@ an ‘editor comment’ block type as well as a link type,
 a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 a ‘link here’ link type, 8 badge link types,
 and block and link types for making documentation-glossary entries.
-That is, *we provide 29 block types and 32 link types*.
+That is, *we provide 29 block types and 34 link types*.
 #+end_quote
 
 #+begin_quote
@@ -336,7 +341,8 @@ Installation instructions are [[#Summary][below]].
   | =example= | Format text verbatim, leaving markup as is         |
   | =src=     | Format source code                                 |
   | =center=  | Centre text                                        |
-  | =quote=   | Format text as a quotation                         |
+  | =quote=   | Format text as a quotation ---ignore line breaks   |
+  | =verse=   | Every line is appended with a line break           |
   | =tiny=    | Render text in a small font; likewise =footnotesize= |
   | =comment= | Completely omit the text from export               |
 
@@ -347,6 +353,10 @@ Installation instructions are [[#Summary][below]].
   - You can ‘zoom in temporarily’, /narrowing/ your focus to only on a particular
     block, with ~org-narrow-to-element~, ~C-x n e~, to make your window only show
     the block.  Then use ~C-x n w~ to /widen/ your vision of the buffer's contents.
+  - Verbatim environments =src= and =example= may be followed by switch =-n= to
+    display line numbers for their contents.
+
+I use [[https://github.com/alhassy/emacs.d#org-mode-templates-a-reason-i-generate-templates-][snippets in my init]] to quickly insert special blocks (•̀ᴗ•́)و
 
 ** /What is a special block?/
    :PROPERTIES:
@@ -358,6 +368,14 @@ Our goal is to turn Org blocks into LaTeX environments and HTML divs.
 Why not use LaTeX or HTML environments directly?
    - Can no longer use Org markup in such settings.
    - Committed to one specific export type.
+
+#+begin_edcomm
+:ed: Aside
+The export syntax =@@backend: 𝒳@@= inserts text 𝒳 literally as-is precisely when
+the current backend being exported to is =backend=. This is useful for inserting
+=html= snippets or =latex= commands. We can use =@@comment: 𝒳@@= to mimic inline
+comments ;-)  ---Since there is [hopefully] no backend named =comment=.
+#+end_edcomm
 
 #+begin_3parallel org
 In general, a “special block” such as
@@ -594,7 +612,7 @@ replaced by =bar= unless the argument =:replacement:= is given a value.
 
 [[file:images/foo_block.png]]
 
-#+name: foo-block
+#+name: startup-code
 #+begin_src emacs-lisp :tangle no
 (defun org-special-block-extras--foo (backend contents)
   "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
@@ -604,8 +622,8 @@ unless a ‘:replacement:’ is provided."
     (s-replace "foo" (or replacement "bar") contents′)))
 #+end_src
 
-#+RESULTS: foo-block
-: org-special-block-extras--foo
+#+RESULTS: startup-code
+| :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (assoc lbl org-special-block-extras--docs)] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (s-replace    &emsp; (s-replace |
 
 Here's an example usage:
 #+begin_2parallel org
@@ -659,7 +677,7 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
 # part of the Lisp code needed to produce the example link type.
 # Consult the HTML/PDF rendition of this file or tangle the block below.
 # #
-#+name: example-link
+#+name: startup-code
 #+begin_src emacs-lisp -n -r :tangle no
 (org-link-set-parameters
   ;; The name of the new link type, usage: “example:label”
@@ -700,8 +718,6 @@ Raw use example:salam and descriptive, [[example:hola][using ‘example’ link 
   :face '(:foreground "red" :weight bold    (ref:exface)
           :underline "orange" :overline "orange"))
 #+end_src
-
-#+RESULTS: example-link
 
 + Line [[(extype)]] ="example"= :: Add a new =example= link type.
   - If the type already exists, update it with the given arguments.
@@ -1659,7 +1675,75 @@ Neato, let's do more super cool stuff ^_^
 ( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
 LaTeX. )
 #+end_footnotesize
-* /“Link Here!”/ OctoIcon
+* Nice Keystroke Renditions: kbd:C-h_h
+  :PROPERTIES:
+  :CUSTOM_ID:
+  :END:
+
+Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
+aesthetically pleasing way, such as [[kbd:doit][C-u 80 -]] to insert 80 dashes
+or kbd:C-c_C-e_h_o to export an Org-mode file to HTML.
+
+- If there is a description, we render it in keystroke style.
+- If there is only a label, we translate underscores into spaces.
+
+[[file:./images/kbd.png]]
+
+#+begin_src emacs-lisp
+(org-link-set-parameters
+ "kbd"
+  :follow (lambda (_))
+  :export (lambda (label description backend)
+            (format (pcase backend
+                      ('html "<kbd> %s </kbd>")
+                      ('latex "\texttt{%s}")
+                      (_ "%s"))
+                    (or description (s-replace "_" " " label)))))
+#+end_src
+
+The following styling rule is used to make the keystrokes displayed nicely.
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+(defvar org-special-block-extras--kbd-html-setup nil
+  "Has the necessary keyboard styling HTML beeen added?")
+
+(unless org-special-block-extras--kbd-html-setup
+  (setq org-special-block-extras--kbd-html-setup t)
+(setq org-html-head-extra
+ (concat org-html-head-extra
+"
+<style>
+/* From: https://endlessparentheses.com/public/css/endless.css */
+/* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+kbd
+{
+  -moz-border-radius: 6px;
+  -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  -webkit-border-radius: 6px;
+  -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  color: #333;
+  display: inline-block;
+  font-family: 'Droid Sans Mono', monospace;
+  font-size: 80%;
+  font-weight: normal;
+  line-height: inherit;
+  margin: 0 .1em;
+  padding: .08em .4em;
+  text-shadow: 0 1px 0 #fff;
+  word-spacing: -4px;
+
+  box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+}
+</style>")))
+#+end_src
+
+[[color:orange][Going forward]], it would be nice to render =kbd:𝒳= links in a pretty way
+within Emacs itself.
+
+* /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -1668,39 +1752,109 @@ Use the syntax =link-here:name= to create an anchor link that alters the URL wit
 =#name= as in “link-here:name”
 ---it looks and behaves like the Github generated links for a heading.
 Use case: Sometimes you want to explicitly point to a particular location in an
-article, this is a possible way to do so.
+article, such as within a =#+begin_details= block, this is a possible way to do so.
+
+Likewise, get OctoIcons with the syntax =octoicon:𝒳= where =𝒳= is one of =home,
+link, mail, report, tag, clock=: octoicon:home, octoicon:link, octoicon:mail,
+octoicon:report, octoicon:tag, octoicon:clock.
+
+- Within =octoicon:𝒳= and =link-here:𝒳= the label =𝒳= determines the
+  OctoIcon shown and the name of the local link to be created, respectively.
+  + Descriptions, as in =[[link:label][description]]=, are ignored.
 - Besides the HTML backend, such links are silently omitted.
-- SVGs obtained from: https://primer.style/octicons/
+
+#+begin_details org
+:title: Six OctoIcons
+
+The following SVGs are obtained from: https://primer.style/octicons/
 
 #+begin_src emacs-lisp
+(defvar
+ org-special-block-extras--supported-octoicons
+ (-partition 2
+ '(
+   home
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0
+   1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12
+   14z\"></path></svg>"
+
+   link
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"></path></svg>"
+
+   mail
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
+   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45
+   1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1
+   5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3
+   4-3v6z\"></path></svg>"
+
+   report
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4
+   4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6
+   6h2v2H7V8zm0-5h2v4H7V3z\"></path></svg>"
+
+   tag
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 15
+   16\" width=\"15\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1
+   3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41
+   0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38
+   7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59
+   1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73
+   4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z\"></path></svg>"
+
+   clock
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
+   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56
+   5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7
+   5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14
+   7-7-3.14-7-7-7z\"></path></svg>"))
+
+"An association list of supported OctoIcons.
+
+Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
+#+end_src
+
+#+end_details
+
+#+begin_src emacs-lisp
+;; Show an OctoIcon: home, link, mail, report, tag, clock
+(org-link-set-parameters
+  "octoicon"
+  :follow (lambda (_))
+  :export (lambda (icon _ backend)
+    (pcase backend
+      (`html  (format
+               (s-collapse-whitespace
+                (cadr (assoc (intern icon)
+                             org-special-block-extras--supported-octoicons)))))
+      (_ ""))))
+
+;; Export a link to the current location in an Org file.
 (org-link-set-parameters
   "link-here"
   :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
-  :export #'org-special-block-extras--link-here)
-
-(defun org-special-block-extras--link-here (label _ backend)
-  "Export a link to the current location in an Org file.
-
-The LABEL determines the name of the link.
-
-+ Only the syntax ‘link-here:label’ is supported.
-+ Such links are displayed using an “octicon-link”
-  and so do not support the DESCRIPTION syntax
-  ‘[[link:label][description]]’.
-+ Besides the HTML BACKEND, such links are silently omitted."
+  :export  (lambda (label _ backend)
     (pcase backend
       (`html  (format (s-collapse-whitespace
           "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
-          href=\"#%s\"><svg class=\"octicon octicon-link\" viewBox=\"0 0 16
-          16\" version=\"1.1\" width=\"16\" height=\"16\"
-          aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M4
-          9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0
-          1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8
-          4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2
-          2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64
-          1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0
-          3-1.69 3-3.5S14.5 6 13 6z\"></path></svg></a>") label label))
-      (_ "")))
+          href=\"#%s\">%s</a>")
+                      label label (cadr (assoc 'link
+                              org-special-block-extras--supported-octoicons))))
+      (_ ""))))
 #+end_src
 
 E.g., link-here:example-location Neato ^_^
@@ -1709,6 +1863,10 @@ E.g., link-here:example-location Neato ^_^
 the LaTeX rendition.  More usefully, before the HTML export hook, we could place
 such ‘link-here’ links before every org-title produce clickable org-headings,
 similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
+
+[[color:orange][Moreover]], it may be useful to have =octoicon:𝒳|url= so the resulting
+OctoIcon is optionally a link to the given =url=. Another direction
+would be to support more, if not all, the possible OctoIcons.
 
 * Badge Links
   :PROPERTIES:
@@ -2165,7 +2323,8 @@ Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
-#+begin_src emacs-lisp
+#+name: startup-code
+#+begin_src emacs-lisp :tangle no
 (add-to-list 'org-special-block-extras--docs
   '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
 #+end_src
@@ -2199,6 +2358,7 @@ tooltips happens in two stages: First we check the documentation, if there is no
 entry, we try the fallback ---if that falls, an error is reported at export
 time. E.g., upon export =doc:wombo= will produce a no-entry error.
 
+#+name: startup-code
 #+begin_src emacs-lisp
 (-let [name&doc
        (lambda (lbl)
@@ -2307,7 +2467,6 @@ The dictionary variable is ‘org-special-block-extras--docs’.
 Documentation blocks are not shown upon export."
   ;; Strip out any <p> tags
   ;; Musa: Make these three lines part of the core utility?
-  (message-box "hola")
   (setq contents (substring-no-properties contents))
   (setq contents (s-replace-regexp "<p>" "" contents))
   (setq contents (s-replace-regexp "</p>" "" contents))
@@ -2366,11 +2525,11 @@ is rather slow. As such, we move to using [[https://iamceege.github.io/tooltipst
 The incantation below sets up the required magic to make this happen.
 
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-(defvar org-special-block-extras--html-setup nil
+(defvar org-special-block-extras--tooltip-html-setup nil
   "Has the necessary HTML beeen added?")
 
-(unless org-special-block-extras--html-setup
-  (setq org-special-block-extras--html-setup t)
+(unless org-special-block-extras--tooltip-html-setup
+  (setq org-special-block-extras--tooltip-html-setup t)
 (setq org-html-head-extra
  (concat org-html-head-extra
 "
@@ -2539,15 +2698,16 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=. Let =𝓃= be any number from =1..5=.
 
-| Idea                   | Block                | Link       | Switches            |
-|------------------------+----------------------+------------+---------------------|
-| Colours                | =𝒞=, =latex-definitions= | =𝒞=, =color:𝒞= | =:color:=             |
-| Parallel               | =𝓃parallel[NB]=        | -          | =:columnbreak:=       |
-| Editorial Comments     | =edcomm=               | =edcomm=     | =:ed:=, =:replacewith:= |
-| Folded Details         | =details=              | -          | =:title:=             |
-| Link Here              | -                    | =link-here=  | -                   |
-| Badges                 | -                    | =badge=      | -                   |
-| Documentation-Glossary | =documentation=        | =doc=, =show=  | =:name:=, =:label:=     |
+| Idea                   | Block                | Link                | Switches            |
+|------------------------+----------------------+---------------------+---------------------|
+| Colours                | =𝒞=, =latex-definitions= | =𝒞=, =color:𝒞=          | =:color:=           |
+| Parallel               | =𝓃parallel[NB]=        | -                   | =:columnbreak:=       |
+| Editorial Comments     | =edcomm=               | =edcomm=              | =:ed:=, =:replacewith:= |
+| Folded Details         | =details=              | -                   | =:title:=             |
+| Keystrokes             |                      | =kbd=               |                     |
+| OctoIcons & Link Here  | -                    | =octoicon, link-here= | -                   |
+| Badges                 | -                    | =badge=               | -                   |
+| Documentation-Glossary | =documentation=        | =doc=, =show=           | =:name:=, =:label:=     |
 
 There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars,
@@ -2606,12 +2766,15 @@ Pop-quiz: How does doc:apply work?
 #+end_parallel
 
 #+begin_details
+link-here:solution
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[edcomm:Musa][Ain't that cool?]]
 
 [[color:purple][We can apply a function to a list of arguments!]]
 #+end_details
+
+octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 
 #+LATEX_HEADER: \usepackage{multicol}
 #+LATEX_HEADER: \usepackage{tcolorbox}
@@ -2637,12 +2800,15 @@ Pop-quiz: How does doc:apply work?
 #+end_parallel
 
 #+begin_details
+link-here:solution
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[edcomm:Musa][Ain't that cool?]]
 
 [[color:purple][We can apply a function to a list of arguments!]]
 #+end_details
+
+octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 
 #+LATEX_HEADER: \usepackage{multicol}
 #+LATEX_HEADER: \usepackage{tcolorbox}
@@ -2819,13 +2985,3 @@ https://github.com/riscy/melpazoid
 
 [fn:1] See [[http://www.cs.nott.ac.uk/~pszgmh/fold.pdf][/A tutorial on the universality and expressiveness of fold/]] and
 [[http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/urs.pdf][/Unifying Structured Recursion Schemes/]]
-
-* COMMENT Footer
-  :PROPERTIES:
-  :CUSTOM_ID: Footer
-  :END:
-# Local Variables:
-# eval: (save-excursion (org-babel-goto-named-src-block "example-link")
-# (org-babel-execute-src-block))
-# eval: (save-excursion (org-babel-goto-named-src-block "foo-block") (org-babel-execute-src-block))
-# End:

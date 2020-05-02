@@ -1,9 +1,9 @@
-;;; org-special-block-extras.el --- 29 new custom blocks & 32 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 29 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.0
+;; Version: 1.2
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -85,41 +85,76 @@
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide twenty-six new custom blocks for Org-mode."
+  "Provide 29 new custom blocks & 34 link types for Org-mode."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-        
+
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
          (defalias 'org-special-block-extras--parallel
                           #'org-special-block-extras--2parallel)
-        
+
                 (defalias 'org-special-block-extras--parallelNB
                           #'org-special-block-extras--2parallelNB)
         (setq org-export-allow-bind-keywords t)
-        (defvar org-special-block-extras--html-setup nil
+        (defvar org-special-block-extras--kbd-html-setup nil
+          "Has the necessary keyboard styling HTML beeen added?")
+
+        (unless org-special-block-extras--kbd-html-setup
+          (setq org-special-block-extras--kbd-html-setup t)
+        (setq org-html-head-extra
+         (concat org-html-head-extra
+        "
+        <style>
+        /* From: https://endlessparentheses.com/public/css/endless.css */
+        /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+        kbd
+        {
+          -moz-border-radius: 6px;
+          -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          -webkit-border-radius: 6px;
+          -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          background-color: #f7f7f7;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          color: #333;
+          display: inline-block;
+          font-family: 'Droid Sans Mono', monospace;
+          font-size: 80%;
+          font-weight: normal;
+          line-height: inherit;
+          margin: 0 .1em;
+          padding: .08em .4em;
+          text-shadow: 0 1px 0 #fff;
+          word-spacing: -4px;
+
+          box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+        }
+        </style>")))
+        (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-        
-        (unless org-special-block-extras--html-setup
-          (setq org-special-block-extras--html-setup t)
+
+        (unless org-special-block-extras--tooltip-html-setup
+          (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
+
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
+
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-        
+
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
+
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -139,10 +174,10 @@
          });
                  });
              </script>
-        
+
         <style>
            abbr {color: red;}
-        
+
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -156,7 +191,7 @@
       ) ;; Must be on a new line; I'm using noweb-refs
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-    
+
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     )) ;; Must be on a new line; I'm using noweb-refs
@@ -413,33 +448,97 @@ the folded region."
     title contents′)))
 
 (org-link-set-parameters
+ "kbd"
+  :follow (lambda (_))
+  :export (lambda (label description backend)
+            (format (pcase backend
+                      ('html "<kbd> %s </kbd>")
+                      ('latex "\texttt{%s}")
+                      (_ "%s"))
+                    (or description (s-replace "_" " " label)))))
+
+(defvar
+ org-special-block-extras--supported-octoicons
+ (-partition 2
+ '(
+   home
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0
+   1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12
+   14z\"></path></svg>"
+
+   link
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"></path></svg>"
+
+   mail
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
+   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45
+   1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1
+   5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3
+   4-3v6z\"></path></svg>"
+
+   report
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
+   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4
+   4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6
+   6h2v2H7V8zm0-5h2v4H7V3z\"></path></svg>"
+
+   tag
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 15
+   16\" width=\"15\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1
+   3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41
+   0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38
+   7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59
+   1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73
+   4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z\"></path></svg>"
+
+   clock
+   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
+   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
+   d=\"M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56
+   5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7
+   5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14
+   7-7-3.14-7-7-7z\"></path></svg>"))
+
+"An association list of supported OctoIcons.
+
+Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
+
+;; Show an OctoIcon: home, link, mail, report, tag, clock
+(org-link-set-parameters
+  "octoicon"
+  :follow (lambda (_))
+  :export (lambda (icon _ backend)
+    (pcase backend
+      (`html  (format
+               (s-collapse-whitespace
+                (cadr (assoc (intern icon)
+                             org-special-block-extras--supported-octoicons)))))
+      (_ ""))))
+
+;; Export a link to the current location in an Org file.
+(org-link-set-parameters
   "link-here"
   :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
-  :export #'org-special-block-extras--link-here)
-
-(defun org-special-block-extras--link-here (label _ backend)
-  "Export a link to the current location in an Org file.
-
-The LABEL determines the name of the link.
-
-+ Only the syntax ‘link-here:label’ is supported.
-+ Such links are displayed using an “octicon-link”
-  and so do not support the DESCRIPTION syntax
-  ‘[[link:label][description]]’.
-+ Besides the HTML BACKEND, such links are silently omitted."
+  :export  (lambda (label _ backend)
     (pcase backend
       (`html  (format (s-collapse-whitespace
           "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
-          href=\"#%s\"><svg class=\"octicon octicon-link\" viewBox=\"0 0 16
-          16\" version=\"1.1\" width=\"16\" height=\"16\"
-          aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M4
-          9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0
-          1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8
-          4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2
-          2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64
-          1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0
-          3-1.69 3-3.5S14.5 6 13 6z\"></path></svg></a>") label label))
-      (_ "")))
+          href=\"#%s\">%s</a>")
+                      label label (cadr (assoc 'link
+                              org-special-block-extras--supported-octoicons))))
+      (_ ""))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The badge link types
@@ -549,9 +648,6 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 
-(add-to-list 'org-special-block-extras--docs
-  '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
-
 (defvar org-special-block-extras--docs-fallback
   (lambda (label) (list label label (documentation (intern label))))
   "The fallback method to retriving documentation or glossary entries.")
@@ -614,7 +710,6 @@ The dictionary variable is ‘org-special-block-extras--docs’.
 Documentation blocks are not shown upon export."
   ;; Strip out any <p> tags
   ;; Musa: Make these three lines part of the core utility?
-  (message-box "hola")
   (setq contents (substring-no-properties contents))
   (setq contents (s-replace-regexp "<p>" "" contents))
   (setq contents (s-replace-regexp "</p>" "" contents))

@@ -8,7 +8,7 @@
 
 <span>
 
-[![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.0-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
+[![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.2-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
 
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 
@@ -58,7 +58,7 @@
 > a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 > a ‘link here’ link type, 8 badge link types,
 > and block and link types for making documentation-glossary entries.
-> That is, **we provide 29 block types and 32 link types**.
+> That is, **we provide 29 block types and 34 link types**.
 
 > The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
 > Installation instructions are [below](#Summary).
@@ -208,7 +208,7 @@
 > Installation instructions are [below](#Summary).
 
 
-# Table of Contents
+# <a href="javascript:window.scrollTo(0,0)" style="color: black !important; border-bottom: none !important;" class="tooltip" title="Go to the top of the page"> Ξ </a>
 
 1.  [Summary](#Summary)
     1.  [Installation Instructions](#Installation-Instructions)
@@ -282,9 +282,17 @@ Let `𝒞` be any of the following: `black`, `blue`, `brown`, `cyan`, `darkgray`
 
 
 <tr>
-<td class="org-left">Link Here</td>
+<td class="org-left">Keystrokes</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">`kbd`</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+
+<tr>
+<td class="org-left">OctoIcons & Link Here</td>
 <td class="org-left">-</td>
-<td class="org-left">`link-here`</td>
+<td class="org-left">`octoicon, link-here`</td>
 <td class="org-left">-</td>
 </tr>
 
@@ -355,12 +363,15 @@ The following example showcases the prominent features of this library.
     #+end_parallel
 
     #+begin_details
+    link-here:solution
     Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
     [[edcomm:Musa][Ain't that cool?]]
 
     [[color:purple][We can apply a function to a list of arguments!]]
     #+end_details
+
+    octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 
     #+LATEX_HEADER: \usepackage{multicol}
     #+LATEX_HEADER: \usepackage{tcolorbox}
