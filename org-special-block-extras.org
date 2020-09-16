@@ -2898,12 +2898,12 @@ https://github.com/riscy/melpazoid
 5. Use ‘-’ as a separator, not ‘/’.
 6. Consider reading:
    https://github.com/bbatsov/emacs-lisp-style-guide#the-emacs-lisp-style-guide
-6. Use cl-loop, cl-first, cl-second, cl-third instead of loop, first, second, third
-7. byte-compile and address any concerns
-8. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
+7. Use cl-loop, cl-first, cl-second, cl-third instead of loop, first, second, third
+8. byte-compile and address any concerns
+9. =M-x checkdoc= on the lisp file to ensure it passes expected style issues.
    - Symbols =nil, t= should not appear in single quotes.
-9. Ensure it byte-compiles without any problems.
-10. Ensure that package-linter raises no issues; i.e., the following has no result.
+10. Ensure it byte-compiles without any problems.
+11. Ensure that package-linter raises no issues; i.e., the following has no result.
      #+BEGIN_SRC emacs-lisp
  (use-package package-lint)
  (-let [it "org-special-block-extras.el"]
@@ -2911,14 +2911,15 @@ https://github.com/riscy/melpazoid
   (find-file-other-window it)
   (package-lint-buffer it))
  #+END_SRC
-11. Create a recipe file by invoking: M-x package-build-create-recipe
+12. Create a recipe file by invoking: M-x package-build-create-recipe
     - Place it in: melpa/recipes/
     - The name of the file should be the name of the package, no extension.
 
        #+BEGIN_SRC emacs-lisp :tangle ~/melpa/recipes/org-special-block-extras
     (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras")
     #+END_SRC
-12. Ensure the recipe builds successfully:
+13. Commit and push everything in your project's repo!
+14. Ensure the recipe builds successfully:
     #+BEGIN_SRC shell
     cd ~/melpa; rm ~/melpa/packages/org-special-block-extras-*; make recipes/org-special-block-extras
     #+END_SRC
@@ -2926,7 +2927,7 @@ https://github.com/riscy/melpazoid
     #+RESULTS:
     : • Building package org-special-block-extras ...
 
-13. Ensure the package installs properly from within Emacs:
+15. Ensure the package installs properly from within Emacs:
 
       #+BEGIN_SRC emacs-lisp
 (package-install-file "~/melpa/packages/org-special-block-extras-20200417.238.el")
