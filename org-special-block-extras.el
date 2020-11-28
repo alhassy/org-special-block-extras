@@ -1,9 +1,10 @@
+;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:1]]
 ;;; org-special-block-extras.el --- 29 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.2
+;; Version: 1.9
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -23,6 +24,8 @@
 
 ;;; Commentary:
 
+;; In a rush to get this out before EmacsConf2020, some Melpa checks fail; sorry!
+
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
@@ -39,23 +42,17 @@
 ;; 2. Multiple columns: Regions of text are exported into multiple side-by-side
 ;; columns
 ;;
-;; 3. Edcomms: First-class visible editor comments
+;; 3. Remarks: First-class visible editor comments
 ;;
 ;; 4. Details: Regions of text can be folded away in HTML
 ;;
-;; 5. Badges: SVG badges have the pleasant syntax
+;; 5. ‼ BROKEN ‼ Badges: SVG badges have the pleasant syntax
 ;; badge:key|value|colour|url|logo; only the first two are necessary.
 ;;
 ;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
 ;; documentation-backend, including user-defined entries; e.g., doc:thread-first
 ;; retrives the documentation for thread-first and attachs it as a tooltip to
 ;; the text in the HTML export and as a glossary entry in the LaTeX export
-;;
-;; Finally, the system is extensible: Users just define a method
-;; ORG-SPECIAL-BLOCK-EXTRAS--TYPE for a new custom block TYPE, which is then
-;; invoked.  The handler takes three arguments: - CONTENTS: The string contents
-;; delimited by the custom block.  - BACKEND: The current exportation backend;
-;; e.g., 'html or 'latex.  The handler must return a string.
 ;;
 ;; This file has been tangled from a literate, org-mode, file; and so contains
 ;; further examples demonstrating the special blocks it introduces.
@@ -79,30 +76,26 @@
 (require 'org)
 (require 'ox-latex)
 (require 'ox-html)
+;; Lisp Package Preamble:1 ends here
 
-(declare-function org-special-block-extras--2parallel "org-special-block-extras" t t)
-(declare-function org-special-block-extras--2parallelNB "org-special-block-extras" t t)
-
+;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:2]]
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide 29 new custom blocks & 34 link types for Org-mode."
+    "Provide 29 new custom blocks & 34 link types for Org-mode."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
+        ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
+        (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-
+        
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
-         (defalias 'org-special-block-extras--parallel
-                          #'org-special-block-extras--2parallel)
-
-                (defalias 'org-special-block-extras--parallelNB
-                          #'org-special-block-extras--2parallelNB)
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-
+        
         (unless org-special-block-extras--kbd-html-setup
           (setq org-special-block-extras--kbd-html-setup t)
         (setq org-html-head-extra
@@ -131,30 +124,32 @@
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-
+        
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
+        ;; Ensure user's documentation libraries have loaded
+        (org-special-block-extras-docs-load-libraries)
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-
+        
         (unless org-special-block-extras--tooltip-html-setup
           (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
+        
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
+        
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-
+        
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
+        
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -174,10 +169,10 @@
          });
                  });
              </script>
-
+        
         <style>
            abbr {color: red;}
-
+        
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -189,17 +184,393 @@
           (setq org-special-block-extras--docs-GLOSSARY nil
                 org-special-block-extras--docs nil)))
       ) ;; Must be on a new line; I'm using noweb-refs
+    (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-
+    
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     )) ;; Must be on a new line; I'm using noweb-refs
+;; Lisp Package Preamble:2 ends here
 
+;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:1]]
+(defun org-special-block-extras--org-export (x)
+  "Wrap the given X in an export block for the current backend."
+  (format "\n#+begin_export %s \n%s\n#+end_export\n" org-special-block-extras--current-backend x))
+
+(defun org-special-block-extras--org-parse (x)
+  "This should ONLY be called within an ORG-EXPORT call."
+  (format "\n#+end_export\n%s\n#+begin_export %s\n" x org-special-block-extras--current-backend))
+
+(cl-defmacro org-special-block-extras--defblock
+  (name main-arg kwds &optional (docstring "") &rest body)
+  "Declare a new special block, and link, in the style of DEFUN.
+
+A full featured example is at the end of this documentation string.
+
+This is an anaphoric macro that provides export support for
+special blocks *and* links named NAME. Just as an Org-mode src-block
+consumes as main argument the language for the src block,
+our special blocks too consume a MAIN-ARG; it may be a symbol
+or a cons-list consisting of a symbolic name (with which
+to refer to the main argument in the definition of the block)
+followed by a default value, then, optionally, any information
+for a one-time setup of the associated link type.
+
+The main arg may be a sequence of symbols separated by spaces,
+and a few punctuation with the exception of comma ‘,’ since
+it is a special Lisp operator. In doubt, enclose the main arg
+in quotes.
+
+Then, just as Org-mode src blocks consume key-value pairs, our
+special blocks consume a number of KWDS, which is a list of the
+form (key₀ value₀ … keyₙ valueₙ).
+
+After that is a DOCSTRING, a familar feature of DEFUN.
+The docstring is displayed as part of the tooltip
+for the produced link type.
+
+Finally, the BODY is a (sequence of) Lisp forms ---no progn needed---
+that may refer to the names BACKEND and CONTENTS
+which refer to the current export backend and the contents
+of the special block ---or the description clause of a link.
+
+CONTENTS refers to an Org-mode parsed string; i.e.,
+Org-markup is acknowledged.
+
+In, hopefully, rare circumstances, one may refer
+to RAW-CONTENTS to look at the fully unparsed contents.
+
+----------------------------------------------------------------------
+
+The relationship between links and special blocks:
+
+  [ [type:label][description]]
+≈
+   #+begin_type label
+    description
+   #+end_type
+
+----------------------------------------------------------------------
+
+Example declaration, with all possible features shown:
+
+   ;; We can use variable values when defining new blocks
+   (setq angry-red '(:foreground \"red\" :weight bold))
+
+   (defblock remark
+     (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
+     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
+     (format (if (equal backend 'html)
+               \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
+               \"{\\color{%s}\\bfseries %s:  %s%s}\")
+             color editor contents signoff))
+
+   ;; I don't want to change the definition, but I'd like to have
+   ;; the following as personalised defaults for the “remark” block.
+   ;; OR, I'd like to set this for links, which do not have argument options.
+   (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+
+Three example uses:
+
+    ;; ⟨0⟩ As a special blocks with arguments given.
+    #+begin_remark Bobbert Barakallah :signoff \"Thank-you for pointing this out!\" :color green
+    I was trying to explain that ${\large (n × (n + 1) \over 2}$ is always an integer.
+    #+end_remark
+
+    ;; ⟨1⟩ As a terse link, using default values for the args.
+    ;;     Notice that Org-mode formatting is recoqgnised even in links.
+    [ [remark:Jasim Jameson][Why are you taking about “$\mathsf{even}$” here?]]
+
+    ;; ⟨2⟩ So terse that no editor name is provided.
+    [ [remark:][Please improve your transition sentences.]]
+
+    ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
+    ;; catenated as well as the default red color.
+"
+  ;; ⇨ The special block support
+  ;;
+  (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
+  `(progn (cl-defun ,(intern (format "org-special-block-extras--%s" name))
+        (backend raw-contents
+                 &optional ;; ,(car main-arg)
+                 ,(if (consp `,main-arg) (car main-arg) 'main-arg)
+                 &rest _
+                 &key ,@(-partition 2 kwds))
+       ,docstring
+       ;; Use default for main argument
+       (when (and ',(car main-arg) (s-blank-p ,(car main-arg)))
+         (--if-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) :main-arg)
+             (setq ,(car main-arg) it)
+           (setq ,(car main-arg) ,(cadr main-arg))))
+
+       ;; Use any headers for this block type, if no local value is passed
+       ,@(loop for k in (mapcar #'car (-partition 2 kwds))
+               collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
+       (org-special-block-extras--org-export
+                              (let ((contents (org-special-block-extras--org-parse raw-contents))) ,@body)))
+
+  ;; ⇨ The link type support
+  (org-link-set-parameters
+   ,(format "%s" name)
+   ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
+   ;; are dumped here verbatim.
+   ;; ‘(main-arg-name main-arg-val :face … :follow …)’
+   ,@(cddr main-arg)
+   :export (lambda (label description backend)
+             (s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                            (,(intern (format "org-special-block-extras--%s" name))
+                             backend (or description label) label)))
+   ;; The tooltip alongside a link
+    :help-echo (lambda (window object position)
+                 (save-excursion
+                   (goto-char position)
+                   (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
+                            (cadr (org-element-context)))
+                           (description
+                            (when (equal format 'bracket)
+                              (copy-region-as-kill contents-begin contents-end)
+                              (substring-no-properties (car kill-ring)))))
+                     (format "%s\n\n%s"
+                            raw-link ,docstring)))))))
+;; The Core Utility: ~defblock~ and friends:1 ends here
+
+;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:4]]
+(defun org-special-block-extras--pp-list (xs)
+  "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
+  When n = 0, yield the empty string “”."
+  (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
+
+(defvar org-special-block-extras--supported-blocks nil
+  "Which special blocks, defined with DEFBLOCK, are supported.")
+
+(defvar org-special-block-extras--current-backend nil
+  "A message-passing channel updated by
+org-special-block-extras--support-special-blocks-with-args
+and used by DEFBLOCK.")
+
+(defun org-special-block-extras--support-special-blocks-with-args (backend)
+  "Remove all headlines in the current buffer.
+BACKEND is the export back-end being used, as a symbol."
+  (setq org-special-block-extras--current-backend backend)
+  (loop for blk in org-special-block-extras--supported-blocks
+        for kwdargs = nil
+        for blk-start = nil
+        do (goto-char (point-min))
+        (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s" blk)))
+          ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
+          ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
+          ; (kill-line)
+          ; (error (format "(%s)" (substring-no-properties (car kill-ring))))
+          (setq blk-start (line-beginning-position))
+          (setq header-start (point))
+          (setq body-start (1+ (line-end-position)))
+          (setq kwdargs (read (format "(%s)" (buffer-substring-no-properties header-start (line-end-position)))))
+          (setq kwdargs (--split-with (not (keywordp it)) kwdargs))
+          (setq main-arg (org-special-block-extras--pp-list (car kwdargs)))
+          (setq kwdargs (cadr kwdargs))
+          ; (beginning-of-line) (kill-line)
+          (forward-line -1)
+          (re-search-forward (format "^\s*\\#\\+end_%s" blk))
+          (setq contents (buffer-substring-no-properties body-start (line-beginning-position)))
+          ; (beginning-of-line)(kill-line) ;; Hack!
+          (kill-region blk-start (point))
+          (insert
+             (eval `(,(intern (format "org-special-block-extras--%s" blk))
+                     backend
+                     contents
+                     main-arg
+                     ,@(--map (list 'quote it) kwdargs)))
+             )
+          ;; the --map is so that arguments may be passed
+          ;; as "this" or just ‘this’ (raw symbols)
+      )))
+;; The Core Utility: ~defblock~ and friends:4 ends here
+
+;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:7]]
+(defvar org-special-block-extras--header-args nil
+  "Alist (name plist) where “:main-arg” is a special plist key.
+
+  It serves a similar role to that of Org's src ‘header-args’.
+
+  See doc of SET-BLOCK-HEADER-ARGS for more information.")
+
+(defmacro org-special-block-extras--set-block-header-args (blk &rest kvs)
+  "Set default valuts for special block arguments.
+
+This is similar to, and inspired by, Org-src block header-args.
+
+Example src use:
+    #+PROPERTY: header-args:Language :key value
+
+Example block use:
+    (defblock-header-args Block :main-arg mainvalue :key value)
+
+A full, working, example can be seen by “C-h o RET defblock”.
+"
+  `(add-to-list 'org-special-block-extras--header-args (list (quote ,blk) ,@kvs)))
+
+(defun org-special-block-extras-short-names ()
+  "Expose shorter names to the user.
+
+Namely,
+
+  org-special-block-extras--set-block-header-args   ↦  set-block-header-args
+  org-special-block-extras--set-block-header-args   ↦  defblock
+  org-special-block-extras--subtle-colors           ↦  subtle-colors
+"
+  (defalias 'defblock              'org-special-block-extras--defblock)
+  (defalias 'set-block-header-args 'org-special-block-extras--set-block-header-args)
+  (defalias 'thread-block-call     'org-special-block-extras--thread-blockcall)
+  (defalias 'subtle-colors         'org-special-block-extras--subtle-colors))
+;; The Core Utility: ~defblock~ and friends:7 ends here
+
+;; [[file:org-special-block-extras.org::startup-code][startup-code]]
+;; This is our 𝒳, “remark”.
+;; As a link, it should be shown angry-red;
+;; it takes two arguments: “color” and “signoff”
+;; with default values being "red" and "".
+;; (Assuming we already called org-special-block-extras-short-names. )
+(org-special-block-extras--defblock rremark
+  (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
+  "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
+  (format (if (equal backend 'html)
+            "<strong style=\"color: %s;\">⟦%s:  %s%s⟧</strong>"
+            "{\\color{%s}\\bfseries %s:  %s%s}")
+          color editor contents signoff))
+
+;; I don't want to change the definition, but I'd like to have
+;; the following as personalised defaults for the “remark” block.
+;; OR, I'd like to set this for links, which do not have argument options.
+(org-special-block-extras--set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+;; startup-code ends here
+
+;; [[file:org-special-block-extras.org::*Modularity with ~thread-blockcall~][Modularity with ~thread-blockcall~:3]]
+(cl-defmacro org-special-block-extras--blockcall (blk &optional main-arg &rest keyword-args-then-contents)
+  "An anaologue to `funcall` but for blocks.
+
+Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
+
+One should rarely use this directly; instead use
+org-special-block-extras--thread-blockcall.
+"
+  `(concat "#+end_export\n" (,(intern (format "org-special-block-extras--%s" blk))
+    backend ;; defblock internal
+    ; (format "\n#+begin_export html\n\n%s\n#+end_export\n" ,(car (last keyword-args-then-contents))) ;; contents
+    ,@(last keyword-args-then-contents) ;; contents
+    ,main-arg
+    ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))
+;; Modularity with ~thread-blockcall~:3 ends here
+
+;; [[file:org-special-block-extras.org::*Modularity with ~thread-blockcall~][Modularity with ~thread-blockcall~:4]]
+(defmacro org-special-block-extras--thread-blockcall (body &rest forms)
+  "Thread text through a number of blocks.
+
+BODY is likely to be ‘raw-contents’, possibly with user manipulations.
+
+Each FORMS is of the shape “(block-name main-argument
+:key-value-pairs)”
+
+(thread-blockcall x)       = x
+(thread-blockcall x (f a)) = (blockcall f a x)
+(thread-blockcall x f₁ f₂) ≈ (f₂ (f₁ x))
+
+The third is a ‘≈’, and not ‘=’, because the RHS contains
+‘blockcall’s as well as massages the export matter
+between conseqeuctive blockcalls.
+
+A full example:
+
+    (org-special-block-extras--defblock nesting (name) nil
+      \"Show text in a box, within details, which contains a box.\"
+
+      (org-special-block-extras--thread-blockcall raw-contents
+                        (box name)
+                        (details (upcase name) :title-color \"green\")
+                        (box (format \"⇨ %s ⇦\" name) :background-color \"blue\")
+                        ))
+"
+  (if (not forms) body
+     `(-let [result (org-special-block-extras--blockcall ,@(car forms) ,body)]
+    ,@(loop for b in (cdr forms)
+          collect `(setq result (org-special-block-extras--blockcall ,@b
+                                     (concat
+                                   "#+begin_export\n"
+                                   result
+                                   "\n#+end_export"
+                                   )))) result)))
+;; Modularity with ~thread-blockcall~:4 ends here
+
+;; [[file:org-special-block-extras.org::*Short Example: /An opportunity to learn!/][Short Example: /An opportunity to learn!/:1]]
+(org-special-block-extras--defblock solution
+  (title "Solution")
+  (reprimand "Did you actually try? Maybe see the ‘hints’ above!"
+   really "Solution, for real")
+  "Show the answers to a problem, but with a reprimand in case no attempt was made."
+  (org-special-block-extras--thread-blockcall raw-contents
+                    (details really :title-color "red")
+                    (box reprimand :background-color "blue")
+                    (details title)))
+;; Short Example: /An opportunity to learn!/:1 ends here
+
+;; [[file:org-special-block-extras.org::*Longer Example: Demonstrating Org-markup with ~org-demo~][Longer Example: Demonstrating Org-markup with ~org-demo~:1]]
+(org-special-block-extras--defblock org-demo nil (source "Source" result "Result"
+                        source-color "cyan" result-color "cyan"
+                        style "parallel"
+                        )
+  "Output the CONTENTS of the block as both parsed Org and unparsed.
+
+Label the source text by SOURCE and the result text by RESULT
+
+finally, the source-result fragments can be shown in a STYLE
+that is either “parallel” (default) or “sequential”.
+"
+  (-let [text (concat (org-special-block-extras--org-export (org-special-block-extras--blockcall box source :background-color source-color (org-special-block-extras--org-export (s-replace "\n" (if (equal backend 'html) "<br>" "\\newline") raw-contents))))
+                      "\n\n\n\n "
+                       (org-special-block-extras--org-export (org-special-block-extras--blockcall box result :background-color result-color raw-contents))
+                      )]
+
+   (if (equal style "parallel")
+       (org-special-block-extras--blockcall parallel "2" :bar nil text)
+       (concat "#+end_export\n" text "\n#+begin_export"))))
+;; Longer Example: Demonstrating Org-markup with ~org-demo~:1 ends here
+
+;; [[file:org-special-block-extras.org::*Sttutttterrr][Sttutttterrr:2]]
+(org-special-block-extras--defblock stutter (reps 2) nil
+  "Output the CONTENTS of the block REPS many times"
+  (-let [num (if (numberp reps) reps (string-to-number reps))]
+    (s-repeat num contents)))
+;; Sttutttterrr:2 ends here
+
+;; [[file:org-special-block-extras.org::*Textual Substitution ---A translation tool][Textual Substitution ---A translation tool:1]]
+(org-special-block-extras--defblock rename (list "") nil
+  "Perform the given LIST of substitutions on the text.
+The LIST is a comma separated list of ‘to’ separated symbols.
+In a link, no quotes are needed."
+  (s-replace-all
+   (--map (cons (car it) (cadr it))
+          (--map (s-split " to " (s-trim it))
+                 (s-split "," list)))
+   contents))
+;; Textual Substitution ---A translation tool:1 ends here
+
+;; [[file:org-special-block-extras.org::*Spoilers! ---“fill in the blanks”][Spoilers! ---“fill in the blanks”:1]]
+(org-special-block-extras--defblock spoiler () (left "((" right "))")
+  "Hide text enclosed in double parens ((like this)) as if it were spoilers.
+   LEFT and RIGHT may be other kinds of delimiters."
+  (s-replace-regexp
+   (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+   "@@html:<span class=\"spoiler\"> \\1 </span>@@"
+   contents))
+;; Spoilers! ---“fill in the blanks”:1 ends here
+
+;; [[file:org-special-block-extras.org::*The Older =org-special-block-extras--𝒳= Utility][The Older =org-special-block-extras--𝒳= Utility:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The Older =org-special-block-extras--𝒳= Utility:1 ends here
 
+;; [[file:org-special-block-extras.org::*The Older =org-special-block-extras--𝒳= Utility][The Older =org-special-block-extras--𝒳= Utility:3]]
 (defun org-special-block-extras--advice (backend blk contents _)
   "Invoke the appropriate custom block handler, if any.
 
@@ -213,7 +584,9 @@ contents at all, not even an empty new line."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend (or contents "") nil))))
+;; The Older =org-special-block-extras--𝒳= Utility:3 ends here
 
+;; [[file:org-special-block-extras.org::*  =:argument:= Extraction][  =:argument:= Extraction:1]]
 (defun org-special-block-extras--extract-arguments (contents &rest args)
 "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
 
@@ -239,169 +612,70 @@ with all ‘:kᵢ:’ lines stripped out.
              for regex = (format ":%s:\\(.*\\)" a)
              do (setq ctnts (s-replace-regexp regex "" ctnts)))
     (cons ctnts values)))
+;;   =:argument:= Extraction:1 ends here
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load support for 20 colour custom blocks and 20 colour link types
-
-(defvar org-special-block-extras--colors
-  '(black blue brown cyan darkgray gray green lightgray lime
-          magenta olive orange pink purple red teal violet white
-          yellow)
-  "Colours that should be available on all systems.")
-
-(cl-loop for colour in org-special-block-extras--colors
-      do (eval (read (format
-                      "(defun org-special-block-extras--%s (backend contents)
-                     (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
-                     contents))"
-                      colour colour colour))))
-
-(defun org-special-block-extras--color (backend contents)
-  "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
-  (-let* (((contents′ . (&alist 'color))
-           (org-special-block-extras--extract-arguments contents 'color))
-         (block-coloring
-          (intern (format "org-special-block-extras--%s" (s-trim color)))))
-    (if (member (intern (s-trim color)) org-special-block-extras--colors)
-        (funcall block-coloring backend contents′)
-      (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
-
-;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
-;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
-(cl-loop for colour in org-special-block-extras--colors
-         do (org-link-set-parameters
-             (format "%s" colour)
-              :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
-              :export `(lambda (label description backend)
-                        (-let [block-colouring
-                               (intern (format "org-special-block-extras--%s" (quote ,colour)))]
-                          (funcall block-colouring backend (or description label))))
-              :face `(:foreground ,(format "%s" colour))))
-
-;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Colour ‘text’ by 𝒞.
-;; If 𝒞 is an unsupported colour, ‘text’ is rendered in large font
-;; and surrounded by red lines.
-(org-link-set-parameters "color"
-   :follow (lambda (_))
-   :face (lambda (colour)
-           (if (member (intern colour) org-special-block-extras--colors)
-               `(:foreground ,(format "%s" colour))
-             `(:height 300
-               :underline (:color "red" :style wave)
-               :overline  "red" :strike-through "red")))
- :help-echo (lambda (_ __ position)
-              (save-excursion
-                (goto-char position)
-                (-let* (((&plist :path) (cadr (org-element-context))))
-                  (if (member (intern path) org-special-block-extras--colors)
-                      "Colour links just colour the descriptive text"
-                    (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
-   :export (lambda (colour description backend)
-             (-let [block-colouring
-                    (intern (format "org-special-block-extras--%s" colour))]
-               (if (member (intern colour) org-special-block-extras--colors)
-                   (funcall block-colouring backend description)
-                 (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
-
-(defun org-special-block-extras--latex-definitions (backend contents)
-  "Declare but do not display the CONTENTS according to the BACKEND."
-  (cl-loop for (this that) in (-partition 2 '("<p>" ""
-                                           "</p>" ""
-                                           "\\{" "{"
-                                           "\\}" "}"))
-        do (setq contents (s-replace this that contents)))
-  (format (pcase backend
-            ('html "<p style=\"display:none\">\\[%s\\]</p>")
-            (_ "%s"))
-          contents))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Parallel blocks: 𝓃parallel[NB] for n:2..5, optionally with ‘N’o ‘b’ar
-;; in-between the columns.
-;;
-;; Common case is to have three columns, and we want to avoid invoking the
-;; attribute via org, so making this.
-
-(cl-loop for cols in '("1" "2" "3" "4" "5")
-      do (cl-loop for rule in '("solid" "none")
-      do (eval (read (concat
-"(defun org-special-block-extras--" cols "parallel"
-(if (equal rule "solid") "" "NB")
-"(backend contents)"
-"(format (pcase backend"
-"(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
-"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
-"          \\\\begin{minipage}[t]{\\\\linewidth}"
-"          \\\\begin{multicols}{" cols "}"
-"          %s"
-"          \\\\end{multicols}\\\\end{minipage}\"))"
-"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
-contents)))")))))
-
+;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:3]]
 (defvar org-special-block-extras-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
 
-(defun org-special-block-extras--edcomm (backend contents)
+(org-special-block-extras--defblock remark
+      (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 "Format CONTENTS as an first-class editor comment according to BACKEND.
 
-The CONTENTS string has two optional argument switches:
-1. :ed: ⇒ To declare an editor of the comment.
-2. :replacewith: ⇒ [Nullary] The text preceding this clause
-   should be replaced by the text after it."
-  (-let* (
-           ;; Get arguments
-           ((contents₁ . (&alist 'ed))
-            (org-special-block-extras--extract-arguments contents 'ed))
+The CONTENTS string has an optional switch: If it contains a line
+with having only ‘#+replacewith:’, then the text preceding this
+clause should be replaced by the text after it; i.e., this is
+what the EDITOR (the person editing) intends and so we fromat the
+replacement instruction (to the authour) as such.
 
-           ;; Strip out any <p> tags
-           (_ (setq contents₁ (s-replace-regexp "<p>" "" contents₁)))
-           (_ (setq contents₁ (s-replace-regexp "</p>" "" contents₁)))
+In Emacs, as links, editor remarks are shown with a bold red; but
+the exported COLOR of a remark is black by default and it is not
+STRONG ---i.e., bold---. There is an optional SIGNOFF message
+that is appended to the remark.
+"
+  (-let* (;; Are we in the html backend?
+          (html? (equal backend 'html))
 
-           ;; Are we in the html backend?
-           (html? (equal backend 'html))
+          ;; fancy display style
+          (boxed (lambda (x)
+                   (if html?
+                       (concat "<span style=\"border-width:1px"
+                               ";border-style:solid;padding:5px\">"
+                               "<strong>" x "</strong></span>")
+                     (concat "\\fbox{\\bf " x "}"))))
 
-           ;; fancy display style
-           (boxed (lambda (x)
-                    (if html?
-                        (concat "<span style=\"border-width:1px"
-                                 ";border-style:solid;padding:5px\">"
-                                 "<strong>" x "</strong></span>")
-                    (concat "\\fbox{\\bf " x "}"))))
+          ;; Is this a replacement clause?
+          ((this that) (s-split "\\#\\+replacewith:" contents))
+          (replacement-clause? that) ;; There is a ‘that’
+          (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
+                             "\\underline{Replace:}"))
+          (with-keyword    (if html? "<u>With:</u>"
+                             "\\underline{With:}"))
+          (editor (format "[%s:%s" editor
+                          (if replacement-clause?
+                              replace-keyword
+                            "")))
+          (contents′ (if replacement-clause?
+                         (format "%s %s %s" this
+                                 (org-special-block-extras--org-export (funcall boxed with-keyword))
+                                 that)
+                       contents))
 
-           ;; Is this a replacement clause?
-           ((this that) (s-split ":replacewith:" contents₁))
-           (replacement-clause? that) ;; There is a ‘that’
-           (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
-                              "\\underline{Replace:}"))
-           (with-keyword    (if html? "<u>With:</u>"
-                              "\\underline{With:}"))
-           (editor (format "[%s:%s"
-                           (if (s-blank? ed) "Editor Comment" ed)
-                           (if replacement-clause?
-                               replace-keyword
-                             "")))
-           (contents₂ (if replacement-clause?
-                          (format "%s %s %s" this
-                                  (funcall boxed with-keyword)
-                                  that)
-                        contents₁))
-
-           ;; “[Editor Comment:”
-           (edcomm-begin (funcall boxed editor))
-           ;; “]”
-           (edcomm-end (funcall boxed "]")))
+          ;; “[Editor Comment:”
+          (edcomm-begin (funcall boxed editor))
+          ;; “]”
+          (edcomm-end (funcall boxed "]")))
 
     (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
     (if org-special-block-extras-hide-editor-comments
         ""
       (format (pcase backend
-                ('latex "%s %s %s")
-                (_ "<p> %s %s %s</p>"))
-              edcomm-begin contents₂ edcomm-end))))
+                ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
+                (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
+              color edcomm-begin contents′ signoff edcomm-end))))
+;; Editor Comments:3 ends here
 
+;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:5]]
 (org-link-set-parameters
  "edcomm"
   :follow (lambda (_))
@@ -415,48 +689,194 @@ The CONTENTS string has two optional argument switches:
                  (-let [(&plist :path) (cadr (org-element-context))]
                    (format "%s made this remark" (s-upcase path)))))
   :face '(:foreground "red" :weight bold))
+;; Editor Comments:5 ends here
 
-(defun org-special-block-extras--details (backend contents)
-"Format CONTENTS as a ‘folded region’ according to BACKEND.
+;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:1]]
+(org-special-block-extras--defblock details (title "Details") (title-color "green")
+  "Enclose contents in a folded up box, for HTML.
 
-CONTENTS may have a ‘:title’ argument specifying a title for
-the folded region."
-(-let* (;; Get arguments
-        ((contents′ . (&alist 'title))
-         (org-special-block-extras--extract-arguments contents 'title)))
-  (when (s-blank? title) (setq title "Details"))
-  (setq title (s-trim title))
+For LaTeX, this is just a boring, but centered, box.
+
+By default, the TITLE of such blocks is “Details”
+and its TITLE-COLOR is green.
+
+In HTML, we show folded, details, regions with a nice greenish colour.
+
+In the future ---i.e., when I have time---
+it may be prudent to expose more aspects as arguments,
+such as ‘background-color’.
+"
   (format
-   (s-collapse-whitespace ;; Remove the whitespace only in the nicely presented
-                          ;; strings below
-    (pcase backend
-      (`html "<details class=\"code-details\">
-                 <summary>
-                   <strong>
-                     <font face=\"Courier\" size=\"3\" color=\"green\"> %s
-                     </font>
-                   </strong>
-                 </summary>
-                 %s
-              </details>")
-      (`latex "\\begin{quote}
-                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]
-                   \\textbf{%s:}
-                   %s
-                 \\end{tcolorbox}
-               \\end{quote}")))
-    title contents′)))
+   (pcase backend
+     (`html "<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75% 20%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"%s\">
+                         %s
+                      </font>
+                    </strong>
+                  </summary>
+                  %s
+               </details>")
+       (`latex "\\begin{quote}
+                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
+                    %s
+                  \\end{tcolorbox}
+                \\end{quote}"))
+   title-color title contents))
+;; Folded Details ---As well as boxed text and subtle colours:1 ends here
 
+;; [[file:org-special-block-extras.org::*Boxed Text][Boxed Text:1]]
+(org-special-block-extras--defblock box (title "") (background-color nil)
+  "Enclose text in a box, possibly with a title.
+
+By default, the box's COLOR is green for HTML and red for LaTeX,
+and it has no TITLE.
+
+The HTML export uses a padded div, whereas the LaTeX export
+requires the tcolorbox pacakge.
+
+In the future, I will likely expose more arguments.
+"
+  (apply #'concat
+  (pcase backend
+    (`html `("<div style=\"padding: 1em; background-color: "
+             ,(org-special-block-extras--subtle-colors (format "%s" (or background-color "green")))
+             ";border-radius: 15px; font-size: 0.9em"
+             "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
+             "<h3>" ,title "</h3>"
+            ,contents "</div>"))
+   (`latex `("\\begin{tcolorbox}[title={" ,title "}"
+             ",colback=" ,(pp-to-string (or background-color 'red!5!white))
+             ",colframe=red!75!black, colbacktitle=yellow!50!red"
+             ",coltitle=red!25!black, fonttitle=\\bfseries,"
+             "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
+             ,contents
+             "\\end{tcolorbox}")))))
+;; Boxed Text:1 ends here
+
+;; [[file:org-special-block-extras.org::*Boxed Text][Boxed Text:2]]
+(defun org-special-block-extras--subtle-colors (c)
+  "HTML codes for common colours.
+
+Names are very rough approximates.
+
+   Translations from: https://www.december.com/html/spec/softhues.html"
+  (pcase c
+    ("teal"    "#99FFCC") ;; close to aqua
+    ("brown"   "#CCCC99") ;; close to moss
+    ("gray"    "#CCCCCC")
+    ("purple"  "#CCCCFF")
+    ("lime"    "#CCFF99") ;; brighter than ‘green’
+    ("green"   "#CCFFCC")
+    ("blue"    "#CCFFFF")
+    ("orange"  "#FFCC99")
+    ("peach"   "#FFCCCC")
+    ("pink"    "#FFCCFF")
+    ("yellow"  "#FFFF99")
+    ("custard" "#FFFFCC") ;; paler than ‘yellow’
+    (c c)
+  ))
+;; Boxed Text:2 ends here
+
+;; [[file:org-special-block-extras.org::*Parallel][Parallel:1]]
+(org-special-block-extras--defblock parallel (cols 2) (bar nil)
+  "Place ideas side-by-side, possibly with a seperator.
+
+There are COLS many columns, and they may be seperated by black
+solid vertical rules if BAR is a non-nil value.
+
+Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”
+will produce a parallel of 𝓃 many columns, possibly
+seperated by solid rules, or a “bar”.
+
+The contents of the block may contain ‘#+columnbreak:’ to request
+a columnbreak. This has no effect on HTML export since HTML
+describes how text should be formatted on a browser, which can
+dynamically shrink and grow and thus it makes no sense to have
+hard columnbreaks.
+"
+  (let ((rule (pcase backend
+               (`html  (if bar "solid" "none"))
+               (`latex (if bar 2 0))))
+        (contents′  (s-replace "#+columnbreak:"
+                               (if (equal 'html backend) "" "\\columnbreak")
+                               contents)))
+  (format (pcase backend
+   (`html "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>")
+   (`latex "\\par \\setlength{\\columnseprule}{%s pt}
+          \\begin{minipage}[t]{\\linewidth}
+          \\begin{multicols}{%s}
+          %s
+          \\end{multicols}\\end{minipage}"))
+   rule cols contents′)))
+;; Parallel:1 ends here
+
+;; [[file:org-special-block-extras.org::*Colours][Colours:2]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Load support for 20 colour custom blocks and 20 colour link types
+;; Colours:2 ends here
+
+;; [[file:org-special-block-extras.org::*Colours][Colours:3]]
+(defvar org-special-block-extras--colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(cl-loop for colour in org-special-block-extras--colors
+      do (eval (read (format
+                      "(org-special-block-extras--defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
+                        \"Show text in %s color.\"
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
+                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                     contents))" colour colour colour colour colour))))
+;; Colours:3 ends here
+
+;; [[file:org-special-block-extras.org::*Colours][Colours:5]]
+(org-special-block-extras--defblock color (color black    :face (lambda (colour)
+           (if (member (intern colour) org-special-block-extras--colors)
+               `(:foreground ,(format "%s" colour))
+             `(:height 300
+               :underline (:color "red" :style wave)
+               :overline  "red" :strike-through "red")))) nil
+  "Format text according to a given COLOR, which is black by default."
+  (format (pcase backend
+            (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+            (`html  "<span style=\"color:%s;\">%s</span>"))
+          color contents))
+;; Colours:5 ends here
+
+;; [[file:org-special-block-extras.org::*  ~latex-definitions~ for hiding LaTeX declarations in HTML][  ~latex-definitions~ for hiding LaTeX declarations in HTML:1]]
+(org-special-block-extras--defblock latex-definitions nil nil
+  "Declare but do not display the CONTENTS according to the BACKEND."
+  (format (pcase backend
+            ('html "<p style=\"display:none\">\\[%s\\]</p>")
+            (_ "%s"))
+          raw-contents))
+;;   ~latex-definitions~ for hiding LaTeX declarations in HTML:1 ends here
+
+;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:1]]
 (org-link-set-parameters
  "kbd"
   :follow (lambda (_))
   :export (lambda (label description backend)
             (format (pcase backend
                       ('html "<kbd> %s </kbd>")
-                      ('latex "\texttt{%s}")
+                      ('latex "\\texttt{%s}")
                       (_ "%s"))
                     (or description (s-replace "_" " " label)))))
+;; Nice Keystroke Renditions: kbd:C-h_h:1 ends here
 
+;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:1]]
 (defvar
  org-special-block-extras--supported-octoicons
  (-partition 2
@@ -514,7 +934,9 @@ the folded region."
 "An association list of supported OctoIcons.
 
 Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
+;;   /“Link Here!”/ & OctoIcons:1 ends here
 
+;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:2]]
 ;; Show an OctoIcon: home, link, mail, report, tag, clock
 (org-link-set-parameters
   "octoicon"
@@ -539,128 +961,75 @@ Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
                       label label (cadr (assoc 'link
                               org-special-block-extras--supported-octoicons))))
       (_ ""))))
+;;   /“Link Here!”/ & OctoIcons:2 ends here
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; The badge link types
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(org-link-set-parameters "badge"
-  :follow (lambda (path) (--> (s-split "|" path)
-                         (or (nth 3 it) path)
-                         (browse-url it)))
-  :export #'org-special-block-extras--link--badge)
-
-(defvar org-special-block-extras--link--twitter-excitement
-  "This looks super neat (•̀ᴗ•́)و:"
-  "The string prefixing the URL being shared.")
-
-(defun org-special-block-extras--link--badge
-  (label _ backend &optional social)
-  "Export a link presented as an SVG badge.
-
-The LABEL should be of the shape ‘key|value|color|url|logo’
-resulting in a badge “|key|value|” where the ‘key’
-is coloured grey and the ‘value’ is coloured ‘color’.
-
-The optional SOCIAL toggle indicates if we want an icon for
-Twitter, Reddit, Github, etc, instead of a badge.
-When SOCIAL is provided, we interpret LABEL as an atomic string.
-
-+ Only the syntax ‘badge:key|value|color|url’ is supported.
-  - ‘key’ and ‘value’ have their underscores interpreted as spaces.
-     ⇒ Underscores are interpreted as spaces;
-     ⇒ ‘__’ is interpreted as an underscore;
-     ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
-  - ‘|color|url|logo’ are optional;
-     if ‘url’ is ‘|here’ then the resulting badge behaves
-     like ‘link-here:key’.
-  - ‘color’ may be: ‘brightgreen’ or ‘success’,
-                    ‘red’         or ‘important’,
-                    ‘orange’      or ‘critical’,
-                    ‘lightgrey’   or ‘inactive’,
-                    ‘blue’        or ‘informational’,
-            or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
-+ Such links are displayed using a SVG badges
-  and so do not support the DESCRIPTION syntax
-  ‘[[link:label][description]]’.
-+ Besides the HTML BACKEND, such links are silently omitted."
-  (-let* (((lbl msg clr url logo) (s-split "|" label))
-          (_ (unless (or (and lbl msg) social)
-               (error "%s\t⇒\tBadges are at least “badge:key|value”!" label)))
-          ;; Support dashes and other symbols
-          (_ (unless social
-               (setq lbl (s-replace "-" "--" lbl)
-                     msg (s-replace "-" "--" msg))
-               (setq lbl (url-hexify-string lbl)
-                     msg (url-hexify-string msg))))
-          (img (format "<img src=\"https://img.shields.io/badge/%s-%s-%s%s\">"
-                        lbl msg clr
-                        (if logo (concat "?logo=" logo) ""))))
-    (when social
-      (-->
-          `(("reddit"            "https://www.reddit.com/r/%s")
-            ("github/followers"  "https://www.github.com/%s?tab=followers")
-            ("github/forks"      "https://www.github.com/%s/fork")
-            ("github"            "https://www.github.com/%s")
-            ("twitter/follow"    "https://twitter.com/intent/follow?screen_name=%s")
-            ("twitter/url"
-             ,(format
-               "https://twitter.com/intent/tweet?text=%s:&url=%%s"
-               (s-replace "%" "%%"
-                          (url-hexify-string
-                           org-special-block-extras--link--twitter-excitement)))
-             ,(format
-               "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
-               label)))
-        (--filter (s-starts-with? (cl-first it) social) it)
-        (car it)
-        (or it (error "Badge: Unsupported social type “%s”" social))
-        (setq url (format (cl-second it) label)
-              img (or (cl-third it)
-                      (format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
-                      social label)))))
-    (pcase backend
-        ('html (if url
-                 (if (equal url "here")
-                     (format "<a id=\"%s\" href=\"#%s\">%s</a>" lbl lbl img)
-                   (format "<a href=\"%s\">%s</a>" url img))
-               img))
-        ('latex "")
-        ;; Markdown syntax: [![image title](url to get image)](url to go to on click)
-        (_
-         (setq img (s-chop-suffix "\">" (s-chop-prefix "<img src=\"" img)))
-         (format "[![badge:%s](%s)](%s)" lbl img url)))))
-
-(cl-loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
-                             ("github/stars")
-                             ("github/watchers")
-                             ("github/followers")
-                             ("github/forks")
-                             ("twitter/follow")
-                             ("twitter/url?=url=" "tweet"))
-      for link′ = (or link (s-replace "/" "-" social))
-      do (org-link-set-parameters link′
-           :export (eval `(-cut org-special-block-extras--link--badge
-                         <> <> <> ,social))))
-
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:1]]
 (defvar org-special-block-extras--docs nil
   "An alist of (label name description) entries; our glossary.
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:1 ends here
 
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:3]]
 (defvar org-special-block-extras--docs-fallback
   (lambda (label) (list label label (documentation (intern label))))
   "The fallback method to retriving documentation or glossary entries.")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:3 ends here
 
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4]]
+(defvar org-special-block-extras--docs-libraries
+  '("documentation.org")
+  "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
+   for use with the ‘doc:𝒳’ link type.")
+
+(cl-defun org-special-block-extras-docs-load-libraries
+    (&optional (libs org-special-block-extras--docs-libraries))
+"Load user's personal documentation libraries.
+
+If no LIBS are provided, simply use those declared
+org-special-block-extras--docs-libraries.
+
+See org-special-block-extras--docs-from-libraries.
+"
+(interactive)
+(loop for lib in libs
+      do (with-temp-buffer
+           (insert-file-contents lib)
+           ;; doc only activates after an export
+           (-let [org-export-with-broken-links t] (org-html-export-as-html))
+           (kill-buffer)
+           (delete-window)
+           (setq org-special-block-extras--docs-from-libraries (-concat org-special-block-extras--docs org-special-block-extras--docs-from-libraries))
+           (setq org-special-block-extras--docs nil))))
+
+(defvar org-special-block-extras--docs-from-libraries nil
+
+  "The alist of (label name description) entries loaded from the libraries.
+
+The initial value ‘-1’ is used to indicate that no libraries have been loaded.
+The ‘doc:𝒳’ link will load the libraries, possibly setting this variable to ‘nil’,
+then make use of this variable when looking for documentation strings.
+
+Interactively call org-special-block-extras-docs-load-libraries
+to force your documentation libraries to be reloaded.
+
+See also org-special-block-extras--docs-libraries.
+")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4 ends here
+
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6]]
 (defvar org-special-block-extras--docs-GLOSSARY nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6 ends here
 
+;; [[file:org-special-block-extras.org::startup-code][startup-code]]
 (-let [name&doc
        (lambda (lbl)
-         (-let [(_ name doc) (assoc lbl org-special-block-extras--docs)]
+         ;; Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries.
+         (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))]
            ;; If there is no documentation, try the fallback.
            (unless doc
              (setq doc
@@ -684,8 +1053,23 @@ We use this listing to actually print a glossary using
        (setq name (or description name))
        (pcase backend
          (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                         ;; Preserve newlines and preserve whitespace
-                         (s-replace "  " "&emsp;" (s-replace "\n" "<br>" docs))
+                         ;; Make it look pretty!
+                         (thread-last docs
+                           (s-replace "  " "&emsp;") ; Preserve newlines
+                           (s-replace "\n" "<br>")   ; Preserve whitespace
+                           ;; Translate Org markup
+                           (s-replace-regexp "/\\(.+?\\)/" "<em>\\1</em>")
+                           (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
+                           (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
+                           (s-replace-regexp "=\\([^ ].*?\\)=" "<code>\\1</code>")
+                           (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
+                           (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
+                           ;; Spacing in math mode
+                           (s-replace-regexp "\\\\quad" "&#x2000;")
+                           (s-replace-regexp "\\\\," "&#8194;") ;; en space
+                           (s-replace-regexp "\\\\;" "&#8195;") ;; em space
+                           ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
+                           (s-replace-regexp "\\\"" "''"))
                          name))
          ;; Make the current word refer to its glosary entry;
          ;; also declare the location that the glossary should refer back to.
@@ -701,32 +1085,47 @@ We use this listing to actually print a glossary using
       (-let* (((&plist :path) (cadr (org-element-context)))
               ((name doc) (funcall ,name&doc path)))
         (format "[%s] %s :: %s" path name doc))))))
+;; startup-code ends here
 
-(defun org-special-block-extras--documentation (_ contents)
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8]]
+(org-special-block-extras--defblock documentation
+  (name (error "Documentation block: Name must be provided"))
+  (label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
 The dictionary variable is ‘org-special-block-extras--docs’.
 
-Documentation blocks are not shown upon export."
-  ;; Strip out any <p> tags
-  ;; Musa: Make these three lines part of the core utility?
-  (setq contents (substring-no-properties contents))
-  (setq contents (s-replace-regexp "<p>" "" contents))
-  (setq contents (s-replace-regexp "</p>" "" contents))
-  (setq contents (s-trim contents))
-  (cl-loop for entry in (cdr (s-split ":name:" contents))
-        do   (-let [(contents′ . (&alist 'label 'name))
-                    (org-special-block-extras--extract-arguments
-                     (s-concat ":name:" entry) 'label 'name)]
-               (unless (and label name)
-                 (error (message-box (concat "#+begin_documentation: "
-                           "Ensure the entry has a :name followed by a :label "
-                            "\n\n " contents))))
-               (add-to-list 'org-special-block-extras--docs
-                            (mapcar #'s-trim (list label name contents′)))))
-  ;; The special block is not shown upon export.
-  "")
+A documentation entry may have its LABEL, its primary identifier,
+be:
+1. Omitted
+2. Given as a single symbol
+3. Given as a many aliases '(lbl₀ lbl₁ … lblₙ)
 
+The third case is for when there is no canonical label to refer to
+an entry, or it is convenient to use multiple labels for the same
+entry.
+
+In all of the above cases, two additional labels are included:
+The entry name with spaces replaced by underscores, and again but
+all lower case.
+
+Documentation blocks are not shown upon export;
+unless SHOW is non-nil, in which case they are shown
+using the ‘box’ block, with the provided COLOR passed to it.
+
+In the futture, it may be nice to have an option to render tooltips.
+That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun’."
+  (unless (consp label) (setq label (list label)))
+  (push (s-replace " " "_" name) label)
+  (push (downcase (s-replace " " "_" name)) label)
+  (loop for l in label
+        do  (add-to-list 'org-special-block-extras--docs
+                         (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
+  ;; Should the special block show something upon export?
+  ""); (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) "")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8 ends here
+
+;; [[file:org-special-block-extras.org::*Wait, what about the LaTeX?][Wait, what about the LaTeX?:1]]
 (let ((whatdo (lambda (x)
                 (message
                           (concat "The value of variable  %s  will be placed "
@@ -769,9 +1168,12 @@ Documentation blocks are not shown upon export."
                              collect (format fstr name label
                                              (when doc (funcall preserve doc))
                                              label)))))))))
+;; Wait, what about the LaTeX?:1 ends here
 
+;; [[file:org-special-block-extras.org::*Lisp Postamble][Lisp Postamble:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'org-special-block-extras)
 
 ;;; org-special-block-extras.el ends here
+;; Lisp Postamble:1 ends here
