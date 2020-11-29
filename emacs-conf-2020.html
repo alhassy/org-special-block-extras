@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Powering-up Special Blocks</title>
+<meta name="author" content="((link (:type https :path //alhassy.github.io/ :format bracket :raw-link https://alhassy.github.io/ :application nil :search-option nil :begin 1 :end 46 :contents-begin 31 :contents-end 44 :post-blank 0 :parent #0) Musa Al-hassy))"/>
+<meta name="description" content="A modular interface for special blocks and links: defblock"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/sky.css" id="theme"/>
+
+<link rel="stylesheet" href="./local.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/npm/reveal.js/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+
+        <style>
+        /* From: https://endlessparentheses.com/public/css/endless.css */
+        /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+        kbd
+        {
+          -moz-border-radius: 6px;
+          -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          -webkit-border-radius: 6px;
+          -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          background-color: #f7f7f7;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          color: #333;
+          display: inline-block;
+          font-family: 'Droid Sans Mono', monospace;
+          font-size: 80%;
+          font-weight: normal;
+          line-height: inherit;
+          margin: 0 .1em;
+          padding: .08em .4em;
+          text-shadow: 0 1px 0 #fff;
+          word-spacing: -4px;
+
+          box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+        }
+        </style>
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css"/>
+
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" />
+
+        <script type="text/javascript">
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape('%3Cscript src="https://code.jquery.com/jquery-1.10.0.min.js"%3E%3C/script%3E'));
+            }
+        </script>
+
+         <script type="text/javascript"            src="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js"></script>
+
+          <script>
+                 $(document).ready(function() {
+                     $('.tooltip').tooltipster({
+                         theme: 'tooltipster-punk',
+                         contentAsHTML: true,
+                         animation: 'grow',
+                         delay: [100,500],
+                         // trigger: 'click'
+                         trigger: 'custom',
+                         triggerOpen: {
+                             mouseenter: true
+                         },
+                         triggerClose: {
+                             originClick: true,
+                             scroll: true
+                         }
+         });
+                 });
+             </script>
+
+        <style>
+           abbr {color: red;}
+
+           .tooltip { border-bottom: 1px dotted #000;
+                      color:red;
+                      text-decoration: none;}
+        </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h2>Powering-up Special Blocks</h2>
+<h3 style="color: green">A <em>modular</em> interface <br> for special blocks and links</h3>
+<br><br>
+<h4 style="color: rose"><emph>Emacs-Conf-2020</emph></h4>
+<br>
+<h><a href="https://alhassy.github.io/">Musa Al-hassy</a></h3>
+<br>
+<font size="1">
+<a href="?print-pdf&showNotes=true">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>
+<br>
+
+<small>
+<center>
+<a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-23%2F26%2F27%2F28-green?logo=gnu-emacs"></a>
+<a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.4-blue?logo=gnu"></a>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-1.9-informational?logo=Gnu-Emacs"></a>
+<br>
+<a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
+<a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
+<br>
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green"></a>
+<a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a>
+<br>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+</center> </small>
+
+</section>
+
+<style>
+
+.reveal .slide-number {
+  font-size: 34pt;
+  color: #ff2D00; }
+
+.reveal .slides {
+  height: 100%;
+  width: 100% !important ;
+  top: 0;
+  margin-top: 0;
+}
+
+.reveal .slides>section {
+  min-height: 90%;
+  min-width:  90%;
+}
+
+.reveal .slides>section>section {
+  min-height: 100%;
+}
+
+.print-pdf .reveal .slides > section.present, .print-pdf .reveal .slides > section > section.present {
+  min-height: 770px !important;
+  position: relative !important;
+}
+
+.reveal table th, .reveal table td {
+    text-align: left;
+    border: none;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+}
+
+.reveal ul {
+    line-height: 200%
+}
+
+.reveal ol {
+    line-height: 200%
+}
+
+.reveal dl {
+    line-height: 200%
+}
+
+.reveal p {
+    line-height: 200%
+}
+
+.reveal pre {
+    font-size: 1em;
+    box-shadow:none;
+}
+
+</style>
+
+<section>
+<section id="slide-Overview">
+<h2 id="Overview"><a href="#Overview">Overview</a></h2>
+<p class="fragment (appear)">
+With a bit of Lisp &#x2014;and a lot of time&#x2014; we obtain
+</p>
+
+<small>
+
+<ol>
+<li class="fragment appear"><p>
+a uniform, and <b>practical</b>, syntax for both <i>special blocks</i> and <i>link types</i>
+</p>
+<br></li>
+<li class="fragment appear"><p>
+reusing the Org <code>src</code> interface &#x2014;including arguments for blocks
+and <b>global header arguments</b> for links
+</p>
+<br></li>
+<li class="fragment appear"><p>
+<b>“write once, generate many”</b>: Write markup in Org and have
+it exported to other backends!
+</p>
+<br></li>
+
+</ol>
+
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         (•̀ᴗ•́) و
+                      </font>
+                    </strong>
+                  </summary>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Idea</th>
+<th scope="col" class="org-left">Documentation</th>
+<th scope="col" class="org-left">Link only?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Colours</td>
+<td class="org-left"><abbr class="tooltip" title="Declare but do not display the CONTENTS according to the BACKEND.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key)">latex-definitions</abbr>, <abbr class="tooltip" title="Format text according to a given COLOR, which is black by default.<br><br>(fn BACKEND RAW-CONTENTS &optional COLOR &rest ## &key)">color</abbr></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Parallel</td>
+<td class="org-left"><abbr class="tooltip" title="Place ideas side-by-side, possibly with a seperator.<br><br>There are COLS many columns, and they may be seperated by black<br>solid vertical rules if BAR is a non-nil value.<br><br>Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”<br>will produce a parallel of 𝓃 many columns, possibly<br>seperated by solid rules, or a “bar”.<br><br>The contents of the block may contain ‘#+columnbreak:’ to request<br>a columnbreak. This has no effect on HTML export since HTML<br>describes how text should be formatted on a browser, which can<br>dynamically shrink and grow and thus it makes no sense to have<br>hard columnbreaks.<br><br>(fn BACKEND RAW-CONTENTS &optional COLS &rest ## &key (BAR nil))">parallel</abbr></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Editorial Remarks</td>
+<td class="org-left"><abbr class="tooltip" title="Format CONTENTS as an first-class editor comment according to BACKEND.<br><br>The CONTENTS string has an optional switch: If it contains a line<br>with having only ‘#+replacewith:’, then the text preceding this<br>clause should be replaced by the text after it; i.e., this is<br>what the EDITOR (the person editing) intends and so we fromat the<br>replacement instruction (to the authour) as such.<br><br>In Emacs, as links, editor remarks are shown with a bold red; but<br>the exported COLOR of a remark is black by default and it is not<br>STRONG ---i.e., bold---. There is an optional SIGNOFF message<br>that is appended to the remark.<br><br>(fn BACKEND RAW-CONTENTS &optional EDITOR &rest ## &key (COLOR ''black'') (SIGNOFF '''') (STRONG nil))">remark</abbr></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Folded Details</td>
+<td class="org-left"><abbr class="tooltip" title="Enclose contents in a folded up box, for HTML.<br><br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such blocks is “Details”<br>and its TITLE-COLOR is green.<br><br>In HTML, we show folded, details, regions with a nice greenish colour.<br><br>In the future ---i.e., when I have time---<br>it may be prudent to expose more aspects as arguments,<br>such as ‘background-color’.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (TITLE-COLOR ''green''))">details</abbr> ,  <abbr class="tooltip" title="Enclose text in a box, possibly with a title.<br><br>By default, the box’s COLOR is green for HTML and red for LaTeX,<br>and it has no TITLE.<br><br>The HTML export uses a padded div, whereas the LaTeX export<br>requires the tcolorbox pacakge.<br><br>In the future, I will likely expose more arguments.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (BACKGROUND-COLOR nil))">box</abbr></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Keystrokes</td>
+<td class="org-left"><kbd> C-c C-e </kbd></td>
+<td class="org-left"><code>kbd</code></td>
+</tr>
+
+<tr>
+<td class="org-left">OctoIcons &amp; Link Here</td>
+<td class="org-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4 4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6 6h2v2H7V8zm0-5h2v4H7V3z"></path></svg> <a class="anchor" aria-hidden="true" id="Overview" href="#Overview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a></td>
+<td class="org-left"><code>octoicon</code>, <code>link-here</code></td>
+</tr>
+
+<tr>
+<td class="org-left">Documentation-Glossary</td>
+<td class="org-left"><abbr class="tooltip" title="Register the dictionary entries in CONTENTS to the dictionary variable.<br><br>The dictionary variable is ‘org-special-block-extras--docs’.<br><br>A documentation entry may have its LABEL, its primary identifier,<br>be:<br>1. Omitted<br>2. Given as a single symbol<br>3. Given as a many aliases ’(lbl₀ lbl₁ … lblₙ)<br><br>The third case is for when there is no canonical label to refer to<br>an entry, or it is convenient to use multiple labels for the same<br>entry.<br><br>In all of the above cases, two additional labels are included:<br>The entry name with spaces replaced by underscores, and again but<br>all lower case.<br><br>Documentation blocks are not shown upon export;<br>unless SHOW is non-nil, in which case they are shown<br>using the ‘box’ block, with the provided COLOR passed to it.<br><br>In the futture, it may be nice to have an option to render tooltips.<br>That’d require the ‘doc:𝒳’ link construction be refactored via a ‘defun’.<br><br>(fn BACKEND RAW-CONTENTS &optional NAME &rest ## &key (LABEL nil) (SHOW nil) (COLOR ''green''))">documentation</abbr></td>
+<td class="org-left"><code>doc</code></td>
+</tr>
+</tbody>
+</table>
+
+
+</details>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Incidentally</h3>
+<p>
+😂 The setup joyously works for org-reveal 😹
+</p>
+
+<p>
+🥰 🍭 🦄 😆
+</p>
+
+</div>
+
+
+</small>
+</section>
+</section>
+<section>
+<section id="slide-Once-upon-a-time">
+<h2 id="Once-upon-a-time"><a href="#Once-upon-a-time">Once upon a time</a></h2>
+<p class="fragment (appear)">
+Three friends ---
+
+<span style="color:green;">
+
+Amin
+
+</span>
+
+,
+
+<span style="color:red;">
+
+Sacha
+
+</span>
+
+, and
+
+<span style="color:blue;">
+
+Corwin
+
+</span>
+
+&#x2014; were organising a conference
+</p>
+
+<p class="fragment (appear)">
+&#x2026; <b>
+
+<span style="color:orange;">
+
+EmacsConf2020
+
+</span>
+
+!</b>
+</p>
+
+<br>
+<p class="fragment (appear)">
+Sacha wrote an Org file and wanted some <b>feedback</b>
+</p>
+
+<p class="fragment (appear)">
+After all: <i>Sacha 💓 Org</i>
+</p>
+
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         Source for this slide!
+                      </font>
+                    </strong>
+                  </summary>
+<div class="org-src-container">
+
+<pre  class="fragment (appear)"><code trim><span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
+Three friends ---<span style="color: #00ff00;"><a href="green:Amin">green:Amin</a></span>, <span style="color: #ff0000;"><a href="red:Sacha">red:Sacha</a></span>, and <span style="color: #0000ff;"><a href="blue:Corwin">blue:Corwin</a></span>--- were organising a conference
+
+<span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
+... <span style="color: #ffa500; font-weight: bold;"><a href="orange:EmacsConf2020">orange:EmacsConf2020</a></span><span style="font-weight: bold;">!</span>
+
+<span style="color: #35a69c;">#+html: &lt;br&gt;</span>
+<span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
+Sacha wrote an Org file and wanted <span style="text-decoration: underline;">some</span> <span style="font-weight: bold;">feedback</span>
+
+<span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
+After all: <span style="font-style: italic;">Sacha &#128147; Org</span>
+</code></pre>
+</div>
+
+
+</details>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Amin-️-LaTeX">
+<h3 id="Amin-️-LaTeX"><a href="#Amin-️-LaTeX">Amin ❤️ LaTeX</a></h3>
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p>
+Amin likes to export to PDF, so he wrote top-level
+remarks using LaTeX
+</p>
+
+</div>
+
+
+<div class="org-src-container">
+
+<pre  class="fragment (appear)"><code trim><span style="color: #35a69c;">#+latex: {\color{green} \fbox{[Amin:}}</span>
+  Please change &#8230;
+<span style="color: #35a69c;">#+latex:  \fbox{]}</span>
+</code></pre>
+</div>
+
+
+<p style="color: green;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Amin:</strong></span>
+<p>
+Please change …
+</p>
+
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Sacha-PDF">
+<h3 id="Sacha-PDF"><a href="#Sacha-PDF">Sacha 💔 PDF</a></h3>
+<div style="padding: 1em; background-color: #FFCCFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+But Sacha likes to look at the resulting
+
+<span style="color:green;">
+
+HTML
+
+</span>
+
+! … not PDFs!
+</p>
+
+</div>
+
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+So, she <i>may</i>
+
+<span style="color:red;">
+
+not
+
+</span>
+
+ see his top-level feedback
+and she <i>may</i>
+
+<span style="color:red;">
+
+forgot
+
+</span>
+
+ to look at the Org source
+</p>
+
+</div>
+
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+Happily, she thinks things are
+
+<span style="color:red;">
+
+all
+
+</span>
+
+
+
+<span style="color:red;">
+
+good
+
+</span>
+
+ &#x2026;!
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Amin-HTML">
+<h3 id="Amin-HTML"><a href="#Amin-HTML">Amin 💢 HTML</a></h3>
+<p class="fragment (appear)">
+Sacha may write top-level feedback …
+</p>
+
+
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<div class="org-src-container">
+
+<pre  class="fragment (appear)"><code trim><span style="color: #35a69c;">#+html: &lt;strong&gt; [Sacha Speculates: &lt;/strong&gt;</span>
+
+I think that maybe we could try &#8230;
+
+<span style="color: #35a69c;">#+html: &lt;strong&gt; End of speculations] &lt;/strong&gt;</span>
+</code></pre>
+</div>
+
+</div>
+
+
+
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Sacha Speculates:</strong></span>
+<p>
+I think that maybe we could try …
+</p>
+
+<strong> End of speculations</strong> <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+Now Amin exports to PDF; take a quick glance and
+not notice anything standing out; thinks
+
+<span style="color:red;">
+
+ <i>it's all OK</i>
+
+</span>
+
+
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-">
+<h3 id=""><a href="#">💥 😧 💭  📖</a></h3>
+<p class="fragment (appear)">
+Corwin
+
+<span style="color:cyan;">
+
+actually
+
+</span>
+
+ reads an exported result, and is worried at what he sees.
+</p>
+
+<br>
+<p class="fragment (appear)">
+Amin &amp; Sacha agree to read up and make <b>
+
+<span style="color:green;">
+
+a uniform Org interface that
+exports to both HTML &amp; PDF
+
+</span>
+
+</b>
+</p>
+
+<br>
+<p class="fragment (appear)">
+They use Org <i>“special blocks”</i>!
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-How-to-set-up-special-blocks">
+<h3 id="How-to-set-up-special-blocks"><a href="#How-to-set-up-special-blocks">How to set up special blocks?</a></h3>
+<p class="fragment (appear)">
+They agree to figure out the necessary
+
+<span style="color:magenta;">
+
+Lisp
+
+</span>
+
+,
+</p>
+
+<p class="fragment (appear)">
+
+
+<span style="color:cyan;">
+
+hooks
+
+</span>
+
+,
+
+<span style="color:blue;">
+
+advice
+
+</span>
+
+, and
+
+<span style="color:violet;">
+
+macros
+
+</span>
+
+ needed to form a
+</p>
+
+<p class="fragment (appear)">
+special custom block that outputs <b>both</b> HTML and PDF, <br>
+
+<span style="color:green;">
+
+but
+
+</span>
+
+
+uses Org as interface.
+</p>
+
+<p class="fragment (appear)">
+So much work, but it's worth it!
+</p>
+
+<p class="fragment (appear)">
+
+
+<span style="color:red;">
+
+&#x2026;!?
+
+</span>
+
+
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-Corwin-Terse">
+<h3 id="Corwin-Terse"><a href="#Corwin-Terse">Corwin  🥶 🤔 🥊 <i>Terse!</i></a></h3>
+<p class="fragment (appear)">
+Corwin likes to provide
+
+<span style="color:blue;">
+
+terse
+
+</span>
+
+, <i>right to the point</i>, feedback
+and thinks blocks are overkill.
+</p>
+
+<p class="fragment (appear)">
+The team decides to incorporate an
+
+<span style="color:red;">
+
+Org-link
+
+</span>
+
+
+
+<span style="color:red;">
+
+type
+
+</span>
+
+
+</p>
+
+<p class="fragment (appear)">
+and
+
+<span style="color:green;">
+
+&#x2014;to avoid duplication of code!---
+
+</span>
+
+ they have the link
+type reuse the core code of the block type.
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-How-to-setup-Org-links">
+<h3 id="How-to-setup-Org-links"><a href="#How-to-setup-Org-links">How to setup Org links?</a></h3>
+<p class="fragment (appear)">
+They have their
+
+<span style="color:pink;">
+
+own interface
+
+</span>
+
+&#x2026;!
+</p>
+
+<p class="fragment (appear)">
+
+
+<span style="color:gray;">
+
+Need
+
+</span>
+
+
+
+
+<span style="color:violet;">
+
+to
+
+</span>
+
+
+
+
+<span style="color:magenta;">
+
+learn
+
+</span>
+
+
+a
+
+
+<span style="color:red;">
+
+little
+
+</span>
+
+
+
+
+<span style="color:blue;">
+
+about
+
+</span>
+
+
+</p>
+<p class="fragment (appear)">
+<b>
+
+<span style="color:teal;">
+
+font
+
+</span>
+
+</b>,
+
+
+<span style="color:orange;">
+
+follow
+
+</span>
+
+
+
+
+<span style="color:cyan;">
+
+links
+
+</span>
+
+,
+
+
+<span style="color:purple;">
+
+export
+
+</span>
+
+
+
+
+<span style="color:pink;">
+
+handles
+
+</span>
+
+.
+</p>
+
+<p class="fragment (appear)">
+Eek
+
+
+<span style="color:green;">
+
+&#x2026;!
+
+</span>
+
+
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-The-friends-learn-a-lot">
+<h3 id="The-friends-learn-a-lot"><a href="#The-friends-learn-a-lot">The friends learn a lot!</a></h3>
+<ul>
+<li class="fragment appear"><abbr class="tooltip" title="Define NAME as a function.<br>The definition is (lambda ARGLIST [DOCSTRING] BODY...).<br>See also the function ‘interactive’.<br>DECL is a declaration, optional, of the form (declare DECLS...) where<br>DECLS is a list of elements of the form (PROP . VALUES).&emsp;These are<br>interpreted according to ‘defun-declarations-alist’.<br>The return value is undefined.<br><br>(fn NAME ARGLIST &optional DOCSTRING DECL &rest BODY)">defun</abbr>, for making
+
+<span style="color:red;">
+
+functions
+
+</span>
+
+ to format their blocks!</li>
+<li class="fragment appear"><abbr class="tooltip" title="Like ‘add-function’ but for the function named SYMBOL.<br>Contrary to ‘add-function’, this will properly handle the cases where SYMBOL<br>is defined as a macro, alias, command, ...<br><br>(fn SYMBOL WHERE FUNCTION &optional PROPS)">advice-add</abbr>, for advising Emacs utilities
+to
+
+<span style="color:blue;">
+
+handle
+
+</span>
+
+ their new special blocks</li>
+<li class="fragment appear"><abbr class="tooltip" title="Bind variables according to VARLIST then eval BODY.<br><br>VARLIST is a list of lists of the form (PATTERN SOURCE).&emsp;Each<br>PATTERN is matched against the SOURCE ''structurally''.&emsp;SOURCE<br>is only evaluated once for each PATTERN.&emsp;Each PATTERN is matched<br>recursively, and can therefore contain sub-patterns which are<br>matched against corresponding sub-expressions of SOURCE.<br><br>All the SOURCEs are evalled before any symbols are<br>bound (i.e. ''in parallel'').<br><br>If VARLIST only contains one (PATTERN SOURCE) element, you can<br>optionally specify it using a vector and discarding the<br>outer-most parens.&emsp;Thus<br><br>&emsp;(-let ((PATTERN SOURCE)) ..)<br><br>becomes<br><br>&emsp;(-let [PATTERN SOURCE] ..).<br><br>‘-let’ uses a convention of not binding places (symbols) starting<br>with _ whenever it’s possible.&emsp;You can use this to skip over<br>entries you don’t care about.&emsp;However, this is not <strong>always</strong><br>possible (as a result of implementation) and these symbols might<br>get bound to undefined values.<br><br>Following is the overview of supported patterns.&emsp;Remember that<br>patterns can be matched recursively, so every a, b, aK in the<br>following can be a matching construct and not necessarily a<br>symbol<em>variable.<br><br>Symbol:<br><br>&emsp;a - bind the SOURCE to A.&emsp;This is just like regular ‘let’.<br><br>Conses and lists:<br><br>&emsp;(a) - bind ‘car’ of cons</em>list to A<br><br>&emsp;(a . b) - bind car of cons to A and ‘cdr’ to B<br><br>&emsp;(a b) - bind car of list to A and ‘cadr’ to B<br><br>&emsp;(a1 a2 a3&emsp;...) - bind 0th car of list to A1, 1st to A2, 2nd to A3 ...<br><br>&emsp;(a1 a2 a3 ... aN . rest) - as above, but bind the Nth cdr to REST.<br><br>Vectors:<br><br>&emsp;[a] - bind 0th element of a non-list sequence to A (works with<br>&emsp;&emsp;&emsp;&emsp;vectors, strings, bit arrays...)<br><br>&emsp;[a1 a2 a3 ...] - bind 0th element of non-list sequence to A0, 1st to<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; A1, 2nd to A2, ...<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; If the PATTERN is shorter than SOURCE, the values at<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; places not in PATTERN are ignored.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; If the PATTERN is longer than SOURCE, an ‘error’ is<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; thrown.<br><br>&emsp;[a1 a2 a3 ... &rest rest] - as above, but bind the rest of<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;the sequence to REST.&emsp;This is<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;conceptually the same as improper list<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;matching (a1 a2 ... aN . rest)<br><br>Key<em>value stores:<br><br>&emsp;(&plist key0 a0 ... keyN aN) - bind value mapped by keyK in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; SOURCE plist to aK.&emsp;If the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; value is not found, aK is nil.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Uses ‘plist-get’ to fetch values.<br><br>&emsp;(&alist key0 a0 ... keyN aN) - bind value mapped by keyK in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; SOURCE alist to aK.&emsp;If the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; value is not found, aK is nil.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; Uses ‘assoc’ to fetch values.<br><br>&emsp;(&hash key0 a0 ... keyN aN) - bind value mapped by keyK in the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;SOURCE hash table to aK.&emsp;If the<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;value is not found, aK is nil.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;Uses ‘gethash’ to fetch values.<br><br>Further, special keyword &keys supports ''inline'' matching of<br>plist-like key-value pairs, similarly to &keys keyword of<br>‘cl-defun’.<br><br>&emsp;(a1 a2 ... aN &keys key1 b1 ... keyN bK)<br><br>This binds N values from the list to a1 ... aN, then interprets<br>the cdr as a plist (see key</em>value matching above).<br><br>A shorthand notation for kv-destructuring exists which allows the<br>patterns be optionally left out and derived from the key name in<br>the following fashion:<br><br>- a key :foo is converted into ‘foo’ pattern,<br>- a key ’bar is converted into ‘bar’ pattern,<br>- a key ''baz'' is converted into ‘baz’ pattern.<br><br>That is, the entire value under the key is bound to the derived<br>variable without any further destructuring.<br><br>This is possible only when the form following the key is not a<br>valid pattern (i.e. not a symbol, a cons cell or a vector).<br>Otherwise the matching proceeds as usual and in case of an<br>invalid spec fails with an error.<br><br>Thus the patterns are normalized as follows:<br><br>&emsp; ;; derive all the missing patterns<br>&emsp; (&plist :foo ’bar ''baz'') <code>> (&plist :foo foo ’bar bar ''baz'' baz)<br><br>&emsp; ;; we can specify some but not others<br>&emsp; (&plist :foo ’bar explicit-bar) </code>> (&plist :foo foo ’bar explicit-bar)<br><br>&emsp; ;; nothing happens, we store :foo in x<br>&emsp; (&plist :foo x) <code>> (&plist :foo x)<br><br>&emsp; ;; nothing happens, we match recursively<br>&emsp; (&plist :foo (a b c)) </code>> (&plist :foo (a b c))<br><br>You can name the source using the syntax SYMBOL &as PATTERN.<br>This syntax works with lists (proper or improper), vectors and<br>all types of maps.<br><br>&emsp;(list &as a b c) (list 1 2 3)<br><br>binds A to 1, B to 2, C to 3 and LIST to (1 2 3).<br><br>Similarly:<br><br>&emsp;(bounds &as beg . end) (cons 1 2)<br><br>binds BEG to 1, END to 2 and BOUNDS to (1 . 2).<br><br>&emsp;(items &as first . rest) (list 1 2 3)<br><br>binds FIRST to 1, REST to (2 3) and ITEMS to (1 2 3)<br><br>&emsp;[vect &as _ b c] [1 2 3]<br><br>binds B to 2, C to 3 and VECT to [1 2 3] (_ avoids binding as usual).<br><br>&emsp;(plist &as &plist :b b) (list :a 1 :b 2 :c 3)<br><br>binds B to 2 and PLIST to (:a 1 :b 2 :c 3).&emsp;Same for &alist and &hash.<br><br>This is especially useful when we want to capture the result of a<br>computation and destructure at the same time.&emsp;Consider the<br>form (function-returning-complex-structure) returning a list of<br>two vectors with two items each.&emsp;We want to capture this entire<br>result and pass it to another computation, but at the same time<br>we want to get the second item from each vector.&emsp;We can achieve<br>it with pattern<br><br>&emsp;(result &as [_ a] [_ b]) (function-returning-complex-structure)<br><br>Note: Clojure programmers may know this feature as the '':as<br>binding''.&emsp;The difference is that we put the &as at the front<br>because we need to support improper list binding.<br><br>(fn VARLIST &rest BODY)">-let</abbr>, pattern matching /
+
+<span style="color:olive;">
+
+“destructuring lets”
+
+</span></li>
+<li class="fragment appear"><abbr class="tooltip" title="Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.<br><br>Example usage:<br><br>&emsp;&emsp;(-let [(contents′ . (&alist ’k₀ … ’kₙ))<br>&emsp;&emsp;&emsp;&emsp;&emsp; (…extract-arguments contents ’k₀ … ’kₙ)]<br>&emsp;&emsp;&emsp;&emsp;&emsp;body)<br><br>Within ‘body’, each ‘kᵢ’ refers to the ‘value’ of argument<br>‘:kᵢ:’ in the CONTENTS text and ‘contents′’ is CONTENTS<br>with all ‘:kᵢ:’ lines stripped out.<br><br>+ If ‘:k:’ is not an argument in CONTENTS, then it is assigned value NIL.<br>+ If ‘:k:’ is an argument in CONTENTS but is not given a value in CONTENTS,<br>&emsp;then it has value the empty string.">extract-arguments</abbr>, an <b>
+
+<span style="color:red;">
+
+ad-hoc
+
+</span>
+
+</b> mechanism to
+
+<span style="color:cyan;">
+
+simulate
+
+</span>
+
+ arguments with special
+blocks</li>
+
+</ul>
+
+<p class="fragment (appear)">
+
+
+<span style="color:green;">
+
+Of
+
+</span>
+
+
+
+<span style="color:green;">
+
+course
+
+</span>
+
+ to actually write the formatting function they need <abbr class="tooltip" title="The Common Lisp ‘loop’ macro.<br>Valid clauses include:<br>&emsp;For clauses:<br>&emsp;&emsp;for VAR from<em>upfrom</em>downfrom EXPR1 to<em>upto</em>downto<em>above</em>below EXPR2 [by EXPR3]<br>&emsp;&emsp;for VAR = EXPR1 then EXPR2<br>&emsp;&emsp;for VAR in<em>on</em>in-ref LIST [by FUNC]<br>&emsp;&emsp;for VAR across<em>across-ref ARRAY<br>&emsp;&emsp;for VAR being:<br>&emsp;&emsp;&emsp;the elements of</em>of-ref SEQUENCE [using (index VAR2)]<br>&emsp;&emsp;&emsp;the symbols [of OBARRAY]<br>&emsp;&emsp;&emsp;the hash-keys<em>hash-values of HASH-TABLE [using (hash-values</em>hash-keys V2)]<br>&emsp;&emsp;&emsp;the key-codes<em>key-bindings</em>key-seqs of KEYMAP [using (key-bindings VAR2)]<br>&emsp;&emsp;&emsp;the overlays<em>intervals [of BUFFER] [from POS1] [to POS2]<br>&emsp;&emsp;&emsp;the frames</em>buffers<br>&emsp;&emsp;&emsp;the windows [of FRAME]<br>&emsp;Iteration clauses:<br>&emsp;&emsp;repeat INTEGER<br>&emsp;&emsp;while<em>until</em>always<em>never</em>thereis CONDITION<br>&emsp;Accumulation clauses:<br>&emsp;&emsp;collect<em>append</em>nconc<em>concat</em>vconcat<em>count</em>sum<em>maximize</em>minimize FORM<br>&emsp;&emsp;&emsp;[into VAR]<br>&emsp;Miscellaneous clauses:<br>&emsp;&emsp;with VAR = INIT<br>&emsp;&emsp;if<em>when</em>unless COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...]<br>&emsp;&emsp;named NAME<br>&emsp;&emsp;initially/finally [do] EXPRS...<br>&emsp;&emsp;do EXPRS...<br>&emsp;&emsp;[finally] return EXPR<br><br>For more details, see Info node ‘(cl)Loop Facility’.<br><br>(fn CLAUSE...)">loop</abbr>,
+<abbr class="tooltip" title="Replaces OLD with NEW in S.">s-replace</abbr>, <abbr class="tooltip" title="Apply FUNCTION to each element of SEQUENCE, and make a list of the results.<br>The result is a list just as long as SEQUENCE.<br>SEQUENCE may be a list, a vector, a bool-vector, or a string.<br><br>(fn FUNCTION SEQUENCE)">mapcar</abbr>, <abbr class="tooltip" title="Eval args until one of them yields non-nil, then return that value.<br>The remaining args are not evalled at all.<br>If all args return nil, return nil.<br><br>(fn CONDITIONS...)">or</abbr>, <abbr class="tooltip" title="When the given expression matches the string, this function returns a list<br>of the whole matching string and a string for each matched subexpressions.<br>If it did not match the returned value is an empty list (nil).<br><br>When START is non-nil the search will start at that index.">s-match</abbr>, and much more!
+</p>
+
+<small>
+<p class="fragment (appear)">
+
+
+<span style="color:pink;">
+
+Such a pain!
+
+</span>
+
+
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="fragment (appear)">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">⇒ It's probably not worth it!</td>
+</tr>
+
+<tr>
+<td class="org-left">“Just do enough to make it work!”</td>
+</tr>
+
+<tr>
+<td class="org-left">“We're in a rush!”</td>
+</tr>
+</tbody>
+</table>
+</small>
+
+</section>
+</section>
+<section>
+<section id="slide-Goals">
+<h2 id="Goals"><a href="#Goals">Goals</a></h2>
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>“Squad goals”</h3>
+<p>
+A <b>
+
+<span style="color:green;">
+
+modular
+
+</span>
+
+</b> and <b>
+
+<span style="color:blue;">
+
+unified
+
+</span>
+
+</b> interface for producing new special blocks and
+link types, <b>
+
+<span style="color:olive;">
+
+simultaneously
+
+</span>
+
+</b>, with roughly the same interface as a
+<abbr class="tooltip" title="Define NAME as a function.<br>The definition is (lambda ARGLIST [DOCSTRING] BODY...).<br>See also the function ‘interactive’.<br>DECL is a declaration, optional, of the form (declare DECLS...) where<br>DECLS is a list of elements of the form (PROP . VALUES).&emsp;These are<br>interpreted according to ‘defun-declarations-alist’.<br>The return value is undefined.<br><br>(fn NAME ARGLIST &optional DOCSTRING DECL &rest BODY)">defun</abbr>!
+</p>
+
+<br>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="fragment (appear)">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">⇒ <abbr class="tooltip" title="Declare a new special block, and link, in the style of DEFUN.<br><br>A full featured example is at the end of this documentation string.<br><br>This is an anaphoric macro that provides export support for<br>special blocks <strong>and</strong> links named NAME. Just as an Org-mode src-block<br>consumes as main argument the language for the src block,<br>our special blocks too consume a MAIN-ARG; it may be a symbol<br>or a cons-list consisting of a symbolic name (with which<br>to refer to the main argument in the definition of the block)<br>followed by a default value, then, optionally, any information<br>for a one-time setup of the associated link type.<br><br>The main arg may be a sequence of symbols separated by spaces,<br>and a few punctuation with the exception of comma ‘,’ since<br>it is a special Lisp operator. In doubt, enclose the main arg<br>in quotes.<br><br>Then, just as Org-mode src blocks consume key-value pairs, our<br>special blocks consume a number of KWDS, which is a list of the<br>form (key₀ value₀ … keyₙ valueₙ).<br><br>After that is a DOCSTRING, a familar feature of DEFUN.<br>The docstring is displayed as part of the tooltip<br>for the produced link type.<br><br>Finally, the BODY is a (sequence of) Lisp forms ---no progn needed---<br>that may refer to the names BACKEND and CONTENTS<br>which refer to the current export backend and the contents<br>of the special block ---or the description clause of a link.<br><br>CONTENTS refers to an Org-mode parsed string; i.e.,<br>Org-markup is acknowledged.<br><br>In, hopefully, rare circumstances, one may refer<br>to RAW-CONTENTS to look at the fully unparsed contents.<br><br>----------------------------------------------------------------------<br><br>The relationship between links and special blocks:<br><br>&emsp;[ [type:label][description]]<br>≈<br>&emsp; #+begin_type label<br>&emsp;&emsp;description<br>&emsp; #+end_type<br><br>----------------------------------------------------------------------<br><br>Example declaration, with all possible features shown:<br><br>&emsp; ;; We can use variable values when defining new blocks<br>&emsp; (setq angry-red ’(:foreground ''red'' :weight bold))<br><br>&emsp; (defblock remark<br>&emsp;&emsp; (editor ''Editor Remark'' :face angry-red) (color ''red'' signoff '''')<br>&emsp;&emsp; ''Top level (HTML & LaTeX) editorial remarks; in Emacs they’re angry red.''<br>&emsp;&emsp; (format (if (equal backend ’html)<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''<strong style=\''color: %s;\''>⟦%s:&emsp;%s%s⟧</strong>''<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; ''{\color{%s}\bfseries %s:&emsp;%s%s}'')<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; color editor contents signoff))<br><br>&emsp; ;; I don’t want to change the definition, but I’d like to have<br>&emsp; ;; the following as personalised defaults for the “remark” block.<br>&emsp; ;; OR, I’d like to set this for links, which do not have argument options.<br>&emsp; (defblock-header-args remark :main-arg ''Jasim Jameson'' :signoff ''( Aim for success! )'')<br><br>Three example uses:<br><br>&emsp;&emsp;;; ⟨0⟩ As a special blocks with arguments given.<br>&emsp;&emsp;#+begin_remark Bobbert Barakallah :signoff ''Thank-you for pointing this out!'' :color green<br>&emsp;&emsp;I was trying to explain that <em>{large (n × (n + 1) over 2}</em> is always an integer.<br>&emsp;&emsp;#+end_remark<br><br>&emsp;&emsp;;; ⟨1⟩ As a terse link, using default values for the args.<br>&emsp;&emsp;;;&emsp;&emsp; Notice that Org-mode formatting is recoqgnised even in links.<br>&emsp;&emsp;[ [remark:Jasim Jameson][Why are you taking about “<em>mathsf{even}</em>” here?]]<br><br>&emsp;&emsp;;; ⟨2⟩ So terse that no editor name is provided.<br>&emsp;&emsp;[ [remark:][Please improve your transition sentences.]]<br><br>&emsp;&emsp;;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF<br>&emsp;&emsp;;; catenated as well as the default red color.<br><br>(fn NAME MAIN-ARG KWDS &optional (DOCSTRING '''') &rest BODY)">defblock</abbr> ⇐</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Solving-the-friend's-trilemma">
+<h3 id="Solving-the-friend's-trilemma"><a href="#Solving-the-friend's-trilemma">Solving the friend's trilemma</a></h3>
+<div class="org-src-container">
+
+<pre  class="src src-emacs-lisp"><code trim>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
+  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
+            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
+            <span style="color: #2aa198;">"{\\color{%s}\\bfseries %s: %s}"</span>)
+          color who contents))
+</code></pre>
+</div>
+
+<p class="fragment (appear)">
+Huh?
+</p>
+
+<p class="fragment (appear)">
+There are 3 main parts …
+</p>
+
+</section>
+</section>
+<section>
+<section id="slide-Line-1-Declare-a-block">
+<h3 id="Line-1-Declare-a-block"><a href="#Line-1-Declare-a-block">Line 1: <i>Declare</i> a block</a></h3>
+<div class="org-src-container">
+
+<pre  class="src src-emacs-lisp"><code trim><span id="coderef-here1" class="coderef-off"><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)</span>
+<span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
+<span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
+<span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
+<span class="linenr">5: </span>            <span style="color: #2aa198;">"{\\color{%s}\\bfseries %s: %s}"</span>)
+<span class="linenr">6: </span>          color who contents))
+</code></pre>
+</div>
+
+
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p>
+<b>Line <a href="#/slide-coderef-here1" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-here1');" onmouseout="CodeHighlightOff(this, 'coderef-here1');">1</a></b>: <b>
+
+<span style="color:olive;">
+
+def
+
+</span>
+
+-ine a new
+
+<span style="color:olive;">
+
+block
+
+</span>
+
+</b> named <b>
+
+<span style="color:green;">
+
+feedback
+
+</span>
+
+</b> whose
+   main argument is <b>
+
+<span style="color:blue;">
+
+who
+
+</span>
+
+</b> wrote the feedback,
+   and optionally a <b>
+
+<span style="color:red;">
+
+color
+
+</span>
+
+</b> &#x2014;which is red by default.
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Line-2-Document-the-block">
+<h3 id="Line-2-Document-the-block"><a href="#Line-2-Document-the-block">Line 2: <i>Document</i> the block</a></h3>
+<div class="org-src-container">
+
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<span id="coderef-here2" class="coderef-off"><span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span></span>
+<span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
+<span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
+<span class="linenr">5: </span>            <span style="color: #2aa198;">"{\\color{%s}\\bfseries %s: %s}"</span>)
+<span class="linenr">6: </span>          color who contents))
+</code></pre>
+</div>
+
+
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p>
+<b>Line <a href="#/slide-coderef-here2" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-here2');" onmouseout="CodeHighlightOff(this, 'coderef-here2');">2</a></b>:
+Just as when you write a function, <b>
+
+<span style="color:green;">
+
+you
+
+</span>
+
+</b> write what it does.
+</p>
+
+<p class="fragment (appear)">
+Moreover, this documentation is used as a
+
+<span style="color:olive;">
+
+tooltip
+
+</span>
+
+
+for the Org link form of
+
+<span style="color:magenta;">
+
+feedback
+
+</span>
+
+ &#x2014;for
+
+<span style="color:blue;">
+
+Corwin
+
+</span>
+
+&#x2014;
+<i>within Emacs!</i>
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Lines-3-6-Do-the-thing">
+<h3 id="Lines-3-6-Do-the-thing"><a href="#Lines-3-6-Do-the-thing">Lines 3-6: <i>Do the thing!</i></a></h3>
+<div class="org-src-container">
+
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
+<span id="coderef-here3" class="coderef-off"><span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)</span>
+<span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
+<span class="linenr">5: </span>            <span style="color: #2aa198;">"{\\color{%s}\\bfseries %s: %s}"</span>)
+<span class="linenr">6: </span>          color who contents))
+</code></pre>
+</div>
+
+
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p>
+<b>Line <a href="#/slide-coderef-here3" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-here3');" onmouseout="CodeHighlightOff(this, 'coderef-here3');">3</a></b>: Depending on whether we're exporting
+to HTML &#x2014;for
+
+<span style="color:red;">
+
+Sacha
+
+</span>
+
+&#x2014; or to PDF &#x2014;for
+
+<span style="color:green;">
+
+Amin
+
+</span>
+
+&#x2014;
+we use HTML divs or LaTeX macros.
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-Anaphoric">
+<h3 id="Anaphoric"><a href="#orge97be60"><i>Anaphoric?</i></a></h3>
+<div class="org-src-container">
+
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
+<span id="coderef-anaB" class="coderef-off"><span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)</span>
+<span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
+<span class="linenr">5: </span>            <span style="color: #2aa198;">"{\\color{%s}\\bfseries %s: %s}"</span>)
+<span id="coderef-anaC" class="coderef-off"><span class="linenr">6: </span>          color who contents))</span>
+</code></pre>
+</div>
+
+
+<div style="padding: 1em; background-color: #FFFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p>
+Lines <a href="#/slide-coderef-anaB" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-anaB');" onmouseout="CodeHighlightOff(this, 'coderef-anaB');">3</a> and  <a href="#/slide-coderef-anaC" class="coderef" onmouseover="CodeHighlightOn(this, 'coderef-anaC');" onmouseout="CodeHighlightOff(this, 'coderef-anaC');">6</a>
+let the user refer to the current export <b>
+
+<span style="color:olive;">
+
+backend
+
+</span>
+
+</b>
+and to the <b>
+
+<span style="color:olive;">
+
+contents
+
+</span>
+
+</b> of the special block / link.
+</p>
+
+</div>
+
+
+</section>
+</section>
+<section>
+<section id="slide-How-do-the-feedback">
+<h3 id="How-do-the-feedback"><a href="#orge97be60"><i>How do the feedback?</i></a></h3>
+<div style="padding: 1em; background-color: #FFCCFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+<b>Sacha 😍 Org/HTML</b>
+</p>
+
+
+<div style="column-rule-style: solid;column-count: 2;">
+<div class="org-src-container">
+
+<pre  class="fragment (appear)"><code trim><span style="background-color: #f7edd0;">#+begin_feedback Sacha Speculates</span>
+I think we should do &#8230;
+<span style="background-color: #f7edd0;">#+end_feedback</span>
+</code></pre>
+</div>
+
+<hr>
+
+
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Sacha Speculates:</strong></span>
+<p>
+I think we should do …
+</p>
+
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+<b>Amin 😻 Org/PDF</b>
+</p>
+
+<div style="column-rule-style: solid;column-count: 2;">
+<div class="org-src-container">
+
+<pre  class="fragment (appear)"><code trim><span style="background-color: #f7edd0;">#+begin_feedback Amin :color green</span>
+I think we should do &#8230;
+<span style="background-color: #f7edd0;">#+end_feedback</span>
+</code></pre>
+</div>
+
+<hr>
+
+<p style="color: green;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Amin:</strong></span>
+<p>
+I think we should do …
+</p>
+
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
+<p class="fragment (appear)">
+<b>Corwin 💌 Org/Terse</b>
+</p>
+
+<div style="column-rule-style: solid;column-count: 2;">
+<p class="fragment (appear)">
+<code>[[feedback:Corwin][Guys, let's wrap up already!]]</code>
+</p>
+
+<hr>
+<p>
+
+
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Corwin:</strong></span>
+
+Guys, let's wrap up already!
+
+  <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+
+</p>
+
+</div>
+
+
+</div>
+
+</section>
+</section>
+<section>
+<section id="slide-More-Blocks">
+<h2 id="More-Blocks"><a href="#More-Blocks">More Blocks!</a></h2>
+<p>
+Using a few lines of Lisp …
+</p>
+
+<small>
+<ul>
+<li class="fragment appear"><p>
+<abbr class="tooltip" title="Perform the given LIST of substitutions on the text.<br>The LIST is a comma separated list of ‘to’ separated symbols.<br>In a link, no quotes are needed.<br><br>(fn BACKEND RAW-CONTENTS &optional LIST &rest ## &key)">translate</abbr> in the export
+</p>
+
+<p class="fragment (appear)">
+… everyone speaks different languages!
+</p>
+
+<p class="fragment (appear)">
+… or suggest a rewrite, without altering the other person's
+text
+</p></li>
+
+<li class="fragment appear"><p>
+write text in <abbr class="tooltip" title="Place ideas side-by-side, possibly with a seperator.<br><br>There are COLS many columns, and they may be seperated by black<br>solid vertical rules if BAR is a non-nil value.<br><br>Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”<br>will produce a parallel of 𝓃 many columns, possibly<br>seperated by solid rules, or a “bar”.<br><br>The contents of the block may contain ‘#+columnbreak:’ to request<br>a columnbreak. This has no effect on HTML export since HTML<br>describes how text should be formatted on a browser, which can<br>dynamically shrink and grow and thus it makes no sense to have<br>hard columnbreaks.<br><br>(fn BACKEND RAW-CONTENTS &optional COLS &rest ## &key (BAR nil))">parallel</abbr> columns
+</p>
+
+<p>
+… to save on vertical whitespace
+</p></li>
+
+<li class="fragment appear">hide away technical <abbr class="tooltip" title="Enclose contents in a folded up box, for HTML.<br><br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such blocks is “Details”<br>and its TITLE-COLOR is green.<br><br>In HTML, we show folded, details, regions with a nice greenish colour.<br><br>In the future ---i.e., when I have time---<br>it may be prudent to expose more aspects as arguments,<br>such as ‘background-color’.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (TITLE-COLOR ''green''))">details</abbr> for the interested reader only</li>
+
+</ul>
+
+</small>
+
+<p class="fragment (appear)">
+Finally,
+<b>
+
+<span style="color:blue;">
+
+blocks compose:
+
+</span>
+
+</b>
+<b>
+
+<span style="color:green;">
+
+They're building blocks for new and better ideas!
+
+</span>
+
+</b>
+</p>
+
+<p class="fragment (appear)">
+<i>More details and examples at</i>
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" class="fragment (appear)">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left"><a href="https://alhassy.github.io/org-special-block-extras">https://alhassy.github.io/org-special-block-extras</a></td>
+</tr>
+</tbody>
+</table>
+
+</section>
+</section>
+<section>
+<section id="slide-Bye">
+<h2 id="Bye"><a href="#Bye">Bye!</a></h2>
+<p>
+<i>Thanks for listening in!</i>
+</p>
+
+<small>
+<ul>
+<li><p>
+The <b>
+
+<span style="color:olive;">
+
+org-special-block-extras
+
+</span>
+
+</b> Library:
+</p>
+
+<p>
+<a href="https://alhassy.github.io/org-special-block-extras">https://alhassy.github.io/org-special-block-extras</a>
+</p>
+
+<p>
+… has examples, tutorial, and is a <i>literate program</i>! (•̀ᴗ•́)و
+</p></li>
+
+<li><p>
+<b>
+
+<span style="color:green;">
+
+A 5-page PDF covering ELisp fundamentals
+
+</span>
+
+</b>:
+</p>
+
+<p>
+<a href="https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf">https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf</a>
+</p></li>
+
+<li><p>
+
+
+<span style="color:violet;">
+
+These slides
+
+</span>
+
+:
+</p>
+
+<p>
+<a href="https://alhassy.github.io/org-special-block-extras/emacs-conf-2020">https://alhassy.github.io/org-special-block-extras/emacs-conf-2020</a>
+</p></li>
+
+</ul>
+</small>
+
+<p>
+<img src="https://img.shields.io/badge/thanks-for_reading-nil">
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+</p>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,659 @@
+  #+TITLE: Powering-up Special Blocks
+#+DESCRIPTION: A modular interface for special blocks and links: defblock
+
+#+AUTHOR: [[https://alhassy.github.io/][Musa Al-hassy]]
+#+EMAIL: alhassy@gmail.com
+#+OPTIONS: html-postamble:nil
+#+PROPERTY: header-args:agda2 :tangle aim-2020.agda
+
+# +TITLE: @@html:<div style="color:green; font-size: 70px">@@Unbundling   on   the   fly   and   mechanically   obtaining   termtypes   from   theories@@html:</div>@@
+#+begin_src emacs-lisp :exports none
+(make-local-variable 'org-reveal-title-slide)
+(setq org-reveal-title-slide "<h2>%t</h2>
+<h3 style=\"color: green\">A <em>modular</em> interface <br> for special blocks and links</h3>
+<br><br>
+<h4 style=\"color: rose\"><emph>Emacs-Conf-2020</emph></h4>
+<br>
+<h>%a</h3>
+<br>
+<font size=\"1\">
+<a href=\"?print-pdf&showNotes=true\">
+⟪ Flattened View ; Press <code>?</code> for Help ⟫
+</a>
+</font>
+<br>
+
+<small>
+<center>
+<a href=\"https://www.gnu.org/software/emacs\"><img src=\"https://img.shields.io/badge/Emacs-23%%2F26%%2F27%%2F28-green?logo=gnu-emacs\"></a>
+<a href=\"https://orgmode.org\"><img src=\"https://img.shields.io/badge/Org-9.4-blue?logo=gnu\"></a>
+<a href=\"https://github.com/alhassy/org-special-block-extras\"><img src=\"https://img.shields.io/badge/org--special--block--extras-1.9-informational?logo=Gnu-Emacs\"></a>
+<br>
+<a href=\"https://melpa.org/#/org-special-block-extras\"><img alt=\"MELPA\" src=\"https://melpa.org/packages/org-special-block-extras-badge.svg\"/></a>
+<a href=\"https://www.gnu.org/licenses/gpl-3.0.en.html\"><img src=\"https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs\"></a>
+<a href=\"https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like\"><img src=\"https://img.shields.io/badge/docs-literate-success?logo=read-the-docs\"></a>
+<br>
+<a href=\"https://twitter.com/intent/tweet?text=This%%20looks%%20super%%20neat%%20%%28%%E2%%80%%A2%%CC%%80%%E1%%B4%%97%%E2%%80%%A2%%CC%%81%%29%%D9%%88%%3A:&url=https://github.com/alhassy/org-special-block-extras\"><img src=\"https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras\"></a>
+<a href=\"https://github.com/alhassy/org-special-block-extras/issues\"><img src=\"https://img.shields.io/badge/contributions-welcome-green\"></a>
+<a href=\"https://alhassy.github.io/\"><img src=\"https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds\"></a>
+<br>
+<a href=\"https://www.buymeacoffee.com/alhassy\"><img src=\"https://img.shields.io/badge/-buy_me_a%%C2%%A0coffee-gray?logo=buy-me-a-coffee\"></a>
+</center> </small>
+")
+#+end_src
+
+#+OPTIONS: timestamp:nil
+#+OPTIONS: toc:nil d:nil
+
+#+OPTIONS: reveal_center:t reveal_progress:t reveal_history:t reveal_control:t
+#+OPTIONS: reveal_rolling_links:t reveal_keyboard:t reveal_overview:t num:nil
+# OPTIONS: reveal_width:1200 reveal_height:800
+#+OPTIONS: reveal_height:800
+
+#+REVEAL_MARGIN: 0.1
+#+REVEAL_MIN_SCALE: 0.5
+#+REVEAL_MAX_SCALE: 2.5
+
+# Available transitions are: default|cube|page|concave|zoom|linear|fade|none.
+#+REVEAL_TRANS: fade
+# Available transitions are: default(black)|white|league|sky|beige|simple|serif|blood|night|moon|solarized
+#+REVEAL_THEME: sky
+# REVEAL_THEME: blood
+
+#+REVEAL_HLEVEL: 2
+# REVEAL_HEAD_PREAMBLE: <meta name="description" content="Org-Reveal Introduction.">
+#+REVEAL_POSTAMBLE:
+#+REVEAL_PLUGINS: (markdown notes)
+#+REVEAL_EXTRA_CSS: ./local.css
+#
+# See here for examples of how fragments look
+# https://revealjs.com/#/fragments
+#
+# Here for what themes look like
+# https://revealjs.com/#/themes
+
+#+MACRO: myfrag  #+ATTR_REVEAL: :frag (appear)
+
+#+MACRO: begin-columns  #+REVEAL_HTML: <div style="width:50%;float:left">
+#+MACRO: break-columns  #+REVEAL_HTML: </div> <div style="width:50%;float: left">
+#+MACRO: end-columns #+REVEAL_HTML: </div>
+
+# Place item in a 1×1 table then center the table.
+# This works nicely for preformatted code whose indentation is important.
+#
+#+MACRO: begin-center #+REVEAL_HTML: <center><table width="50%" border="0""><tr><td>
+#+MACRO: end-center  #+REVEAL_HTML: </td><tr></table></center>
+
+* css :ignore:
+  :PROPERTIES:
+  :CUSTOM_ID: css
+  :END:
+
+# For the most part, I “view page source” to inspect what div or whatever it is I want
+# to alter, then I lookup the css to do so and that gives me the following ^_^
+
+# Bigger & redish (ff2d00) page numbers; max vertical and  horizontal size
+# Also reasonable ?print-pdf url extension ^_^
+#+BEGIN_EXPORT html
+<style>
+
+.reveal .slide-number {
+  font-size: 34pt;
+  color: #ff2D00; }
+
+.reveal .slides {
+  height: 100%;
+  width: 100% !important ;
+  top: 0;
+  margin-top: 0;
+}
+
+.reveal .slides>section {
+  min-height: 90%;
+  min-width:  90%;
+}
+
+.reveal .slides>section>section {
+  min-height: 100%;
+}
+
+.print-pdf .reveal .slides > section.present, .print-pdf .reveal .slides > section > section.present {
+  min-height: 770px !important;
+  position: relative !important;
+}
+
+.reveal table th, .reveal table td {
+    text-align: left;
+    border: none;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+}
+#+END_EXPORT
+# Last one above is so that tables have no border; c.f. {{{begin-center}}}
+# border:none ⇒ no bottom, top, inner borders
+# border-left/right transparent ⇒ no “edge” borders
+
+# Increase vertical spacing between reveal's unnumbered & ordered listings; also definition listings, “p”aragraphs, and “pre”formatted code blocks.
+# Also the preformatted code blocks needn't have a border.
+#+BEGIN_EXPORT html
+.reveal ul {
+    line-height: 200%
+}
+
+.reveal ol {
+    line-height: 200%
+}
+
+.reveal dl {
+    line-height: 200%
+}
+
+.reveal p {
+    line-height: 200%
+}
+
+.reveal pre {
+    font-size: 1em;
+    box-shadow:none;
+}
+
+</style>
+#+END_EXPORT
+
+#
+# !important everywhere forces my suggestions.
+#
+
+* Overview
+  :PROPERTIES:
+  :CUSTOM_ID: Overview
+  :END:
+#+ATTR_REVEAL: :frag (appear)
+With a bit of Lisp ---and a lot of time--- we obtain
+
+#+html: <small>
+
+#+ATTR_REVEAL: :frag (appear)
+1. a uniform, and *practical*, syntax for both /special blocks/ and /link types/
+      #+html: <br>
+2. reusing the Org ~src~ interface ---including arguments for blocks
+   and *global header arguments* for links
+   #+html: <br>
+3. *“write once, generate many”*: Write markup in Org and have
+   it exported to other backends!
+      #+html: <br>
+
+#+begin_details (•̀ᴗ•́)و
+| Idea                   | Documentation                   | Link only?          |
+|------------------------+---------------------------------+---------------------|
+| Colours                | [[doc:org-special-block-extras--latex-definitions][latex-definitions]], [[doc:org-special-block-extras--color][color]]        |                     |
+| Parallel               | [[doc:org-special-block-extras--parallel][parallel]]                        |                     |
+| Editorial Remarks      | [[doc:org-special-block-extras--remark][remark]]                          |                     |
+| Folded Details         | [[doc:org-special-block-extras--details][details]] ,  [[doc:org-special-block-extras--box][box]]                  |                     |
+| Keystrokes             | kbd:C-c_C-e                     | ~kbd~                 |
+| OctoIcons & Link Here  | octoicon:report link-here:Overview      | ~octoicon~, ~link-here~ |
+| Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]                   | ~doc~                 |
+#+end_details
+#+begin_box Incidentally
+😂 The setup joyously works for org-reveal 😹
+
+🥰 🍭 🦄 😆
+#+end_box
+
+#+html: </small>
+* Once upon a time
+  :PROPERTIES:
+  :CUSTOM_ID: Once-upon-a-time
+  :END:
+
+#+ATTR_REVEAL: :frag (appear)
+Three friends ---green:Amin, red:Sacha, and blue:Corwin--- were organising a conference
+
+#+ATTR_REVEAL: :frag (appear)
+... *orange:EmacsConf2020!*
+
+#+html: <br>
+#+ATTR_REVEAL: :frag (appear)
+Sacha wrote an Org file and wanted some *feedback*
+
+#+ATTR_REVEAL: :frag (appear)
+After all: /Sacha 💓 Org/
+
+#+begin_details Source for this slide!
+#+ATTR_REVEAL: :frag (appear)
+#+begin_src org
+#+ATTR_REVEAL: :frag (appear)
+Three friends ---green:Amin, red:Sacha, and blue:Corwin--- were organising a conference
+
+,#+ATTR_REVEAL: :frag (appear)
+... *orange:EmacsConf2020!*
+
+,#+html: <br>
+,#+ATTR_REVEAL: :frag (appear)
+Sacha wrote an Org file and wanted some *feedback*
+
+,#+ATTR_REVEAL: :frag (appear)
+After all: /Sacha 💓 Org/
+#+end_src
+#+end_details
+
+** Amin ❤️ LaTeX
+   :PROPERTIES:
+   :CUSTOM_ID: Amin-️-LaTeX
+   :END:
+
+#+begin_box
+Amin likes to export to PDF, so he wrote top-level
+remarks using LaTeX
+#+end_box
+
+#+ATTR_REVEAL: :frag (appear)
+#+begin_src org
+,#+latex: {\color{green} \fbox{[Amin:}}
+  Please change …
+,#+latex:  \fbox{]}
+#+end_src
+
+#+begin_remark Amin :color green
+Please change …
+#+end_remark
+
+** Sacha 💔 PDF
+   :PROPERTIES:
+   :CUSTOM_ID: Sacha-PDF
+   :END:
+
+#+begin_box :background-color pink
+#+ATTR_REVEAL: :frag (appear)
+But Sacha likes to look at the resulting green:HTML! … not PDFs!
+#+end_box
+
+#+begin_box :background-color blue
+#+ATTR_REVEAL: :frag (appear)
+So, she /may/ red:not see his top-level feedback
+and she /may/ red:forgot to look at the Org source
+#+end_box
+
+#+begin_box :background-color green
+#+ATTR_REVEAL: :frag (appear)
+Happily, she thinks things are red:all red:good ...!
+#+end_box
+
+** Amin 💢 HTML
+   :PROPERTIES:
+   :CUSTOM_ID: Amin-HTML
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+Sacha may write top-level feedback …
+
+#+begin_box :background-color custard
+#+ATTR_REVEAL: :frag (appear)
+#+begin_src org
+,#+html: <strong> [Sacha Speculates: </strong>
+
+I think that maybe we could try …
+
+,#+html: <strong> End of speculations] </strong>
+#+end_src
+#+end_box
+
+#+begin_remark Sacha Speculates :signoff "<strong> End of speculations</strong>"
+I think that maybe we could try …
+#+end_remark
+
+#+begin_box :background-color green
+#+ATTR_REVEAL: :frag (appear)
+Now Amin exports to PDF; take a quick glance and
+not notice anything standing out; thinks [[red:][ /it's all OK/]]
+#+end_box
+
+**   💥 😧 💭  📖
+   :PROPERTIES:
+   :CUSTOM_ID:
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+Corwin cyan:actually reads an exported result, and is worried at what he sees.
+
+#+html: <br>
+#+ATTR_REVEAL: :frag (appear)
+Amin & Sacha agree to read up and make *[[green:][a uniform Org interface that
+exports to both HTML & PDF]]*
+
+#+html: <br>
+#+ATTR_REVEAL: :frag (appear)
+They use Org /“special blocks”/!
+
+** How to set up special blocks?
+   :PROPERTIES:
+   :CUSTOM_ID: How-to-set-up-special-blocks
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+They agree to figure out the necessary magenta:Lisp,
+
+#+ATTR_REVEAL: :frag (appear)
+cyan:hooks, blue:advice, and violet:macros needed to form a
+
+#+ATTR_REVEAL: :frag (appear)
+special custom block that outputs *both* HTML and PDF, @@html:<br>@@ green:but
+uses Org as interface.
+
+#+ATTR_REVEAL: :frag (appear)
+So much work, but it's worth it!
+
+#+ATTR_REVEAL: :frag (appear)
+[[red:][...!?]]
+
+** Corwin  🥶 🤔 🥊 /Terse!/
+   :PROPERTIES:
+   :CUSTOM_ID: Corwin-Terse
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+Corwin likes to provide blue:terse, /right to the point/, feedback
+and thinks blocks are overkill.
+
+#+ATTR_REVEAL: :frag (appear)
+The team decides to incorporate an red:Org-link red:type
+
+#+ATTR_REVEAL: :frag (appear)
+and [[color:green][---to avoid duplication of code!---]] they have the link
+type reuse the core code of the block type.
+
+** How to setup Org links?
+   :PROPERTIES:
+   :CUSTOM_ID: How-to-setup-Org-links
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+They have their [[pink:][own interface]]...!
+
+#+ATTR_REVEAL: :frag (appear)
+gray:Need
+violet:to
+magenta:learn
+a
+red:little
+blue:about
+#+ATTR_REVEAL: :frag (appear)
+*teal:font*,
+orange:follow
+cyan:links,
+purple:export
+pink:handles.
+
+#+ATTR_REVEAL: :frag (appear)
+Eek
+[[green:][...!]]
+
+** The friends learn a lot!
+   :PROPERTIES:
+   :CUSTOM_ID: The-friends-learn-a-lot
+   :END:
+
+#+ATTR_REVEAL: :frag (appear)
+- doc:defun, for making red:functions to format their blocks!
+- doc:advice-add, for advising Emacs utilities
+  to blue:handle their new special blocks
+- doc:-let, pattern matching / [[olive:][“destructuring lets”]]
+- [[doc:org-special-block-extras--extract-arguments][extract-arguments]], an *red:ad-hoc* mechanism to cyan:simulate arguments with special
+  blocks
+
+#+ATTR_REVEAL: :frag (appear)
+green:Of green:course to actually write the formatting function they need doc:loop,
+doc:s-replace, doc:mapcar, doc:or, doc:s-match, and much more!
+
+#+html: <small>
+#+ATTR_REVEAL: :frag (appear)
+[[pink:][Such a pain!]]
+#+ATTR_REVEAL: :frag (appear)
+| ⇒ It's probably not worth it!     |
+| “Just do enough to make it work!” |
+| “We're in a rush!”                |
+#+html: </small>
+
+* Goals
+  :PROPERTIES:
+  :CUSTOM_ID: Goals
+  :END:
+
+#+begin_box “Squad goals” :background-color custard
+A *green:modular* and *blue:unified* interface for producing new special blocks and
+link types, *olive:simultaneously*, with roughly the same interface as a
+doc:defun!
+
+#+html: <br>
+#+ATTR_REVEAL: :frag (appear)
+| ⇒ [[doc:org-special-block-extras--defblock][defblock]] ⇐ |
+#+end_box
+
+** Solving the friend's trilemma
+   :PROPERTIES:
+   :CUSTOM_ID: Solving-the-friend's-trilemma
+   :END:
+
+# (org-special-block-extras-short-names)
+#+begin_src emacs-lisp
+(defblock feedback (who) (color "red")
+  "Top level (HTML & LaTeX) constructive feedback."
+  (format (if (equal backend 'html)
+            "<strong style=\"color: %s;\">⟦%s: %s⟧</strong>"
+            "{\\color{%s}\\bfseries %s: %s}")
+          color who contents))
+#+end_src
+
+#+ATTR_REVEAL: :frag (appear)
+Huh?
+
+#+ATTR_REVEAL: :frag (appear)
+There are 3 main parts …
+
+** Line 1: /Declare/ a block
+   :PROPERTIES:
+   :CUSTOM_ID: Line-1-Declare-a-block
+   :END:
+
+#+begin_src emacs-lisp -r -n
+(defblock feedback (who) (color "red")    (ref:here1)
+  "Top level (HTML & LaTeX) constructive feedback."
+  (format (if (equal backend 'html)
+            "<strong style=\"color: %s;\">⟦%s: %s⟧</strong>"
+            "{\\color{%s}\\bfseries %s: %s}")
+          color who contents))
+#+end_src
+
+#+begin_box :background-color custard
+*Line [[(here1)]]*: *[[olive:][def]]-ine a new olive:block* named *green:feedback* whose
+   main argument is *blue:who* wrote the feedback,
+   and optionally a *red:color* ---which is red by default.
+#+end_box
+
+** Line 2: /Document/ the block
+   :PROPERTIES:
+   :CUSTOM_ID: Line-2-Document-the-block
+   :END:
+
+#+begin_src emacs-lisp -r -n
+(defblock feedback (who) (color "red")
+  "Top level (HTML & LaTeX) constructive feedback." (ref:here2)
+  (format (if (equal backend 'html)
+            "<strong style=\"color: %s;\">⟦%s: %s⟧</strong>"
+            "{\\color{%s}\\bfseries %s: %s}")
+          color who contents))
+#+end_src
+
+#+begin_box :background-color custard
+*Line [[(here2)]]*:
+Just as when you write a function, *green:you* write what it does.
+
+#+ATTR_REVEAL: :frag (appear)
+Moreover, this documentation is used as a olive:tooltip
+for the Org link form of magenta:feedback ---for blue:Corwin---
+/within Emacs!/
+#+end_box
+
+** Lines 3-6: /Do the thing!/
+   :PROPERTIES:
+   :CUSTOM_ID: Lines-3-6-Do-the-thing
+   :END:
+
+#+begin_src emacs-lisp -r -n
+(defblock feedback (who) (color "red")
+  "Top level (HTML & LaTeX) constructive feedback."
+  (format (if (equal backend 'html)  (ref:here3)
+            "<strong style=\"color: %s;\">⟦%s: %s⟧</strong>"
+            "{\\color{%s}\\bfseries %s: %s}")
+          color who contents))
+#+end_src
+
+#+begin_box :background-color custard
+*Line [[(here3)]]*: Depending on whether we're exporting
+to HTML ---for red:Sacha--- or to PDF ---for green:Amin---
+we use HTML divs or LaTeX macros.
+#+end_box
+
+** /Anaphoric?/
+   :PROPERTIES:
+   :CUSTOM_ID: Anaphoric
+   :END:
+
+#+begin_src emacs-lisp -r -n
+(defblock feedback (who) (color "red")
+  "Top level (HTML & LaTeX) constructive feedback."
+  (format (if (equal backend 'html)  (ref:anaB)
+            "<strong style=\"color: %s;\">⟦%s: %s⟧</strong>"
+            "{\\color{%s}\\bfseries %s: %s}")
+          color who contents))  (ref:anaC)
+#+end_src
+
+#+begin_box :background-color custard
+Lines [[(anaB)]] and  [[(anaC)]]
+let the user refer to the current export *olive:backend*
+and to the *olive:contents* of the special block / link.
+#+end_box
+
+** /How do the feedback?/
+   :PROPERTIES:
+   :CUSTOM_ID: How-do-the-feedback
+   :END:
+
+
+#+begin_box :background-color pink
+#+ATTR_REVEAL: :frag (appear)
+*Sacha 😍 Org/HTML*
+
+#+begin_parallel 2 :bar yes
+#+ATTR_REVEAL: :frag (appear)
+#+begin_src org
+,#+begin_feedback Sacha Speculates
+I think we should do …
+,#+end_feedback
+#+end_src
+
+#+html: <hr>
+
+#+begin_remark Sacha Speculates
+I think we should do …
+#+end_remark
+
+#+end_parallel
+
+#+end_box
+
+#+begin_box :background-color green
+#+ATTR_REVEAL: :frag (appear)
+*Amin 😻 Org/PDF*
+#+begin_parallel 2 :bar yes
+#+ATTR_REVEAL: :frag (appear)
+#+begin_src org
+,#+begin_feedback Amin :color green
+I think we should do …
+,#+end_feedback
+#+end_src
+
+#+html: <hr>
+#+begin_remark Amin :color green
+I think we should do …
+#+end_remark
+#+end_parallel
+#+end_box
+
+#+begin_box :background-color blue
+#+ATTR_REVEAL: :frag (appear)
+*Corwin 💌 Org/Terse*
+#+begin_parallel 2 :bar yes
+#+ATTR_REVEAL: :frag (appear)
+~[[feedback:Corwin][Guys, let's wrap up already!]]~
+
+#+html: <hr>
+[[remark:Corwin][Guys, let's wrap up already!]]
+#+end_parallel
+#+end_box
+* More Blocks!
+  :PROPERTIES:
+  :CUSTOM_ID: More-Blocks
+  :END:
+
+Using a few lines of Lisp …
+
+#+html: <small>
+#+ATTR_REVEAL: :frag (appear)
+- [[doc:org-special-block-extras--rename][translate]] in the export
+
+  #+ATTR_REVEAL: :frag (appear)
+  … everyone speaks different languages!
+
+  #+ATTR_REVEAL: :frag (appear)
+  … or suggest a rewrite, without altering the other person's
+  text
+
+- write text in [[doc:org-special-block-extras--parallel][parallel]] columns
+
+  … to save on vertical whitespace
+
+- hide away technical [[doc:org-special-block-extras--details][details]] for the interested reader only
+
+#+html: </small>
+
+#+ATTR_REVEAL: :frag (appear)
+Finally,
+*[[blue:][blocks compose:]]*
+*[[green:][They're building blocks for new and better ideas!]]*
+
+#+ATTR_REVEAL: :frag (appear)
+/More details and examples at/
+#+ATTR_REVEAL: :frag (appear)
+| https://alhassy.github.io/org-special-block-extras |
+
+* Bye!
+  :PROPERTIES:
+  :CUSTOM_ID: Bye
+  :END:
+
+/Thanks for listening in!/
+
+#+html:<small>
+- The *olive:org-special-block-extras* Library:
+
+  https://alhassy.github.io/org-special-block-extras
+
+  … has examples, tutorial, and is a /literate program/! (•̀ᴗ•́)و
+
+- *[[green:][A 5-page PDF covering ELisp fundamentals]]*:
+
+  https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf
+
+- [[violet:][These slides]]:
+
+    https://alhassy.github.io/org-special-block-extras/emacs-conf-2020
+#+html:</small>
+
+#+begin_export html
+<p>
+<img src="https://img.shields.io/badge/thanks-for_reading-nil">
+<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+</p>
+#+end_export
