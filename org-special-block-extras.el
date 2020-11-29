@@ -877,9 +877,8 @@ hard columnbreaks.
   :follow (lambda (_))
   :export (lambda (label description backend)
             (format (pcase backend
-                      ('html "<kbd> %s </kbd>")
                       ('latex "\\texttt{%s}")
-                      (_ "%s"))
+                      (_ "<kbd> %s </kbd>") )
                     (or description (s-replace "_" " " label)))))
 ;; Nice Keystroke Renditions: kbd:C-h_h:1 ends here
 

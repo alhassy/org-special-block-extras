@@ -389,6 +389,12 @@ It is hoped that the ease of creating custom special blocks will be a gateway
 for many Emacs users to start using Lisp.
 #+latex: \iffalse
 *[[green:][A 5-page PDF covering ELisp fundamentals]]* can be found *[[https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf][here]]*.
+
+This article is featured in EmacsConf2020, with slides [[https://alhassy.github.io/org-special-block-extras/emacs-conf-2020][here]]:
+No pictures, instead we use this system to make the  slides
+have a variety of styling information; i.e., we write Org
+and the result looks nice. “Look ma, no HTML required!”
+
 #+latex: \fi
 
 #+latex: \vspace{1em}
@@ -1712,13 +1718,15 @@ Define a block [[doc:org-special-block-extras--spoiler][spoiler]] so that the fo
 #+end_spoiler
 
 #+columnbreak:
+#+html: <hr><br>
 
-#+begin_example org
-,#+begin_spoiler :left "[" :right "]"
-[Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
-[eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/
-,#+end_spoiler
-#+end_example
+~#+begin_spoiler :left "[" :right "]"~
+
+~[Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen~
+
+~[eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/~
+
+~#+end_spoiler~
 
 #+begin_spoiler :left "[" :right "]"
 [Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
@@ -1744,6 +1752,11 @@ There's actually a problem with this ‘solution’; can you find it?
 #+begin_spoiler
 Hint: ((Try the link form and see how it breaks!))
 #+end_spoiler
+
+*green:Advanced:* Rather than having auxiliary ~#+html_head:~ styling settings,
+move the styling information to the ~defblock~ declaration /and/
+add a new argument, say, ~:color~ that colors the spoiler another colour,
+and defaults to grey ;-)
 #+end_solution
 
 ** What's the rest of this article about?
@@ -3201,14 +3214,10 @@ or kbd:C-c_C-e_h_o to export an Org-mode file to HTML.
   :follow (lambda (_))
   :export (lambda (label description backend)
             (format (pcase backend
-                      ('html "<kbd> %s </kbd>")
                       ('latex "\\texttt{%s}")
-                      (_ "%s"))
+                      (_ "<kbd> %s </kbd>") )
                     (or description (s-replace "_" " " label)))))
 #+end_src
-
-#+RESULTS:
-| :follow | (lambda (_)) | :export | (lambda (label description backend) (format (pcase backend ('html <kbd> %s </kbd>) ('latex \texttt{%s}) (_ %s)) (or description (s-replace _   label)))) |
 
 The following styling rule is used to make the keystrokes displayed nicely.
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
@@ -4394,6 +4403,9 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Keystrokes             |                             | ~kbd~                 |
 | OctoIcons & Link Here  |                             | ~octoicon~, ~link-here~ |
 | Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]               | ~doc~                 |
+
+Other fun stuff: [[doc:org-special-block-extras--solution][solution]], [[doc:org-special-block-extras--org-demo][org-demo]], [[doc:org-special-block-extras--stutter][stutter]], [[doc:org-special-block-extras--rename][rename]], [[doc:org-special-block-extras--spoiler][spoiler]] :grin:
+
 # | Badges                 | [[doc:org-special-block-extras--parallel][parallel] |            |
 # | OctoIcons & Link Here  | [[doc:org-special-block-extras--octoicon][octoicon]] , [[doc:org-special-block-extras--link-here][link-here]]        | ✓          |
 

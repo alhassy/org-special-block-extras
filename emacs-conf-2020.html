@@ -24,6 +24,11 @@
         document.getElementsByTagName( 'head' )[0].appendChild( link );
     }
 </script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<style>
+.spoiler {color: pink; background-color:pink;}
+.spoiler:hover {color: black; background-color:white;}
+<style>
 
         <style>
         /* From: https://endlessparentheses.com/public/css/endless.css */
@@ -91,6 +96,34 @@
                       color:red;
                       text-decoration: none;}
         </style>
+
+<style>
+/* From: https://endlessparentheses.com/public/css/endless.css */
+/* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+kbd
+{
+  -moz-border-radius: 6px;
+  -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  -webkit-border-radius: 6px;
+  -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+  color: #333;
+  display: inline-block;
+  font-family: 'Droid Sans Mono', monospace;
+  font-size: 80%;
+  font-weight: normal;
+  line-height: inherit;
+  margin: 0 .1em;
+  padding: .08em .4em;
+  text-shadow: 0 1px 0 #fff;
+  word-spacing: -4px;
+
+  box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+}
+</style>
 </head>
 <body>
 <div class="reveal">
@@ -104,7 +137,7 @@
 <br>
 <font size="1">
 <a href="?print-pdf&showNotes=true">
-⟪ Flattened View ; Press <code>?</code> for Help ⟫
+⟪ <strong>Flattened View</strong> ; Press <code>?</code> for Help ⟫
 </a>
 </font>
 <br>
@@ -297,6 +330,10 @@ it exported to other backends!
 </tbody>
 </table>
 
+<p>
+Other fun stuff: <abbr class="tooltip" title="Show the answers to a problem, but with a reprimand in case no attempt was made.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (REPRIMAND ''Did you actually try? Maybe see the ‘hints’ above!'') (REALLY ''Solution, for real''))">solution</abbr>, <abbr class="tooltip" title="Output the CONTENTS of the block as both parsed Org and unparsed.<br><br>Label the source text by SOURCE and the result text by RESULT<br><br>finally, the source-result fragments can be shown in a STYLE<br>that is either “parallel” (default) or “sequential”.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (SOURCE ''Source'') (RESULT ''Result'') (SOURCE-COLOR ''cyan'') (RESULT-COLOR ''cyan'') (STYLE ''parallel''))">org-demo</abbr>, <abbr class="tooltip" title="Output the CONTENTS of the block REPS many times<br><br>(fn BACKEND RAW-CONTENTS &optional REPS &rest ## &key)">stutter</abbr>, <abbr class="tooltip" title="Perform the given LIST of substitutions on the text.<br>The LIST is a comma separated list of ‘to’ separated symbols.<br>In a link, no quotes are needed.<br><br>(fn BACKEND RAW-CONTENTS &optional LIST &rest ## &key)">rename</abbr>, <abbr class="tooltip" title="Hide text enclosed in double parens ((like this)) as if it were spoilers.<br>&emsp; LEFT and RIGHT may be other kinds of delimiters.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (LEFT ''(('') (RIGHT ''))''))">spoiler</abbr> (─‿‿─)
+</p>
+
 
 </details>
 
@@ -314,6 +351,87 @@ it exported to other backends!
 
 
 </small>
+</section>
+</section>
+<section>
+<section id="slide-org1ec463c">
+<h2 id="org1ec463c"><a href="#org1ec463c">Motivation</a></h2>
+<p>
+See an <b>
+
+<span style="color:green;">
+
+aesthetically pleasing style
+
+</span>
+
+</b> online and seek to reproduce it …
+</p>
+<br>
+
+
+<p class="fragment (appear)">
+⇄ The author wrote raw HTML
+</p>
+
+<p>
+<span class="spoiler"> Obscures my source with styling information! </span>
+</p>
+
+<p class="fragment (appear)">
+⇄ The author wraps the HTML in an <code>{{{Org-macro}}}</code>
+</p>
+
+<p>
+<span class="spoiler"> Not useful if I want to export to PDF! </span>
+</p>
+
+<p class="fragment (appear)">
+⇄
+
+<span style="color:red;">
+
+The author doesn't even provide the source!
+
+</span>
+
+
+</p>
+
+<p>
+<span class="spoiler"> Time to ‘View Page Source’ and do a lot of reading! </span>
+</p>
+
+<p class="fragment (appear)">
+⇉ We want <b><b>
+
+<span style="color:magenta;">
+
+Org users
+
+</span>
+
+</b></b> to have <b>
+
+<span style="color:green;">
+
+numerous
+
+</span>
+
+</b> styles available
+and an <b>
+
+<span style="color:green;">
+
+extensible
+
+</span>
+
+</b> mechanism to add more! ⇇
+</p>
+
+
 </section>
 </section>
 <section>
@@ -364,10 +482,7 @@ EmacsConf2020
 Sacha wrote an Org file and wanted some <b>feedback</b>
 </p>
 
-<p class="fragment (appear)">
-After all: <i>Sacha 💓 Org</i>
-</p>
-
+<br>
 
 <details class="code-details"
                  style ="padding: 1em;
@@ -386,8 +501,9 @@ After all: <i>Sacha 💓 Org</i>
                   </summary>
 <div class="org-src-container">
 
-<pre  class="fragment (appear)"><code trim><span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
-Three friends ---<span style="color: #00ff00;"><a href="green:Amin">green:Amin</a></span>, <span style="color: #ff0000;"><a href="red:Sacha">red:Sacha</a></span>, and <span style="color: #0000ff;"><a href="blue:Corwin">blue:Corwin</a></span>--- were organising a conference
+<pre  class="src src-org"><code trim><span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
+Three friends ---<span style="color: #00ff00;"><a href="green:Amin">green:Amin</a></span>, <span style="color: #ff0000;"><a href="red:Sacha">red:Sacha</a></span>,
+and <span style="color: #0000ff;"><a href="blue:Corwin">blue:Corwin</a></span>--- were organising a conference
 
 <span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
 ... <span style="color: #ffa500; font-weight: bold;"><a href="orange:EmacsConf2020">orange:EmacsConf2020</a></span><span style="font-weight: bold;">!</span>
@@ -395,14 +511,140 @@ Three friends ---<span style="color: #00ff00;"><a href="green:Amin">green:Amin</
 <span style="color: #35a69c;">#+html: &lt;br&gt;</span>
 <span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
 Sacha wrote an Org file and wanted <span style="text-decoration: underline;">some</span> <span style="font-weight: bold;">feedback</span>
-
-<span style="color: #35a69c;">#+ATTR_REVEAL: :frag (appear)</span>
-After all: <span style="font-style: italic;">Sacha &#128147; Org</span>
 </code></pre>
 </div>
 
 
 </details>
+
+
+</section>
+</section>
+<section>
+<section id="slide-orga601991">
+<h3 id="orga601991"><a href="#orga601991">What <i>kind</i> of feedback?</a></h3>
+<ul>
+<li class="fragment appear"><p>
+top-level <abbr class="tooltip" title="Format CONTENTS as an first-class editor comment according to BACKEND.<br><br>The CONTENTS string has an optional switch: If it contains a line<br>with having only ‘#+replacewith:’, then the text preceding this<br>clause should be replaced by the text after it; i.e., this is<br>what the EDITOR (the person editing) intends and so we fromat the<br>replacement instruction (to the authour) as such.<br><br>In Emacs, as links, editor remarks are shown with a bold red; but<br>the exported COLOR of a remark is black by default and it is not<br>STRONG ---i.e., bold---. There is an optional SIGNOFF message<br>that is appended to the remark.<br><br>(fn BACKEND RAW-CONTENTS &optional EDITOR &rest ## &key (COLOR ''black'') (SIGNOFF '''') (STRONG nil))">remarks</abbr> <i>visible in the export</i>
+</p>
+
+<p class="fragment (appear)">
+… suggest
+
+<span style="color:red;">
+
+replacement
+
+</span>
+
+ text
+</p>
+
+<p class="fragment (appear)">
+… this is not possible,
+
+<span style="color:green;">
+
+elegantly
+
+</span>
+
+, with raw HTML!
+</p>
+
+<br></li>
+
+<li class="fragment appear"><p>
+<abbr class="tooltip" title="Perform the given LIST of substitutions on the text.<br>The LIST is a comma separated list of ‘to’ separated symbols.<br>In a link, no quotes are needed.<br><br>(fn BACKEND RAW-CONTENTS &optional LIST &rest ## &key)">translate</abbr> in the export
+</p>
+
+<p class="fragment (appear)">
+… everyone speaks different languages!
+</p>
+
+<p class="fragment (appear)">
+… or suggest a rewrite, without altering the other person's
+text
+</p>
+
+<p class="fragment (appear)">
+… this is not possible with raw HTML
+
+<span style="color:red;">
+
+at all
+
+</span>
+
+!
+</p></li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-orgd72a039">
+<h3 id="orgd72a039"><a href="#orgd72a039">Example 💓 Text and Feedback</a></h3>
+<p>
+Sacha …
+</p>
+
+
+<div style="column-rule-style: none;column-count: 2;">
+
+
+<div style="padding: 1em; background-color: cyan;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Writes</h3>
+
+Let's begin at $\sqrt{3 + \sum_{i = 0}^{12} i}$ in the *morning*.\newline
+
+</div>
+
+
+<div style="padding: 1em; background-color: cyan;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Sees</h3>
+<p>
+Let's begin at \(\sqrt{3 + \sum_{i = 0}^{12} i}\) in the <b>morning</b>.
+</p>
+
+</div>
+
+</div>
+
+<p>
+She gets feedback …
+</p>
+
+
+<div style="column-rule-style: none;column-count: 2;">
+<small>
+
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Amin:</strong></span>
+<p>
+How about
+</p>
+
+<p>
+<code class="src src-emacs-lisp">(<span style="color: #b58900;">sqrt</span> (<span style="color: #b58900;">apply</span> '<span style="color: #b58900;">+</span> 3 (<span style="color: #b58900;">number-sequence</span> 0 12)))</code> ;-)
+</p>
+
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+</small>
+
+<hr>
+
+<small>
+
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Corwin:</strong></span>
+<p>
+C'mon guys, let's just say <b>9 am</b>!
+</p>
+
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+
+</small>
+
+</div>
 
 
 </section>
@@ -896,6 +1138,7 @@ simulate
 
  arguments with special
 blocks</li>
+<li class="fragment appear"><abbr class="tooltip" title="Set link TYPE properties to PARAMETERS.<br>PARAMETERS should be keyword value pairs.&emsp;See<br>‘org-link-parameters’ for supported keys.<br><br>(fn TYPE &rest PARAMETERS)">org-link-set-parameters</abbr>, to make new link types</li>
 
 </ul>
 
@@ -1014,7 +1257,7 @@ simultaneously
 <h3 id="Solving-the-friend's-trilemma"><a href="#Solving-the-friend's-trilemma">Solving the friend's trilemma</a></h3>
 <div class="org-src-container">
 
-<pre  class="src src-emacs-lisp"><code trim>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<pre  class="src src-emacs-lisp"><code trim>(defblock feedback (who) (color <span style="color: #2aa198;">"red"</span>)
   <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
   (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
             <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
@@ -1038,7 +1281,7 @@ There are 3 main parts …
 <h3 id="Line-1-Declare-a-block"><a href="#Line-1-Declare-a-block">Line 1: <i>Declare</i> a block</a></h3>
 <div class="org-src-container">
 
-<pre  class="src src-emacs-lisp"><code trim><span id="coderef-here1" class="coderef-off"><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)</span>
+<pre  class="src src-emacs-lisp"><code trim><span id="coderef-here1" class="coderef-off"><span class="linenr">1: </span>(defblock feedback (who) (color <span style="color: #2aa198;">"red"</span>)</span>
 <span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
 <span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
 <span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
@@ -1105,7 +1348,7 @@ color
 <h3 id="Line-2-Document-the-block"><a href="#Line-2-Document-the-block">Line 2: <i>Document</i> the block</a></h3>
 <div class="org-src-container">
 
-<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(defblock feedback (who) (color <span style="color: #2aa198;">"red"</span>)
 <span id="coderef-here2" class="coderef-off"><span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span></span>
 <span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
 <span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
@@ -1169,7 +1412,7 @@ Corwin
 <h3 id="Lines-3-6-Do-the-thing"><a href="#Lines-3-6-Do-the-thing">Lines 3-6: <i>Do the thing!</i></a></h3>
 <div class="org-src-container">
 
-<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(defblock feedback (who) (color <span style="color: #2aa198;">"red"</span>)
 <span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
 <span id="coderef-here3" class="coderef-off"><span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)</span>
 <span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
@@ -1209,10 +1452,10 @@ we use HTML divs or LaTeX macros.
 </section>
 <section>
 <section id="slide-Anaphoric">
-<h3 id="Anaphoric"><a href="#orge97be60"><i>Anaphoric?</i></a></h3>
+<h3 id="Anaphoric"><a href="#orgc26053d"><i>Anaphoric?</i></a></h3>
 <div class="org-src-container">
 
-<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(<span style="color: #859900; font-weight: bold;">defblock</span> feedback (who) (color <span style="color: #2aa198;">"red"</span>)
+<pre  class="src src-emacs-lisp"><code trim><span class="linenr">1: </span>(defblock feedback (who) (color <span style="color: #2aa198;">"red"</span>)
 <span class="linenr">2: </span>  <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) constructive feedback."</span>
 <span id="coderef-anaB" class="coderef-off"><span class="linenr">3: </span>  (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)</span>
 <span class="linenr">4: </span>            <span style="color: #2aa198;">"&lt;strong style=\"color: %s;\"&gt;&#10214;%s: %s&#10215;&lt;/strong&gt;"</span>
@@ -1252,7 +1495,7 @@ contents
 </section>
 <section>
 <section id="slide-How-do-the-feedback">
-<h3 id="How-do-the-feedback"><a href="#orge97be60"><i>How do the feedback?</i></a></h3>
+<h3 id="How-do-the-feedback"><a href="#orgc26053d"><i>How do the feedback?</i></a></h3>
 <div style="padding: 1em; background-color: #FFCCFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3></h3>
 <p class="fragment (appear)">
 <b>Sacha 😍 Org/HTML</b>
@@ -1356,21 +1599,7 @@ Guys, let's wrap up already!
 Using a few lines of Lisp …
 </p>
 
-<small>
 <ul>
-<li class="fragment appear"><p>
-<abbr class="tooltip" title="Perform the given LIST of substitutions on the text.<br>The LIST is a comma separated list of ‘to’ separated symbols.<br>In a link, no quotes are needed.<br><br>(fn BACKEND RAW-CONTENTS &optional LIST &rest ## &key)">translate</abbr> in the export
-</p>
-
-<p class="fragment (appear)">
-… everyone speaks different languages!
-</p>
-
-<p class="fragment (appear)">
-… or suggest a rewrite, without altering the other person's
-text
-</p></li>
-
 <li class="fragment appear"><p>
 write text in <abbr class="tooltip" title="Place ideas side-by-side, possibly with a seperator.<br><br>There are COLS many columns, and they may be seperated by black<br>solid vertical rules if BAR is a non-nil value.<br><br>Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”<br>will produce a parallel of 𝓃 many columns, possibly<br>seperated by solid rules, or a “bar”.<br><br>The contents of the block may contain ‘#+columnbreak:’ to request<br>a columnbreak. This has no effect on HTML export since HTML<br>describes how text should be formatted on a browser, which can<br>dynamically shrink and grow and thus it makes no sense to have<br>hard columnbreaks.<br><br>(fn BACKEND RAW-CONTENTS &optional COLS &rest ## &key (BAR nil))">parallel</abbr> columns
 </p>
@@ -1381,9 +1610,11 @@ write text in <abbr class="tooltip" title="Place ideas side-by-side, possibly wi
 
 <li class="fragment appear">hide away technical <abbr class="tooltip" title="Enclose contents in a folded up box, for HTML.<br><br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such blocks is “Details”<br>and its TITLE-COLOR is green.<br><br>In HTML, we show folded, details, regions with a nice greenish colour.<br><br>In the future ---i.e., when I have time---<br>it may be prudent to expose more aspects as arguments,<br>such as ‘background-color’.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (TITLE-COLOR ''green''))">details</abbr> for the interested reader only</li>
 
-</ul>
+<li class="fragment appear">enclose text in a pretty <abbr class="tooltip" title="Enclose text in a box, possibly with a title.<br><br>By default, the box’s COLOR is green for HTML and red for LaTeX,<br>and it has no TITLE.<br><br>The HTML export uses a padded div, whereas the LaTeX export<br>requires the tcolorbox pacakge.<br><br>In the future, I will likely expose more arguments.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (BACKGROUND-COLOR nil))">box</abbr></li>
 
-</small>
+<li class="fragment appear">Educational material blocks: <abbr class="tooltip" title="Hide text enclosed in double parens ((like this)) as if it were spoilers.<br>&emsp; LEFT and RIGHT may be other kinds of delimiters.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (LEFT ''(('') (RIGHT ''))''))">spolier</abbr>, <abbr class="tooltip" title="Show the answers to a problem, but with a reprimand in case no attempt was made.<br><br>(fn BACKEND RAW-CONTENTS &optional TITLE &rest ## &key (REPRIMAND ''Did you actually try? Maybe see the ‘hints’ above!'') (REALLY ''Solution, for real''))">solution</abbr>, and <abbr class="tooltip" title="Output the CONTENTS of the block as both parsed Org and unparsed.<br><br>Label the source text by SOURCE and the result text by RESULT<br><br>finally, the source-result fragments can be shown in a STYLE<br>that is either “parallel” (default) or “sequential”.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (SOURCE ''Source'') (RESULT ''Result'') (SOURCE-COLOR ''cyan'') (RESULT-COLOR ''cyan'') (STYLE ''parallel''))">org-demo</abbr></li>
+
+</ul>
 
 <p class="fragment (appear)">
 Finally,

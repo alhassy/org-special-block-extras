@@ -18,7 +18,7 @@
 <br>
 <font size=\"1\">
 <a href=\"?print-pdf&showNotes=true\">
-⟪ Flattened View ; Press <code>?</code> for Help ⟫
+⟪ <strong>Flattened View</strong> ; Press <code>?</code> for Help ⟫
 </a>
 </font>
 <br>
@@ -193,6 +193,8 @@ With a bit of Lisp ---and a lot of time--- we obtain
 | Keystrokes             | kbd:C-c_C-e                     | ~kbd~                 |
 | OctoIcons & Link Here  | octoicon:report link-here:Overview      | ~octoicon~, ~link-here~ |
 | Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]                   | ~doc~                 |
+
+Other fun stuff: [[doc:org-special-block-extras--solution][solution]], [[doc:org-special-block-extras--org-demo][org-demo]], [[doc:org-special-block-extras--stutter][stutter]], [[doc:org-special-block-extras--rename][rename]], [[doc:org-special-block-extras--spoiler][spoiler]] (─‿‿─)
 #+end_details
 #+begin_box Incidentally
 😂 The setup joyously works for org-reveal 😹
@@ -201,6 +203,38 @@ With a bit of Lisp ---and a lot of time--- we obtain
 #+end_box
 
 #+html: </small>
+* Motivation
+
+See an *[[green:][aesthetically pleasing style]]* online and seek to reproduce it …
+#+html: <br>
+
+#+html_head: <style>
+#+html_head: .spoiler {color: pink; background-color:pink;}
+#+html_head: .spoiler:hover {color: black; background-color:white;}
+#+html_head: <style>
+# Example use: <span class="spoiler"> test </span>
+
+#+begin_spoiler
+#+ATTR_REVEAL: :frag (appear)
+⇄ The author wrote raw HTML
+
+((Obscures my source with styling information!))
+
+#+ATTR_REVEAL: :frag (appear)
+⇄ The author wraps the HTML in an ~{{{Org-macro}}}~
+
+((Not useful if I want to export to PDF!))
+
+#+ATTR_REVEAL: :frag (appear)
+⇄ [[red:][The author doesn't even provide the source!]]
+
+((Time to ‘View Page Source’ and do a lot of reading!))
+
+#+ATTR_REVEAL: :frag (appear)
+⇉ We want **[[magenta:][Org users]]** to have *green:numerous* styles available
+and an *green:extensible* mechanism to add more! ⇇
+#+end_spoiler
+
 * Once upon a time
   :PROPERTIES:
   :CUSTOM_ID: Once-upon-a-time
@@ -216,14 +250,12 @@ Three friends ---green:Amin, red:Sacha, and blue:Corwin--- were organising a con
 #+ATTR_REVEAL: :frag (appear)
 Sacha wrote an Org file and wanted some *feedback*
 
-#+ATTR_REVEAL: :frag (appear)
-After all: /Sacha 💓 Org/
-
+#+html: <br>
 #+begin_details Source for this slide!
-#+ATTR_REVEAL: :frag (appear)
 #+begin_src org
-#+ATTR_REVEAL: :frag (appear)
-Three friends ---green:Amin, red:Sacha, and blue:Corwin--- were organising a conference
+,#+ATTR_REVEAL: :frag (appear)
+Three friends ---green:Amin, red:Sacha,
+and blue:Corwin--- were organising a conference
 
 ,#+ATTR_REVEAL: :frag (appear)
 ... *orange:EmacsConf2020!*
@@ -231,11 +263,60 @@ Three friends ---green:Amin, red:Sacha, and blue:Corwin--- were organising a con
 ,#+html: <br>
 ,#+ATTR_REVEAL: :frag (appear)
 Sacha wrote an Org file and wanted some *feedback*
-
-,#+ATTR_REVEAL: :frag (appear)
-After all: /Sacha 💓 Org/
 #+end_src
 #+end_details
+
+** What /kind/ of feedback?
+
+#+ATTR_REVEAL: :frag (appear)
+- top-level [[doc:org-special-block-extras--remark][remarks]] /visible in the export/
+
+  #+ATTR_REVEAL: :frag (appear)
+  … suggest red:replacement text
+
+  #+ATTR_REVEAL: :frag (appear)
+  … this is not possible, green:elegantly, with raw HTML!
+
+  #+html: <br>
+
+- [[doc:org-special-block-extras--rename][translate]] in the export
+
+  #+ATTR_REVEAL: :frag (appear)
+  … everyone speaks different languages!
+
+  #+ATTR_REVEAL: :frag (appear)
+  … or suggest a rewrite, without altering the other person's
+  text
+
+  #+ATTR_REVEAL: :frag (appear)
+  … this is not possible with raw HTML [[red:][at all]]!
+
+** Example 💓 Text and Feedback
+
+Sacha …
+#+begin_org-demo :source "Writes" :result "Sees"
+Let's begin at $\sqrt{3 + \sum_{i = 0}^{12} i}$ in the *morning*.
+#+end_org-demo
+
+She gets feedback …
+
+#+begin_parallel
+#+html: <small>
+#+begin_remark Amin
+How about
+
+src_emacs-lisp[:exports code]{(sqrt (apply '+ 3 (number-sequence 0 12)))} ;-)
+#+end_remark
+#+html: </small>
+
+#+html: <hr>
+
+#+html: <small>
+#+begin_remark Corwin
+C'mon guys, let's just say *9 am*!
+#+end_remark
+#+html: </small>
+#+end_parallel
 
 ** Amin ❤️ LaTeX
    :PROPERTIES:
@@ -400,6 +481,7 @@ Eek
 - doc:-let, pattern matching / [[olive:][“destructuring lets”]]
 - [[doc:org-special-block-extras--extract-arguments][extract-arguments]], an *red:ad-hoc* mechanism to cyan:simulate arguments with special
   blocks
+- doc:org-link-set-parameters, to make new link types
 
 #+ATTR_REVEAL: :frag (appear)
 green:Of green:course to actually write the formatting function they need doc:loop,
@@ -598,24 +680,16 @@ I think we should do …
 
 Using a few lines of Lisp …
 
-#+html: <small>
 #+ATTR_REVEAL: :frag (appear)
-- [[doc:org-special-block-extras--rename][translate]] in the export
-
-  #+ATTR_REVEAL: :frag (appear)
-  … everyone speaks different languages!
-
-  #+ATTR_REVEAL: :frag (appear)
-  … or suggest a rewrite, without altering the other person's
-  text
-
 - write text in [[doc:org-special-block-extras--parallel][parallel]] columns
 
   … to save on vertical whitespace
 
 - hide away technical [[doc:org-special-block-extras--details][details]] for the interested reader only
 
-#+html: </small>
+- enclose text in a pretty [[doc:org-special-block-extras--box][box]]
+
+- Educational material blocks: [[doc:org-special-block-extras--spoiler][spolier]], [[doc:org-special-block-extras--solution][solution]], and [[doc:org-special-block-extras--org-demo][org-demo]]
 
 #+ATTR_REVEAL: :frag (appear)
 Finally,
