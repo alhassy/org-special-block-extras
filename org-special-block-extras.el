@@ -196,11 +196,18 @@
 ;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:1]]
 (defun org-special-block-extras--org-export (x)
   "Wrap the given X in an export block for the current backend."
-  (format "\n#+begin_export %s \n%s\n#+end_export\n" org-special-block-extras--current-backend x))
+  (format "\n#+begin_export %s \n%s\n#+end_export\n"
+          (if (equal org-special-block-extras--current-backend 'reveal)
+              'html
+            org-special-block-extras--current-backend)
+          x))
 
 (defun org-special-block-extras--org-parse (x)
   "This should ONLY be called within an ORG-EXPORT call."
-  (format "\n#+end_export\n%s\n#+begin_export %s\n" x org-special-block-extras--current-backend))
+   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+           (if (equal 'reveal org-special-block-extras--current-backend)
+               'html
+             org-special-block-extras--current-backend)))
 
 (cl-defmacro org-special-block-extras--defblock
   (name main-arg kwds &optional (docstring "") &rest body)
@@ -634,23 +641,23 @@ STRONG ---i.e., bold---. There is an optional SIGNOFF message
 that is appended to the remark.
 "
   (-let* (;; Are we in the html backend?
-          (html? (equal backend 'html))
+          (tex? (equal backend 'latex))
 
           ;; fancy display style
           (boxed (lambda (x)
-                   (if html?
-                       (concat "<span style=\"border-width:1px"
-                               ";border-style:solid;padding:5px\">"
-                               "<strong>" x "</strong></span>")
-                     (concat "\\fbox{\\bf " x "}"))))
+                   (if tex?
+                       (concat "\\fbox{\\bf " x "}")
+                     (concat "<span style=\"border-width:1px"
+                             ";border-style:solid;padding:5px\">"
+                             "<strong>" x "</strong></span>"))))
 
           ;; Is this a replacement clause?
           ((this that) (s-split "\\#\\+replacewith:" contents))
           (replacement-clause? that) ;; There is a ‘that’
-          (replace-keyword (if html? "&nbsp;<u>Replace:</u>"
-                             "\\underline{Replace:}"))
-          (with-keyword    (if html? "<u>With:</u>"
-                             "\\underline{With:}"))
+          (replace-keyword (if tex?
+                             "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
+          (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
+                             ))
           (editor (format "[%s:%s" editor
                           (if replacement-clause?
                               replace-keyword
@@ -708,7 +715,12 @@ such as ‘background-color’.
 "
   (format
    (pcase backend
-     (`html "<details class=\"code-details\"
+     (`latex "\\begin{quote}
+                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
+                    %s
+                  \\end{tcolorbox}
+                \\end{quote}")
+     (_ "<details class=\"code-details\"
                  style =\"padding: 1em;
                           background-color: #e5f5e5;
                           /* background-color: pink; */
@@ -724,12 +736,7 @@ such as ‘background-color’.
                     </strong>
                   </summary>
                   %s
-               </details>")
-       (`latex "\\begin{quote}
-                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
-                    %s
-                  \\end{tcolorbox}
-                \\end{quote}"))
+               </details>"))
    title-color title contents))
 ;; Folded Details ---As well as boxed text and subtle colours:1 ends here
 
@@ -747,19 +754,19 @@ In the future, I will likely expose more arguments.
 "
   (apply #'concat
   (pcase backend
-    (`html `("<div style=\"padding: 1em; background-color: "
-             ,(org-special-block-extras--subtle-colors (format "%s" (or background-color "green")))
-             ";border-radius: 15px; font-size: 0.9em"
-             "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
-             "<h3>" ,title "</h3>"
-            ,contents "</div>"))
    (`latex `("\\begin{tcolorbox}[title={" ,title "}"
              ",colback=" ,(pp-to-string (or background-color 'red!5!white))
              ",colframe=red!75!black, colbacktitle=yellow!50!red"
              ",coltitle=red!25!black, fonttitle=\\bfseries,"
              "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
              ,contents
-             "\\end{tcolorbox}")))))
+             "\\end{tcolorbox}"))
+    (_ `("<div style=\"padding: 1em; background-color: "
+             ,(org-special-block-extras--subtle-colors (format "%s" (or background-color "green")))
+             ";border-radius: 15px; font-size: 0.9em"
+             "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
+             "<h3>" ,title "</h3>"
+            ,contents "</div>")))))
 ;; Boxed Text:1 ends here
 
 ;; [[file:org-special-block-extras.org::*Boxed Text][Boxed Text:2]]
@@ -804,18 +811,18 @@ dynamically shrink and grow and thus it makes no sense to have
 hard columnbreaks.
 "
   (let ((rule (pcase backend
-               (`html  (if bar "solid" "none"))
-               (`latex (if bar 2 0))))
+               (`latex (if bar 2 0))
+               (_  (if bar "solid" "none"))))
         (contents′  (s-replace "#+columnbreak:"
-                               (if (equal 'html backend) "" "\\columnbreak")
+                               (if (equal 'latex backend) "\\columnbreak" "")
                                contents)))
   (format (pcase backend
-   (`html "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>")
    (`latex "\\par \\setlength{\\columnseprule}{%s pt}
           \\begin{minipage}[t]{\\linewidth}
           \\begin{multicols}{%s}
           %s
-          \\end{multicols}\\end{minipage}"))
+          \\end{multicols}\\end{minipage}")
+   (_ "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"))
    rule cols contents′)))
 ;; Parallel:1 ends here
 
