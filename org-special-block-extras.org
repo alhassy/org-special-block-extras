@@ -3985,11 +3985,20 @@ Emacs' init file---, for more see: doc:org-special-block-extras-docs-load-librar
 
 #+begin_details Implementation matter for user libraries
 #+begin_src emacs-lisp
-(defvar org-special-block-extras--docs-libraries
-  '("documentation.org")
+(defvar org-special-block-extras--docs-libraries nil
   "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
    for use with the ‘doc:𝒳’ link type.")
+#+end_src
 
+In your init, you could do the following. ( See the installation instructions
+below, for more! )
+#+name: startup-code
+#+begin_src emacs-lisp :tangle no
+(setq org-special-block-extras--docs-libraries
+  '("documentation.org"))
+#+end_src
+
+#+begin_src emacs-lisp
 (cl-defun org-special-block-extras-docs-load-libraries
     (&optional (libs org-special-block-extras--docs-libraries))
 "Load user's personal documentation libraries.
@@ -4436,7 +4445,14 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package org-special-block-extras
   :ensure t
-  :hook (org-mode . org-special-block-extras-mode))
+  :hook (org-mode . org-special-block-extras-mode)
+  :config
+  (setq org-special-block-extras--docs-libraries
+        '("~/org-special-block-extras/documentation.org"))
+  (org-special-block-extras-short-names))
+  ;; Final line is so we can write “defblock”
+  ;; instead of the fully qualified name
+  ;; “org-special-block-extras--defblock”
 #+END_SRC
 
 Then, provide support for a new type of special block named =foo= that, say

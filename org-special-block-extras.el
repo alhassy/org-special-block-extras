@@ -983,11 +983,12 @@ Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 ;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:3 ends here
 
 ;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4]]
-(defvar org-special-block-extras--docs-libraries
-  '("documentation.org")
+(defvar org-special-block-extras--docs-libraries nil
   "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
    for use with the ‘doc:𝒳’ link type.")
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4 ends here
 
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6]]
 (cl-defun org-special-block-extras-docs-load-libraries
     (&optional (libs org-special-block-extras--docs-libraries))
 "Load user's personal documentation libraries.
@@ -1021,15 +1022,15 @@ to force your documentation libraries to be reloaded.
 
 See also org-special-block-extras--docs-libraries.
 ")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4 ends here
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6 ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6]]
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8]]
 (defvar org-special-block-extras--docs-GLOSSARY nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6 ends here
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8 ends here
 
 ;; [[file:org-special-block-extras.org::startup-code][startup-code]]
 (-let [name&doc
@@ -1093,7 +1094,7 @@ We use this listing to actually print a glossary using
         (format "[%s] %s :: %s" path name doc))))))
 ;; startup-code ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8]]
+;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:10]]
 (org-special-block-extras--defblock documentation
   (name (error "Documentation block: Name must be provided"))
   (label nil show nil color "green")
@@ -1129,7 +1130,7 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
   ""); (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) "")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8 ends here
+;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:10 ends here
 
 ;; [[file:org-special-block-extras.org::*Wait, what about the LaTeX?][Wait, what about the LaTeX?:1]]
 (let ((whatdo (lambda (x)
