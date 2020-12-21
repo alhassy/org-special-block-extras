@@ -1,30 +1,54 @@
-<h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
+<h1> A unified interface for Emacs' Org-mode block & link types (•̀ᴗ•́)و </h1>
+
+<h2> Which is used to obtain 30 new custom blocks and 34 link types ¯\_(ツ)_/¯ </h2>
+
+<div align="center">
 
 <div class="org-center">
+<p>
 
+</p>
 
-[![badge:Emacs](https://img.shields.io/badge/Emacs-23%2F26%2F28-green?logo=gnu-emacs)](https://www.gnu.org/software/emacs)
-[![badge:Org](https://img.shields.io/badge/Org-9.3.6-blue?logo=gnu)](https://orgmode.org)
+<p>
+<a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-27-green?logo=gnu-emacs"></a>
+<a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.4-blue?logo=gnu"></a>
+</p>
 
 <span>
 
-[![badge:org--special--block--extras](https://img.shields.io/badge/org--special--block--extras-1.2-informational?logo=Gnu-Emacs)](https://github.com/alhassy/org-special-block-extras)
+<p>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-2.0-informational?logo=Gnu-Emacs"></a>
+</p>
 
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 
 </span>
 
-[![badge:license](https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![badge:docs](https://img.shields.io/badge/docs-literate-success?logo=read-the-docs)](https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like)
-[![badge:https://github.com/alhassy/org-special-block-extras](https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras)](https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras)
-[![badge:contributions](https://img.shields.io/badge/contributions-welcome-green)](https://github.com/alhassy/org-special-block-extras/issues)
+<p>
+<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
+<a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
+<a href="https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و::&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green?logo=nil"></a>
+</p>
 
-[![badge:author](https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds)](https://alhassy.github.io/)
-[![badge:](https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee)](https://www.buymeacoffee.com/alhassy)
+<p>
+<a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+</p>
+
+<p>
+<a href="https://alhassy.github.io/about"><img src="https://img.shields.io/badge/Hire-me-success?logo=nil"></a>
+</p>
+
+<p>
+<a href="https://youtu.be/BQdNhtJSbqk"><img src="https://img.shields.io/badge/EmacsConf-2020-informational?logo=youtube"></a>
+</p>
 </div>
 
 <div class="org-center">
-**Abstract**
+<p>
+<b>Abstract</b>
+</p>
 </div>
 
 > The aim is to write something once using Org-mode markup
@@ -38,34 +62,64 @@
 > HTML `div`'s using HTML tags, we promote using Org-mode markup in special blocks
 > &#x2014;Org markup cannot be used explicitly within HTML or LaTeX environments.
 >
-> Consequently, we extend the number of block types available to the Emacs
-> Org-mode user **without forcing the user** to learn HTML or LaTeX.
-> Indeed, I am not a web developer and had to learn a number of HTML concepts
-> in the process &#x2014;the average Org user should not have to do so.
+> *Special blocks*, like `centre` and `quote`, allow us to use Org-mode as the primary
+> interface regardless of whether the final result is an HTML or PDF article;
+> sometime we need to make our own special blocks to avoid a duplication of
+> effort.  However, this can be difficult and may require familiarity with
+> relatively advanced ELisp concepts, such as macros and hooks; as such, users may
+> not be willing to put in the time and instead use ad-hoc solutions.
 >
-> Similarly, we provide a number of ‘link types’ `[[linktype:label][description]]`
-> for producing in-line coloured text and SVG “badges”.
+> We present a new macro, [defblock](org-special-block-extras--defblock), which is similar in-spirit to Lisp's standard
+> <defun> except that where the latter defines functions, ours defines new
+> special blocks for Emacs' Org-mode &#x2014;as well as, simultaneously, defining new
+> Org link types. Besides the macro, the primary contribution of this effort is an
+> interface for special blocks that *admits* arguments and is familar to Org users
+> &#x2014;namely, we ‘try to reuse’ the familiar `src`-block interface, including
+> header-args, but for special blocks.
 >
-> We begin with the first two sections serving as mini-tutorials on special blocks
-> and on link types. The special block setup we use is *extensible* in that a new
-> block named `𝒞` will automatically be supported if the user defines a function
-> `org-special-block-extras--𝒞` that formats the text of a block.  \*The remaining
-> sections are literate implementation matter, along with examples and
-> screenshots.\*
+> It is hoped that the ease of creating custom special blocks will be a gateway
+> for many Emacs users to start using Lisp.
 >
-> In summary, we provide 20 colour block types and 20 colour link types,
-> an ‘editor comment’ block type as well as a link type,
-> a ‘details’ block type, a ‘parallel’ multiple columns view block type,
-> a ‘link here’ link type, 8 badge link types,
-> and block and link types for making documentation-glossary entries.
-> That is, **we provide 29 block types and 34 link types**.
+> **
+>
+> <span style="color:green;">
+>
+> A 5-page PDF covering ELisp fundamentals
+>
+> </span>
+>
+> ** can be found **[here](https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf)**.
+>
+> This article is featured in EmacsConf2020, with slides [here](https://alhassy.github.io/org-special-block-extras/emacs-conf-2020):
+> No pictures, instead we use this system to make the  slides
+> have a variety of styling information; i.e., we write Org
+> and the result looks nice. “Look ma, no HTML required!”
+
+![img](images/minimal-working-example-multiforms.png "Write in Emacs using Org-mode, export beautifully to HTML or LaTeX")
+
+<!--
 
 > The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
-> Installation instructions are [below](#Summary).
+> Installation instructions are .
+
+-->
 
 
+# Table of Contents
 
-## Installation Instructions
+1.  [Installation Instructions](#Installation-Instructions)
+2.  [Minimal working example](#Minimal-working-example)
+3.  [Bye!](#Bye)
+
+> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
+> Installation instructions are .
+
+</div>
+
+
+<a id="Installation-Instructions"></a>
+
+# Installation Instructions
 
 Manually or using [quelpa](https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source):
 
@@ -82,39 +136,58 @@ Manually or using [quelpa](https://github.com/alhassy/emacs.d#installing-emacs-p
 
     (use-package org-special-block-extras
       :ensure t
-      :hook (org-mode . org-special-block-extras-mode))
+      :hook (org-mode . org-special-block-extras-mode)
+      :custom
+        (org-special-block-extras--docs-libraries
+         '("~/org-special-block-extras/documentation.org")
+         "The places where I keep my ‘#+documentation’")
+        ;; (org-special-block-extras-fancy-links
+        ;; nil "Disable this feature.")
+      :config
+      ;; Use short names like ‘defblock’ instead of the fully qualified name
+      ;; ‘org-special-block-extras--defblock’
+        (org-special-block-extras-short-names))
 
-Then, provide support for a new type of special block named `foo` that, say
-replaces all words *foo* in a block, by declaring the following.
+Then, provide support for a new type of special block, say re-using the `src`
+blocks that, say, folds up all such blocks in HTML export, by declaring the
+following.
 
-    (defun org-special-block-extras--foo (backend contents)
-      "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
-    unless a ‘:replacement:’ is provided."
-      (-let [(contents′ . (&alist 'replacement))
-               (org-special-block-extras--extract-arguments contents 'replacement)]
-        (s-replace "foo" (or replacement "bar") contents′)))
+    (org-special-block-extras--defblock src (lang nil) (title nil exports nil file nil)
+      "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
+    If a block has a ‘:title’, use that to title the ‘<details>’."
+      (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
+              (or title (concat "Details; " lang))
+              raw-contents))
 
 
-## Minimal working example
+<a id="Minimal-working-example"></a>
+
+# Minimal working example
 
 The following example showcases the prominent features of this library.
 
     #+begin_parallel
-    [[color:orange][Are you excited to learn some Lisp?]] blue:yes!
+    [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 
     Pop-quiz: How does doc:apply work?
     #+end_parallel
 
-    #+begin_details
+    #+begin_details Answer
     link-here:solution
     Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
     [[remark:Musa][Ain't that cool?]]
 
-    [[color:purple][We can apply a function to a list of arguments!]]
+    #+begin_spoiler aqua
+    That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
+    #+end_spoiler
+
     #+end_details
 
+    #+html: <br>
+    #+begin_box
     octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+    #+end_box
 
     #+LATEX_HEADER: \usepackage{multicol}
     #+LATEX_HEADER: \usepackage{tcolorbox}
@@ -122,6 +195,22 @@ The following example showcases the prominent features of this library.
 
     show:GLOSSARY
 
-Way better instructions and images may be found at the HTML site.
+    badge:Thanks|for_reading
+    tweet:https://github.com/alhassy/org-special-block-extras
+    badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 
-## Bye!
+Here is what it looks like as HTML (left) and LaTeX (right):
+
+![img](images/minimal-working-example.png)
+
+The above section, , presents a few puzzles to get you
+comfortable with `defblock` ;-)
+
+
+<a id="Bye"></a>
+
+# Bye!
+
+<img src="https://img.shields.io/badge/thanks-for_reading-nil?logo=nil">
+<a href="https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و::&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>

@@ -5,13 +5,14 @@
 #+PROPERTY: header-args:emacs-lisp :tangle org-special-block-extras.el :exports code
 #+options: d:nil toc:nil
 #+EXPORT_FILE_NAME: index
-#+macro: blurb Twenty-nine new custom block and 34 link types for Emacs' Org-mode ^_^
+#+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
+#+PROPERTY: header-args :eval never-export
 
-:29_blocks:
+:30_blocks:
 21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
-5  ⇒ parallel blocks
+3  ⇒ parallel, box, detail block
 1  ⇒ editorial comments
-1  ⇒ details
+4  ⇒ Solution, org-demo, spoiler, rename (textual substitution)
 1  ⇒ documentation
 :End:
 :34_links:
@@ -20,16 +21,15 @@
 1  ⇒ link here
 8  ⇒ badges and socials
 2  ⇒ doc and show
-----
 1 ⇒ kbd
 1 ⇒ octoicon
 :End:
 
-# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode))
+# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq org-special-block-extras--docs-libraries  '("~/org-special-block-extras/documentation.org")))
 
 # +TOC: headlines 2
 
-* HTML & LaTeX Setup :ignore:
+* HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
   :CUSTOM_ID: HTML-LaTeX-Setup
   :END:
@@ -124,12 +124,12 @@ pre.src-C:before { content: 'Org-mode Example!'; }
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp  :noweb yes
-;;; org-special-block-extras.el --- 29 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.9
+;; Version: 2
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -154,6 +154,8 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
+;; 0. A unified interface, the ‘defblock’ macro, for making new block and link types.
+;;
 ;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
 ;;  easily extendable; below is an example.
 ;;
@@ -171,13 +173,15 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;;
 ;; 4. Details: Regions of text can be folded away in HTML
 ;;
-;; 5. ‼ BROKEN ‼ Badges: SVG badges have the pleasant syntax
+;; 5. Badges: SVG badges have the pleasant syntax
 ;; badge:key|value|colour|url|logo; only the first two are necessary.
 ;;
 ;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
 ;; documentation-backend, including user-defined entries; e.g., doc:thread-first
 ;; retrives the documentation for thread-first and attachs it as a tooltip to
 ;; the text in the HTML export and as a glossary entry in the LaTeX export
+;;
+;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
 ;;
 ;; This file has been tangled from a literate, org-mode, file; and so contains
 ;; further examples demonstrating the special blocks it introduces.
@@ -197,6 +201,9 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
 (require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
                            ;; ‘-not’, ‘-partial’, etc.
+
+
+(require 'cus-edit) ;; To get the custom-* faces
 
 (require 'org)
 (require 'ox-latex)
@@ -240,17 +247,17 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 * Abstract :ignore:
   :PROPERTIES:
-  :CUSTOM_ID: Example-Use
+  :CUSTOM_ID: Abstract
   :END:
 
-:Broke_Org_9_4:
+
 #+begin_center
 
-badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
-badge:Org|9.3.6|blue|https://orgmode.org|gnu
+badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
+badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-[[badge:org-special-block-extras|1.2|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]]
+badge:org-special-block-extras|2.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
 
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
@@ -262,42 +269,11 @@ badge:contributions|welcome|green|https://github.com/alhassy/org-special-block-e
 
 badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+badge:Hire|me|success|https://alhassy.github.io/about
+
+badge:EmacsConf|2020|informational|https://youtu.be/BQdNhtJSbqk|youtube
 #+end_center
-
-:End:
-#+begin_export html
-<div class="org-center">
-<p>
-
-</p>
-
-<p>
-<a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-23%2F26%2F27%2F28-green?logo=gnu-emacs"></a>
-<a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.4-blue?logo=gnu"></a>
-</p>
-
-<span>
-<p>
-<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-1.9-informational?logo=Gnu-Emacs"></a>
-</p>
-
-<a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
-</span>
-
-<p>
-<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
-<a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
-<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
-<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green"></a>
-</p>
-
-<p>
-<a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a>
-<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
-</p>
-</div>
-
-#+end_export
 
 :Outdated_pics:
 #+begin_quote
@@ -389,6 +365,8 @@ It is hoped that the ease of creating custom special blocks will be a gateway
 for many Emacs users to start using Lisp.
 #+latex: \iffalse
 *[[green:][A 5-page PDF covering ELisp fundamentals]]* can be found *[[https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf][here]]*.
+# a video lecture for this article can be found at
+# badge:EmacsConf|2020|informational|https://youtu.be/BQdNhtJSbqk|youtube.
 
 This article is featured in EmacsConf2020, with slides [[https://alhassy.github.io/org-special-block-extras/emacs-conf-2020][here]]:
 No pictures, instead we use this system to make the  slides
@@ -427,6 +405,11 @@ and the result looks nice. “Look ma, no HTML required!”
 # and block and link types for making documentation-glossary entries.
 # That is, *we provide 29 block types and 34 link types*.
 #+end_quote
+
+#+attr_html: :width 1000px
+#+attr_latex: :width 100px
+#+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
+[[file:images/minimal-working-example-multiforms.png]]
 
 #+html: <!--
 #+latex: \vfill
@@ -785,7 +768,9 @@ possibilities for =params=.
           :underline "orange" :overline "orange"))
  #+end_src
 
- #+RESULTS: startup-code
+ #+RESULTS[10eec6e6db4ef44b41ceb72deed6df71edc9b90a]: startup-code
+ | :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (thread-last docs (s-replace    &emsp;) (s-replace |
+
 
 
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
@@ -1035,7 +1020,7 @@ Three example uses:
            (setq ,(car main-arg) ,(cadr main-arg))))
 
        ;; Use any headers for this block type, if no local value is passed
-       ,@(loop for k in (mapcar #'car (-partition 2 kwds))
+       ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
                collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
        (org-special-block-extras--org-export
                               (let ((contents (org-special-block-extras--org-parse raw-contents))) ,@body)))
@@ -1112,7 +1097,7 @@ and used by DEFBLOCK.")
   "Remove all headlines in the current buffer.
 BACKEND is the export back-end being used, as a symbol."
   (setq org-special-block-extras--current-backend backend)
-  (loop for blk in org-special-block-extras--supported-blocks
+  (cl-loop for blk in org-special-block-extras--supported-blocks
         for kwdargs = nil
         for blk-start = nil
         do (goto-char (point-min))
@@ -1195,7 +1180,7 @@ Namely,
 "
   (defalias 'defblock              'org-special-block-extras--defblock)
   (defalias 'set-block-header-args 'org-special-block-extras--set-block-header-args)
-  (defalias 'thread-block-call     'org-special-block-extras--thread-blockcall)
+  (defalias 'thread-blockcall     'org-special-block-extras--thread-blockcall)
   (defalias 'subtle-colors         'org-special-block-extras--subtle-colors))
  #+end_src
 #+end_details
@@ -1379,7 +1364,7 @@ A full example:
 "
   (if (not forms) body
      `(-let [result (org-special-block-extras--blockcall ,@(car forms) ,body)]
-    ,@(loop for b in (cdr forms)
+    ,@(cl-loop for b in (cdr forms)
           collect `(setq result (org-special-block-extras--blockcall ,@b
                                      (concat
                                    "#+begin_export\n"
@@ -1718,15 +1703,14 @@ Define a block [[doc:org-special-block-extras--spoiler][spoiler]] so that the fo
 #+end_spoiler
 
 #+columnbreak:
-#+html: <hr><br>
+#+html: <br>
 
-~#+begin_spoiler :left "[" :right "]"~
-
-~[Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen~
-
-~[eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/~
-
-~#+end_spoiler~
+#+begin_example org
+,#+begin_spoiler :left "[" :right "]"
+[Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
+[eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/
+,#+end_spoiler
+#+end_example
 
 #+begin_spoiler :left "[" :right "]"
 [Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
@@ -1738,26 +1722,71 @@ Define a block [[doc:org-special-block-extras--spoiler][spoiler]] so that the fo
 
 #+html: <br>
 #+begin_solution
+Rather than having auxiliary ~#+html_head:~ styling settings, we have moved the
+styling information to the ~defblock~ declaration /and/ are using the main argument
+to colour the spoiler ---which defaults to grey ;-)
+
+--------------------------------------------------------------------------------
+
+For example, the next segment of text is in a block ~#+begin_spoiler pink~ ...
+#+begin_spoiler pink
+((Yusuf)) said to his father ((Yacoub)), /“O my father, indeed I have seen
+((eleven stars)) and ((the sun and the moon)); I saw them prostrating to me.”/
+#+end_spoiler
+
+Whereas, the following begins with ~#+begin_spoiler orange~ ...
+#+begin_spoiler orange
+((Yusuf)) said to his father ((Yacoub)), /“O my father, indeed I have seen
+((eleven stars)) and ((the sun and the moon)); I saw them prostrating to me.”/
+#+end_spoiler
+
+--------------------------------------------------------------------------------
+
 #+begin_src emacs-lisp
-(org-special-block-extras--defblock spoiler () (left "((" right "))")
+(org-special-block-extras--defblock spoiler (color "grey") (left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
-   LEFT and RIGHT may be other kinds of delimiters."
-  (s-replace-regexp
-   (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
-   "@@html:<span class=\"spoiler\"> \\1 </span>@@"
-   contents))
+   LEFT and RIGHT may be other kinds of delimiters.
+   The main argument, COLOR, indicates which color to use.
+
+For LaTeX, this becomes “fill in the blanks”, with the answers
+in the footnotes."
+  (if (equal backend 'latex)
+      (s-replace-regexp
+       (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+       "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
+       contents)
+  (-let [id (gensym)]
+    (concat
+     ;; In HTML, a ‘style’ can be, technically, almost anywhere...
+     (format
+      "<style> #%s {color: %s; background-color:%s;}
+       #%s:hover {color: black; background-color:white;} </style>
+       " id color color id)
+     (s-replace-regexp
+      (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+      (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
+      contents)))))
 #+end_src
 
 There's actually a problem with this ‘solution’; can you find it?
 #+begin_spoiler
 Hint: ((Try the link form and see how it breaks!))
 #+end_spoiler
-
-*green:Advanced:* Rather than having auxiliary ~#+html_head:~ styling settings,
-move the styling information to the ~defblock~ declaration /and/
-add a new argument, say, ~:color~ that colors the spoiler another colour,
-and defaults to grey ;-)
 #+end_solution
+
+:OnMouseOver_OnMouseOut_Approach:
+
+An alternative would be to use JS with mouse parameters; e.g.:
+
+#+begin_export html
+<a href="http://alhassy.github.io/"
+   style="background: pink; padding: 10px; cursor: pointer"
+   onMouseOver="this.style.color='#0F0'"
+   onMouseOut="this.style.color='#00F'" >Text</a>
+#+end_export
+
+Possibly using ID's as the current working solution above.
+:End:
 
 ** What's the rest of this article about?
    :PROPERTIES:
@@ -2597,13 +2626,14 @@ The contents of the block may contain ‘#+columnbreak:’ to request
 a columnbreak. This has no effect on HTML export since HTML
 describes how text should be formatted on a browser, which can
 dynamically shrink and grow and thus it makes no sense to have
-hard columnbreaks.
+hard columnbreaks. We do replace such declarations by ‘<p><br>’,
+which sometimes accomplishes the desired goal.
 "
   (let ((rule (pcase backend
                (`latex (if bar 2 0))
                (_  (if bar "solid" "none"))))
         (contents′  (s-replace "#+columnbreak:"
-                               (if (equal 'latex backend) "\\columnbreak" "")
+                               (if (equal 'latex backend) "\\columnbreak" "@@html:<p><br>@@")
                                contents)))
   (format (pcase backend
    (`latex "\\par \\setlength{\\columnseprule}{%s pt}
@@ -2631,9 +2661,9 @@ _This_
 ,#+begin_parallel 2 :bar yes-or-any-other-text
 X
 
-Y
-
 ,#+columnbreak:
+
+Y
 
 Z
 ,#+end_parallel
@@ -2644,9 +2674,9 @@ _Yields_
 #+begin_parallel 2 :bar t
 X
 
-Y
-
 #+columnbreak:
+
+Y
 
 Z
 #+end_parallel
@@ -2738,6 +2768,9 @@ mode activation ---after such functions have been declared.
 
 Let's develop blocks for colouring text and link types for inline colouring;
 e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block-extras--teal][teal]].
++ E.g., ~[[brown: Hello, World!]]~ ⇒ [[brown: Hello, World!]]
++ E.g., ~brown:Friends!~
+  ⇒ brown:Friends! ( Note the ‘!’ is not coloured; use ~[[...]]~ ! )
 
 #+begin_box :background-color custard
 Use kbd:M-x_list-colors-display to see a list of defined colour names in Emacs
@@ -3080,6 +3113,7 @@ Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:bro
  \;{\color{teal}\oplus}\; \cdots
  \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL {\color{cyan} b} \RR}}
  $$
+
  | [[teal:⊕]]   | /Loop sequentially with loop-bodies fused using [[teal:⊕][⊕]]/ |
  | /[[violet:x]]/ | /Use [[violet:x][x]] as the name of the current element/         |
  | /[[red:a]]/    | /Start with [[violet:x][x]] being [[red:a][a]]/                             |
@@ -3260,9 +3294,37 @@ kbd
 
 #+end_details
 
-[[color:orange][Going forward]], it would be nice to render =kbd:𝒳= links in a pretty way within
-Emacs itself.
+Using the ~org-special-block-extras-fancy-links~ variable, defined below, we can
+now render =kbd:𝒳= links in a pretty way within Emacs itself.
 
+:Hide:
+#+HTML: <style>
+#+HTML: kbd
+#+HTML: {
+#+HTML:   -moz-border-radius: 6px;
+#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   -webkit-border-radius: 6px;
+#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   background-color: #f7f7f7;
+#+HTML:   border: 1px solid #ccc;
+#+HTML:   border-radius: 6px;
+#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   color: #333;
+#+HTML:   display: inline-block;
+#+HTML:   font-family: 'Droid Sans Mono', monospace;
+#+HTML:   font-size: 80%;
+#+HTML:   font-weight: normal;
+#+HTML:   line-height: inherit;
+#+HTML:   margin: 0 .1em;
+#+HTML:   padding: .08em .4em;
+#+HTML:   text-shadow: 0 1px 0 #fff;
+#+HTML:   word-spacing: -4px;
+#+HTML:
+#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+#+HTML: }
+#+HTML: </style>
+#+HTML:
+:End:
 *   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
@@ -3394,12 +3456,11 @@ would be to support more, if not all, the possible OctoIcons.
 link-here:example-location (Click the icon and see the URL has changed!)
 #+end_org-demo
 
-* COMMENT Badge Links
+* Badge Links
   :PROPERTIES:
   :CUSTOM_ID: Badge-Links
   :END:
 
-link-here:badges
 Badges provide a quick and colourful summary of key features of a project,
 such as whether it's maintained, its license, and if it's documented.
 # Badges are little coloured boxes; e.g., those found all over Github.  Such
@@ -3421,26 +3482,207 @@ the brand on your jeans or other reliable product. --- [[https://github.com/dwyl
 ;; The badge link types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #+end_src
+
+#+RESULTS:
+
 :End:
 
-** The =badge= Link and derived Reddit/Github/Twitter socials
+# :style sequential
+#+begin_org-demo
+What are badges?
+
+badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir
+
+or
+
+[[badge: Let me google that | for you! |orange|
+         https://lmgtfy.app/?q=badge+shields.io&iie=1 |Elixir]]
+
+or
+
+badge:Let_me_*not*_google_that|for_you
+#+end_org-demo
+
+Notice that the orange:orange badge points to a URL and so is clickable, whereas
+the green:green one does not point to a URL and so is not clickable.
+
+** Begin omitting from LaTeX output                                  :ignore:
    :PROPERTIES:
-   :CUSTOM_ID: The-badge-Link
+   :CUSTOM_ID: Begin-omitting-from-LaTeX-output
+   :END:
+#+latex: \iffalse
+
+** Example Badges
+   :PROPERTIES:
+   :CUSTOM_ID: Example-Badges
    :END:
 
+The general syntax is as follows, with *only the first 2* are mandatory,
+with the colour defaulting to green, and the url and logo both to nil.
+We can thus have ~badge:label|message~
+:Hide:
+#+begin_example org
+# Standard template
+badge:key|value|colour|url|logo
+
+# Minimal template
+badge:key|value
+
+# Only show a coloured logo pointed to its location
+badge:||colour|here|logo
+#+end_example
+:End:
+
++ badge:key|value|informational|here|Elixir
+  ⇐ ~badge:key|value|informational|here|Elixir~
+  - Standard template; with URL pointing to current location which is named =#key=
+    ---click on it and look at your browser's URL ;-)
+
++ badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
+ ⇐ ~badge:example_with_spaces,_-,_and_%|points_right_here|orange|here~
+  #  - Use ‘_’ to denote spaces
+
++ badge:no_colour|given
+  ⇐ =badge:key|value=.
+
++ badge:empty_value||informational
+  ⇐ =badge:empty_value||informational=
+
++ badge:|value
+  ⇐ =badge:|value=
+
++ badge:||green ⇐ =badge:||green= ( No key; nor value! )
+
+  Also: [[badge:]]
+  ⇐ ~[[badge:]]~.
+#+begin_box General Syntax
+#+begin_example org
+badge:your_key|its_neato_value|some_url|a_logo_as_shown_below
+
+[[badge: your key | its neato value | some url | a logo as shown below]]
+
+reddit-subscribe-to:exact-name-of-a-subreddit
+
+github-stars:user-name/repository-name
+
+github-watchers:user-name/repository-name
+
+github-forks:user-name/repository-name
+
+github-followers:user-name
+
+twitter-follow:user-name
+
+tweet:url
+#+end_example
+
+For now, only ~badge:~ badges redirect to their URL, if any, upon a user's click.
+Within Emacs, hovering over a badge displays a tooltip indicating which values
+corresponds to which badge fields.
+
+You can make your /own/ badge types with
+doc:org-special-block-extras-make-badge.
+#+end_box
+
+#+begin_details org-special-block-extras-make-badge
 The implementation is a bit lengthy since it attempts to capture a useful
 portion of the shilelds.io badge interface.
+
 #+begin_src emacs-lisp
-(org-link-set-parameters "badge"
-  :follow (lambda (path) (--> (s-split "|" path)
+(cl-defmacro org-special-block-extras-make-badge
+  (name &optional social-shields-name social-url social-shields-url )
+  "Make a link NAME whose export is presented as an SVG badge.
+
+If the link is intend to be a social badge, then, adhering to
+shield.io conventions, the appropriate SOCIAL-SHIELDS-NAME must
+be given.
+
+The SOCIAL-URL is a URL that the badge points to and it should
+have a single ‘%s’ where the link label argument will go.
+
+Some social badges have a uniform URL, but otherwise, such as
+twitter, deviate and so need their own SOCIAL-SHIELDS-URL,
+which has a single ‘%s’ for the link's label argument.
+
+----------------------------------------------------------------------
+
+E.g., to create a badge named “go”:
+
+     (org-special-block-extras-make-badge \"go\")
+
+Then the following exports nicely from an Org file:
+
+     go:key|value|blue|here|gnu-emacs
+
+--------------------------------------------------------------------------------
+
+The LABEL should be of the shape ‘key|value|color|url|logo’
+resulting in a badge “|key|value|” where the ‘key’
+is coloured grey and the ‘value’ is coloured ‘color’.
+
++ Only the syntax ‘badge:key|value|color|url’ is supported.
+  - ‘key’ and ‘value’ have their underscores interpreted as spaces.
+     ⇒ Underscores are interpreted as spaces;
+     ⇒ ‘__’ is interpreted as an underscore;
+     ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
+  - ‘|color|url|logo’ are optional;
+     if ‘url’ is ‘here’ then the resulting badge behaves
+     like ‘link-here:key’.
+  - ‘color’ may be: ‘brightgreen’ or ‘success’,
+                    ‘red’         or ‘important’,
+                    ‘orange’      or ‘critical’,
+                    ‘lightgrey’   or ‘inactive’,
+                    ‘blue’        or ‘informational’,
+            or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
++ Of course, you can write ‘⟦badge: ⋯⟧’, then ‘⋯’ may have multiword, spaced, content.
++ Such links are displayed using a SVG badges
+  and so do not support the DESCRIPTION syntax
+  ‘⟦link:label][description⟧’.
++ Besides the HTML BACKEND, such links are silently omitted.
+"
+
+  `(org-link-set-parameters ,name
+    :follow (lambda (path) (--> (s-split "|" path)
                          (or (nth 3 it) path)
                          (browse-url it)))
-  :export #'org-special-block-extras--link--badge)
+    ;; :export #'org-special-block-extras--link--badge
+    :export (lambda (label description backend)
+              (if (equal backend 'latex) ""
+               (-let [ (key value color url logo)  (s-split "|" label) ]
+                (format
+                 (pcase ,(if social-shields-name `(format ,social-url label) 'url)
+                   ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
+                   (""      "%s") ;; e.g., badge:key|value|color||logo
+                   ('nil    "%s") ;; e.g., badge:key|value|color
+                   (t      (format "<a href=\"%s\">%%s</a>" ,(if social-shields-name `(format ,social-url label) 'url)))
+                   )
+                 ,(if social-shields-name
+                     (if social-shields-url
+                         `(format ,social-shields-url label)
+                       `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
+                                ,social-shields-name label))
+                   '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s?logo=%s\">"
+                           (url-hexify-string (s-replace "-" "--" key))
+                           (url-hexify-string (s-replace "-" "--" (or value "")))
+                           color logo)))
+                 )))
+    ;; The tooltip alongside a link
+    :help-echo (lambda (window object position)
+                 (save-excursion
+                   (goto-char position)
+                   (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
+                            (cadr (org-element-context)))
+                           (description
+                            (when (equal format 'bracket)
+                              (copy-region-as-kill contents-begin contents-end)
+                              (substring-no-properties (car kill-ring)))))
+                     (format "%s\n\n General Syntax:\n\t badge:key|value|colour|url|logo"
+                             raw-link))))))
 
-(defvar org-special-block-extras--link--twitter-excitement
-  "This looks super neat (•̀ᴗ•́)و:"
-  "The string prefixing the URL being shared.")
-
+  #+end_src
+#+end_details
+:OLD:
+#+begin_src emacs-lisp :tangle no
 (defun org-special-block-extras--link--badge
   (label _ backend &optional social)
   "Export a link presented as an SVG badge.
@@ -3518,64 +3760,103 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
          (setq img (s-chop-suffix "\">" (s-chop-prefix "<img src=\"" img)))
          (format "[![badge:%s](%s)](%s)" lbl img url)))))
 #+end_src
+:End:
 
-#+RESULTS:
-: org-special-block-extras--link--badge
+#+begin_details Example: Derived Reddit/Github/Twitter social badges
 
-We now form the specialised link types for social media.
+# We now form the specialised link types for social media.
+
+# MA: Should be on when the mode is enabled?
+
+# --------------------------------------------------------------------------------
+
+For example, a super simple ‘badge’ link type
 #+begin_src emacs-lisp
-(cl-loop for (social link) in '(("reddit/subreddit-subscribers" "reddit-subscribe-to")
-                             ("github/stars")
-                             ("github/watchers")
-                             ("github/followers")
-                             ("github/forks")
-                             ("twitter/follow")
-                             ("twitter/url?=url=" "tweet"))
-      for link′ = (or link (s-replace "/" "-" social))
-      do (org-link-set-parameters link′
-           :export (eval `(-cut org-special-block-extras--link--badge
-                         <> <> <> ,social))))
+(org-special-block-extras-make-badge "badge")
 #+end_src
 
-#+RESULTS:
+--------------------------------------------------------------------------------
 
-[[badge:key][yes]]
+A more involved example.
+#+begin_src emacs-lisp
+;; Since we're invoking a macro, the twitter-excitement is used lazily; i.e.,
+;; consulted when needed instead of being evaluated once.
+(defvar org-special-block-extras-link-twitter-excitement
+  "This looks super neat (•̀ᴗ•́)و:"
+  "The string prefixing the URL being shared.")
 
-[[badge:key|value|informational|Here|Elixir]]
+(org-special-block-extras-make-badge
+ "tweet"
+ "twitter/url?=url="
+ (format
+   "https://twitter.com/intent/tweet?text=%s:&url=%%s"
+   org-special-block-extras-link-twitter-excitement)
+ "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
+               )
+#+end_src
 
-** COMMENT Begin omitting from LaTeX output                                  :ignore:
-   :PROPERTIES:
-   :CUSTOM_ID: Begin-omitting-from-LaTeX-output
-   :END:
-#+latex: \iffalse
-** COMMENT Example Social Icons
-   :PROPERTIES:
-   :CUSTOM_ID: Example-Social-Icons
-   :END:
-Syntax:
-#+begin_example org
-reddit-subscribe-to:exact-name-of-a-subreddit
+--------------------------------------------------------------------------------
 
-github-stars:user-name/repository-name
+A few more in one, convoluted, go.
+#+begin_src emacs-lisp
+;; MA: I don't think this is ideal for long-term maintainability, see ‘:OLD’ below.
+(cl-loop for (social url name)
+         in '(("reddit/subreddit-subscribers" "https://www.reddit.com/r/%s" "reddit")
+             ("github" "https://www.github.com/%s")
+             ("github/stars" "https://www.github.com/%s/stars")
+             ("github/watchers" "https://www.github.com/%s/watchers")
+             ("github/followers" "https://www.github.com/%s?tab=followers")
+             ("github/forks" "https://www.github.com/%s/fork")
+             ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
+         for name′ = (or name (s-replace "/" "-" social))
+         do (eval `(org-special-block-extras-make-badge ,name′ ,social ,url)))
+#+end_src
+:OLD:
+#+begin_src emacs-lisp :tangle no
+(org-special-block-extras-make-badge
+ "twitter-follow"
+ "twitter/follow"
+ "https://twitter.com/intent/follow?screen_name=%s")
 
-github-watchers:user-name/repository-name
 
-github-forks:user-name/repository-name
+(org-special-block-extras-make-badge
+ "reddit" "reddit/subreddit-subscribers" "https://www.reddit.com/r/%s")
 
-github-followers:user-name
+(org-special-block-extras-make-badge
+ "github"
+ "github"
+ "https://www.github.com/%s")
 
-twitter-follow:user-name
+(org-special-block-extras-make-badge
+ "github-followers"
+ "github/followers"
+ "https://www.github.com/%s?tab=followers")
 
-tweet:url
-#+end_example
+(org-special-block-extras-make-badge
+ "github-stars"
+ "github/stars"
+ "https://www.github.com/%s/stars")
+
+(org-special-block-extras-make-badge
+ "github-forks"
+ "github/forks"
+ "https://www.github.com/%s/fork")
+
+(org-special-block-extras-make-badge
+ "github-watchers"
+ "github/watchers"
+ "https://www.github.com/%s/watchers")
+#+end_src
+:END:
+#+end_details
 
 Here are some examples.
 
 + Things I like:
-  reddit-subscribe-to:emacs
-  reddit-subscribe-to:common_lisp
-  reddit-subscribe-to:coolguides
-  reddit-subscribe-to:shia
+  reddit:emacs
+  reddit:common_lisp
+  reddit:coolguides
+  reddit:shia
   # reddit-subscribe-to:LispMemes
   # reddit-subscribe-to:ProgrammerHumor
 
@@ -3589,48 +3870,12 @@ Here are some examples.
   github-followers:alhassy
   twitter-follow:musa314
 
-** COMMENT Example Badges
-   :PROPERTIES:
-   :CUSTOM_ID: Example-Badges
-   :END:
-
-The general syntax is as follows, with *only the first 2* are mandatory,
-with the colour defaulting to green, and the url and logo both to nil.
-We can thus have ~badge:label|message~
-#+begin_example org
-# Standard template
-badge:key|value|colour|url|logo
-
-# Minimal template
-badge:key|value
-
-# Only show a coloured logo pointed to its location
-badge:||colour|here|logo
-#+end_example
-
-+ badge:key|value|informational|Here|Elixir
-  - Standard template; with URL pointing to current location which is named
-    =#key=
-
-+ badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
-  - Use ‘_’ to denote spaces
-
-+ badge:no_colour|given
-  - Only two items given: =badge:key|value=.
-
-+ badge:empty_value||informational
-  - =badge:key||colour=
-
-+ badge:|value
-  - No key; =badge:|value=
-
-+ badge:||green
-  - No key; nor value: =badge:||green=
-
-** COMMENT Example Colours
+** Example Colours
    :PROPERTIES:
    :CUSTOM_ID: Example-Colours
    :END:
+
+#+begin_org-demo
 + badge:|red|red badge:|critical|critical
 + badge:|blue|blue badge:|informational|informational
 + badge:|brightgreen|brightgreen badge:|success|success
@@ -3646,182 +3891,203 @@ badge:||colour|here|logo
 
 Consult https://htmlcolorcodes.com/ to see the HEX code of any other colour you
 wish to use; e.g., badge:|1d8348|1d8348
+#+end_org-demo
 
-** COMMENT Example Badge Icons
+** Example Badge Icons
    :PROPERTIES:
    :CUSTOM_ID: Example-Badge-Icons
    :END:
 
  Here are a few free SVG icons for popular brands from https://simpleicons.org/.
 
- + “Fire” ::
-    badge:||grey|here|Elixir
-    badge:||grey|here|tinder
-    badge:||grey|here|codeigniter
-    badge:||grey|here|prometheus
-    badge:||grey|here|sparkpost
- + “Messaging” ::
-    badge:||grey|here|quip
-    badge:||grey|here|WeChat
-    badge:||grey|here|google-hangouts
-    badge:||grey|here|hackhands
-    badge:||grey|here|google-messages
-    badge:||grey|here|Tor
-    badge:||grey|here|Slack
- + “Emacs” ::
-    badge:||white|here|gnu-emacs
-    badge:||white|here|spacemacs
-    badge:||grey|here|vim
-    badge:||grey|here|neovim
-    badge:||grey|here|gnu
-    badge:||grey|here|github
-    badge:||grey|here|acm
-    badge:||grey|here|wikipedia
-    badge:||grey|here|microsoft-excel
-    badge:||grey|here|microsoft-word
-    badge:||grey|here|dropbox
-    badge:||grey|here|google-scholar
-    badge:||grey|here|google
-    badge:||grey|here|google-translate
-    badge:||grey|here|ghost
-    badge:||grey|here|helm
-    badge:||grey|here|apache-openoffice
-    badge:||grey|here|buffer
-    # badge:||grey|here|adobe-fonts
-    #    badge:||grey|here|google-calendar
- + “Social” ::
-    badge:||grey|here|google-cast
-    badge:||grey|here|youtube
-    badge:||grey|here|discord
-    badge:||grey|here|facebook
-    badge:||grey|here|google-hangouts
-    badge:||grey|here|whatsapp
-    badge:||grey|here|skype
-    badge:||grey|here|arXiv
-    badge:||grey|here|reddit
-    badge:||grey|here|stack-overflow
-    badge:||grey|here|stack-exchange
-    badge:||grey|here|linkedin
-    badge:||grey|here|twitter
-    badge:||grey|here|jabber
- + “Lightbulb” ::
-    badge:||grey|here|lighthouse
-    badge:||grey|here|google-keep
-    badge:||grey|here|minds
- + “Programming” ::
-    badge:||grey|here|git
-    badge:||grey|here|ruby
-    badge:||grey|here|scala
-    badge:||grey|here|OCaml
-    badge:||grey|here|javascript
-    badge:||grey|here|gnu-bash
-    badge:||grey|here|powershell
-    badge:||grey|here|LaTeX
-    badge:||grey|here|java
-    badge:||grey|here|kotlin
-    badge:||grey|here|haskell
-    badge:||grey|here|coffeescript
-    badge:||grey|here|purescript
-    badge:||grey|here|rust
-    badge:||grey|here|typescript
-    badge:||grey|here|css3
-    badge:||grey|here|python
-    badge:||grey|here|c
-    badge:||grey|here|clojure
-    badge:||grey|here|lua
-    badge:||grey|here|adobe-acrobat-reader
-    #   badge:||grey|here|c-+-+
-    # badge:||grey|here|perl
-    #    badge:||grey|here|c#
- + “Miscellaneous” ::
-    badge:||grey|here|read-the-docs
-    badge:||grey|here|buy-me-a-coffee
-    badge:||grey|here|gimp
-    badge:||grey|here|mega
-    badge:||grey|here|nintendo-3ds
-    badge:||grey|here|paypal
-    badge:||grey|here|pinboard
-    badge:||grey|here|mocha
-    badge:||grey|here|Gitea
-    badge:||grey|here|instacart
-    badge:||grey|here|openStreetMap
-    badge:||grey|here|amazon
-    badge:||grey|here|svg
-    badge:||grey|here|rss
-    badge:||grey|here|swagger
-    badge:||grey|here|pastebin
-    badge:||grey|here|skyliner
-    badge:||grey|here|iTunes   badge:||grey|here|gulp
-      # badge:||grey|here|pokemon
-   # + “Music” ::
-   #    badge:||grey|here|1001-track-lists
-   #    badge:||grey|here|auda-city
-   #    badge:||grey|here|dribble
-   #    badge:||grey|here|leaflet
-   #    badge:||grey|here|youtube-gaming
-    badge:||grey|here|GIMP
-    badge:||grey|here|atom
+ To use any of the names below, just write, say,
+ ~badge:||grey||SVG-NAME-HERE~.
 
-** COMMENT Common Project Badges
+#+macro: showicon badge:||grey||$1  $1
+
+#+begin_parallel 4 :bar t
+ + “Fire” ::
+   - {{{showicon(Elixir)}}}
+   - {{{showicon(tinder)}}}
+   - {{{showicon(codeigniter)}}}
+   - {{{showicon(prometheus)}}}
+   - {{{showicon(sparkpost)}}}
+
+--------------------------------------------------------------------------------
+
+ + “Messaging” ::
+    - {{{showicon(quip)}}}
+    - {{{showicon(WeChat)}}}
+    - {{{showicon(google-hangouts)}}}
+    - {{{showicon(hackhands)}}}
+    - {{{showicon(google-messages)}}}
+    - {{{showicon(Slack)}}}
+    # Tor badge:||grey|here|Tor
+
+--------------------------------------------------------------------------------
+
+ + “Emacs” ::
+    - {{{showicon(gnu-emacs)}}}
+    - {{{showicon(spacemacs)}}}
+    - {{{showicon(vim)}}}
+    - {{{showicon(neovim)}}}
+    - {{{showicon(gnu)}}}
+    - {{{showicon(github)}}}
+    - {{{showicon(acm)}}}
+    - {{{showicon(wikipedia)}}}
+    - {{{showicon(microsoft-excel)}}}
+    - {{{showicon(microsoft-word)}}}
+    - {{{showicon(dropbox)}}}
+    - {{{showicon(google-scholar)}}}
+    - {{{showicon(google)}}}
+    - {{{showicon(google-translate)}}}
+    - {{{showicon(ghost)}}}
+    - {{{showicon(helm)}}}
+    - {{{showicon(apache-openoffice)}}}
+    - {{{showicon(buffer)}}}
+    - {{{showicon(adobe-fonts)}}}
+    - {{{showicon(google-calendar)}}}
+
+--------------------------------------------------------------------------------
+
+ + “Social” ::
+    - {{{showicon(google-cast)}}}
+    - {{{showicon(youtube)}}}
+    - {{{showicon(discord)}}}
+    - {{{showicon(facebook)}}}
+    - {{{showicon(google-hangouts)}}}
+    - {{{showicon(whatsapp)}}}
+    - {{{showicon(skype)}}}
+      # - {{{showicon(arxive)}}}
+    - {{{showicon(reddit)}}}
+    - {{{showicon(stack-overflow)}}}
+    - {{{showicon(stack-exchange)}}}
+    - {{{showicon(linkedin)}}}
+    - {{{showicon(twitter)}}}
+    - {{{showicon(jabber)}}}
+
+--------------------------------------------------------------------------------
+
+ + “Lightbulb” ::
+    - {{{showicon(lighthouse)}}}
+    - {{{showicon(google-keep)}}}
+    - {{{showicon(minds)}}}
+
+--------------------------------------------------------------------------------
+
+ + “Programming” ::
+     - {{{showicon(git)}}}
+     - {{{showicon(ruby)}}}
+     - {{{showicon(scala)}}}
+     - {{{showicon(OCaml)}}}
+     - {{{showicon(javascript)}}}
+     - {{{showicon(gnu-bash)}}}
+     - {{{showicon(powershell)}}}
+     - {{{showicon(LaTeX)}}}
+     - {{{showicon(java)}}}
+     - {{{showicon(kotlin)}}}
+     - {{{showicon(haskell)}}}
+     - {{{showicon(coffeescript)}}}
+     - {{{showicon(purescript)}}}
+     - {{{showicon(rust)}}}
+     - {{{showicon(typescript)}}}
+     - {{{showicon(css3)}}}
+     - {{{showicon(python)}}}
+     - {{{showicon(c)}}}
+     - {{{showicon(clojure)}}}
+     - {{{showicon(lua)}}}
+     - {{{showicon(adobe-acrobat-reader)}}}
+     - {{{showicon(perl)}}}
+    # c-+-+              badge:||grey|here|c-+-+
+    # c#                 badge:||grey|here|c#
+
+--------------------------------------------------------------------------------
+
+ + “Miscellaneous” ::
+     - {{{showicon(read-the-docs)}}}
+     - {{{showicon(buy-me-a-coffee)}}}
+     - {{{showicon(gimp)}}}
+     - {{{showicon(mega)}}}
+     - {{{showicon(nintendo-3ds)}}}
+     - {{{showicon(paypal)}}}
+     - {{{showicon(pinboard)}}}
+     - {{{showicon(mocha)}}}
+     - {{{showicon(Gitea)}}}
+     - {{{showicon(instacart)}}}
+     - {{{showicon(openStreetMap)}}}
+     - {{{showicon(amazon)}}}
+     - {{{showicon(svg)}}}
+     - {{{showicon(rss)}}}
+     - {{{showicon(swagger)}}}
+     - {{{showicon(pastebin)}}}
+     - {{{showicon(skyliner)}}}
+     - {{{showicon(iTunes)}}}
+     - {{{showicon(gulp)}}}
+     - {{{showicon(leaflet)}}}
+     - {{{showicon(youtube-gaming)}}}
+     - {{{showicon(GIMP)}}}
+     - {{{showicon(atom)}}}
+
+    # pokemon            badge:||grey|here|pokemon
+   #                     badge:||grey|here|1001-track-lists
+   #                     badge:||grey|here|auda-city
+   #                     badge:||grey|here|dribble
+#+end_parallel
+
+** Common Project Badges ---with copyable source
    :PROPERTIES:
    :CUSTOM_ID: Common-Project-Badges
    :END:
 
-+ badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs
+#+macro: withsrc  $1 @@html:<details><summary>src</summary>@@ ~$1~ @@html:</details>@@
 
-+ badge:Org|9.3.6|blue|https://orgmode.org|gnu
+# +begin_org-demo :style sequential
 
-+ [[badge:org-special-block-extras|1.0|informational|https://alhassy.github.io/org-special-block-extras/README.html|Gnu-Emacs][org-special-block-extras badge]]
++ {{{withsrc(badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs)}}}
++ {{{withsrc(badge:Org|9.3.6|blue|https://orgmode.org|gnu)}}}
++ {{{withsrc([[badge:org-special-block-extras|1.0|informational|https://alhassy.github.io/org-special-block-extras/README.html|Gnu-Emacs][org-special-block-extras badge]])}}}
   # + twitter:https://github.com/alhassy/org-special-block-extras
-+ [[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]]
++ {{{withsrc([[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]])}}}
++ {{{withsrc([[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]])}}}
+  {{{withsrc(badge:wiki|github|informational|here|wikipedia)}}}
++ {{{withsrc(badge:code_coverage|88%|green|here|codecov)}}}
+  {{{withsrc(badge:build|passing|success|here|azure-pipelines)}}}
++ {{{withsrc(badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds)}}}
++ {{{withsrc(badge:author|musa_al-hassy|purple|https://alhassy.github.io/|gimp)}}}
++ {{{withsrc([[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]])}}}
++ {{{withsrc(badge:issue_tracking|github|informational|here|github)}}}
++ {{{withsrc(badge:help_forum|discourse|informational|here|discourse)}}}
++ {{{withsrc(badge:social_chat|gitter|informational|https://gitter.im/explore|gitter)}}}
++ {{{withsrc(badge:Maintained?|yes|success)}}}
+  {{{withsrc(badge:Maintained?|no|critical)}}}
+  {{{withsrc(badge:No_Maintenance_Intended|×|critical|http://unmaintained.tech/)}}}
++ {{{withsrc(badge:website|up|success)}}}
+  {{{withsrc(badge:website|down|critical)}}}
++ {{{withsrc(badge:Ask_me|anything|1abc9c)}}}
+  {{{withsrc(badge:contributions|welcome|green|https://github.com/alhassy/org-special-block-extras/issues)}}}
++
+  # Org macro args are delimited by ‘,’!
+  # Wont show correctly: {{{withsrc(badge:Made_with|Python,_LaTeX,_MathJax,_and_Emacs_Org-mode|1f425)}}}
+  badge:Made_with|Python,_LaTeX,_MathJax,_and_Emacs_Org-mode|1f425
+  @@html: <details><summary>src</summary>@@
+  ~badge:Made_with|Python,_LaTeX,_MathJax,_and_Emacs_Org-mode|1f425~
+  @@html: </details>@@
 
-+ [[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
-  badge:wiki|github|informational|here|wikipedia
-
-+ badge:code_coverage|88%|green|here|codecov
-  badge:build|passing|success|here|azure-pipelines
-
-+ badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds
-
-+ badge:author|musa_al-hassy|purple|https://alhassy.github.io/|gimp
-
-+ [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
-
-+ badge:issue_tracking|github|informational|here|github
-
-+ badge:help_forum|discourse|informational|here|discourse
-
-+ badge:social_chat|gitter|informational|https://gitter.im/explore|gitter
-
-+ badge:Maintained?|yes|success
-  badge:Maintained?|no|critical
-  badge:No_Maintenance_Intended|×|critical|http://unmaintained.tech/
-  ---Interesting!
-
-+ badge:website|up|success
-  badge:website|down|critical
-
-+ badge:Ask_me|anything|1abc9c
-  badge:contributions|welcome|green|https://github.com/alhassy/org-special-block-extras/issues
-+ badge:Made_with|Python,_LaTeX,_MathJax,_and_Emacs_Org-mode|1f425
-** COMMENT End omitting from LaTeX output                                            :ignore:
+# +end_org-demo
+** End omitting from LaTeX output                                            :ignore:
    :PROPERTIES:
    :CUSTOM_ID: End-omitting-from-LaTeX-output
    :END:
  #+latex: \fi
-** COMMENT Next Steps
+** Next Steps
   :PROPERTIES:
   :CUSTOM_ID: Next-Steps-badges
   :END:
 
-[[color:orange][Going forward,]] it would be desirable to provide non-whitespace alternatives
-for the LaTeX backend. {{{newline}}}
-[[edcomm:Author][That is why no examples are shown in the PDF]] It would
-also be useful to have badges redirect to their URL, if any, upon a user's
-click. Finally, it may be useful to colour the =|=-separated fields of a badge
-link and provide a tooltip indicating which value corresponds to which
-field. This would make the interface more welcoming to new users.
-
+[[color:orange][Going forward,]] it would be desirable to provide non-whitespace alternatives for
+the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
+may be useful to colour the =|=-separated fields of a badge link.
+# This would make the interface more welcoming to new users.
 * Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
@@ -3939,6 +4205,13 @@ Below are the entries in my personal glossary ;-)
 (ignore-errors (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))
 #+end_src
 
+:Get_all_docs:
+#+begin_src emacs-lisp
+(ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))))
+#+end_src
+:End:
+
+
 #+RESULTS:
 | ("doc:cat" "doc:Category_Theory" "doc:category_theory" "doc:polymorphism" "doc:nat-trans" "doc:Natural_Transformation" "doc:natural_transformation" "doc:nil" "doc:Calculational_Proof" "doc:calculational_proof" "doc:nil" "doc:Algorithmic_Problem_Solving" "doc:algorithmic_problem_solving" "doc:nil" "doc:Expression" "doc:expression" "doc:nil" "doc:Specification" "doc:specification" "doc:nil" "doc:Programming" "doc:programming" "doc:nil" "doc:Distributive" "doc:distributive" "doc:nil" "doc:Identity" "doc:identity" "doc:nil" "doc:Associative" "doc:associative" "doc:Operational_Semantics" "doc:Axiomatic_Semantics" "doc:Semantics" "doc:semantics" "doc:Propositional_Calculus" "doc:Calculus" "doc:calculus" "doc:nil" "doc:Metatheorem" "doc:metatheorem" "doc:nil" "doc:Theorem" "doc:theorem") |
 
@@ -3995,7 +4268,7 @@ below, for more! )
 #+name: startup-code
 #+begin_src emacs-lisp :tangle no
 (setq org-special-block-extras--docs-libraries
-  '("documentation.org"))
+  '("~/org-special-block-extras/documentation.org"))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -4009,7 +4282,7 @@ org-special-block-extras--docs-libraries.
 See org-special-block-extras--docs-from-libraries.
 "
 (interactive)
-(loop for lib in libs
+(cl-loop for lib in libs
       do (with-temp-buffer
            (insert-file-contents lib)
            ;; doc only activates after an export
@@ -4096,13 +4369,18 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
                          (thread-last docs
                            (s-replace "  " "&emsp;") ; Preserve newlines
                            (s-replace "\n" "<br>")   ; Preserve whitespace
+                           (s-replace-regexp "\\#\\+begin_example<br>" "")
+                           (s-replace-regexp "\\#\\+end_example<br>" "")
                            ;; Translate Org markup
                            (s-replace-regexp "/\\(.+?\\)/" "<em>\\1</em>")
                            (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
                            (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
-                           (s-replace-regexp "=\\([^ ].*?\\)=" "<code>\\1</code>")
+                           ;; No, sometimes we want equalities.
+                           ;; (s-replace-regexp "=\\([^ \n].*?\\)=" "<code>\\1</code>")
                            (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
                            (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
+                           ;; 5+ dashes result in a horizontal line
+                           (s-replace-regexp "-----+" "<hr>")
                            ;; Spacing in math mode
                            (s-replace-regexp "\\\\quad" "&#x2000;")
                            (s-replace-regexp "\\\\," "&#8194;") ;; en space
@@ -4175,11 +4453,11 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
   (unless (consp label) (setq label (list label)))
   (push (s-replace " " "_" name) label)
   (push (downcase (s-replace " " "_" name)) label)
-  (loop for l in label
+  (cl-loop for l in label
         do  (add-to-list 'org-special-block-extras--docs
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
-  ""); (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) "")
+  (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) ""))
 #+END_SRC
 
 #+RESULTS:
@@ -4389,6 +4667,64 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
+* Emacs faces for links
+  :PROPERTIES:
+  :CUSTOM_ID: Emacs-faces-for-links
+  :END:
+A ‘fancy’ face setup for links /within/ Emacs.
++ To disable this feature, ~(setq org-special-block-extras-fancy-links nil)~.
+
+#+begin_details Details
+
+:OLD:
+#+begin_src emacs-lisp :tangle no
+;; Much more sad:
+(defface org-special-block-extras--link-face
+  '((t :foreground "black" :background "white" :box "black"
+       :family "Roboto Mono" :weight light :height 120))
+  "Face used by org-special-block-extras links" :group nil)
+#+end_src
+:End:
+
+#+begin_src emacs-lisp
+(defvar org-special-block-extras-fancy-links
+  '(badge kbd link-here doc tweet)
+  "The links, regexps, that should be shown with a boxed face within Emacs.")
+#+end_src
+
+# (require 'cus-edit) ;; To get the custom-* faces
+
+When you enable the ~org-special-block-extras~ mode, it is activated...
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+(cl-loop for lnk in org-special-block-extras-fancy-links
+      do (highlight-phrase (format "%s:[^ \n]*" lnk)
+                           'custom-button))
+
+;; Other faces to consider: custom-button-mouse, custom-button-unraised,
+;; custom-button, custom-button-pressed, custom-link
+ #+end_src
+
+When you disable the ~org-special-block-extras~ mode, it is deactivated...
+#+BEGIN_SRC emacs-lisp :noweb-ref disable-mode :tangle no
+(cl-loop for lnk in org-special-block-extras-fancy-links
+      do (unhighlight-regexp (format "%s:[^ \n]*" lnk)))
+#+END_SRC
+
+#+RESULTS:
+
+#+end_details
+
+[[file:images/fancy-faces.png]]
+
+( link-here:fancy-face-example ) kbd:C-x_ESC_ESC invokes
+doc:repeat-complex-command, you will see a Lisp form of the previous /interactive/
+action you performed. You can press kbd:RET to repeat that command, or, more
+likely, to convert your actions to Lisp code for a personal function.
+badge:Emacs|is_so_cool|informational||gnu-emacs.
+
+[[orange:Going forward]] it would be nice to make use of doc:org-edit-special to
+edit the various link types introduced in this article.
+
 * Summary
   :PROPERTIES:
   :CUSTOM_ID: Summary
@@ -4412,14 +4748,12 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Keystrokes             |                             | ~kbd~                 |
 | OctoIcons & Link Here  |                             | ~octoicon~, ~link-here~ |
 | Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]               | ~doc~                 |
+| Badges                 | [[doc:org-special-block-extras-make-badge][badge]]                       |                     |
 
 Other fun stuff: [[doc:org-special-block-extras--solution][solution]], [[doc:org-special-block-extras--org-demo][org-demo]], [[doc:org-special-block-extras--stutter][stutter]], [[doc:org-special-block-extras--rename][rename]], [[doc:org-special-block-extras--spoiler][spoiler]] :grin:
 
-# | Badges                 | [[doc:org-special-block-extras--parallel][parallel] |            |
-# | OctoIcons & Link Here  | [[doc:org-special-block-extras--octoicon][octoicon]] , [[doc:org-special-block-extras--link-here][link-here]]        | ✓          |
-
-# There are also the social badge links:
-# =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars, github-watchers=, =twitter-follow=, and =tweet=.
+There are also the social badge links:
+=reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars, github-watchers=, =twitter-follow=, and =tweet=.
 
 # [[color:orange][Going forward,]] it'd be nice to a centralised ‘user manual’ which may be
 # consulted rather than reading the literate implementation above.
@@ -4446,24 +4780,28 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
 (use-package org-special-block-extras
   :ensure t
   :hook (org-mode . org-special-block-extras-mode)
+  :custom
+    (org-special-block-extras--docs-libraries
+     '("~/org-special-block-extras/documentation.org")
+     "The places where I keep my ‘#+documentation’")
+    ;; (org-special-block-extras-fancy-links
+    ;; nil "Disable this feature.")
   :config
-  (setq org-special-block-extras--docs-libraries
-        '("~/org-special-block-extras/documentation.org"))
-  (org-special-block-extras-short-names))
-  ;; Final line is so we can write “defblock”
-  ;; instead of the fully qualified name
-  ;; “org-special-block-extras--defblock”
+  ;; Use short names like ‘defblock’ instead of the fully qualified name
+  ;; ‘org-special-block-extras--defblock’
+    (org-special-block-extras-short-names))
 #+END_SRC
 
-Then, provide support for a new type of special block named =foo= that, say
-replaces all words /foo/ in a block, by declaring the following.
+Then, provide support for a new type of special block, say re-using the ~src~
+blocks that, say, folds up all such blocks in HTML export, by declaring the
+following.
 #+BEGIN_SRC emacs-lisp :tangle no
-(defun org-special-block-extras--foo (backend contents)
-  "The FOO block type replaces all occurances of ‘foo’ with ‘bar’,
-unless a ‘:replacement:’ is provided."
-  (-let [(contents′ . (&alist 'replacement))
-           (org-special-block-extras--extract-arguments contents 'replacement)]
-    (s-replace "foo" (or replacement "bar") contents′)))
+(org-special-block-extras--defblock src (lang nil) (title nil exports nil file nil)
+  "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
+If a block has a ‘:title’, use that to title the ‘<details>’."
+  (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
+          (or title (concat "Details; " lang))
+          raw-contents))
 #+END_SRC
 
 ** Minimal working example
@@ -4475,53 +4813,68 @@ The following example showcases the prominent features of this library.
 
 #+begin_example org
 ,#+begin_parallel
-[[color:orange][Are you excited to learn some Lisp?]] blue:yes!
+[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 
 Pop-quiz: How does doc:apply work?
 ,#+end_parallel
 
-,#+begin_details
+,#+begin_details Answer
 link-here:solution
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]
 
-[[color:purple][We can apply a function to a list of arguments!]]
+,#+begin_spoiler aqua
+That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
+,#+end_spoiler
+
 ,#+end_details
 
-,#+html: <br>
+#+html: <br>
 ,#+begin_box
 octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
-#+end_box
+,#+end_box
 
 #+LATEX_HEADER: \usepackage{multicol}
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
 
 show:GLOSSARY
+
+badge:Thanks|for_reading
+tweet:https://github.com/alhassy/org-special-block-extras
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 #+end_example
+
+Here is what it looks like as HTML (left) and LaTeX (right):
+#+attr_html: :width 800px
+#+attr_latex: :width 100px
+[[file:images/minimal-working-example.png]]
 
 The above section, [[#practice_problems][‘practice problems’]], presents a few puzzles to get you
 comfortable with ~defblock~ ;-)
 
-
-** COMMENT Live MWE
+** COMMENT Live MWE :ignore:
    :PROPERTIES:
    :CUSTOM_ID: Live-MWE
    :END:
+
 #+begin_parallel
-[[color:orange][Are you excited to learn some Lisp?]] blue:yes!
+[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 
 Pop-quiz: How does doc:apply work?
 #+end_parallel
 
-#+begin_details
+#+begin_details Answer
 link-here:solution
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]
 
-[[color:purple][We can apply a function to a list of arguments!]]
+#+begin_spoiler aqua
+That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
+#+end_spoiler
+
 #+end_details
 
 #+html: <br>
@@ -4535,30 +4888,18 @@ octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 
 show:GLOSSARY
 
-#
-# badge:thanks|for_reading
-#
-# tweet:https://github.com/alhassy/org-special-block-extras
-#
-# badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-#
+badge:Thanks|for_reading
+tweet:https://github.com/alhassy/org-special-block-extras
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
 ** Bye!
    :PROPERTIES:
    :CUSTOM_ID: Bye
    :END:
 
-:Broke_Org_9_1:
 badge:thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-:End:
-#+begin_export html
-<p>
-<img src="https://img.shields.io/badge/thanks-for_reading-nil">
-<a href="https://twitter.com/intent/tweet?text=This%20looks%20super%20neat%20%28%E2%80%A2%CC%80%E1%B4%97%E2%80%A2%CC%81%29%D9%88%3A:&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
-<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
-</p>
-#+end_export
 
 * Lisp Postamble                                                   :noexport:
   :PROPERTIES:
@@ -4684,18 +5025,29 @@ https://github.com/riscy/melpazoid
 #+NAME: make-readme
 #+BEGIN_SRC emacs-lisp
 (with-temp-buffer
-    (insert
-    "#+EXPORT_FILE_NAME: README.md
-     # HTML: <h1> 29 new custom blocks and 32 link types for Emacs' Org-mode (•̀ᴗ•́)و </h1>
-     ,#+OPTIONS: toc:nil d:nil
-     ,#+INCLUDE: \"org-special-block-extras.org::*Abstract\"
-     # INCLUDE: \"org-special-block-extras.org::*Summary\"
-     HELLO!
-    ")
-    (let ((org-export-use-babel nil)
+    (insert "
+,#+EXPORT_FILE_NAME: README.md
+#+HTML: <h1> A unified interface for Emacs' Org-mode block & link types (•̀ᴗ•́)و </h1>
+#+HTML: <h2> Which is used to obtain 30 new custom blocks and 34 link types ¯\\_(ツ)_/¯ </h2>
+,#+OPTIONS: toc:nil d:nil broken-links:t
+,#+html: <div align=\"center\">
+,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Abstract :only-contents t
+,#+html: </div>
+# +TOC: headlines 2
+,* Installation Instructions
+,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Installation-Instructions :only-contents t
+,* Minimal working example
+,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Minimal-working-example :only-contents t
+,* Bye!
+,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Bye :only-contents t
+")
+    (let ((org-export-use-babel nil) (org-export-with-broken-links t))
       (org-mode)
-      (org-md-export-to-markdown))))
+      (org-md-export-to-markdown)))
 #+END_SRC
+
+#+RESULTS: make-readme
+: README.md
 
 *Then* use =grip= to see that this looks reasonable.
 

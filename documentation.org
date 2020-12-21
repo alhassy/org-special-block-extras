@@ -1,5 +1,395 @@
 #+title: Musa Al-hassy's Personal Glossary
 # +OPTIONS: broken-links:auto
+#+HTML_HEAD: <link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
+#+HTML_HEAD: <link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
+# The last one has the styling for lists.
+
+#+begin_quote
+Knowledge is software for your brain: The more you know, the more problems you can solve!
+#+end_quote
+
+doc:Calculational_Proof
+#+begin_documentation Calculational Proof :show t
+A story whose events have smooth transitions connecting them.
+
+# A proof wherein each step is connected to the next step by an explicit
+# justification.
+
+This is a ‘linear’ proof format; also known as /equational style/ or /calculational
+proof/. This corresponds to the ‘high-school style’ of writing a sequence of
+equations, one on each line, along with hints/explanations of how each line was
+reached from the previous line. ( This is similar to *programming* which
+encourages placing /comments/ to /communicate/ what's going on to future readers. )
+
+The structure of equational proofs allows implicit use of infernece rules
+Leibniz, Transitvitity & Symmetry & Reflexivity of equality, and
+Substitution. In contrast, the structure of proof trees is no help in this
+regard, and so all uses of inference rules must be mentioned explicitly.
+
+For comparison with other proof notations see [[http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf][Equational Propositional Logic]].
+
+--------------------------------------------------------------------------------
+
+We advocate /calculational proofs/ in which reasoning is goal directed and
+justified by simple axiomatic laws that can be checked syntactically rather than
+semantically. ---/Program Construction/ by Roland Backhouse
+
+--------------------------------------------------------------------------------
+
+Calculational proofs introduce notation and recall theorems as needed, thereby
+making each step of the argument easy to verify and follow. Thus, such arguments
+are more accessible to readers unfamiliar with the problem domain.
+
+--------------------------------------------------------------------------------
+
+The use of a formal approach let us keep track of when our statements are
+equivalent (“=”) rather than being weakened (“⇒”). That is, the use of English
+to express the connection between steps is usually presented naturally using “if
+this, then that” statements ---i.e., implication--- rather than stronger notion
+of equality.
+#+end_documentation
+
+:template:
+
+doc:temp
+#+begin_documentation temp :show t :color blue
+#+end_documentation
+
+:End:
+
+doc:graph
+#+begin_documentation graph :show t :color blue
+A /(Partial, resp. Total) Graph/ $G = (V, E, src, tgt)$ consists of
+   + $V$, a set of “points, nodes, vertices”
+   + $E$, a set of “arcs, edges”
+   + $src, tgt : E ↔ V$, a pair of /partial (resp. total)/ functions.
+
+⟦ Tersely put, in any category, a /graph/ is a parallel pair of morphisms. ⟧
+
+/Edge parallelism/ is the relation $Ξ = src ⨾ src ˘ ∩ tgt ⨾ tgt˘$; two arcs are
+related when they have the same starting point and the same ending point, which
+both exist. Joyously, the name ‘Ξ’ is a neat reminder of the concept:
+The name is three parallel lines, for the concept of edge(line) parallelism.
+
++ A graph is /total/ exactly when /Id ⊆ Ξ/; and so Ξ is an equivalence.
++ A graph has /no parallel arrows/ exactly when /Ξ ⊆ Id/.
++ A graph is /simple/ exactly when /Ξ = Id/.
+
+The /associated relation/ is the relation /_⟶_ = src ˘ ⨾ tgt/ that relates two nodes
+when the first is the source of some edge that happens to have the second point
+as its target. One uses the associated relation to study properties not
+involving partial or parallel arrows. One writes /⟵/ for /⟶˘/;
+one writes ⟶⋆ for the /reachability/ relation.
+
++ Node /y/ is /reachable via a non-empty path/ from node /x/ exactly when /x ⟶⁺ y/.
+  - Node /x/ lies on a cycle exactly when /x ⟶⁺ x/.
+  - A graph is /DAG, acylic, circuit-free,/ exactly when /⟶⁺ ⊆ ∼Id/; i.e., /⟶⁺ ∩ Id = ⊥/.
+  - An acyclic graph is a (/directed) forest/ exactly when ⟶ is injective; i.e.,
+    every node has at most one predecessor; i.e., $⟶ ⨾ ⟵ ⊆ Id$.
++ A node /r/ is a /root/ exactly when every node is reachable from it; i.e., /{r} × V ⊆ ⟶⋆;/
+  i.e., /𝕃 r ⨾ ⟶⋆ = ⊤/ where /𝕃 r/ is defined by $𝕃 r = (ℝ r)˘$ and $x 〔ℝ r〕 y \;≡\; x = r$.
+  - $x〔𝕃 r ⨾ R〕 y \;≡\; r〔R〕 y$ and $x 〔R ⨾ ℝ r〕 y \;≡\; x 〔R〕 r$
+  - A /tree/ is a forest with a root.
++ A graph is /loop free/ exactly when /⟶ ⊆ ∼Id/.
++ A graph is /strongly connected/ exactly when /⟶⋆ = ⊤/; i.e., /∼Id ⊆ ⟶⁺/;
+  i.e., every point is reachable from any /other/ point; i.e., /∼Id ⊆ ⟶ ∩ ⟵˘/;
+  i.e., any two distinct points lie on an undirected circuit.
+  - The equivalence classes of /⟶⋆ ∩ ⟵⋆/ are the /strongly connected components/.
++ /Terminal∣sinks/ are nodes from which it is /not/ possible to proceed /any/ further;
+  i.e., terminals have no successors; the domain of /∼(⟶ ⨾ ⊤)/ is all terminals.
++ /Initial∣sources/ are nodes from which it is /not/ possible to proceed backward;
+  i.e., initials have no predecessors; the domain of /∼(⟵ ⨾ ⊤)/ is all initials.
+#+end_documentation
+
+* Logics
+  :PROPERTIES:
+  :CUSTOM_ID: Logics
+  :END:
+
+doc:Expression
+#+begin_documentation Expression :show t
+
+An /expression/ is either a ‘variable’ or a ‘function application’; i.e., the name
+of a function along with a number of existing expressions.
+
+#+begin_example
+ Expr ::= Constant    -- E.g., 1 or “apple”
+      |  Variable    -- E.g., x or apple (no quotes!)
+      |  Application -- E.g., f(x₁, x₂, …, xₙ)
+#+end_example
+
+( One reads ‘:=’ as /becomes/ and so the addition of an extra colon results in a
+‘stutter’: One reads ‘∷=’ as /be-becomes/. The symbol ‘|’ is read /or/. )
+
+Notice that a constant is really just an application with /n/ being /0/ arguments
+and so the first line in the definition above could be omitted.
+
+--------------------------------------------------------------------------------
+
+In a sense, an expression is like a sentence with the variables acting as
+pronouns and the function applications acting as verb clauses and the argument
+to the application are the participants in the action of the verbal clause.
+
+A *variable of type τ* is a /name/ denoting a yet unknown /value/ of type τ;
+i.e., “it is a pronoun (nickname) referring to a person in the collection of people τ”.
+E.g., to say $x$ is an integer variable means that we may treat it
+as if it were a number whose precise value is unknown.
+Then, if we let =Expr τ= refer to the expressions denoting /values/ of type τ;
+then a *meta-variable* is simply a normal variable of type =Expr τ=.
+
+That is, when we write phrases like =“Let E be an expression”=, then the /name/ $E$
+varies and so is a variable, but it is an expression and so may consist of a
+function application or a variable. *That is, $E$ is a variable that may stand
+for variables.* This layered inception is resolved by referring to $E$ as not
+just any normal variable, but instead as a *meta-variable*: A variable capable of
+referring to other (simpler) variables.
+
+--------------------------------------------------------------------------------
+
+Expressions, as defined above, are also known as /abstract syntax trees/ (AST) or
+/prefix notation/. Then /textual substitution/ is known as ‘grafting trees’ (a
+monadic bind).
+
+Their use can be clunky, such as by requiring many parentheses and implicitly
+forcing a syntactic distinction between equivalent expressions; e.g.,
+/gcd(m,gcd(n,p))/ and /gcd(gcd(m,n),p)/ look difference even though /gcd/ is
+associative.
+
+As such, one can declare /precedence levels/ ---a.k.a. /binding power/--- to reduce
+parentheses, one can declare fixity ---i.e., have arguments around operation
+names---, and, finally, one can declare association ---whether sequential
+instances of an operation should be read with implicit parenthesis to the right
+or the to the left--- to reduce syntactic differences.  The resulting expression
+are now known to be in a /concrete syntax/ ---i.e., in a syntactic shape that is
+more concrete.
+
+That is, the *conventions* on how a /string/ should be parsed as a /tree/ are known as a
+*precedence, fixity, and associativity rules.*
+
+Similarly, not for operators but one treats /relations/ *conjunctionally* to reduce
+the number of ‘and’(∧) symbols; e.g. $x ≤ y + 2 = z \quad≡\quad x ≤ (y + 2) \,∧\, (y + 2) = z$.
+This is very useful to avoid repeating lengthy common expressions, such as /y + 2/.
+#+end_documentation
+
+doc:Induction
+#+begin_documentation Induction :show t :color blue
+How we prove a theorem $P\, n$ ranging over natural numbers $n$?
+
+For instance, suppose the property $P$ is that using only 3 and 5 dollar bills,
+any amount of money that is at-least 8 dollars can be formed.
+
+Since there are an infinite number of natural numbers, it is not possibly to
+verify $P\, n$ is true by /evaluating/ $P\, n$ at each natural number $n$.
+
+*Knocking over dominos is induction:*
+The natural numbers are like an infinite number of dominoes ---i.e., standing
+tiles one after the other, in any arrangement. Can all dominoes be knocked over?
+That is, if we construe $P\, n$ to mean “the /n/-th domino can be knocked over”,
+then the question is “is $∀ n • P\, n$ true”. Then, clearly if we can knock over
+the first domino, $P\, 0$, and if when a domino is knocked over then it also
+knocks over the next domino, $P\, n ⇒ P\, (n + 1)$, then ‘clearly’ all dominoes
+will be knocked over. This ‘basic observation’ is known as /induction/.
+
+*Climbing a ladder is induction:*
+The natural numbers are like an infinite ladder ascending to heaven.  Can we
+reach every step, rung, on the ladder?  That is, if we construe $P\, n$ to mean
+“the /n/-th rung is reachable”, then the question is “is $∀ n • P\, n$
+true”. Then, clearly if we can reach the first rung, $P\, 0$, and whenever we
+climb to a rung then we can reach up and grab the next rung, $P\, n ⇒ P\, (n +
+1)$, then ‘clearly’ all rungs of the ladder can be reached. This ‘basic
+observation’ is known as /induction/.
+
+*Constant functions are induction:*
+A predicate $P : ℕ → 𝔹$ is a function. When is such a function constantly the
+value $\true$? That is, when is $∀ n • P\, n = \true$?  Clearly, if $P$ starts
+off being $\true$ ---i.e., /P 0/--- and it preserves truth at every step ---i.e.,
+/P n ⇒ P (n + 1)/--- then /P n/ will be true for any choice of $n$.
+
+That is, if we consider $(ℕ, ≤)$ and $(𝔹, ⇒)$ as ordered sets and $P$ starts at
+the ‘top’ of 𝔹 ---i.e., /P 0 = true/--- and it is ascending ---i.e., /P n ⇒ P (n +
+1)/--- and so ‘never goes down’, then clearly it must stay constantly at the top
+value of 𝔹. This ‘basic observation’ is known as /induction/.
+
+
+⟦ For the money problem, we need to start somewhere else besides 0. ⟧
+
+*Principle of (“Weak”) Mathematical Induction:*
+To show that a property $P$ is true for all natural numbers starting with some
+number $n_0$, show the following two properties:
++ Base case :: Show that $P\, n₀$ is true.
++ Inductive Step :: Show that whenever (the *inductive hypothesis*) $n$ is a
+  natural number that such that $n ≥ n₀$ and $P\, n$ is true, then $P\, (n + 1)$
+  is also true.
+
+⟦ For the money problem, we need to be able to use the fact that to prove
+$P\,(n + 1)$ we must have already proven $P$ for all smaller values. ⟧
+
+*Principle of (“Strong”) Mathematical Induction*:
+To show that a property $P$ is true for all natural numbers starting with some
+number $n_0$, show the following two properties:
++ Base case :: Show that $P\, n₀$ is true.
++ Inductive Step :: Show that whenever (the *inductive hypothesis*) $n$ is a
+  natural number that such that $n ≥ n₀$ and $P\, n_0, P\, (n_0 + 1), P\, (n_0 +
+  2), …, P\, n$ are true, then $P\, (n + 1)$ is also true.
+
+⟦ The ‘strength’ of these principles refers to the strength of the inductive
+hypothesis. The principles are provably equivalent. ⟧
+
+# (It is also a way to say that ℕ has non-empty meets.)
+*The Least Number Principle (LNP) ---Another way to see induction:*
+Every non-empty subset of the natural numbers must have a least element,
+‘obviously’. This is (strong) induction.
+# Possibly infinite!
+
+Application of LNP to showing that algorithms terminate:
+In particular, every decreasing non-negative sequence of integers
+$r₀ > r₁ > r₂ > ⋯$ must terminate.
+#+end_box
+
+#+end_documentation
+
+doc:Textual_Substitution
+#+begin_documentation  Textual_Substitution :show t
+The *(simultaneous textual) Substitution operation* $E[\vec x ≔ \vec F]$ replaces
+all variables $\vec x$ with parenthesised expressions $\vec F$ in an expression
+$E$. In particular, $E[x ≔ F]$ is just $E$ but with all occurrences of $x$
+replaced by $“(F)”$. This is the “find-and-replace” utility you use on your
+computers.
+
+Textual substitution on expressions is known as “grafting” on trees: Evaluate
+$E[x ≔ F]$ by going down the tree $E$ and finding all the ‘leaves’ labelled $x$,
+cut them out and replace them with the new trees $F$.
+
+Since expressions are either variables of functions applications,
+substitution can be defined inductively/recursively by the following two clauses:
+
++ /y[x ≔ F]             =  if  x = y  then  F  else  y  fi/
++ /f(t₁, …, tₙ)[x ≔ F]  =  f(t₁′, …, tₙ′)   where  tᵢ′ = tᵢ[x ≔ F]/
+
+--------------------------------------------------------------------------------
+
+Sequential ≠ Simultaneous:
+  /(x + 2 · y)[x ≔ y][y ≔ x]  ≠  (x + 2 · y)[x, y ≔ y, x]/
+
+[[https://alhassy.github.io/PythonCheatSheet/CheatSheet.pdf][Python]], for example, has simultaneous /assignment/;
+e.g., ~x, y = y, x~ is used to swap the value of two variables.
+
+--------------------------------------------------------------------------------
+
+A /function/ $f$ is a rule for computing a value from another value.
+
+If we define $f\, x = E$ using an expression, then /function application/ can be
+defined using textual substitution: $f \, X = E[x ≔ X]$. That is, expressions
+can be considered functions of their variables ---but it is still expressions
+that are the primitive idea, the building blocks.
+
+#+end_documentation
+
+doc:Inference_Rule
+#+begin_documentation Inference_Rule :show t
+
+Formally, a “proof” is obtained by applying a number of “rules” to known results
+to obtain new results; a “theorem” is the conclusion of a “proof”.  An “axiom”
+is a rule that does not need to be applied to any existing results: It's just a
+known result.
+
+That is, a *rule* $R$ is a tuple $P₁, …, Pₙ, C$ that is thought of as ‘taking
+*premises* (instances of known results) $Pᵢ$’ and acting as a ‘natural,
+reasonable justification’ to obtain *conclusion* $C$.  A *proof system* is a
+collection of rules. At first sight, this all sounds very abstract and rather
+useless, however it is a /game/: *Starting from rules, what can you obtain?* Some
+games can be very fun! Another way to see these ideas is from the view of
+programming:
+
++ Proving ≈ Programming
++ Logic   ≈ Trees (algebraic data types, 𝒲-types)
++ Rules   ≈ Constructors
++ Proof   ≈ An application of constructors
++ Axiom   ≈ A constructor with no arguments
+
+Just as in elementary school one sees addition ‘+’ as a fraction with the
+arguments above the horizontal line and their sum below the line, so too is that
+notation reused for inference rules: Premises are above the fraction's bar and
+the conclusion is below.
+#+begin_example
+                                   12
+P₁, P₂, …, Pn                    +  7
+---------------R     versues     ----
+      C                            19
+#+end_example
+
+Just as there are meta-variables and meta-theorems, there is ‘meta-syntax’:
+- The use of a fraction to delimit premises from conclusion is a form of ‘implication’.
+- The use of a comma, or white space, to separate premises is a form of ‘conjunction’.
+
+If our expressions actually have an implication and conjunction operation, then
+inference rule above can be presented as an axiom $P₁ \,∧\, ⋯ \,∧\, Pₙ \,⇒\, C$.
+
+The inference rule says “if the $Pᵢ$ are all valid, i.e., true in /all states/,
+then so is $C$”; the axiom, on the other hand, says “if the $Pᵢ$ are true in /a
+state/, then $C$ is true in /that state/.” Thus the rule and the axiom are not
+quite the same.
+
+Moreover, the rule is not a Boolean expression.  Rules are thus more general,
+allowing us to construct systems of reasoning that have no concrete notions of
+‘truth’ ---e.g., the above arithmetic rule says from the things above the
+fraction bar, using the operation ‘+’, we /can get/ the thing below the bar, but
+that thing (19) is not ‘true’ as we may think of conventional truth.
+
+Finally, the rule asserts that $C$ follows from $P₁, …, Pₙ$.  The formula $P₁
+\,∧\, ⋯ \,∧\, Pₙ \,⇒\, C$, on the other hand, is an expression (but it need not
+be a theorem).
+
+A “theorem” is a syntactic concept: Can we play the game of moving symbols to
+get this? Not “is the meaning of this true”!  ‘Semantic concepts’ rely on
+‘states’, assignments of values to variables so that we can ‘evaluate, simplify’
+statements to deduce if they are true.
+
+Syntax is like static analysis; semantics is like actually running the program
+(on some, or all possible inputs).
+
+--------------------------------------------------------------------------------
+
+One reads/writes a /natural deduction proof (tree)/ from the very *bottom*: Each
+line is an application of a rule of reasoning, whose assumptions are above the
+line; so read/written upward.  The *benefit* of this approach is that *rules guide
+proof construction*; i.e., it is goal-directed.
+
+However the *downsides are numerous*:
+- So much horizontal space is needed even for simple proofs.
+- One has to *repeat* common subexpressions; e.g., when using transitivity of equality.
+- For comparison with other proof notations, such as Hilbert style,
+  see [[http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf][Equational Propositional Logic]].
+
+  This is more ‘linear’ proof format; also known as /equational style/ or
+  /calculational proof/. This corresponds to the ‘high-school style’ of writing a
+  sequence of equations, one on each line, along with hints/explanations of how
+  each line was reached from the previous line.
+
+--------------------------------------------------------------------------------
+
+Finally, an inference rule says that it is possible to start with the givens
+$Pᵢ$ and obtain as result $C$.  The idea to use *inference rules as computation*
+is witnessed by the [[https://alhassy.github.io/PrologCheatSheet/CheatSheet.pdf][Prolog]] programming language.
+
+#+end_documentation
+
+doc:Logic
+#+begin_documentation Logic :show t
+A /logic/ is a formal system of reasoning...
+
+A /logic/ is a set of symbols along with a set of /formulas/ formed from the
+symbols, and a set of /inference rules/ which allow formulas to be derived from
+other formulas. (The formulas may or may not include a notion of variable.)
+
+Logics are purely syntactic objects; an /inference rule/ is a syntactic mechanism
+for deriving “truths” or “theorems”.
+
+In general, proofs are evidence of truth of a claim; by demonstrating that the
+claim follows from some /obvious truth/ using rules of reasoning that /obviously
+preserve truth./
+#+end_documentation
 
 doc:Theorem
 #+begin_documentation Theorem :show t :color blue
@@ -10,6 +400,29 @@ rule whose premises are theorems.
 
 Different axioms could lead to the same set of theorems, and many texts use
 different axioms.
+
+--------------------------------------------------------------------------------
+
+A “theorem” is a syntactic concept: Can we play the game of moving symbols to
+get this? Not “is the meaning of this true”!  ‘Semantic concepts’ rely on
+‘states’, assignments of values to variables so that we can ‘evaluate, simplify’
+statements to deduce if they are true.
+
+Syntax is like static analysis; semantics is like actually running the program
+(on some, or all possible inputs).
+
+--------------------------------------------------------------------------------
+
+A *meta-theorem* is a general statement about our logic that we prove to be
+true. That is, if 𝑬 is collection of rules that allows us to find truths, then a
+/theorem/ is a truth found using those rules; whereas a meta-theorem/ is property
+of 𝑬 itself, such as what theorems it can have.  That is, theorems are _in_ 𝑬 and
+meta-theorems are _about_ 𝑬.  For example, here is a meta-theorem that the
+equational logic 𝑬 has (as do many other theories, such as lattices): An
+/equational/ theorem is true precisely when its ‘dual’ is true. Such metatheorems
+can be helpful to discover new theorems.
+
+# A meta-theorem is a theorem about theorems.
 #+end_documentation
 
 doc:Metatheorem
@@ -41,13 +454,60 @@ doc:Calculus ([[doc:Propositional_Calculus][Propositional Calculus]])
 A /calculus/ is a method or process of reasoning by calculation
 with symbols. A /propositional calculus/ is a method of calculating with Boolean
 (or propositional) expressions.
+
+--------------------------------------------------------------------------------
+
+Calculus: Formalised reasoning through calculation.
+
+‘Hand wavy’ English arguments tend to favour case analysis —considering what
+could happen in each possible scenario— which increases exponentially with each
+variable; in contrast, equality-based calculation is much simpler since it
+delegates intricate case analysis into codified algebraic laws.
 #+end_documentation
 
 doc:Semantics
 #+begin_documentation Semantics :label (Axiomatic_Semantics Operational_Semantics) :show t
-Often operations are defined by how they are evaluated (“operationally”), we
+
+*Syntax* refers to the structure of expressions, or the rules for putting symbols
+together to form an expression. *Semantics* refers to the meaning of expressions
+or how they are evaluated.
+
+An expression can contain variables, and evaluating such an expression requires
+knowing what values to use for these variables; i.e., a *state*: A list of
+variables with associated values. E.g., evaluation of $x - y + 2$ in the state
+consisting of $(x, 5)$ and $(y, 6)$ is performed by replacing $x$ and $y$ by
+their values to yield $5 - 6 + 2$ and then evaluating that to yield $1$.
+
+A Boolean expression $P$ is *satisfied* in a state if its value is /true/ in that
+state; $P$ is *satisfiable* if there is a state in which it is satisfied; and $P$
+is *valid* (or is a *tautology*) if it is satisfied in every state.
+
+--------------------------------------------------------------------------------
+
+Often operations are defined by how they are evaluated (*operationally*), we
 take the alternative route of defining operations by how they can be manipulated
-(“axiomatically”); i.e., by what properties they satisfy.
+(*axiomatically*); i.e., by what properties they satisfy.
+
+For example, evaluation of the expression $X = Y$ in a state yields the value
+/true/ if expressions $X$ and $Y$ have the same value and yields /false/ if they
+have different values.  This characterisation of equality is in terms of
+expression /evaluation/.  For /reasoning about expressions/, a more useful
+characterisation would be a set of /laws/ that can be used to show that two
+expressions are equal, *without* calculating their values.
+--- c.f., static analysis versues running a program.
+
+For example, you know that $x = y$ equals $y = x$, regardless of the values of
+$x$ and $y$.  A collection of such laws can be regarded as a definition of
+equality, *provided* two expressions have the same value in all states precisely
+when one expression can be translated into the other according to the laws.
+
+Usually, in /a/ logic, theorems correspond to expressions that are true in all
+states.
+
+--------------------------------------------------------------------------------
+
+That is, instead of defining expressions by how they are evaluated, we may
+define expressions in terms of how they can be manipulated ---c.f., a calculus.
 
 For instance, we may define basic manipulative properties of operators ---i.e.,
 /axioms/--- by considering how the operators behave operationally on particular
@@ -62,9 +522,186 @@ of the definition of equivalence is that it be an associative operation.
 Sometimes a single axiom is not enough to ‘pin down’ a unique operator ---i.e.,
 to ensure we actually have a well-defined operation--- and other times this is
 cleanly possible; e.g., given an ordering ‘≤’(‘⇒, ⊆, ⊑’) we can define minima
-‘↓’ (‘∧, ∩, ⊓’) by the axiom: “x ↓ y is the greatest lower bound”; i.e., $z ≤ x
-↓ y \quad≡\quad z ≤ x \,∧\, z ≤ y$.
+‘↓’ (‘∧, ∩, ⊓’) by the axiom: “x ↓ y is the greatest lower bound”;
+i.e., $z ≤ x ↓ y \quad≡\quad z ≤ x \,∧\, z ≤ y$.
 #+end_documentation
+
+** Misc :ignore:
+   :PROPERTIES:
+   :CUSTOM_ID: Misc
+   :END:
+
+ doc:Programming
+ #+begin_documentation Programming :show t
+ Programming is solving the equation /R ⇒[C] G/ in the unknown /C/; i.e., it is the
+ activity of finding a ‘recipe’ that satisfies a given specification. Sometimes
+ we may write /R ⇒[?] G/ and solve for ‘?’. Programming is a goal-directed activity: From a specification, a program is found by examining the shape of its postcondition.
+ #+end_documentation
+
+ doc:Specification
+ #+begin_documentation Specification :show t :color blue
+  A specification is an equation of a certain shape.
+  /Programming/ is the activity of solving a specification
+  for its unknown. Its unknown is called a /program/.
+
+  See also “Programming”.
+ #+end_documentation
+
+ doc:Proving_is_Programming
+ #+begin_documentation Proving_is_Programming :show t :color blue
+ Problems may be formulated and solved using, possibly implicitly, the
+ construction of correct programs:
+
+     /“for all x satisfying R(x), there is a y such that G(x,y) is true”/
+ ≈	/∀ x • R x ⇒ ∃ y • G x y/
+ ≈	/R {𝑺} G for some program 𝑺 with inputs x and outputs y/
+
+ This is known as a /constructive proof/ since we have an algorithm 𝑺 that actually
+ shows how to find a particular /y/ to solve the problem, for any given x. In
+ contrast, non-constructive proofs usually involving some form of counting
+ followed by a phrase “there is at least one such /y/ …”, without actually
+ indicating /how/ to find it!
+
+ The /“R {𝑺} G”/ is known as a ‘Hoare triple’ and it expresses “when begun in a
+ state satisfying /R/, program 𝑺 will terminate in a state satisfying /G/.”
+
+ --------------------------------------------------------------------------------
+
+ + Proving ≈ Programming
+ + Logic   ≈ Trees (algebraic data types, 𝒲-types)
+ + Rules   ≈ Constructors
+ + Proof   ≈ An application of constructors
+ + Axiom   ≈ A constructor with no arguments
+
+
+ #+end_documentation
+
+ doc:Algorithmic_Problem_Solving
+ #+begin_documentation Algorithmic Problem Solving :show t :color blue
+ There are two ways to read this phrase.
+
+ Algorithmic-problem solving is about solving problems that
+ involve the construction of an algorithm for their solution.
+
+ Algorithmic problem-solving is about problem solving in general,
+ using the principles of correct-by-construction algorithm-design.
+
+ #+end_documentation
+ # Computing science is all about solving algorithmic problems (or, as some
+ # authors pre- fer to say, it is all about instructing computers to solve
+ # problems).
+
+ doc:nat-trans
+ #+begin_documentation Natural Transformation :label (nat-trans polymorphism) :show t :color blue
+ Natural transformations are essentially polymorphic functions that make /no/
+ choices according to the input type; e.g., =reverse : List τ → List τ= makes no
+ choices depending on the type ~τ~.
+ #+end_documentation
+
+ doc:cat
+ #+begin_documentation Category Theory :label cat :show t
+ A theory of typed  composition; e.g., typed monoids.
+ #+end_documentation
+
+* COMMENT Logic :incomplete:erroneous:
+  :PROPERTIES:
+  :CUSTOM_ID: Logic
+  :END:
+doc:Logic
+#+begin_documentation Logic :show t
+A /logic/ consists of a /language/ ---generated by a signature Σ---
+and a deductive system ---usually defined by ⊢.
+
+The relation ⊢ is between sets of formulae and a single formula,
+and it must usually satisfy:
+1. Reflexivity:  If φ ∈ Γ then Γ ⊢ Φ
+2. Cut [Transitivity]:  If Δ ⊢ γ for each γ ∈ Γ, and Γ ⊢ φ, then Δ ⊢ φ
+3. Structurality: If Γ ⊢ φ then Γσ ⊢ Φσ for each substitution σ.
+
+A “theorem” then is a consequence of the empty set of formulae; a “theory” 𝑻 is
+a set of formulae closed under consequence: If 𝑻 ⊢ Φ then Φ ∈ 𝑻. The theorems
+are then exactly Th(∅), the theory generated by the empty set; where Th(Γ) = {Φ
+❙ Γ ⊢ φ} is the theory generated by Γ (i.e., the smallest theory containing Γ.)
+
+--------------------------------------------------------------------------------
+
+An *axiomatic system* is a collection 𝑹 of set-formula pairs (Γ, Φ), called
+“inference rules”, that is closed under substitutions.  A *proof* of a formula φ
+from a set of formulae Γ is defined to be a tree labelled by formulae such that
+the root is labelled by φ and the leaves by axioms or elements of Γ, and if a
+node is labelled by Ψ and Δ is the set of labels of its preceding nodes, then
+(Δ, Ψ) ∈ 𝑹.
+
+One writes Γ ⊢ Φ if there is a proof of Φ from Γ; then ⊢ is the least logic
+containing 𝑹.
+
+One says *𝑹 is an axiomatic system, or a presentation of, the logic 𝑳*.
+#+end_documentation
+
+doc:Algebra
+#+begin_documentation Algebra :show t
+An /algebra/ consists of a /language/ ---generated by a signature Σ--- and an
+interpretation of the signature's symbols in terms of sets and functions.
+
+#+end_documentation
+
+doc:Type_Theory
+#+begin_documentation Type Theory :show t
+A /type theory/ is a logic with different sorts of individuals, called ‘types’,
+and constructions that generate new types from existing ones, like product and
+arrow types.
+#+end_documentation
+
+doc:Internal_Logic
+#+begin_documentation Internal Logic :show t
+An /internal logic/ is a type  theory derived from a category;
+and an /internal language/ is the language part of that logic.
+
+Specifically, the atomic sorts of the internal language are the objects of the
+category.
+#+end_documentation
+
+doc:Algebraic_Logic
+#+begin_documentation Algebraic Logic :show t
+/Algebraic logic/ treats algebraic structures, such as lattices, as models
+(interpretations) of certain logics, making logic a branch of order theory.
+
+In algebraic logic, variables are tacitly universally quantified,
+and there is no ∃ nor other logical connectives. The only inference rule
+is Leibniz, substituting equals for equals.
+
+| Logic                | “has models” | Algebra                         |
+| Classical logic      |              | Boolean Algebra                 |
+| Intuitionistic Logic |              | Heyting Algebra                 |
+| Linear Logic         |              | Commutative residuated lattices |
+| ...                  |              | ...                             |
+| Quantifiers ∀, ∃     |              | Generalised meets ⊓ and joins ⊔ |
+
+One says “logic 𝑳 has (as semantics) the class of algebras 𝑨 (with selected
+value ‘1’)”, or “𝑳 has algebraic semantics 𝑨”, precisely when each 𝑨 algebra
+provides a semantic consequence that coincides with 𝑳's syntactic provability,
+consequence, relation:
+
+Γ ⊢ φ   ⇔   ∀ A : 𝑨 • ∀ v : Term(𝑳) → A • (∀ γ : Γ • v(γ) = 1) ⇒ v(φ) = 1
+
+where Term(𝑳) is the free 𝑨-algebra of terms, formulae, of the logic 𝑳.
+
+That is, there must be a way ---/Term(_)/--- to see the logic as an algebra, namely the
+connectives of the logic give rise to the required operations of the algebra
+and moreover the resulting setup must satisfy the algebra's axioms.
+Then, the above speaks about 𝑨-homomorphisms that ‘reify’ the formulae
+of 𝑳 into particular 𝑨-algebras. We may thus rephrase the above condition:
+
+Γ ⊢ Φ  ⇔  Every interpretation of 𝑳's formulae in any 𝑨-algebra
+           that satisfies every member of Γ will also satisfy Φ.
+
+The “⇒” is known as “soundness” and the “⇐” is called “completeness”.
+#+end_documentation
+
+* Properties of Operators
+  :PROPERTIES:
+  :CUSTOM_ID: Properties-of-Operators-Relations
+  :END:
 
 doc:Associative
 #+begin_documentation Associative :show t :color blue
@@ -121,64 +758,564 @@ could be called “multiplying out”; replacing the right side by the left side
 “factoring”.
 #+end_documentation
 
-doc:Programming
-#+begin_documentation Programming :show t
-Programming is solving the equation /R ⇒[C] G/ in the unknown /C/; i.e., it is the
-activity of finding a ‘recipe’ that satisfies a given specification. Sometimes
-we may write /R ⇒[?] G/ and solve for ‘?’. Programming is a goal-directed activity: From a specification, a program is found by examining the shape of its postcondition.
+doc:Commutative
+#+begin_documentation Commutative :show t :color green
+An operation _⊕_ is /commutative/ or /symmetric/ if it satisfies /x ⊕ y = y ⊕ x/.
+
+This property indicates (semantically) that the value of an ⊕-expression doesn't
+depend on the order of its arguments and (syntactically) we may swap their order
+when manipulating ⊕-expressions.
 #+end_documentation
 
-doc:Specification
-#+begin_documentation Specification :show t :color blue
- A specification is an equation of a certain shape.
- /Programming/ is the activity of solving a specification
- for its unknown. Its unknown is called a /program/.
+* Properties of /Homogeneous/ Relations
+   :PROPERTIES:
+   :CUSTOM_ID: Properties-of-Homogeneous-Relations
+   :END:
 
- See also “Programming”.
+doc:Reflexive
+#+begin_documentation Reflexive  :show t :color blue
+/Elements are related to themselves/
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$.  That is relations are /simple graphs/; one refers to the directed lines as
+/edges/ and the dots as /nodes/.
+
+As a simple graph, reflexivity means /there is loop “ ⟳ ” at each node./
+--------------------------------------------------------------------------------
+
+   /R/ is reflexive exactly when /everything is related to itself/.
+≡  /∀ x • x 〔R〕 x/
+≡  $Id ⊆ R$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
 #+end_documentation
 
-doc:Expression
-#+begin_documentation Expression :show t
+doc:Transitive
+#+begin_documentation Transitive :show t :color green
+A relation _⊑_ is /transitive/ when it satisfies /a ⊑ b  ∧  b ⊑ c  ⇒  a ⊑ c/;
+i.e., /a ⊑ b ⊑ c  ⇒ a ⊑ c/ ---that is, “we can chain ⊑” so that from a proof of /a
+⊑ b ⊑ c/ we can get from the first to the final part and so have a proof of
+/a ⊑ c/.
 
-A ‘variable’ or a ‘function application’; i.e., the name of a function along
-with a number of existing expressions.
+Loosely put, whenever /a/ and /c/ have a common relative then they are themselves
+related.
+--------------------------------------------------------------------------------
 
-In a sense, an expression is like a sentence with the variables acting as
-pronouns and the function applications acting as verb clauses and the argument
-to the application are the participants in the action of the verbal clause.
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$.  That is relations are /simple graphs/; one refers to the directed lines as
+/edges/ and the dots as /nodes/.
+
+As a simple graph, transitivity means /paths can always be shortened (but
+nonempty)./
+
+--------------------------------------------------------------------------------
+
+By the shunting rule, transitivity can be read as a *‘monotonicity’* property for
+the operation that turns a value /x/ into the proposition /a ⊑ x/; this maps ordered
+relationships /b ⊑ c/ to ordered propositions /a ⊑ b ⇒ a ⊑ c/.
+
+Likewise, transitivity can be read as an ‘*antitonicity*’ property for the
+operation mapping a value /x/ to the proposition /x ⊑ c/; this maps ordered
+relationships /a ⊑ b/ to ordered propositions /b ⊑ c ⇒ a ⊑ c/.
+
+--------------------------------------------------------------------------------
+
+   Relation /R/ is transitive
+≡  /Things related to things that are related, are themselves related./
+≡  Whenever /x/ is related to /y/ and /y/ is related to /z/, then also /x/ will
+   be related to /z/
+≡  /∀ x, y, z •  x 〔 R 〕 y 〔R 〕 z  ⇒  x 〔R〕 z/
+≡  $R ⨾ R ⊆ R$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+
+--------------------------------------------------------------------------------
+
+A transitive relation is irreflexive precisely when it is asymmetric.
 #+end_documentation
 
-doc:Algorithmic_Problem_Solving
-#+begin_documentation Algorithmic Problem Solving :show t :color blue
-There are two ways to read this phrase.
+doc:Symmetric
+#+begin_documentation  Symmetric :show t :color blue
+/The relationship is mutual; if one thing is related to the other, then the other
+is also related to the first./
 
-Algorithmic-problem solving is about solving problems that
-involve the construction of an algorithm for their solution.
+   $R$ is symmetric
+≡  If /x/ is related to /y/, then /y/ is also related to /x/.
+≡  /∀ x, y • x 〔R〕 y ⇒ y 〔 R〕 x/
+≡  $R ˘ ⊆ R$
+≡  $R ∩ R˘ ⊆ R$
+≡  $R ˘ = R$
 
-Algorithmic problem-solving is about problem solving in general,
-using the principles of correct-by-construction algorithm-design.
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
 
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$.  That is relations are /simple graphs/; one refers to the directed lines as
+/edges/ and the dots as /nodes/.
+
+As a simple graph, symmetry means the graphs is /undirected/.
+
+That is, as graphs, symmetric relations contains either exactly two arrows ---in
+opposite directions--- between any two elements or none at all.  As such, for
+clarity, one prefers “squeezing any two arrows in opposite directions” into one
+‘undirected’ line and so obtains *undirected graphs*.
+- Undirected edges represent pairs of arrows pointing in opposite directions.
+
+  Coreflexives are symmetric: $R ⊆ Id ⇒ R ˘ = R$.
+--------------------------------------------------------------------------------
+
+Interestingly, every homogeneous relation /R/ may be /partitioned/ into an
+asymmetric part $A = R ∩ ∼R˘$ and a symmetric part $S = R ∩ R˘$
+---i.e., $R = A ∪ S$ and $A ∩ S = ⊥$ where ⊥ is the empty relation.
 #+end_documentation
-# Computing science is all about solving algorithmic problems (or, as some
-# authors pre- fer to say, it is all about instructing computers to solve
-# problems).
 
-doc:Calculational_Proof
-#+begin_documentation Calculational Proof :show t
-A story whose events have smooth transitions connecting them.
+doc:Antisymmetric
+#+begin_documentation Antisymmetric :show t :color blue
+/Different elements cannot be mutually related; i.e.,
+Mutually related items are necessarily indistinguishable./
 
-A proof wherein each step is connected to the next step by an explicit
-justification.
+Such relations allow us to prove equality between two elements;
+we have only to show that the relationship holds in both directions.
+  * E.g, one often shows two sets are equal by using the antisymmetry of ‘⊆’.
+--------------------------------------------------------------------------------
+
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$.  That is relations are /simple graphs/; one refers to the directed lines as
+/edges/ and the dots as /nodes/.
+
+As a simple graph, antisymmetry means /Mutually related nodes are necessarily self-loops/.
+--------------------------------------------------------------------------------
+   $R$ is antisymmetric
+≡  /∀ x, y • x 〔R〕 y  ∧  y 〔 R〕 x ⇒ x = y/
+≡  /∀ x, y •  x ≠ y  ⇒  ¬ (x 〔R〕 y  ∧  y 〔 R〕 x)/
+≡  /∀ x, y •  x ≠ y  ⇒  x 〔R̸〕 y  ∨  y 〔 R̸〕 x/
+≡  $R ∩ R ˘ ⊆ Id$
+≡  $R ˘ ⊆ ∼ R ∪ Id$
+≡  /R ╳ R = Id/  ---‘╳’ is symmetric quotient
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+
+( As a simple graph, an antisymmetric relation has /at most/ one arrow between
+any two different nodes. )
 #+end_documentation
 
-doc:nat-trans
-#+begin_documentation Natural Transformation :label (nat-trans polymorphism) :show t :color blue
-Natural transformations are essentially polymorphic functions that make /no/
-choices according to the input type; e.g., =reverse : List τ → List τ= makes no
-choices depending on the type ~τ~.
+doc:Asymmetric
+#+begin_documentation Asymmetric  :show t :color blue
+/The relationship is mutually exclusive./
+--------------------------------------------------------------------------------
+
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$.  That is relations are /simple graphs/; one refers to the directed lines as
+/edges/ and the dots as /nodes/.
+
+As a simple graph, asymmetric means: /There's at most 1 edge (regardless of
+direction) relating any 2 nodes/.
+--------------------------------------------------------------------------------
+   $R$ is asymmetric
+≡  /∀ x, y • x 〔R〕 y  ⇒  ¬ y 〔R〕 x/
+≡  $R ∩ R ˘ ⊆ ⊥$
+≡  $R ˘ ⊆ ∼ R$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+
+Asymmetrics are irreflexive ---just pick /x = y/ in the above ∀-formulation ;-)
+--------------------------------------------------------------------------------
+
+Interestingly, every homogeneous relation /R/ may be /partitioned/ into an
+asymmetric part $A = R ∩ ∼R˘$ and a symmetric part $S = R ∩ R˘$
+---i.e., $R = A ∪ S$ and $A ∩ S = ⊥$ where ⊥ is the empty relation.
 #+end_documentation
 
-doc:cat
-#+begin_documentation Category Theory :label cat :show t
-A theory of typed  composition; e.g., typed monoids.
+doc:Preorder
+#+begin_documentation Preorder :show t :color blue
+A /preorder/ models the notion of ‘inclusion’ or ‘at most’ or ‘before’ or
+‘predecessor of’; and so requires: /Everything is included in itself and
+inclusion is transitive./
+
+  $R$ is a preorder
+≡ $R$ is transitive and reflexive
+≡ $R ⨾ R ⊆ R \;∧\; Id ⊆ R$
+≡ $R ⨾ R = R \;∧\; Id ⊆ R$
+≡ $R ╱ R = R$  ---“indirect inclusion from above”
+≡ $R ╲ R = R$  ---“indirect inclusion from below”
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+
+If it is additionally /antisymmetric/, one says we have an *order*.
+- The relation $R ∩ R˘$ is the greatest equivalence contained in a preorder $R$.
+
+  Indeed, it's clearly symmetric and reflexive, and transitive since ‘⨾’
+  sub-distributes over ‘∩’ and /R/ and /R˘/ are transitive. Then, for any
+  equivalence /Ξ ⊆ R/, we have /Ξ = Ξ ˘ ⊆ R ˘/ and so /Ξ ⊆ R ∩ R˘/.
+
+Instead of reflexivity, if we have irreflexivity we get *strict order*:
+  $R$ is a strict order
+≡ $R$ is transitive and irreflexive
+≡ $R ⨾ R ⊆ R ⊆ ∼Id$
+≡ $R ⨾ R ⊆ R \;∧\; R˘ ⊆ ∼ R$
+≡ $R ⨾ R ⊆ R \;∧\; R ∩ R˘ ⊆ ⊥$
+≡ $R$ is transitive and asymmetric
+
+( /Warning!/ A “strict order” is not an order that is somehow strict. )
+
+Orders and strict orders come in pairs: Every order $R$ induces a strict order
+$R ∩ ∼Id$; conversely, every strict order $R$ gives rise to an order $R ∪
+Id$. As such, it is customary to denote order relations by symbols such as ≤,
+⊆. ≼, ⊑ and their associated strict orders by related symbols <, ⊂, ≺, ⊏,
+respectively, with *lack the horizontal line ‘─’ below the symbol to indicate
+irreflexivity ---i.e., the line is a suggestive reminder of equality.
+
+When letters are used to denote orders, one may see /E/ for an order since it is
+reminiscent of ≤ and ⊆, and may see /C/ for a strict order since it is reminiscent
+of < and ⊂.
+
+Using ‘≤’ for /an arbitrary order/ is not ideal since readers may confuse it with
+the familiar /linear/ orders for numbers.
+#+end_documentation
+
+doc:Equivalence
+#+begin_documentation Equivalence :show t :color blue
+An /equivalence/ models the notion of ‘similarity’; /Everything is similar to
+itself, being similar is a mutual relationship, and it is transitive/.
+
+   $R$ is an equivalence
+≡  $R$ is a symmetric preorder
+≡  $R$ is transitive and reflexive and symmetric
+≡  $R ⨾ R ⊆ R \;∧\; Id ⊆ R ⊆ R˘$
+≡  $R ⨾ R = R = R˘ \;∧\; Id ⊆ R$
+≡  $R ⨾ R ˘ ⊆ R \;∧\; Id ⊆ R$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+For example, “2 + 3” and “5” are clearly *not the same*”: The first is a string
+of 3 symbols, whereas the latter is a string of a single symbol.  However, they
+are *equivalent* when we evaluate them and so we want to pretend they are the
+same, not by using equality, but by using an equivalence relation.  ( This
+equivalence relation is obtained using transitive closure as $(R ⨾ R)^*$ where
+$R$ is the evaluation, reduction relation. )
+
+In general, “sharing the same feature 𝒇” is an equivalence relation.
+That is, if $f : A → B$ is a function, then ∼ is an equivalence relation
+defined by $a₁ ∼  a₂ \quad≡\quad f(a₁) \;=\; f(a₂)$.
+--------------------------------------------------------------------------------
+Characterising Equivalences with “Indirect Equivalence”:
+Ξ is an equivalence  ≡  $∀ x, y •  x 〔Ξ〕 y \quad≡\quad (∀ z • x 〔Ξ〕 z \;≡\; y 〔Ξ〕 z)$
+--------------------------------------------------------------------------------
+Equivalence relations coincide with partitions.
+#+end_documentation
+
+doc:Linear
+#+begin_documentation Linear :show t :color blue
+/Any two (possibly identical) members are related/; (the associated
+graph can be drawn /similar/ to a line; i.e., the nodes can be arranged in a
+sequence).
+
+( In graph terminology, linear is also referred to as /strongly complete/. )
+
+( Sometimes a linear /order/ is called a /complete order/. )
+
+   $R$ is linear
+≡  /∀ x, y • x 〔R〕 y  ∨  y 〔R〕 x/
+≡  $⊤ ⊆ R ∪ R ˘$
+≡  $∼ R ⊆ R ˘$
+≡  $∼ R$ is asymmetric
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+A linear /order/ corresponds to a full upper triangular matrix, /after/ suitably
+arranging rows and columns. A linear (pre)-/order/ has no (distinct) incomparable
+elements.
+
+Any linear ordering /E/, with associated strict order /C/, satisfies $C˘ = ∼E$;
+i.e., any linear order ‘⊑’ satisfies $∀ x, y •\quad ¬ (x ⊑ y) \;≡\; y ⊏ x$.
+
+Likewise, for liner order, we have /transitivity E⨾C⨾E = C/ and /weakening C ⊆ E/;
+i.e., $a ⊑ b ⊏ c ⊑ d \;⇒\; a ⊏ d \quad\; and\; \quad x ⊏ y \;⇒\; x ⊑ y$.
+
+Every order /E/ can be extended to a linear order /E′/; i.e., /E ⊆ E′/.  For the
+finite case this is known as /topological sort/, and for the infinite case this is
+known as the /Szpilrajn extension/.
+
+- For the finite case, the /idea/ is as follows: If /E/ is not linear, then there
+  are two incomparable elements /x, y/ (i.e., outside /E ∪ E˘/), so we may define
+  /an/ ordering /E₁ ≔ E ∪ {(x, y)}/. We iterate this process and /Eₙ/ will
+  eventually become linear.
+
+  This process maintains “the order /E/, less the incomparable elements, is
+  linear” invariant throughout. Since each step reduces the number of
+  incomparable elements, it must terminate, and the invariant then ensures the
+  resulting order is linear. (•̀ᴗ•́)و
+#+end_documentation
+
+doc:Semilinear
+#+begin_documentation Semilinear :show t :color blue
+/Any two different members are related/; (the associated graph can be drawn
+similar to a line).
+
+( In graph terminology, semilinear is also referred to as /complete/; e.g., /“the
+complete graph on n nodes”/ refers to $⊤ ∩ ∼Id : 1..n ↔ 1..n$. )
+
+   $R$ is semilinear
+≡  /∀ x, y • x ≠ y  ⇒  x 〔R〕 y  ∨  y 〔R〕 x/
+≡  $∼Id ⊆ R ∪ R ˘$
+≡  $∼ R ⊆ R ˘ ∪ Id$
+≡  $∼ R$ is antisymmetric
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+
+A relation without incomparable elements is semilinear.
+
+A semilinear and asymmetric relation $R$ is known as a /tournament/ since it
+models the win-loss situation of a typical sports tournament: Semilinearity and
+asymmetry ensure teams do not play against themselves and that there is no draw
+---i.e., there must be a winner. A tournament /R/ is characterised by /R ∪ R˘ =
+∼Id/.
+#+end_documentation
+* Properties of /Heterogeneous/ Relations
+  :PROPERTIES:
+  :CUSTOM_ID: Properties-of-Heterogeneous-Relations
+  :END:
+
+doc:Univalent
+#+begin_documentation Univalent :show t :color blue
+*Univalent (partially defined function):* /Equal elements are related to equal
+elements; i.e., an element cannot be related to two different elements./
+
+/That is, every source value x is associated *at most one* target value y./
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, univalence means: /Any arcs from the same source actually coincide./
+That is, /Every node has at most one outgoing edge./
+--------------------------------------------------------------------------------
+   $R$ is univalent
+≡  /∀ x, y, y′  • x 〔 R 〕 y ∧ x 〔R〕 y′  ⇒ y = y′/
+≡  $R ˘ ⨾ R  ⊆ Id$
+≡  $R ⨾ ∼ Id \;⊆\; ∼ R$
+≡  $∀ S • R ⨾ ∼ S \;⊆\; ∼ (R ⨾ S)$
+≡  /∀ S • R ⨾ ∼ S = R ⨾ ⊤ ∩ ∼(R ⨾ S)/
+≡  /∀ Q, S •  R ⨾ (Q ∩ S) = R ⨾ Q ∩ R ⨾ S/   ---c.f., ⨾ sub-distributes over ∩
+≡  /∀ Q, S • Q⨾R ∩ S = (Q ∩ S ⨾ R˘)⨾R/       ---c.f., the Dedekind rule
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+The formula $R ⨾ ∼ Id \;⊆ ∼ R$ reads “If /x/ is /R/-related to a value different
+from /y/, then it is not /R/-related to /y/.”  It continues to hold when we replace
+the identity by an arbitrary relation.
+
+The 5th row reads, /the preimage of the complement is the same as the complement
+of the preimage intersected with the domain/.  In fact, for univalent $R$, we
+also have $∼(R ⨾ S) = R ⨾ ∼ S ∪ ∼(R ⨾ ⊤)$; e.g., the people who do “not (own an
+Audi car)” are exactly the people who “(own a non-Audi car) or do not(own any
+car)” ---assuming a person can own at most one car.
+
+For a map $f$, the 6th row becomes: $f(A ∩ B) \;=\; f(A) ∩ f(B)$, using
+conventional direct image notation; i.e., for a function, /the preimage of an
+intersection is the intersection of preimages/.
+
+Likewise, for a map $f$, we have /the intersection of $B$ with a function's image
+is the same as the image of an intersection involving the preimage of $B$/; i.e.,
+$f(A) ∩ B = f(A ∩ f^{-1}(B))$.
+#+end_documentation
+
+doc:Total
+#+begin_documentation Total :show t :color blue
+*Total:* /Every source value x is associated *at least one* target value y./
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, totality means: /Every node has at least one outgoing edge/.
+
+   $R$ is total
+≡  /∀ x • ∃ y • x 〔 R 〕 y/
+≡  $⊤ = R ⨾ ⊤$ (“defined everywhere”)
+≡  $⊥ = ∼ (R ⨾ ⊤)$
+≡  $Id ⊆ R ⨾ R ˘$
+≡  $∼ R \;⊆\; R ⨾ ∼ Id$
+≡  $∀ S • ∼ (R ⨾ S) \;⊆\; R ⨾ ∼ S$
+≡  $∀ Q • Q ⨾ R = ⊥ ≡ Q = ⊥$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+The formula $∼ R \;⊆\; R ⨾ ∼ Id$ reads “If /x/ is not /R/-related to y, then /x/ is /R/
+related to some element different from /y/.”  It continues to hold when we replace
+the identity by an arbitrary relation.
+
+The final formula says that $R$ is post-annihilated by the empty relation only.
+
+Note: $∼(R ⨾ ⊤) = ⊤ \;≡\; R = ⊥$, for any $R$; i.e., /the complement of a
+relation's domain is everything precisely when the relation is empty./
+#+end_documentation
+
+doc:Map
+#+begin_documentation Map :show t :color blue
+
+*Map (totally defined function):* /Every source value x is associated *exactly one*
+target value y./
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple relation, being a mapping means: /Every node has exactly one outgoing edge./
+--------------------------------------------------------------------------------
+   $F$ is a map
+≡  $F$ is total and univalent
+≡  $F ⨾ ∼ Id \;=\; ∼ F$
+≡  $∀ S • F ⨾ ∼ S \;=\; ∼ (F ⨾ S)$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+The final rule says /the preimage of the complement is the complement of the
+preimage/; or, using conventional direct image notation, $f⁻¹(∼ A) \;=\; ∼
+f⁻¹(A)$.
+
+In conventional direct image notation, this amount to a Galois connection: $A ⊆
+f⁻¹(B) \quad≡\quad f(A) ⊆ B$.
+
+A mapping is so very close to being invertible since mappings $F$ always
+satisfy: $F ˘ ⨾ F ⊆ Id$ and $Id ⊆ F ⨾ F˘$.
+
+Shunting rule:* If $F$ is a map, then $R ⊆ S ⨾ F ˘ \quad≡\quad R ⨾ F ⊆ S$.
+
+More generally, given an equivalence Ξ, if relation /F/ is total and Ξ-univalent
+---i.e., /F˘ ⨾ F ⊆ Ξ/--- and if /S/ is Ξ-target-saturated ---i.e., /S ⨾ Ξ = S/---
+then $R ⊆ S ⨾ F ˘ \quad≡\quad R ⨾ F ⊆ S$.
+#+end_documentation
+
+doc:Surjective
+#+begin_documentation Surjective :show t :color blue
+*Surjective:* /Every source value y is associated *at least* one source value x./
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, surjectivity means: /Every node has at least one outgoing edge./
+--------------------------------------------------------------------------------
+   $R$ is surjective
+≡  $R˘$ is total
+≡  $⊤ ⨾ R = ⊤$
+≡  $Id ⊆ R ˘ ⨾ R$
+≡  $∼ R \;⊆\; ∼ Id ⨾ R$
+≡  /∀ S • R ⨾ S = ⊥ ≡ S = ⊥/
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+#+end_documentation
+
+doc:Injective
+#+begin_documentation Injective  :show t :color blue
+*Injective:* /Every source value y is associated *at most* one source value x./
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, injective means: /Every node has at most one incoming edge./
+--------------------------------------------------------------------------------
+   $R$ is injective
+≡  $R˘$ is univalent
+≡  $R  ⨾ R ˘ ⊆ Id$
+≡  $∼ Id ⨾ R \;⊆\; ∼ R$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+#+end_documentation
+
+doc:Bijective
+#+begin_documentation Bijective :show t :color blue
+*Bijective:* /Every source value y is associated *exactly one* source value x./
+
+   $R$ is bijective
+≡  $R$ is injective and surjective
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, bijectivity means: /Every node has exactly one outgoing edge/.
+#+end_documentation
+
+doc:Iso
+#+begin_documentation Iso :show t :color blue
+An *iso* is a bijective mapping, also known as a *permutation.*
+
+An isomorphism is a non-lossy protocol associating inputs to outputs.
+--------------------------------------------------------------------------------
+A relation $R : V → V$ can be visualised as a drawing: A dot for each element
+$x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔R〕
+y$. That is relations are /simple graphs/; one refers to the directed lines
+as /edges/ and the dots as /nodes/.
+
+As a simple graph, an iso is a /bunch of circles/: Any number of cycles, such that
+every node lies on exactly one.
+--------------------------------------------------------------------------------
+If relation $R$ is finite, then
+$R ⨾ R ˘ = Id \quad≡\quad  (∃ m • Rᵐ = Id ∧ Rᵐ⁻¹ = R ˘)$
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+#+end_documentation
+
+doc:Difunctional
+#+begin_documentation Difunctional :show t :color blue
+This property generalises injectivity, univalence, and equivalence...
+
+Recall,
+- Univalent: Every source value /x/ is associated *at most one* target value /y/.
+    + I.e., if /x/ goes to /y/ and /y′/ then /y = y′/.
+    + I.e., $∀ x, y′, y •\quad  x 〔R〕 y  〔R˘〕 x 〔R〕 y′ \;⇒\; y 〔Id〕 y′$
+- Injective: Every source value /y/ is associated *at most* one source value /x/.
+    + I.e., if /y/ comes from /x/ and /x′/ then /x = x′/.
+    + I.e., $∀ x, x′, y •\quad  x 〔R〕 y  〔R˘〕 x′ 〔R〕 y \;⇒\; x 〔Id〕 x′$
+- Equivalence: Any given equivalence classes are either identical or disjoint.
+      # + I.e., $∀ x, y •\quad  x 〔R〕 y  〔R˘〕 x 〔R〕 y′ \;⇒\; x 〔R〕 y′$
+    + Moreover, it is a /homogenous/ relation.
+
+ Now, a /possibly heterogenous/ relation /R/ is /difunctional/ exactly when
+ $∀ x, x′, y′, y •\quad  x 〔R〕 y  〔R˘〕 x′ 〔R〕 y′ \;⇒\; x 〔R〕 y′$.
+ That is, $R ⨾ R ˘ ⨾ R ⊆ R$; in-fact we have equality $R ⨾ R ˘ ⨾ R = R$.
+ Using Schröder, this amounts to $R ⨾ ∼R ˘ ⨾ R \;⊆\; ∼R$.
+
+ Clearly, converse preserves difunctionality.
+
+ For difunctional /R/,
+ 1. /R ⨾ (Q ∩ R˘ ⨾ S) = R ⨾ Q ∩ R ⨾ R˘ ⨾ S/
+ 2. $R ⨾ ∼(R ˘ ⨾ Q) \;=\; R ⨾ ⊤ ∩ ∼(R ⨾ R˘ Q)$
+ 3. $∼(R ⨾ R ˘ ⨾ Q) \;=\; R ⨾ ∼(R˘ ⨾ Q) ∪ ∼(R ⨾ ⊤)$
+ 4. $R ⨾ ∼(R ˘ ⨾ Q) \;=\; ∼(R ⨾ R˘ Q)$, if /R/ is also total.
+
+Where /⨾, ⊤, ⊥, Id, ˘, ∼/ are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+--------------------------------------------------------------------------------
+The equivalence target-saturation of a univalent relation is difunctional; i.e.,
+if /R/ is univalent and Ξ is an equivalence, then $R ⨾ Ξ$ is difunctional.
 #+end_documentation

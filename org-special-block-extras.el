@@ -1,10 +1,10 @@
 ;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:1]]
-;;; org-special-block-extras.el --- 29 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.9
+;; Version: 2
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -29,6 +29,8 @@
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
+;; 0. A unified interface, the ‘defblock’ macro, for making new block and link types.
+;;
 ;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
 ;;  easily extendable; below is an example.
 ;;
@@ -46,13 +48,15 @@
 ;;
 ;; 4. Details: Regions of text can be folded away in HTML
 ;;
-;; 5. ‼ BROKEN ‼ Badges: SVG badges have the pleasant syntax
+;; 5. Badges: SVG badges have the pleasant syntax
 ;; badge:key|value|colour|url|logo; only the first two are necessary.
 ;;
 ;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
 ;; documentation-backend, including user-defined entries; e.g., doc:thread-first
 ;; retrives the documentation for thread-first and attachs it as a tooltip to
 ;; the text in the HTML export and as a glossary entry in the LaTeX export
+;;
+;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
 ;;
 ;; This file has been tangled from a literate, org-mode, file; and so contains
 ;; further examples demonstrating the special blocks it introduces.
@@ -72,6 +76,9 @@
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
 (require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
                            ;; ‘-not’, ‘-partial’, etc.
+
+
+(require 'cus-edit) ;; To get the custom-* faces
 
 (require 'org)
 (require 'ox-latex)
@@ -183,6 +190,12 @@
           :after (lambda (&rest _)
           (setq org-special-block-extras--docs-GLOSSARY nil
                 org-special-block-extras--docs nil)))
+        (cl-loop for lnk in org-special-block-extras-fancy-links
+              do (highlight-phrase (format "%s:[^ \n]*" lnk)
+                                   'custom-button))
+        
+        ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
+        ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
@@ -190,6 +203,8 @@
     
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
+    (cl-loop for lnk in org-special-block-extras-fancy-links
+          do (unhighlight-regexp (format "%s:[^ \n]*" lnk)))
     )) ;; Must be on a new line; I'm using noweb-refs
 ;; Lisp Package Preamble:2 ends here
 
@@ -428,7 +443,7 @@ Namely,
 "
   (defalias 'defblock              'org-special-block-extras--defblock)
   (defalias 'set-block-header-args 'org-special-block-extras--set-block-header-args)
-  (defalias 'thread-block-call     'org-special-block-extras--thread-blockcall)
+  (defalias 'thread-blockcall     'org-special-block-extras--thread-blockcall)
   (defalias 'subtle-colors         'org-special-block-extras--subtle-colors))
 ;; The Core Utility: ~defblock~ and friends:7 ends here
 
@@ -562,13 +577,29 @@ In a link, no quotes are needed."
 ;; Textual Substitution ---A translation tool:1 ends here
 
 ;; [[file:org-special-block-extras.org::*Spoilers! ---“fill in the blanks”][Spoilers! ---“fill in the blanks”:1]]
-(org-special-block-extras--defblock spoiler () (left "((" right "))")
+(org-special-block-extras--defblock spoiler (color "grey") (left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
-   LEFT and RIGHT may be other kinds of delimiters."
-  (s-replace-regexp
-   (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
-   "@@html:<span class=\"spoiler\"> \\1 </span>@@"
-   contents))
+   LEFT and RIGHT may be other kinds of delimiters.
+   The main argument, COLOR, indicates which color to use.
+
+For LaTeX, this becomes “fill in the blanks”, with the answers
+in the footnotes."
+  (if (equal backend 'latex)
+      (s-replace-regexp
+       (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+       "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
+       contents)
+  (-let [id (gensym)]
+    (concat
+     ;; In HTML, a ‘style’ can be, technically, almost anywhere...
+     (format
+      "<style> #%s {color: %s; background-color:%s;}
+       #%s:hover {color: black; background-color:white;} </style>
+       " id color color id)
+     (s-replace-regexp
+      (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+      (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
+      contents)))))
 ;; Spoilers! ---“fill in the blanks”:1 ends here
 
 ;; [[file:org-special-block-extras.org::*The Older =org-special-block-extras--𝒳= Utility][The Older =org-special-block-extras--𝒳= Utility:1]]
@@ -808,13 +839,14 @@ The contents of the block may contain ‘#+columnbreak:’ to request
 a columnbreak. This has no effect on HTML export since HTML
 describes how text should be formatted on a browser, which can
 dynamically shrink and grow and thus it makes no sense to have
-hard columnbreaks.
+hard columnbreaks. We do replace such declarations by ‘<p><br>’,
+which sometimes accomplishes the desired goal.
 "
   (let ((rule (pcase backend
                (`latex (if bar 2 0))
                (_  (if bar "solid" "none"))))
         (contents′  (s-replace "#+columnbreak:"
-                               (if (equal 'latex backend) "\\columnbreak" "")
+                               (if (equal 'latex backend) "\\columnbreak" "@@html:<p><br>@@")
                                contents)))
   (format (pcase backend
    (`latex "\\par \\setlength{\\columnseprule}{%s pt}
@@ -969,6 +1001,143 @@ Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
       (_ ""))))
 ;;   /“Link Here!”/ & OctoIcons:2 ends here
 
+;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:1]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The badge link types
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Badge Links:1 ends here
+
+;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:1]]
+(cl-defmacro org-special-block-extras-make-badge
+  (name &optional social-shields-name social-url social-shields-url )
+  "Make a link NAME whose export is presented as an SVG badge.
+
+If the link is intend to be a social badge, then, adhering to
+shield.io conventions, the appropriate SOCIAL-SHIELDS-NAME must
+be given.
+
+The SOCIAL-URL is a URL that the badge points to and it should
+have a single ‘%s’ where the link label argument will go.
+
+Some social badges have a uniform URL, but otherwise, such as
+twitter, deviate and so need their own SOCIAL-SHIELDS-URL,
+which has a single ‘%s’ for the link's label argument.
+
+----------------------------------------------------------------------
+
+E.g., to create a badge named “go”:
+
+     (org-special-block-extras-make-badge \"go\")
+
+Then the following exports nicely from an Org file:
+
+     go:key|value|blue|here|gnu-emacs
+
+--------------------------------------------------------------------------------
+
+The LABEL should be of the shape ‘key|value|color|url|logo’
+resulting in a badge “|key|value|” where the ‘key’
+is coloured grey and the ‘value’ is coloured ‘color’.
+
++ Only the syntax ‘badge:key|value|color|url’ is supported.
+  - ‘key’ and ‘value’ have their underscores interpreted as spaces.
+     ⇒ Underscores are interpreted as spaces;
+     ⇒ ‘__’ is interpreted as an underscore;
+     ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
+  - ‘|color|url|logo’ are optional;
+     if ‘url’ is ‘here’ then the resulting badge behaves
+     like ‘link-here:key’.
+  - ‘color’ may be: ‘brightgreen’ or ‘success’,
+                    ‘red’         or ‘important’,
+                    ‘orange’      or ‘critical’,
+                    ‘lightgrey’   or ‘inactive’,
+                    ‘blue’        or ‘informational’,
+            or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
++ Of course, you can write ‘⟦badge: ⋯⟧’, then ‘⋯’ may have multiword, spaced, content.
++ Such links are displayed using a SVG badges
+  and so do not support the DESCRIPTION syntax
+  ‘⟦link:label][description⟧’.
++ Besides the HTML BACKEND, such links are silently omitted.
+"
+
+  `(org-link-set-parameters ,name
+    :follow (lambda (path) (--> (s-split "|" path)
+                         (or (nth 3 it) path)
+                         (browse-url it)))
+    ;; :export #'org-special-block-extras--link--badge
+    :export (lambda (label description backend)
+              (if (equal backend 'latex) ""
+               (-let [ (key value color url logo)  (s-split "|" label) ]
+                (format
+                 (pcase ,(if social-shields-name `(format ,social-url label) 'url)
+                   ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
+                   (""      "%s") ;; e.g., badge:key|value|color||logo
+                   ('nil    "%s") ;; e.g., badge:key|value|color
+                   (t      (format "<a href=\"%s\">%%s</a>" ,(if social-shields-name `(format ,social-url label) 'url)))
+                   )
+                 ,(if social-shields-name
+                     (if social-shields-url
+                         `(format ,social-shields-url label)
+                       `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
+                                ,social-shields-name label))
+                   '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s?logo=%s\">"
+                           (url-hexify-string (s-replace "-" "--" key))
+                           (url-hexify-string (s-replace "-" "--" (or value "")))
+                           color logo)))
+                 )))
+    ;; The tooltip alongside a link
+    :help-echo (lambda (window object position)
+                 (save-excursion
+                   (goto-char position)
+                   (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
+                            (cadr (org-element-context)))
+                           (description
+                            (when (equal format 'bracket)
+                              (copy-region-as-kill contents-begin contents-end)
+                              (substring-no-properties (car kill-ring)))))
+                     (format "%s\n\n General Syntax:\n\t badge:key|value|colour|url|logo"
+                             raw-link))))))
+;; Example Badges:1 ends here
+
+;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:3]]
+(org-special-block-extras-make-badge "badge")
+;; Example Badges:3 ends here
+
+;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:4]]
+;; Since we're invoking a macro, the twitter-excitement is used lazily; i.e.,
+;; consulted when needed instead of being evaluated once.
+(defvar org-special-block-extras-link-twitter-excitement
+  "This looks super neat (•̀ᴗ•́)و:"
+  "The string prefixing the URL being shared.")
+
+(org-special-block-extras-make-badge
+ "tweet"
+ "twitter/url?=url="
+ (format
+   "https://twitter.com/intent/tweet?text=%s:&url=%%s"
+   org-special-block-extras-link-twitter-excitement)
+ "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
+               )
+;; Example Badges:4 ends here
+
+;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:5]]
+;; MA: I don't think this is ideal for long-term maintainability, see ‘:OLD’ below.
+(cl-loop for (social url name)
+         in '(("reddit/subreddit-subscribers" "https://www.reddit.com/r/%s" "reddit")
+             ("github" "https://www.github.com/%s")
+             ("github/stars" "https://www.github.com/%s/stars")
+             ("github/watchers" "https://www.github.com/%s/watchers")
+             ("github/followers" "https://www.github.com/%s?tab=followers")
+             ("github/forks" "https://www.github.com/%s/fork")
+             ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
+         for name′ = (or name (s-replace "/" "-" social))
+         do (eval `(org-special-block-extras-make-badge ,name′ ,social ,url)))
+;; Example Badges:5 ends here
+
+;; [[file:org-special-block-extras.org::*Tooltips for Glossaries, Dictionaries, and Documentation][Tooltips for Glossaries, Dictionaries, and Documentation:2]]
+(ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))))
+;; Tooltips for Glossaries, Dictionaries, and Documentation:2 ends here
+
 ;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:1]]
 (defvar org-special-block-extras--docs nil
   "An alist of (label name description) entries; our glossary.
@@ -1064,13 +1233,18 @@ We use this listing to actually print a glossary using
                          (thread-last docs
                            (s-replace "  " "&emsp;") ; Preserve newlines
                            (s-replace "\n" "<br>")   ; Preserve whitespace
+                           (s-replace-regexp "\\#\\+begin_example<br>" "")
+                           (s-replace-regexp "\\#\\+end_example<br>" "")
                            ;; Translate Org markup
                            (s-replace-regexp "/\\(.+?\\)/" "<em>\\1</em>")
                            (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
                            (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
-                           (s-replace-regexp "=\\([^ ].*?\\)=" "<code>\\1</code>")
+                           ;; No, sometimes we want equalities.
+                           ;; (s-replace-regexp "=\\([^ \n].*?\\)=" "<code>\\1</code>")
                            (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
                            (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
+                           ;; 5+ dashes result in a horizontal line
+                           (s-replace-regexp "-----+" "<hr>")
                            ;; Spacing in math mode
                            (s-replace-regexp "\\\\quad" "&#x2000;")
                            (s-replace-regexp "\\\\," "&#8194;") ;; en space
@@ -1129,7 +1303,7 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
         do  (add-to-list 'org-special-block-extras--docs
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
-  ""); (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) "")
+  (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) ""))
 ;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:10 ends here
 
 ;; [[file:org-special-block-extras.org::*Wait, what about the LaTeX?][Wait, what about the LaTeX?:1]]
@@ -1176,6 +1350,12 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
                                              (when doc (funcall preserve doc))
                                              label)))))))))
 ;; Wait, what about the LaTeX?:1 ends here
+
+;; [[file:org-special-block-extras.org::*Emacs faces for links][Emacs faces for links:2]]
+(defvar org-special-block-extras-fancy-links
+  '(badge kbd link-here doc tweet)
+  "The links, regexps, that should be shown with a boxed face within Emacs.")
+;; Emacs faces for links:2 ends here
 
 ;; [[file:org-special-block-extras.org::*Lisp Postamble][Lisp Postamble:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
