@@ -312,7 +312,7 @@ Three example uses:
            (setq ,(car main-arg) ,(cadr main-arg))))
 
        ;; Use any headers for this block type, if no local value is passed
-       ,@(loop for k in (mapcar #'car (-partition 2 kwds))
+       ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
                collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
        (org-special-block-extras--org-export
                               (let ((contents (org-special-block-extras--org-parse raw-contents))) ,@body)))
@@ -360,7 +360,7 @@ and used by DEFBLOCK.")
   "Remove all headlines in the current buffer.
 BACKEND is the export back-end being used, as a symbol."
   (setq org-special-block-extras--current-backend backend)
-  (loop for blk in org-special-block-extras--supported-blocks
+  (cl-loop for blk in org-special-block-extras--supported-blocks
         for kwdargs = nil
         for blk-start = nil
         do (goto-char (point-min))
@@ -499,7 +499,7 @@ A full example:
 "
   (if (not forms) body
      `(-let [result (org-special-block-extras--blockcall ,@(car forms) ,body)]
-    ,@(loop for b in (cdr forms)
+    ,@(cl-loop for b in (cdr forms)
           collect `(setq result (org-special-block-extras--blockcall ,@b
                                      (concat
                                    "#+begin_export\n"
@@ -999,7 +999,7 @@ org-special-block-extras--docs-libraries.
 See org-special-block-extras--docs-from-libraries.
 "
 (interactive)
-(loop for lib in libs
+(cl-loop for lib in libs
       do (with-temp-buffer
            (insert-file-contents lib)
            ;; doc only activates after an export
@@ -1125,7 +1125,7 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
   (unless (consp label) (setq label (list label)))
   (push (s-replace " " "_" name) label)
   (push (downcase (s-replace " " "_" name)) label)
-  (loop for l in label
+  (cl-loop for l in label
         do  (add-to-list 'org-special-block-extras--docs
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
