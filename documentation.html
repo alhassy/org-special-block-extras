@@ -1,0 +1,2301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2020-12-21 Mon 21:22 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Musa Al-hassy's Personal Glossary</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Musa Al-hassy" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link href="https://alhassy.github.io/org-notes-style.css" rel="stylesheet" type="text/css" />
+<link href="https://alhassy.github.io/floating-toc.css" rel="stylesheet" type="text/css" />
+<link href="https://alhassy.github.io/blog-banner.css" rel="stylesheet" type="text/css" />
+
+        <style>
+        /* From: https://endlessparentheses.com/public/css/endless.css */
+        /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+        kbd
+        {
+          -moz-border-radius: 6px;
+          -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          -webkit-border-radius: 6px;
+          -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          background-color: #f7f7f7;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+          color: #333;
+          display: inline-block;
+          font-family: 'Droid Sans Mono', monospace;
+          font-size: 80%;
+          font-weight: normal;
+          line-height: inherit;
+          margin: 0 .1em;
+          padding: .08em .4em;
+          text-shadow: 0 1px 0 #fff;
+          word-spacing: -4px;
+
+          box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+        }
+        </style>
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css"/>
+
+        <link rel="stylesheet" type="text/css" href="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" />
+
+        <script type="text/javascript">
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape('%3Cscript src="https://code.jquery.com/jquery-1.10.0.min.js"%3E%3C/script%3E'));
+            }
+        </script>
+
+         <script type="text/javascript"            src="https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js"></script>
+
+          <script>
+                 $(document).ready(function() {
+                     $('.tooltip').tooltipster({
+                         theme: 'tooltipster-punk',
+                         contentAsHTML: true,
+                         animation: 'grow',
+                         delay: [100,500],
+                         // trigger: 'click'
+                         trigger: 'custom',
+                         triggerOpen: {
+                             mouseenter: true
+                         },
+                         triggerClose: {
+                             originClick: true,
+                             scroll: true
+                         }
+         });
+                 });
+             </script>
+
+        <style>
+           abbr {color: red;}
+
+           .tooltip { border-bottom: 1px dotted #000;
+                      color:red;
+                      text-decoration: none;}
+        </style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Musa Al-hassy's Personal Glossary</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#Logics">1. <a href="#Logics">Logics</a></a></li>
+<li><a href="#Properties-of-Operators-Relations">2. <a href="#Properties-of-Operators-Relations">Properties of Operators</a></a></li>
+<li><a href="#Properties-of-Homogeneous-Relations">3. <a href="#Properties-of-Homogeneous-Relations">Properties of <i>Homogeneous</i> Relations</a></a></li>
+<li><a href="#Properties-of-Heterogeneous-Relations">4. <a href="#Properties-of-Heterogeneous-Relations">Properties of <i>Heterogeneous</i> Relations</a></a></li>
+</ul>
+</div>
+</div>
+<blockquote>
+<p>
+<i>Knowledge is software for your brain: The more you know, the more problems you can solve!</i>
+</p>
+</blockquote>
+
+<p>
+<abbr class="tooltip" title="Hussein ibn Ali is the grandson of Prophet Muhammad, who is known to have<br>declared <strong>“Hussain is from me and I am from Hussain; God loves whoever loves Hussain.”</strong><br><br>He is honoured as “The Chief of Martyrs” for his selfless stand for social justice<br>against Yazid, the corrupt 7ᵗʰ caliph. The Karbala Massacre is commemorated annually<br>in the first Islamic month, Muharram, as a reminder to stand against oppression and tyranny;<br>Jesus Christ, son of Mary, makes an indirect appearance in the story.<br><br>A terse summary of the chain of events leading to the massacre may be found at<br>https://www.al-islam.org/articles/karbala-chain-events.<br><br>An elegant English recitation recounting the Karbala Massacre may be found at<br>https://youtu.be/2i9Y3Km6h08 ---“Arbaeen Maqtal - Sheikh Hamam Nassereddine - 1439”.<br><hr><br> <strong>Charles Dickens:</strong> <em>“If Hussain had fought to quench his worldly desires...then I</em><br><em>do not understand why his sister, wife, and children accompanied him. It stands<br>to reason therefore, that he sacrificed purely for Islam.”</em><br><br><strong>Gandhi:</strong> <em>“I learned from Hussain how to achieve victory while being oppressed.”</em><br><br><strong>Thomas Carlyle:</strong> <em>“The victory of Hussein, despite his minority, marvels me.”</em><br><br><strong>Thomas Masaryk:</strong> <em>“Although our clergies also move us while describing the<br>Christ's sufferings, but the zeal and zest that is found in the followers of</em><br><em>Hussain will not be found in the followers of Christ. And it seems that the<br>suffering of Christ against the suffering of Hussain is like a blade of straw</em> <em>in<br>front of a huge mountain.”</em>">Hussain</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Hussain</h3>
+<p>
+Hussein ibn Ali is the grandson of Prophet Muhammad, who is known to have
+declared <b>“Hussain is from me and I am from Hussain; God loves whoever loves Hussain.”</b>
+</p>
+
+<p>
+He is honoured as “The Chief of Martyrs” for his selfless stand for social justice
+against Yazid, the corrupt 7ᵗʰ caliph. The Karbala Massacre is commemorated annually
+in the first Islamic month, Muharram, as a reminder to stand against oppression and tyranny;
+Jesus Christ, son of Mary, makes an indirect appearance in the story.
+</p>
+
+<p>
+A terse summary of the chain of events leading to the massacre may be found at
+<a href="https://www.al-islam.org/articles/karbala-chain-events">https://www.al-islam.org/articles/karbala-chain-events</a>.
+</p>
+
+<p>
+An elegant English recitation recounting the Karbala Massacre may be found at
+<a href="https://youtu.be/2i9Y3Km6h08">https://youtu.be/2i9Y3Km6h08</a> &#x2014;“Arbaeen Maqtal - Sheikh Hamam Nassereddine - 1439”.
+</p>
+<hr />
+<p>
+ <b>Charles Dickens:</b> <i>“If Hussain had fought to quench his worldly desires&#x2026;then I</i>
+<i>do not understand why his sister, wife, and children accompanied him. It stands
+to reason therefore, that he sacrificed purely for Islam.”</i>
+</p>
+
+<p>
+<b>Gandhi:</b> <i>“I learned from Hussain how to achieve victory while being oppressed.”</i>
+</p>
+
+<p>
+<b>Thomas Carlyle:</b> <i>“The victory of Hussein, despite his minority, marvels me.”</i>
+</p>
+
+<p>
+<b>Thomas Masaryk:</b> <i>“Although our clergies also move us while describing the
+Christ's sufferings, but the zeal and zest that is found in the followers of</i>
+<i>Hussain will not be found in the followers of Christ. And it seems that the
+suffering of Christ against the suffering of Hussain is like a blade of straw</i> <i>in
+front of a huge mountain.”</i>
+</p>
+
+</div>
+
+<div id="outline-container-Logics" class="outline-2">
+<h2 id="Logics"><span class="section-number-2">1</span> <a href="#Logics">Logics</a></h2>
+<div class="outline-text-2" id="text-Logics">
+<p>
+<abbr class="tooltip" title="A <em>(Partial, resp. Total) Graph</em> <em>G = (V, E, src, tgt)</em> consists of<br>&emsp; + <EM>V</EM>, a set of “points, nodes, vertices”<br>&emsp; + <EM>E</EM>, a set of “arcs, edges”<br>&emsp; + <em>src, tgt : E ↔ V</em>, a pair of <em>partial (resp. total)</em> functions.<br><br>⟦ Tersely put, in any category, a <em>graph</em> is a parallel pair of morphisms. ⟧<br><br><em>Edge parallelism</em> is the relation <em>Ξ = src ⨾ src ˘ ∩ tgt ⨾ tgt˘</em>; two arcs are<br>related when they have the same starting point and the same ending point, which<br>both exist. Joyously, the name ‘Ξ’ is a neat reminder of the concept:<br>The name is three parallel lines, for the concept of edge(line) parallelism.<br><br>+ A graph is <em>total</em> exactly when <em>Id ⊆ Ξ</em>; and so Ξ is an equivalence.<br>+ A graph has <em>no parallel arrows</em> exactly when <em>Ξ ⊆ Id</em>.<br>+ A graph is <em>simple</em> exactly when <em>Ξ = Id</em>.<br><br>The <em>associated relation</em> is the relation <em>_⟶_ = src ˘ ⨾ tgt</em> that relates two nodes<br>when the first is the source of some edge that happens to have the second point<br>as its target. One uses the associated relation to study properties not<br>involving partial or parallel arrows. One writes <em>⟵</em> for <em>⟶˘</em>;<br>one writes ⟶⋆ for the <em>reachability</em> relation.<br><br>+ Node <em>y</em> is <em>reachable via a non-empty path</em> from node <em>x</em> exactly when <em>x ⟶⁺ y</em>.<br>&emsp;- Node <em>x</em> lies on a cycle exactly when <em>x ⟶⁺ x</em>.<br>&emsp;- A graph is <em>DAG, acylic, circuit-free,</em> exactly when <em>⟶⁺ ⊆ ∼Id</em>; i.e., <em>⟶⁺ ∩ Id = ⊥</em>.<br>&emsp;- An acyclic graph is a (<em>directed) forest</em> exactly when ⟶ is injective; i.e.,<br>&emsp;&emsp;every node has at most one predecessor; i.e., <em>⟶ ⨾ ⟵ ⊆ Id</em>.<br>+ A node <em>r</em> is a <em>root</em> exactly when every node is reachable from it; i.e., <em>{r} × V ⊆ ⟶⋆;</em><br>&emsp;i.e., <em>𝕃 r ⨾ ⟶⋆ = ⊤</em> where <em>𝕃 r</em> is defined by <em>𝕃 r = (ℝ r)˘</em> and <em>x 〔ℝ r〕 y &#8195;≡&#8195; x = r</em>.<br>&emsp;- <em>x〔𝕃 r ⨾ R〕 y &#8195;≡&#8195; r〔R〕 y</em> and <em>x 〔R ⨾ ℝ r〕 y &#8195;≡&#8195; x 〔R〕 r</em><br>&emsp;- A <em>tree</em> is a forest with a root.<br>+ A graph is <em>loop free</em> exactly when <em>⟶ ⊆ ∼Id</em>.<br>+ A graph is <em>strongly connected</em> exactly when <em>⟶⋆ = ⊤</em>; i.e., <em>∼Id ⊆ ⟶⁺</em>;<br>&emsp;i.e., every point is reachable from any <em>other</em> point; i.e., <em>∼Id ⊆ ⟶ ∩ ⟵˘</em>;<br>&emsp;i.e., any two distinct points lie on an undirected circuit.<br>&emsp;- The equivalence classes of <em>⟶⋆ ∩ ⟵⋆</em> are the <em>strongly connected components</em>.<br>+ <em>Terminal∣sinks</em> are nodes from which it is <em>not</em> possible to proceed <em>any</em> further;<br>&emsp;i.e., terminals have no successors; the domain of <em>∼(⟶ ⨾ ⊤)</em> is all terminals.<br>+ <em>Initial∣sources</em> are nodes from which it is <em>not</em> possible to proceed backward;<br>&emsp;i.e., initials have no predecessors; the domain of <em>∼(⟵ ⨾ ⊤)</em> is all initials.">graph</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>graph</h3>
+<p>
+A <i>(Partial, resp. Total) Graph</i> \(G = (V, E, src, tgt)\) consists of
+</p>
+<ul class="org-ul">
+<li>\(V\), a set of “points, nodes, vertices”</li>
+<li>\(E\), a set of “arcs, edges”</li>
+<li>\(src, tgt : E ↔ V\), a pair of <i>partial (resp. total)</i> functions.</li>
+</ul>
+
+<p>
+⟦ Tersely put, in any category, a <i>graph</i> is a parallel pair of morphisms. ⟧
+</p>
+
+<p>
+<i>Edge parallelism</i> is the relation \(Ξ = src ⨾ src ˘ ∩ tgt ⨾ tgt˘\); two arcs are
+related when they have the same starting point and the same ending point, which
+both exist. Joyously, the name ‘Ξ’ is a neat reminder of the concept:
+The name is three parallel lines, for the concept of edge(line) parallelism.
+</p>
+
+<ul class="org-ul">
+<li>A graph is <i>total</i> exactly when <i>Id ⊆ Ξ</i>; and so Ξ is an equivalence.</li>
+<li>A graph has <i>no parallel arrows</i> exactly when <i>Ξ ⊆ Id</i>.</li>
+<li>A graph is <i>simple</i> exactly when <i>Ξ = Id</i>.</li>
+</ul>
+
+<p>
+The <i>associated relation</i> is the relation <i><span class="underline">⟶</span> = src ˘ ⨾ tgt</i> that relates two nodes
+when the first is the source of some edge that happens to have the second point
+as its target. One uses the associated relation to study properties not
+involving partial or parallel arrows. One writes <i>⟵</i> for <i>⟶˘</i>;
+one writes ⟶⋆ for the <i>reachability</i> relation.
+</p>
+
+<ul class="org-ul">
+<li>Node <i>y</i> is <i>reachable via a non-empty path</i> from node <i>x</i> exactly when <i>x ⟶⁺ y</i>.
+<ul class="org-ul">
+<li>Node <i>x</i> lies on a cycle exactly when <i>x ⟶⁺ x</i>.</li>
+<li>A graph is <i>DAG, acylic, circuit-free,</i> exactly when <i>⟶⁺ ⊆ ∼Id</i>; i.e., <i>⟶⁺ ∩ Id = ⊥</i>.</li>
+<li>An acyclic graph is a (<i>directed) forest</i> exactly when ⟶ is injective; i.e.,
+every node has at most one predecessor; i.e., \(⟶ ⨾ ⟵ ⊆ Id\).</li>
+</ul></li>
+<li>A node <i>r</i> is a <i>root</i> exactly when every node is reachable from it; i.e., <i>{r} × V ⊆ ⟶⋆;</i>
+i.e., <i>𝕃 r ⨾ ⟶⋆ = ⊤</i> where <i>𝕃 r</i> is defined by \(𝕃 r = (ℝ r)˘\) and \(x 〔ℝ r〕 y \;≡\; x = r\).
+<ul class="org-ul">
+<li>\(x〔𝕃 r ⨾ R〕 y \;≡\; r〔R〕 y\) and \(x 〔R ⨾ ℝ r〕 y \;≡\; x 〔R〕 r\)</li>
+<li>A <i>tree</i> is a forest with a root.</li>
+</ul></li>
+<li>A graph is <i>loop free</i> exactly when <i>⟶ ⊆ ∼Id</i>.</li>
+<li>A graph is <i>strongly connected</i> exactly when <i>⟶⋆ = ⊤</i>; i.e., <i>∼Id ⊆ ⟶⁺</i>;
+i.e., every point is reachable from any <i>other</i> point; i.e., <i>∼Id ⊆ ⟶ ∩ ⟵˘</i>;
+i.e., any two distinct points lie on an undirected circuit.
+<ul class="org-ul">
+<li>The equivalence classes of <i>⟶⋆ ∩ ⟵⋆</i> are the <i>strongly connected components</i>.</li>
+</ul></li>
+<li><i>Terminal∣sinks</i> are nodes from which it is <i>not</i> possible to proceed <i>any</i> further;
+i.e., terminals have no successors; the domain of <i>∼(⟶ ⨾ ⊤)</i> is all terminals.</li>
+<li><i>Initial∣sources</i> are nodes from which it is <i>not</i> possible to proceed backward;
+i.e., initials have no predecessors; the domain of <i>∼(⟵ ⨾ ⊤)</i> is all initials.</li>
+</ul>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An <em>expression</em> is either a ‘variable’ or a ‘function application’; i.e., the name<br>of a function along with a number of existing expressions.<br><br> Expr ::= Constant&emsp;&emsp;-- E.g., 1 or “apple”<br>&emsp;&emsp;&emsp;|&emsp;Variable&emsp;&emsp;-- E.g., x or apple (no quotes!)<br>&emsp;&emsp;&emsp;|&emsp;Application -- E.g., f(x₁, x₂, …, xₙ)<br><br>( One reads ‘:=’ as <em>becomes</em> and so the addition of an extra colon results in a<br>‘stutter’: One reads ‘∷=’ as <em>be-becomes</em>. The symbol ‘|’ is read <em>or</em>. )<br><br>Notice that a constant is really just an application with <em>n</em> being <em>0</em> arguments<br>and so the first line in the definition above could be omitted.<br><br><hr><br><br>In a sense, an expression is like a sentence with the variables acting as<br>pronouns and the function applications acting as verb clauses and the argument<br>to the application are the participants in the action of the verbal clause.<br><br>A <strong>variable of type τ</strong> is a <em>name</em> denoting a yet unknown <em>value</em> of type τ;<br>i.e., “it is a pronoun (nickname) referring to a person in the collection of people τ”.<br>E.g., to say <em>x</em> is an integer variable means that we may treat it<br>as if it were a number whose precise value is unknown.<br>Then, if we let =Expr τ= refer to the expressions denoting <em>values</em> of type τ;<br>then a <strong>meta-variable</strong> is simply a normal variable of type =Expr τ=.<br><br>That is, when we write phrases like =“Let E be an expression”=, then the <em>name</em> <EM>E</EM><br>varies and so is a variable, but it is an expression and so may consist of a<br>function application or a variable. <strong>That is, <EM>E</EM> is a variable that may stand<br>for variables.</strong> This layered inception is resolved by referring to <EM>E</EM> as not<br>just any normal variable, but instead as a <strong>meta-variable</strong>: A variable capable of<br>referring to other (simpler) variables.<br><br><hr><br><br>Expressions, as defined above, are also known as <em>abstract syntax trees</em> (AST) or<br><em>prefix notation</em>. Then <em>textual substitution</em> is known as ‘grafting trees’ (a<br>monadic bind).<br><br>Their use can be clunky, such as by requiring many parentheses and implicitly<br>forcing a syntactic distinction between equivalent expressions; e.g.,<br><em>gcd(m,gcd(n,p))</em> and <em>gcd(gcd(m,n),p)</em> look difference even though <em>gcd</em> is<br>associative.<br><br>As such, one can declare <em>precedence levels</em> ---a.k.a. <em>binding power</em>--- to reduce<br>parentheses, one can declare fixity ---i.e., have arguments around operation<br>names---, and, finally, one can declare association ---whether sequential<br>instances of an operation should be read with implicit parenthesis to the right<br>or the to the left--- to reduce syntactic differences.&emsp;The resulting expression<br>are now known to be in a <em>concrete syntax</em> ---i.e., in a syntactic shape that is<br>more concrete.<br><br>That is, the <strong>conventions</strong> on how a <em>string</em> should be parsed as a <em>tree</em> are known as a<br><strong>precedence, fixity, and associativity rules.</strong><br><br>Similarly, not for operators but one treats <em>relations</em> <strong>conjunctionally</strong> to reduce<br>the number of ‘and’(∧) symbols; e.g. <em>x ≤ y + 2 = z &#x2000;≡&#x2000; x ≤ (y + 2) &#8194;∧&#8194; (y + 2) = z</em>.<br>This is very useful to avoid repeating lengthy common expressions, such as <em>y + 2</em>.">Expression</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Expression</h3>
+
+<p>
+An <i>expression</i> is either a ‘variable’ or a ‘function application’; i.e., the name
+of a function along with a number of existing expressions.
+</p>
+
+<pre class="example" id="org2667093">
+ Expr ::= Constant    -- E.g., 1 or “apple”
+      |  Variable    -- E.g., x or apple (no quotes!)
+      |  Application -- E.g., f(x₁, x₂, …, xₙ)
+</pre>
+
+<p>
+( One reads ‘:=’ as <i>becomes</i> and so the addition of an extra colon results in a
+‘stutter’: One reads ‘∷=’ as <i>be-becomes</i>. The symbol ‘|’ is read <i>or</i>. )
+</p>
+
+<p>
+Notice that a constant is really just an application with <i>n</i> being <i>0</i> arguments
+and so the first line in the definition above could be omitted.
+</p>
+
+<hr />
+
+<p>
+In a sense, an expression is like a sentence with the variables acting as
+pronouns and the function applications acting as verb clauses and the argument
+to the application are the participants in the action of the verbal clause.
+</p>
+
+<p>
+A <b>variable of type τ</b> is a <i>name</i> denoting a yet unknown <i>value</i> of type τ;
+i.e., “it is a pronoun (nickname) referring to a person in the collection of people τ”.
+E.g., to say \(x\) is an integer variable means that we may treat it
+as if it were a number whose precise value is unknown.
+Then, if we let <code>Expr τ</code> refer to the expressions denoting <i>values</i> of type τ;
+then a <b>meta-variable</b> is simply a normal variable of type <code>Expr τ</code>.
+</p>
+
+<p>
+That is, when we write phrases like <code>“Let E be an expression”</code>, then the <i>name</i> \(E\)
+varies and so is a variable, but it is an expression and so may consist of a
+function application or a variable. <b>That is, \(E\) is a variable that may stand
+for variables.</b> This layered inception is resolved by referring to \(E\) as not
+just any normal variable, but instead as a <b>meta-variable</b>: A variable capable of
+referring to other (simpler) variables.
+</p>
+
+<hr />
+
+<p>
+Expressions, as defined above, are also known as <i>abstract syntax trees</i> (AST) or
+<i>prefix notation</i>. Then <i>textual substitution</i> is known as ‘grafting trees’ (a
+monadic bind).
+</p>
+
+<p>
+Their use can be clunky, such as by requiring many parentheses and implicitly
+forcing a syntactic distinction between equivalent expressions; e.g.,
+<i>gcd(m,gcd(n,p))</i> and <i>gcd(gcd(m,n),p)</i> look difference even though <i>gcd</i> is
+associative.
+</p>
+
+<p>
+As such, one can declare <i>precedence levels</i> &#x2014;a.k.a. <i>binding power</i>&#x2014; to reduce
+parentheses, one can declare fixity &#x2014;i.e., have arguments around operation
+names&#x2014;, and, finally, one can declare association &#x2014;whether sequential
+instances of an operation should be read with implicit parenthesis to the right
+or the to the left&#x2014; to reduce syntactic differences.  The resulting expression
+are now known to be in a <i>concrete syntax</i> &#x2014;i.e., in a syntactic shape that is
+more concrete.
+</p>
+
+<p>
+That is, the <b>conventions</b> on how a <i>string</i> should be parsed as a <i>tree</i> are known as a
+<b>precedence, fixity, and associativity rules.</b>
+</p>
+
+<p>
+Similarly, not for operators but one treats <i>relations</i> <b>conjunctionally</b> to reduce
+the number of ‘and’(∧) symbols; e.g. \(x ≤ y + 2 = z \quad≡\quad x ≤ (y + 2) \,∧\, (y + 2) = z\).
+This is very useful to avoid repeating lengthy common expressions, such as <i>y + 2</i>.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="How we prove a theorem <em>P&#8194; n</em> ranging over natural numbers <em>n</em>?<br><br>For instance, suppose the property <EM>P</EM> is that using only 3 and 5 dollar bills,<br>any amount of money that is at-least 8 dollars can be formed.<br><br>Since there are an infinite number of natural numbers, it is not possibly to<br>verify <em>P&#8194; n</em> is true by <em>evaluating</em> <em>P&#8194; n</em> at each natural number <em>n</em>.<br><br><strong>Knocking over dominos is induction:</strong><br>The natural numbers are like an infinite number of dominoes ---i.e., standing<br>tiles one after the other, in any arrangement. Can all dominoes be knocked over?<br>That is, if we construe <em>P&#8194; n</em> to mean “the <em>n</em>-th domino can be knocked over”,<br>then the question is “is <em>∀ n • P&#8194; n</em> true”. Then, clearly if we can knock over<br>the first domino, <EM>P&#8194; 0</EM>, and if when a domino is knocked over then it also<br>knocks over the next domino, <em>P&#8194; n ⇒ P&#8194; (n + 1)</em>, then ‘clearly’ all dominoes<br>will be knocked over. This ‘basic observation’ is known as <em>induction</em>.<br><br><strong>Climbing a ladder is induction:</strong><br>The natural numbers are like an infinite ladder ascending to heaven.&emsp;Can we<br>reach every step, rung, on the ladder?&emsp;That is, if we construe <em>P&#8194; n</em> to mean<br>“the <em>n</em>-th rung is reachable”, then the question is “is <em>∀ n • P&#8194; n</em><br>true”. Then, clearly if we can reach the first rung, <EM>P&#8194; 0</EM>, and whenever we<br>climb to a rung then we can reach up and grab the next rung, <em>P&#8194; n ⇒ P&#8194; (n +<br>1)</em>, then ‘clearly’ all rungs of the ladder can be reached. This ‘basic<br>observation’ is known as <em>induction</em>.<br><br><strong>Constant functions are induction:</strong><br>A predicate <EM>P : ℕ → 𝔹</EM> is a function. When is such a function constantly the<br>value <em>\true</em>? That is, when is <em>∀ n • P&#8194; n = \true</em>?&emsp;Clearly, if <EM>P</EM> starts<br>off being <em>\true</em> ---i.e., <em>P 0</em>--- and it preserves truth at every step ---i.e.,<br><em>P n ⇒ P (n + 1)</em>--- then <em>P n</em> will be true for any choice of <em>n</em>.<br><br>That is, if we consider <em>(ℕ, ≤)</em> and <em>(𝔹, ⇒)</em> as ordered sets and <EM>P</EM> starts at<br>the ‘top’ of 𝔹 ---i.e., <em>P 0 = true</em>--- and it is ascending ---i.e., <em>P n ⇒ P (n +<br>1)</em>--- and so ‘never goes down’, then clearly it must stay constantly at the top<br>value of 𝔹. This ‘basic observation’ is known as <em>induction</em>.<br><br><br>⟦ For the money problem, we need to start somewhere else besides 0. ⟧<br><br><strong>Principle of (“Weak”) Mathematical Induction:</strong><br>To show that a property <EM>P</EM> is true for all natural numbers starting with some<br>number <em>n_0</em>, show the following two properties:<br>+ Base case :: Show that <em>P&#8194; n₀</em> is true.<br>+ Inductive Step :: Show that whenever (the <strong>inductive hypothesis</strong>) <em>n</em> is a<br>&emsp;natural number that such that <em>n ≥ n₀</em> and <em>P&#8194; n</em> is true, then <em>P&#8194; (n + 1)</em><br>&emsp;is also true.<br><br>⟦ For the money problem, we need to be able to use the fact that to prove<br><em>P&#8194;(n + 1)</em> we must have already proven <EM>P</EM> for all smaller values. ⟧<br><br><strong>Principle of (“Strong”) Mathematical Induction</strong>:<br>To show that a property <EM>P</EM> is true for all natural numbers starting with some<br>number <em>n_0</em>, show the following two properties:<br>+ Base case :: Show that <em>P&#8194; n₀</em> is true.<br>+ Inductive Step :: Show that whenever (the <strong>inductive hypothesis</strong>) <em>n</em> is a<br>&emsp;natural number that such that <em>n ≥ n₀</em> and <em>P&#8194; n_0, P&#8194; (n_0 + 1), P&#8194; (n_0 +<br>&emsp;2), …, P&#8194; n</em> are true, then <em>P&#8194; (n + 1)</em> is also true.<br><br>⟦ The ‘strength’ of these principles refers to the strength of the inductive<br>hypothesis. The principles are provably equivalent. ⟧<br><br># (It is also a way to say that ℕ has non-empty meets.)<br><strong>The Least Number Principle (LNP) ---Another way to see induction:</strong><br>Every non-empty subset of the natural numbers must have a least element,<br>‘obviously’. This is (strong) induction.<br># Possibly infinite!<br><br>Application of LNP to showing that algorithms terminate:<br>In particular, every decreasing non-negative sequence of integers<br><em>r₀ > r₁ > r₂ > ⋯</em> must terminate.<br>#+end_box">Induction</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Induction</h3>
+<p>
+How we prove a theorem \(P\, n\) ranging over natural numbers \(n\)?
+</p>
+
+<p>
+For instance, suppose the property \(P\) is that using only 3 and 5 dollar bills,
+any amount of money that is at-least 8 dollars can be formed.
+</p>
+
+<p>
+Since there are an infinite number of natural numbers, it is not possibly to
+verify \(P\, n\) is true by <i>evaluating</i> \(P\, n\) at each natural number \(n\).
+</p>
+
+<p>
+<b>Knocking over dominos is induction:</b>
+The natural numbers are like an infinite number of dominoes &#x2014;i.e., standing
+tiles one after the other, in any arrangement. Can all dominoes be knocked over?
+That is, if we construe \(P\, n\) to mean “the <i>n</i>-th domino can be knocked over”,
+then the question is “is \(∀ n • P\, n\) true”. Then, clearly if we can knock over
+the first domino, \(P\, 0\), and if when a domino is knocked over then it also
+knocks over the next domino, \(P\, n ⇒ P\, (n + 1)\), then ‘clearly’ all dominoes
+will be knocked over. This ‘basic observation’ is known as <i>induction</i>.
+</p>
+
+<p>
+<b>Climbing a ladder is induction:</b>
+The natural numbers are like an infinite ladder ascending to heaven.  Can we
+reach every step, rung, on the ladder?  That is, if we construe \(P\, n\) to mean
+“the <i>n</i>-th rung is reachable”, then the question is “is \(∀ n • P\, n\)
+true”. Then, clearly if we can reach the first rung, \(P\, 0\), and whenever we
+climb to a rung then we can reach up and grab the next rung, \(P\, n ⇒ P\, (n +
+1)\), then ‘clearly’ all rungs of the ladder can be reached. This ‘basic
+observation’ is known as <i>induction</i>.
+</p>
+
+<p>
+<b>Constant functions are induction:</b>
+A predicate \(P : ℕ → 𝔹\) is a function. When is such a function constantly the
+value \(\true\)? That is, when is \(∀ n • P\, n = \true\)?  Clearly, if \(P\) starts
+off being \(\true\) &#x2014;i.e., <i>P 0</i>&#x2014; and it preserves truth at every step &#x2014;i.e.,
+<i>P n ⇒ P (n + 1)</i>&#x2014; then <i>P n</i> will be true for any choice of \(n\).
+</p>
+
+<p>
+That is, if we consider \((ℕ, ≤)\) and \((𝔹, ⇒)\) as ordered sets and \(P\) starts at
+the ‘top’ of 𝔹 &#x2014;i.e., <i>P 0 = true</i>&#x2014; and it is ascending &#x2014;i.e., <i>P n ⇒ P (n +
+1)</i>&#x2014; and so ‘never goes down’, then clearly it must stay constantly at the top
+value of 𝔹. This ‘basic observation’ is known as <i>induction</i>.
+</p>
+
+
+<p>
+⟦ For the money problem, we need to start somewhere else besides 0. ⟧
+</p>
+
+<p>
+<b>Principle of (“Weak”) Mathematical Induction:</b>
+To show that a property \(P\) is true for all natural numbers starting with some
+number \(n_0\), show the following two properties:
+</p>
+<dl class="org-dl">
+<dt>Base case</dt><dd>Show that \(P\, n₀\) is true.</dd>
+<dt>Inductive Step</dt><dd>Show that whenever (the <b>inductive hypothesis</b>) \(n\) is a
+natural number that such that \(n ≥ n₀\) and \(P\, n\) is true, then \(P\, (n + 1)\)
+is also true.</dd>
+</dl>
+
+<p>
+⟦ For the money problem, we need to be able to use the fact that to prove
+\(P\,(n + 1)\) we must have already proven \(P\) for all smaller values. ⟧
+</p>
+
+<p>
+<b>Principle of (“Strong”) Mathematical Induction</b>:
+To show that a property \(P\) is true for all natural numbers starting with some
+number \(n_0\), show the following two properties:
+</p>
+<dl class="org-dl">
+<dt>Base case</dt><dd>Show that \(P\, n₀\) is true.</dd>
+<dt>Inductive Step</dt><dd>Show that whenever (the <b>inductive hypothesis</b>) \(n\) is a
+natural number that such that \(n ≥ n₀\) and \(P\, n_0, P\, (n_0 + 1), P\, (n_0 +
+  2), …, P\, n\) are true, then \(P\, (n + 1)\) is also true.</dd>
+</dl>
+
+<p>
+⟦ The ‘strength’ of these principles refers to the strength of the inductive
+hypothesis. The principles are provably equivalent. ⟧
+</p>
+
+<p>
+<b>The Least Number Principle (LNP) &#x2014;Another way to see induction:</b>
+Every non-empty subset of the natural numbers must have a least element,
+‘obviously’. This is (strong) induction.
+</p>
+
+<p>
+Application of LNP to showing that algorithms terminate:
+In particular, every decreasing non-negative sequence of integers
+\(r₀ > r₁ > r₂ > ⋯\) must terminate.
+#+end<sub>box</sub>
+</p>
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="The <strong>(simultaneous textual) Substitution operation</strong> <em>E[\vec x ≔ \vec F]</em> replaces<br>all variables <em>\vec x</em> with parenthesised expressions <em>\vec F</em> in an expression<br><EM>E</EM>. In particular, <em>E[x ≔ F]</em> is just <EM>E</EM> but with all occurrences of <em>x</em><br>replaced by <em>“(F)”</em>. This is the “find-and-replace” utility you use on your<br>computers.<br><br>Textual substitution on expressions is known as “grafting” on trees: Evaluate<br><em>E[x ≔ F]</em> by going down the tree <EM>E</EM> and finding all the ‘leaves’ labelled <em>x</em>,<br>cut them out and replace them with the new trees <EM>F</EM>.<br><br>Since expressions are either variables of functions applications,<br>substitution can be defined inductively/recursively by the following two clauses:<br><br>+ <em>y[x ≔ F]&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; =&emsp;if  x = y  then  F  else  y  fi</em><br>+ <em>f(t₁, …, tₙ)[x ≔ F]&emsp;=&emsp;f(t₁′, …, tₙ′)&emsp; where  tᵢ′ = tᵢ[x ≔ F]</em><br><br><hr><br><br>Sequential ≠ Simultaneous:<br>&emsp;<em>(x + 2 · y)[x ≔ y][y ≔ x]&emsp;≠&emsp;(x + 2 · y)[x, y ≔ y, x]</em><br><br>Python (https://alhassy.github.io/PythonCheatSheet/CheatSheet.pdf), for example, has simultaneous <em>assignment</em>;<br>e.g., <code>x, y = y, x</code> is used to swap the value of two variables.<br><br><hr><br><br>A <em>function</em> <em>f</em> is a rule for computing a value from another value.<br><br>If we define <em>f&#8194; x = E</em> using an expression, then <em>function application</em> can be<br>defined using textual substitution: <em>f &#8194; X = E[x ≔ X]</em>. That is, expressions<br>can be considered functions of their variables ---but it is still expressions<br>that are the primitive idea, the building blocks.">Textual_Substitution</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Textual_Substitution</h3>
+<p>
+The <b>(simultaneous textual) Substitution operation</b> \(E[\vec x ≔ \vec F]\) replaces
+all variables \(\vec x\) with parenthesised expressions \(\vec F\) in an expression
+\(E\). In particular, \(E[x ≔ F]\) is just \(E\) but with all occurrences of \(x\)
+replaced by \(“(F)”\). This is the “find-and-replace” utility you use on your
+computers.
+</p>
+
+<p>
+Textual substitution on expressions is known as “grafting” on trees: Evaluate
+\(E[x ≔ F]\) by going down the tree \(E\) and finding all the ‘leaves’ labelled \(x\),
+cut them out and replace them with the new trees \(F\).
+</p>
+
+<p>
+Since expressions are either variables of functions applications,
+substitution can be defined inductively/recursively by the following two clauses:
+</p>
+
+<ul class="org-ul">
+<li><i>y[x ≔ F]             =  if  x = y  then  F  else  y  fi</i></li>
+<li><i>f(t₁, …, tₙ)[x ≔ F]  =  f(t₁′, …, tₙ′)   where  tᵢ′ = tᵢ[x ≔ F]</i></li>
+</ul>
+
+<hr />
+
+<p>
+Sequential ≠ Simultaneous:
+  <i>(x + 2 · y)[x ≔ y][y ≔ x]  ≠  (x + 2 · y)[x, y ≔ y, x]</i>
+</p>
+
+<p>
+<a href="https://alhassy.github.io/PythonCheatSheet/CheatSheet.pdf">Python</a>, for example, has simultaneous <i>assignment</i>;
+e.g., <code>x, y = y, x</code> is used to swap the value of two variables.
+</p>
+
+<hr />
+
+<p>
+A <i>function</i> \(f\) is a rule for computing a value from another value.
+</p>
+
+<p>
+If we define \(f\, x = E\) using an expression, then <i>function application</i> can be
+defined using textual substitution: \(f \, X = E[x ≔ X]\). That is, expressions
+can be considered functions of their variables &#x2014;but it is still expressions
+that are the primitive idea, the building blocks.
+</p>
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="Formally, a “proof” is obtained by applying a number of “rules” to known results<br>to obtain new results; a “theorem” is the conclusion of a “proof”.&emsp;An “axiom”<br>is a rule that does not need to be applied to any existing results: It's just a<br>known result.<br><br>That is, a <strong>rule</strong> <EM>R</EM> is a tuple <EM>P₁, …, Pₙ, C</EM> that is thought of as ‘taking<br><strong>premises</strong> (instances of known results) <EM>Pᵢ</EM>’ and acting as a ‘natural,<br>reasonable justification’ to obtain <strong>conclusion</strong> <EM>C</EM>.&emsp;A <strong>proof system</strong> is a<br>collection of rules. At first sight, this all sounds very abstract and rather<br>useless, however it is a <em>game</em>: <strong>Starting from rules, what can you obtain?</strong> Some<br>games can be very fun! Another way to see these ideas is from the view of<br>programming:<br><br>+ Proving ≈ Programming<br>+ Logic&emsp; ≈ Trees (algebraic data types, 𝒲-types)<br>+ Rules&emsp; ≈ Constructors<br>+ Proof&emsp; ≈ An application of constructors<br>+ Axiom&emsp; ≈ A constructor with no arguments<br><br>Just as in elementary school one sees addition ‘+’ as a fraction with the<br>arguments above the horizontal line and their sum below the line, so too is that<br>notation reused for inference rules: Premises are above the fraction's bar and<br>the conclusion is below.<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; 12<br>P₁, P₂, …, Pn&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;+&emsp;7<br><hr>R&emsp;&emsp; versues&emsp;&emsp; ----<br>&emsp;&emsp;&emsp;C&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;19<br><br>Just as there are meta-variables and meta-theorems, there is ‘meta-syntax’:<br>- The use of a fraction to delimit premises from conclusion is a form of ‘implication’.<br>- The use of a comma, or white space, to separate premises is a form of ‘conjunction’.<br><br>If our expressions actually have an implication and conjunction operation, then<br>inference rule above can be presented as an axiom <EM>P₁ &#8194;∧&#8194; ⋯ &#8194;∧&#8194; Pₙ &#8194;⇒&#8194; C</EM>.<br><br>The inference rule says “if the <EM>Pᵢ</EM> are all valid, i.e., true in <em>all states</em>,<br>then so is <EM>C</EM>”; the axiom, on the other hand, says “if the <EM>Pᵢ</EM> are true in <em>a<br>state</em>, then <EM>C</EM> is true in <em>that state</em>.” Thus the rule and the axiom are not<br>quite the same.<br><br>Moreover, the rule is not a Boolean expression.&emsp;Rules are thus more general,<br>allowing us to construct systems of reasoning that have no concrete notions of<br>‘truth’ ---e.g., the above arithmetic rule says from the things above the<br>fraction bar, using the operation ‘+’, we <em>can get</em> the thing below the bar, but<br>that thing (19) is not ‘true’ as we may think of conventional truth.<br><br>Finally, the rule asserts that <EM>C</EM> follows from <EM>P₁, …, Pₙ</EM>.&emsp;The formula <em>P₁<br>&#8194;∧&#8194; ⋯ &#8194;∧&#8194; Pₙ &#8194;⇒&#8194; C</em>, on the other hand, is an expression (but it need not<br>be a theorem).<br><br>A “theorem” is a syntactic concept: Can we play the game of moving symbols to<br>get this? Not “is the meaning of this true”!&emsp;‘Semantic concepts’ rely on<br>‘states’, assignments of values to variables so that we can ‘evaluate, simplify’<br>statements to deduce if they are true.<br><br>Syntax is like static analysis; semantics is like actually running the program<br>(on some, or all possible inputs).<br><br><hr><br><br>One reads/writes a <em>natural deduction proof (tree)</em> from the very <strong>bottom</strong>: Each<br>line is an application of a rule of reasoning, whose assumptions are above the<br>line; so read/written upward.&emsp;The <strong>benefit</strong> of this approach is that <strong>rules guide<br>proof construction</strong>; i.e., it is goal-directed.<br><br>However the <strong>downsides are numerous</strong>:<br>- So much horizontal space is needed even for simple proofs.<br>- One has to <strong>repeat</strong> common subexpressions; e.g., when using transitivity of equality.<br>- For comparison with other proof notations, such as Hilbert style,<br>&emsp;see Prolog (http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf][Equational Propositional Logic]].<br><br>&emsp;This is more ‘linear’ proof format; also known as <em>equational style</em> or<br>&emsp;<em>calculational proof</em>. This corresponds to the ‘high-school style’ of writing a<br>&emsp;sequence of equations, one on each line, along with hints/explanations of how<br>&emsp;each line was reached from the previous line.<br><br><hr><br><br>Finally, an inference rule says that it is possible to start with the givens<br><EM>Pᵢ</EM> and obtain as result <EM>C</EM>.&emsp;The idea to use <strong>inference rules as computation</strong><br>is witnessed by the [[https://alhassy.github.io/PrologCheatSheet/CheatSheet.pdf) programming language.">Inference_Rule</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Inference_Rule</h3>
+
+<p>
+Formally, a “proof” is obtained by applying a number of “rules” to known results
+to obtain new results; a “theorem” is the conclusion of a “proof”.  An “axiom”
+is a rule that does not need to be applied to any existing results: It's just a
+known result.
+</p>
+
+<p>
+That is, a <b>rule</b> \(R\) is a tuple \(P₁, …, Pₙ, C\) that is thought of as ‘taking
+<b>premises</b> (instances of known results) \(Pᵢ\)’ and acting as a ‘natural,
+reasonable justification’ to obtain <b>conclusion</b> \(C\).  A <b>proof system</b> is a
+collection of rules. At first sight, this all sounds very abstract and rather
+useless, however it is a <i>game</i>: <b>Starting from rules, what can you obtain?</b> Some
+games can be very fun! Another way to see these ideas is from the view of
+programming:
+</p>
+
+<ul class="org-ul">
+<li>Proving ≈ Programming</li>
+<li>Logic   ≈ Trees (algebraic data types, 𝒲-types)</li>
+<li>Rules   ≈ Constructors</li>
+<li>Proof   ≈ An application of constructors</li>
+<li>Axiom   ≈ A constructor with no arguments</li>
+</ul>
+
+<p>
+Just as in elementary school one sees addition ‘+’ as a fraction with the
+arguments above the horizontal line and their sum below the line, so too is that
+notation reused for inference rules: Premises are above the fraction's bar and
+the conclusion is below.
+</p>
+<pre class="example" id="org2d9a2e1">
+                                   12
+P₁, P₂, …, Pn                    +  7
+---------------R     versues     ----
+      C                            19
+</pre>
+
+<p>
+Just as there are meta-variables and meta-theorems, there is ‘meta-syntax’:
+</p>
+<ul class="org-ul">
+<li>The use of a fraction to delimit premises from conclusion is a form of ‘implication’.</li>
+<li>The use of a comma, or white space, to separate premises is a form of ‘conjunction’.</li>
+</ul>
+
+<p>
+If our expressions actually have an implication and conjunction operation, then
+inference rule above can be presented as an axiom \(P₁ \,∧\, ⋯ \,∧\, Pₙ \,⇒\, C\).
+</p>
+
+<p>
+The inference rule says “if the \(Pᵢ\) are all valid, i.e., true in <i>all states</i>,
+then so is \(C\)”; the axiom, on the other hand, says “if the \(Pᵢ\) are true in <i>a
+state</i>, then \(C\) is true in <i>that state</i>.” Thus the rule and the axiom are not
+quite the same.
+</p>
+
+<p>
+Moreover, the rule is not a Boolean expression.  Rules are thus more general,
+allowing us to construct systems of reasoning that have no concrete notions of
+‘truth’ &#x2014;e.g., the above arithmetic rule says from the things above the
+fraction bar, using the operation ‘+’, we <i>can get</i> the thing below the bar, but
+that thing (19) is not ‘true’ as we may think of conventional truth.
+</p>
+
+<p>
+Finally, the rule asserts that \(C\) follows from \(P₁, …, Pₙ\).  The formula \(P₁
+\,∧\, ⋯ \,∧\, Pₙ \,⇒\, C\), on the other hand, is an expression (but it need not
+be a theorem).
+</p>
+
+<p>
+A “theorem” is a syntactic concept: Can we play the game of moving symbols to
+get this? Not “is the meaning of this true”!  ‘Semantic concepts’ rely on
+‘states’, assignments of values to variables so that we can ‘evaluate, simplify’
+statements to deduce if they are true.
+</p>
+
+<p>
+Syntax is like static analysis; semantics is like actually running the program
+(on some, or all possible inputs).
+</p>
+
+<hr />
+
+<p>
+One reads/writes a <i>natural deduction proof (tree)</i> from the very <b>bottom</b>: Each
+line is an application of a rule of reasoning, whose assumptions are above the
+line; so read/written upward.  The <b>benefit</b> of this approach is that <b>rules guide
+proof construction</b>; i.e., it is goal-directed.
+</p>
+
+<p>
+However the <b>downsides are numerous</b>:
+</p>
+<ul class="org-ul">
+<li>So much horizontal space is needed even for simple proofs.</li>
+<li>One has to <b>repeat</b> common subexpressions; e.g., when using transitivity of equality.</li>
+<li><p>
+For comparison with other proof notations, such as Hilbert style,
+see <a href="http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf">Equational Propositional Logic</a>.
+</p>
+
+<p>
+This is more ‘linear’ proof format; also known as <i>equational style</i> or
+<i>calculational proof</i>. This corresponds to the ‘high-school style’ of writing a
+sequence of equations, one on each line, along with hints/explanations of how
+each line was reached from the previous line.
+</p></li>
+</ul>
+
+<hr />
+
+<p>
+Finally, an inference rule says that it is possible to start with the givens
+\(Pᵢ\) and obtain as result \(C\).  The idea to use <b>inference rules as computation</b>
+is witnessed by the <a href="https://alhassy.github.io/PrologCheatSheet/CheatSheet.pdf">Prolog</a> programming language.
+</p>
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A <em>logic</em> is a formal system of reasoning...<br><br>A <em>logic</em> is a set of symbols along with a set of <em>formulas</em> formed from the<br>symbols, and a set of <em>inference rules</em> which allow formulas to be derived from<br>other formulas. (The formulas may or may not include a notion of variable.)<br><br>Logics are purely syntactic objects; an <em>inference rule</em> is a syntactic mechanism<br>for deriving “truths” or “theorems”.<br><br>In general, proofs are evidence of truth of a claim; by demonstrating that the<br>claim follows from some <em>obvious truth</em> using rules of reasoning that <em>obviously<br>preserve truth.</em>">Logic</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Logic</h3>
+<p>
+A <i>logic</i> is a formal system of reasoning&#x2026;
+</p>
+
+<p>
+A <i>logic</i> is a set of symbols along with a set of <i>formulas</i> formed from the
+symbols, and a set of <i>inference rules</i> which allow formulas to be derived from
+other formulas. (The formulas may or may not include a notion of variable.)
+</p>
+
+<p>
+Logics are purely syntactic objects; an <i>inference rule</i> is a syntactic mechanism
+for deriving “truths” or “theorems”.
+</p>
+
+<p>
+In general, proofs are evidence of truth of a claim; by demonstrating that the
+claim follows from some <i>obvious truth</i> using rules of reasoning that <i>obviously
+preserve truth.</i>
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A <em>theorem</em> is a syntactic object, a string of symbols with a particular property.<br><br>A <em>theorem</em> of a calculus is either an axiom or the conclusion of an inference<br>rule whose premises are theorems.<br><br>Different axioms could lead to the same set of theorems, and many texts use<br>different axioms.<br><br><hr><br><br>A “theorem” is a syntactic concept: Can we play the game of moving symbols to<br>get this? Not “is the meaning of this true”!&emsp;‘Semantic concepts’ rely on<br>‘states’, assignments of values to variables so that we can ‘evaluate, simplify’<br>statements to deduce if they are true.<br><br>Syntax is like static analysis; semantics is like actually running the program<br>(on some, or all possible inputs).<br><br><hr><br><br>A <strong>meta-theorem</strong> is a general statement about our logic that we prove to be<br>true. That is, if 𝑬 is collection of rules that allows us to find truths, then a<br><em>theorem</em> is a truth found using those rules; whereas a meta-theorem/ is property<br>of 𝑬 itself, such as what theorems it can have.&emsp;That is, theorems are _in_ 𝑬 and<br>meta-theorems are _about_ 𝑬.&emsp;For example, here is a meta-theorem that the<br>equational logic 𝑬 has (as do many other theories, such as lattices): An<br><em>equational</em> theorem is true precisely when its ‘dual’ is true. Such metatheorems<br>can be helpful to discover new theorems.<br><br># A meta-theorem is a theorem about theorems.">Theorem</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Theorem</h3>
+<p>
+A <i>theorem</i> is a syntactic object, a string of symbols with a particular property.
+</p>
+
+<p>
+A <i>theorem</i> of a calculus is either an axiom or the conclusion of an inference
+rule whose premises are theorems.
+</p>
+
+<p>
+Different axioms could lead to the same set of theorems, and many texts use
+different axioms.
+</p>
+
+<hr />
+
+<p>
+A “theorem” is a syntactic concept: Can we play the game of moving symbols to
+get this? Not “is the meaning of this true”!  ‘Semantic concepts’ rely on
+‘states’, assignments of values to variables so that we can ‘evaluate, simplify’
+statements to deduce if they are true.
+</p>
+
+<p>
+Syntax is like static analysis; semantics is like actually running the program
+(on some, or all possible inputs).
+</p>
+
+<hr />
+
+<p>
+A <b>meta-theorem</b> is a general statement about our logic that we prove to be
+true. That is, if 𝑬 is collection of rules that allows us to find truths, then a
+<i>theorem</i> is a truth found using those rules; whereas a meta-theorem/ is property
+of 𝑬 itself, such as what theorems it can have.  That is, theorems are <span class="underline">in</span> 𝑬 and
+meta-theorems are <span class="underline">about</span> 𝑬.  For example, here is a meta-theorem that the
+equational logic 𝑬 has (as do many other theories, such as lattices): An
+<i>equational</i> theorem is true precisely when its ‘dual’ is true. Such metatheorems
+can be helpful to discover new theorems.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A <em>theorem</em> in the technical sense is an expression derived<br>from axioms using inference rules.<br><br>A <em>metatheorem</em> is a general <strong>statement</strong> about a logic that<br>one argues to be <strong>true</strong>.<br><br>For instance, “any two theorems are equivalent” is a statement that speaks about<br>expressions which happen to be theorems. A logic may not have the linguistic<br>capability to speak of its own expressions and so the statement may not be<br>expressible as an expression <strong>within</strong> the logic ---and so cannot be a theorem of<br>the logic.<br><br>For instance, the logic 𝒑𝑞 has expressions formed from the symbols “𝒑”, “𝒒”, and<br>“-” (dash). It has the axiom schema <em>x𝒑-𝒒x-</em> and the rule “If <em>x𝒑y𝒒z</em> is a theorem<br>then so is <em>x-𝒑y-𝒒z-</em>”. Notice that <em>x, y, z</em> are <em>any</em> strings of dashes;<br>the language of this logic does not have variables and so cannot even speak<br>of its own expressions, let alone its own theorems!<br><br>[Informal] theorems about [technical, logic-specific] theorems are thus termed<br>‘metatheorems’.">Metatheorem</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Metatheorem</h3>
+<p>
+A <i>theorem</i> in the technical sense is an expression derived
+from axioms using inference rules.
+</p>
+
+<p>
+A <i>metatheorem</i> is a general <b>statement</b> about a logic that
+one argues to be <b>true</b>.
+</p>
+
+<p>
+For instance, “any two theorems are equivalent” is a statement that speaks about
+expressions which happen to be theorems. A logic may not have the linguistic
+capability to speak of its own expressions and so the statement may not be
+expressible as an expression <b>within</b> the logic &#x2014;and so cannot be a theorem of
+the logic.
+</p>
+
+<p>
+For instance, the logic 𝒑𝑞 has expressions formed from the symbols “𝒑”, “𝒒”, and
+“-” (dash). It has the axiom schema \(x𝒑-𝒒x-\) and the rule “If \(x𝒑y𝒒z\) is a theorem
+then so is \(x-𝒑y-𝒒z-\)”. Notice that \(x, y, z\) are <i>any</i> strings of dashes;
+the language of this logic does not have variables and so cannot even speak
+of its own expressions, let alone its own theorems!
+</p>
+
+<p>
+[Informal] theorems about [technical, logic-specific] theorems are thus termed
+‘metatheorems’.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A <em>calculus</em> is a method or process of reasoning by calculation<br>with symbols. A <em>propositional calculus</em> is a method of calculating with Boolean<br>(or propositional) expressions.<br><br><hr><br><br>Calculus: Formalised reasoning through calculation.<br><br>‘Hand wavy’ English arguments tend to favour case analysis —considering what<br>could happen in each possible scenario— which increases exponentially with each<br>variable; in contrast, equality-based calculation is much simpler since it<br>delegates intricate case analysis into codified algebraic laws.">Calculus</abbr> (<abbr class="tooltip" title="A <em>calculus</em> is a method or process of reasoning by calculation<br>with symbols. A <em>propositional calculus</em> is a method of calculating with Boolean<br>(or propositional) expressions.<br><br><hr><br><br>Calculus: Formalised reasoning through calculation.<br><br>‘Hand wavy’ English arguments tend to favour case analysis —considering what<br>could happen in each possible scenario— which increases exponentially with each<br>variable; in contrast, equality-based calculation is much simpler since it<br>delegates intricate case analysis into codified algebraic laws.">Propositional Calculus</abbr>)
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Calculus</h3>
+<p>
+A <i>calculus</i> is a method or process of reasoning by calculation
+with symbols. A <i>propositional calculus</i> is a method of calculating with Boolean
+(or propositional) expressions.
+</p>
+
+<hr />
+
+<p>
+Calculus: Formalised reasoning through calculation.
+</p>
+
+<p>
+‘Hand wavy’ English arguments tend to favour case analysis —considering what
+could happen in each possible scenario— which increases exponentially with each
+variable; in contrast, equality-based calculation is much simpler since it
+delegates intricate case analysis into codified algebraic laws.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Syntax</strong> refers to the structure of expressions, or the rules for putting symbols<br>together to form an expression. <strong>Semantics</strong> refers to the meaning of expressions<br>or how they are evaluated.<br><br>An expression can contain variables, and evaluating such an expression requires<br>knowing what values to use for these variables; i.e., a <strong>state</strong>: A list of<br>variables with associated values. E.g., evaluation of <em>x - y + 2</em> in the state<br>consisting of <em>(x, 5)</em> and <em>(y, 6)</em> is performed by replacing <em>x</em> and <em>y</em> by<br>their values to yield <em>5 - 6 + 2</em> and then evaluating that to yield <em>1</em>.<br><br>A Boolean expression <EM>P</EM> is <strong>satisfied</strong> in a state if its value is <em>true</em> in that<br>state; <EM>P</EM> is <strong>satisfiable</strong> if there is a state in which it is satisfied; and <EM>P</EM><br>is <strong>valid</strong> (or is a <strong>tautology</strong>) if it is satisfied in every state.<br><br><hr><br><br>Often operations are defined by how they are evaluated (<strong>operationally</strong>), we<br>take the alternative route of defining operations by how they can be manipulated<br>(<strong>axiomatically</strong>); i.e., by what properties they satisfy.<br><br>For example, evaluation of the expression <EM>X = Y</EM> in a state yields the value<br><em>true</em> if expressions <EM>X</EM> and <EM>Y</EM> have the same value and yields <em>false</em> if they<br>have different values.&emsp;This characterisation of equality is in terms of<br>expression <em>evaluation</em>.&emsp;For <em>reasoning about expressions</em>, a more useful<br>characterisation would be a set of <em>laws</em> that can be used to show that two<br>expressions are equal, <strong>without</strong> calculating their values.<br>--- c.f., static analysis versues running a program.<br><br>For example, you know that <em>x = y</em> equals <em>y = x</em>, regardless of the values of<br><em>x</em> and <em>y</em>.&emsp;A collection of such laws can be regarded as a definition of<br>equality, <strong>provided</strong> two expressions have the same value in all states precisely<br>when one expression can be translated into the other according to the laws.<br><br>Usually, in <em>a</em> logic, theorems correspond to expressions that are true in all<br>states.<br><br><hr><br><br>That is, instead of defining expressions by how they are evaluated, we may<br>define expressions in terms of how they can be manipulated ---c.f., a calculus.<br><br>For instance, we may define basic manipulative properties of operators ---i.e.,<br><em>axioms</em>--- by considering how the operators behave operationally on particular<br>expressions. That is, one may use an operational, intuitive, approach to obtain<br>an axiomatic specification (characterisation, interface) of the desired<br>properties.<br><br>More concretely, since <em>(p ≡ q) ≡ r</em> and <em>p ≡ (q ≡ r)</em> evaluate to<br>the same value for any choice of values for <em>p, q, r</em>, we may insist that a part<br>of the definition of equivalence is that it be an associative operation.<br><br>Sometimes a single axiom is not enough to ‘pin down’ a unique operator ---i.e.,<br>to ensure we actually have a well-defined operation--- and other times this is<br>cleanly possible; e.g., given an ordering ‘≤’(‘⇒, ⊆, ⊑’) we can define minima<br>‘↓’ (‘∧, ∩, ⊓’) by the axiom: “x ↓ y is the greatest lower bound”;<br>i.e., <em>z ≤ x ↓ y &#x2000;≡&#x2000; z ≤ x &#8194;∧&#8194; z ≤ y</em>.">Semantics</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Semantics</h3>
+
+<p>
+<b>Syntax</b> refers to the structure of expressions, or the rules for putting symbols
+together to form an expression. <b>Semantics</b> refers to the meaning of expressions
+or how they are evaluated.
+</p>
+
+<p>
+An expression can contain variables, and evaluating such an expression requires
+knowing what values to use for these variables; i.e., a <b>state</b>: A list of
+variables with associated values. E.g., evaluation of \(x - y + 2\) in the state
+consisting of \((x, 5)\) and \((y, 6)\) is performed by replacing \(x\) and \(y\) by
+their values to yield \(5 - 6 + 2\) and then evaluating that to yield \(1\).
+</p>
+
+<p>
+A Boolean expression \(P\) is <b>satisfied</b> in a state if its value is <i>true</i> in that
+state; \(P\) is <b>satisfiable</b> if there is a state in which it is satisfied; and \(P\)
+is <b>valid</b> (or is a <b>tautology</b>) if it is satisfied in every state.
+</p>
+
+<hr />
+
+<p>
+Often operations are defined by how they are evaluated (<b>operationally</b>), we
+take the alternative route of defining operations by how they can be manipulated
+(<b>axiomatically</b>); i.e., by what properties they satisfy.
+</p>
+
+<p>
+For example, evaluation of the expression \(X = Y\) in a state yields the value
+<i>true</i> if expressions \(X\) and \(Y\) have the same value and yields <i>false</i> if they
+have different values.  This characterisation of equality is in terms of
+expression <i>evaluation</i>.  For <i>reasoning about expressions</i>, a more useful
+characterisation would be a set of <i>laws</i> that can be used to show that two
+expressions are equal, <b>without</b> calculating their values.
+&#x2014; c.f., static analysis versues running a program.
+</p>
+
+<p>
+For example, you know that \(x = y\) equals \(y = x\), regardless of the values of
+\(x\) and \(y\).  A collection of such laws can be regarded as a definition of
+equality, <b>provided</b> two expressions have the same value in all states precisely
+when one expression can be translated into the other according to the laws.
+</p>
+
+<p>
+Usually, in <i>a</i> logic, theorems correspond to expressions that are true in all
+states.
+</p>
+
+<hr />
+
+<p>
+That is, instead of defining expressions by how they are evaluated, we may
+define expressions in terms of how they can be manipulated &#x2014;c.f., a calculus.
+</p>
+
+<p>
+For instance, we may define basic manipulative properties of operators &#x2014;i.e.,
+<i>axioms</i>&#x2014; by considering how the operators behave operationally on particular
+expressions. That is, one may use an operational, intuitive, approach to obtain
+an axiomatic specification (characterisation, interface) of the desired
+properties.
+</p>
+
+<p>
+More concretely, since \((p ≡ q) ≡ r\) and \(p ≡ (q ≡ r)\) evaluate to
+the same value for any choice of values for \(p, q, r\), we may insist that a part
+of the definition of equivalence is that it be an associative operation.
+</p>
+
+<p>
+Sometimes a single axiom is not enough to ‘pin down’ a unique operator &#x2014;i.e.,
+to ensure we actually have a well-defined operation&#x2014; and other times this is
+cleanly possible; e.g., given an ordering ‘≤’(‘⇒, ⊆, ⊑’) we can define minima
+‘↓’ (‘∧, ∩, ⊓’) by the axiom: “x ↓ y is the greatest lower bound”;
+i.e., \(z ≤ x ↓ y \quad≡\quad z ≤ x \,∧\, z ≤ y\).
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A story whose events have smooth transitions connecting them.<br><br># A proof wherein each step is connected to the next step by an explicit<br># justification.<br><br>This is a ‘linear’ proof format; also known as <em>equational style</em> or <em>calculational<br>proof</em>. This corresponds to the ‘high-school style’ of writing a sequence of<br>equations, one on each line, along with hints/explanations of how each line was<br>reached from the previous line. ( This is similar to <strong>programming</strong> which<br>encourages placing <em>comments</em> to <em>communicate</em> what's going on to future readers. )<br><br>The structure of equational proofs allows implicit use of infernece rules<br>Leibniz, Transitvitity & Symmetry & Reflexivity of equality, and<br>Substitution. In contrast, the structure of proof trees is no help in this<br>regard, and so all uses of inference rules must be mentioned explicitly.<br><br>For comparison with other proof notations see Equational Propositional Logic (http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf).<br><br><hr><br><br>We advocate <em>calculational proofs</em> in which reasoning is goal directed and<br>justified by simple axiomatic laws that can be checked syntactically rather than<br>semantically. ---<em>Program Construction</em> by Roland Backhouse<br><br><hr><br><br>Calculational proofs introduce notation and recall theorems as needed, thereby<br>making each step of the argument easy to verify and follow. Thus, such arguments<br>are more accessible to readers unfamiliar with the problem domain.<br><br><hr><br><br>The use of a formal approach let us keep track of when our statements are<br>equivalent (“=”) rather than being weakened (“⇒”). That is, the use of English<br>to express the connection between steps is usually presented naturally using “if<br>this, then that” statements ---i.e., implication--- rather than stronger notion<br>of equality.">Calculational Proof</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Calculational Proof</h3>
+<p>
+A story whose events have smooth transitions connecting them.
+</p>
+
+<p>
+This is a ‘linear’ proof format; also known as <i>equational style</i> or <i>calculational
+proof</i>. This corresponds to the ‘high-school style’ of writing a sequence of
+equations, one on each line, along with hints/explanations of how each line was
+reached from the previous line. ( This is similar to <b>programming</b> which
+encourages placing <i>comments</i> to <i>communicate</i> what's going on to future readers. )
+</p>
+
+<p>
+The structure of equational proofs allows implicit use of infernece rules
+Leibniz, Transitvitity &amp; Symmetry &amp; Reflexivity of equality, and
+Substitution. In contrast, the structure of proof trees is no help in this
+regard, and so all uses of inference rules must be mentioned explicitly.
+</p>
+
+<p>
+For comparison with other proof notations see <a href="http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf">Equational Propositional Logic</a>.
+</p>
+
+<hr />
+
+<p>
+We advocate <i>calculational proofs</i> in which reasoning is goal directed and
+justified by simple axiomatic laws that can be checked syntactically rather than
+semantically. ---<i>Program Construction</i> by Roland Backhouse
+</p>
+
+<hr />
+
+<p>
+Calculational proofs introduce notation and recall theorems as needed, thereby
+making each step of the argument easy to verify and follow. Thus, such arguments
+are more accessible to readers unfamiliar with the problem domain.
+</p>
+
+<hr />
+
+<p>
+The use of a formal approach let us keep track of when our statements are
+equivalent (“=”) rather than being weakened (“⇒”). That is, the use of English
+to express the connection between steps is usually presented naturally using “if
+this, then that” statements &#x2014;i.e., implication&#x2014; rather than stronger notion
+of equality.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="Programming is solving the equation <em>R ⇒[C] G</em> in the unknown <em>C</em>; i.e., it is the<br> activity of finding a ‘recipe’ that satisfies a given specification. Sometimes<br> we may write <em>R ⇒[?] G</em> and solve for ‘?’. Programming is a goal-directed activity: From a specification, a program is found by examining the shape of its postcondition.">Programming</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Programming</h3>
+<p>
+Programming is solving the equation <i>R ⇒[C] G</i> in the unknown <i>C</i>; i.e., it is the
+activity of finding a ‘recipe’ that satisfies a given specification. Sometimes
+we may write <i>R ⇒[?] G</i> and solve for ‘?’. Programming is a goal-directed activity: From a specification, a program is found by examining the shape of its postcondition.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A specification is an equation of a certain shape.<br>&emsp;<em>Programming</em> is the activity of solving a specification<br>&emsp;for its unknown. Its unknown is called a <em>program</em>.<br><br>&emsp;See also “Programming”.">Specification</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Specification</h3>
+<p>
+A specification is an equation of a certain shape.
+<i>Programming</i> is the activity of solving a specification
+for its unknown. Its unknown is called a <i>program</i>.
+</p>
+
+<p>
+See also “Programming”.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="Problems may be formulated and solved using, possibly implicitly, the<br> construction of correct programs:<br><br>&emsp;&emsp; <em>“for all x satisfying R(x), there is a y such that G(x,y) is true”</em><br> ≈	<em>∀ x • R x ⇒ ∃ y • G x y</em><br> ≈	<em>R {𝑺} G for some program 𝑺 with inputs x and outputs y</em><br><br> This is known as a <em>constructive proof</em> since we have an algorithm 𝑺 that actually<br> shows how to find a particular <em>y</em> to solve the problem, for any given x. In<br> contrast, non-constructive proofs usually involving some form of counting<br> followed by a phrase “there is at least one such <em>y</em> …”, without actually<br> indicating <em>how</em> to find it!<br><br> The <em>“R {𝑺} G”</em> is known as a ‘Hoare triple’ and it expresses “when begun in a<br> state satisfying <em>R</em>, program 𝑺 will terminate in a state satisfying <em>G</em>.”<br><br> <hr><br><br> + Proving ≈ Programming<br> + Logic&emsp; ≈ Trees (algebraic data types, 𝒲-types)<br> + Rules&emsp; ≈ Constructors<br> + Proof&emsp; ≈ An application of constructors<br> + Axiom&emsp; ≈ A constructor with no arguments">Proving_is_Programming</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Proving_is_Programming</h3>
+<p>
+Problems may be formulated and solved using, possibly implicitly, the
+construction of correct programs:
+</p>
+
+<p>
+    <i>“for all x satisfying R(x), there is a y such that G(x,y) is true”</i>
+≈	<i>∀ x • R x ⇒ ∃ y • G x y</i>
+≈	<i>R {𝑺} G for some program 𝑺 with inputs x and outputs y</i>
+</p>
+
+<p>
+This is known as a <i>constructive proof</i> since we have an algorithm 𝑺 that actually
+shows how to find a particular <i>y</i> to solve the problem, for any given x. In
+contrast, non-constructive proofs usually involving some form of counting
+followed by a phrase “there is at least one such <i>y</i> …”, without actually
+indicating <i>how</i> to find it!
+</p>
+
+<p>
+The <i>“R {𝑺} G”</i> is known as a ‘Hoare triple’ and it expresses “when begun in a
+state satisfying <i>R</i>, program 𝑺 will terminate in a state satisfying <i>G</i>.”
+</p>
+
+<hr />
+
+<ul class="org-ul">
+<li>Proving ≈ Programming</li>
+<li>Logic   ≈ Trees (algebraic data types, 𝒲-types)</li>
+<li>Rules   ≈ Constructors</li>
+<li>Proof   ≈ An application of constructors</li>
+<li>Axiom   ≈ A constructor with no arguments</li>
+</ul>
+
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="There are two ways to read this phrase.<br><br> Algorithmic-problem solving is about solving problems that<br> involve the construction of an algorithm for their solution.<br><br> Algorithmic problem-solving is about problem solving in general,<br> using the principles of correct-by-construction algorithm-design.">Algorithmic Problem Solving</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Algorithmic Problem Solving</h3>
+<p>
+There are two ways to read this phrase.
+</p>
+
+<p>
+Algorithmic-problem solving is about solving problems that
+involve the construction of an algorithm for their solution.
+</p>
+
+<p>
+Algorithmic problem-solving is about problem solving in general,
+using the principles of correct-by-construction algorithm-design.
+</p>
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="Natural transformations are essentially polymorphic functions that make <em>no</em><br> choices according to the input type; e.g., =reverse : List τ → List τ= makes no<br> choices depending on the type <code>τ</code>.">Natural Transformation</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Natural Transformation</h3>
+<p>
+Natural transformations are essentially polymorphic functions that make <i>no</i>
+choices according to the input type; e.g., <code>reverse : List τ → List τ</code> makes no
+choices depending on the type <code>τ</code>.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A theory of typed&emsp;composition; e.g., typed monoids.">Category Theory</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Category Theory</h3>
+<p>
+A theory of typed  composition; e.g., typed monoids.
+</p>
+
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-Properties-of-Operators-Relations" class="outline-2">
+<h2 id="Properties-of-Operators-Relations"><span class="section-number-2">2</span> <a href="#Properties-of-Operators-Relations">Properties of Operators</a></h2>
+<div class="outline-text-2" id="text-Properties-of-Operators-Relations">
+<p>
+<abbr class="tooltip" title="An operation _⊕_ is associative when it satisfies <em>(p ⊕ q) ⊕ r = p ⊕ (q ⊕ r)</em>.<br><br>Associativity allows us to be informal and insert or delete pairs of<br>parentheses in sequences of ⊕'s, just as we do with sequences of<br>additions ---e.g., <em>a + b + c + d</em> is equivalent to <em>a + (b + c) + d</em>.<br><br>Hence, we can write <em>p ⊕ q ⊕ r</em> instead of <em>(p ⊕ q) ⊕ r</em> or <em>p ⊕ (q ⊕ r)</em>.<br><br>When an operation is associative, it is best to avoid “making a choice” of how<br>sequences of ⊕ should be read, by using parentheses ---unless to make things<br>clear or explicit for manipulation.<br><br><hr><br><br>More generally, for any two operations _⊕_ and _⊞_, the “(left to right) mutual<br>associativity of ⊕ and ⊞” is the property <em>(x ⊕ y) ⊞ z = x ⊕ (y ⊞ z)</em>. It allows<br>us to omit parentheses in mixed sequences of ⊕ and ⊞. For instance, addition and<br>subtraction are (left to right) mutually associative.">Associative</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Associative</h3>
+<p>
+An operation <span class="underline">⊕</span> is associative when it satisfies \((p ⊕ q) ⊕ r = p ⊕ (q ⊕ r)\).
+</p>
+
+<p>
+Associativity allows us to be informal and insert or delete pairs of
+parentheses in sequences of ⊕'s, just as we do with sequences of
+additions &#x2014;e.g., \(a + b + c + d\) is equivalent to \(a + (b + c) + d\).
+</p>
+
+<p>
+Hence, we can write \(p ⊕ q ⊕ r\) instead of \((p ⊕ q) ⊕ r\) or \(p ⊕ (q ⊕ r)\).
+</p>
+
+<p>
+When an operation is associative, it is best to avoid “making a choice” of how
+sequences of ⊕ should be read, by using parentheses &#x2014;unless to make things
+clear or explicit for manipulation.
+</p>
+
+<hr />
+
+<p>
+More generally, for any two operations <span class="underline">⊕</span> and <span class="underline">⊞</span>, the “(left to right) mutual
+associativity of ⊕ and ⊞” is the property \((x ⊕ y) ⊞ z = x ⊕ (y ⊞ z)\). It allows
+us to omit parentheses in mixed sequences of ⊕ and ⊞. For instance, addition and
+subtraction are (left to right) mutually associative.
+</p>
+
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An operation _⊕_ has identity 𝑰 when it satisfies <em>𝑰 ⊕ x = x = x ⊕ 𝑰</em>.<br><br>If it satisfies only the first equation, <em>𝑰 ⊕ x = x</em>, one says<br>that “𝑰 is a left-identity for ⊕”. If it satisfies only the second<br>equation, <em>x ⊕ 𝑰 = x</em>, one says that “𝑰 is a right-identity for ⊕”.<br><br>For example, implication only has a left identity, <em>(false ⇒ x) = x</em>, and<br>subtraction only has a right identity, <em>(x - 0) = x</em>.<br><br>An identity implies that occurrences of “⊕ 𝑰” and “𝑰 ⊕” in an expression are<br>redundant. Thus, <em>x ⊕ 𝑰</em> may be replaced by <em>x</em> in any expression without<br>changing the value of the expression. Therefore, we usually eliminate such<br>occurrences unless something encourages us to leave them in.">Identity</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Identity</h3>
+<p>
+An operation <span class="underline">⊕</span> has identity 𝑰 when it satisfies \(𝑰 ⊕ x = x = x ⊕ 𝑰\).
+</p>
+
+<p>
+If it satisfies only the first equation, \(𝑰 ⊕ x = x\), one says
+that “𝑰 is a left-identity for ⊕”. If it satisfies only the second
+equation, \(x ⊕ 𝑰 = x\), one says that “𝑰 is a right-identity for ⊕”.
+</p>
+
+<p>
+For example, implication only has a left identity, \((false ⇒ x) = x\), and
+subtraction only has a right identity, \((x - 0) = x\).
+</p>
+
+<p>
+An identity implies that occurrences of “⊕ 𝑰” and “𝑰 ⊕” in an expression are
+redundant. Thus, \(x ⊕ 𝑰\) may be replaced by \(x\) in any expression without
+changing the value of the expression. Therefore, we usually eliminate such
+occurrences unless something encourages us to leave them in.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An operation ⊗ distributes over ⊕ when they satisfy<br>“left-distributivity” <em>x ⊗ (y ⊕ z) = (x ⊗ y) ⊕ (x ⊗ y)</em><br>and<br>“right-distributivity” <em>(y ⊕ z) ⊗ x = (y ⊗ x) ⊕ (z ⊗ x)</em>.<br><br>When ⊕ = ⊗, one says that the operation is “self-distributive”.<br><br>Distributivity can be viewed in two ways, much like distributivity of<br>multiplication × over addition +. Replacing the left side by the right side<br>could be called “multiplying out”; replacing the right side by the left side,<br>“factoring”.">Distributive</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Distributive</h3>
+<p>
+An operation ⊗ distributes over ⊕ when they satisfy
+“left-distributivity” \(x ⊗ (y ⊕ z) = (x ⊗ y) ⊕ (x ⊗ y)\)
+and
+“right-distributivity” \((y ⊕ z) ⊗ x = (y ⊗ x) ⊕ (z ⊗ x)\).
+</p>
+
+<p>
+When ⊕ = ⊗, one says that the operation is “self-distributive”.
+</p>
+
+<p>
+Distributivity can be viewed in two ways, much like distributivity of
+multiplication × over addition +. Replacing the left side by the right side
+could be called “multiplying out”; replacing the right side by the left side,
+“factoring”.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An operation _⊕_ is <em>commutative</em> or <em>symmetric</em> if it satisfies <em>x ⊕ y = y ⊕ x</em>.<br><br>This property indicates (semantically) that the value of an ⊕-expression doesn't<br>depend on the order of its arguments and (syntactically) we may swap their order<br>when manipulating ⊕-expressions.">Commutative</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Commutative</h3>
+<p>
+An operation <span class="underline">⊕</span> is <i>commutative</i> or <i>symmetric</i> if it satisfies <i>x ⊕ y = y ⊕ x</i>.
+</p>
+
+<p>
+This property indicates (semantically) that the value of an ⊕-expression doesn't
+depend on the order of its arguments and (syntactically) we may swap their order
+when manipulating ⊕-expressions.
+</p>
+
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-Properties-of-Homogeneous-Relations" class="outline-2">
+<h2 id="Properties-of-Homogeneous-Relations"><span class="section-number-2">3</span> <a href="#Properties-of-Homogeneous-Relations">Properties of <i>Homogeneous</i> Relations</a></h2>
+<div class="outline-text-2" id="text-Properties-of-Homogeneous-Relations">
+<p>
+<abbr class="tooltip" title="/Elements are related to themselves/<br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>.&emsp;That is relations are <em>simple graphs</em>; one refers to the directed lines as<br><em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, reflexivity means <em>there is loop “ ⟳ ” at each node.</em><br><hr><br><br>&emsp; <em>R</em> is reflexive exactly when <em>everything is related to itself</em>.<br>≡&emsp;<em>∀ x • x 〔R〕 x</em><br>≡&emsp;<em>Id ⊆ R</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.">Reflexive</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Reflexive</h3>
+<p>
+<i>Elements are related to themselves</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\).  That is relations are <i>simple graphs</i>; one refers to the directed lines as
+<i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, reflexivity means <i>there is loop “ ⟳ ” at each node.</i>
+</p>
+<hr />
+
+<p>
+   <i>R</i> is reflexive exactly when <i>everything is related to itself</i>.
+≡  <i>∀ x • x 〔R〕 x</i>
+≡  \(Id ⊆ R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A relation _⊑_ is <em>transitive</em> when it satisfies <em>a ⊑ b  ∧  b ⊑ c  ⇒  a ⊑ c</em>;<br>i.e., <em>a ⊑ b ⊑ c  ⇒ a ⊑ c</em> ---that is, “we can chain ⊑” so that from a proof of <em>a<br>⊑ b ⊑ c</em> we can get from the first to the final part and so have a proof of<br><em>a ⊑ c</em>.<br><br>Loosely put, whenever <em>a</em> and <em>c</em> have a common relative then they are themselves<br>related.<br><hr><br><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>.&emsp;That is relations are <em>simple graphs</em>; one refers to the directed lines as<br><em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, transitivity means <em>paths can always be shortened (but<br>nonempty).</em><br><br><hr><br><br>By the shunting rule, transitivity can be read as a <strong>‘monotonicity’</strong> property for<br>the operation that turns a value <em>x</em> into the proposition <em>a ⊑ x</em>; this maps ordered<br>relationships <em>b ⊑ c</em> to ordered propositions <em>a ⊑ b ⇒ a ⊑ c</em>.<br><br>Likewise, transitivity can be read as an ‘<strong>antitonicity</strong>’ property for the<br>operation mapping a value <em>x</em> to the proposition <em>x ⊑ c</em>; this maps ordered<br>relationships <em>a ⊑ b</em> to ordered propositions <em>b ⊑ c ⇒ a ⊑ c</em>.<br><br><hr><br><br>&emsp; Relation <em>R</em> is transitive<br>≡&emsp;<em>Things related to things that are related, are themselves related.</em><br>≡&emsp;Whenever <em>x</em> is related to <em>y</em> and <em>y</em> is related to <em>z</em>, then also <em>x</em> will<br>&emsp; be related to <em>z</em><br>≡&emsp;<em>∀ x, y, z •&emsp;x 〔 R 〕 y 〔R 〕 z&emsp;⇒&emsp;x 〔R〕 z</em><br>≡&emsp;<EM>R ⨾ R ⊆ R</EM><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><br><hr><br><br>A transitive relation is irreflexive precisely when it is asymmetric.">Transitive</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Transitive</h3>
+<p>
+A relation <span class="underline">⊑</span> is <i>transitive</i> when it satisfies <i>a ⊑ b  ∧  b ⊑ c  ⇒  a ⊑ c</i>;
+i.e., <i>a ⊑ b ⊑ c  ⇒ a ⊑ c</i> &#x2014;that is, “we can chain ⊑” so that from a proof of <i>a
+⊑ b ⊑ c</i> we can get from the first to the final part and so have a proof of
+<i>a ⊑ c</i>.
+</p>
+
+<p>
+Loosely put, whenever <i>a</i> and <i>c</i> have a common relative then they are themselves
+related.
+</p>
+<hr />
+
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\).  That is relations are <i>simple graphs</i>; one refers to the directed lines as
+<i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, transitivity means <i>paths can always be shortened (but
+nonempty).</i>
+</p>
+
+<hr />
+
+<p>
+By the shunting rule, transitivity can be read as a <b>‘monotonicity’</b> property for
+the operation that turns a value <i>x</i> into the proposition <i>a ⊑ x</i>; this maps ordered
+relationships <i>b ⊑ c</i> to ordered propositions <i>a ⊑ b ⇒ a ⊑ c</i>.
+</p>
+
+<p>
+Likewise, transitivity can be read as an ‘*antitonicity*’ property for the
+operation mapping a value <i>x</i> to the proposition <i>x ⊑ c</i>; this maps ordered
+relationships <i>a ⊑ b</i> to ordered propositions <i>b ⊑ c ⇒ a ⊑ c</i>.
+</p>
+
+<hr />
+
+<p>
+   Relation <i>R</i> is transitive
+≡  <i>Things related to things that are related, are themselves related.</i>
+≡  Whenever <i>x</i> is related to <i>y</i> and <i>y</i> is related to <i>z</i>, then also <i>x</i> will
+   be related to <i>z</i>
+≡  <i>∀ x, y, z •  x 〔 R 〕 y 〔R 〕 z  ⇒  x 〔R〕 z</i>
+≡  \(R ⨾ R ⊆ R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+<hr />
+
+<p>
+A transitive relation is irreflexive precisely when it is asymmetric.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="/The relationship is mutual; if one thing is related to the other, then the other<br>is also related to the first.<em><br><br>&emsp; <EM>R</EM> is symmetric<br>≡&emsp;If </em>x/ is related to <em>y</em>, then <em>y</em> is also related to <em>x</em>.<br>≡&emsp;<em>∀ x, y • x 〔R〕 y ⇒ y 〔 R〕 x</em><br>≡&emsp;<EM>R ˘ ⊆ R</EM><br>≡&emsp;<EM>R ∩ R˘ ⊆ R</EM><br>≡&emsp;<EM>R ˘ = R</EM><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>.&emsp;That is relations are <em>simple graphs</em>; one refers to the directed lines as<br><em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, symmetry means the graphs is <em>undirected</em>.<br><br>That is, as graphs, symmetric relations contains either exactly two arrows ---in<br>opposite directions--- between any two elements or none at all.&emsp;As such, for<br>clarity, one prefers “squeezing any two arrows in opposite directions” into one<br>‘undirected’ line and so obtains <strong>undirected graphs</strong>.<br>- Undirected edges represent pairs of arrows pointing in opposite directions.<br><br>&emsp;Coreflexives are symmetric: <em>R ⊆ Id ⇒ R ˘ = R</em>.<br><hr><br><br>Interestingly, every homogeneous relation <em>R</em> may be <em>partitioned</em> into an<br>asymmetric part <EM>A = R ∩ ∼R˘</EM> and a symmetric part <EM>S = R ∩ R˘</EM><br>---i.e., <EM>R = A ∪ S</EM> and <EM>A ∩ S = ⊥</EM> where ⊥ is the empty relation.">Symmetric</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Symmetric</h3>
+<p>
+<i>The relationship is mutual; if one thing is related to the other, then the other
+is also related to the first.</i>
+</p>
+
+<p>
+   \(R\) is symmetric
+≡  If <i>x</i> is related to <i>y</i>, then <i>y</i> is also related to <i>x</i>.
+≡  <i>∀ x, y • x 〔R〕 y ⇒ y 〔 R〕 x</i>
+≡  \(R ˘ ⊆ R\)
+≡  \(R ∩ R˘ ⊆ R\)
+≡  \(R ˘ = R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\).  That is relations are <i>simple graphs</i>; one refers to the directed lines as
+<i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, symmetry means the graphs is <i>undirected</i>.
+</p>
+
+<p>
+That is, as graphs, symmetric relations contains either exactly two arrows &#x2014;in
+opposite directions&#x2014; between any two elements or none at all.  As such, for
+clarity, one prefers “squeezing any two arrows in opposite directions” into one
+‘undirected’ line and so obtains <b>undirected graphs</b>.
+</p>
+<ul class="org-ul">
+<li><p>
+Undirected edges represent pairs of arrows pointing in opposite directions.
+</p>
+
+<p>
+Coreflexives are symmetric: \(R ⊆ Id ⇒ R ˘ = R\).
+</p></li>
+</ul>
+<hr />
+
+<p>
+Interestingly, every homogeneous relation <i>R</i> may be <i>partitioned</i> into an
+asymmetric part \(A = R ∩ ∼R˘\) and a symmetric part \(S = R ∩ R˘\)
+&#x2014;i.e., \(R = A ∪ S\) and \(A ∩ S = ⊥\) where ⊥ is the empty relation.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="/Different elements cannot be mutually related; i.e.,<br>Mutually related items are necessarily indistinguishable.<em><br><br>Such relations allow us to prove equality between two elements;<br>we have only to show that the relationship holds in both directions.<br>&emsp;* E.g, one often shows two sets are equal by using the antisymmetry of ‘⊆’.<br><hr><br><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>.&emsp;That is relations are </em>simple graphs/; one refers to the directed lines as<br><em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, antisymmetry means <em>Mutually related nodes are necessarily self-loops</em>.<br><hr><br>&emsp; <EM>R</EM> is antisymmetric<br>≡&emsp;<em>∀ x, y • x 〔R〕 y&emsp;∧&emsp;y 〔 R〕 x ⇒ x = y</em><br>≡&emsp;<em>∀ x, y •&emsp;x ≠ y&emsp;⇒&emsp;¬ (x 〔R〕 y&emsp;∧&emsp;y 〔 R〕 x)</em><br>≡&emsp;<em>∀ x, y •&emsp;x ≠ y&emsp;⇒&emsp;x 〔R̸〕 y&emsp;∨&emsp;y 〔 R̸〕 x</em><br>≡&emsp;<em>R ∩ R ˘ ⊆ Id</em><br>≡&emsp;<em>R ˘ ⊆ ∼ R ∪ Id</em><br>≡&emsp;<em>R ╳ R = Id</em>&emsp;---‘╳’ is symmetric quotient<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><br>( As a simple graph, an antisymmetric relation has <em>at most</em> one arrow between<br>any two different nodes. )">Antisymmetric</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Antisymmetric</h3>
+<p>
+<i>Different elements cannot be mutually related; i.e.,
+Mutually related items are necessarily indistinguishable.</i>
+</p>
+
+<p>
+Such relations allow us to prove equality between two elements;
+we have only to show that the relationship holds in both directions.
+</p>
+<ul class="org-ul">
+<li>E.g, one often shows two sets are equal by using the antisymmetry of ‘⊆’.</li>
+</ul>
+<hr />
+
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\).  That is relations are <i>simple graphs</i>; one refers to the directed lines as
+<i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, antisymmetry means <i>Mutually related nodes are necessarily self-loops</i>.
+</p>
+<hr />
+<p>
+   \(R\) is antisymmetric
+≡  <i>∀ x, y • x 〔R〕 y  ∧  y 〔 R〕 x ⇒ x = y</i>
+≡  <i>∀ x, y •  x ≠ y  ⇒  ¬ (x 〔R〕 y  ∧  y 〔 R〕 x)</i>
+≡  <i>∀ x, y •  x ≠ y  ⇒  x 〔R̸〕 y  ∨  y 〔 R̸〕 x</i>
+≡  \(R ∩ R ˘ ⊆ Id\)
+≡  \(R ˘ ⊆ ∼ R ∪ Id\)
+≡  <i>R ╳ R = Id</i>  &#x2014;‘╳’ is symmetric quotient
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+<p>
+( As a simple graph, an antisymmetric relation has <i>at most</i> one arrow between
+any two different nodes. )
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="/The relationship is mutually exclusive.<em><br><hr><br><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>.&emsp;That is relations are </em>simple graphs/; one refers to the directed lines as<br><em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, asymmetric means: <em>There's at most 1 edge (regardless of<br>direction) relating any 2 nodes</em>.<br><hr><br>&emsp; <EM>R</EM> is asymmetric<br>≡&emsp;<em>∀ x, y • x 〔R〕 y&emsp;⇒&emsp;¬ y 〔R〕 x</em><br>≡&emsp;<EM>R ∩ R ˘ ⊆ ⊥</EM><br>≡&emsp;<EM>R ˘ ⊆ ∼ R</EM><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><br>Asymmetrics are irreflexive ---just pick <em>x = y</em> in the above ∀-formulation ;-)<br><hr><br><br>Interestingly, every homogeneous relation <em>R</em> may be <em>partitioned</em> into an<br>asymmetric part <EM>A = R ∩ ∼R˘</EM> and a symmetric part <EM>S = R ∩ R˘</EM><br>---i.e., <EM>R = A ∪ S</EM> and <EM>A ∩ S = ⊥</EM> where ⊥ is the empty relation.">Asymmetric</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Asymmetric</h3>
+<p>
+<i>The relationship is mutually exclusive.</i>
+</p>
+<hr />
+
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\).  That is relations are <i>simple graphs</i>; one refers to the directed lines as
+<i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, asymmetric means: <i>There's at most 1 edge (regardless of
+direction) relating any 2 nodes</i>.
+</p>
+<hr />
+<p>
+   \(R\) is asymmetric
+≡  <i>∀ x, y • x 〔R〕 y  ⇒  ¬ y 〔R〕 x</i>
+≡  \(R ∩ R ˘ ⊆ ⊥\)
+≡  \(R ˘ ⊆ ∼ R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+<p>
+Asymmetrics are irreflexive &#x2014;just pick <i>x = y</i> in the above ∀-formulation ;-)
+</p>
+<hr />
+
+<p>
+Interestingly, every homogeneous relation <i>R</i> may be <i>partitioned</i> into an
+asymmetric part \(A = R ∩ ∼R˘\) and a symmetric part \(S = R ∩ R˘\)
+&#x2014;i.e., \(R = A ∪ S\) and \(A ∩ S = ⊥\) where ⊥ is the empty relation.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="A <em>preorder</em> models the notion of ‘inclusion’ or ‘at most’ or ‘before’ or<br>‘predecessor of’; and so requires: <em>Everything is included in itself and<br>inclusion is transitive.</em><br><br>&emsp;<EM>R</EM> is a preorder<br>≡ <EM>R</EM> is transitive and reflexive<br>≡ <em>R ⨾ R ⊆ R &#8195;∧&#8195; Id ⊆ R</em><br>≡ <em>R ⨾ R = R &#8195;∧&#8195; Id ⊆ R</em><br>≡ <EM>R ╱ R = R</EM>&emsp;---“indirect inclusion from above”<br>≡ <EM>R ╲ R = R</EM>&emsp;---“indirect inclusion from below”<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><br>If it is additionally <em>antisymmetric</em>, one says we have an <strong>order</strong>.<br>- The relation <EM>R ∩ R˘</EM> is the greatest equivalence contained in a preorder <EM>R</EM>.<br><br>&emsp;Indeed, it's clearly symmetric and reflexive, and transitive since ‘⨾’<br>&emsp;sub-distributes over ‘∩’ and <em>R</em> and <em>R˘</em> are transitive. Then, for any<br>&emsp;equivalence <em>Ξ ⊆ R</em>, we have <em>Ξ = Ξ ˘ ⊆ R ˘</em> and so <em>Ξ ⊆ R ∩ R˘</em>.<br><br>Instead of reflexivity, if we have irreflexivity we get <strong>strict order</strong>:<br>&emsp;<EM>R</EM> is a strict order<br>≡ <EM>R</EM> is transitive and irreflexive<br>≡ <em>R ⨾ R ⊆ R ⊆ ∼Id</em><br>≡ <EM>R ⨾ R ⊆ R &#8195;∧&#8195; R˘ ⊆ ∼ R</EM><br>≡ <EM>R ⨾ R ⊆ R &#8195;∧&#8195; R ∩ R˘ ⊆ ⊥</EM><br>≡ <EM>R</EM> is transitive and asymmetric<br><br>( <em>Warning!</em> A “strict order” is not an order that is somehow strict. )<br><br>Orders and strict orders come in pairs: Every order <EM>R</EM> induces a strict order<br><em>R ∩ ∼Id</em>; conversely, every strict order <EM>R</EM> gives rise to an order <em>R ∪<br>Id</em>. As such, it is customary to denote order relations by symbols such as ≤,<br>⊆. ≼, ⊑ and their associated strict orders by related symbols <, ⊂, ≺, ⊏,<br>respectively, with *lack the horizontal line ‘─’ below the symbol to indicate<br>irreflexivity ---i.e., the line is a suggestive reminder of equality.<br><br>When letters are used to denote orders, one may see <em>E</em> for an order since it is<br>reminiscent of ≤ and ⊆, and may see <em>C</em> for a strict order since it is reminiscent<br>of < and ⊂.<br><br>Using ‘≤’ for <em>an arbitrary order</em> is not ideal since readers may confuse it with<br>the familiar <em>linear</em> orders for numbers.">Preorder</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Preorder</h3>
+<p>
+A <i>preorder</i> models the notion of ‘inclusion’ or ‘at most’ or ‘before’ or
+‘predecessor of’; and so requires: <i>Everything is included in itself and
+inclusion is transitive.</i>
+</p>
+
+<p>
+  \(R\) is a preorder
+≡ \(R\) is transitive and reflexive
+≡ \(R ⨾ R ⊆ R \;∧\; Id ⊆ R\)
+≡ \(R ⨾ R = R \;∧\; Id ⊆ R\)
+≡ \(R ╱ R = R\)  &#x2014;“indirect inclusion from above”
+≡ \(R ╲ R = R\)  &#x2014;“indirect inclusion from below”
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+<p>
+If it is additionally <i>antisymmetric</i>, one says we have an <b>order</b>.
+</p>
+<ul class="org-ul">
+<li><p>
+The relation \(R ∩ R˘\) is the greatest equivalence contained in a preorder \(R\).
+</p>
+
+<p>
+Indeed, it's clearly symmetric and reflexive, and transitive since ‘⨾’
+sub-distributes over ‘∩’ and <i>R</i> and <i>R˘</i> are transitive. Then, for any
+equivalence <i>Ξ ⊆ R</i>, we have <i>Ξ = Ξ ˘ ⊆ R ˘</i> and so <i>Ξ ⊆ R ∩ R˘</i>.
+</p></li>
+</ul>
+
+<p>
+Instead of reflexivity, if we have irreflexivity we get <b>strict order</b>:
+  \(R\) is a strict order
+≡ \(R\) is transitive and irreflexive
+≡ \(R ⨾ R ⊆ R ⊆ ∼Id\)
+≡ \(R ⨾ R ⊆ R \;∧\; R˘ ⊆ ∼ R\)
+≡ \(R ⨾ R ⊆ R \;∧\; R ∩ R˘ ⊆ ⊥\)
+≡ \(R\) is transitive and asymmetric
+</p>
+
+<p>
+( <i>Warning!</i> A “strict order” is not an order that is somehow strict. )
+</p>
+
+<p>
+Orders and strict orders come in pairs: Every order \(R\) induces a strict order
+\(R ∩ ∼Id\); conversely, every strict order \(R\) gives rise to an order \(R ∪
+Id\). As such, it is customary to denote order relations by symbols such as ≤,
+⊆. ≼, ⊑ and their associated strict orders by related symbols &lt;, ⊂, ≺, ⊏,
+respectively, with *lack the horizontal line ‘─’ below the symbol to indicate
+irreflexivity &#x2014;i.e., the line is a suggestive reminder of equality.
+</p>
+
+<p>
+When letters are used to denote orders, one may see <i>E</i> for an order since it is
+reminiscent of ≤ and ⊆, and may see <i>C</i> for a strict order since it is reminiscent
+of &lt; and ⊂.
+</p>
+
+<p>
+Using ‘≤’ for <i>an arbitrary order</i> is not ideal since readers may confuse it with
+the familiar <i>linear</i> orders for numbers.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An <em>equivalence</em> models the notion of ‘similarity’; <em>Everything is similar to<br>itself, being similar is a mutual relationship, and it is transitive</em>.<br><br>&emsp; <EM>R</EM> is an equivalence<br>≡&emsp;<EM>R</EM> is a symmetric preorder<br>≡&emsp;<EM>R</EM> is transitive and reflexive and symmetric<br>≡&emsp;<em>R ⨾ R ⊆ R &#8195;∧&#8195; Id ⊆ R ⊆ R˘</em><br>≡&emsp;<em>R ⨾ R = R = R˘ &#8195;∧&#8195; Id ⊆ R</em><br>≡&emsp;<em>R ⨾ R ˘ ⊆ R &#8195;∧&#8195; Id ⊆ R</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>For example, “2 + 3” and “5” are clearly <strong>not the same</strong>”: The first is a string<br>of 3 symbols, whereas the latter is a string of a single symbol.&emsp;However, they<br>are <strong>equivalent</strong> when we evaluate them and so we want to pretend they are the<br>same, not by using equality, but by using an equivalence relation.&emsp;( This<br>equivalence relation is obtained using transitive closure as <em>(R ⨾ R)^*</em> where<br><EM>R</EM> is the evaluation, reduction relation. )<br><br>In general, “sharing the same feature 𝒇” is an equivalence relation.<br>That is, if <em>f : A → B</em> is a function, then ∼ is an equivalence relation<br>defined by <em>a₁ ∼&emsp;a₂ &#x2000;≡&#x2000; f(a₁) &#8195;=&#8195; f(a₂)</em>.<br><hr><br>Characterising Equivalences with “Indirect Equivalence”:<br>Ξ is an equivalence&emsp;≡&emsp;<em>∀ x, y •&emsp;x 〔Ξ〕 y &#x2000;≡&#x2000; (∀ z • x 〔Ξ〕 z &#8195;≡&#8195; y 〔Ξ〕 z)</em><br><hr><br>Equivalence relations coincide with partitions.">Equivalence</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Equivalence</h3>
+<p>
+An <i>equivalence</i> models the notion of ‘similarity’; <i>Everything is similar to
+itself, being similar is a mutual relationship, and it is transitive</i>.
+</p>
+
+<p>
+   \(R\) is an equivalence
+≡  \(R\) is a symmetric preorder
+≡  \(R\) is transitive and reflexive and symmetric
+≡  \(R ⨾ R ⊆ R \;∧\; Id ⊆ R ⊆ R˘\)
+≡  \(R ⨾ R = R = R˘ \;∧\; Id ⊆ R\)
+≡  \(R ⨾ R ˘ ⊆ R \;∧\; Id ⊆ R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+For example, “2 + 3” and “5” are clearly *not the same*”: The first is a string
+of 3 symbols, whereas the latter is a string of a single symbol.  However, they
+are <b>equivalent</b> when we evaluate them and so we want to pretend they are the
+same, not by using equality, but by using an equivalence relation.  ( This
+equivalence relation is obtained using transitive closure as \((R ⨾ R)^*\) where
+\(R\) is the evaluation, reduction relation. )
+</p>
+
+<p>
+In general, “sharing the same feature 𝒇” is an equivalence relation.
+That is, if \(f : A → B\) is a function, then ∼ is an equivalence relation
+defined by \(a₁ ∼  a₂ \quad≡\quad f(a₁) \;=\; f(a₂)\).
+</p>
+<hr />
+<p>
+Characterising Equivalences with “Indirect Equivalence”:
+Ξ is an equivalence  ≡  \(∀ x, y •  x 〔Ξ〕 y \quad≡\quad (∀ z • x 〔Ξ〕 z \;≡\; y 〔Ξ〕 z)\)
+</p>
+<hr />
+<p>
+Equivalence relations coincide with partitions.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="/Any two (possibly identical) members are related/; (the associated<br>graph can be drawn <em>similar</em> to a line; i.e., the nodes can be arranged in a<br>sequence).<br><br>( In graph terminology, linear is also referred to as <em>strongly complete</em>. )<br><br>( Sometimes a linear <em>order</em> is called a <em>complete order</em>. )<br><br>&emsp; <EM>R</EM> is linear<br>≡&emsp;<em>∀ x, y • x 〔R〕 y&emsp;∨&emsp;y 〔R〕 x</em><br>≡&emsp;<em>⊤ ⊆ R ∪ R ˘</em><br>≡&emsp;<em>∼ R ⊆ R ˘</em><br>≡&emsp;<em>∼ R</em> is asymmetric<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>A linear <em>order</em> corresponds to a full upper triangular matrix, <em>after</em> suitably<br>arranging rows and columns. A linear (pre)-<em>order</em> has no (distinct) incomparable<br>elements.<br><br>Any linear ordering <em>E</em>, with associated strict order <em>C</em>, satisfies <EM>C˘ = ∼E</EM>;<br>i.e., any linear order ‘⊑’ satisfies <em>∀ x, y •&#x2000; ¬ (x ⊑ y) &#8195;≡&#8195; y ⊏ x</em>.<br><br>Likewise, for liner order, we have <em>transitivity E⨾C⨾E = C</em> and <em>weakening C ⊆ E</em>;<br>i.e., <em>a ⊑ b ⊏ c ⊑ d &#8195;⇒&#8195; a ⊏ d &#x2000;&#8195; and&#8195; &#x2000; x ⊏ y &#8195;⇒&#8195; x ⊑ y</em>.<br><br>Every order <em>E</em> can be extended to a linear order <em>E′</em>; i.e., <em>E ⊆ E′</em>.&emsp;For the<br>finite case this is known as <em>topological sort</em>, and for the infinite case this is<br>known as the <em>Szpilrajn extension</em>.<br><br>- For the finite case, the <em>idea</em> is as follows: If <em>E</em> is not linear, then there<br>&emsp;are two incomparable elements <em>x, y</em> (i.e., outside <em>E ∪ E˘</em>), so we may define<br>&emsp;<em>an</em> ordering <em>E₁ ≔ E ∪ {(x, y)}</em>. We iterate this process and <em>Eₙ</em> will<br>&emsp;eventually become linear.<br><br>&emsp;This process maintains “the order <em>E</em>, less the incomparable elements, is<br>&emsp;linear” invariant throughout. Since each step reduces the number of<br>&emsp;incomparable elements, it must terminate, and the invariant then ensures the<br>&emsp;resulting order is linear. (•̀ᴗ•́)و">Linear</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Linear</h3>
+<p>
+<i>Any two (possibly identical) members are related</i>; (the associated
+graph can be drawn <i>similar</i> to a line; i.e., the nodes can be arranged in a
+sequence).
+</p>
+
+<p>
+( In graph terminology, linear is also referred to as <i>strongly complete</i>. )
+</p>
+
+<p>
+( Sometimes a linear <i>order</i> is called a <i>complete order</i>. )
+</p>
+
+<p>
+   \(R\) is linear
+≡  <i>∀ x, y • x 〔R〕 y  ∨  y 〔R〕 x</i>
+≡  \(⊤ ⊆ R ∪ R ˘\)
+≡  \(∼ R ⊆ R ˘\)
+≡  \(∼ R\) is asymmetric
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+A linear <i>order</i> corresponds to a full upper triangular matrix, <i>after</i> suitably
+arranging rows and columns. A linear (pre)-<i>order</i> has no (distinct) incomparable
+elements.
+</p>
+
+<p>
+Any linear ordering <i>E</i>, with associated strict order <i>C</i>, satisfies \(C˘ = ∼E\);
+i.e., any linear order ‘⊑’ satisfies \(∀ x, y •\quad ¬ (x ⊑ y) \;≡\; y ⊏ x\).
+</p>
+
+<p>
+Likewise, for liner order, we have <i>transitivity E⨾C⨾E = C</i> and <i>weakening C ⊆ E</i>;
+i.e., \(a ⊑ b ⊏ c ⊑ d \;⇒\; a ⊏ d \quad\; and\; \quad x ⊏ y \;⇒\; x ⊑ y\).
+</p>
+
+<p>
+Every order <i>E</i> can be extended to a linear order <i>E′</i>; i.e., <i>E ⊆ E′</i>.  For the
+finite case this is known as <i>topological sort</i>, and for the infinite case this is
+known as the <i>Szpilrajn extension</i>.
+</p>
+
+<ul class="org-ul">
+<li><p>
+For the finite case, the <i>idea</i> is as follows: If <i>E</i> is not linear, then there
+are two incomparable elements <i>x, y</i> (i.e., outside <i>E ∪ E˘</i>), so we may define
+<i>an</i> ordering <i>E₁ ≔ E ∪ {(x, y)}</i>. We iterate this process and <i>Eₙ</i> will
+eventually become linear.
+</p>
+
+<p>
+This process maintains “the order <i>E</i>, less the incomparable elements, is
+linear” invariant throughout. Since each step reduces the number of
+incomparable elements, it must terminate, and the invariant then ensures the
+resulting order is linear. (•̀ᴗ•́)و
+</p></li>
+</ul>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="/Any two different members are related/; (the associated graph can be drawn<br>similar to a line).<br><br>( In graph terminology, semilinear is also referred to as <em>complete</em>; e.g., <em>“the<br>complete graph on n nodes”</em> refers to <em>⊤ ∩ ∼Id : 1..n ↔ 1..n</em>. )<br><br>&emsp; <EM>R</EM> is semilinear<br>≡&emsp;<em>∀ x, y • x ≠ y&emsp;⇒&emsp;x 〔R〕 y&emsp;∨&emsp;y 〔R〕 x</em><br>≡&emsp;<em>∼Id ⊆ R ∪ R ˘</em><br>≡&emsp;<em>∼ R ⊆ R ˘ ∪ Id</em><br>≡&emsp;<em>∼ R</em> is antisymmetric<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><br>A relation without incomparable elements is semilinear.<br><br>A semilinear and asymmetric relation <EM>R</EM> is known as a <em>tournament</em> since it<br>models the win-loss situation of a typical sports tournament: Semilinearity and<br>asymmetry ensure teams do not play against themselves and that there is no draw<br>---i.e., there must be a winner. A tournament <em>R</em> is characterised by <em>R ∪ R˘ =<br>∼Id</em>.">Semilinear</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Semilinear</h3>
+<p>
+<i>Any two different members are related</i>; (the associated graph can be drawn
+similar to a line).
+</p>
+
+<p>
+( In graph terminology, semilinear is also referred to as <i>complete</i>; e.g., <i>“the
+complete graph on n nodes”</i> refers to \(⊤ ∩ ∼Id : 1..n ↔ 1..n\). )
+</p>
+
+<p>
+   \(R\) is semilinear
+≡  <i>∀ x, y • x ≠ y  ⇒  x 〔R〕 y  ∨  y 〔R〕 x</i>
+≡  \(∼Id ⊆ R ∪ R ˘\)
+≡  \(∼ R ⊆ R ˘ ∪ Id\)
+≡  \(∼ R\) is antisymmetric
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+<p>
+A relation without incomparable elements is semilinear.
+</p>
+
+<p>
+A semilinear and asymmetric relation \(R\) is known as a <i>tournament</i> since it
+models the win-loss situation of a typical sports tournament: Semilinearity and
+asymmetry ensure teams do not play against themselves and that there is no draw
+&#x2014;i.e., there must be a winner. A tournament <i>R</i> is characterised by <i>R ∪ R˘ =
+∼Id</i>.
+</p>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-Properties-of-Heterogeneous-Relations" class="outline-2">
+<h2 id="Properties-of-Heterogeneous-Relations"><span class="section-number-2">4</span> <a href="#Properties-of-Heterogeneous-Relations">Properties of <i>Heterogeneous</i> Relations</a></h2>
+<div class="outline-text-2" id="text-Properties-of-Heterogeneous-Relations">
+<p>
+<abbr class="tooltip" title="<strong>Univalent (partially defined function):</strong> <em>Equal elements are related to equal<br>elements; i.e., an element cannot be related to two different elements.</em><br><br><em>That is, every source value x is associated <strong>at most one</strong> target value y.</em><br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, univalence means: <em>Any arcs from the same source actually coincide.</em><br>That is, <em>Every node has at most one outgoing edge.</em><br><hr><br>&emsp; <EM>R</EM> is univalent<br>≡&emsp;<em>∀ x, y, y′&emsp;• x 〔 R 〕 y ∧ x 〔R〕 y′&emsp;⇒ y = y′</em><br>≡&emsp;<em>R ˘ ⨾ R&emsp;⊆ Id</em><br>≡&emsp;<em>R ⨾ ∼ Id &#8195;⊆&#8195; ∼ R</em><br>≡&emsp;<em>∀ S • R ⨾ ∼ S &#8195;⊆&#8195; ∼ (R ⨾ S)</em><br>≡&emsp;<em>∀ S • R ⨾ ∼ S = R ⨾ ⊤ ∩ ∼(R ⨾ S)</em><br>≡&emsp;<em>∀ Q, S •&emsp;R ⨾ (Q ∩ S) = R ⨾ Q ∩ R ⨾ S</em>&emsp; ---c.f., ⨾ sub-distributes over ∩<br>≡&emsp;<em>∀ Q, S • Q⨾R ∩ S = (Q ∩ S ⨾ R˘)⨾R</em>&emsp;&emsp;&emsp; ---c.f., the Dedekind rule<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>The formula <em>R ⨾ ∼ Id &#8195;⊆ ∼ R</em> reads “If <em>x</em> is <em>R</em>-related to a value different<br>from <em>y</em>, then it is not <em>R</em>-related to <em>y</em>.”&emsp;It continues to hold when we replace<br>the identity by an arbitrary relation.<br><br>The 5th row reads, <em>the preimage of the complement is the same as the complement<br>of the preimage intersected with the domain</em>.&emsp;In fact, for univalent <EM>R</EM>, we<br>also have <em>∼(R ⨾ S) = R ⨾ ∼ S ∪ ∼(R ⨾ ⊤)</em>; e.g., the people who do “not (own an<br>Audi car)” are exactly the people who “(own a non-Audi car) or do not(own any<br>car)” ---assuming a person can own at most one car.<br><br>For a map <em>f</em>, the 6th row becomes: <em>f(A ∩ B) &#8195;=&#8195; f(A) ∩ f(B)</em>, using<br>conventional direct image notation; i.e., for a function, <em>the preimage of an<br>intersection is the intersection of preimages</em>.<br><br>Likewise, for a map <em>f</em>, we have <em>the intersection of <EM>B</EM> with a function's image<br>is the same as the image of an intersection involving the preimage of <EM>B</EM></em>; i.e.,<br><em>f(A) ∩ B = f(A ∩ f^{-1}(B))</em>.">Univalent</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Univalent</h3>
+<p>
+<b>Univalent (partially defined function):</b> <i>Equal elements are related to equal
+elements; i.e., an element cannot be related to two different elements.</i>
+</p>
+
+<p>
+<i>That is, every source value x is associated <b>at most one</b> target value y.</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, univalence means: <i>Any arcs from the same source actually coincide.</i>
+That is, <i>Every node has at most one outgoing edge.</i>
+</p>
+<hr />
+<p>
+   \(R\) is univalent
+≡  <i>∀ x, y, y′  • x 〔 R 〕 y ∧ x 〔R〕 y′  ⇒ y = y′</i>
+≡  \(R ˘ ⨾ R  ⊆ Id\)
+≡  \(R ⨾ ∼ Id \;⊆\; ∼ R\)
+≡  \(∀ S • R ⨾ ∼ S \;⊆\; ∼ (R ⨾ S)\)
+≡  <i>∀ S • R ⨾ ∼ S = R ⨾ ⊤ ∩ ∼(R ⨾ S)</i>
+≡  <i>∀ Q, S •  R ⨾ (Q ∩ S) = R ⨾ Q ∩ R ⨾ S</i>   &#x2014;c.f., ⨾ sub-distributes over ∩
+≡  <i>∀ Q, S • Q⨾R ∩ S = (Q ∩ S ⨾ R˘)⨾R</i>       &#x2014;c.f., the Dedekind rule
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+The formula \(R ⨾ ∼ Id \;⊆ ∼ R\) reads “If <i>x</i> is <i>R</i>-related to a value different
+from <i>y</i>, then it is not <i>R</i>-related to <i>y</i>.”  It continues to hold when we replace
+the identity by an arbitrary relation.
+</p>
+
+<p>
+The 5th row reads, <i>the preimage of the complement is the same as the complement
+of the preimage intersected with the domain</i>.  In fact, for univalent \(R\), we
+also have \(∼(R ⨾ S) = R ⨾ ∼ S ∪ ∼(R ⨾ ⊤)\); e.g., the people who do “not (own an
+Audi car)” are exactly the people who “(own a non-Audi car) or do not(own any
+car)” &#x2014;assuming a person can own at most one car.
+</p>
+
+<p>
+For a map \(f\), the 6th row becomes: \(f(A ∩ B) \;=\; f(A) ∩ f(B)\), using
+conventional direct image notation; i.e., for a function, <i>the preimage of an
+intersection is the intersection of preimages</i>.
+</p>
+
+<p>
+Likewise, for a map \(f\), we have <i>the intersection of \(B\) with a function's image
+is the same as the image of an intersection involving the preimage of \(B\)</i>; i.e.,
+\(f(A) ∩ B = f(A ∩ f^{-1}(B))\).
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Total:</strong> <em>Every source value x is associated <strong>at least one</strong> target value y.</em><br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, totality means: <em>Every node has at least one outgoing edge</em>.<br><br>&emsp; <EM>R</EM> is total<br>≡&emsp;<em>∀ x • ∃ y • x 〔 R 〕 y</em><br>≡&emsp;<em>⊤ = R ⨾ ⊤</em> (“defined everywhere”)<br>≡&emsp;<em>⊥ = ∼ (R ⨾ ⊤)</em><br>≡&emsp;<em>Id ⊆ R ⨾ R ˘</em><br>≡&emsp;<em>∼ R &#8195;⊆&#8195; R ⨾ ∼ Id</em><br>≡&emsp;<em>∀ S • ∼ (R ⨾ S) &#8195;⊆&#8195; R ⨾ ∼ S</em><br>≡&emsp;<em>∀ Q • Q ⨾ R = ⊥ ≡ Q = ⊥</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>The formula <em>∼ R &#8195;⊆&#8195; R ⨾ ∼ Id</em> reads “If <em>x</em> is not <em>R</em>-related to y, then <em>x</em> is <em>R</em><br>related to some element different from <em>y</em>.”&emsp;It continues to hold when we replace<br>the identity by an arbitrary relation.<br><br>The final formula says that <EM>R</EM> is post-annihilated by the empty relation only.<br><br>Note: <em>∼(R ⨾ ⊤) = ⊤ &#8195;≡&#8195; R = ⊥</em>, for any <EM>R</EM>; i.e., <em>the complement of a<br>relation's domain is everything precisely when the relation is empty.</em>">Total</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Total</h3>
+<p>
+<b>Total:</b> <i>Every source value x is associated <b>at least one</b> target value y.</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, totality means: <i>Every node has at least one outgoing edge</i>.
+</p>
+
+<p>
+   \(R\) is total
+≡  <i>∀ x • ∃ y • x 〔 R 〕 y</i>
+≡  \(⊤ = R ⨾ ⊤\) (“defined everywhere”)
+≡  \(⊥ = ∼ (R ⨾ ⊤)\)
+≡  \(Id ⊆ R ⨾ R ˘\)
+≡  \(∼ R \;⊆\; R ⨾ ∼ Id\)
+≡  \(∀ S • ∼ (R ⨾ S) \;⊆\; R ⨾ ∼ S\)
+≡  \(∀ Q • Q ⨾ R = ⊥ ≡ Q = ⊥\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+The formula \(∼ R \;⊆\; R ⨾ ∼ Id\) reads “If <i>x</i> is not <i>R</i>-related to y, then <i>x</i> is <i>R</i>
+related to some element different from <i>y</i>.”  It continues to hold when we replace
+the identity by an arbitrary relation.
+</p>
+
+<p>
+The final formula says that \(R\) is post-annihilated by the empty relation only.
+</p>
+
+<p>
+Note: \(∼(R ⨾ ⊤) = ⊤ \;≡\; R = ⊥\), for any \(R\); i.e., <i>the complement of a
+relation's domain is everything precisely when the relation is empty.</i>
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Map (totally defined function):</strong> <em>Every source value x is associated <strong>exactly one</strong><br>target value y.</em><br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple relation, being a mapping means: <em>Every node has exactly one outgoing edge.</em><br><hr><br>&emsp; <EM>F</EM> is a map<br>≡&emsp;<EM>F</EM> is total and univalent<br>≡&emsp;<em>F ⨾ ∼ Id &#8195;=&#8195; ∼ F</em><br>≡&emsp;<em>∀ S • F ⨾ ∼ S &#8195;=&#8195; ∼ (F ⨾ S)</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>The final rule says <em>the preimage of the complement is the complement of the<br>preimage</em>; or, using conventional direct image notation, <em>f⁻¹(∼ A) &#8195;=&#8195; ∼<br>f⁻¹(A)</em>.<br><br>In conventional direct image notation, this amount to a Galois connection: <em>A ⊆<br>f⁻¹(B) &#x2000;≡&#x2000; f(A) ⊆ B</em>.<br><br>A mapping is so very close to being invertible since mappings <EM>F</EM> always<br>satisfy: <em>F ˘ ⨾ F ⊆ Id</em> and <em>Id ⊆ F ⨾ F˘</em>.<br><br>Shunting rule:* If <EM>F</EM> is a map, then <em>R ⊆ S ⨾ F ˘ &#x2000;≡&#x2000; R ⨾ F ⊆ S</em>.<br><br>More generally, given an equivalence Ξ, if relation <em>F</em> is total and Ξ-univalent<br>---i.e., <em>F˘ ⨾ F ⊆ Ξ</em>--- and if <em>S</em> is Ξ-target-saturated ---i.e., <em>S ⨾ Ξ = S</em>---<br>then <em>R ⊆ S ⨾ F ˘ &#x2000;≡&#x2000; R ⨾ F ⊆ S</em>.">Map</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Map</h3>
+
+<p>
+<b>Map (totally defined function):</b> <i>Every source value x is associated <b>exactly one</b>
+target value y.</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple relation, being a mapping means: <i>Every node has exactly one outgoing edge.</i>
+</p>
+<hr />
+<p>
+   \(F\) is a map
+≡  \(F\) is total and univalent
+≡  \(F ⨾ ∼ Id \;=\; ∼ F\)
+≡  \(∀ S • F ⨾ ∼ S \;=\; ∼ (F ⨾ S)\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+The final rule says <i>the preimage of the complement is the complement of the
+preimage</i>; or, using conventional direct image notation, \(f⁻¹(∼ A) \;=\; ∼
+f⁻¹(A)\).
+</p>
+
+<p>
+In conventional direct image notation, this amount to a Galois connection: \(A ⊆
+f⁻¹(B) \quad≡\quad f(A) ⊆ B\).
+</p>
+
+<p>
+A mapping is so very close to being invertible since mappings \(F\) always
+satisfy: \(F ˘ ⨾ F ⊆ Id\) and \(Id ⊆ F ⨾ F˘\).
+</p>
+
+<p>
+Shunting rule:* If \(F\) is a map, then \(R ⊆ S ⨾ F ˘ \quad≡\quad R ⨾ F ⊆ S\).
+</p>
+
+<p>
+More generally, given an equivalence Ξ, if relation <i>F</i> is total and Ξ-univalent
+&#x2014;i.e., <i>F˘ ⨾ F ⊆ Ξ</i>&#x2014; and if <i>S</i> is Ξ-target-saturated &#x2014;i.e., <i>S ⨾ Ξ = S</i>&#x2014;
+then \(R ⊆ S ⨾ F ˘ \quad≡\quad R ⨾ F ⊆ S\).
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Surjective:</strong> <em>Every source value y is associated <strong>at least</strong> one source value x.</em><br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, surjectivity means: <em>Every node has at least one incoming edge.</em><br><hr><br>&emsp; <EM>R</EM> is surjective<br>≡&emsp;<EM>R˘</EM> is total<br>≡&emsp;<em>⊤ ⨾ R = ⊤</em><br>≡&emsp;<em>Id ⊆ R ˘ ⨾ R</em><br>≡&emsp;<em>∼ R &#8195;⊆&#8195; ∼ Id ⨾ R</em><br>≡&emsp;<em>∀ S • R ⨾ S = ⊥ ≡ S = ⊥</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.">Surjective</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Surjective</h3>
+<p>
+<b>Surjective:</b> <i>Every source value y is associated <b>at least</b> one source value x.</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, surjectivity means: <i>Every node has at least one incoming edge.</i>
+</p>
+<hr />
+<p>
+   \(R\) is surjective
+≡  \(R˘\) is total
+≡  \(⊤ ⨾ R = ⊤\)
+≡  \(Id ⊆ R ˘ ⨾ R\)
+≡  \(∼ R \;⊆\; ∼ Id ⨾ R\)
+≡  <i>∀ S • R ⨾ S = ⊥ ≡ S = ⊥</i>
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Injective:</strong> <em>Every source value y is associated <strong>at most</strong> one source value x.</em><br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, injective means: <em>Every node has at most one incoming edge.</em><br><hr><br>&emsp; <EM>R</EM> is injective<br>≡&emsp;<EM>R˘</EM> is univalent<br>≡&emsp;<em>R&emsp;⨾ R ˘ ⊆ Id</em><br>≡&emsp;<em>∼ Id ⨾ R &#8195;⊆&#8195; ∼ R</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.">Injective</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Injective</h3>
+<p>
+<b>Injective:</b> <i>Every source value y is associated <b>at most</b> one source value x.</i>
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, injective means: <i>Every node has at most one incoming edge.</i>
+</p>
+<hr />
+<p>
+   \(R\) is injective
+≡  \(R˘\) is univalent
+≡  \(R  ⨾ R ˘ ⊆ Id\)
+≡  \(∼ Id ⨾ R \;⊆\; ∼ R\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="<strong>Bijective:</strong> <em>Every source value y is associated <strong>exactly one</strong> source value x.</em><br><br>&emsp; <EM>R</EM> is bijective<br>≡&emsp;<EM>R</EM> is injective and surjective<br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, bijectivity means: <em>Every node has exactly one outgoing edge</em>.">Bijective</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Bijective</h3>
+<p>
+<b>Bijective:</b> <i>Every source value y is associated <b>exactly one</b> source value x.</i>
+</p>
+
+<p>
+   \(R\) is bijective
+≡  \(R\) is injective and surjective
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, bijectivity means: <i>Every node has exactly one outgoing edge</i>.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="An <strong>iso</strong> is a bijective mapping, also known as a <strong>permutation.</strong><br><br>An isomorphism is a non-lossy protocol associating inputs to outputs.<br><hr><br>A relation <EM>R : V → V</EM> can be visualised as a drawing: A dot for each element<br><em>x</em> of <EM>V</EM>, and a directed line <em>x ⟶ y</em> between two points exactly when <em>x 〔R〕<br>y</em>. That is relations are <em>simple graphs</em>; one refers to the directed lines<br>as <em>edges</em> and the dots as <em>nodes</em>.<br><br>As a simple graph, an iso is a <em>bunch of circles</em>: Any number of cycles, such that<br>every node lies on exactly one.<br><hr><br>If relation <EM>R</EM> is finite, then<br><em>R ⨾ R ˘ = Id &#x2000;≡&#x2000;&emsp;(∃ m • Rᵐ = Id ∧ Rᵐ⁻¹ = R ˘)</em><br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.">Iso</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Iso</h3>
+<p>
+An <b>iso</b> is a bijective mapping, also known as a <b>permutation.</b>
+</p>
+
+<p>
+An isomorphism is a non-lossy protocol associating inputs to outputs.
+</p>
+<hr />
+<p>
+A relation \(R : V → V\) can be visualised as a drawing: A dot for each element
+\(x\) of \(V\), and a directed line \(x ⟶ y\) between two points exactly when \(x 〔R〕
+y\). That is relations are <i>simple graphs</i>; one refers to the directed lines
+as <i>edges</i> and the dots as <i>nodes</i>.
+</p>
+
+<p>
+As a simple graph, an iso is a <i>bunch of circles</i>: Any number of cycles, such that
+every node lies on exactly one.
+</p>
+<hr />
+<p>
+If relation \(R\) is finite, then
+\(R ⨾ R ˘ = Id \quad≡\quad  (∃ m • Rᵐ = Id ∧ Rᵐ⁻¹ = R ˘)\)
+</p>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+
+</div>
+
+<p>
+<abbr class="tooltip" title="This property generalises injectivity, univalence, and equivalence...<br><br>Recall,<br>- Univalent: Every source value <em>x</em> is associated <strong>at most one</strong> target value <em>y</em>.<br>&emsp;&emsp;+ I.e., if <em>x</em> goes to <em>y</em> and <em>y′</em> then <em>y = y′</em>.<br>&emsp;&emsp;+ I.e., <em>∀ x, y′, y •&#x2000;&emsp;x 〔R〕 y&emsp;〔R˘〕 x 〔R〕 y′ &#8195;⇒&#8195; y 〔Id〕 y′</em><br>- Injective: Every source value <em>y</em> is associated <strong>at most</strong> one source value <em>x</em>.<br>&emsp;&emsp;+ I.e., if <em>y</em> comes from <em>x</em> and <em>x′</em> then <em>x = x′</em>.<br>&emsp;&emsp;+ I.e., <em>∀ x, x′, y •&#x2000;&emsp;x 〔R〕 y&emsp;〔R˘〕 x′ 〔R〕 y &#8195;⇒&#8195; x 〔Id〕 x′</em><br>- Equivalence: Any given equivalence classes are either identical or disjoint.<br>&emsp;&emsp;&emsp;# + I.e., <em>∀ x, y •&#x2000;&emsp;x 〔R〕 y&emsp;〔R˘〕 x 〔R〕 y′ &#8195;⇒&#8195; x 〔R〕 y′</em><br>&emsp;&emsp;+ Moreover, it is a <em>homogenous</em> relation.<br><br> Now, a <em>possibly heterogenous</em> relation <em>R</em> is <em>difunctional</em> exactly when<br> <em>∀ x, x′, y′, y •&#x2000;&emsp;x 〔R〕 y&emsp;〔R˘〕 x′ 〔R〕 y′ &#8195;⇒&#8195; x 〔R〕 y′</em>.<br> That is, <EM>R ⨾ R ˘ ⨾ R ⊆ R</EM>; in-fact we have equality <EM>R ⨾ R ˘ ⨾ R = R</EM>.<br> Using Schröder, this amounts to <EM>R ⨾ ∼R ˘ ⨾ R &#8195;⊆&#8195; ∼R</EM>.<br><br> Clearly, converse preserves difunctionality.<br><br> For difunctional <em>R</em>,<br> 1. <em>R ⨾ (Q ∩ R˘ ⨾ S) = R ⨾ Q ∩ R ⨾ R˘ ⨾ S</em><br> 2. <EM>R ⨾ ∼(R ˘ ⨾ Q) &#8195;=&#8195; R ⨾ ⊤ ∩ ∼(R ⨾ R˘ Q)</EM><br> 3. <em>∼(R ⨾ R ˘ ⨾ Q) &#8195;=&#8195; R ⨾ ∼(R˘ ⨾ Q) ∪ ∼(R ⨾ ⊤)</em><br> 4. <EM>R ⨾ ∼(R ˘ ⨾ Q) &#8195;=&#8195; ∼(R ⨾ R˘ Q)</EM>, if <em>R</em> is also total.<br><br>Where <em>⨾, ⊤, ⊥, Id, ˘, ∼</em> are relation composition, the universal relation, the<br>empty relation, the identity relation, relation converse (transpose), and complement.<br><hr><br>The equivalence target-saturation of a univalent relation is difunctional; i.e.,<br>if <em>R</em> is univalent and Ξ is an equivalence, then <EM>R ⨾ Ξ</EM> is difunctional.">Difunctional</abbr>
+</p>
+
+
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Difunctional</h3>
+<p>
+This property generalises injectivity, univalence, and equivalence&#x2026;
+</p>
+
+<p>
+Recall,
+</p>
+<ul class="org-ul">
+<li>Univalent: Every source value <i>x</i> is associated <b>at most one</b> target value <i>y</i>.
+<ul class="org-ul">
+<li>I.e., if <i>x</i> goes to <i>y</i> and <i>y′</i> then <i>y = y′</i>.</li>
+<li>I.e., \(∀ x, y′, y •\quad  x 〔R〕 y  〔R˘〕 x 〔R〕 y′ \;⇒\; y 〔Id〕 y′\)</li>
+</ul></li>
+<li>Injective: Every source value <i>y</i> is associated <b>at most</b> one source value <i>x</i>.
+<ul class="org-ul">
+<li>I.e., if <i>y</i> comes from <i>x</i> and <i>x′</i> then <i>x = x′</i>.</li>
+<li>I.e., \(∀ x, x′, y •\quad  x 〔R〕 y  〔R˘〕 x′ 〔R〕 y \;⇒\; x 〔Id〕 x′\)</li>
+</ul></li>
+<li><p>
+Equivalence: Any given equivalence classes are either identical or disjoint.
+</p>
+
+<ul class="org-ul">
+<li>Moreover, it is a <i>homogenous</i> relation.</li>
+</ul>
+
+<p>
+Now, a <i>possibly heterogenous</i> relation <i>R</i> is <i>difunctional</i> exactly when
+\(∀ x, x′, y′, y •\quad  x 〔R〕 y  〔R˘〕 x′ 〔R〕 y′ \;⇒\; x 〔R〕 y′\).
+That is, \(R ⨾ R ˘ ⨾ R ⊆ R\); in-fact we have equality \(R ⨾ R ˘ ⨾ R = R\).
+Using Schröder, this amounts to \(R ⨾ ∼R ˘ ⨾ R \;⊆\; ∼R\).
+</p>
+
+<p>
+Clearly, converse preserves difunctionality.
+</p>
+
+<p>
+For difunctional <i>R</i>,
+</p>
+<ol class="org-ol">
+<li><i>R ⨾ (Q ∩ R˘ ⨾ S) = R ⨾ Q ∩ R ⨾ R˘ ⨾ S</i></li>
+<li>\(R ⨾ ∼(R ˘ ⨾ Q) \;=\; R ⨾ ⊤ ∩ ∼(R ⨾ R˘ Q)\)</li>
+<li>\(∼(R ⨾ R ˘ ⨾ Q) \;=\; R ⨾ ∼(R˘ ⨾ Q) ∪ ∼(R ⨾ ⊤)\)</li>
+<li>\(R ⨾ ∼(R ˘ ⨾ Q) \;=\; ∼(R ⨾ R˘ Q)\), if <i>R</i> is also total.</li>
+</ol></li>
+</ul>
+
+<p>
+Where <i>⨾, ⊤, ⊥, Id, ˘, ∼</i> are relation composition, the universal relation, the
+empty relation, the identity relation, relation converse (transpose), and complement.
+</p>
+<hr />
+<p>
+The equivalence target-saturation of a univalent relation is difunctional; i.e.,
+if <i>R</i> is univalent and Ξ is an equivalence, then \(R ⨾ Ξ\) is difunctional.
+</p>
+
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Musa Al-hassy</p>
+<p class="date">Created: 2020-12-21 Mon 21:22</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

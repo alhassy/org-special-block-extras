@@ -6,49 +6,8 @@
 # The last one has the styling for lists.
 
 #+begin_quote
-Knowledge is software for your brain: The more you know, the more problems you can solve!
+/Knowledge is software for your brain: The more you know, the more problems you can solve!/
 #+end_quote
-
-doc:Calculational_Proof
-#+begin_documentation Calculational Proof :show t
-A story whose events have smooth transitions connecting them.
-
-# A proof wherein each step is connected to the next step by an explicit
-# justification.
-
-This is a ‘linear’ proof format; also known as /equational style/ or /calculational
-proof/. This corresponds to the ‘high-school style’ of writing a sequence of
-equations, one on each line, along with hints/explanations of how each line was
-reached from the previous line. ( This is similar to *programming* which
-encourages placing /comments/ to /communicate/ what's going on to future readers. )
-
-The structure of equational proofs allows implicit use of infernece rules
-Leibniz, Transitvitity & Symmetry & Reflexivity of equality, and
-Substitution. In contrast, the structure of proof trees is no help in this
-regard, and so all uses of inference rules must be mentioned explicitly.
-
-For comparison with other proof notations see [[http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf][Equational Propositional Logic]].
-
---------------------------------------------------------------------------------
-
-We advocate /calculational proofs/ in which reasoning is goal directed and
-justified by simple axiomatic laws that can be checked syntactically rather than
-semantically. ---/Program Construction/ by Roland Backhouse
-
---------------------------------------------------------------------------------
-
-Calculational proofs introduce notation and recall theorems as needed, thereby
-making each step of the argument easy to verify and follow. Thus, such arguments
-are more accessible to readers unfamiliar with the problem domain.
-
---------------------------------------------------------------------------------
-
-The use of a formal approach let us keep track of when our statements are
-equivalent (“=”) rather than being weakened (“⇒”). That is, the use of English
-to express the connection between steps is usually presented naturally using “if
-this, then that” statements ---i.e., implication--- rather than stronger notion
-of equality.
-#+end_documentation
 
 :template:
 
@@ -57,6 +16,43 @@ doc:temp
 #+end_documentation
 
 :End:
+
+# M-x htmlize-buffer
+
+doc:Hussain
+#+begin_documentation Hussain :show t :color blue :label (Karbala Cosmic_Tragedy)
+Hussein ibn Ali is the grandson of Prophet Muhammad, who is known to have
+declared *“Hussain is from me and I am from Hussain; God loves whoever loves Hussain.”*
+
+He is honoured as “The Chief of Martyrs” for his selfless stand for social justice
+against Yazid, the corrupt 7ᵗʰ caliph. The Karbala Massacre is commemorated annually
+in the first Islamic month, Muharram, as a reminder to stand against oppression and tyranny;
+Jesus Christ, son of Mary, makes an indirect appearance in the story.
+
+A terse summary of the chain of events leading to the massacre may be found at
+https://www.al-islam.org/articles/karbala-chain-events.
+
+An elegant English recitation recounting the Karbala Massacre may be found at
+https://youtu.be/2i9Y3Km6h08 ---“Arbaeen Maqtal - Sheikh Hamam Nassereddine - 1439”.
+--------------------------------------------------------------------------------
+ *Charles Dickens:* /“If Hussain had fought to quench his worldly desires...then I/
+/do not understand why his sister, wife, and children accompanied him. It stands
+to reason therefore, that he sacrificed purely for Islam.”/
+
+*Gandhi:* /“I learned from Hussain how to achieve victory while being oppressed.”/
+
+*Thomas Carlyle:* /“The victory of Hussein, despite his minority, marvels me.”/
+
+*Thomas Masaryk:* /“Although our clergies also move us while describing the
+Christ's sufferings, but the zeal and zest that is found in the followers of/
+/Hussain will not be found in the followers of Christ. And it seems that the
+suffering of Christ against the suffering of Hussain is like a blade of straw/ /in
+front of a huge mountain.”/
+#+end_documentation
+* Logics
+  :PROPERTIES:
+  :CUSTOM_ID: Logics
+  :END:
 
 doc:graph
 #+begin_documentation graph :show t :color blue
@@ -101,11 +97,6 @@ one writes ⟶⋆ for the /reachability/ relation.
 + /Initial∣sources/ are nodes from which it is /not/ possible to proceed backward;
   i.e., initials have no predecessors; the domain of /∼(⟵ ⨾ ⊤)/ is all initials.
 #+end_documentation
-
-* Logics
-  :PROPERTIES:
-  :CUSTOM_ID: Logics
-  :END:
 
 doc:Expression
 #+begin_documentation Expression :show t
@@ -526,6 +517,47 @@ cleanly possible; e.g., given an ordering ‘≤’(‘⇒, ⊆, ⊑’) we can 
 i.e., $z ≤ x ↓ y \quad≡\quad z ≤ x \,∧\, z ≤ y$.
 #+end_documentation
 
+doc:Calculational_Proof
+#+begin_documentation Calculational Proof :show t
+A story whose events have smooth transitions connecting them.
+
+# A proof wherein each step is connected to the next step by an explicit
+# justification.
+
+This is a ‘linear’ proof format; also known as /equational style/ or /calculational
+proof/. This corresponds to the ‘high-school style’ of writing a sequence of
+equations, one on each line, along with hints/explanations of how each line was
+reached from the previous line. ( This is similar to *programming* which
+encourages placing /comments/ to /communicate/ what's going on to future readers. )
+
+The structure of equational proofs allows implicit use of infernece rules
+Leibniz, Transitvitity & Symmetry & Reflexivity of equality, and
+Substitution. In contrast, the structure of proof trees is no help in this
+regard, and so all uses of inference rules must be mentioned explicitly.
+
+For comparison with other proof notations see [[http://www.cse.yorku.ca/~logicE/misc/logicE_intro.pdf][Equational Propositional Logic]].
+
+--------------------------------------------------------------------------------
+
+We advocate /calculational proofs/ in which reasoning is goal directed and
+justified by simple axiomatic laws that can be checked syntactically rather than
+semantically. ---/Program Construction/ by Roland Backhouse
+
+--------------------------------------------------------------------------------
+
+Calculational proofs introduce notation and recall theorems as needed, thereby
+making each step of the argument easy to verify and follow. Thus, such arguments
+are more accessible to readers unfamiliar with the problem domain.
+
+--------------------------------------------------------------------------------
+
+The use of a formal approach let us keep track of when our statements are
+equivalent (“=”) rather than being weakened (“⇒”). That is, the use of English
+to express the connection between steps is usually presented naturally using “if
+this, then that” statements ---i.e., implication--- rather than stronger notion
+of equality.
+#+end_documentation
+
 ** Misc :ignore:
    :PROPERTIES:
    :CUSTOM_ID: Misc
@@ -602,101 +634,6 @@ i.e., $z ≤ x ↓ y \quad≡\quad z ≤ x \,∧\, z ≤ y$.
  #+begin_documentation Category Theory :label cat :show t
  A theory of typed  composition; e.g., typed monoids.
  #+end_documentation
-
-* COMMENT Logic :incomplete:erroneous:
-  :PROPERTIES:
-  :CUSTOM_ID: Logic
-  :END:
-doc:Logic
-#+begin_documentation Logic :show t
-A /logic/ consists of a /language/ ---generated by a signature Σ---
-and a deductive system ---usually defined by ⊢.
-
-The relation ⊢ is between sets of formulae and a single formula,
-and it must usually satisfy:
-1. Reflexivity:  If φ ∈ Γ then Γ ⊢ Φ
-2. Cut [Transitivity]:  If Δ ⊢ γ for each γ ∈ Γ, and Γ ⊢ φ, then Δ ⊢ φ
-3. Structurality: If Γ ⊢ φ then Γσ ⊢ Φσ for each substitution σ.
-
-A “theorem” then is a consequence of the empty set of formulae; a “theory” 𝑻 is
-a set of formulae closed under consequence: If 𝑻 ⊢ Φ then Φ ∈ 𝑻. The theorems
-are then exactly Th(∅), the theory generated by the empty set; where Th(Γ) = {Φ
-❙ Γ ⊢ φ} is the theory generated by Γ (i.e., the smallest theory containing Γ.)
-
---------------------------------------------------------------------------------
-
-An *axiomatic system* is a collection 𝑹 of set-formula pairs (Γ, Φ), called
-“inference rules”, that is closed under substitutions.  A *proof* of a formula φ
-from a set of formulae Γ is defined to be a tree labelled by formulae such that
-the root is labelled by φ and the leaves by axioms or elements of Γ, and if a
-node is labelled by Ψ and Δ is the set of labels of its preceding nodes, then
-(Δ, Ψ) ∈ 𝑹.
-
-One writes Γ ⊢ Φ if there is a proof of Φ from Γ; then ⊢ is the least logic
-containing 𝑹.
-
-One says *𝑹 is an axiomatic system, or a presentation of, the logic 𝑳*.
-#+end_documentation
-
-doc:Algebra
-#+begin_documentation Algebra :show t
-An /algebra/ consists of a /language/ ---generated by a signature Σ--- and an
-interpretation of the signature's symbols in terms of sets and functions.
-
-#+end_documentation
-
-doc:Type_Theory
-#+begin_documentation Type Theory :show t
-A /type theory/ is a logic with different sorts of individuals, called ‘types’,
-and constructions that generate new types from existing ones, like product and
-arrow types.
-#+end_documentation
-
-doc:Internal_Logic
-#+begin_documentation Internal Logic :show t
-An /internal logic/ is a type  theory derived from a category;
-and an /internal language/ is the language part of that logic.
-
-Specifically, the atomic sorts of the internal language are the objects of the
-category.
-#+end_documentation
-
-doc:Algebraic_Logic
-#+begin_documentation Algebraic Logic :show t
-/Algebraic logic/ treats algebraic structures, such as lattices, as models
-(interpretations) of certain logics, making logic a branch of order theory.
-
-In algebraic logic, variables are tacitly universally quantified,
-and there is no ∃ nor other logical connectives. The only inference rule
-is Leibniz, substituting equals for equals.
-
-| Logic                | “has models” | Algebra                         |
-| Classical logic      |              | Boolean Algebra                 |
-| Intuitionistic Logic |              | Heyting Algebra                 |
-| Linear Logic         |              | Commutative residuated lattices |
-| ...                  |              | ...                             |
-| Quantifiers ∀, ∃     |              | Generalised meets ⊓ and joins ⊔ |
-
-One says “logic 𝑳 has (as semantics) the class of algebras 𝑨 (with selected
-value ‘1’)”, or “𝑳 has algebraic semantics 𝑨”, precisely when each 𝑨 algebra
-provides a semantic consequence that coincides with 𝑳's syntactic provability,
-consequence, relation:
-
-Γ ⊢ φ   ⇔   ∀ A : 𝑨 • ∀ v : Term(𝑳) → A • (∀ γ : Γ • v(γ) = 1) ⇒ v(φ) = 1
-
-where Term(𝑳) is the free 𝑨-algebra of terms, formulae, of the logic 𝑳.
-
-That is, there must be a way ---/Term(_)/--- to see the logic as an algebra, namely the
-connectives of the logic give rise to the required operations of the algebra
-and moreover the resulting setup must satisfy the algebra's axioms.
-Then, the above speaks about 𝑨-homomorphisms that ‘reify’ the formulae
-of 𝑳 into particular 𝑨-algebras. We may thus rephrase the above condition:
-
-Γ ⊢ Φ  ⇔  Every interpretation of 𝑳's formulae in any 𝑨-algebra
-           that satisfies every member of Γ will also satisfy Φ.
-
-The “⇒” is known as “soundness” and the “⇐” is called “completeness”.
-#+end_documentation
 
 * Properties of Operators
   :PROPERTIES:
@@ -1216,7 +1153,7 @@ $x$ of $V$, and a directed line $x ⟶ y$ between two points exactly when $x 〔
 y$. That is relations are /simple graphs/; one refers to the directed lines
 as /edges/ and the dots as /nodes/.
 
-As a simple graph, surjectivity means: /Every node has at least one outgoing edge./
+As a simple graph, surjectivity means: /Every node has at least one incoming edge./
 --------------------------------------------------------------------------------
    $R$ is surjective
 ≡  $R˘$ is total

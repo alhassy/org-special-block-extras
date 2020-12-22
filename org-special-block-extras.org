@@ -149,8 +149,6 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 ;;; Commentary:
 
-;; In a rush to get this out before EmacsConf2020, some Melpa checks fail; sorry!
-
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
@@ -219,16 +217,10 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 # ;; e.g., 'html or 'latex.  The handler must return a string.
 #
 
-#+RESULTS:
-: ox-html
-
-#
-# #
-
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 29 new custom blocks & 34 link types for Org-mode."
+    "Provide 30 new custom blocks & 34 link types for Org-mode."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
@@ -769,7 +761,6 @@ possibilities for =params=.
  #+end_src
 
  #+RESULTS[10eec6e6db4ef44b41ceb72deed6df71edc9b90a]: startup-code
- | :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (thread-last docs (s-replace    &emsp;) (s-replace |
 
 
 
@@ -902,6 +893,9 @@ we take the following approach:
 
    #+begin_details ‘defblock’ Implementation
  #+begin_src emacs-lisp
+(defvar org-special-block-extras--supported-blocks nil
+  "Which special blocks, defined with DEFBLOCK, are supported.")
+
 (defun org-special-block-extras--org-export (x)
   "Wrap the given X in an export block for the current backend."
   (format "\n#+begin_export %s \n%s\n#+end_export\n"
@@ -1084,9 +1078,6 @@ The mechanism that rewrites your source...
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
   When n = 0, yield the empty string “”."
   (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
-
-(defvar org-special-block-extras--supported-blocks nil
-  "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (defvar org-special-block-extras--current-backend nil
   "A message-passing channel updated by
@@ -2434,6 +2425,17 @@ src_latex[:exports code]{\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:
 source blocks. Instead, we use ~tcolorbox~.
 
 #+end_details
+
+If you fear that your readers may not click on details boxes in the HTML export,
+you could, say, have the details heading “flash pink” whenever the user hovers
+over it. This can be accomplished by inserting the following incantation into
+your Org file or place it into your ~org-html-head~ variable.
+#+begin_example org
+#+html: <style>  summary:hover {background:pink;} </style>
+#+end_example
+
+# Which, I will do, for fun.
+#+html: <style>  summary:hover {background:pink;} </style>
 
 ** Example: /Here's a nifty puzzle, can you figure it out?/
    :PROPERTIES:
@@ -4218,6 +4220,13 @@ Below are the entries in my personal glossary ;-)
 In the export, it looks like some names are repeated, but in the source one
 would notice that we have /labels/ in both upper and lower cases and with underscores ;-)
 They just happen to be referring to the same /named/ entry.
+
+-------
+
+My personal documentation library can be seen here:
+badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
+or
+badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
 #+end_details
 
 ** Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]
@@ -4270,6 +4279,11 @@ below, for more! )
 (setq org-special-block-extras--docs-libraries
   '("~/org-special-block-extras/documentation.org"))
 #+end_src
+
+My personal documentation library can be seen here:
+badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
+or
+badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
 
 #+begin_src emacs-lisp
 (cl-defun org-special-block-extras-docs-load-libraries
@@ -4367,12 +4381,15 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
          (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
                          ;; Make it look pretty!
                          (thread-last docs
+                           ;; Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
+                           ;; (org-export-string-as docs 'html :body-only-please)
                            (s-replace "  " "&emsp;") ; Preserve newlines
                            (s-replace "\n" "<br>")   ; Preserve whitespace
                            (s-replace-regexp "\\#\\+begin_example<br>" "")
                            (s-replace-regexp "\\#\\+end_example<br>" "")
                            ;; Translate Org markup
-                           (s-replace-regexp "/\\(.+?\\)/" "<em>\\1</em>")
+                           ;; Only replace /.*/ by <em>.*<em> when it does not have an alphanum,:,/ before it.
+                           (s-replace-regexp "\\([^a-z0-9A-Z:/]\\)/\\(.+?\\)/" "\\1<em>\\2</em>")
                            (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
                            (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
                            ;; No, sometimes we want equalities.
@@ -4781,11 +4798,16 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
   :ensure t
   :hook (org-mode . org-special-block-extras-mode)
   :custom
+    ;; The places where I keep my ‘#+documentation’
     (org-special-block-extras--docs-libraries
-     '("~/org-special-block-extras/documentation.org")
-     "The places where I keep my ‘#+documentation’")
-    ;; (org-special-block-extras-fancy-links
-    ;; nil "Disable this feature.")
+     '("~/org-special-block-extras/documentation.org"))
+    ;; Disable the in-Emacs fancy-links feature?
+    ;; (org-special-block-extras-fancy-links nil)
+    ;; Details heading “flash pink” whenever the user hovers over them?
+    (org-html-head "<style>  summary:hover {background:pink;} </style>")
+    ;; The message prefixing a ‘tweet:url’ badge
+    (org-special-block-extras-link-twitter-excitement
+     "This looks super neat (•̀ᴗ•́)و:")
   :config
   ;; Use short names like ‘defblock’ instead of the fully qualified name
   ;; ‘org-special-block-extras--defblock’
@@ -4803,6 +4825,33 @@ If a block has a ‘:title’, use that to title the ‘<details>’."
           (or title (concat "Details; " lang))
           raw-contents))
 #+END_SRC
+
+:Links_from_tdehaeze_reddit:
+14 days ago
+I have made some research, and I could find nice resources:
+
+- https://emacs.stackexchange.com/questions/44958/can-i-insert-a-prefix-to-org-babel-source-code-lines-on-export
+
+- https://stackoverflow.com/questions/38857751/show-tangled-file-name-in-org-mode-code-block-export
+
+- http://kitchingroup.cheme.cmu.edu/blog/2014/09/22/Showing-what-data-went-into-a-code-block-on-export/
+
+- https://lists.gnu.org/archive/html/emacs-orgmode/2016-10/msg00282.html
+
+- https://thibaultmarin.github.io/blog/posts/2016-11-13-Personal_website_in_org.html#org306eaa4
+
+
+
+Especially the last link were this seems to have been implemented. However it does not use "hooks" but rather define a new export back-end.
+
+I'll let you know if I can combine different thing I can find to make something that works.
+
+Cheers
+
+--------------------------------------------------------------------------------
+
+Context: https://www.reddit.com/r/emacs/comments/k2whsy/declaring_new_special_blocks_with_arguments/gevyoml/?context=3
+:End:
 
 ** Minimal working example
    :PROPERTIES:

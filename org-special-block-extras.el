@@ -24,8 +24,6 @@
 
 ;;; Commentary:
 
-;; In a rush to get this out before EmacsConf2020, some Melpa checks fail; sorry!
-
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
@@ -88,7 +86,7 @@
 ;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:2]]
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 29 new custom blocks & 34 link types for Org-mode."
+    "Provide 30 new custom blocks & 34 link types for Org-mode."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
@@ -209,6 +207,9 @@
 ;; Lisp Package Preamble:2 ends here
 
 ;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:1]]
+(defvar org-special-block-extras--supported-blocks nil
+  "Which special blocks, defined with DEFBLOCK, are supported.")
+
 (defun org-special-block-extras--org-export (x)
   "Wrap the given X in an export block for the current backend."
   (format "\n#+begin_export %s \n%s\n#+end_export\n"
@@ -362,9 +363,6 @@ Three example uses:
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
   When n = 0, yield the empty string “”."
   (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
-
-(defvar org-special-block-extras--supported-blocks nil
-  "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (defvar org-special-block-extras--current-backend nil
   "A message-passing channel updated by
@@ -1231,12 +1229,15 @@ We use this listing to actually print a glossary using
          (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
                          ;; Make it look pretty!
                          (thread-last docs
+                           ;; Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
+                           ;; (org-export-string-as docs 'html :body-only-please)
                            (s-replace "  " "&emsp;") ; Preserve newlines
                            (s-replace "\n" "<br>")   ; Preserve whitespace
                            (s-replace-regexp "\\#\\+begin_example<br>" "")
                            (s-replace-regexp "\\#\\+end_example<br>" "")
                            ;; Translate Org markup
-                           (s-replace-regexp "/\\(.+?\\)/" "<em>\\1</em>")
+                           ;; Only replace /.*/ by <em>.*<em> when it does not have an alphanum,:,/ before it.
+                           (s-replace-regexp "\\([^a-z0-9A-Z:/]\\)/\\(.+?\\)/" "\\1<em>\\2</em>")
                            (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
                            (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
                            ;; No, sometimes we want equalities.
