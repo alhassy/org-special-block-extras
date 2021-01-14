@@ -405,6 +405,7 @@ and the result looks nice. “Look ma, no HTML required!”
 #+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
 [[file:images/minimal-working-example-multiforms.png]]
 
+* org-tutorial :ignore:
 #+include: ~/.emacs.d/init.org::#Mini-tutorial-on-Org-mode
 
 #+html: <!--
