@@ -1,10 +1,9 @@
-;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:1]]
 ;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2
+;; Version: 2.1
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -81,9 +80,7 @@
 (require 'org)
 (require 'ox-latex)
 (require 'ox-html)
-;; Lisp Package Preamble:1 ends here
 
-;; [[file:org-special-block-extras.org::*Lisp Package Preamble][Lisp Package Preamble:2]]
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
     "Provide 30 new custom blocks & 34 link types for Org-mode."
@@ -134,7 +131,8 @@
         }
         </style>")))
         ;; Ensure user's documentation libraries have loaded
-        (org-special-block-extras-docs-load-libraries)
+        (unless org-special-block-extras--docs-from-libraries
+          (org-special-block-extras-docs-load-libraries))
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
         
@@ -204,9 +202,7 @@
     (cl-loop for lnk in org-special-block-extras-fancy-links
           do (unhighlight-regexp (format "%s:[^ \n]*" lnk)))
     )) ;; Must be on a new line; I'm using noweb-refs
-;; Lisp Package Preamble:2 ends here
 
-;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:1]]
 (defvar org-special-block-extras--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
@@ -225,7 +221,7 @@
                'html
              org-special-block-extras--current-backend)))
 
-(cl-defmacro org-special-block-extras--defblock
+(cl-defmacro org-special-block-extras-defblock
   (name main-arg kwds &optional (docstring "") &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
@@ -356,9 +352,7 @@ Three example uses:
                               (substring-no-properties (car kill-ring)))))
                      (format "%s\n\n%s"
                             raw-link ,docstring)))))))
-;; The Core Utility: ~defblock~ and friends:1 ends here
 
-;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:4]]
 (defun org-special-block-extras--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
   When n = 0, yield the empty string “”."
@@ -397,7 +391,7 @@ BACKEND is the export back-end being used, as a symbol."
           (kill-region blk-start (point))
           (insert
              (eval `(,(intern (format "org-special-block-extras--%s" blk))
-                     backend
+                     (quote ,backend)
                      contents
                      main-arg
                      ,@(--map (list 'quote it) kwdargs)))
@@ -405,9 +399,7 @@ BACKEND is the export back-end being used, as a symbol."
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
       )))
-;; The Core Utility: ~defblock~ and friends:4 ends here
 
-;; [[file:org-special-block-extras.org::*The Core Utility: ~defblock~ and friends][The Core Utility: ~defblock~ and friends:7]]
 (defvar org-special-block-extras--header-args nil
   "Alist (name plist) where “:main-arg” is a special plist key.
 
@@ -415,7 +407,7 @@ BACKEND is the export back-end being used, as a symbol."
 
   See doc of SET-BLOCK-HEADER-ARGS for more information.")
 
-(defmacro org-special-block-extras--set-block-header-args (blk &rest kvs)
+(defmacro org-special-block-extras-set-block-header-args (blk &rest kvs)
   "Set default valuts for special block arguments.
 
 This is similar to, and inspired by, Org-src block header-args.
@@ -424,7 +416,7 @@ Example src use:
     #+PROPERTY: header-args:Language :key value
 
 Example block use:
-    (defblock-header-args Block :main-arg mainvalue :key value)
+    (set-block-header-args Block :main-arg mainvalue :key value)
 
 A full, working, example can be seen by “C-h o RET defblock”.
 "
@@ -435,23 +427,21 @@ A full, working, example can be seen by “C-h o RET defblock”.
 
 Namely,
 
-  org-special-block-extras--set-block-header-args   ↦  set-block-header-args
-  org-special-block-extras--set-block-header-args   ↦  defblock
-  org-special-block-extras--subtle-colors           ↦  subtle-colors
+  org-special-block-extras-set-block-header-args   ↦  set-block-header-args
+  org-special-block-extras-defblock                ↦  defblock
+  org-special-block-extras-subtle-colors           ↦  subtle-colors
 "
-  (defalias 'defblock              'org-special-block-extras--defblock)
-  (defalias 'set-block-header-args 'org-special-block-extras--set-block-header-args)
-  (defalias 'thread-blockcall     'org-special-block-extras--thread-blockcall)
-  (defalias 'subtle-colors         'org-special-block-extras--subtle-colors))
-;; The Core Utility: ~defblock~ and friends:7 ends here
+  (defalias 'defblock              'org-special-block-extras-defblock)
+  (defalias 'set-block-header-args 'org-special-block-extras-set-block-header-args)
+  (defalias 'thread-blockcall      'org-special-block-extras-thread-blockcall)
+  (defalias 'subtle-colors         'org-special-block-extras-subtle-colors))
 
-;; [[file:org-special-block-extras.org::startup-code][startup-code]]
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 ;; (Assuming we already called org-special-block-extras-short-names. )
-(org-special-block-extras--defblock rremark
+(org-special-block-extras-defblock rremark
   (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -462,17 +452,15 @@ Namely,
 ;; I don't want to change the definition, but I'd like to have
 ;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
-(org-special-block-extras--set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
-;; startup-code ends here
+(org-special-block-extras-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
 
-;; [[file:org-special-block-extras.org::*Modularity with ~thread-blockcall~][Modularity with ~thread-blockcall~:3]]
 (cl-defmacro org-special-block-extras--blockcall (blk &optional main-arg &rest keyword-args-then-contents)
   "An anaologue to `funcall` but for blocks.
 
 Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
 
 One should rarely use this directly; instead use
-org-special-block-extras--thread-blockcall.
+org-special-block-extras-thread-blockcall.
 "
   `(concat "#+end_export\n" (,(intern (format "org-special-block-extras--%s" blk))
     backend ;; defblock internal
@@ -480,10 +468,8 @@ org-special-block-extras--thread-blockcall.
     ,@(last keyword-args-then-contents) ;; contents
     ,main-arg
     ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))
-;; Modularity with ~thread-blockcall~:3 ends here
 
-;; [[file:org-special-block-extras.org::*Modularity with ~thread-blockcall~][Modularity with ~thread-blockcall~:4]]
-(defmacro org-special-block-extras--thread-blockcall (body &rest forms)
+(defmacro org-special-block-extras-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
 
 BODY is likely to be ‘raw-contents’, possibly with user manipulations.
@@ -501,10 +487,10 @@ between conseqeuctive blockcalls.
 
 A full example:
 
-    (org-special-block-extras--defblock nesting (name) nil
+    (org-special-block-extras-defblock nesting (name) nil
       \"Show text in a box, within details, which contains a box.\"
 
-      (org-special-block-extras--thread-blockcall raw-contents
+      (org-special-block-extras-thread-blockcall raw-contents
                         (box name)
                         (details (upcase name) :title-color \"green\")
                         (box (format \"⇨ %s ⇦\" name) :background-color \"blue\")
@@ -519,24 +505,21 @@ A full example:
                                    result
                                    "\n#+end_export"
                                    )))) result)))
-;; Modularity with ~thread-blockcall~:4 ends here
 
-;; [[file:org-special-block-extras.org::*Short Example: /An opportunity to learn!/][Short Example: /An opportunity to learn!/:1]]
-(org-special-block-extras--defblock solution
+(org-special-block-extras-defblock solution
   (title "Solution")
   (reprimand "Did you actually try? Maybe see the ‘hints’ above!"
    really "Solution, for real")
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
-  (org-special-block-extras--thread-blockcall raw-contents
+  (org-special-block-extras-thread-blockcall raw-contents
                     (details really :title-color "red")
                     (box reprimand :background-color "blue")
                     (details title)))
-;; Short Example: /An opportunity to learn!/:1 ends here
 
-;; [[file:org-special-block-extras.org::*Longer Example: Demonstrating Org-markup with ~org-demo~][Longer Example: Demonstrating Org-markup with ~org-demo~:1]]
-(org-special-block-extras--defblock org-demo nil (source "Source" result "Result"
+(org-special-block-extras-defblock org-demo nil (source "Source" result "Result"
                         source-color "cyan" result-color "cyan"
                         style "parallel"
+                        sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
                         )
   "Output the CONTENTS of the block as both parsed Org and unparsed.
 
@@ -544,26 +527,35 @@ Label the source text by SOURCE and the result text by RESULT
 
 finally, the source-result fragments can be shown in a STYLE
 that is either “parallel” (default) or “sequential”.
+
+SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
 "
-  (-let [text (concat (org-special-block-extras--org-export (org-special-block-extras--blockcall box source :background-color source-color (org-special-block-extras--org-export (s-replace "\n" (if (equal backend 'html) "<br>" "\\newline") raw-contents))))
-                      "\n\n\n\n "
-                       (org-special-block-extras--org-export (org-special-block-extras--blockcall box result :background-color result-color raw-contents))
-                      )]
+  (-let [text (concat
+               ;; Source
+               (thread-last raw-contents
+                 (format (if (equal backend 'html)
+                             "<div ><pre class=\"src src-org\">%s</pre></div>"
+                           "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
+                 org-special-block-extras--org-export
+                 (org-special-block-extras--blockcall box source :background-color source-color)
+                 org-special-block-extras--org-export)
+               ;; Separator
+               sep
+               ;; Result
+               (thread-last raw-contents
+                 (org-special-block-extras--blockcall box result :background-color result-color)
+                 org-special-block-extras--org-export))]
 
    (if (equal style "parallel")
        (org-special-block-extras--blockcall parallel "2" :bar nil text)
        (concat "#+end_export\n" text "\n#+begin_export"))))
-;; Longer Example: Demonstrating Org-markup with ~org-demo~:1 ends here
 
-;; [[file:org-special-block-extras.org::*Sttutttterrr][Sttutttterrr:2]]
-(org-special-block-extras--defblock stutter (reps 2) nil
+(org-special-block-extras-defblock stutter (reps 2) nil
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
-;; Sttutttterrr:2 ends here
 
-;; [[file:org-special-block-extras.org::*Textual Substitution ---A translation tool][Textual Substitution ---A translation tool:1]]
-(org-special-block-extras--defblock rename (list "") nil
+(org-special-block-extras-defblock rename (list "") nil
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
@@ -572,10 +564,8 @@ In a link, no quotes are needed."
           (--map (s-split " to " (s-trim it))
                  (s-split "," list)))
    contents))
-;; Textual Substitution ---A translation tool:1 ends here
 
-;; [[file:org-special-block-extras.org::*Spoilers! ---“fill in the blanks”][Spoilers! ---“fill in the blanks”:1]]
-(org-special-block-extras--defblock spoiler (color "grey") (left "((" right "))")
+(org-special-block-extras-defblock spoiler (color "grey") (left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -598,15 +588,81 @@ in the footnotes."
       (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
       (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
       contents)))))
-;; Spoilers! ---“fill in the blanks”:1 ends here
 
-;; [[file:org-special-block-extras.org::*The Older =org-special-block-extras--𝒳= Utility][The Older =org-special-block-extras--𝒳= Utility:1]]
+(defun org-special-block-extras--list-to-math (lst)
+  "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
+  (cond
+   ((symbolp lst) "")
+   ((symbolp (car lst)) (org-special-block-extras--list-to-math (cadr lst)))
+   (t
+    (-let* (((conclusion₀ children) lst)
+            ((name named?) (s-split " :: " conclusion₀))
+            (conclusion (or named? conclusion₀)))
+      (if (not children)
+          (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
+        (format "\\frac{\\displaystyle %s}{%s}%s"
+                (s-join " \\qquad "
+                        (mapcar #'org-special-block-extras--list-to-math children))
+                conclusion
+                (if named? (format "[\\text{%s}]" name) "")))))))
+
+(org-special-block-extras-defblock tree (main-arg) nil
+  "Write a proof tree using Org-lists.
+
+To get
+
+         premises₀  …   premisesₙ
+       ────────────────────────────[ reason ]
+               conclusion
+
+You type
+
+       #+begin_tree
+       + reason :: conclusion
+         - premises₀
+         - premises₁
+         ⋮
+         - premisesₙ
+       #+end_tree
+
+Where each premisesᵢ may, recursively, also have named reasons
+and (indented) child premises of its own.
+
+If there are multiple trees, they are shown one after the other.
+
+The text in this block should be considered LaTeX;
+as such, Org markup is not recognised.
+
+A proof tree, derivation, is then just a deeply nested
+itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
+the following proves P = R.
+
+  #+begin_tree
+  + Trans :: P = R
+    - P = Q(X)
+      + ✓
+    - Trans :: Q(X) = R
+      + Trans :: Q(X) = Q(Y)
+        - Refl :: Q(X) = Q(X)
+          + ✓
+        - Leibniz :: Q(X) = Q(Y)
+          + X = Y
+            - ✓
+      + Sym :: Q(Y) = R
+        - R = Q(Y)
+          - ✓
+  #+end_tree"
+  (s-join "\n\n" (--map (format "$$%s\\\\$$"
+                                (org-special-block-extras--list-to-math it))
+                        (cdr (with-temp-buffer
+                               (insert raw-contents)
+                               (goto-char (point-min))
+                               (org-list-to-lisp))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core utility
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; The Older =org-special-block-extras--𝒳= Utility:1 ends here
 
-;; [[file:org-special-block-extras.org::*The Older =org-special-block-extras--𝒳= Utility][The Older =org-special-block-extras--𝒳= Utility:3]]
 (defun org-special-block-extras--advice (backend blk contents _)
   "Invoke the appropriate custom block handler, if any.
 
@@ -620,9 +676,7 @@ contents at all, not even an empty new line."
   (let* ((type    (nth 1 (nth 1 blk)))
          (handler (intern (format "org-special-block-extras--%s" type))))
     (ignore-errors (apply handler backend (or contents "") nil))))
-;; The Older =org-special-block-extras--𝒳= Utility:3 ends here
 
-;; [[file:org-special-block-extras.org::*  =:argument:= Extraction][  =:argument:= Extraction:1]]
 (defun org-special-block-extras--extract-arguments (contents &rest args)
 "Get list of CONTENTS string with ARGS lines stripped out and values of ARGS.
 
@@ -648,13 +702,11 @@ with all ‘:kᵢ:’ lines stripped out.
              for regex = (format ":%s:\\(.*\\)" a)
              do (setq ctnts (s-replace-regexp regex "" ctnts)))
     (cons ctnts values)))
-;;   =:argument:= Extraction:1 ends here
 
-;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:3]]
 (defvar org-special-block-extras-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
 
-(org-special-block-extras--defblock remark
+(org-special-block-extras-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 "Format CONTENTS as an first-class editor comment according to BACKEND.
 
@@ -709,9 +761,7 @@ that is appended to the remark.
                 ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
                 (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
               color edcomm-begin contents′ signoff edcomm-end))))
-;; Editor Comments:3 ends here
 
-;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:5]]
 (org-link-set-parameters
  "edcomm"
   :follow (lambda (_))
@@ -725,10 +775,8 @@ that is appended to the remark.
                  (-let [(&plist :path) (cadr (org-element-context))]
                    (format "%s made this remark" (s-upcase path)))))
   :face '(:foreground "red" :weight bold))
-;; Editor Comments:5 ends here
 
-;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:1]]
-(org-special-block-extras--defblock details (title "Details") (title-color "green")
+(org-special-block-extras-defblock details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -767,10 +815,48 @@ such as ‘background-color’.
                   %s
                </details>"))
    title-color title contents))
-;; Folded Details ---As well as boxed text and subtle colours:1 ends here
 
-;; [[file:org-special-block-extras.org::*Boxed Text][Boxed Text:1]]
-(org-special-block-extras--defblock box (title "") (background-color nil)
+(org-special-block-extras-defblock Details (title "Details") (title-color "green")
+  "Enclose contents in a folded up box, for HTML.
+
+For LaTeX, this is just a boring, but centered, box.
+
+By default, the TITLE of such blocks is “Details”
+and its TITLE-COLOR is green.
+
+In HTML, we show folded, details, regions with a nice greenish colour.
+
+In the future ---i.e., when I have time---
+it may be prudent to expose more aspects as arguments,
+such as ‘background-color’.
+"
+  (format
+   (pcase backend
+     (`latex "\\begin{quote}
+                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
+                    %s
+                  \\end{tcolorbox}
+                \\end{quote}")
+     (_ "<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75% 20%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"%s\">
+                         %s
+                      </font>
+                    </strong>
+                  </summary>
+                  %s
+               </details>"))
+   title-color title contents))
+
+(org-special-block-extras-defblock box (title "") (background-color nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
@@ -791,15 +877,13 @@ In the future, I will likely expose more arguments.
              ,contents
              "\\end{tcolorbox}"))
     (_ `("<div style=\"padding: 1em; background-color: "
-             ,(org-special-block-extras--subtle-colors (format "%s" (or background-color "green")))
+             ,(org-special-block-extras-subtle-colors (format "%s" (or background-color "green")))
              ";border-radius: 15px; font-size: 0.9em"
              "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
              "<h3>" ,title "</h3>"
             ,contents "</div>")))))
-;; Boxed Text:1 ends here
 
-;; [[file:org-special-block-extras.org::*Boxed Text][Boxed Text:2]]
-(defun org-special-block-extras--subtle-colors (c)
+(defun org-special-block-extras-subtle-colors (c)
   "HTML codes for common colours.
 
 Names are very rough approximates.
@@ -820,10 +904,8 @@ Names are very rough approximates.
     ("custard" "#FFFFCC") ;; paler than ‘yellow’
     (c c)
   ))
-;; Boxed Text:2 ends here
 
-;; [[file:org-special-block-extras.org::*Parallel][Parallel:1]]
-(org-special-block-extras--defblock parallel (cols 2) (bar nil)
+(org-special-block-extras-defblock parallel (cols 2) (bar nil)
   "Place ideas side-by-side, possibly with a seperator.
 
 There are COLS many columns, and they may be seperated by black
@@ -854,14 +936,10 @@ which sometimes accomplishes the desired goal.
           \\end{multicols}\\end{minipage}")
    (_ "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"))
    rule cols contents′)))
-;; Parallel:1 ends here
 
-;; [[file:org-special-block-extras.org::*Colours][Colours:2]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load support for 20 colour custom blocks and 20 colour link types
-;; Colours:2 ends here
 
-;; [[file:org-special-block-extras.org::*Colours][Colours:3]]
 (defvar org-special-block-extras--colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
@@ -870,16 +948,14 @@ which sometimes accomplishes the desired goal.
 
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
-                      "(org-special-block-extras--defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
+                      "(org-special-block-extras-defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
                         \"Show text in %s color.\"
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
                      (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))" colour colour colour colour colour))))
-;; Colours:3 ends here
 
-;; [[file:org-special-block-extras.org::*Colours][Colours:5]]
-(org-special-block-extras--defblock color (color black    :face (lambda (colour)
+(org-special-block-extras-defblock color (color black    :face (lambda (colour)
            (if (member (intern colour) org-special-block-extras--colors)
                `(:foreground ,(format "%s" colour))
              `(:height 300
@@ -890,18 +966,14 @@ which sometimes accomplishes the desired goal.
             (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
             (`html  "<span style=\"color:%s;\">%s</span>"))
           color contents))
-;; Colours:5 ends here
 
-;; [[file:org-special-block-extras.org::*  ~latex-definitions~ for hiding LaTeX declarations in HTML][  ~latex-definitions~ for hiding LaTeX declarations in HTML:1]]
-(org-special-block-extras--defblock latex-definitions nil nil
+(org-special-block-extras-defblock latex-definitions nil nil
   "Declare but do not display the CONTENTS according to the BACKEND."
   (format (pcase backend
             ('html "<p style=\"display:none\">\\[%s\\]</p>")
             (_ "%s"))
           raw-contents))
-;;   ~latex-definitions~ for hiding LaTeX declarations in HTML:1 ends here
 
-;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:1]]
 (org-link-set-parameters
  "kbd"
   :follow (lambda (_))
@@ -910,9 +982,7 @@ which sometimes accomplishes the desired goal.
                       ('latex "\\texttt{%s}")
                       (_ "<kbd> %s </kbd>") )
                     (or description (s-replace "_" " " label)))))
-;; Nice Keystroke Renditions: kbd:C-h_h:1 ends here
 
-;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:1]]
 (defvar
  org-special-block-extras--supported-octoicons
  (-partition 2
@@ -970,9 +1040,7 @@ which sometimes accomplishes the desired goal.
 "An association list of supported OctoIcons.
 
 Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
-;;   /“Link Here!”/ & OctoIcons:1 ends here
 
-;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:2]]
 ;; Show an OctoIcon: home, link, mail, report, tag, clock
 (org-link-set-parameters
   "octoicon"
@@ -997,15 +1065,11 @@ Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
                       label label (cadr (assoc 'link
                               org-special-block-extras--supported-octoicons))))
       (_ ""))))
-;;   /“Link Here!”/ & OctoIcons:2 ends here
 
-;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The badge link types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Badge Links:1 ends here
 
-;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:1]]
 (cl-defmacro org-special-block-extras-make-badge
   (name &optional social-shields-name social-url social-shields-url )
   "Make a link NAME whose export is presented as an SVG badge.
@@ -1071,7 +1135,7 @@ is coloured grey and the ‘value’ is coloured ‘color’.
                    ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
                    (""      "%s") ;; e.g., badge:key|value|color||logo
                    ('nil    "%s") ;; e.g., badge:key|value|color
-                   (t      (format "<a href=\"%s\">%%s</a>" ,(if social-shields-name `(format ,social-url label) 'url)))
+                   (t      (format "<a href=\"%s\">%%s</a>"  (s-replace "%" "%%" ,(if social-shields-name `(format ,social-url label) 'url))))
                    )
                  ,(if social-shields-name
                      (if social-shields-url
@@ -1095,13 +1159,9 @@ is coloured grey and the ‘value’ is coloured ‘color’.
                               (substring-no-properties (car kill-ring)))))
                      (format "%s\n\n General Syntax:\n\t badge:key|value|colour|url|logo"
                              raw-link))))))
-;; Example Badges:1 ends here
 
-;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:3]]
 (org-special-block-extras-make-badge "badge")
-;; Example Badges:3 ends here
 
-;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:4]]
 ;; Since we're invoking a macro, the twitter-excitement is used lazily; i.e.,
 ;; consulted when needed instead of being evaluated once.
 (defvar org-special-block-extras-link-twitter-excitement
@@ -1116,9 +1176,7 @@ is coloured grey and the ‘value’ is coloured ‘color’.
    org-special-block-extras-link-twitter-excitement)
  "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                )
-;; Example Badges:4 ends here
 
-;; [[file:org-special-block-extras.org::*Example Badges][Example Badges:5]]
 ;; MA: I don't think this is ideal for long-term maintainability, see ‘:OLD’ below.
 (cl-loop for (social url name)
          in '(("reddit/subreddit-subscribers" "https://www.reddit.com/r/%s" "reddit")
@@ -1130,32 +1188,20 @@ is coloured grey and the ‘value’ is coloured ‘color’.
              ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
          for name′ = (or name (s-replace "/" "-" social))
          do (eval `(org-special-block-extras-make-badge ,name′ ,social ,url)))
-;; Example Badges:5 ends here
 
-;; [[file:org-special-block-extras.org::*Tooltips for Glossaries, Dictionaries, and Documentation][Tooltips for Glossaries, Dictionaries, and Documentation:2]]
-(ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))))
-;; Tooltips for Glossaries, Dictionaries, and Documentation:2 ends here
-
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:1]]
 (defvar org-special-block-extras--docs nil
   "An alist of (label name description) entries; our glossary.
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:1 ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:3]]
 (defvar org-special-block-extras--docs-fallback
   (lambda (label) (list label label (documentation (intern label))))
   "The fallback method to retriving documentation or glossary entries.")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:3 ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4]]
 (defvar org-special-block-extras--docs-libraries nil
   "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
    for use with the ‘doc:𝒳’ link type.")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:4 ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6]]
 (cl-defun org-special-block-extras-docs-load-libraries
     (&optional (libs org-special-block-extras--docs-libraries))
 "Load user's personal documentation libraries.
@@ -1187,20 +1233,15 @@ then make use of this variable when looking for documentation strings.
 Interactively call org-special-block-extras-docs-load-libraries
 to force your documentation libraries to be reloaded.
 
-See also org-special-block-extras--docs-libraries.
-")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:6 ends here
+See also org-special-block-extras--docs-libraries.")
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8]]
 (defvar org-special-block-extras--docs-GLOSSARY nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:8 ends here
 
-;; [[file:org-special-block-extras.org::startup-code][startup-code]]
-(-let [name&doc
+(let ((name&doc
        (lambda (lbl)
          ;; Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries.
          (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))]
@@ -1214,7 +1255,7 @@ We use this listing to actually print a glossary using
                              lbl))))
              (setq name (nth 1 doc))
              (setq doc (nth 2 doc)))
-           (list name doc)))]
+           (list name doc)))))
 
 (org-link-set-parameters
  "doc"
@@ -1267,10 +1308,8 @@ We use this listing to actually print a glossary using
       (-let* (((&plist :path) (cadr (org-element-context)))
               ((name doc) (funcall ,name&doc path)))
         (format "[%s] %s :: %s" path name doc))))))
-;; startup-code ends here
 
-;; [[file:org-special-block-extras.org::*Implementation Details: =doc= link, ~documentation~ block, and \[\[https:/iamceege.github.io/tooltipster/#triggers\]\[tooltipster\]\]][Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:10]]
-(org-special-block-extras--defblock documentation
+(org-special-block-extras-defblock documentation
   (name (error "Documentation block: Name must be provided"))
   (label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
@@ -1305,9 +1344,7 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
   (if show (org-special-block-extras--blockcall box name :background-color color raw-contents) ""))
-;; Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]:10 ends here
 
-;; [[file:org-special-block-extras.org::*Wait, what about the LaTeX?][Wait, what about the LaTeX?:1]]
 (let ((whatdo (lambda (x)
                 (message
                           (concat "The value of variable  %s  will be placed "
@@ -1350,18 +1387,13 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
                              collect (format fstr name label
                                              (when doc (funcall preserve doc))
                                              label)))))))))
-;; Wait, what about the LaTeX?:1 ends here
 
-;; [[file:org-special-block-extras.org::*Emacs faces for links][Emacs faces for links:2]]
 (defvar org-special-block-extras-fancy-links
   '(badge kbd link-here doc tweet)
   "The links, regexps, that should be shown with a boxed face within Emacs.")
-;; Emacs faces for links:2 ends here
 
-;; [[file:org-special-block-extras.org::*Lisp Postamble][Lisp Postamble:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'org-special-block-extras)
 
 ;;; org-special-block-extras.el ends here
-;; Lisp Postamble:1 ends here

@@ -29,6 +29,8 @@
 
 # +TOC: headlines 2
 
+# (require 'cl-lib)
+
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
   :CUSTOM_ID: HTML-LaTeX-Setup
@@ -129,7 +131,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2
+;; Version: 2.1
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -249,7 +251,7 @@ badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-badge:org-special-block-extras|2.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
+badge:org-special-block-extras|2.1|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
 
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
@@ -344,7 +346,7 @@ relatively advanced ELisp concepts, such as macros and hooks; as such, users may
 not be willing to put in the time and instead use ad-hoc solutions.
 
 #+latex: \vspace{1em}
-We present a new macro, [[doc:org-special-block-extras--defblock][defblock]], which is similar in-spirit to Lisp's standard
+We present a new macro, [[doc:org-special-block-extras-defblock][defblock]], which is similar in-spirit to Lisp's standard
 doc:defun except that where the latter defines functions, ours defines new
 special blocks for Emacs' Org-mode ---as well as, simultaneously, defining new
 Org link types. Besides the macro, the primary contribution of this effort is an
@@ -403,6 +405,8 @@ and the result looks nice. “Look ma, no HTML required!”
 #+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
 [[file:images/minimal-working-example-multiforms.png]]
 
+#+include: ~/.emacs.d/init.org::#Mini-tutorial-on-Org-mode
+
 #+html: <!--
 #+latex: \vfill
 #+begin_quote
@@ -429,7 +433,7 @@ Installation instructions are [[#Summary][below]].
 An Org-mode block of type 𝒳 is a bunch of text enclosed in ~#+begin_𝒳~ and
 ~#+end_𝒳~, upon export it modifies the text ---e.g., to center it, or to display
 it as code. We show how to make /new/ blocks using a simple interface
----[[doc:org-special-block-extras--defblock][defblock]]--- that lets users treat 𝒳 as a string-valued function in the style
+---[[doc:org-special-block-extras-defblock][defblock]]--- that lets users treat 𝒳 as a string-valued function in the style
 of doc:defun.
 
 The notable features of the system are as follows.
@@ -752,17 +756,26 @@ possibilities for =params=.
                           (when (equal format 'bracket)
                             (copy-region-as-kill contents-begin contents-end)
                             (substring-no-properties (car kill-ring)))))
-                   (format "“%s” :: Let me google “%s” for you -__-"
+                   (format "“%s” :: Let me google “%s” for you -__- %s and %s"
                           raw-link (or description raw-link)))))
 
   ;; How should these links be displayed
   :face '(:foreground "red" :weight bold    (ref:exface)
-          :underline "orange" :overline "orange"))
+          :underline "orange" :overline "orange")
+
+  ;; Any special keybindings when cursour is on this link type?
+  ;; On ‘example:’ links, C-n/p to go to the next/previous such links.
+ :keymap (let ((map (copy-keymap org-mouse-map)))
+           ;; Populate the keymap
+           (define-key map (kbd "C-p")
+             (lambda () (interactive) (re-search-backward "example:" nil t)))
+           (define-key map (kbd "C-n")
+             (lambda () (interactive) (re-search-forward "example:" nil t)))
+           ;; Return the keymap
+           map))
  #+end_src
 
- #+RESULTS[10eec6e6db4ef44b41ceb72deed6df71edc9b90a]: startup-code
-
-
+ #+RESULTS: startup-code
 
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
    - If the type already exists, update it with the given arguments.
@@ -887,7 +900,7 @@ The PHRASE is taken literally; no regexp operators are recognised."
 To have a unified, and pleasant, interface for declaring new blocks and links,
 we take the following approach:
 0. [@0] ( /Fuse/ the process of link generation and special block support into
-   one macro,  [[doc:org-special-block-extras--defblock][defblock]] which is like doc:defun. )
+   one macro,  [[doc:org-special-block-extras-defblock][defblock]] which is like doc:defun. )
 1. The user writes as string-valued function named 𝒳, possibly with arguments,
    that has access to a ~contents~ and ~backend~ variables.
 
@@ -911,7 +924,7 @@ we take the following approach:
                'html
              org-special-block-extras--current-backend)))
 
-(cl-defmacro org-special-block-extras--defblock
+(cl-defmacro org-special-block-extras-defblock
   (name main-arg kwds &optional (docstring "") &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
@@ -1045,7 +1058,7 @@ Three example uses:
  #+end_src
 
  #+RESULTS:
- : org-special-block-extras--defblock
+ : org-special-block-extras-defblock
 
 # [[color:orange][Going forward,]]
 Going forward, it would be nice to have a set of switches that apply to all
@@ -1112,7 +1125,7 @@ BACKEND is the export back-end being used, as a symbol."
           (kill-region blk-start (point))
           (insert
              (eval `(,(intern (format "org-special-block-extras--%s" blk))
-                     backend
+                     (quote ,backend)
                      contents
                      main-arg
                      ,@(--map (list 'quote it) kwdargs)))
@@ -1145,7 +1158,7 @@ When you disable the ~org-special-block-extras~ mode, it is deactivated...
 
   See doc of SET-BLOCK-HEADER-ARGS for more information.")
 
-(defmacro org-special-block-extras--set-block-header-args (blk &rest kvs)
+(defmacro org-special-block-extras-set-block-header-args (blk &rest kvs)
   "Set default valuts for special block arguments.
 
 This is similar to, and inspired by, Org-src block header-args.
@@ -1154,7 +1167,7 @@ Example src use:
     ,#+PROPERTY: header-args:Language :key value
 
 Example block use:
-    (defblock-header-args Block :main-arg mainvalue :key value)
+    (set-block-header-args Block :main-arg mainvalue :key value)
 
 A full, working, example can be seen by “C-h o RET defblock”.
 "
@@ -1165,14 +1178,14 @@ A full, working, example can be seen by “C-h o RET defblock”.
 
 Namely,
 
-  org-special-block-extras--set-block-header-args   ↦  set-block-header-args
-  org-special-block-extras--set-block-header-args   ↦  defblock
-  org-special-block-extras--subtle-colors           ↦  subtle-colors
+  org-special-block-extras-set-block-header-args   ↦  set-block-header-args
+  org-special-block-extras-defblock                ↦  defblock
+  org-special-block-extras-subtle-colors           ↦  subtle-colors
 "
-  (defalias 'defblock              'org-special-block-extras--defblock)
-  (defalias 'set-block-header-args 'org-special-block-extras--set-block-header-args)
-  (defalias 'thread-blockcall     'org-special-block-extras--thread-blockcall)
-  (defalias 'subtle-colors         'org-special-block-extras--subtle-colors))
+  (defalias 'defblock              'org-special-block-extras-defblock)
+  (defalias 'set-block-header-args 'org-special-block-extras-set-block-header-args)
+  (defalias 'thread-blockcall      'org-special-block-extras-thread-blockcall)
+  (defalias 'subtle-colors         'org-special-block-extras-subtle-colors))
  #+end_src
 #+end_details
 
@@ -1263,7 +1276,7 @@ has more bells and whistles … keep reading ;-)
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 ;; (Assuming we already called org-special-block-extras-short-names. )
-(org-special-block-extras--defblock rremark
+(org-special-block-extras-defblock rremark
   (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -1274,7 +1287,7 @@ has more bells and whistles … keep reading ;-)
 ;; I don't want to change the definition, but I'd like to have
 ;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
-(org-special-block-extras--set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+(org-special-block-extras-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
  #+end_src
 
 ** Modularity with ~thread-blockcall~
@@ -1282,10 +1295,10 @@ has more bells and whistles … keep reading ;-)
    :CUSTOM_ID: modularity_with_thread-blockcall
    :END:
 
-Since [[doc:org-special-block-extras--defblock][defblock]] let's us pretend block ---and link--- types are string-valued
+Since [[doc:org-special-block-extras-defblock][defblock]] let's us pretend block ---and link--- types are string-valued
 functions, then one would expect that we can compose blocks /modularly/ as
 functions compose. Somewhat analogously to doc:funcall and doc:thread-last, we
-provide a macro [[doc:org-special-block-extras--thread-blockcall][thread-blockcall]].
+provide a macro [[doc:org-special-block-extras-thread-blockcall][thread-blockcall]].
 
 #+begin_box Example
 #+begin_src emacs-lisp :tangle no
@@ -1313,7 +1326,7 @@ First, we need to handle the case of one block…
 Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
 
 One should rarely use this directly; instead use
-org-special-block-extras--thread-blockcall.
+org-special-block-extras-thread-blockcall.
 "
   `(concat "#+end_export\n" (,(intern (format "org-special-block-extras--%s" blk))
     backend ;; defblock internal
@@ -1326,7 +1339,7 @@ org-special-block-extras--thread-blockcall.
 Using the above sequentially does not work due to the plumbing of
 ~defblock~, so we handle that plumbing below …
 #+BEGIN_SRC emacs-lisp
-(defmacro org-special-block-extras--thread-blockcall (body &rest forms)
+(defmacro org-special-block-extras-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
 
 BODY is likely to be ‘raw-contents’, possibly with user manipulations.
@@ -1344,10 +1357,10 @@ between conseqeuctive blockcalls.
 
 A full example:
 
-    (org-special-block-extras--defblock nesting (name) nil
+    (org-special-block-extras-defblock nesting (name) nil
       \"Show text in a box, within details, which contains a box.\"
 
-      (org-special-block-extras--thread-blockcall raw-contents
+      (org-special-block-extras-thread-blockcall raw-contents
                         (box name)
                         (details (upcase name) :title-color \"green\")
                         (box (format \"⇨ %s ⇦\" name) :background-color \"blue\")
@@ -1376,12 +1389,12 @@ opportunity to make sure they have tried to solve the puzzle posed in the main
 text before seeing the answer ----this works well in HTML, not so in LaTeX.
 
 #+begin_src emacs-lisp
-(org-special-block-extras--defblock solution
+(org-special-block-extras-defblock solution
   (title "Solution")
   (reprimand "Did you actually try? Maybe see the ‘hints’ above!"
    really "Solution, for real")
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
-  (org-special-block-extras--thread-blockcall raw-contents
+  (org-special-block-extras-thread-blockcall raw-contents
                     (details really :title-color "red")
                     (box reprimand :background-color "blue")
                     (details title)))
@@ -1418,15 +1431,17 @@ We will make use of this block below when we get to guided problems ;-)
   :PROPERTIES:
   :CUSTOM_ID: Longer_Example_Demonstrating_Org-markup_with_org-demo
   :END:
+
 Sometimes, we want to show verbatim source and its resulting rendition ---which
 is a major part of this article! So, let's make a block to mitigate such an
 error-prone tedium.
 
 #+begin_details Implementation
  #+begin_src emacs-lisp
-(org-special-block-extras--defblock org-demo nil (source "Source" result "Result"
+(org-special-block-extras-defblock org-demo nil (source "Source" result "Result"
                         source-color "cyan" result-color "cyan"
                         style "parallel"
+                        sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
                         )
   "Output the CONTENTS of the block as both parsed Org and unparsed.
 
@@ -1434,11 +1449,24 @@ Label the source text by SOURCE and the result text by RESULT
 
 finally, the source-result fragments can be shown in a STYLE
 that is either “parallel” (default) or “sequential”.
+
+SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
 "
-  (-let [text (concat (org-special-block-extras--org-export (org-special-block-extras--blockcall box source :background-color source-color (org-special-block-extras--org-export (s-replace "\n" (if (equal backend 'html) "<br>" "\\newline") raw-contents))))
-                      "\n\n\n\n "
-                       (org-special-block-extras--org-export (org-special-block-extras--blockcall box result :background-color result-color raw-contents))
-                      )]
+  (-let [text (concat
+               ;; Source
+               (thread-last raw-contents
+                 (format (if (equal backend 'html)
+                             "<div ><pre class=\"src src-org\">%s</pre></div>"
+                           "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
+                 org-special-block-extras--org-export
+                 (org-special-block-extras--blockcall box source :background-color source-color)
+                 org-special-block-extras--org-export)
+               ;; Separator
+               sep
+               ;; Result
+               (thread-last raw-contents
+                 (org-special-block-extras--blockcall box result :background-color result-color)
+                 org-special-block-extras--org-export))]
 
    (if (equal style "parallel")
        (org-special-block-extras--blockcall parallel "2" :bar nil text)
@@ -1463,6 +1491,9 @@ that is either “parallel” (default) or “sequential”.
 $e^{i \times \pi} + 1 = 0$
 ,#+end_org-demo
  #+end_example
+
+#+html: <hr><br>
+
  _Yields_
  #+begin_org-demo
  /italics/ and _underline_
@@ -1484,7 +1515,7 @@ $e^{i \times \pi} + 1 = 0$
 $e^{i \times \pi} + 1 = 0$
 ,#+end_org-demo
  #+end_example
-#+html: <br><hr><br>
+#+html: <br><br><br><p><br><p><br><p><hr><p><br><p>
 
  _Yields_
  #+begin_org-demo :style seq
@@ -1508,8 +1539,8 @@ There is no special block ‘box’ to touch!
 ,#+end_org-demo
  #+end_example
 
-#+html: <hr><br>
- yields
+#+html: <br><p><hr><br>
+ yields the /mess/
  #+begin_org-demo
  #+begin_box
  There is no special block ‘box’ to touch!
@@ -1582,7 +1613,7 @@ In contrast …
 #+html: <br>
 #+begin_solution
 #+begin_src emacs-lisp
-(org-special-block-extras--defblock stutter (reps 2) nil
+(org-special-block-extras-defblock stutter (reps 2) nil
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
@@ -1638,7 +1669,7 @@ bank of the river/ …]]
 
 #+begin_solution
 #+begin_src emacs-lisp
-(org-special-block-extras--defblock rename (list "") nil
+(org-special-block-extras-defblock rename (list "") nil
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
@@ -1734,7 +1765,7 @@ Whereas, the following begins with ~#+begin_spoiler orange~ ...
 --------------------------------------------------------------------------------
 
 #+begin_src emacs-lisp
-(org-special-block-extras--defblock spoiler (color "grey") (left "((" right "))")
+(org-special-block-extras-defblock spoiler (color "grey") (left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -1779,6 +1810,122 @@ An alternative would be to use JS with mouse parameters; e.g.:
 Possibly using ID's as the current working solution above.
 :End:
 
+*** Judgements: Inference rules and proof trees
+    :PROPERTIES:
+    :CUSTOM_ID: Judgements-Inference-rules-and-proof-trees
+    :END:
+
+ Using a mixture of ~\frac~ and ~\displaystyle~, define a block [[doc:org-special-block-extras--tree][tree]] so that the
+ following examples behave as shown. Hint: doc:org-list-to-lisp and
+ doc:with-temp-buffer may be useful ;-)
+
+#+begin_box Programming ≈ Proving
+#+begin_parallel
+*Source*
+#+begin_src org :tangle no
+,#+begin_tree
+  + Function Application :: f(a) : B
+    - a : A
+    - f : A → B
+
+  + Modus Ponens :: q
+    - p
+    - p ⇒ q
+,#+end_tree
+#+end_src
+
+# +columnbreak:
+#+html: <p>
+
+*Result*
+#+begin_tree
++ Function Application :: f(a) : B
+  - a : A
+  - f : A → B
+
++ Modus Ponens :: q
+  - p
+  - p ⇒ q
+#+end_tree
+#+end_parallel
+#+end_box
+
+#+begin_solution
+#+begin_src emacs-lisp
+(defun org-special-block-extras--list-to-math (lst)
+  "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
+  (cond
+   ((symbolp lst) "")
+   ((symbolp (car lst)) (org-special-block-extras--list-to-math (cadr lst)))
+   (t
+    (-let* (((conclusion₀ children) lst)
+            ((name named?) (s-split " :: " conclusion₀))
+            (conclusion (or named? conclusion₀)))
+      (if (not children)
+          (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
+        (format "\\frac{\\displaystyle %s}{%s}%s"
+                (s-join " \\qquad "
+                        (mapcar #'org-special-block-extras--list-to-math children))
+                conclusion
+                (if named? (format "[\\text{%s}]" name) "")))))))
+
+(org-special-block-extras-defblock tree (main-arg) nil
+  "Write a proof tree using Org-lists.
+
+To get
+
+         premises₀  …   premisesₙ
+       ────────────────────────────[ reason ]
+               conclusion
+
+You type
+
+       ,#+begin_tree
+       + reason :: conclusion
+         - premises₀
+         - premises₁
+         ⋮
+         - premisesₙ
+       ,#+end_tree
+
+Where each premisesᵢ may, recursively, also have named reasons
+and (indented) child premises of its own.
+
+If there are multiple trees, they are shown one after the other.
+
+The text in this block should be considered LaTeX;
+as such, Org markup is not recognised.
+
+A proof tree, derivation, is then just a deeply nested
+itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
+the following proves P = R.
+
+  ,#+begin_tree
+  + Trans :: P = R
+    - P = Q(X)
+      + ✓
+    - Trans :: Q(X) = R
+      + Trans :: Q(X) = Q(Y)
+        - Refl :: Q(X) = Q(X)
+          + ✓
+        - Leibniz :: Q(X) = Q(Y)
+          + X = Y
+            - ✓
+      + Sym :: Q(Y) = R
+        - R = Q(Y)
+          - ✓
+  ,#+end_tree"
+  (s-join "\n\n" (--map (format "$$%s\\\\$$"
+                                (org-special-block-extras--list-to-math it))
+                        (cdr (with-temp-buffer
+                               (insert raw-contents)
+                               (goto-char (point-min))
+                               (org-list-to-lisp))))))
+#+end_src
+#+end_solution
+
+  For more on these ‘proof trees’, see [[https://cpb-us-w2.wpmucdn.com/u.osu.edu/dist/a/4597/files/2014/08/Natural_Logic-2epb48e.pdf][‘Natural Logic’ by Neil Tennant]].
+  # Out of print, but downloadable as a scanned PDF as the above link.
 ** What's the rest of this article about?
    :PROPERTIES:
    :CUSTOM_ID: Whats_the_rest_of_this_article_about?
@@ -2128,7 +2275,7 @@ Completely lost one's train of thought…
 (defvar org-special-block-extras-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
 
-(org-special-block-extras--defblock remark
+(org-special-block-extras-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 "Format CONTENTS as an first-class editor comment according to BACKEND.
 
@@ -2259,7 +2406,7 @@ The CONTENTS string has two optional argument switches:
 --------------------------------------------------------------------------------
 
  A block to make an editorial comment could be overkill in some cases; luckily
- [[doc:org-special-block-extras--defblock][defblock]] automatically provides an associated link type for the declared
+ [[doc:org-special-block-extras-defblock][defblock]] automatically provides an associated link type for the declared
  special blocks.
 
  - Syntax: =[[remark:person_name][editorial remark]]=.
@@ -2334,7 +2481,7 @@ Requires: src_latex[:exports code]{,#+latex_header:  \usepackage{tcolorbox}}
 
 #+begin_details Implementation
 #+begin_src emacs-lisp -n -r
-(org-special-block-extras--defblock details (title "Details") (title-color "green")
+(org-special-block-extras-defblock details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -2378,6 +2525,50 @@ such as ‘background-color’.
 #+RESULTS:
 | :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (org-special-block-extras--details backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
 
+Above is a lower-case ‘d’etails block, we now make a captial-case ‘D’etails
+block, for the not-too-odd situation we want to have, right away, one details block
+within another.
+#+begin_src emacs-lisp -n -r
+(org-special-block-extras-defblock Details (title "Details") (title-color "green")
+  "Enclose contents in a folded up box, for HTML.
+
+For LaTeX, this is just a boring, but centered, box.
+
+By default, the TITLE of such blocks is “Details”
+and its TITLE-COLOR is green.
+
+In HTML, we show folded, details, regions with a nice greenish colour.
+
+In the future ---i.e., when I have time---
+it may be prudent to expose more aspects as arguments,
+such as ‘background-color’.
+"
+  (format
+   (pcase backend
+     (`latex "\\begin{quote}
+                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
+                    %s
+                  \\end{tcolorbox}
+                \\end{quote}")
+     (_ "<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75% 20%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"%s\">
+                         %s
+                      </font>
+                    </strong>
+                  </summary>
+                  %s
+               </details>"))
+   title-color title contents))
+#+end_src
 
 
 :Posterity_Older_implementation:
@@ -2488,7 +2679,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{tcolorbox}}
 
  #+begin_details Implementation
  #+begin_src emacs-lisp -r -n
-(org-special-block-extras--defblock box (title "") (background-color nil)
+(org-special-block-extras-defblock box (title "") (background-color nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
@@ -2509,7 +2700,7 @@ In the future, I will likely expose more arguments.
              ,contents
              "\\end{tcolorbox}"))
     (_ `("<div style=\"padding: 1em; background-color: "
-             ,(org-special-block-extras--subtle-colors (format "%s" (or background-color "green")))
+             ,(org-special-block-extras-subtle-colors (format "%s" (or background-color "green")))
              ";border-radius: 15px; font-size: 0.9em"
              "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
              "<h3>" ,title "</h3>"
@@ -2540,7 +2731,7 @@ In the future, I will likely expose more arguments.
 
  #+begin_details Implementation for Subtle Colours
  #+begin_src emacs-lisp -r -n
-(defun org-special-block-extras--subtle-colors (c)
+(defun org-special-block-extras-subtle-colors (c)
   "HTML codes for common colours.
 
 Names are very rough approximates.
@@ -2614,7 +2805,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{multicol}}
 
 #+begin_details Implementation
   #+begin_src emacs-lisp -r -n
-(org-special-block-extras--defblock parallel (cols 2) (bar nil)
+(org-special-block-extras-defblock parallel (cols 2) (bar nil)
   "Place ideas side-by-side, possibly with a seperator.
 
 There are COLS many columns, and they may be seperated by black
@@ -2911,7 +3102,7 @@ the following produces blue coloured text.
 
 (cl-loop for colour in org-special-block-extras--colors
       do (eval (read (format
-                      "(org-special-block-extras--defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
+                      "(org-special-block-extras-defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
                         \"Show text in %s color.\"
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
@@ -2950,7 +3141,7 @@ For faster experimentation between colours, we provide a generic =color= block
 that consumes a color argument.
 
   #+begin_src emacs-lisp
-(org-special-block-extras--defblock color (color black    :face (lambda (colour)
+(org-special-block-extras-defblock color (color black    :face (lambda (colour)
            (if (member (intern colour) org-special-block-extras--colors)
                `(:foreground ,(format "%s" colour))
              `(:height 300
@@ -3063,7 +3254,7 @@ Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:bro
 
 #+begin_details ‘latex-definitions’ Implementation
  #+begin_src emacs-lisp
-(org-special-block-extras--defblock latex-definitions nil nil
+(org-special-block-extras-defblock latex-definitions nil nil
   "Declare but do not display the CONTENTS according to the BACKEND."
   (format (pcase backend
             ('html "<p style=\"display:none\">\\[%s\\]</p>")
@@ -3656,7 +3847,7 @@ is coloured grey and the ‘value’ is coloured ‘color’.
                    ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
                    (""      "%s") ;; e.g., badge:key|value|color||logo
                    ('nil    "%s") ;; e.g., badge:key|value|color
-                   (t      (format "<a href=\"%s\">%%s</a>" ,(if social-shields-name `(format ,social-url label) 'url)))
+                   (t      (format "<a href=\"%s\">%%s</a>"  (s-replace "%" "%%" ,(if social-shields-name `(format ,social-url label) 'url))))
                    )
                  ,(if social-shields-name
                      (if social-shields-url
@@ -3682,6 +3873,16 @@ is coloured grey and the ‘value’ is coloured ‘color’.
                              raw-link))))))
 
   #+end_src
+
+  #+RESULTS:
+  : org-special-block-extras-make-badge
+
+Notice that we can have special ~%~-HTML characters in URLs; e.g.,
+~[[badge:my key|my value| my
+colour|https://www.google.com/search?q=hello%20world|gnu-emacs]]~
+⇒
+[[badge:my key|my value| my colour|https://www.google.com/search?q=hello%20world|gnu-emacs]].
+
 #+end_details
 :OLD:
 #+begin_src emacs-lisp :tangle no
@@ -3776,6 +3977,10 @@ For example, a super simple ‘badge’ link type
 #+begin_src emacs-lisp
 (org-special-block-extras-make-badge "badge")
 #+end_src
+
+#+RESULTS:
+| :follow | (lambda (path) (--> (s-split | path) (or (nth 3 it) path) (browse-url it))) | :export | (lambda (label description backend) (if (equal backend 'latex)  (-let [(key value color url logo) (s-split | label)] (format (pcase url (here (format <a id="%s" href="#%s">%%s</a> (s-replace % %% key) (s-replace % %% key))) ( %s) ('nil %s) (t (format <a href="%s">%%s</a> (s-replace % %% url)))) (format <img src="https://img.shields.io/badge/%s-%s-%s?logo=%s"> (url-hexify-string (s-replace - -- key)) (url-hexify-string (s-replace - -- (or value ))) color logo))))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
+
 
 --------------------------------------------------------------------------------
 
@@ -4189,14 +4394,16 @@ Entry names do not need to be unique, but labels do!
 # description-documentation of the given name.
 #+end_quote
 
-
 #+begin_details More Examples
 
-| Supported                            | Example          | Source                            |
-|--------------------------------------+------------------+-----------------------------------|
-| No description                       | doc:cat          | ~doc:cat~                           |
-| With description and code font       | [[doc:nat-trans][=polymorphism=]]   | ~[[doc:nat-trans][=polymorphism=]]~ |
-| Fallback; e.g., arbitrary ELisp Docs | doc:thread-first | ~doc:thread-first~                  |
+| Supported                            | Example          | Source                                         |
+|--------------------------------------+------------------+------------------------------------------------|
+| No description                       | doc:cat          | ~doc:cat~                                        |
+TODO: FIXME
+
+# | With description and code font       | [[doc:natural-transformation][=polymorphism=]]   | ~[[doc:natural-transformation][=polymorphism=]]~ |
+
+| Fallback; e.g., arbitrary ELisp Docs | doc:thread-first | ~doc:thread-first~                               |
 
 Notice how hovering over items makes them appear, but to make them disappear you
 should click on them or scroll away.  This is ideal when one wants to have
@@ -4206,16 +4413,651 @@ Below are the entries in my personal glossary ;-)
 #+begin_src emacs-lisp :exports results :results replace value :results table pp replace :tangle no
 (ignore-errors (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))
 #+end_src
-
-:Get_all_docs:
-#+begin_src emacs-lisp
+# or ...
+#+begin_src emacs-lisp :wrap box :exports results :tangle no
+(org-special-block-extras-docs-load-libraries)
 (ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car org-special-block-extras--docs-from-libraries)))))
 #+end_src
-:End:
-
 
 #+RESULTS:
-| ("doc:cat" "doc:Category_Theory" "doc:category_theory" "doc:polymorphism" "doc:nat-trans" "doc:Natural_Transformation" "doc:natural_transformation" "doc:nil" "doc:Calculational_Proof" "doc:calculational_proof" "doc:nil" "doc:Algorithmic_Problem_Solving" "doc:algorithmic_problem_solving" "doc:nil" "doc:Expression" "doc:expression" "doc:nil" "doc:Specification" "doc:specification" "doc:nil" "doc:Programming" "doc:programming" "doc:nil" "doc:Distributive" "doc:distributive" "doc:nil" "doc:Identity" "doc:identity" "doc:nil" "doc:Associative" "doc:associative" "doc:Operational_Semantics" "doc:Axiomatic_Semantics" "doc:Semantics" "doc:semantics" "doc:Propositional_Calculus" "doc:Calculus" "doc:calculus" "doc:nil" "doc:Metatheorem" "doc:metatheorem" "doc:nil" "doc:Theorem" "doc:theorem") |
+#+begin_box
+doc:cat
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:existential_angst
+doc:Existential_Angst
+doc:ex-angst
+doc:existential_angsty
+doc:Existential_Angsty
+doc:nil
+doc:nil
+doc:hussain
+doc:Hussain
+doc:Karbala
+doc:Cosmic_Tragedy
+doc:hello
+doc:Hello
+doc:nil
+doc:graph
+doc:Graph
+doc:nil
+doc:expression
+doc:Expression
+doc:nil
+doc:induction
+doc:Induction
+doc:nil
+doc:textual_substitution
+doc:Textual_Substitution
+doc:nil
+doc:inference_rule
+doc:Inference_Rule
+doc:nil
+doc:logic
+doc:Logic
+doc:nil
+doc:theorem
+doc:Theorem
+doc:nil
+doc:metatheorem
+doc:Metatheorem
+doc:nil
+doc:calculus
+doc:Calculus
+doc:Propositional_Calculus
+doc:semantics
+doc:Semantics
+doc:Axiomatic_Semantics
+doc:Operational_Semantics
+doc:calculational_proof
+doc:Calculational_Proof
+doc:nil
+doc:programming
+doc:Programming
+doc:nil
+doc:specification
+doc:Specification
+doc:nil
+doc:proving_is_programming
+doc:Proving_is_Programming
+doc:nil
+doc:algorithmic_problem_solving
+doc:Algorithmic_Problem_Solving
+doc:nil
+doc:natural_transformation
+doc:Natural_Transformation
+doc:nat-trans
+doc:polymorphism
+doc:category_theory
+doc:Category_Theory
+doc:associative
+doc:Associative
+doc:nil
+doc:identity
+doc:Identity
+doc:nil
+doc:distributive
+doc:Distributive
+doc:nil
+doc:commutative
+doc:Commutative
+doc:nil
+doc:reflexive
+doc:Reflexive
+doc:nil
+doc:transitive
+doc:Transitive
+doc:nil
+doc:symmetric
+doc:Symmetric
+doc:nil
+doc:antisymmetric
+doc:Antisymmetric
+doc:nil
+doc:asymmetric
+doc:Asymmetric
+doc:nil
+doc:preorder
+doc:Preorder
+doc:nil
+doc:equivalence
+doc:Equivalence
+doc:nil
+doc:linear
+doc:Linear
+doc:nil
+doc:semilinear
+doc:Semilinear
+doc:nil
+doc:univalent
+doc:Univalent
+doc:nil
+doc:total
+doc:Total
+doc:nil
+doc:map
+doc:Map
+doc:nil
+doc:surjective
+doc:Surjective
+doc:nil
+doc:injective
+doc:Injective
+doc:nil
+doc:bijective
+doc:Bijective
+doc:nil
+doc:iso
+doc:Iso
+doc:nil
+doc:difunctional
+doc:Difunctional
+doc:nil
+doc:nil
+doc:hussain
+doc:Hussain
+doc:Karbala
+doc:Cosmic_Tragedy
+doc:hello
+doc:Hello
+doc:nil
+doc:graph
+doc:Graph
+doc:nil
+doc:expression
+doc:Expression
+doc:nil
+doc:induction
+doc:Induction
+doc:nil
+doc:textual_substitution
+doc:Textual_Substitution
+doc:nil
+doc:inference_rule
+doc:Inference_Rule
+doc:nil
+doc:logic
+doc:Logic
+doc:nil
+doc:theorem
+doc:Theorem
+doc:nil
+doc:metatheorem
+doc:Metatheorem
+doc:nil
+doc:calculus
+doc:Calculus
+doc:Propositional_Calculus
+doc:semantics
+doc:Semantics
+doc:Axiomatic_Semantics
+doc:Operational_Semantics
+doc:calculational_proof
+doc:Calculational_Proof
+doc:nil
+doc:programming
+doc:Programming
+doc:nil
+doc:specification
+doc:Specification
+doc:nil
+doc:proving_is_programming
+doc:Proving_is_Programming
+doc:nil
+doc:algorithmic_problem_solving
+doc:Algorithmic_Problem_Solving
+doc:nil
+doc:natural_transformation
+doc:Natural_Transformation
+doc:nat-trans
+doc:polymorphism
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:associative
+doc:Associative
+doc:nil
+doc:identity
+doc:Identity
+doc:nil
+doc:distributive
+doc:Distributive
+doc:nil
+doc:commutative
+doc:Commutative
+doc:nil
+doc:reflexive
+doc:Reflexive
+doc:nil
+doc:transitive
+doc:Transitive
+doc:nil
+doc:symmetric
+doc:Symmetric
+doc:nil
+doc:antisymmetric
+doc:Antisymmetric
+doc:nil
+doc:asymmetric
+doc:Asymmetric
+doc:nil
+doc:preorder
+doc:Preorder
+doc:nil
+doc:equivalence
+doc:Equivalence
+doc:nil
+doc:linear
+doc:Linear
+doc:nil
+doc:semilinear
+doc:Semilinear
+doc:nil
+doc:univalent
+doc:Univalent
+doc:nil
+doc:total
+doc:Total
+doc:nil
+doc:map
+doc:Map
+doc:nil
+doc:surjective
+doc:Surjective
+doc:nil
+doc:injective
+doc:Injective
+doc:nil
+doc:bijective
+doc:Bijective
+doc:nil
+doc:iso
+doc:Iso
+doc:nil
+doc:difunctional
+doc:Difunctional
+doc:nil
+doc:nil
+doc:hussain
+doc:Hussain
+doc:Karbala
+doc:Cosmic_Tragedy
+doc:hello
+doc:Hello
+doc:nil
+doc:graph
+doc:Graph
+doc:nil
+doc:expression
+doc:Expression
+doc:nil
+doc:induction
+doc:Induction
+doc:nil
+doc:textual_substitution
+doc:Textual_Substitution
+doc:nil
+doc:inference_rule
+doc:Inference_Rule
+doc:nil
+doc:logic
+doc:Logic
+doc:nil
+doc:theorem
+doc:Theorem
+doc:nil
+doc:metatheorem
+doc:Metatheorem
+doc:nil
+doc:calculus
+doc:Calculus
+doc:Propositional_Calculus
+doc:semantics
+doc:Semantics
+doc:Axiomatic_Semantics
+doc:Operational_Semantics
+doc:calculational_proof
+doc:Calculational_Proof
+doc:nil
+doc:programming
+doc:Programming
+doc:nil
+doc:specification
+doc:Specification
+doc:nil
+doc:proving_is_programming
+doc:Proving_is_Programming
+doc:nil
+doc:algorithmic_problem_solving
+doc:Algorithmic_Problem_Solving
+doc:nil
+doc:natural_transformation
+doc:Natural_Transformation
+doc:nat-trans
+doc:polymorphism
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:associative
+doc:Associative
+doc:nil
+doc:identity
+doc:Identity
+doc:nil
+doc:distributive
+doc:Distributive
+doc:nil
+doc:commutative
+doc:Commutative
+doc:nil
+doc:reflexive
+doc:Reflexive
+doc:nil
+doc:transitive
+doc:Transitive
+doc:nil
+doc:symmetric
+doc:Symmetric
+doc:nil
+doc:antisymmetric
+doc:Antisymmetric
+doc:nil
+doc:asymmetric
+doc:Asymmetric
+doc:nil
+doc:preorder
+doc:Preorder
+doc:nil
+doc:equivalence
+doc:Equivalence
+doc:nil
+doc:linear
+doc:Linear
+doc:nil
+doc:semilinear
+doc:Semilinear
+doc:nil
+doc:univalent
+doc:Univalent
+doc:nil
+doc:total
+doc:Total
+doc:nil
+doc:map
+doc:Map
+doc:nil
+doc:surjective
+doc:Surjective
+doc:nil
+doc:injective
+doc:Injective
+doc:nil
+doc:bijective
+doc:Bijective
+doc:nil
+doc:iso
+doc:Iso
+doc:nil
+doc:difunctional
+doc:Difunctional
+doc:nil
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:existential_angst
+doc:Existential_Angst
+doc:ex-angst
+doc:existential_angsty
+doc:Existential_Angsty
+doc:nil
+doc:nil
+doc:hussain
+doc:Hussain
+doc:Karbala
+doc:Cosmic_Tragedy
+doc:hello
+doc:Hello
+doc:nil
+doc:graph
+doc:Graph
+doc:nil
+doc:expression
+doc:Expression
+doc:nil
+doc:induction
+doc:Induction
+doc:nil
+doc:textual_substitution
+doc:Textual_Substitution
+doc:nil
+doc:inference_rule
+doc:Inference_Rule
+doc:nil
+doc:logic
+doc:Logic
+doc:nil
+doc:theorem
+doc:Theorem
+doc:nil
+doc:metatheorem
+doc:Metatheorem
+doc:nil
+doc:calculus
+doc:Calculus
+doc:Propositional_Calculus
+doc:semantics
+doc:Semantics
+doc:Axiomatic_Semantics
+doc:Operational_Semantics
+doc:calculational_proof
+doc:Calculational_Proof
+doc:nil
+doc:programming
+doc:Programming
+doc:nil
+doc:specification
+doc:Specification
+doc:nil
+doc:proving_is_programming
+doc:Proving_is_Programming
+doc:nil
+doc:algorithmic_problem_solving
+doc:Algorithmic_Problem_Solving
+doc:nil
+doc:natural_transformation
+doc:Natural_Transformation
+doc:nat-trans
+doc:polymorphism
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:associative
+doc:Associative
+doc:nil
+doc:identity
+doc:Identity
+doc:nil
+doc:distributive
+doc:Distributive
+doc:nil
+doc:commutative
+doc:Commutative
+doc:nil
+doc:reflexive
+doc:Reflexive
+doc:nil
+doc:transitive
+doc:Transitive
+doc:nil
+doc:symmetric
+doc:Symmetric
+doc:nil
+doc:antisymmetric
+doc:Antisymmetric
+doc:nil
+doc:asymmetric
+doc:Asymmetric
+doc:nil
+doc:preorder
+doc:Preorder
+doc:nil
+doc:equivalence
+doc:Equivalence
+doc:nil
+doc:linear
+doc:Linear
+doc:nil
+doc:semilinear
+doc:Semilinear
+doc:nil
+doc:univalent
+doc:Univalent
+doc:nil
+doc:total
+doc:Total
+doc:nil
+doc:map
+doc:Map
+doc:nil
+doc:surjective
+doc:Surjective
+doc:nil
+doc:injective
+doc:Injective
+doc:nil
+doc:bijective
+doc:Bijective
+doc:nil
+doc:iso
+doc:Iso
+doc:nil
+doc:difunctional
+doc:Difunctional
+doc:hussain
+doc:Hussain
+doc:Karbala
+doc:Cosmic_Tragedy
+doc:hello
+doc:Hello
+doc:nil
+doc:graph
+doc:Graph
+doc:nil
+doc:expression
+doc:Expression
+doc:nil
+doc:induction
+doc:Induction
+doc:nil
+doc:textual_substitution
+doc:Textual_Substitution
+doc:nil
+doc:inference_rule
+doc:Inference_Rule
+doc:nil
+doc:logic
+doc:Logic
+doc:nil
+doc:theorem
+doc:Theorem
+doc:nil
+doc:metatheorem
+doc:Metatheorem
+doc:nil
+doc:calculus
+doc:Calculus
+doc:Propositional_Calculus
+doc:semantics
+doc:Semantics
+doc:Axiomatic_Semantics
+doc:Operational_Semantics
+doc:calculational_proof
+doc:Calculational_Proof
+doc:nil
+doc:programming
+doc:Programming
+doc:nil
+doc:specification
+doc:Specification
+doc:nil
+doc:proving_is_programming
+doc:Proving_is_Programming
+doc:nil
+doc:algorithmic_problem_solving
+doc:Algorithmic_Problem_Solving
+doc:nil
+doc:natural_transformation
+doc:Natural_Transformation
+doc:nat-trans
+doc:polymorphism
+doc:category_theory
+doc:Category_Theory
+doc:cat
+doc:associative
+doc:Associative
+doc:nil
+doc:identity
+doc:Identity
+doc:nil
+doc:distributive
+doc:Distributive
+doc:nil
+doc:commutative
+doc:Commutative
+doc:nil
+doc:reflexive
+doc:Reflexive
+doc:nil
+doc:transitive
+doc:Transitive
+doc:nil
+doc:symmetric
+doc:Symmetric
+doc:nil
+doc:antisymmetric
+doc:Antisymmetric
+doc:nil
+doc:asymmetric
+doc:Asymmetric
+doc:nil
+doc:preorder
+doc:Preorder
+doc:nil
+doc:equivalence
+doc:Equivalence
+doc:nil
+doc:linear
+doc:Linear
+doc:nil
+doc:semilinear
+doc:Semilinear
+doc:nil
+doc:univalent
+doc:Univalent
+doc:nil
+doc:total
+doc:Total
+doc:nil
+doc:map
+doc:Map
+doc:nil
+doc:surjective
+doc:Surjective
+doc:nil
+doc:injective
+doc:Injective
+doc:nil
+doc:bijective
+doc:Bijective
+doc:nil
+doc:iso
+doc:Iso
+doc:nil
+doc:difunctional
+doc:Difunctional
+doc:nil
+#+end_box
 
 In the export, it looks like some names are repeated, but in the source one
 would notice that we have /labels/ in both upper and lower cases and with underscores ;-)
@@ -4241,6 +5083,9 @@ We begin by making use of a list of documentation-glossary entries
 
 Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
 #+end_src
+
+#+RESULTS:
+: org-special-block-extras--docs
 
 For example, we may use =add-to-list= to add an entry only if it is not already in
 the list.
@@ -4317,14 +5162,14 @@ then make use of this variable when looking for documentation strings.
 Interactively call org-special-block-extras-docs-load-libraries
 to force your documentation libraries to be reloaded.
 
-See also org-special-block-extras--docs-libraries.
-")
+See also org-special-block-extras--docs-libraries.")
 #+end_src
 
 When the mode is actually enabled, then we load the user's libraries.
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
 ;; Ensure user's documentation libraries have loaded
-(org-special-block-extras-docs-load-libraries)
+(unless org-special-block-extras--docs-from-libraries
+  (org-special-block-extras-docs-load-libraries))
 #+end_src
 
 #+RESULTS:
@@ -4352,7 +5197,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
 #+begin_details ‘doc’ link implementation
 #+name: startup-code
 #+begin_src emacs-lisp
-(-let [name&doc
+(let ((name&doc
        (lambda (lbl)
          ;; Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries.
          (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))]
@@ -4366,7 +5211,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
                              lbl))))
              (setq name (nth 1 doc))
              (setq doc (nth 2 doc)))
-           (list name doc)))]
+           (list name doc)))))
 
 (org-link-set-parameters
  "doc"
@@ -4440,7 +5285,7 @@ the problem of *producing* documentation entries with a block type interface...
 
 #+begin_details ‘documentation’ Implementation: An Example of Mandatory Arguments and Using ‘raw-contents’
 #+BEGIN_SRC emacs-lisp
-(org-special-block-extras--defblock documentation
+(org-special-block-extras-defblock documentation
   (name (error "Documentation block: Name must be provided"))
   (label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
@@ -4804,13 +5649,13 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
     ;; Disable the in-Emacs fancy-links feature?
     ;; (org-special-block-extras-fancy-links nil)
     ;; Details heading “flash pink” whenever the user hovers over them?
-    (org-html-head "<style>  summary:hover {background:pink;} </style>")
+    (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
     (org-special-block-extras-link-twitter-excitement
      "This looks super neat (•̀ᴗ•́)و:")
   :config
   ;; Use short names like ‘defblock’ instead of the fully qualified name
-  ;; ‘org-special-block-extras--defblock’
+  ;; ‘org-special-block-extras-defblock’
     (org-special-block-extras-short-names))
 #+END_SRC
 
@@ -4818,7 +5663,7 @@ Then, provide support for a new type of special block, say re-using the ~src~
 blocks that, say, folds up all such blocks in HTML export, by declaring the
 following.
 #+BEGIN_SRC emacs-lisp :tangle no
-(org-special-block-extras--defblock src (lang nil) (title nil exports nil file nil)
+(org-special-block-extras-defblock src (lang nil) (title nil exports nil file nil)
   "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
 If a block has a ‘:title’, use that to title the ‘<details>’."
   (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
@@ -4902,6 +5747,11 @@ Here is what it looks like as HTML (left) and LaTeX (right):
 
 The above section, [[#practice_problems][‘practice problems’]], presents a few puzzles to get you
 comfortable with ~defblock~ ;-)
+
+Other cool stuff...
+#+attr_html: :width 800px
+#+attr_latex: :width 100px
+[[file:images/inference-rules.png]]
 
 ** COMMENT Live MWE :ignore:
    :PROPERTIES:
