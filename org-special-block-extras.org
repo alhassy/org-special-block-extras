@@ -777,6 +777,7 @@ possibilities for =params=.
  #+end_src
 
  #+RESULTS: startup-code
+ | :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (thread-last docs (s-replace    &emsp;) (s-replace |
 
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
    - If the type already exists, update it with the given arguments.
@@ -1916,7 +1917,7 @@ the following proves P = R.
         - R = Q(Y)
           - ✓
   ,#+end_tree"
-  (s-join "\n\n" (--map (format "$$%s\\\\$$"
+  (s-join "\n\n" (--map (format "$$%s\\newline$$" ; \newline is more forgiving than \\.
                                 (org-special-block-extras--list-to-math it))
                         (cdr (with-temp-buffer
                                (insert raw-contents)
