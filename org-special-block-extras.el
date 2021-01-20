@@ -206,7 +206,12 @@
 (defvar org-special-block-extras--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
-(defun org-special-block-extras--org-export (x)
+
+(when nil
+
+
+  
+(defun org-export (x) 
   "Wrap the given X in an export block for the current backend."
   (format "\n#+begin_export %s \n%s\n#+end_export\n"
           (if (equal org-special-block-extras--current-backend 'reveal)
@@ -220,6 +225,8 @@
            (if (equal 'reveal org-special-block-extras--current-backend)
                'html
              org-special-block-extras--current-backend)))
+
+)
 
 (cl-defmacro org-special-block-extras-defblock
   (name main-arg kwds &optional (docstring "") &rest body)
@@ -310,7 +317,8 @@ Three example uses:
   ;; ⇨ The special block support
   ;;
   (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
-  `(progn (cl-defun ,(intern (format "org-special-block-extras--%s" name))
+  `(progn     
+     (cl-defun ,(intern (format "org-special-block-extras--%s" name))
         (backend raw-contents
                  &optional ;; ,(car main-arg)
                  ,(if (consp `,main-arg) (car main-arg) 'main-arg)
@@ -323,11 +331,25 @@ Three example uses:
              (setq ,(car main-arg) it)
            (setq ,(car main-arg) ,(cadr main-arg))))
 
+       (cl-letf (((symbol-function 'org-export)
+		  (lambda (x)
+		      (format "\n#+begin_export %s \n%s\n#+end_export\n"
+          (if (equal org-special-block-extras--current-backend 'reveal)
+              'html
+            org-special-block-extras--current-backend)
+          x)))
+             ((symbol-function 'org-parse)
+              (lambda (x)
+		   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+           (if (equal 'reveal org-special-block-extras--current-backend)
+               'html
+             org-special-block-extras--current-backend)))))	
+
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
                collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
-       (org-special-block-extras--org-export
-                              (let ((contents (org-special-block-extras--org-parse raw-contents))) ,@body)))
+       (org-export
+                              (let ((contents (org-parse raw-contents))) ,@body))))
 
   ;; ⇨ The link type support
   (org-link-set-parameters
@@ -528,7 +550,7 @@ Label the source text by SOURCE and the result text by RESULT
 finally, the source-result fragments can be shown in a STYLE
 that is either “parallel” (default) or “sequential”.
 
-SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
+SEP is the separator; e.g., a rule ‘<hr>'.
 "
   (-let [text (concat
                ;; Source
@@ -536,15 +558,15 @@ SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
                  (format (if (equal backend 'html)
                              "<div ><pre class=\"src src-org\">%s</pre></div>"
                            "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
-                 org-special-block-extras--org-export
+                 org-export
                  (org-special-block-extras--blockcall box source :background-color source-color)
-                 org-special-block-extras--org-export)
+                 org-export)
                ;; Separator
                sep
                ;; Result
                (thread-last raw-contents
                  (org-special-block-extras--blockcall box result :background-color result-color)
-                 org-special-block-extras--org-export))]
+                 org-export))]
 
    (if (equal style "parallel")
        (org-special-block-extras--blockcall parallel "2" :bar nil text)
@@ -652,7 +674,7 @@ the following proves P = R.
         - R = Q(Y)
           - ✓
   #+end_tree"
-  (s-join "\n\n" (--map (format "$$%s\\\\$$"
+  (s-join "\n\n" (--map (format "$$%s\\newline$$" ; \newline is more forgiving than \\.
                                 (org-special-block-extras--list-to-math it))
                         (cdr (with-temp-buffer
                                (insert raw-contents)
@@ -745,7 +767,7 @@ that is appended to the remark.
                             "")))
           (contents′ (if replacement-clause?
                          (format "%s %s %s" this
-                                 (org-special-block-extras--org-export (funcall boxed with-keyword))
+                                 (org-export (funcall boxed with-keyword))
                                  that)
                        contents))
 

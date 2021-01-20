@@ -26,10 +26,14 @@
 :End:
 
 # (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq org-special-block-extras--docs-libraries  '("~/org-special-block-extras/documentation.org")))
+# 
+# (org-special-block-extras-short-names)
+# (ignore-errors (org-special-block-extras-docs-load-libraries))
 
 # +TOC: headlines 2
 
-# (require 'cl-lib)
+# MA: Final version should not have the following incantation active.
+#+OPTIONS: broken-links:auto
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -779,6 +783,7 @@ possibilities for =params=.
  #+RESULTS: startup-code
  | :follow | (lambda (_) nil) | :export | (lambda (label description backend) (-let [(name docs) (funcall (lambda (lbl) (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))] (unless doc (setq doc (condition-case nil (funcall org-special-block-extras--docs-fallback lbl) (error (error Error: No documentation-glossary entry for “%s”! lbl)))) (setq name (nth 1 doc)) (setq doc (nth 2 doc))) (list name doc))) label)] (add-to-list 'org-special-block-extras--docs-GLOSSARY (list label name docs)) (setq name (or description name)) (pcase backend (`html (format <abbr class="tooltip" title="%s">%s</abbr> (thread-last docs (s-replace    &emsp;) (s-replace |
 
+
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
    - If the type already exists, update it with the given arguments.
 
@@ -897,8 +902,6 @@ The PHRASE is taken literally; no regexp operators are recognised."
 #+latex_header: \newunicodechar{⇦}{\ensuremath{\Leftarrow}}
 #+latex_header: \newunicodechar{↦}{\ensuremath{\mapsto}}
 
-
-
 To have a unified, and pleasant, interface for declaring new blocks and links,
 we take the following approach:
 0. [@0] ( /Fuse/ the process of link generation and special block support into
@@ -911,7 +914,12 @@ we take the following approach:
 (defvar org-special-block-extras--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
-(defun org-special-block-extras--org-export (x)
+
+(when nil
+
+
+  
+(defun org-export (x) 
   "Wrap the given X in an export block for the current backend."
   (format "\n#+begin_export %s \n%s\n#+end_export\n"
           (if (equal org-special-block-extras--current-backend 'reveal)
@@ -925,6 +933,8 @@ we take the following approach:
            (if (equal 'reveal org-special-block-extras--current-backend)
                'html
              org-special-block-extras--current-backend)))
+
+)
 
 (cl-defmacro org-special-block-extras-defblock
   (name main-arg kwds &optional (docstring "") &rest body)
@@ -1015,7 +1025,8 @@ Three example uses:
   ;; ⇨ The special block support
   ;;
   (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
-  `(progn (cl-defun ,(intern (format "org-special-block-extras--%s" name))
+  `(progn     
+     (cl-defun ,(intern (format "org-special-block-extras--%s" name))
         (backend raw-contents
                  &optional ;; ,(car main-arg)
                  ,(if (consp `,main-arg) (car main-arg) 'main-arg)
@@ -1028,11 +1039,25 @@ Three example uses:
              (setq ,(car main-arg) it)
            (setq ,(car main-arg) ,(cadr main-arg))))
 
+       (cl-letf (((symbol-function 'org-export)
+		  (lambda (x)
+		      (format "\n#+begin_export %s \n%s\n#+end_export\n"
+          (if (equal org-special-block-extras--current-backend 'reveal)
+              'html
+            org-special-block-extras--current-backend)
+          x)))
+             ((symbol-function 'org-parse)
+              (lambda (x)
+		   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+           (if (equal 'reveal org-special-block-extras--current-backend)
+               'html
+             org-special-block-extras--current-backend)))))	
+
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
                collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
-       (org-special-block-extras--org-export
-                              (let ((contents (org-special-block-extras--org-parse raw-contents))) ,@body)))
+       (org-export
+                              (let ((contents (org-parse raw-contents))) ,@body))))
 
   ;; ⇨ The link type support
   (org-link-set-parameters
@@ -1057,11 +1082,10 @@ Three example uses:
                               (substring-no-properties (car kill-ring)))))
                      (format "%s\n\n%s"
                             raw-link ,docstring)))))))
- #+end_src
-
- #+RESULTS:
- : org-special-block-extras-defblock
-
+  #+end_src
+  
+# (fmakunbound 'org-special-block-extras--org-parse)
+	      
 # [[color:orange][Going forward,]]
 Going forward, it would be nice to have a set of switches that apply to all
 special blocks. For instance, ~:ignore~ to simply bypass the user-defined
@@ -1073,7 +1097,7 @@ block-type and link-type approaches used here into one macro.
  #+end_details
 
 2. [@2] We tell Org to please look at all special blocks
-   #+begin_src C :tangle no
+   #+begin_src org :tangle no
 ,#+begin_𝒳 main-arg :key₀ value₀ … :keyₙ valueₙ
 contents
 ,#+end_𝒳
@@ -1137,11 +1161,17 @@ BACKEND is the export back-end being used, as a symbol."
       )))
 #+end_src
 
+#+RESULTS:
+: org-special-block-extras--support-special-blocks-with-args
+
 When you enable the ~org-special-block-extras~ mode, it is activated...
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
 ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
 (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
  #+end_src
+
+ #+RESULTS:
+ | org-special-block-extras--support-special-blocks-with-args |
 
 When you disable the ~org-special-block-extras~ mode, it is deactivated...
 #+BEGIN_SRC emacs-lisp :noweb-ref disable-mode :tangle no
@@ -1189,6 +1219,10 @@ Namely,
   (defalias 'thread-blockcall      'org-special-block-extras-thread-blockcall)
   (defalias 'subtle-colors         'org-special-block-extras-subtle-colors))
  #+end_src
+
+ #+RESULTS:
+ : org-special-block-extras-short-names
+
 #+end_details
 
    This interface is essentially that of Org's ~src~ blocks, with the ~main-arg~
@@ -1215,6 +1249,9 @@ Perhaps an example will clarify things ...
  #+begin_src emacs-lisp :tangle no
 ;; We can use variable values when defining new blocks
 (setq angry-red '(:foreground "red" :weight bold))
+
+;; Enable short names; e.g., ‘defblock’ instead of ‘org-special-block-extras-defblock’.
+(org-special-block-extras-short-names)
 
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
@@ -1452,7 +1489,7 @@ Label the source text by SOURCE and the result text by RESULT
 finally, the source-result fragments can be shown in a STYLE
 that is either “parallel” (default) or “sequential”.
 
-SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
+SEP is the separator; e.g., a rule ‘<hr>'.
 "
   (-let [text (concat
                ;; Source
@@ -1460,15 +1497,15 @@ SEP is the separator; e.g., a peritoneal rule ‘<hr>'.
                  (format (if (equal backend 'html)
                              "<div ><pre class=\"src src-org\">%s</pre></div>"
                            "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
-                 org-special-block-extras--org-export
+                 org-export
                  (org-special-block-extras--blockcall box source :background-color source-color)
-                 org-special-block-extras--org-export)
+                 org-export)
                ;; Separator
                sep
                ;; Result
                (thread-last raw-contents
                  (org-special-block-extras--blockcall box result :background-color result-color)
-                 org-special-block-extras--org-export))]
+                 org-export))]
 
    (if (equal style "parallel")
        (org-special-block-extras--blockcall parallel "2" :bar nil text)
@@ -1924,6 +1961,10 @@ the following proves P = R.
                                (goto-char (point-min))
                                (org-list-to-lisp))))))
 #+end_src
+
+#+RESULTS:
+
+
 #+end_solution
 
   For more on these ‘proof trees’, see [[https://cpb-us-w2.wpmucdn.com/u.osu.edu/dist/a/4597/files/2014/08/Natural_Logic-2epb48e.pdf][‘Natural Logic’ by Neil Tennant]].
@@ -2316,7 +2357,7 @@ that is appended to the remark.
                             "")))
           (contents′ (if replacement-clause?
                          (format "%s %s %s" this
-                                 (org-special-block-extras--org-export (funcall boxed with-keyword))
+                                 (org-export (funcall boxed with-keyword))
                                  that)
                        contents))
 
