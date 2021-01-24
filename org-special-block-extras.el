@@ -91,13 +91,13 @@
         (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-        
+
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-        
+
         (unless org-special-block-extras--kbd-html-setup
           (setq org-special-block-extras--kbd-html-setup t)
         (setq org-html-head-extra
@@ -126,7 +126,7 @@
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-        
+
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
@@ -135,24 +135,24 @@
           (org-special-block-extras-docs-load-libraries))
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-        
+
         (unless org-special-block-extras--tooltip-html-setup
           (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
+
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
+
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-        
+
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
+
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -172,10 +172,10 @@
          });
                  });
              </script>
-        
+
         <style>
            abbr {color: red;}
-        
+
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -189,14 +189,14 @@
         (cl-loop for lnk in org-special-block-extras-fancy-links
               do (highlight-phrase (format "%s:[^ \n]*" lnk)
                                    'custom-button))
-        
+
         ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
         ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-    
+
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     (cl-loop for lnk in org-special-block-extras-fancy-links
@@ -210,8 +210,8 @@
 (when nil
 
 
-  
-(defun org-export (x) 
+
+(defun org-export (x)
   "Wrap the given X in an export block for the current backend."
   (format "\n#+begin_export %s \n%s\n#+end_export\n"
           (if (equal org-special-block-extras--current-backend 'reveal)
@@ -317,7 +317,7 @@ Three example uses:
   ;; ⇨ The special block support
   ;;
   (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
-  `(progn     
+  `(progn
      (cl-defun ,(intern (format "org-special-block-extras--%s" name))
         (backend raw-contents
                  &optional ;; ,(car main-arg)
@@ -332,18 +332,18 @@ Three example uses:
            (setq ,(car main-arg) ,(cadr main-arg))))
 
        (cl-letf (((symbol-function 'org-export)
-		  (lambda (x)
-		      (format "\n#+begin_export %s \n%s\n#+end_export\n"
+                  (lambda (x)
+                      (format "\n#+begin_export %s \n%s\n#+end_export\n"
           (if (equal org-special-block-extras--current-backend 'reveal)
               'html
             org-special-block-extras--current-backend)
           x)))
              ((symbol-function 'org-parse)
               (lambda (x)
-		   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+                   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
            (if (equal 'reveal org-special-block-extras--current-backend)
                'html
-             org-special-block-extras--current-backend)))))	
+             org-special-block-extras--current-backend)))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
@@ -1263,28 +1263,33 @@ See also org-special-block-extras--docs-libraries.")
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
 
-(let ((name&doc
-       (lambda (lbl)
-         ;; Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries.
-         (-let [(_ name doc) (or (assoc lbl org-special-block-extras--docs) (assoc lbl org-special-block-extras--docs-from-libraries))]
-           ;; If there is no documentation, try the fallback.
-           (unless doc
-             (setq doc
-                   (condition-case nil
-                       (funcall org-special-block-extras--docs-fallback lbl)
-                     (error
-                      (error "Error: No documentation-glossary entry for “%s”!"
-                             lbl))))
-             (setq name (nth 1 doc))
-             (setq doc (nth 2 doc)))
-           (list name doc)))))
+(defun org-special-block-extras--name&doc (lbl)
+  "Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries."
+  (let* ((wit (or (assoc lbl org-special-block-extras--docs)
+                  (assoc lbl org-special-block-extras--docs-from-libraries)))
+         (name (cl-second wit))
+         (doc (cl-third wit)))
+    ;; If there is no documentation, try the fallback.
+    (unless doc
+      (setq doc
+            (condition-case nil
+                (funcall org-special-block-extras--docs-fallback lbl)
+              (error
+               (error "Error: No documentation-glossary entry for “%s”!"
+                      lbl))))
+      (setq name (nth 1 doc))
+      (setq doc (nth 2 doc)))
+    (list name doc)))
 
 (org-link-set-parameters
  "doc"
  :follow (lambda (_) ())
  :export
-   `(lambda (label description backend)
-     (-let [(name docs) (funcall ,name&doc label)]
+   (lambda (label description backend)
+      (let* ((dit (org-special-block-extras--name&doc label))
+             (name (cl-first dit))
+             (docs (cl-second dit)))
+        ; -let [(name docs) (funcall ,name&doc label)]
        (add-to-list 'org-special-block-extras--docs-GLOSSARY
                     (list label name docs))
        (setq name (or description name))
@@ -1324,12 +1329,12 @@ We use this listing to actually print a glossary using
                                 "-declaration-site-%s}")
                          label name label)))))
   :help-echo
-  `(lambda (_ __ position)
+  (lambda (_ __ position)
     (save-excursion
       (goto-char position)
       (-let* (((&plist :path) (cadr (org-element-context)))
-              ((name doc) (funcall ,name&doc path)))
-        (format "[%s] %s :: %s" path name doc))))))
+              ((name doc) (org-special-block-extras--name&doc path)))
+        (format "[%s] %s :: %s" path name doc)))))
 
 (org-special-block-extras-defblock documentation
   (name (error "Documentation block: Name must be provided"))
