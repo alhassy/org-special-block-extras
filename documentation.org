@@ -9,6 +9,9 @@
 /Knowledge is software for your brain: The more you know, the more problems you can solve!/
 #+end_quote
 
+[[http://r6.ca/blog/20171008T222703Z.html][Taking Propositions as Types Seriously]]
+a nice brief read by Russell O'Connor, to link to.
+
 Foundations of Algebraic Specification and Formal Software Development Authors:
 Donald Sannella, Andrzej Tarlecki
 http://link.springer.com/book/10.1007%2F978-3-642-17336-3

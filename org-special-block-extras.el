@@ -3,7 +3,7 @@
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.1
+;; Version: 2.2
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -206,66 +206,58 @@
 (defvar org-special-block-extras--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
-
-(when nil
-
-
-
-(defun org-export (x)
-  "Wrap the given X in an export block for the current backend."
-  (format "\n#+begin_export %s \n%s\n#+end_export\n"
-          (if (equal org-special-block-extras--current-backend 'reveal)
-              'html
-            org-special-block-extras--current-backend)
-          x))
-
-(defun org-special-block-extras--org-parse (x)
-  "This should ONLY be called within an ORG-EXPORT call."
-   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-           (if (equal 'reveal org-special-block-extras--current-backend)
-               'html
-             org-special-block-extras--current-backend)))
-
-)
-
 (cl-defmacro org-special-block-extras-defblock
-  (name main-arg kwds &optional (docstring "") &rest body)
+  (name main-arg kwds &rest experimental&&docstring&&body)
   "Declare a new special block, and link, in the style of DEFUN.
 
 A full featured example is at the end of this documentation string.
 
 This is an anaphoric macro that provides export support for
-special blocks *and* links named NAME. Just as an Org-mode src-block
-consumes as main argument the language for the src block,
-our special blocks too consume a MAIN-ARG; it may be a symbol
-or a cons-list consisting of a symbolic name (with which
+special blocks *and* links named NAME. Just as an Org-mode
+src-block consumes as main argument the language for the src
+block, our special blocks too consume a MAIN-ARG; it may be a
+symbol or a cons-list consisting of a symbolic name (with which
 to refer to the main argument in the definition of the block)
 followed by a default value, then, optionally, any information
 for a one-time setup of the associated link type.
 
 The main arg may be a sequence of symbols separated by spaces,
-and a few punctuation with the exception of comma ‘,’ since
-it is a special Lisp operator. In doubt, enclose the main arg
-in quotes.
+and a few punctuation with the exception of comma ‘,’ since it is
+a special Lisp operator. In doubt, enclose the main arg in
+quotes.
 
 Then, just as Org-mode src blocks consume key-value pairs, our
 special blocks consume a number of KWDS, which is a list of the
 form (key₀ value₀ … keyₙ valueₙ).
 
-After that is a DOCSTRING, a familar feature of DEFUN.
-The docstring is displayed as part of the tooltip
-for the produced link type.
+After that is an optional DOCSTRING, a familar feature of DEFUN.
+The docstring is displayed as part of the tooltip for the
+produced link type.
 
-Finally, the BODY is a (sequence of) Lisp forms ---no progn needed---
-that may refer to the names BACKEND and CONTENTS
-which refer to the current export backend and the contents
-of the special block ---or the description clause of a link.
+Finally, the BODY is a (sequence of) Lisp forms ---no progn
+needed--- that may refer to the names BACKEND and CONTENTS which
+refer to the current export backend and the contents of the
+special block ---or the description clause of a link.
 
-CONTENTS refers to an Org-mode parsed string; i.e.,
-Org-markup is acknowledged.
+CONTENTS refers to an Org-mode parsed string; i.e., Org-markup is
+acknowledged.
 
-In, hopefully, rare circumstances, one may refer
-to RAW-CONTENTS to look at the fully unparsed contents.
+In, hopefully, rare circumstances, one may refer to RAW-CONTENTS
+to look at the fully unparsed contents.
+
+Finally, this macro exposes two functions:
++ ORG-EXPORT: Wrap the argument in an export block for the current backend.
++ ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
+             to escape text to Org, and out of the export block.
+
+----------------------------------------------------------------------
+
+TLDR for EXPERIMENTAL&&DOCSTRING&&BODY, the first two parts are
+optional; they're a symbol, a string, then the main body.  The
+symbol, OSPE-RESPECT-NEWLINES?, when present enables a highly
+experimental [i.e., do *not* use it!] feature: No new lines for
+blocks in HTML export.  Its need rose from developing the MARGIN
+block type.
 
 ----------------------------------------------------------------------
 
@@ -286,7 +278,7 @@ Example declaration, with all possible features shown:
 
    (defblock remark
      (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
-     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
+     \"Top level (HTML & LaTeX)OSPE-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
@@ -317,52 +309,132 @@ Three example uses:
   ;; ⇨ The special block support
   ;;
   (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
-  `(progn
-     (cl-defun ,(intern (format "org-special-block-extras--%s" name))
-        (backend raw-contents
-                 &optional ;; ,(car main-arg)
-                 ,(if (consp `,main-arg) (car main-arg) 'main-arg)
-                 &rest _
-                 &key ,@(-partition 2 kwds))
-       ,docstring
-       ;; Use default for main argument
-       (when (and ',(car main-arg) (s-blank-p ,(car main-arg)))
-         (--if-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) :main-arg)
-             (setq ,(car main-arg) it)
-           (setq ,(car main-arg) ,(cadr main-arg))))
 
-       (cl-letf (((symbol-function 'org-export)
-                  (lambda (x)
-                      (format "\n#+begin_export %s \n%s\n#+end_export\n"
-          (if (equal org-special-block-extras--current-backend 'reveal)
-              'html
-            org-special-block-extras--current-backend)
-          x)))
-             ((symbol-function 'org-parse)
-              (lambda (x)
-                   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-           (if (equal 'reveal org-special-block-extras--current-backend)
-               'html
-             org-special-block-extras--current-backend)))))
+  ;; Identify which of the optional features is present...
+  (let (ospe-respect-newlines?
+        docstring
+        body)
+    (if (symbolp (first experimental&&docstring&&body))
+        ;; okay we have a newline declaration, but do we ALSO have a doc-string?
+        (if (stringp (second experimental&&docstring&&body))
+            (setq ospe-respect-newlines? t
+                  docstring (second experimental&&docstring&&body)
+                  body      (cddr   experimental&&docstring&&body))
+          (setq ospe-respect-newlines? t
+                body      (rest experimental&&docstring&&body)))
+      ;; no newline declaration...
+      ;; maybe we have a docstring?
+      (if (stringp (first experimental&&docstring&&body))
+          (setq docstring (first experimental&&docstring&&body)
+                body      (rest experimental&&docstring&&body))
+        ;; else neither newline-declaration now docstring
+        (setq body experimental&&docstring&&body)))
+
+    `(progn
+       ;; Produce an associated Lisp function
+       ,(org-special-block-extras-defblock---support-block-type
+         name
+         docstring
+         (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
+         (cadr main-arg) ;; main argument's value
+         kwds
+         body
+         ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
+         ospe-respect-newlines?
+         )
+
+       ;; ⇨ The link type support
+       ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
+       ;; are dumped here verbatim.
+       ;; ‘(main-arg-name main-arg-val :face … :follow …)’
+       ,(org-special-block-extras-defblock---support-link-type
+         name (cddr main-arg) docstring))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WHERE ...
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(cl-defmethod org-special-block-extras-defblock---support-block-type
+    (name docstring main-arg-name main-arg-value kwds body ospe-respect-newlines?)
+  "Helper method for org-special-block-extras-defblock.
+
+This method creates an Org block type's associated Lisp function.
+
+NAME, string: The name of the block type.
+DOCSTRING, string: Documentation of block.
+MAIN-ARG-NAME: Essentially main-arg's name
+MAIN-ARG-VALUE: Essentially main-arg's value
+KWDS, plist: Keyword-value pairs
+BODY, list: Code to be executed"
+  `(cl-defun ,(intern (format "org-special-block-extras--%s" name))
+       (backend raw-contents
+                &optional ;; ,(car main-arg)
+                ,main-arg-name
+                &rest _
+                &key (ospe-link? nil) ,@(-partition 2 kwds))
+     ,docstring
+     ;; Use default for main argument
+     (when (and ',main-arg-name (s-blank-p ,main-arg-name))
+       (--if-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) :main-arg)
+           (setq ,main-arg-name it)
+         (setq ,main-arg-name ,main-arg-value)))
+
+     (cl-letf (((symbol-function 'org-export)
+                 (lambda (x)
+            "Wrap the given X in an export block for the current backend.
+
+          One can think of this function as replacing the #+begin_𝒳⋯#+end_𝒳
+          in-place in your Org document; but really that's done by the
+          ⋯-support-blocks function.
+          "
+            (if ospe-link?
+                x
+            ;; ospe-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
+            (cond ((and ,ospe-respect-newlines? (member backend '(html reveal)))
+                   (format "@@%s:%s@@" backend (s-replace "\n" (format "@@\n@@%s:" backend) x) backend))
+                  (:else
+                   (format "#+begin_export %s \n%s\n#+end_export"
+                           backend x))))))
+
+               ((symbol-function 'org-parse)
+                (lambda (x)
+                  "This should ONLY be called within an ORG-EXPORT call."
+                  (if ospe-link?
+                      x
+                    (cond ((and ,ospe-respect-newlines? (member backend '(html reveal)))
+                           (format "@@%s@@%s:" x backend))
+                          (:else
+                           (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+                                   backend)))))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
-               collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) ,(intern (format ":%s" k))) (when (s-blank-p ,k) (setq ,k it))))
-       (org-export
-                              (let ((contents (org-parse raw-contents))) ,@body))))
+                  collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args))
+                                                  ,(intern (format ":%s" k)))
+                             (when (s-blank-p ,k)
+                               (setq ,k it))))
 
-  ;; ⇨ The link type support
-  (org-link-set-parameters
-   ,(format "%s" name)
-   ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
-   ;; are dumped here verbatim.
-   ;; ‘(main-arg-name main-arg-val :face … :follow …)’
-   ,@(cddr main-arg)
-   :export (lambda (label description backend)
-             (s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-                            (,(intern (format "org-special-block-extras--%s" name))
-                             backend (or description label) label)))
-   ;; The tooltip alongside a link
+       (org-export
+        (let ((contents (org-parse raw-contents))) ,@body)))))
+
+(cl-defmethod org-special-block-extras-defblock---support-link-type
+    (name verbatim tooltip)
+  "Helper method for org-special-block-extras-defblock.
+
+This method creates an Org link type.
+
+NAME, string: The name of the link type.
+VERBATIM, list: Code dumped into the org-link-set-parameters.
+TOOLTIP, string: Tooltip text alongside link, for use in Emacs."
+  `(org-link-set-parameters
+    ,(format "%s" name)
+    ,@verbatim
+    :export (lambda (label description backend)
+              ; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+              (s-replace-all `(("@@" . "")) ; (,(format "@@%s:" backend) . "")
+               (,(intern (format "org-special-block-extras--%s" name))
+                backend (or description label) label :ospe-link? t)))
+    ;; The tooltip alongside a link
     :help-echo (lambda (window object position)
                  (save-excursion
                    (goto-char position)
@@ -373,7 +445,7 @@ Three example uses:
                               (copy-region-as-kill contents-begin contents-end)
                               (substring-no-properties (car kill-ring)))))
                      (format "%s\n\n%s"
-                            raw-link ,docstring)))))))
+                             raw-link ,tooltip))))))
 
 (defun org-special-block-extras--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
@@ -465,9 +537,10 @@ Namely,
 ;; (Assuming we already called org-special-block-extras-short-names. )
 (org-special-block-extras-defblock rremark
   (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
+  ; :please-preserve-new-lines
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
-            "<strong style=\"color: %s;\">⟦%s:  %s%s⟧</strong>"
+            "<strong style=\"color: %s;\">⟦%s: %s%s⟧</strong>"
             "{\\color{%s}\\bfseries %s:  %s%s}")
           color editor contents signoff))
 
@@ -674,7 +747,7 @@ the following proves P = R.
         - R = Q(Y)
           - ✓
   #+end_tree"
-  (s-join "\n\n" (--map (format "$$%s\\newline$$" ; \newline is more forgiving than \\.
+  (s-join "" (--map (format "\\[%s\\]"
                                 (org-special-block-extras--list-to-math it))
                         (cdr (with-temp-buffer
                                (insert raw-contents)
@@ -730,6 +803,7 @@ with all ‘:kᵢ:’ lines stripped out.
 
 (org-special-block-extras-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
+; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
 "Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
@@ -969,20 +1043,19 @@ which sometimes accomplishes the desired goal.
   "Colours that should be available on all systems.")
 
 (cl-loop for colour in org-special-block-extras--colors
-      do (eval (read (format
-                      "(org-special-block-extras-defblock %s (_ \"\" :face '(:foreground \"%s\")) nil
-                        \"Show text in %s color.\"
-                     (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
-                     contents))" colour colour colour colour colour))))
+         do (eval `(org-special-block-extras-defblock ,colour
+                     (the-color "black" :face `(:foreground ,(format "%s" (quote ,colour))))
+                     nil
+                     ,(format "Show text in %s color." colour)
+                     (let ()
+                       (format (pcase backend
+                                 (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+                                 (_  "<span style=\"color:%s;\">%s</span>"))
+                               (quote ,colour) contents)))))
 
-(org-special-block-extras-defblock color (color black    :face (lambda (colour)
-           (if (member (intern colour) org-special-block-extras--colors)
-               `(:foreground ,(format "%s" colour))
-             `(:height 300
-               :underline (:color "red" :style wave)
-               :overline  "red" :strike-through "red")))) nil
+(org-special-block-extras-defblock color
+  (color black :face (lambda (colour) `(:foreground ,(format "%s" colour))))
+  nil
   "Format text according to a given COLOR, which is black by default."
   (format (pcase backend
             (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
@@ -1263,6 +1336,77 @@ See also org-special-block-extras--docs-libraries.")
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
 
+(org-link-set-parameters
+ "doc"
+ :follow (lambda (_) ())
+ :export
+   `(lambda (label description backend)
+     (-let [(name docs) (org-special-block-extras--name&doc label)]
+       (add-to-list 'org-special-block-extras--docs-GLOSSARY
+                    (list label name docs))
+       (setq name (or description name))
+       (pcase backend
+         (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
+                         (org-special-block-extras--poor-mans-html-org-export docs)
+                         name))
+         ;; Make the current word refer to its glosary entry;
+         ;; also declare the location that the glossary should refer back to.
+         (`latex (format (concat "\\hyperref"
+                                 "[org-special-block-extras-glossary-%s]{%s}"
+                                "\\label{org-special-block-extras-glossary"
+                                "-declaration-site-%s}")
+                         label name label)))))
+  :help-echo
+  `(lambda (_ __ position)
+    (save-excursion
+      (goto-char position)
+      (-let* (((&plist :path) (cadr (org-element-context)))
+              ((name doc) (org-special-block-extras--name&doc path)))
+        (format "[%s] %s :: %s" path name doc)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WHERE ...
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun org-special-block-extras--poor-mans-html-org-export (s)
+  "Make Org-markup'd string S ready for HTML presentation.
+
+Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
+(org-export-string-as s 'html :body-only-please)"
+
+  ;; Make it look pretty!
+  (thread-last s
+    ;; Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
+    ;; (org-export-string-as docs 'html :body-only-please)
+    (s-replace-regexp "\\#\\+begin_src [^\n]*\n" "<pre class='tooltip'>")
+    (s-replace-regexp "\\( \\)*\\#\\+end_src\n" "</pre>")
+    (s-replace-regexp "\\#\\+begin_export [^\n]*\n" "")
+    (s-replace-regexp "\\( \\)*\\#\\+end_export" "")
+    (s-replace "  " "&emsp;") ; Preserve newlines
+    (s-replace "\n" "<br>")   ; Preserve whitespace
+    (s-replace-regexp "\\#\\+begin_example<br>" "")
+    (s-replace-regexp "\\#\\+end_example<br>" "")
+    ; (s-replace-regexp "\\#\\+begin_src \\(.\\)*\\#\\+end_src)" "<pre>\1</pre>")
+    ; (s-replace-regexp "\\#\\+begin_src [^<]*<br>" "<pre>")
+    ; (s-replace-regexp "<br>\\( \\)*\\#\\+end_src<br>" "<br>\1</pre>")
+    ;; Translate Org markup
+    ;; Only replace /.*/ by <em>.*<em> when it does not have an alphanum,:,/,< before it.
+    (s-replace-regexp "\\([^a-z0-9A-Z:/<]\\)/\\(.+?\\)/" "\\1<em>\\2</em>")
+    (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
+    (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
+    ;; No, sometimes we want equalities.
+    ;; (s-replace-regexp "=\\([^ \n].*?\\)=" "<code>\\1</code>")
+    (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
+    (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
+    ;; 5+ dashes result in a horizontal line
+    (s-replace-regexp "-----+" "<hr>")
+    ;; Spacing in math mode
+    (s-replace-regexp "\\\\quad" "&#x2000;")
+    (s-replace-regexp "\\\\," "&#8194;") ;; en space
+    (s-replace-regexp "\\\\;" "&#8195;") ;; em space
+    ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
+    (s-replace-regexp "\\\"" "''")))
+
 (defun org-special-block-extras--name&doc (lbl)
   "Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries."
   (let* ((wit (or (assoc lbl org-special-block-extras--docs)
@@ -1280,61 +1424,6 @@ We use this listing to actually print a glossary using
       (setq name (nth 1 doc))
       (setq doc (nth 2 doc)))
     (list name doc)))
-
-(org-link-set-parameters
- "doc"
- :follow (lambda (_) ())
- :export
-   (lambda (label description backend)
-      (let* ((dit (org-special-block-extras--name&doc label))
-             (name (cl-first dit))
-             (docs (cl-second dit)))
-        ; -let [(name docs) (funcall ,name&doc label)]
-       (add-to-list 'org-special-block-extras--docs-GLOSSARY
-                    (list label name docs))
-       (setq name (or description name))
-       (pcase backend
-         (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                         ;; Make it look pretty!
-                         (thread-last docs
-                           ;; Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
-                           ;; (org-export-string-as docs 'html :body-only-please)
-                           (s-replace "  " "&emsp;") ; Preserve newlines
-                           (s-replace "\n" "<br>")   ; Preserve whitespace
-                           (s-replace-regexp "\\#\\+begin_example<br>" "")
-                           (s-replace-regexp "\\#\\+end_example<br>" "")
-                           ;; Translate Org markup
-                           ;; Only replace /.*/ by <em>.*<em> when it does not have an alphanum,:,/ before it.
-                           (s-replace-regexp "\\([^a-z0-9A-Z:/]\\)/\\(.+?\\)/" "\\1<em>\\2</em>")
-                           (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
-                           (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
-                           ;; No, sometimes we want equalities.
-                           ;; (s-replace-regexp "=\\([^ \n].*?\\)=" "<code>\\1</code>")
-                           (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
-                           (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
-                           ;; 5+ dashes result in a horizontal line
-                           (s-replace-regexp "-----+" "<hr>")
-                           ;; Spacing in math mode
-                           (s-replace-regexp "\\\\quad" "&#x2000;")
-                           (s-replace-regexp "\\\\," "&#8194;") ;; en space
-                           (s-replace-regexp "\\\\;" "&#8195;") ;; em space
-                           ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
-                           (s-replace-regexp "\\\"" "''"))
-                         name))
-         ;; Make the current word refer to its glosary entry;
-         ;; also declare the location that the glossary should refer back to.
-         (`latex (format (concat "\\hyperref"
-                                 "[org-special-block-extras-glossary-%s]{%s}"
-                                "\\label{org-special-block-extras-glossary"
-                                "-declaration-site-%s}")
-                         label name label)))))
-  :help-echo
-  (lambda (_ __ position)
-    (save-excursion
-      (goto-char position)
-      (-let* (((&plist :path) (cadr (org-element-context)))
-              ((name doc) (org-special-block-extras--name&doc path)))
-        (format "[%s] %s :: %s" path name doc)))))
 
 (org-special-block-extras-defblock documentation
   (name (error "Documentation block: Name must be provided"))
@@ -1414,6 +1503,92 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
                              collect (format fstr name label
                                              (when doc (funcall preserve doc))
                                              label)))))))))
+
+(org-special-block-extras-defblock margin
+  (marker nil
+          :face '(:foreground "grey" :weight bold
+          :underline "orange" :overline "orange"))
+  (color "gray!80"
+          counter "footnote"
+          width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
+          ;; Width: https://tex.stackexchange.com/a/101861/69371
+  :please-inline__no-extra-newlines__k-thx-bye!
+  "Produce an HTML tooltip or a LaTeX margin note.
+
+The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
+
+For notes that you want to use repeatedly, in multiple articles
+or in multiple locations in the same article, consider using
+‘documentation’ to declare them and ‘doc’ to invoke them.
+
+For LaTeX, place ‘#+resize:’ to have the remainder of a block be
+resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
+
+----------------------------------------------------------------------
+
+WIDTH, COUNTER, and COLOR are LaTeX specfic.
+
+When no label, marker, is used for a marginal note, we rely
+on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
+Since HTML has no margin per se, we use “∘” as default marker:
+Users hover over it to read the marginal note.
+
+Marginal notes have their labels, markers, in black
+and the notes themselves have COLOR being grey!80.
+In Emacs, margin links appear grey with an orange tinted boarder.
+
+Regarding LaTeX, since verbatim environments do not in general work well
+as arguments to other commands, such as ‘\\marginpar’, we save the contents
+of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
+a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
+
+The WIDTH argument is the width of the margin; i.e., the width of the underlying
+minipage.
+
+One could use \\maxsizebox{.25\\textwidth}{\\textheight}{ ... }
+which only resizes the content if its natural size is larger than
+the given 〈width〉 or 〈height〉.  We don't use this, since
+maxsizebox does not natively allow linebreaks
+(e.g., one would wrap contents in a tabular environment then use
+‘\\\\’, two backslashes, to request a line break; but this
+crashes if one wants to also use verbatim environments.)
+
+In LaTeX, it may be useful to invoke ‘\\dotfill’."
+  (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
+    (pcase backend
+      (`latex
+       (setq marker (or marker (format "{\\the%s}" counter))) ;; "\\circ"
+       (format "\\!\\!${}^{\\textnormal{%s}}$
+               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
+               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
+               \\begin{minipage}{%s}
+               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
+               \\footnotesize
+               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
+               \\color{%s}
+               {\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n %s
+               \\end{minipage}
+               \\end{lrbox}
+               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}%s}
+               \\hspace{-1.9ex}
+               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax"
+               marker
+               width
+               color
+               marker
+               (if (s-contains? "#+resize:" contents)
+                   (s-concat
+                    (s-replace "#+resize:"
+                               "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
+                               (s-trim contents))
+                    "\n\\end{tabular}}")
+                 (s-trim contents))
+               stepcounter))
+      (_ (setq marker (or marker "°"))
+         (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+                 (org-special-block-extras--poor-mans-html-org-export contents)
+                 ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
+                 marker)))))
 
 (defvar org-special-block-extras-fancy-links
   '(badge kbd link-here doc tweet)

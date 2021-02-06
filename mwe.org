@@ -23,6 +23,9 @@ That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
 octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
 #+end_box
 
+/Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
+beyond what it can bear./ --- Quran 2:286
+
 #+LATEX_HEADER: \usepackage{multicol}
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
@@ -31,4 +34,4 @@ show:GLOSSARY
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
-badge:|buy_me_a_coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
