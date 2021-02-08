@@ -3,7 +3,7 @@
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.2
+;; Version: 2.3
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -91,13 +91,13 @@
         (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-
+        
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-
+        
         (unless org-special-block-extras--kbd-html-setup
           (setq org-special-block-extras--kbd-html-setup t)
         (setq org-html-head-extra
@@ -126,7 +126,7 @@
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-
+        
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
@@ -135,24 +135,24 @@
           (org-special-block-extras-docs-load-libraries))
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-
+        
         (unless org-special-block-extras--tooltip-html-setup
           (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
+        
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
+        
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-
+        
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
+        
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -172,10 +172,10 @@
          });
                  });
              </script>
-
+        
         <style>
            abbr {color: red;}
-
+        
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -189,14 +189,14 @@
         (cl-loop for lnk in org-special-block-extras-fancy-links
               do (highlight-phrase (format "%s:[^ \n]*" lnk)
                                    'custom-button))
-
+        
         ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
         ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-
+    
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     (cl-loop for lnk in org-special-block-extras-fancy-links
@@ -1589,6 +1589,93 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                  (org-special-block-extras--poor-mans-html-org-export contents)
                  ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                  marker)))))
+
+(defun org-special-block-extras--list-to-calc (lst rel hint-format NL-length color)
+  "Get a result from org-list-to-lisp and render it as a calculational proof.
+
+LST is an expression, possibly with a hint and dedicated relation.
+The expression may contain multiple lines, as may the hints.
+
+REL is the default relation in the left-most column.
+
+HINT_FORMAT is the formatting string for hints; e.g.,
+\"\\color{maroon}{\\langle\\large\\substack{\\text{ %s }}⟩}\"
+
+NL-length is how long the explicit vertical space, \\, should be.
+The number refers to the vspace occupied nearly by the height of
+a single normal sized letter.
+
+COLOR is the colour of the hints."
+  (cond
+   ((symbolp lst) "")
+   ((symbolp (car lst)) (org-special-block-extras--list-to-calc (cadr lst)))
+   (t (-let* (((conclusion₀ children) lst)
+              ((expr₀ hint) (s-split "--" conclusion₀))
+              ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
+              (op (or op₀ rel))
+              (expr (or expr₁ expr₀)))
+        (if (not children)
+            (if hint
+                (format
+                 "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+                 op
+                 color
+                 ;; the hfill is so that we do not use substack's default
+                 ;; centering, but instead left-align justificatiion
+                 ;; hints.
+                 (format (s-replace "%s" "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint-format)
+                         (s-replace "\n" " } \\hfill\\\\\n\\text{ "
+                                    (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint))))
+                 expr)
+              (format "\\begin{split}%s\\end{split} \n" expr))
+       ;; MA: The following could be improved.
+          (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+                  op color
+                  ;; BEGIN similar as above
+                  (format (s-replace
+                           "%s"
+                           "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} & %s \n\\end{split}\\hfill\\\\\n}}"
+                           hint-format)
+                          (s-replace "\n" " } \\hfill\\\\\n\\text{ "
+                                     (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint)))
+                          ;; END similar
+                          (s-chop-prefix
+                           "\\\\" (s-join
+                                   "\\\\"
+                                   (--map (format "%s" (org-special-block-extras--list-to-calc it rel hint-format NL-length color))
+                                          children))))
+                  expr))))))
+
+(org-special-block-extras-defblock calc
+  (main-arg)
+  (rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
+  "Render an Org-list as an equational proof.
+
+Sometimes the notation delimiting justification hints may clash
+with the domain topic, so we can change the hint format, e.g., to
+\"\\left\\langle %s \\right\\rangle\".  Set HINT-FORMAT to the
+empty string, \"\", to comment-out all hints in the exported
+version.
+
+The hint is the text immediately after a “--”, if there are
+multiple such delimiters only the first is shown; this can be
+useful if we want to have multiple alternatives, say for extra
+details in the source but not so much in the export.
+
+Line breaks are taken literally in the hints, but not in the
+math; where one uses \\\\.  For math with multiple lines, use ‘&’
+as an alignment marker; otherwise math is right-justified.
+
+For HTML, to use an TeX it must be enclosed in $, since that is
+what is required by MathJaX."
+  (thread-last (with-temp-buffer
+                 (insert raw-contents)
+                 (goto-char (point-min))
+                 (org-list-to-lisp))
+    cdr
+    (--map (format "%s" (org-special-block-extras--list-to-calc it rel hint-format explicit-vspace color)))
+    (s-join "\\\\")
+    (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
 (defvar org-special-block-extras-fancy-links
   '(badge kbd link-here doc tweet)

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-02-05 Fri 21:04 -->
+<!-- 2021-02-07 Sun 20:01 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -334,7 +334,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 <span>
 <p>
-<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-2.2-informational?logo=Gnu-Emacs"></a>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-2.3-informational?logo=Gnu-Emacs"></a>
 </p>
 
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
@@ -415,7 +415,7 @@ and the result looks nice. “Look ma, no HTML required!”
 </blockquote>
 
 
-<div id="orge9a490f" class="figure">
+<div id="org42d1364" class="figure">
 <p><img src="images/minimal-working-example-multiforms.png" alt="minimal-working-example-multiforms.png" width="1000px" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Write in Emacs using Org-mode, export beautifully to HTML or LaTeX</p>
@@ -658,12 +658,12 @@ See equation [[euler]].
 </div>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Result</h3>
 \begin{equation}
-\label{org691bf67}
+\label{org44b9165}
 e ^ {i \pi} + 1 = 0
 \end{equation}
 
 <p>
-See equation \eqref{org691bf67}.
+See equation \eqref{org44b9165}.
 </p>
 
 </div>
@@ -746,7 +746,7 @@ essay:
 </p>
 
 
-<div id="orgacb75a3" class="figure">
+<div id="org453d087" class="figure">
 <p><img src="../.emacs.d/https:/alhassy.github.io/emacs.d/images/literate-programming.png" alt="literate-programming.png" />
 </p>
 </div>
@@ -843,12 +843,13 @@ Installation instructions are <a href="#Summary">below</a>.
 </ul>
 </li>
 <li><a href="#Marginal-one-off-remarks">10. <a href="#Marginal-one-off-remarks">Marginal, “one-off”, remarks</a></a></li>
-<li><a href="#Emacs-faces-for-links">11. <a href="#Emacs-faces-for-links">Emacs faces for links</a></a></li>
-<li><a href="#Summary">12. <a href="#Summary">Summary</a></a>
+<li><a href="#Equational-Proofs">11. <a href="#Equational-Proofs">Equational Proofs</a></a></li>
+<li><a href="#Emacs-faces-for-links">12. <a href="#Emacs-faces-for-links">Emacs faces for links</a></a></li>
+<li><a href="#Summary">13. <a href="#Summary">Summary</a></a>
 <ul>
-<li><a href="#Installation-Instructions">12.1. <a href="#Installation-Instructions">Installation Instructions</a></a></li>
-<li><a href="#Minimal-working-example">12.2. <a href="#Minimal-working-example">Minimal working example</a></a></li>
-<li><a href="#Bye">12.3. <a href="#Bye">Bye!</a></a></li>
+<li><a href="#Installation-Instructions">13.1. <a href="#Installation-Instructions">Installation Instructions</a></a></li>
+<li><a href="#Minimal-working-example">13.2. <a href="#Minimal-working-example">Minimal working example</a></a></li>
+<li><a href="#Bye">13.3. <a href="#Bye">Bye!</a></a></li>
 </ul>
 </li>
 </ul>
@@ -927,7 +928,7 @@ For instance, here is a sample declaration.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defblock</span> stutter () (reps 2)
+<pre class="src src-emacs-lisp">(defblock stutter () (reps 2)
   <span style="color: #2aa198;">"Output the CONTENTS of the block REPS many times"</span>
   (org-parse (<span style="color: #b58900;">s-repeat</span> reps contents)))
 </pre>
@@ -938,7 +939,7 @@ Here is an invocation that passes an optional argument; which defaults to 2 when
 not given.
 </p>
 
-<pre class="example" id="org0414bc6">
+<pre class="example" id="orgc58cc9e">
 #+begin_stutter 5
 Emacs for the win :-)
 #+end_stutter 5
@@ -1128,7 +1129,7 @@ comments ;-)  &#x2014;Since there is [hopefully] no backend named <code>comment<
 <p>
 In general, a “special block” such as
 </p>
-<pre class="example" id="org81ae437">
+<pre class="example" id="orgd64bad2">
    #+begin_𝒳
    I /love/ Emacs!
    #+end_𝒳
@@ -1239,7 +1240,7 @@ pairs. Then our <code>div</code>'s refer to that particular <code>class</code> n
 For example, in an HTML export block, we may declare the following style class
 named <code>red</code>.
 </p>
-<pre class="example" id="org4b5333a">
+<pre class="example" id="org62f50d2">
 #+begin_export html
 &lt;style&gt;
 .red { color:red; }
@@ -1317,7 +1318,7 @@ Raw use <a href="https://lmgtfy.com/?q=salam">salam</a> and descriptive, <a href
 </p>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgb91d7a0"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
+<pre class="src src-emacs-lisp" id="org090399a"><span class="linenr"> 1: </span>(<span style="color: #b58900;">org-link-set-parameters</span>
 <span class="linenr"> 2: </span>  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">The name of the new link type, usage: &#8220;example:label&#8221;</span>
 <span id="coderef-extype" class="coderef-off"><span class="linenr"> 3: </span>  <span style="color: #2aa198;">"example"</span></span>
 <span class="linenr"> 4: </span>
@@ -2042,7 +2043,7 @@ accessible.
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">it takes two arguments: &#8220;color&#8221; and &#8220;signoff&#8221;</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">with default values being "red" and "".</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">(Assuming we already called org-special-block-extras-short-names. )</span>
-(<span style="color: #859900; font-weight: bold;">defblock</span> rremark
+(defblock rremark
   (editor <span style="color: #2aa198;">"Editor Remark"</span> <span style="color: #d33682; font-style: italic;">:face</span> angry-red) (color <span style="color: #2aa198;">"red"</span> signoff <span style="color: #2aa198;">""</span>)
   <span style="color: #2aa198;">"Top level (HTML &amp; LaTeX) editorial remarks; in Emacs they're angry red."</span>
   (<span style="color: #b58900;">format</span> (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">equal</span> backend 'html)
@@ -2053,14 +2054,14 @@ accessible.
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">I don't want to change the definition, but I'd like to have</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">the following as personalised defaults for the &#8220;remark&#8221; block.</span>
 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">OR, I'd like to set this for links, which do not have argument options.</span>
-(<span style="color: #859900; font-weight: bold;">set-block-header-args</span> rremark <span style="color: #d33682; font-style: italic;">:main-arg</span> <span style="color: #2aa198;">"Jasim Jameson"</span> <span style="color: #d33682; font-style: italic;">:signoff</span> <span style="color: #2aa198;">"( Aim for success! )"</span>)
+(set-block-header-args rremark <span style="color: #d33682; font-style: italic;">:main-arg</span> <span style="color: #2aa198;">"Jasim Jameson"</span> <span style="color: #d33682; font-style: italic;">:signoff</span> <span style="color: #2aa198;">"( Aim for success! )"</span>)
 </pre>
 </div>
 
 <p>
 <span class="underline">Example use</span>
 </p>
-<pre class="example" id="org70e57db">
+<pre class="example" id="org513cfee">
 The sum of the first $n$ natural numbers is $\sum_{i = 0}^n i = {n × (n + 1)
 \over 2}$. Note that $n × (n + 1)$ is even.
 [[rremark:Jasim Jameson][Why are you taking about “$\mathsf{even}$” here?]]
@@ -2123,7 +2124,7 @@ provide a macro <abbr class="tooltip" title="Thread text through a number of blo
 
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Example</h3>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">thread-blockcall</span> raw-contents
+<pre class="src src-emacs-lisp">(thread-blockcall raw-contents
                   (box name)
                   (details (<span style="color: #b58900;">upcase</span> name) <span style="color: #d33682; font-style: italic;">:title-color</span> <span style="color: #2aa198;">"green"</span>)
 </pre>
@@ -2255,10 +2256,10 @@ text before seeing the answer -&#x2014;this works well in HTML, not so in LaTeX.
 E.g., what is 1 + 1?
 </p>
 
-<style> #g21 {color: grey; background-color:grey;}
-       #g21:hover {color: black; background-color:white;} </style>
+<style> #g6 {color: grey; background-color:grey;}
+       #g6:hover {color: black; background-color:white;} </style>
 <p>
-<span id="g21"> Useless </span> Hint: <span id="g21"> What is a number? </span>
+<span id="g6"> Useless </span> Hint: <span id="g6"> What is a number? </span>
 </p>
 
 
@@ -2400,7 +2401,7 @@ error-prone tedium.
 <p>
 <span class="underline">This</span>
 </p>
-<pre class="example" id="org48c5e77">
+<pre class="example" id="orgd0d26c1">
 #+begin_org-demo
 /italics/ and _underline_
 
@@ -2442,7 +2443,7 @@ $e^{i \times \pi} + 1 = 0$
 <p>
 <span class="underline">This</span>
 </p>
-<pre class="example" id="orga7e0e83">
+<pre class="example" id="org4ea5f0c">
 #+begin_org-demo :style seq
 /italics/ and _underline_
 
@@ -2483,7 +2484,7 @@ disappear in the preprocessing step!
 <p>
 E.g., this
 </p>
-<pre class="example" id="orgcc964a8">
+<pre class="example" id="orga3f3700">
 #+begin_org-demo
 #+begin_box
 There is no special block ‘box’ to touch!
@@ -2715,7 +2716,7 @@ only.</li>
 <br>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Examples</h3>
 
-<pre class="example" id="orgdf47283">
+<pre class="example" id="orge713d33">
 #+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
 Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father, indeed I have seen (in a dream) eleven
 stars and the sun and the moon; I saw them prostrating to me.”/
@@ -2834,7 +2835,7 @@ Define a block <abbr class="tooltip" title="Hide text enclosed in double parens 
 <li><p>
 You will need the following style setup …
 </p>
-<pre class="example" id="orgd1d015a">
+<pre class="example" id="orgffa4a7f">
 #+html_head: &lt;style&gt;
 #+html_head: .spoiler {color: grey; background-color:grey;}
 #+html_head: .spoiler:hover {color: black; background-color:white;}
@@ -2852,18 +2853,18 @@ in the introduction to special blocks.</li>
 <br>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>Examples</h3>
 <div style="column-rule-style: solid;column-count: 2;">
-<pre class="example" id="org7de42ce">
+<pre class="example" id="orge006a14">
 #+begin_spoiler
 ((Yusuf)) said to his father ((Yacoub)), /“O my father, indeed I have seen
 ((eleven stars)) and ((the sun and the moon)); I saw them prostrating to me.”/
 #+end_spoiler
 </pre>
 
-<style> #g22 {color: grey; background-color:grey;}
-       #g22:hover {color: black; background-color:white;} </style>
+<style> #g7 {color: grey; background-color:grey;}
+       #g7:hover {color: black; background-color:white;} </style>
 <p>
-<span id="g22"> Yusuf </span> said to his father <span id="g22"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span id="g22"> eleven stars </span> and <span id="g22"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span id="g7"> Yusuf </span> said to his father <span id="g7"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span id="g7"> eleven stars </span> and <span id="g7"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>
 
 
@@ -2873,18 +2874,18 @@ in the introduction to special blocks.</li>
 </p>
 <br>
 
-<pre class="example" id="org7f5e68a">
+<pre class="example" id="org9fbad43">
 #+begin_spoiler :left "[" :right "]"
 [Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
 [eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/
 #+end_spoiler
 </pre>
 
-<style> #g23 {color: grey; background-color:grey;}
-       #g23:hover {color: black; background-color:white;} </style>
+<style> #g8 {color: grey; background-color:grey;}
+       #g8:hover {color: black; background-color:white;} </style>
 <p>
-<span id="g23"> Yusuf </span> said to his father <span id="g23"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span id="g23"> eleven stars </span> and <span id="g23"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span id="g8"> Yusuf </span> said to his father <span id="g8"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span id="g8"> eleven stars </span> and <span id="g8"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>
 
 
@@ -2937,11 +2938,11 @@ to colour the spoiler &#x2014;which defaults to grey ;-)
 <p>
 For example, the next segment of text is in a block <code>#+begin_spoiler pink</code> &#x2026;
 </p>
-<style> #g24 {color: pink; background-color:pink;}
-       #g24:hover {color: black; background-color:white;} </style>
+<style> #g9 {color: pink; background-color:pink;}
+       #g9:hover {color: black; background-color:white;} </style>
 <p>
-<span id="g24"> Yusuf </span> said to his father <span id="g24"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span id="g24"> eleven stars </span> and <span id="g24"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span id="g9"> Yusuf </span> said to his father <span id="g9"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span id="g9"> eleven stars </span> and <span id="g9"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>
 
 
@@ -2949,11 +2950,11 @@ For example, the next segment of text is in a block <code>#+begin_spoiler pink</
 <p>
 Whereas, the following begins with <code>#+begin_spoiler orange</code> &#x2026;
 </p>
-<style> #g25 {color: orange; background-color:orange;}
-       #g25:hover {color: black; background-color:white;} </style>
+<style> #g10 {color: orange; background-color:orange;}
+       #g10:hover {color: black; background-color:white;} </style>
 <p>
-<span id="g25"> Yusuf </span> said to his father <span id="g25"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span id="g25"> eleven stars </span> and <span id="g25"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span id="g10"> Yusuf </span> said to his father <span id="g10"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span id="g10"> eleven stars </span> and <span id="g10"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>
 
 
@@ -2991,10 +2992,10 @@ Whereas, the following begins with <code>#+begin_spoiler orange</code> &#x2026;
 <p>
 There's actually a problem with this ‘solution’; can you find it?
 </p>
-<style> #g26 {color: grey; background-color:grey;}
-       #g26:hover {color: black; background-color:white;} </style>
+<style> #g11 {color: grey; background-color:grey;}
+       #g11:hover {color: black; background-color:white;} </style>
 <p>
-Hint: <span id="g26"> Try the link form and see how it breaks! </span>
+Hint: <span id="g11"> Try the link form and see how it breaks! </span>
 </p>
 
 
@@ -3354,13 +3355,13 @@ replaced by <code>bar</code> unless the argument <code>:replacement:</code> is g
 </p>
 
 
-<div id="orga6780c1" class="figure">
+<div id="org59fbc20" class="figure">
 <p><img src="images/foo_block.png" alt="foo_block.png" />
 </p>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgc56c362">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
+<pre class="src src-emacs-lisp" id="orgec939ca">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--foo</span> (backend contents)
   <span style="color: #35a69c; font-style: italic;">"The FOO block type replaces all occurances of &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">foo</span><span style="color: #35a69c; font-style: italic;">&#8217; with &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">bar</span><span style="color: #35a69c; font-style: italic;">&#8217;,</span>
 <span style="color: #35a69c; font-style: italic;">unless a &#8216;</span><span style="color: #6c71c4; font-weight: bold; font-style: italic;">:replacement:</span><span style="color: #35a69c; font-style: italic;">&#8217; is provided."</span>
   (<span style="color: #859900; font-weight: bold;">-let</span> [(contents&#8242; . (<span style="color: #b58900; font-style: italic;">&amp;alist</span> 'replacement))
@@ -3848,7 +3849,7 @@ links:  <br> <code>[[remark:Qasim][/‘j’/ #+replacewith: /‘q’/]]</code>
 <p>
 All editor comments, remarks, are disabled by declaring, in your Org file:
 </p>
-<pre class="example" id="orga43e8ae">
+<pre class="example" id="org426d054">
 #+bind: org-special-block-extras-hide-editor-comments t
 </pre>
 <p>
@@ -4029,7 +4030,7 @@ you could, say, have the details heading “flash pink” whenever the user hove
 over it. This can be accomplished by inserting the following incantation into
 your Org file or place it into your <code>org-html-head</code> variable.
 </p>
-<pre class="example" id="orgae4af09">
+<pre class="example" id="orgd458bc3">
 #+html: &lt;style&gt;  summary:hover {background:pink;} &lt;/style&gt;
 </pre>
 
@@ -4091,7 +4092,7 @@ i.e., \(\large \frac{1}{𝓃!}\).
 Neato, let's do more super cool stuff ^_^
 </p>
 
-<div class="footnotesize" id="org9c57ee5">
+<div class="footnotesize" id="orgb0d0ddb">
 <p>
 ( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
 LaTeX. )
@@ -4436,7 +4437,7 @@ Use <kbd> M-x list-colors-display </kbd> to see a list of defined colour names i
                   </summary>
 
 
-<div id="org3ab7e66" class="figure">
+<div id="org436db64" class="figure">
 <p><img src="images/colours.jpg" alt="colours.jpg" />
 </p>
 </div>
@@ -4604,7 +4605,7 @@ By default, Org uses the <code>graphicx</code> LaTeX package which let's us colo
 &#x2014;see its documentation <a href="http://ctan.mirror.rafal.ca/macros/latex/required/graphics/grfguide.pdf">here</a>.  For example, in an <code>#+begin_export latex</code> block,
 the following produces blue coloured text.
 </p>
-<pre class="example" id="orge25c1d6">
+<pre class="example" id="org4de23cf">
 {  \color{blue}  This is a sample text in blue.  }
 </pre>
 
@@ -4691,7 +4692,7 @@ in <b>both</b> the Emacs interface and in exported backends.
 </p>
 
 
-<div id="org67fe52a" class="figure">
+<div id="orgf580d52" class="figure">
 <p><img src="images/colour_links.png" alt="colour_links.png" />
 </p>
 </div>
@@ -4906,7 +4907,7 @@ or <kbd> C-c C-e h o </kbd> to export an Org-mode file to HTML.
 </ul>
 
 
-<div id="org655f756" class="figure">
+<div id="org990a9ee" class="figure">
 <p><img src="./images/kbd.png" alt="kbd.png" />
 </p>
 </div>
@@ -5181,7 +5182,7 @@ such as whether it's maintained, its license, and if it's documented.
 </p>
 
 
-<div id="org3381d52" class="figure">
+<div id="orgfc18603" class="figure">
 <p><img src="images/badges.png" alt="badges.png" />
 </p>
 <p><span class="figure-number">Figure 7: </span>An Emacs interface to <a href="https://shields.io/">https://shields.io/</a></p>
@@ -5283,7 +5284,7 @@ Also: <img src="https://img.shields.io/badge/--nil?logo=nil">
 </p></li>
 </ul>
 <div style="padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>General Syntax</h3>
-<pre class="example" id="orgb5c34e1">
+<pre class="example" id="orgae07768">
 badge:your_key|its_neato_value|some_url|a_logo_as_shown_below
 
 [[badge: your key | its neato value | some url | a logo as shown below]]
@@ -5811,21 +5812,21 @@ E.g., user-declared <abbr class="tooltip" title="A theory of typed composition; 
                     </strong>
                   </summary>
 
-<div id="org2dc5b8b" class="figure">
+<div id="orga8bf565" class="figure">
 <p><img src="images/tooltips_browser.png" alt="tooltips_browser.png" />
 </p>
 <p><span class="figure-number">Figure 8: </span>Tooltips for documentation and glossary items &#x2013;in the browser!</p>
 </div>
 
 
-<div id="org271e368" class="figure">
+<div id="orgb0370ef" class="figure">
 <p><img src="images/tooltips_emacs.png" alt="tooltips_emacs.png" />
 </p>
 <p><span class="figure-number">Figure 9: </span>Tooltips for documentation and glossary items &#x2013;in Emacs!</p>
 </div>
 
 
-<div id="orged5fc04" class="figure">
+<div id="org46cb217" class="figure">
 <p><img src="images/tooltips_pdf.png" alt="tooltips_pdf.png" />
 </p>
 <p><span class="figure-number">Figure 10: </span>Tooltips for documentation and glossary items &#x2013;in the PDF!</p>
@@ -5841,7 +5842,7 @@ E.g., user-declared <abbr class="tooltip" title="A theory of typed composition; 
 <p>
 <span class="underline">User enters …</span>
 </p>
-<pre class="example" id="org22cc865">
+<pre class="example" id="orgd241380">
 #+begin_documentation Existential Angst :label "ex-angst"
 A negative feeling arising from freedom and responsibility.
 
@@ -6638,7 +6639,7 @@ For example, we may use <code>add-to-list</code> to add an entry only if it is n
 the list.
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgd0b7e85">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span>
+<pre class="src src-emacs-lisp" id="orgb624a4c">(<span style="color: #b58900;">add-to-list</span> '<span style="color: #268bd2;">org-special-block-extras--docs</span>
   '(<span style="color: #2aa198;">"cat"</span> <span style="color: #2aa198;">"Category Theory"</span> <span style="color: #2aa198;">"A theory of typed  composition; e.g., typed monoids."</span>))
 </pre>
 </div>
@@ -6685,7 +6686,7 @@ In your init, you could do the following. ( See the installation instructions
 below, for more! )
 </p>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="org5639184">(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--docs-libraries</span>
+<pre class="src src-emacs-lisp" id="org5c9aa6a">(<span style="color: #859900; font-weight: bold;">setq</span> <span style="color: #268bd2;">org-special-block-extras--docs-libraries</span>
   '(<span style="color: #2aa198;">"~/org-special-block-extras/documentation.org"</span>))
 </pre>
 </div>
@@ -6783,7 +6784,7 @@ time. E.g., upon export <code>doc:wombo</code> will produce a no-entry error.
                     </strong>
                   </summary>
 <div class="org-src-container">
-<pre class="src src-emacs-lisp" id="orgf932d14">(<span style="color: #b58900;">org-link-set-parameters</span>
+<pre class="src src-emacs-lisp" id="orgadedb4e">(<span style="color: #b58900;">org-link-set-parameters</span>
  <span style="color: #2aa198;">"doc"</span>
  <span style="color: #d33682; font-style: italic;">:follow</span> (<span style="color: #859900; font-weight: bold;">lambda</span> (_) ())
  <span style="color: #d33682; font-style: italic;">:export</span>
@@ -7193,7 +7194,7 @@ buffer, if possible.</li>
 <div id="outline-container-Marginal-one-off-remarks" class="outline-2">
 <h2 id="Marginal-one-off-remarks"><span class="section-number-2">10</span> <a href="#Marginal-one-off-remarks">Marginal, “one-off”, remarks</a></h2>
 <div class="outline-text-2" id="text-Marginal-one-off-remarks">
-<div class="tiny" id="org823c17b">
+<div class="tiny" id="org8696ff6">
 <div class="org-center">
 <p>
 <i>(Scroll to make tooltips disappear!)</i>
@@ -7639,8 +7640,800 @@ source blocks in the HTML tooltips &#x2014;which can be done using
 </div>
 </div>
 
+<div id="outline-container-Equational-Proofs" class="outline-2">
+<h2 id="Equational-Proofs"><span class="section-number-2">11</span> <a href="#Equational-Proofs">Equational Proofs</a></h2>
+<div class="outline-text-2" id="text-Equational-Proofs">
+<p>
+Sometimes you just want to have a quick, yet <i>detailed</i>, explanation and so we can
+use <b><span style="color:green;">org-lists as equational proofs</span></b> &#x2014;thanks to the <abbr class="tooltip" title="Render an Org-list as an equational proof.<br><br>Sometimes the notation delimiting justification hints may clash<br>with the domain topic, so we can change the hint format, e.g., to<br>''\left\langle %s \right\rangle''.&emsp;Set HINT-FORMAT to the<br>empty string, '''', to comment-out all hints in the exported<br>version.<br><br>The hint is the text immediately after a “--”, if there are<br>multiple such delimiters only the first is shown; this can be<br>useful if we want to have multiple alternatives, say for extra<br>details in the source but not so much in the export.<br><br>Line breaks are taken literally in the hints, but not in the<br>math; where one uses \\.&emsp;For math with multiple lines, use ‘&’<br>as an alignment marker; otherwise math is right-justified.<br><br>For HTML, to use an TeX it must be enclosed in $, since that is<br>what is required by MathJaX.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (OSPE-LINK\? nil) (REL ''='') (HINT-FORMAT ''\\left[ %s \\right.'') (EXPLICIT-VSPACE 2) (COLOR ''maroon''))">calc</abbr> block!
+</p>
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="pink">
+                         Implementation
+                      </font>
+                    </strong>
+                  </summary>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #859900; font-weight: bold;">defun</span> <span style="color: #b58900;">org-special-block-extras--list-to-calc</span> (lst rel hint-format NL-length color)
+  <span style="color: #35a69c; font-style: italic;">"Get a result from org-list-to-lisp and render it as a calculational proof.</span>
+
+<span style="color: #35a69c; font-style: italic;">LST is an expression, possibly with a hint and dedicated relation.</span>
+<span style="color: #35a69c; font-style: italic;">The expression may contain multiple lines, as may the hints.</span>
+
+<span style="color: #35a69c; font-style: italic;">REL is the default relation in the left-most column.</span>
+
+<span style="color: #35a69c; font-style: italic;">HINT_FORMAT is the formatting string for hints; e.g.,</span>
+<span style="color: #35a69c; font-style: italic;">\"\\color{maroon}{\\langle\\large\\substack{\\text{ %s }}&#10217;}\"</span>
+
+<span style="color: #35a69c; font-style: italic;">NL-length is how long the explicit vertical space, \\, should be.</span>
+<span style="color: #35a69c; font-style: italic;">The number refers to the vspace occupied nearly by the height of</span>
+<span style="color: #35a69c; font-style: italic;">a single normal sized letter.</span>
+
+<span style="color: #35a69c; font-style: italic;">COLOR is the colour of the hints."</span>
+  (<span style="color: #859900; font-weight: bold;">cond</span>
+   ((<span style="color: #b58900;">symbolp</span> lst) <span style="color: #2aa198;">""</span>)
+   ((<span style="color: #b58900;">symbolp</span> (<span style="color: #b58900;">car</span> lst)) (<span style="color: #b58900;">org-special-block-extras--list-to-calc</span> (<span style="color: #b58900;">cadr</span> lst)))
+   (<span style="color: #268bd2;">t</span> (<span style="color: #859900; font-weight: bold;">-let*</span> (((conclusion&#8320; children) lst)
+              ((expr&#8320; hint) (<span style="color: #b58900;">s-split</span> <span style="color: #2aa198;">"--"</span> conclusion&#8320;))
+              ((op&#8320; expr&#8321;) (<span style="color: #b58900;">cdr</span> (<span style="color: #b58900;">s-match</span> <span style="color: #2aa198;">"^\\[</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">\\]</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">(</span><span style="color: #2aa198;">.*</span><span style="color: #268bd2; font-weight: bold;">\\</span><span style="color: #268bd2; font-weight: bold;">)</span><span style="color: #2aa198;">"</span> expr&#8320;)))
+              (op (<span style="color: #859900; font-weight: bold;">or</span> op&#8320; rel))
+              (expr (<span style="color: #859900; font-weight: bold;">or</span> expr&#8321; expr&#8320;)))
+        (<span style="color: #859900; font-weight: bold;">if</span> (<span style="color: #b58900;">not</span> children)
+            (<span style="color: #859900; font-weight: bold;">if</span> hint
+                (<span style="color: #b58900;">format</span>
+                 <span style="color: #2aa198;">"\n %s \\;\\; &amp; \\qquad \\color{%s}{%s} \n \\\\ &amp; \\begin{split}%s\\end{split}"</span>
+                 op
+                 color
+                 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">the hfill is so that we do not use substack's default</span>
+                 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">centering, but instead left-align justificatiion</span>
+                 <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">hints.</span>
+                 (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"%s"</span> <span style="color: #2aa198;">"{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}"</span> hint-format)
+                         (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n"</span> <span style="color: #2aa198;">" } \\hfill\\\\\n\\text{ "</span>
+                                    (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n\n"</span> (<span style="color: #b58900;">s-repeat</span> (<span style="color: #b58900;">*</span> 6 NL-length) <span style="color: #2aa198;">"\n $\\,$"</span>) (<span style="color: #b58900;">s-trim</span> hint))))
+                 expr)
+              (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"\\begin{split}%s\\end{split} \n"</span> expr))
+       <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #dc8cc3;">MA</span><span style="color: #96A7A9; font-style: italic;">: The following could be improved.</span>
+          (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"\n %s \\;\\; &amp; \\qquad \\color{%s}{%s} \n \\\\ &amp; \\begin{split}%s\\end{split}"</span>
+                  op color
+                  <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">BEGIN similar as above</span>
+                  (<span style="color: #b58900;">format</span> (<span style="color: #b58900;">s-replace</span>
+                           <span style="color: #2aa198;">"%s"</span>
+                           <span style="color: #2aa198;">"{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} &amp; %s \n\\end{split}\\hfill\\\\\n}}"</span>
+                           hint-format)
+                          (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n"</span> <span style="color: #2aa198;">" } \\hfill\\\\\n\\text{ "</span>
+                                     (<span style="color: #b58900;">s-replace</span> <span style="color: #2aa198;">"\n\n"</span> (<span style="color: #b58900;">s-repeat</span> (<span style="color: #b58900;">*</span> 6 NL-length) <span style="color: #2aa198;">"\n $\\,$"</span>) (<span style="color: #b58900;">s-trim</span> hint)))
+                          <span style="color: #96A7A9; font-style: italic;">;; </span><span style="color: #96A7A9; font-style: italic;">END similar</span>
+                          (<span style="color: #b58900;">s-chop-prefix</span>
+                           <span style="color: #2aa198;">"\\\\"</span> (<span style="color: #b58900;">s-join</span>
+                                   <span style="color: #2aa198;">"\\\\"</span>
+                                   (<span style="color: #859900; font-weight: bold;">--map</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s"</span> (<span style="color: #b58900;">org-special-block-extras--list-to-calc</span> it rel hint-format NL-length color))
+                                          children))))
+                  expr))))))
+
+(<span style="color: #859900; font-weight: bold;">org-special-block-extras-defblock</span> <span style="color: #b58900;">calc</span>
+  (main-arg)
+  (rel <span style="color: #2aa198;">"="</span> hint-format <span style="color: #2aa198;">"\\left[ %s \\right."</span> explicit-vspace 2 color <span style="color: #2aa198;">"maroon"</span>)
+  <span style="color: #2aa198;">"Render an Org-list as an equational proof.</span>
+
+<span style="color: #2aa198;">Sometimes the notation delimiting justification hints may clash</span>
+<span style="color: #2aa198;">with the domain topic, so we can change the hint format, e.g., to</span>
+<span style="color: #2aa198;">\"\\left\\langle %s \\right\\rangle\".  Set HINT-FORMAT to the</span>
+<span style="color: #2aa198;">empty string, \"\", to comment-out all hints in the exported</span>
+<span style="color: #2aa198;">version.</span>
+
+<span style="color: #2aa198;">The hint is the text immediately after a &#8220;--&#8221;, if there are</span>
+<span style="color: #2aa198;">multiple such delimiters only the first is shown; this can be</span>
+<span style="color: #2aa198;">useful if we want to have multiple alternatives, say for extra</span>
+<span style="color: #2aa198;">details in the source but not so much in the export.</span>
+
+<span style="color: #2aa198;">Line breaks are taken literally in the hints, but not in the</span>
+<span style="color: #2aa198;">math; where one uses \\\\.  For math with multiple lines, use &#8216;&amp;&#8217;</span>
+<span style="color: #2aa198;">as an alignment marker; otherwise math is right-justified.</span>
+
+<span style="color: #2aa198;">For HTML, to use an TeX it must be enclosed in $, since that is</span>
+<span style="color: #2aa198;">what is required by MathJaX."</span>
+  (<span style="color: #859900; font-weight: bold;">thread-last</span> (<span style="color: #859900; font-weight: bold;">with-temp-buffer</span>
+                 (<span style="color: #b58900;">insert</span> raw-contents)
+                 (<span style="color: #b58900;">goto-char</span> (<span style="color: #b58900;">point-min</span>))
+                 (<span style="color: #b58900;">org-list-to-lisp</span>))
+    <span style="color: #b58900;">cdr</span>
+    (<span style="color: #859900; font-weight: bold;">--map</span> (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"%s"</span> (<span style="color: #b58900;">org-special-block-extras--list-to-calc</span> it rel hint-format explicit-vspace color)))
+    (<span style="color: #b58900;">s-join</span> <span style="color: #2aa198;">"\\\\"</span>)
+    (<span style="color: #b58900;">format</span> <span style="color: #2aa198;">"$$\\begin{align*} &amp; %s \n\\end{align*}$$"</span>)))
+</pre>
+</div>
+
+
+
+
+</details>
+<div style="padding: 1em; background-color: #CCFFFF;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;"><h3>“Programming Comments  ≈  Proof Hints”</h3>
+<p>
+Let's prove that \(x ≤ z\)&#x2026;
+</p>
+<div style="column-rule-style: none;column-count: 2;">
+<p>
+<b>Source:</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-org">#+begin_calc :hint-format "\\left\\{ %s\\right."
++     x
++     y -- Explanation of why $x \;=\; y$
+  Actually, let me explain:
+  * x
+  * x&#8242; -- hint 1
+  * y  -- hint 2
+
+  No words can appear (in the export) *after* a nested calculation, for now.
++ [&#8804;] z
+  --
+  Explanation of why $y \;\leq\; z$
+
+  -- explain it more, this is ignored from export ;-)
+#+end_calc
+</pre>
+</div>
+<p>
+<p>
+<b>Result:</b>
+</p>
+$$\begin{align*} & \begin{split}x\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left\{ {\large\substack{\text{ Explanation of why $x \;=\; y$ } \hfill\\
+\text{ Actually, let me explain: } \hfill\\ \begin{split} & \begin{split}x\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left\{ {\large\substack{\text{ hint 1 } \hfill\\
+}}\right.}
+ \\ & \begin{split}x′ \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left\{ {\large\substack{\text{ hint 2 } \hfill\\
+}}\right.}
+ \\ & \begin{split}y  \end{split}
+\end{split}\hfill\\
+}}\right.}
+ \\ & \begin{split}    y \end{split}\\
+ ≤ \;\; & \qquad \color{maroon}{\left\{ {\large\substack{\text{ Explanation of why $y \;\leq\; z$ } \hfill\\
+}}\right.}
+ \\ & \begin{split} z\end{split}
+\end{align*}$$
+
+</div>
+
+<p>
+Benefits of Org-lists for proofs:
+</p>
+<ul class="org-ul">
+<li>Nested proofs can be <i>folded-away</i> with <kbd> TAB </kbd>.
+<ul class="org-ul">
+<li>This provides a nice <i>proof outline!</i></li>
+</ul></li>
+<li>All Org support for lists active; e.g., <kbd> M-↑,↓ </kbd> for moving <i>proof steps</i> (list
+items) and <kbd> M-RET </kbd> for new <i>proof steps</i>.</li>
+
+<li>Intentional explanations can make the proof argument more <i>convincing</i>, or
+accurate.</li>
+</ul>
+
+<p>
+Examples below: Rational root equivales perfect power, Handshaking lemma,
+calculating train length, and last, but not least, “1 + 1 = 2”.
+</p>
+
+<hr />
+
+<p>
+Align the proof hints with <kbd> M-x align-regexp RET -- RET </kbd> &#x2026;let's calculate that \(a ⊆ e\)&#x2026;
+</p>
+
+<div style="column-rule-style: none;column-count: 2;">
+<p>
+<b>Source:</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-org">#+begin_calc
++     a
++     b  --  reason for the equality
++ [&#8838;] c  --  reason for the inclusion
++     d  --  reason for the equality
++     e  --  final justification
+#+end_calc
+</pre>
+</div>
+
+<br><p><br>
+<p>
+<b>Result:</b>
+</p>
+$$\begin{align*} & \begin{split}a\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ reason for the equality } \hfill\\
+}} \right.}
+ \\ & \begin{split}b  \end{split}\\
+ ⊆ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ reason for the inclusion } \hfill\\
+}} \right.}
+ \\ & \begin{split} c  \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ reason for the equality } \hfill\\
+}} \right.}
+ \\ & \begin{split}d  \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ final justification } \hfill\\
+}} \right.}
+ \\ & \begin{split}e  \end{split}
+\end{align*}$$
+
+</div>
+
+</div>
+
+<hr />
+
+<p>
+Examples&#x2026;
+</p>
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="orange">
+                         ★ Proof of “1 + 1 = 2” with source
+                      </font>
+                    </strong>
+                  </summary>
+<p>
+<a class="anchor" aria-hidden="true" id="1+1=2" href="#1+1=2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+</p>
+$$\begin{align*} & \begin{split}1 + 1\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ $\def\suc{\mathsf{suc}\,} \def\zero{\mathsf{zero}}$ } \hfill\\
+\text{ “1” abbreviates “$\suc \zero$” } \hfill\\
+}} \right.}
+ \\ & \begin{split}\suc \zero + \suc \zero
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Addition is defined by moving the $\suc$-s from the left argument to the } \hfill\\
+\text{ right. } \hfill\\
+\text{ $\def\eqn#1#2{\begin{equation} #2 \tag{#1} \label{#1} \end{equation}}$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$That is, we define $x + y$ by considering the possible $shape$ of $x$, } \hfill\\
+\text{ which could only be a $\zero$ or a $\suc$-cessor. } \hfill\\
+\text{ When $x$ is zero, there are no $\suc$-s to move to the right, so we yield the  right. } \hfill\\
+\text{ $\eqn{Base Case}{\zero + n \; = \; n}$ } \hfill\\
+\text{ When $x$ is a $\suc$, we move the $\suc$ to the right, and continue to try adding. } \hfill\\
+\text{ $\eqn{Inductive Step}{\suc m \,+\, n \; = \; m \,+\, \suc n}$ } \hfill\\
+\text{ Since we're moving a $\suc$ at each step, eventually we'll hit the } \hfill\\
+\text{ base case and be done adding. } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$For now, we apply the \eqref{Inductive Step}. } \hfill\\
+}} \right.}
+ \\ & \begin{split}\zero + \suc (\suc \zero) \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Using the \eqref{Base Case} definition of addition. } \hfill\\
+}} \right.}
+ \\ & \begin{split}\suc (\suc \zero)
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Switching to ‘conventional’ notation } \hfill\\
+}} \right.}
+ \\ & \begin{split}2 \end{split}
+\end{align*}$$
+<hr />
+<p>
+<b>Source:</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-org">#+begin_calc
++ 1 + 1
++ \suc \zero + \suc \zero
+  --
+  $\def\suc{\mathsf{suc}\,} \def\zero{\mathsf{zero}}$
+  &#8220;1&#8221; abbreviates &#8220;$\suc \zero$&#8221;
++ \zero + \suc (\suc \zero) --
+  Addition is defined by moving the $\suc$-s from the left argument to the
+  right.
+  $\def\eqn#1#2{\begin{equation} #2 \tag{#1} \label{#1} \end{equation}}$
+
+  That is, we define $x + y$ by considering the possible $shape$ of $x$,
+  which could only be a $\zero$ or a $\suc$-cessor.
+  When $x$ is zero, there are no $\suc$-s to move to the right, so we yield the  right.
+  $\eqn{Base Case}{\zero + n \; = \; n}$
+  When $x$ is a $\suc$, we move the $\suc$ to the right, and continue to try adding.
+  $\eqn{Inductive Step}{\suc m \,+\, n \; = \; m \,+\, \suc n}$
+  Since we're moving a $\suc$ at each step, eventually we'll hit the
+  base case and be done adding.
+
+  For now, we apply the \eqref{Inductive Step}.
+
++ \suc (\suc \zero)
+  -- Using the \eqref{Base Case} definition of addition.
++ 2 -- Switching to &#8216;conventional&#8217; notation
+#+end_calc
+</pre>
+</div>
+
+
+</details>
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         “Calculating” the length of a train
+                      </font>
+                    </strong>
+                  </summary>
+<p>
+<a class="anchor" aria-hidden="true" id="calculating-the-length-of-a-train" href="#calculating-the-length-of-a-train"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+Let us <b><span style="color:green;">calculate</span></b> the length of a train, that is travelling at a speed of
+60 km/hr and, on its way, it crosses a pole in 9 seconds.
+</p>
+
+$$\begin{align*} & \begin{split}\text{ the length of the train }
+\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Express length as a difference of distance } \hfill\\
+}} \right.}
+ \\ & \begin{split}\text{ the distance from the end of the train to its front }
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ distance = time × speed } \hfill\\
+}} \right.}
+ \\ & \begin{split}& \left(\begin{split} &\text{ difference in time from when the train's front}
+   \\ &\text{ crosses the pole until its back crosses the pole } \end{split}\right)
+  \;\times\; \text{speed of the train}
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Rephrase } \hfill\\
+}} \right.}
+ \\ & \begin{split}& \text{ how long it takes the train to cross the pole }
+  \;\times\; \text{speed of the train}
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ $\def\meters{\,\mathsf{meters}\,} \def\seconds{\,\mathsf{seconds}\,}$ } \hfill\\
+\text{ The train crosses the pole in 9 seconds; } \hfill\\
+\text{ and the train is travelling at the speed of 60km/hr. } \hfill\\
+}} \right.}
+ \\ & \begin{split}9 \text{ seconds } \times 60 \text{ km / hr}
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Express things in common units, such as seconds; i.e.,: } \hfill\\ \begin{split} & \begin{split}1 \text{ km / hr}\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Be more explicit } \hfill\\
+}} \right.}
+ \\ & \begin{split}1 \text{ km } /\; 1 \text{ hr }      \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ A kilometre is 1000 meters } \hfill\\
+}} \right.}
+ \\ & \begin{split}1000 \meters /\, 1 \text{ hr }   \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Express hours in terms of seconds: } \hfill\\ \begin{split} & \begin{split}1 \text{ hr }\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Express in minutes } \hfill\\
+}} \right.}
+ \\ & \begin{split}60 \,\mathsf{minutes}              \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Be more explicit } \hfill\\
+}} \right.}
+ \\ & \begin{split}60 \,\times\, 1 \,\mathsf{minutes} \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ A minute has 60 seconds } \hfill\\
+}} \right.}
+ \\ & \begin{split}60 \,\times\, 60 \,\seconds        \end{split}
+\end{split}\hfill\\
+}} \right.}
+ \\ & \begin{split}1000 \meters /\, (60 × 60) \seconds  \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Collecting like-terms } \hfill\\
+}} \right.}
+ \\ & \begin{split}(1000 / 60 × 60) \meters / \seconds  \end{split}
+\end{split}\hfill\\
+}} \right.}
+ \\ & \begin{split}9 \seconds \times 60 × (1000 / 60 × 60) \meters / \seconds
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Division cancels multiplication: $b × (a / b) = a$ } \hfill\\
+}} \right.}
+ \\ & \begin{split}9 \seconds \times (1000 / 60) \meters / \seconds
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Collect like-terms; i.e., commutativity of × } \hfill\\
+}} \right.}
+ \\ & \begin{split}(1000 / 60) × 9 \seconds × (\meters / \seconds)
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Division cancels multiplication: $b × (a / b) = a$ } \hfill\\
+}} \right.}
+ \\ & \begin{split}(1000 / 60) × 9 \meters
+\end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Arithmetic } \hfill\\
+}} \right.}
+ \\ & \begin{split}150 \meters
+\end{split}
+\end{align*}$$
+
+
+</details>
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="green">
+                         Euler's Handshaking Lemma
+                      </font>
+                    </strong>
+                  </summary>
+
+<p>
+<a class="anchor" aria-hidden="true" id="handshaking-lemma" href="#handshaking-lemma"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+<i>At a party of 7 people, is it possible that everybody knows exactly 3 other
+people?</i>
+</p>
+
+<p>
+We could consider all possible cases, which is not particularly enlightening; or
+we could <i>calculate</i>&#x2026;
+</p>
+
+$$\begin{align*} & \begin{split}\text{“Obviously”, the sum of everyone's friendship count is twice the total
+number of friendships}\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Formalise... } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$Let $f(p)$ denote the number of friends that person $p$ has, } \hfill\\
+\text{ which is 0 if $p$ has no friends. } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$Let $F$ be the total number of friendships (between any 2 people). } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$Since friendships are always between two people, we have } \hfill\\
+\text{ that $\sum_p f(p) = 2 × F$: Counting-up the number of friends } \hfill\\
+\text{ that everyone has will always be twice the total number of relationships } \hfill\\ \begin{split} & \begin{split}\text{sum of everyone's friendship count}\end{split}
+\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Formalise, where $p$ ranges over people } \hfill\\
+}} \right]}
+ \\ & \begin{split}\sum_p f(p)             \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Definition of $f$: } \hfill\\
+\text{ Let $𝑭𝒓_{p, r}$ be 1 exactly when $p$ participates in } \hfill\\
+\text{ friendship/relationship $r$, } \hfill\\
+\text{ and 0 otherwise, then $f(p) = \sum_r 𝑭𝒓_{p, r}$. } \hfill\\
+}} \right]}
+ \\ & \begin{split}\sum_p \sum_r 𝑭𝒓_{p, r} \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Quantifier interchange; i.e., Fubini's Principle } \hfill\\
+}} \right]}
+ \\ & \begin{split}\sum_r \sum_p 𝑭𝒓_{p, r} \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Every relationship $r$ is between 2 people; } \hfill\\
+\text{ i.e., $\sum_p 𝑭𝒓_{p, r} = 2$ } \hfill\\
+}} \right]}
+ \\ & \begin{split}\sum_r 2                \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Factoring } \hfill\\
+}} \right]}
+ \\ & \begin{split}2 × \sum_r 1            \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ The total number of friendships is $F$ } \hfill\\
+}} \right]}
+ \\ & \begin{split}2 × F                   \end{split}
+\end{split}\hfill\\
+}} \right]}
+ \\ & \begin{split}∑_p f(p) = 2×F                      \end{split}\\
+ ⇒ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Equals for equals; } \hfill\\
+\text{ i.e., $if$ those numbers are equal $then$ their parities are equal } \hfill\\
+\text{ $\def\even#1{\mathsf{even}\,\left(#1\right)}$ } \hfill\\
+\text{ $\def\odd#1{\mathsf{odd}\,\left(#1\right)}$ } \hfill\\
+}} \right]}
+ \\ & \begin{split} \even{∑_p f(p)} ≡ \even{2 × F}  \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ The right side is clearly true; } \hfill\\
+\text{ (‘true’ is the identity of ‘≡’) } \hfill\\
+}} \right]}
+ \\ & \begin{split}\even{∑_p f(p)}                     \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ $\even{-}$ distributes over sums turning them into equivalences ‘≡’ } \hfill\\
+}} \right]}
+ \\ & \begin{split}{\LARGE ≡}_p \;\even{f(p)}          \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ By definition, a chain of equivalences is true exactly when } \hfill\\
+\text{ it has an even number of false values } \hfill\\
+}} \right]}
+ \\ & \begin{split}\even{ ♯\{p ∣ ¬ \even{f(p)}\} }      \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ A non-even number is precisely an odd number } \hfill\\
+}} \right]}
+ \\ & \begin{split}\even{ ♯\{p ∣ \odd{f(p)} \} }        \end{split}\\
+ = \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Un-formalise } \hfill\\
+}} \right]}
+ \\ & \begin{split}\text{an even number of people have an odd number of friends} \end{split}
+\end{align*}$$
+
+<p>
+Back to the problem: At a party of 7 people, is it possible that everybody knows
+exactly 3 other people?
+</p>
+
+<p>
+If such a party were possible, the number of people with an odd friend count
+must be even, but 7 is not even, and so no such party is possible.  (
+Alternatively, if such a party were possible, then by the Handshaking Lemma, \(F
+= {∑_p f(p) \over 2} = {7 × 3 \over 2} = 10.5\): This is absurd since there
+cannot be a ‘.5’ relationship! Hence, no such party is possible. )
+</p>
+
+<ul class="org-ul">
+<li>Likewise, if exactly 5 people in a room each claim to have shaken 3 hands,
+then someone is lying.</li>
+</ul>
+
+<p>
+( Rephrased: The sum of the degrees of the vertices of a (total) <abbr class="tooltip" title="A <em>(Partial, resp. Total) Graph</em> <em>G = (V, E, src, tgt)</em> consists of<br>&emsp; + <EM>V</EM>, a set of “points, nodes, vertices”<br>&emsp; + <EM>E</EM>, a set of “arcs, edges”<br>&emsp; + <em>src, tgt : E ↔ V</em>, a pair of <em>partial (resp. total)</em> functions.<br><br>⟦ Tersely put, in any category, a <em>graph</em> is a parallel pair of morphisms. ⟧<br><br><em>Edge parallelism</em> is the relation <em>Ξ = src ⨾ src ˘ ∩ tgt ⨾ tgt˘</em>; two arcs are<br>related when they have the same starting point and the same ending point, which<br>both exist. Joyously, the name ‘Ξ’ is a neat reminder of the concept:<br>The name is three parallel lines, for the concept of edge(line) parallelism.<br><br>+ A graph is <em>total</em> exactly when <em>Id ⊆ Ξ</em>; and so Ξ is an equivalence.<br>+ A graph has <em>no parallel arrows</em> exactly when <em>Ξ ⊆ Id</em>.<br>+ A graph is <em>simple</em> exactly when <em>Ξ = Id</em>.<br><br>The <em>associated relation</em> is the relation <em>_⟶_ = src ˘ ⨾ tgt</em> that relates two nodes<br>when the first is the source of some edge that happens to have the second point<br>as its target. One uses the associated relation to study properties not<br>involving partial or parallel arrows. One writes <em>⟵</em> for <em>⟶˘</em>;<br>one writes ⟶⋆ for the <em>reachability</em> relation.<br><br>+ Node <em>y</em> is <em>reachable via a non-empty path</em> from node <em>x</em> exactly when <em>x ⟶⁺ y</em>.<br>&emsp;- Node <em>x</em> lies on a cycle exactly when <em>x ⟶⁺ x</em>.<br>&emsp;- A graph is <em>DAG, acylic, circuit-free,</em> exactly when <em>⟶⁺ ⊆ ∼Id</em>; i.e., <em>⟶⁺ ∩ Id = ⊥</em>.<br>&emsp;- An acyclic graph is a (<em>directed) forest</em> exactly when ⟶ is injective; i.e.,<br>&emsp;&emsp;every node has at most one predecessor; i.e., <em>⟶ ⨾ ⟵ ⊆ Id</em>.<br>+ A node <em>r</em> is a <em>root</em> exactly when every node is reachable from it; i.e., <em>{r} × V ⊆ ⟶⋆;</em><br>&emsp;i.e., <em>𝕃 r ⨾ ⟶⋆ = ⊤</em> where <em>𝕃 r</em> is defined by <em>𝕃 r = (ℝ r)˘</em> and <em>x 〔ℝ r〕 y &#8195;≡&#8195; x = r</em>.<br>&emsp;- <em>x〔𝕃 r ⨾ R〕 y &#8195;≡&#8195; r〔R〕 y</em> and <em>x 〔R ⨾ ℝ r〕 y &#8195;≡&#8195; x 〔R〕 r</em><br>&emsp;- A <em>tree</em> is a forest with a root.<br>+ A graph is <em>loop free</em> exactly when <em>⟶ ⊆ ∼Id</em>.<br>+ A graph is <em>strongly connected</em> exactly when <em>⟶⋆ = ⊤</em>; i.e., <em>∼Id ⊆ ⟶⁺</em>;<br>&emsp;i.e., every point is reachable from any <em>other</em> point; i.e., <em>∼Id ⊆ ⟶ ∩ ⟵˘</em>;<br>&emsp;i.e., any two distinct points lie on an undirected circuit.<br>&emsp;- The equivalence classes of <em>⟶⋆ ∩ ⟵⋆</em> are the <em>strongly connected components</em>.<br>+ <em>Terminal∣sinks</em> are nodes from which it is <em>not</em> possible to proceed <em>any</em> further;<br>&emsp;i.e., terminals have no successors; the domain of <em>∼(⟶ ⨾ ⊤)</em> is all terminals.<br>+ <em>Initial∣sources</em> are nodes from which it is <em>not</em> possible to proceed backward;<br>&emsp;i.e., initials have no predecessors; the domain of <em>∼(⟵ ⨾ ⊤)</em> is all initials.">Graph</abbr> is
+twice the number of edges of the graph; moreover, an even number of vertices
+have an odd degree.
+</p>
+
+<p>
+The party problem is then: <i>Is there a graph of 7 nodes with each node being
+connected to exactly 3 other nodes?</i> Apparently not, and we didn't need to draw
+any graphs at all to prove it.
+</p>
+
+<p>
+For more on Graph Theory, <a href="https://ptwiddle.github.io/MAS341-Graph-Theory-2017/">here</a> are some lecture notes. )
+</p>
+
+<ul class="org-ul">
+<li><a href="http://homepage.tudelft.nl/64a8q/papers/handshake.pdf">The power of shaking hands</a> has a few non-trivial applications of this lemma.</li>
+</ul>
+
+
+</details>
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="orange">
+                         ★ Rational root equivales perfect power
+                      </font>
+                    </strong>
+                  </summary>
+<p>
+<a class="anchor" aria-hidden="true" id="rational-root-equivales-perfect-power" href="#rational-root-equivales-perfect-power"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+</p>
+$$\begin{align*} & \begin{split}\sqrt[n]{k} \text{ is a rational number }
+\end{split}
+\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ A rational number is the fraction of two integers. } \hfill\\
+\text{ Let variables $a,\, b$ range over integer numbers. } \hfill\\
+}} \right.}
+ \\ & \begin{split}∃\, a, b •\; \sqrt[n]{k} = {a \over b} \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Use arithmetic to eliminate the $n$-th root operator. } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$$\def\exp#1#2{\mathsf{exp}_#1\,#2}$ } \hfill\\
+\text{ $\def\eq{\;=\;}$ } \hfill\\
+}} \right.}
+ \\ & \begin{split}∃\, a, b •\; k · a ^n = b ^n \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Let $\exp{m} x$ be the number of times that $m$ divides $x$. } \hfill\\
+\text{ For example, $\exp{2} 48 \eq 4$ and $\exp{2} 49 \eq 0$. } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$The numbers $p$ with $∀ m : ℤ⁺ \;•\; \exp{m}p \,≠\, 0 \,≡\, m \,=\, p$ } \hfill\\
+\text{ are called $prime$ numbers. Let variable $p$ range over prime numbers. } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$ } \hfill\\
+\text{  $\,$Fundamental theorem of arithmetic: Numbers are determined by their prime powers. } \hfill\\
+\text{ That is, $\big(∀ \,p\, •\;\; \exp{p} x \eq f(p)\big) \;\;≡\;\; x \eq \big(Π\, p\, •\; p^{f(p)}\big)$ for any $f$. } \hfill\\
+\text{ As such, every number is the product of its prime powers: } \hfill\\
+\text{ $\qquad x \eq \big(Π \,p\, •\; p^{\exp{p} x}\big)$. } \hfill\\
+\text{ And so, any two numbers are the same precisely when they have the same primes: } \hfill\\
+\text{ $\qquad x \eq y \;\;≡\;\; \big(∀ p \,•\, \exp{p} x \eq \exp{p} y\big)$. } \hfill\\
+}} \right.}
+ \\ & \begin{split}∃\, a, b •\; ∀\, p •\; \exp{p}(k · a ^n) \eq \exp{p}(b ^n ) \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ When $p$ is prime, $\exp{p}(x · y) \eq \exp{p} x \,+\, \exp{p} y$. } \hfill\\
+\text{ Aside: In general, $\exp{p}(Π \,i\, \,•\, x_i) \eq (Σ \,i\, \,•\, \exp{p} x_i)$. } \hfill\\
+}} \right.}
+ \\ & \begin{split}∃\, a, b •\; ∀\, p •\; \exp{p} k + n · \exp{p} a \eq n · \exp{p} b \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Use arithmetic to collect similar terms. } \hfill\\
+}} \right.}
+ \\ & \begin{split}∃\, a, b •\; ∀\, p •\; \exp{p} k \eq  n · \Big(\exp{p} b - \exp{p} a\Big) \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ (⇒) is the definition of multiplicity; } \hfill\\
+\text{ (⇐) take $a \,≔\, 1$ and define $b$ by its prime powers: } \hfill\\
+\text{ $\qquad ∀\, p \,•\, \exp{p} b \,≔\, {\exp{p} k \,/\, n}$ } \hfill\\
+}} \right.}
+ \\ & \begin{split}∀\, p •\; \exp{p} k \text{ is a multiple of } n  \end{split}\\
+ ⇔ \;\; & \qquad \color{maroon}{\left[ {\large\substack{\text{ Fundamental theorem of arithmetic and definition of ‘perfect’ } \hfill\\
+}} \right.}
+ \\ & \begin{split}k \text{ is a perfect $n$-th power; i.e., of the shape } x^n  \end{split}
+\end{align*}$$
+
+
+</details>
+
+<hr />
+
+<p>
+Possibly Useful links:
+</p>
+<ul class="org-ul">
+<li><a href="https://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm">TeX Commands available in MathJax</a></li>
+<li>MathJax crashes if <code>\label</code> names are not unique &#x2014;e.g., for labelled
+equations, see “1 + 1 = 2” example above.</li>
+</ul>
+
+<details class="code-details"
+                 style ="padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;">
+                  <summary>
+                    <strong>
+                      <font face="Courier" size="3" color="orange">
+                         ★ What if I want to do this in LaTeX (e.g., for math.stackexchange.com)?
+                      </font>
+                    </strong>
+                  </summary>
+<p>
+<a class="anchor" aria-hidden="true" id="equational-proofs-in-LaTeX" href="#equational-proofs-in-LaTeX"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16
+   16" width="16" height="16"><path fill-rule="evenodd"
+   d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
+   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
+   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
+   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
+   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>
+Copy-paste the following&#x2026;
+</p>
+<div class="org-src-container">
+<pre class="src src-latex">$
+<span style="color: #96A7A9; font-style: italic;">% </span><span style="color: #96A7A9; font-style: italic;">set up \step command</span>
+<span style="color: #859900; font-weight: bold;">\def</span>\<span style="color: #b58900;">BEGINstep</span>{ <span style="color: #859900; font-weight: bold;">\left\langle</span> }
+<span style="color: #859900; font-weight: bold;">\def</span>\<span style="color: #b58900;">ENDstep</span>{ <span style="color: #859900; font-weight: bold;">\right\rangle</span> }
+<span style="color: #859900; font-weight: bold;">\newcommand</span>{<span style="color: #b58900;">\step</span>}[2][=]{ <span style="color: #b58900;">\\</span> #1 <span style="color: #859900; font-weight: bold;">\;\;</span> &amp; <span style="color: #859900; font-weight: bold;">\qquad</span> <span style="color: #859900; font-weight: bold;">\color</span>{maroon}{<span style="color: #859900; font-weight: bold;">\BEGINstep\text</span>{ #2 } <span style="color: #859900; font-weight: bold;">\ENDstep</span>} <span style="color: #b58900;">\\</span> &amp; }
+<span style="color: #96A7A9; font-style: italic;">% </span><span style="color: #96A7A9; font-style: italic;">multi-line step with </span><span style="color: #96A7A9; font-style: italic; text-decoration: underline;">many</span><span style="color: #96A7A9; font-style: italic;"> lines of text</span>
+<span style="color: #859900; font-weight: bold;">\newcommand</span>{<span style="color: #b58900;">\line</span>}[1]{ <span style="color: #859900; font-weight: bold;">\text</span>{#1}<span style="color: #859900; font-weight: bold;">\hfill</span><span style="color: #b58900;">\\</span> }
+<span style="color: #859900; font-weight: bold;">\newcommand</span>{<span style="color: #b58900;">\stepmany</span>}[2][=]{ <span style="color: #b58900;">\\</span> #1 <span style="color: #859900; font-weight: bold;">\;\;</span> &amp; <span style="color: #859900; font-weight: bold;">\qquad</span> <span style="color: #859900; font-weight: bold;">\color</span>{maroon}{<span style="color: #859900; font-weight: bold;">\BEGINstep</span> <span style="color: #859900; font-weight: bold;">\large\substack</span>{ #2 } <span style="color: #859900; font-weight: bold;">\ENDstep</span>} <span style="color: #b58900;">\\</span> &amp; }
+<span style="color: #96A7A9; font-style: italic;">% </span><span style="color: #96A7A9; font-style: italic;">multi-line step with 4 lines of text</span>
+<span style="color: #859900; font-weight: bold;">\newcommand</span>{<span style="color: #b58900;">\stepfour</span>}[5][=]{ <span style="color: #859900; font-weight: bold;">\stepmany</span>[#1]{<span style="color: #859900; font-weight: bold;">\line</span>{#2} <span style="color: #859900; font-weight: bold;">\line</span>{#3} <span style="color: #859900; font-weight: bold;">\line</span>{#4}
+<span style="color: #859900; font-weight: bold;">\line</span>{#5}} }
+<span style="color: #859900; font-weight: bold;">\newenvironment</span>{<span style="color: #b58900;">calc</span>}{<span style="color: #859900; font-weight: bold;">\begin</span>{<span style="color: #b58900;">align*</span>} &amp; }{<span style="color: #859900; font-weight: bold;">\end</span>{<span style="color: #b58900;">align*</span>}}
+$
+</pre>
+</div>
+<p>
+Then, use it as follows&#x2026;
+</p>
+<div class="org-src-container">
+<pre class="src src-latex"><span style="color: #859900; font-weight: bold;">\begin</span>{<span style="color: #b58900;">calc</span>}
+x
+<span style="color: #859900; font-weight: bold;">\step</span>{reason for equality}
+y
+<span style="color: #859900; font-weight: bold;">\step</span>[<span style="color: #859900; font-weight: bold;">\leq</span>]{reason for inclusion}
+z
+<span style="color: #859900; font-weight: bold;">\end</span>{<span style="color: #b58900;">calc</span>}
+</pre>
+</div>
+
+
+</details>
+</div>
+</div>
 <div id="outline-container-Emacs-faces-for-links" class="outline-2">
-<h2 id="Emacs-faces-for-links"><span class="section-number-2">11</span> <a href="#Emacs-faces-for-links">Emacs faces for links</a></h2>
+<h2 id="Emacs-faces-for-links"><span class="section-number-2">12</span> <a href="#Emacs-faces-for-links">Emacs faces for links</a></h2>
 <div class="outline-text-2" id="text-Emacs-faces-for-links">
 <p>
 A ‘fancy’ face setup for links <i>within</i> Emacs.
@@ -7699,7 +8492,7 @@ When you disable the <code>org-special-block-extras</code> mode, it is deactivat
 </details>
 
 
-<div id="orgeb90c38" class="figure">
+<div id="org2382061" class="figure">
 <p><img src="images/fancy-faces.png" alt="fancy-faces.png" />
 </p>
 </div>
@@ -7727,7 +8520,7 @@ edit the various link types introduced in this article.
 </div>
 
 <div id="outline-container-Summary" class="outline-2">
-<h2 id="Summary"><span class="section-number-2">12</span> <a href="#Summary">Summary</a></h2>
+<h2 id="Summary"><span class="section-number-2">13</span> <a href="#Summary">Summary</a></h2>
 <div class="outline-text-2" id="text-Summary">
 <blockquote>
 <p>
@@ -7820,6 +8613,12 @@ Let <code>𝒞</code> be any of the following: <code>black</code>, <code>blue</c
 <td class="org-left"><abbr class="tooltip" title="Make a link NAME whose export is presented as an SVG badge.<br><br>If the link is intend to be a social badge, then, adhering to<br>shield.io conventions, the appropriate SOCIAL-SHIELDS-NAME must<br>be given.<br><br>The SOCIAL-URL is a URL that the badge points to and it should<br>have a single ‘%s’ where the link label argument will go.<br><br>Some social badges have a uniform URL, but otherwise, such as<br>twitter, deviate and so need their own SOCIAL-SHIELDS-URL,<br>which has a single ‘%s’ for the link’s label argument.<br><br><hr><br><br>E.g., to create a badge named “go”:<br><br>&emsp;&emsp; (org-special-block-extras-make-badge ''go'')<br><br>Then the following exports nicely from an Org file:<br><br>&emsp;&emsp; go:key|value|blue|here|gnu-emacs<br><br><hr><br><br>The LABEL should be of the shape ‘key|value|color|url|logo’<br>resulting in a badge “|key|value|” where the ‘key’<br>is coloured grey and the ‘value’ is coloured ‘color’.<br><br>+ Only the syntax ‘badge:key|value|color|url’ is supported.<br>&emsp;- ‘key’ and ‘value’ have their underscores interpreted as spaces.<br>&emsp;&emsp; ⇒ Underscores are interpreted as spaces;<br>&emsp;&emsp; ⇒ ‘__’ is interpreted as an underscore;<br>&emsp;&emsp; ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.<br>&emsp;- ‘|color|url|logo’ are optional;<br>&emsp;&emsp; if ‘url’ is ‘here’ then the resulting badge behaves<br>&emsp;&emsp; like ‘link-here:key’.<br>&emsp;- ‘color’ may be: ‘brightgreen’ or ‘success’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;‘red’&emsp;&emsp;&emsp;&emsp; or ‘important’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;‘orange’&emsp;&emsp;&emsp;or ‘critical’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;‘lightgrey’&emsp; or ‘inactive’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;‘blue’&emsp;&emsp;&emsp;&emsp;or ‘informational’,<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.<br>+ Of course, you can write ‘⟦badge: ⋯⟧’, then ‘⋯’ may have multiword, spaced, content.<br>+ Such links are displayed using a SVG badges<br>&emsp;and so do not support the DESCRIPTION syntax<br>&emsp;‘⟦link:label][description⟧’.<br>+ Besides the HTML BACKEND, such links are silently omitted.<br>">badge</abbr></td>
 <td class="org-left">&#xa0;</td>
 </tr>
+
+<tr>
+<td class="org-left">Equational proofs</td>
+<td class="org-left"><abbr class="tooltip" title="Render an Org-list as an equational proof.<br><br>Sometimes the notation delimiting justification hints may clash<br>with the domain topic, so we can change the hint format, e.g., to<br>''\left\langle %s \right\rangle''.&emsp;Set HINT-FORMAT to the<br>empty string, '''', to comment-out all hints in the exported<br>version.<br><br>The hint is the text immediately after a “--”, if there are<br>multiple such delimiters only the first is shown; this can be<br>useful if we want to have multiple alternatives, say for extra<br>details in the source but not so much in the export.<br><br>Line breaks are taken literally in the hints, but not in the<br>math; where one uses \\.&emsp;For math with multiple lines, use ‘&’<br>as an alignment marker; otherwise math is right-justified.<br><br>For HTML, to use an TeX it must be enclosed in $, since that is<br>what is required by MathJaX.<br><br>(fn BACKEND RAW-CONTENTS &optional MAIN-ARG &rest ## &key (OSPE-LINK\? nil) (REL ''='') (HINT-FORMAT ''\\left[ %s \\right.'') (EXPLICIT-VSPACE 2) (COLOR ''maroon''))">calc</abbr></td>
+<td class="org-left">&#xa0;</td>
+</tr>
 </tbody>
 </table>
 
@@ -7834,7 +8633,7 @@ There are also the social badge links:
 </div>
 
 <div id="outline-container-Installation-Instructions" class="outline-3">
-<h3 id="Installation-Instructions"><span class="section-number-3">12.1</span> <a href="#Installation-Instructions">Installation Instructions</a></h3>
+<h3 id="Installation-Instructions"><span class="section-number-3">13.1</span> <a href="#Installation-Instructions">Installation Instructions</a></h3>
 <div class="outline-text-3" id="text-Installation-Instructions">
 <p>
 Manually or using <a href="https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source">quelpa</a>:
@@ -7894,13 +8693,13 @@ following.
 </div>
 
 <div id="outline-container-Minimal-working-example" class="outline-3">
-<h3 id="Minimal-working-example"><span class="section-number-3">12.2</span> <a href="#Minimal-working-example">Minimal working example</a></h3>
+<h3 id="Minimal-working-example"><span class="section-number-3">13.2</span> <a href="#Minimal-working-example">Minimal working example</a></h3>
 <div class="outline-text-3" id="text-Minimal-working-example">
 <p>
 The following example showcases the prominent features of this library.
 </p>
 
-<pre class="example" id="orgac6c58a">
+<pre class="example" id="org559e621">
 #+begin_parallel
 [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 
@@ -7942,7 +8741,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 Here is what it looks like as HTML (left) and LaTeX (right):
 </p>
 
-<div id="orge946b0a" class="figure">
+<div id="orga107718" class="figure">
 <p><img src="images/minimal-working-example.png" alt="minimal-working-example.png" width="800px" />
 </p>
 </div>
@@ -7956,13 +8755,19 @@ comfortable with <code>defblock</code> ;-)
 Other cool stuff&#x2026;
 </p>
 
-<div id="org7ad7f62" class="figure">
+<div id="orgdbd49ae" class="figure">
 <p><img src="images/inference-rules.png" alt="inference-rules.png" width="800px" />
 </p>
 </div>
 
 
-<div id="orga196c47" class="figure">
+<div id="org793d4f3" class="figure">
+<p><img src="images/calculational_proofs.png" alt="calculational_proofs.png" width="800px" />
+</p>
+</div>
+
+
+<div id="orgff3c5b9" class="figure">
 <p><img src="images/marginal_remarks.png" alt="marginal_remarks.png" width="800px" />
 </p>
 </div>
@@ -7970,7 +8775,7 @@ Other cool stuff&#x2026;
 </div>
 
 <div id="outline-container-Bye" class="outline-3">
-<h3 id="Bye"><span class="section-number-3">12.3</span> <a href="#Bye">Bye!</a></h3>
+<h3 id="Bye"><span class="section-number-3">13.3</span> <a href="#Bye">Bye!</a></h3>
 <div class="outline-text-3" id="text-Bye">
 <p>
 <img src="https://img.shields.io/badge/thanks-for_reading-nil?logo=nil">
@@ -7994,7 +8799,7 @@ See <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf"><i>A tutorial on the uni
 </div></div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2021-02-05 Fri 21:04</p>
+<p class="date">Created: 2021-02-07 Sun 20:01</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

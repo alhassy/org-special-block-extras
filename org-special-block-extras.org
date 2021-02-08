@@ -25,10 +25,9 @@
 1 ⇒ octoicon
 :End:
 
-# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq org-special-block-extras--docs-libraries  '("~/org-special-block-extras/documentation.org")))
+# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq org-special-block-extras--docs-libraries  '("~/org-special-block-extras/documentation.org")) (ignore-errors (org-special-block-extras-docs-load-libraries)))
 #
 # (org-special-block-extras-short-names)
-# (ignore-errors (org-special-block-extras-docs-load-libraries))
 
 # +TOC: headlines 2
 
@@ -146,7 +145,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.2
+;; Version: 2.3
 ;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -266,7 +265,7 @@ badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-badge:org-special-block-extras|2.2|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
+badge:org-special-block-extras|2.3|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
 
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
@@ -6253,6 +6252,473 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
+* Equational Proofs
+  :PROPERTIES:
+  :CUSTOM_ID: Equational-Proofs
+  :END:
+
+Sometimes you just want to have a quick, yet /detailed/, explanation and so we can
+use *[[green:org-lists as equational proofs]]* ---thanks to the [[doc:org-special-block-extras--calc][calc]] block!
+#+begin_details Implementation :title-color pink
+  #+begin_src emacs-lisp
+(defun org-special-block-extras--list-to-calc (lst rel hint-format NL-length color)
+  "Get a result from org-list-to-lisp and render it as a calculational proof.
+
+LST is an expression, possibly with a hint and dedicated relation.
+The expression may contain multiple lines, as may the hints.
+
+REL is the default relation in the left-most column.
+
+HINT_FORMAT is the formatting string for hints; e.g.,
+\"\\color{maroon}{\\langle\\large\\substack{\\text{ %s }}⟩}\"
+
+NL-length is how long the explicit vertical space, \\, should be.
+The number refers to the vspace occupied nearly by the height of
+a single normal sized letter.
+
+COLOR is the colour of the hints."
+  (cond
+   ((symbolp lst) "")
+   ((symbolp (car lst)) (org-special-block-extras--list-to-calc (cadr lst)))
+   (t (-let* (((conclusion₀ children) lst)
+              ((expr₀ hint) (s-split "--" conclusion₀))
+              ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
+              (op (or op₀ rel))
+              (expr (or expr₁ expr₀)))
+        (if (not children)
+            (if hint
+                (format
+                 "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+                 op
+                 color
+                 ;; the hfill is so that we do not use substack's default
+                 ;; centering, but instead left-align justificatiion
+                 ;; hints.
+                 (format (s-replace "%s" "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint-format)
+                         (s-replace "\n" " } \\hfill\\\\\n\\text{ "
+                                    (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint))))
+                 expr)
+              (format "\\begin{split}%s\\end{split} \n" expr))
+       ;; MA: The following could be improved.
+          (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+                  op color
+                  ;; BEGIN similar as above
+                  (format (s-replace
+                           "%s"
+                           "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} & %s \n\\end{split}\\hfill\\\\\n}}"
+                           hint-format)
+                          (s-replace "\n" " } \\hfill\\\\\n\\text{ "
+                                     (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint)))
+                          ;; END similar
+                          (s-chop-prefix
+                           "\\\\" (s-join
+                                   "\\\\"
+                                   (--map (format "%s" (org-special-block-extras--list-to-calc it rel hint-format NL-length color))
+                                          children))))
+                  expr))))))
+
+(org-special-block-extras-defblock calc
+  (main-arg)
+  (rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
+  "Render an Org-list as an equational proof.
+
+Sometimes the notation delimiting justification hints may clash
+with the domain topic, so we can change the hint format, e.g., to
+\"\\left\\langle %s \\right\\rangle\".  Set HINT-FORMAT to the
+empty string, \"\", to comment-out all hints in the exported
+version.
+
+The hint is the text immediately after a “--”, if there are
+multiple such delimiters only the first is shown; this can be
+useful if we want to have multiple alternatives, say for extra
+details in the source but not so much in the export.
+
+Line breaks are taken literally in the hints, but not in the
+math; where one uses \\\\.  For math with multiple lines, use ‘&’
+as an alignment marker; otherwise math is right-justified.
+
+For HTML, to use an TeX it must be enclosed in $, since that is
+what is required by MathJaX."
+  (thread-last (with-temp-buffer
+                 (insert raw-contents)
+                 (goto-char (point-min))
+                 (org-list-to-lisp))
+    cdr
+    (--map (format "%s" (org-special-block-extras--list-to-calc it rel hint-format explicit-vspace color)))
+    (s-join "\\\\")
+    (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
+#+end_src
+
+#+RESULTS:
+| :export | (lambda (label description backend) (s-replace-all `((@@ . )) (org-special-block-extras--calc backend (or description label) label :ospe-link? t))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
+
+
+#+end_details
+#+begin_box "“Programming Comments  ≈  Proof Hints”" :background-color blue
+Let's prove that $x ≤ z$...
+#+begin_parallel
+*Source:*
+#+begin_src org :tangle no
+,#+begin_calc :hint-format "\\left\\{ %s\\right."
++     x
++     y -- Explanation of why $x \;=\; y$
+  Actually, let me explain:
+  ,* x
+  ,* x′ -- hint 1
+  ,* y  -- hint 2
+
+  No words can appear (in the export) *after* a nested calculation, for now.
++ [≤] z
+  --
+  Explanation of why $y \;\leq\; z$
+
+  -- explain it more, this is ignored from export ;-)
+,#+end_calc
+#+end_src
+#+html: <p>
+*Result:*
+#+begin_calc :hint-format "\\left\\{ %s\\right."
++     x
++     y -- Explanation of why $x \;=\; y$
+  Actually, let me explain:
+  * x
+  * x′ -- hint 1
+  * y  -- hint 2
+
+  No words can appear (in the export) *after* a nested calculation, for now.
++ [≤] z
+  --
+  Explanation of why $y \;\leq\; z$
+
+  -- explain it more, this is ignored from export ;-)
+#+end_calc
+#+end_parallel
+
+Benefits of Org-lists for proofs:
++ Nested proofs can be /folded-away/ with kbd:TAB.
+  - This provides a nice /proof outline!/
++ All Org support for lists active; e.g., [[kbd:M-↑,↓]] for moving /proof steps/ (list
+  items) and [[kbd:M-RET]] for new /proof steps/.
+
++ Intentional explanations can make the proof argument more /convincing/, or
+  accurate.
+
+Examples below: Rational root equivales perfect power, Handshaking lemma,
+calculating train length, and last, but not least, “1 + 1 = 2”.
+
+--------------------------------------------------------------------------------
+
+Align the proof hints with [[kbd:M-x align-regexp RET -- RET]] ...let's calculate that $a ⊆ e$...
+
+#+begin_parallel
+*Source:*
+#+begin_src org :tangle no
+,#+begin_calc
++     a
++     b  --  reason for the equality
++ [⊆] c  --  reason for the inclusion
++     d  --  reason for the equality
++     e  --  final justification
+,#+end_calc
+#+end_src
+
+#+html: <br><p><br>
+*Result:*
+#+begin_calc
++     a
++     b  --  reason for the equality
++ [⊆] c  --  reason for the inclusion
++     d  --  reason for the equality
++     e  --  final justification
+#+end_calc
+#+end_parallel
+#+end_box
+
+--------------------------------------------------------------------------------
+
+Examples...
+
+#+begin_details ★ "Proof of “1 + 1 = 2” with source"  :title-color orange
+link-here:1+1=2
+#+begin_calc
++ 1 + 1
++ \suc \zero + \suc \zero
+  --
+  $\def\suc{\mathsf{suc}\,} \def\zero{\mathsf{zero}}$
+  “1” abbreviates “$\suc \zero$”
++ \zero + \suc (\suc \zero) --
+  Addition is defined by moving the $\suc$-s from the left argument to the
+  right.
+  $\def\eqn#1#2{\begin{equation} #2 \tag{#1} \label{#1} \end{equation}}$
+
+  That is, we define $x + y$ by considering the possible $shape$ of $x$,
+  which could only be a $\zero$ or a $\suc$-cessor.
+  When $x$ is zero, there are no $\suc$-s to move to the right, so we yield the  right.
+  $\eqn{Base Case}{\zero + n \; = \; n}$
+  When $x$ is a $\suc$, we move the $\suc$ to the right, and continue to try adding.
+  $\eqn{Inductive Step}{\suc m \,+\, n \; = \; m \,+\, \suc n}$
+  Since we're moving a $\suc$ at each step, eventually we'll hit the
+  base case and be done adding.
+
+  For now, we apply the \eqref{Inductive Step}.
+
++ \suc (\suc \zero)
+  -- Using the \eqref{Base Case} definition of addition.
++ 2 -- Switching to ‘conventional’ notation
+#+end_calc
+--------------------------------------------------------------------------------
+*Source:*
+#+begin_src org :tangle no
+,#+begin_calc
++ 1 + 1
++ \suc \zero + \suc \zero
+  --
+  $\def\suc{\mathsf{suc}\,} \def\zero{\mathsf{zero}}$
+  “1” abbreviates “$\suc \zero$”
++ \zero + \suc (\suc \zero) --
+  Addition is defined by moving the $\suc$-s from the left argument to the
+  right.
+  $\def\eqn#1#2{\begin{equation} #2 \tag{#1} \label{#1} \end{equation}}$
+
+  That is, we define $x + y$ by considering the possible $shape$ of $x$,
+  which could only be a $\zero$ or a $\suc$-cessor.
+  When $x$ is zero, there are no $\suc$-s to move to the right, so we yield the  right.
+  $\eqn{Base Case}{\zero + n \; = \; n}$
+  When $x$ is a $\suc$, we move the $\suc$ to the right, and continue to try adding.
+  $\eqn{Inductive Step}{\suc m \,+\, n \; = \; m \,+\, \suc n}$
+  Since we're moving a $\suc$ at each step, eventually we'll hit the
+  base case and be done adding.
+
+  For now, we apply the \eqref{Inductive Step}.
+
++ \suc (\suc \zero)
+  -- Using the \eqref{Base Case} definition of addition.
++ 2 -- Switching to ‘conventional’ notation
+,#+end_calc
+#+end_src
+#+end_details
+#+begin_details “Calculating” the length of a train
+link-here:calculating-the-length-of-a-train
+Let us *green:calculate* the length of a train, that is travelling at a speed of
+60 km/hr and, on its way, it crosses a pole in 9 seconds.
+# Implicitly assuming that it is going straight, no turns or curves.
+#+begin_calc
++ \text{ the length of the train }
+
++ \text{ the distance from the end of the train to its front }
+  -- Express length as a difference of distance
+
++ & \left(\begin{split} &\text{ difference in time from when the train's front}
+     \\ &\text{ crosses the pole until its back crosses the pole } \end{split}\right)
+    \;\times\; \text{speed of the train}
+  -- distance = time × speed
+
++ & \text{ how long it takes the train to cross the pole }
+    \;\times\; \text{speed of the train}
+  -- Rephrase
+
++ 9 \text{ seconds } \times 60 \text{ km / hr}
+  -- $\def\meters{\,\mathsf{meters}\,} \def\seconds{\,\mathsf{seconds}\,}$
+  The train crosses the pole in 9 seconds;
+  and the train is travelling at the speed of 60km/hr.
+
++ 9 \seconds \times 60 × (1000 / 60 × 60) \meters / \seconds
+  --
+  Express things in common units, such as seconds; i.e.,:
+  * 1 \text{ km / hr}
+  * 1 \text{ km } /\; 1 \text{ hr }      -- Be more explicit
+  * 1000 \meters /\, 1 \text{ hr }   -- A kilometre is 1000 meters
+  * 1000 \meters /\, (60 × 60) \seconds  -- Express hours in terms of seconds:
+    + 1 \text{ hr }
+    + 60 \,\mathsf{minutes}              -- Express in minutes
+    + 60 \,\times\, 1 \,\mathsf{minutes} -- Be more explicit
+    + 60 \,\times\, 60 \,\seconds        -- A minute has 60 seconds
+  * (1000 / 60 × 60) \meters / \seconds  -- Collecting like-terms
+
+  Original justification, not shown in export:
+  A kilometre is 1000 meters and an hour is 60 minutes, each having 60 seconds:
+  $1 \text{ km / hr} \;=\; 1 \text{ km } /\; 1 \text{ hr } =\; 1000 \meters /\, (60 × 60) \seconds \;=\; (1000 / 60 × 60) \meters / \seconds$
+
++ 9 \seconds \times (1000 / 60) \meters / \seconds
+  -- Division cancels multiplication: $b × (a / b) = a$
+
++ (1000 / 60) × 9 \seconds × (\meters / \seconds)
+  -- Collect like-terms; i.e., commutativity of ×
+
++ (1000 / 60) × 9 \meters
+  -- Division cancels multiplication: $b × (a / b) = a$
+
++ 150 \meters
+  -- Arithmetic
+
+#+end_calc
+#+end_details
+#+begin_details "Euler's Handshaking Lemma"
+
+link-here:handshaking-lemma
+/At a party of 7 people, is it possible that everybody knows exactly 3 other
+people?/
+
+We could consider all possible cases, which is not particularly enlightening; or
+we could /calculate/...
+
+#+begin_calc :hint-format "\\left[ %s \\right]"
++ \text{“Obviously”, the sum of everyone's friendship count is twice the total
+  number of friendships}
++ ∑_p f(p) = 2×F                      --  Formalise...
+
+  Let $f(p)$ denote the number of friends that person $p$ has,
+  which is 0 if $p$ has no friends.
+
+  Let $F$ be the total number of friendships (between any 2 people).
+
+  Since friendships are always between two people, we have
+  that $\sum_p f(p) = 2 × F$: Counting-up the number of friends
+  that everyone has will always be twice the total number of relationships
+  ---which is always an even number.
+
+  Formally,
+
+  * \text{sum of everyone's friendship count}
+  * \sum_p f(p)             -- Formalise, where $p$ ranges over people
+  * \sum_p \sum_r 𝑭𝒓_{p, r} -- Definition of $f$:
+    Let $𝑭𝒓_{p, r}$ be 1 exactly when $p$ participates in
+    friendship/relationship $r$,
+    and 0 otherwise, then $f(p) = \sum_r 𝑭𝒓_{p, r}$.
+  * \sum_r \sum_p 𝑭𝒓_{p, r} -- Quantifier interchange; i.e., Fubini's Principle
+  * \sum_r 2                -- Every relationship $r$ is between 2 people;
+    i.e., $\sum_p 𝑭𝒓_{p, r} = 2$
+  * 2 × \sum_r 1            -- Factoring
+  * 2 × F                   -- The total number of friendships is $F$
++ [⇒] \even{∑_p f(p)} ≡ \even{2 × F}  -- Equals for equals;
+  i.e., $if$ those numbers are equal $then$ their parities are equal
+  $\def\even#1{\mathsf{even}\,\left(#1\right)}$
+  $\def\odd#1{\mathsf{odd}\,\left(#1\right)}$
++ \even{∑_p f(p)}                     -- The right side is clearly true;
+  (‘true’ is the identity of ‘≡’)
++ {\LARGE ≡}_p \;\even{f(p)}          --  $\even{-}$ distributes over sums turning them into equivalences ‘≡’
++ \even{ ♯\{p ∣ ¬ \even{f(p)}\} }      -- By definition, a chain of equivalences is true exactly when
+  it has an even number of false values
++ \even{ ♯\{p ∣ \odd{f(p)} \} }        -- A non-even number is precisely an odd number
++ \text{an even number of people have an odd number of friends} -- Un-formalise
+#+end_calc
+
+Back to the problem: At a party of 7 people, is it possible that everybody knows
+exactly 3 other people?
+
+If such a party were possible, the number of people with an odd friend count
+must be even, but 7 is not even, and so no such party is possible.  (
+Alternatively, if such a party were possible, then by the Handshaking Lemma, $F
+= {∑_p f(p) \over 2} = {7 × 3 \over 2} = 10.5$: This is absurd since there
+cannot be a ‘.5’ relationship! Hence, no such party is possible. )
+
++ Likewise, if exactly 5 people in a room each claim to have shaken 3 hands,
+  then someone is lying.
+
+( Rephrased: The sum of the degrees of the vertices of a (total) doc:graph is
+twice the number of edges of the graph; moreover, an even number of vertices
+have an odd degree.
+
+The party problem is then: /Is there a graph of 7 nodes with each node being
+connected to exactly 3 other nodes?/ Apparently not, and we didn't need to draw
+any graphs at all to prove it.
+
+For more on Graph Theory, [[https://ptwiddle.github.io/MAS341-Graph-Theory-2017/][here]] are some lecture notes. )
+
++ [[http://homepage.tudelft.nl/64a8q/papers/handshake.pdf][The power of shaking hands]] has a few non-trivial applications of this lemma.
+#+end_details
+#+begin_details ★ Rational root equivales perfect power :title-color orange
+link-here:rational-root-equivales-perfect-power
+#+begin_calc :rel ⇔
++ \sqrt[n]{k} \text{ is a rational number }
+
++ ∃\, a, b •\; \sqrt[n]{k} = {a \over b} --
+
+  A rational number is the fraction of two integers.
+  Let variables $a,\, b$ range over integer numbers.
+
++ ∃\, a, b •\; k · a ^n = b ^n --
+  Use arithmetic to eliminate the $n$-th root operator.
+
+  $\def\exp#1#2{\mathsf{exp}_#1\,#2}$
+  $\def\eq{\;=\;}$
+
++ ∃\, a, b •\; ∀\, p •\; \exp{p}(k · a ^n) \eq \exp{p}(b ^n ) --
+
+  Let $\exp{m} x$ be the number of times that $m$ divides $x$.
+  For example, $\exp{2} 48 \eq 4$ and $\exp{2} 49 \eq 0$.
+
+  The numbers $p$ with $∀ m : ℤ⁺ \;•\; \exp{m}p \,≠\, 0 \,≡\, m \,=\, p$
+  are called $prime$ numbers. Let variable $p$ range over prime numbers.
+
+  Fundamental theorem of arithmetic: Numbers are determined by their prime powers.
+  That is, $\big(∀ \,p\, •\;\; \exp{p} x \eq f(p)\big) \;\;≡\;\; x \eq \big(Π\, p\, •\; p^{f(p)}\big)$ for any $f$.
+  As such, every number is the product of its prime powers:
+  $\qquad x \eq \big(Π \,p\, •\; p^{\exp{p} x}\big)$.
+  And so, any two numbers are the same precisely when they have the same primes:
+  $\qquad x \eq y \;\;≡\;\; \big(∀ p \,•\, \exp{p} x \eq \exp{p} y\big)$.
+
++ ∃\, a, b •\; ∀\, p •\; \exp{p} k + n · \exp{p} a \eq n · \exp{p} b --
+
+  When $p$ is prime, $\exp{p}(x · y) \eq \exp{p} x \,+\, \exp{p} y$.
+  Aside: In general, $\exp{p}(Π \,i\, \,•\, x_i) \eq (Σ \,i\, \,•\, \exp{p} x_i)$.
+
++ ∃\, a, b •\; ∀\, p •\; \exp{p} k \eq  n · \Big(\exp{p} b - \exp{p} a\Big) --
+  Use arithmetic to collect similar terms.
+
++ ∀\, p •\; \exp{p} k \text{ is a multiple of } n  --
+
+  (⇒) is the definition of multiplicity;
+  (⇐) take $a \,≔\, 1$ and define $b$ by its prime powers:
+  $\qquad ∀\, p \,•\, \exp{p} b \,≔\, {\exp{p} k \,/\, n}$
+
++ k \text{ is a perfect $n$-th power; i.e., of the shape } x^n  --
+  Fundamental theorem of arithmetic and definition of ‘perfect’
+#+end_calc
+#+end_details
+
+# Not ideal because current design decision favours hard line breaks...
+# $\begin{align} \label{hi}\zero \,+\, n  &\;=\; n \\ (\suc m) \,+\, n  &\;=\; \suc (m + n) \end{align}$
+
+# For some reason, I need /some/ math to “activate” MathJax
+# ${}$
+
+--------------------------------------------------------------------------------
+
+Possibly Useful links:
++ [[https://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm][TeX Commands available in MathJax]]
++ MathJax crashes if ~\label~ names are not unique ---e.g., for labelled
+  equations, see “1 + 1 = 2” example above.
+
+#+begin_details "★ What if I want to do this in LaTeX (e.g., for math.stackexchange.com)?" :title-color orange
+link-here:equational-proofs-in-LaTeX
+Copy-paste the following...
+#+begin_src latex :tangle no :exports code
+$
+% set up \step command
+\def\BEGINstep{ \left\langle }
+\def\ENDstep{ \right\rangle }
+\newcommand{\step}[2][=]{ \\ #1 \;\; & \qquad \color{maroon}{\BEGINstep\text{ #2 } \ENDstep} \\ & }
+% multi-line step with many lines of text
+\newcommand{\line}[1]{ \text{#1}\hfill\\ }
+\newcommand{\stepmany}[2][=]{ \\ #1 \;\; & \qquad \color{maroon}{\BEGINstep \large\substack{ #2 } \ENDstep} \\ & }
+% multi-line step with 4 lines of text
+\newcommand{\stepfour}[5][=]{ \stepmany[#1]{\line{#2} \line{#3} \line{#4}
+\line{#5}} }
+\newenvironment{calc}{\begin{align*} & }{\end{align*}}
+$
+#+end_src
+Then, use it as follows...
+#+begin_src latex :tangle no :exports code
+\begin{calc}
+x
+\step{reason for equality}
+y
+\step[\leq]{reason for inclusion}
+z
+\end{calc}
+#+end_src
+#+end_details
 * Emacs faces for links
   :PROPERTIES:
   :CUSTOM_ID: Emacs-faces-for-links
@@ -6336,6 +6802,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]               | ~doc~                 |
 | Marginal remarks       | [[doc:org-special-block-extras--margin][margin]]                      |                     |
 | Badges                 | [[doc:org-special-block-extras-make-badge][badge]]                       |                     |
+| Equational proofs      | [[doc:org-special-block-extras--calc][calc]]                        |                     |
 
 Other fun stuff: [[doc:org-special-block-extras--solution][solution]], [[doc:org-special-block-extras--org-demo][org-demo]], [[doc:org-special-block-extras--stutter][stutter]], [[doc:org-special-block-extras--rename][rename]], [[doc:org-special-block-extras--spoiler][spoiler]], [[doc:org-special-block-extras--tree][tree]] :grin:
 
@@ -6480,6 +6947,10 @@ Other cool stuff...
 #+attr_html: :width 800px
 #+attr_latex: :width 100px
 [[file:images/inference-rules.png]]
+
+#+attr_html: :width 800px
+#+attr_latex: :width 100px
+[[file:images/calculational_proofs.png]]
 
 #+attr_html: :width 800px
 #+attr_latex: :width 100px
