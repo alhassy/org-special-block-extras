@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 2.3
-;; Package-Requires: ((s "1.12.0") (dash "2.16.0") (emacs "26.1") (dash-functional "1.2.0") (org "9.1"))
+;; Package-Requires: ((s "1.12.0") (dash "2.18.0") (emacs "26.1") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -71,9 +71,6 @@
 (require 'dash)            ;; “A modern list library for Emacs”
 (require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
 (require 'cl-lib)          ;; New Common Lisp library; ‘cl-???’ forms.
-(require 'dash-functional) ;; Function library; ‘-const’, ‘-compose’, ‘-orfn’,
-                           ;; ‘-not’, ‘-partial’, etc.
-
 
 (require 'cus-edit) ;; To get the custom-* faces
 
