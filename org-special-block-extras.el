@@ -464,7 +464,7 @@ BACKEND is the export back-end being used, as a symbol."
         main-arg         ;; The first (non-keyed) value to the block.
         blk-column       ;; The column at which the user's block begins.
         body-start       ;; The starting line of the user's block.
-        contents         ;; The actual body string.
+        blk-contents         ;; The actual body string.
         ;; ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
         ;; ⟨body-start⟩ body
         ;; #+end_blk
@@ -492,12 +492,12 @@ BACKEND is the export back-end being used, as a symbol."
           (setq kwdargs (cadr kwdargs))
           (forward-line -1)
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
-          (setq contents (buffer-substring-no-properties body-start (line-beginning-position)))
+          (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
           (kill-region blk-start (point))
           (insert (eval `(,(intern (format "org-special-block-extras--%s" blk))
                           (quote ,backend)
-                          contents
-                          main-arg
+                          ,blk-contents
+                          ,main-arg
                           ,@(--map (list 'quote it) kwdargs))))
           (indent-region blk-start (point) blk-column)
           ;; the --map is so that arguments may be passed
