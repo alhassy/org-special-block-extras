@@ -458,38 +458,51 @@ and used by DEFBLOCK.")
   "Remove all headlines in the current buffer.
 BACKEND is the export back-end being used, as a symbol."
   (setq org-special-block-extras--current-backend backend)
+  (let (blk-start        ;; The point at which the user's block begins.
+        header-start ;; The point at which the user's block header & args begin.
+        kwdargs          ;; The actual key-value arguments for the header.
+        main-arg         ;; The first (non-keyed) value to the block.
+        blk-column       ;; The column at which the user's block begins.
+        body-start       ;; The starting line of the user's block.
+        contents         ;; The actual body string.
+        ;; ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
+        ;; ⟨body-start⟩ body
+        ;; #+end_blk
+        )
   (cl-loop for blk in org-special-block-extras--supported-blocks
-        for kwdargs = nil
-        for blk-start = nil
         do (goto-char (point-min))
         (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s" blk)))
           ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
           ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
-          ; (kill-line)
-          ; (error (format "(%s)" (substring-no-properties (car kill-ring))))
-          (setq blk-start (line-beginning-position))
           (setq header-start (point))
+          ;; Save indentation
+          (re-search-backward (format "\\#\\+begin_%s" blk))
+          (setq blk-start (point))
+          (setq blk-column (current-column))
+          ;; actually process body
+          (goto-char header-start)
           (setq body-start (1+ (line-end-position)))
-          (setq kwdargs (read (format "(%s)" (buffer-substring-no-properties header-start (line-end-position)))))
-          (setq kwdargs (--split-with (not (keywordp it)) kwdargs))
+          (thread-last
+              (buffer-substring-no-properties header-start (line-end-position))
+            (format "(%s)")
+            read
+            (--split-with (not (keywordp it)))
+            (setq kwdargs))
           (setq main-arg (org-special-block-extras--pp-list (car kwdargs)))
           (setq kwdargs (cadr kwdargs))
-          ; (beginning-of-line) (kill-line)
           (forward-line -1)
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
           (setq contents (buffer-substring-no-properties body-start (line-beginning-position)))
-          ; (beginning-of-line)(kill-line) ;; Hack!
           (kill-region blk-start (point))
-          (insert
-             (eval `(,(intern (format "org-special-block-extras--%s" blk))
-                     (quote ,backend)
-                     contents
-                     main-arg
-                     ,@(--map (list 'quote it) kwdargs)))
-             )
+          (insert (eval `(,(intern (format "org-special-block-extras--%s" blk))
+                          (quote ,backend)
+                          contents
+                          main-arg
+                          ,@(--map (list 'quote it) kwdargs))))
+          (indent-region blk-start (point) blk-column)
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
-      )))
+      ))))
 
 (defvar org-special-block-extras--header-args nil
   "Alist (name plist) where “:main-arg” is a special plist key.
