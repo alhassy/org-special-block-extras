@@ -1,14 +1,15 @@
-# This is a basic workflow to help you get started with Actions
+# This workflow will do a clean install of dependencies and run tests
+# For more information see: https://help.github.com/actions/language-and-framework-guides/
 
-name: CI
+name: Tests
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -25,12 +26,21 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Set up Emacs
+        uses: purcell/setup-emacs@v3.0
+        with:
+          # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
+          version: 27.1 # optional
+
       # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # - name: Run a one-line script
+      #  run: echo Hello, world!
 
       # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      # - name: Run a multi-line script
+      #  run: |
+      #    echo Add other actions to build,
+      #    echo test, and deploy your project.
+
+      - name: Run tests
+        run: emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit

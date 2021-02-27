@@ -293,7 +293,11 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 The following creates the “Github Actions Workflow” file;
 this way, Github will run your tests every time you commit ^_^
 
-#+begin_src shell :tangle .github/workflows/main.yml :mkdirp yes
+FIRST: In Github, you must “Actions → New WorkFlow → Get Started → Commit”,
+Then & only then: Update the main.yml to the following.
+(Otherwise, for some reason, the workflow will not be triggered automatically.)
+
+#+begin_src shell :tangle .github/workflows/main.yml
 # This workflow will do a clean install of dependencies and run tests
 # For more information see: https://help.github.com/actions/language-and-framework-guides/
 
