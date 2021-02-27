@@ -9,6 +9,8 @@
 
 </p>
 
+![example workflow](https://github.com/alhassy/org-special-block-extras/actions/workflows/main.yml/badge.svg)
+
 <p>
 <a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-27-green?logo=gnu-emacs"></a>
 <a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.4-blue?logo=gnu"></a>

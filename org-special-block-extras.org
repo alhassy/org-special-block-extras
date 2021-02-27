@@ -253,12 +253,20 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 # #
 # See https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like
 
-* TODO Tests                                                       :noexport:
-  :PROPERTIES:
-  :CUSTOM_ID: Tests
-  :END:
-
+* Testing :noexport:
 #+begin_src emacs-lisp :tangle tests.el
+(setq needed-libraries
+      '(s cl-lib dash org seq quelpa))
+
+(require 'package)
+(push '("melpa" . "https://melpa.org/packages/") package-archives)
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+(dolist (pkg needed-libraries)
+  (unless (package-installed-p pkg)
+    (package-install pkg)))
+
 (defmacro deftest (desc &rest body)
   `(ert-deftest ,(intern
 ;; Convert all non-letters to ‘_’
@@ -274,8 +282,67 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 (when nil ;; example use
   (let ((propcheck-seed (propcheck-seed)))
     (propcheck-generate-string nil)))
+
+
+(load-file "org-special-block-extras.el")
 #+end_src
 
+--------------------------------------------------------------------------------
+
+The following creates the “Github Actions Workflow” file;
+this way, Github will run your tests every time you commit ^_^
+
+#+begin_src shell :tangle .github/workflows/main.yml :mkdirp yes
+# This workflow will do a clean install of dependencies and run tests
+# For more information see: https://help.github.com/actions/language-and-framework-guides/
+
+name: Tests
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Set up Emacs
+        uses: purcell/setup-emacs@v3.0
+        with:
+          # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
+          version: 27.1 # optional
+
+      # Runs a single command using the runners shell
+      # - name: Run a one-line script
+      #  run: echo Hello, world!
+
+      # Runs a set of commands using the runners shell
+      # - name: Run a multi-line script
+      #  run: |
+      #    echo Add other actions to build,
+      #    echo test, and deploy your project.
+
+      - name: Run tests
+        run: emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
+#+end_src
+
+      # Upload coverage
+      - uses: codecov/codecov-action@v1
 * Abstract :ignore:
   :PROPERTIES:
   :CUSTOM_ID: Abstract
@@ -1349,7 +1416,7 @@ hello
       (org-special-block-extras--support-special-blocks-with-args 'html)
       (buffer-string)))))
 
-(deftest "Constant blocks export to LaTex preserves indentation/enumeration")
+(deftest "Constant blocks export to LaTex preserves indentation/enumeration"
 (should (equal
 "\\begin{enumerate}
 \\item item one
@@ -3247,7 +3314,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{multicol}}
 #+begin_details Implementation
   #+begin_src emacs-lisp -r -n
 (org-special-block-extras-defblock parallel (cols 2) (bar nil)
-  "Place ideas side-by-side, possibly with a seperator.
+  "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be seperated by black
 solid vertical rules if BAR is a non-nil value.
