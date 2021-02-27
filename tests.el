@@ -45,3 +45,7 @@
     (should (equal buf
                    (with-temp-buffer
                      (insert buf)
+                     (org-special-block-extras--support-special-blocks-with-args 'html)
+                     (buffer-string))))))
+
+(defblock go nil nil "doc" "hello") ;; Constantly “hello”
