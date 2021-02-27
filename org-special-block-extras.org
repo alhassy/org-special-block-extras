@@ -1366,7 +1366,10 @@ BACKEND is the export back-end being used, as a symbol."
                           ,blk-contents
                           ,main-arg
                           ,@(--map (list 'quote it) kwdargs))))
-          (indent-region blk-start (point) blk-column)
+          ;; (indent-region blk-start (point) blk-column)
+          ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
+          (indent-line-to blk-column) ;; #+end...
+          (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
       ))))
@@ -3359,7 +3362,7 @@ would be useful in cases where one column is wide and the others are not.
 #+html: <br>
 #+begin_box Example
 _This_
-#+begin_src C :tangle no
+#+begin_src org :tangle no
 ,#+begin_parallel 2 :bar yes-or-any-other-text
 X
 

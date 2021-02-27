@@ -499,7 +499,9 @@ BACKEND is the export back-end being used, as a symbol."
                           ,blk-contents
                           ,main-arg
                           ,@(--map (list 'quote it) kwdargs))))
-          (indent-region blk-start (point) blk-column)
+          ;; (indent-region blk-start (point) blk-column)
+          (indent-line-to blk-column) ;; #+end...
+          (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
       ))))
