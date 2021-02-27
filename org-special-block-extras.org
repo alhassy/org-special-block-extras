@@ -285,6 +285,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 
 (load-file "org-special-block-extras.el")
+(org-special-block-extras-short-names)
 #+end_src
 
 --------------------------------------------------------------------------------
@@ -1144,19 +1145,19 @@ Three example uses:
   (let (ospe-respect-newlines?
         docstring
         body)
-    (if (symbolp (first experimental&&docstring&&body))
+    (if (symbolp (cl-first experimental&&docstring&&body))
         ;; okay we have a newline declaration, but do we ALSO have a doc-string?
-        (if (stringp (second experimental&&docstring&&body))
+        (if (stringp (cl-second experimental&&docstring&&body))
             (setq ospe-respect-newlines? t
-                  docstring (second experimental&&docstring&&body)
+                  docstring (cl-second experimental&&docstring&&body)
                   body      (cddr   experimental&&docstring&&body))
           (setq ospe-respect-newlines? t
-                body      (rest experimental&&docstring&&body)))
+                body      (cl-rest experimental&&docstring&&body)))
       ;; no newline declaration...
       ;; maybe we have a docstring?
-      (if (stringp (first experimental&&docstring&&body))
-          (setq docstring (first experimental&&docstring&&body)
-                body      (rest experimental&&docstring&&body))
+      (if (stringp (cl-first experimental&&docstring&&body))
+          (setq docstring (cl-first experimental&&docstring&&body)
+                body      (cl-rest experimental&&docstring&&body))
         ;; else neither newline-declaration now docstring
         (setq body experimental&&docstring&&body)))
 

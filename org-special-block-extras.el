@@ -88,13 +88,13 @@
         (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-        
+
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-        
+
         (unless org-special-block-extras--kbd-html-setup
           (setq org-special-block-extras--kbd-html-setup t)
         (setq org-html-head-extra
@@ -123,7 +123,7 @@
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-        
+
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
@@ -132,24 +132,24 @@
           (org-special-block-extras-docs-load-libraries))
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-        
+
         (unless org-special-block-extras--tooltip-html-setup
           (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
+
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
+
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-        
+
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
+
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -169,10 +169,10 @@
          });
                  });
              </script>
-        
+
         <style>
            abbr {color: red;}
-        
+
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -186,14 +186,14 @@
         (cl-loop for lnk in org-special-block-extras-fancy-links
               do (highlight-phrase (format "%s:[^ \n]*" lnk)
                                    'custom-button))
-        
+
         ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
         ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-    
+
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     (cl-loop for lnk in org-special-block-extras-fancy-links
@@ -311,19 +311,19 @@ Three example uses:
   (let (ospe-respect-newlines?
         docstring
         body)
-    (if (symbolp (first experimental&&docstring&&body))
+    (if (symbolp (cl-first experimental&&docstring&&body))
         ;; okay we have a newline declaration, but do we ALSO have a doc-string?
-        (if (stringp (second experimental&&docstring&&body))
+        (if (stringp (cl-second experimental&&docstring&&body))
             (setq ospe-respect-newlines? t
-                  docstring (second experimental&&docstring&&body)
+                  docstring (cl-second experimental&&docstring&&body)
                   body      (cddr   experimental&&docstring&&body))
           (setq ospe-respect-newlines? t
-                body      (rest experimental&&docstring&&body)))
+                body      (cl-rest experimental&&docstring&&body)))
       ;; no newline declaration...
       ;; maybe we have a docstring?
-      (if (stringp (first experimental&&docstring&&body))
-          (setq docstring (first experimental&&docstring&&body)
-                body      (rest experimental&&docstring&&body))
+      (if (stringp (cl-first experimental&&docstring&&body))
+          (setq docstring (cl-first experimental&&docstring&&body)
+                body      (cl-rest experimental&&docstring&&body))
         ;; else neither newline-declaration now docstring
         (setq body experimental&&docstring&&body)))
 
@@ -461,7 +461,7 @@ BACKEND is the export back-end being used, as a symbol."
   (let (blk-start        ;; The point at which the user's block begins.
         header-start ;; The point at which the user's block header & args begin.
         kwdargs          ;; The actual key-value arguments for the header.
-        main-arg         ;; The first (non-keyed) value to the block.
+        main-arg         ;; The cl-first (non-keyed) value to the block.
         blk-column       ;; The column at which the user's block begins.
         body-start       ;; The starting line of the user's block.
         blk-contents         ;; The actual body string.
@@ -814,7 +814,7 @@ with all ‘:kᵢ:’ lines stripped out.
 (org-special-block-extras-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
-"Format CONTENTS as an first-class editor comment according to BACKEND.
+"Format CONTENTS as an cl-first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
 with having only ‘#+replacewith:’, then the text preceding this
@@ -1418,7 +1418,7 @@ Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
     (s-replace-regexp "\\\"" "''")))
 
 (defun org-special-block-extras--name&doc (lbl)
-  "Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries."
+  "Look for ‘lbl’ from within the current buffer cl-first, otherwise look among the loaded libraries."
   (let* ((wit (or (assoc lbl org-special-block-extras--docs)
                   (assoc lbl org-special-block-extras--docs-from-libraries)))
          (name (cl-second wit))
@@ -1668,7 +1668,7 @@ empty string, \"\", to comment-out all hints in the exported
 version.
 
 The hint is the text immediately after a “--”, if there are
-multiple such delimiters only the first is shown; this can be
+multiple such delimiters only the cl-first is shown; this can be
 useful if we want to have multiple alternatives, say for extra
 details in the source but not so much in the export.
 
