@@ -88,13 +88,13 @@
         (add-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
         (advice-add #'org-html-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'html))
-
+        
         (advice-add #'org-latex-special-block
            :before-until (apply-partially #'org-special-block-extras--advice 'latex))
         (setq org-export-allow-bind-keywords t)
         (defvar org-special-block-extras--kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-
+        
         (unless org-special-block-extras--kbd-html-setup
           (setq org-special-block-extras--kbd-html-setup t)
         (setq org-html-head-extra
@@ -123,7 +123,7 @@
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-
+        
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
@@ -132,24 +132,24 @@
           (org-special-block-extras-docs-load-libraries))
         (defvar org-special-block-extras--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-
+        
         (unless org-special-block-extras--tooltip-html-setup
           (setq org-special-block-extras--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
+        
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
+        
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-
+        
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
+        
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -169,10 +169,10 @@
          });
                  });
              </script>
-
+        
         <style>
            abbr {color: red;}
-
+        
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -186,14 +186,14 @@
         (cl-loop for lnk in org-special-block-extras-fancy-links
               do (highlight-phrase (format "%s:[^ \n]*" lnk)
                                    'custom-button))
-
+        
         ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
         ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org-special-block-extras--support-special-blocks-with-args)
     (advice-remove #'org-html-special-block
                    (apply-partially #'org-special-block-extras--advice 'html))
-
+    
     (advice-remove #'org-latex-special-block
                    (apply-partially #'org-special-block-extras--advice 'latex))
     (cl-loop for lnk in org-special-block-extras-fancy-links
@@ -461,7 +461,7 @@ BACKEND is the export back-end being used, as a symbol."
   (let (blk-start        ;; The point at which the user's block begins.
         header-start ;; The point at which the user's block header & args begin.
         kwdargs          ;; The actual key-value arguments for the header.
-        main-arg         ;; The cl-first (non-keyed) value to the block.
+        main-arg         ;; The first (non-keyed) value to the block.
         blk-column       ;; The column at which the user's block begins.
         body-start       ;; The starting line of the user's block.
         blk-contents         ;; The actual body string.
@@ -499,9 +499,10 @@ BACKEND is the export back-end being used, as a symbol."
                           ,blk-contents
                           ,main-arg
                           ,@(--map (list 'quote it) kwdargs))))
-          ;; (indent-region blk-start (point) blk-column)
-          (indent-line-to blk-column) ;; #+end...
-          (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
+          ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
+          ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
+          ;; (indent-line-to blk-column) ;; #+end...
+          ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
       ))))
@@ -816,7 +817,7 @@ with all ‘:kᵢ:’ lines stripped out.
 (org-special-block-extras-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
-"Format CONTENTS as an cl-first-class editor comment according to BACKEND.
+"Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
 with having only ‘#+replacewith:’, then the text preceding this
@@ -1014,7 +1015,7 @@ Names are very rough approximates.
   ))
 
 (org-special-block-extras-defblock parallel (cols 2) (bar nil)
-  "Place ideas side-by-side, possibly with a seperator.
+  "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be seperated by black
 solid vertical rules if BAR is a non-nil value.
@@ -1064,6 +1065,41 @@ which sometimes accomplishes the desired goal.
                                  (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
                                  (_  "<span style=\"color:%s;\">%s</span>"))
                                (quote ,colour) contents)))))
+
+(when nil
+
+(ert-deftest red-color-block ()
+  (should (equal
+    (⟰
+      "#+begin_red
+      XXX
+      #+end_red")
+    (unindent
+     "#+begin_export html
+      <span style=\"color:red;\">
+      #+end_export
+      XXX
+
+      #+begin_export html
+      </span>
+      #+end_export"))))
+
+(ert-deftest colors-block ()
+  (should (equal
+    (⟰
+      "#+begin_color pink
+      XXX
+      #+end_color")
+"#+begin_export html
+<span style=\"color:pink;\">
+#+end_export
+XXX
+
+#+begin_export html
+</span>
+#+end_export")))
+
+)
 
 (org-special-block-extras-defblock color
   (color black :face (lambda (colour) `(:foreground ,(format "%s" colour))))
@@ -1176,6 +1212,101 @@ Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The badge link types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(ert-deftest badges/lmgtfy/1 ()
+  (should (equal
+     (org-export-string-as
+  "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir"
+  'html :body-only)
+     "<p>
+<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/2 ()
+  (should (equal
+     (org-export-string-as
+  "[[badge: Let me google that | for you! | orange |
+   https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]"
+  'html :body-only)
+"<p>
+<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/3 ()
+  (should (equal
+     (org-export-string-as
+      "badge:Let_me_*not*_google_that|for_you"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/with-all-options ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value|informational|here|Elixir"
+      'html :body-only)
+"<p>
+<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a></p>
+")))
+
+
+(ert-deftest badges/with-spaces-and-% ()
+  (should (equal
+     (org-export-string-as
+      "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here"
+      'html :body-only)
+"<p>
+<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a></p>
+")))
+
+
+(ert-deftest badges/no-color-given ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:key"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key--nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-key-and-empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:||green"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--green?logo=nil\"></p>
+")))
+
+(ert-deftest badges/just-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/totally-empty ()
+  (should (equal
+     (org-export-string-as
+      "[[badge:]]"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--nil?logo=nil\"></p>
+")))
+
+; (ert "badges/*")
 
 (cl-defmacro org-special-block-extras-make-badge
   (name &optional social-shields-name social-url social-shields-url )
@@ -1420,7 +1551,7 @@ Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
     (s-replace-regexp "\\\"" "''")))
 
 (defun org-special-block-extras--name&doc (lbl)
-  "Look for ‘lbl’ from within the current buffer cl-first, otherwise look among the loaded libraries."
+  "Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries."
   (let* ((wit (or (assoc lbl org-special-block-extras--docs)
                   (assoc lbl org-special-block-extras--docs-from-libraries)))
          (name (cl-second wit))
@@ -1670,7 +1801,7 @@ empty string, \"\", to comment-out all hints in the exported
 version.
 
 The hint is the text immediately after a “--”, if there are
-multiple such delimiters only the cl-first is shown; this can be
+multiple such delimiters only the first is shown; this can be
 useful if we want to have multiple alternatives, say for extra
 details in the source but not so much in the export.
 

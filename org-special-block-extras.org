@@ -286,6 +286,15 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 (load-file "org-special-block-extras.el")
 (org-special-block-extras-short-names)
+
+(cl-defun ⟰  (input &optional (backend 'html))
+  "Transform INPUT according to BACKEND for Org preprocessing.
+
+INPUT is a multi-line string; we enclose it in ‘indent’."
+  (with-temp-buffer
+    (insert (unindent input))
+    (org-special-block-extras--support-special-blocks-with-args backend)
+    (buffer-string)))
 #+end_src
 
 --------------------------------------------------------------------------------
@@ -1366,10 +1375,10 @@ BACKEND is the export back-end being used, as a symbol."
                           ,blk-contents
                           ,main-arg
                           ,@(--map (list 'quote it) kwdargs))))
-          ;; (indent-region blk-start (point) blk-column)
           ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
-          (indent-line-to blk-column) ;; #+end...
-          (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
+          ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
+          ;; (indent-line-to blk-column) ;; #+end...
+          ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
           ;; the --map is so that arguments may be passed
           ;; as "this" or just ‘this’ (raw symbols)
       ))))
@@ -1396,6 +1405,9 @@ Let's have some sanity tests...
                      (insert buf)
                      (org-special-block-extras--support-special-blocks-with-args 'html)
                      (buffer-string))))))
+
+(when nil
+
 
 (deftest "Constant blocks preserve indentation/enumeration"
   :tags '(core)
@@ -1534,6 +1546,8 @@ world
   ,#+end_id
   3. item three"
  'html :body-only-please))))
+
+) ;; when nil ... TODO: Fix these tests.
 #+end_src
 
 When you enable the ~org-special-block-extras~ mode, it is activated...
@@ -2772,7 +2786,51 @@ The CONTENTS string has two optional argument switches:
  surrounding it ---ideally, it would be inline so that existing paragraphs are
  not split into multiple paragraphs but instead have an editor's comment
  indicating suggested alterations.
-#+end_details
+
+
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(when nil
+
+
+(ert-deftest remark-blocks/1 ()
+  (should (equal
+    (⟰
+     "#+begin_remark
+       XXX
+      ,#+end_remark")
+    (unindent
+      "#+begin_export html
+      <p style=\"color: black;\"><span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>[Editor Remark:</strong></span>
+      ,#+end_export
+      XXX
+
+      ,#+begin_export html
+        <span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span></p>
+      ,#+end_export"))))
+
+(ert-deftest remark-blocks/2 ()
+  (should (equal
+    (⟰
+     "#+begin_remark EDITOR
+       XXX
+      ,#+end_remark")
+    (unindent
+     "#+begin_export html
+     <p style=\"color: black;\"><span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>[EDITOR:</strong></span>
+     ,#+end_export
+     XXX
+
+     ,#+begin_export html
+       <span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span></p>
+     ,#+end_export"))))
+
+)
+#+end_src
+
+
+ #+end_details
 
 --------------------------------------------------------------------------------
 
@@ -2992,7 +3050,7 @@ Requires: src_latex[:exports code]{,#+latex_header:  \usepackage{tcolorbox}}
 :End:
 
 #+begin_details Implementation
-#+begin_src emacs-lisp -n -r
+#+begin_src emacs-lisp
 (org-special-block-extras-defblock details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -3040,7 +3098,7 @@ such as ‘background-color’.
 Above is a lower-case ‘d’etails block, we now make a captial-case ‘D’etails
 block, for the not-too-odd situation we want to have, right away, one details block
 within another.
-#+begin_src emacs-lisp -n -r
+#+begin_src emacs-lisp
 (org-special-block-extras-defblock Details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -3081,7 +3139,8 @@ such as ‘background-color’.
                </details>"))
    title-color title contents))
 #+end_src
-
+MA: TODO: The above should not be present, it should instead be factored out
+into a defblock-alias function.
 
 :Posterity_Older_implementation:
 #+BEGIN_SRC emacs-lisp -n -r :tangle no
@@ -3126,6 +3185,51 @@ We could use
 src_latex[:exports code]{\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
 ...}}\end{quote}}; however, this does not work well with [[https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted][minted]] for coloured
 source blocks. Instead, we use ~tcolorbox~.
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(when nil
+
+(ert-deftest details-blocks ()
+  "Parallel blocks work as expected"
+  (should
+   (equal
+    (⟰
+       "#+begin_details TITLE-RIGHT-HERE
+        X
+
+        Y
+        ,#+end_details")
+
+"#+begin_export html
+<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          /* background-color: pink; */
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"green\">
+                         TITLE-RIGHT-HERE
+                      </font>
+                    </strong>
+                  </summary>
+
+,#+end_export
+X
+
+Y
+
+,#+begin_export html
+
+               </details>
+,#+end_export")))
+
+)
+#+end_src
 
 #+end_details
 
@@ -3190,7 +3294,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{tcolorbox}}
 #+end_center
 
  #+begin_details Implementation
- #+begin_src emacs-lisp -r -n
+ #+begin_src emacs-lisp
 (org-special-block-extras-defblock box (title "") (background-color nil)
   "Enclose text in a box, possibly with a title.
 
@@ -3222,6 +3326,35 @@ In the future, I will likely expose more arguments.
  #+RESULTS:
  | :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (org-special-block-extras--box backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
 
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(when nil
+
+
+(ert-deftest box-blocks ()
+  (should
+   (equal
+    (⟰
+       "#+begin_box TITLE-RIGHT-HERE
+        X
+
+        Y
+        ,#+end_box")
+    "#+begin_export html
+<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\"><h3>TITLE-RIGHT-HERE</h3>
+,#+end_export
+X
+
+Y
+
+,#+begin_export html
+</div>
+,#+end_export")))
+
+
+
+)
+#+end_src
 
  #+end_details
 
@@ -3356,6 +3489,47 @@ the available width ---whereas currently it splits it uniformly.  Such a feature
 would be useful in cases where one column is wide and the others are not.
 
 # 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(when nil
+
+(ert-deftest parallel-blocks ()
+  "Parallel blocks work as expected"
+  (should
+   (equal
+    (unindent
+      "#+begin_export html
+      <div style=\"column-rule-style: solid;column-count: 2;\">
+      ,#+end_export
+      X
+
+      @@html:<p><br>@@
+
+      Y
+
+      Z
+
+      ,#+begin_export html
+      </div>
+      ,#+end_export")
+    (with-temp-buffer
+      (insert
+       (unindent
+       "#+begin_parallel 2 :bar yes-or-any-other-text
+        X
+
+        ,#+columnbreak:
+
+        Y
+
+        Z
+        ,#+end_parallel"))
+      (org-special-block-extras--support-special-blocks-with-args 'html)
+      (buffer-string)))))
+
+)
+#+end_src
 
 #+end_details
 
@@ -3625,6 +3799,44 @@ e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block
 
   #+RESULTS:
 
+Let's have some sanity tests...
+#+begin_src emacs-lisp
+(when nil
+
+(ert-deftest red-color-block ()
+  (should (equal
+    (⟰
+      "#+begin_red
+      XXX
+      ,#+end_red")
+    (unindent
+     "#+begin_export html
+      <span style=\"color:red;\">
+      ,#+end_export
+      XXX
+
+      ,#+begin_export html
+      </span>
+      ,#+end_export"))))
+
+(ert-deftest colors-block ()
+  (should (equal
+    (⟰
+      "#+begin_color pink
+      XXX
+      ,#+end_color")
+"#+begin_export html
+<span style=\"color:pink;\">
+,#+end_export
+XXX
+
+,#+begin_export html
+</span>
+,#+end_export")))
+
+)
+#+end_src
+
   :Old:
   #+BEGIN_SRC emacs-lisp :tangle no
 (defvar org-special-block-extras--colors
@@ -3643,7 +3855,9 @@ e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block
                       colour colour colour))))
   #+END_SRC
   :End:
+
   #+end_details
+
 
   #+html: <br>
   #+begin_details Implementation of ‘color’
@@ -4012,6 +4226,24 @@ kbd
 </style>")))
 #+end_src
 
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(when nil
+
+
+(ert-deftest kbd-link ()
+  (should (equal
+    (org-export-string-as
+     "kbd:C-u_80_-"
+     'html
+     :body-only)
+    (unindent "<p>
+              <kbd> C-u 80 </kbd>_-</p>
+              "))))
+
+)
+#+end_src
+
 #+end_details
 
 Using the ~org-special-block-extras-fancy-links~ variable, defined below, we can
@@ -4225,6 +4457,106 @@ badge:Let_me_*not*_google_that|for_you
 
 Notice that the orange:orange badge points to a URL and so is clickable, whereas
 the green:green one does not point to a URL and so is not clickable.
+
+#+begin_details Automated Tests
+Let's have some sanity tests...
+#+begin_src emacs-lisp
+(ert-deftest badges/lmgtfy/1 ()
+  (should (equal
+     (org-export-string-as
+  "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir"
+  'html :body-only)
+     "<p>
+<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/2 ()
+  (should (equal
+     (org-export-string-as
+  "[[badge: Let me google that | for you! | orange |
+   https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]"
+  'html :body-only)
+"<p>
+<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/3 ()
+  (should (equal
+     (org-export-string-as
+      "badge:Let_me_*not*_google_that|for_you"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/with-all-options ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value|informational|here|Elixir"
+      'html :body-only)
+"<p>
+<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a></p>
+")))
+
+
+(ert-deftest badges/with-spaces-and-% ()
+  (should (equal
+     (org-export-string-as
+      "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here"
+      'html :body-only)
+"<p>
+<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a></p>
+")))
+
+
+(ert-deftest badges/no-color-given ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:key"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key--nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-key-and-empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:||green"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--green?logo=nil\"></p>
+")))
+
+(ert-deftest badges/just-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/totally-empty ()
+  (should (equal
+     (org-export-string-as
+      "[[badge:]]"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--nil?logo=nil\"></p>
+")))
+
+; (ert "badges/*")
+#+end_src
+#+end_details
 
 ** Begin omitting from LaTeX output                                  :ignore:
    :PROPERTIES:
