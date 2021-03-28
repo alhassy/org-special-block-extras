@@ -91,10 +91,8 @@ INPUT is a multi-line string; we enclose it in ‘indent’."
                      (org-special-block-extras--support-special-blocks-with-args 'html)
                      (buffer-string))))))
 
-(when nil
-
-
 (deftest "Constant blocks preserve indentation/enumeration"
+  :expected-result :failed
   :tags '(core)
   (defblock go nil nil "doc" "hello") ;; Constantly “hello”
   (should (equal
@@ -158,6 +156,7 @@ hello</li>
  'html :body-only-please))))
 
 (deftest "Identity blocks preserve indentation/enumeration"
+    :expected-result :failed
   :tags '(core)
   (defblock id nil nil "doc" contents)
   (should (equal
@@ -186,6 +185,7 @@ hello</li>
       (buffer-string)))))
 
 (deftest "Identity blocks export to LaTex preserves indentation/enumeration"
+    :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 "\\begin{enumerate}
@@ -207,6 +207,7 @@ world
  'latex :body-only-please))))
 
 (deftest "Identity blocks export to HTML preserves indentation/enumeration"
+    :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 
@@ -232,12 +233,8 @@ world
   3. item three"
  'html :body-only-please))))
 
-) ;; when nil ... TODO: Fix these tests.
-
-(when nil
-
-
 (ert-deftest remark-blocks/1 ()
+  :expected-result :failed
   (should (equal
     (⟰
      "#+begin_remark
@@ -254,6 +251,7 @@ world
       #+end_export"))))
 
 (ert-deftest remark-blocks/2 ()
+  :expected-result :failed
   (should (equal
     (⟰
      "#+begin_remark EDITOR
@@ -269,12 +267,9 @@ world
        <span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span></p>
      #+end_export"))))
 
-)
-
-(when nil
-
 (ert-deftest details-blocks ()
   "Parallel blocks work as expected"
+  :expected-result :failed
   (should
    (equal
     (⟰
@@ -311,12 +306,8 @@ Y
                </details>
 #+end_export")))
 
-)
-
-(when nil
-
-
 (ert-deftest box-blocks ()
+  :expected-result :failed
   (should
    (equal
     (⟰
@@ -336,14 +327,9 @@ Y
 </div>
 #+end_export")))
 
-
-
-)
-
-(when nil
-
 (ert-deftest parallel-blocks ()
   "Parallel blocks work as expected"
+  :expected-result :failed
   (should
    (equal
     (unindent
@@ -376,11 +362,6 @@ Y
       (org-special-block-extras--support-special-blocks-with-args 'html)
       (buffer-string)))))
 
-)
-
-(when nil
-
-
 (ert-deftest kbd-link ()
   (should (equal
     (org-export-string-as
@@ -390,5 +371,3 @@ Y
     (unindent "<p>
               <kbd> C-u 80 </kbd>_-</p>
               "))))
-
-)

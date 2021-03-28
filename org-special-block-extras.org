@@ -691,10 +691,9 @@ Let's have some sanity tests...
                      (org-special-block-extras--support-special-blocks-with-args 'html)
                      (buffer-string))))))
 
-(when nil
-
 
 (deftest "Constant blocks preserve indentation/enumeration"
+  :expected-result :failed
   :tags '(core)
   (defblock go nil nil "doc" "hello") ;; Constantly “hello”
   (should (equal
@@ -737,6 +736,7 @@ hello
  'latex :body-only-please))))
 
 (deftest "Constant blocks export to HTML preserves indentation/enumeration"
+  :expected-result :failed
 (should (equal
 "<ol class=\"org-ol\">
 <li>item one</li>
@@ -758,6 +758,7 @@ hello</li>
  'html :body-only-please))))
 
 (deftest "Identity blocks preserve indentation/enumeration"
+  :expected-result :failed
   :tags '(core)
   (defblock id nil nil "doc" contents)
   (should (equal
@@ -786,6 +787,7 @@ hello</li>
       (buffer-string)))))
 
 (deftest "Identity blocks export to LaTex preserves indentation/enumeration"
+  :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 "\\begin{enumerate}
@@ -807,6 +809,7 @@ world
  'latex :body-only-please))))
 
 (deftest "Identity blocks export to HTML preserves indentation/enumeration"
+  :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 
@@ -831,8 +834,6 @@ world
   ,#+end_id
   3. item three"
  'html :body-only-please))))
-
-) ;; when nil ... TODO: Fix these tests.
 #+end_src
 
 When you enable the ~org-special-block-extras~ mode, it is activated...
@@ -946,7 +947,6 @@ this loses indent
    #+begin_remark
    this keeps indent
    #+end_remark
-
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
   :CUSTOM_ID: HTML-LaTeX-Setup
@@ -2339,10 +2339,8 @@ Let's have some sanity tests...
                      (org-special-block-extras--support-special-blocks-with-args 'html)
                      (buffer-string))))))
 
-(when nil
-
-
 (deftest "Constant blocks preserve indentation/enumeration"
+  :expected-result :failed
   :tags '(core)
   (defblock go nil nil "doc" "hello") ;; Constantly “hello”
   (should (equal
@@ -2406,6 +2404,7 @@ hello</li>
  'html :body-only-please))))
 
 (deftest "Identity blocks preserve indentation/enumeration"
+    :expected-result :failed
   :tags '(core)
   (defblock id nil nil "doc" contents)
   (should (equal
@@ -2434,6 +2433,7 @@ hello</li>
       (buffer-string)))))
 
 (deftest "Identity blocks export to LaTex preserves indentation/enumeration"
+    :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 "\\begin{enumerate}
@@ -2455,6 +2455,7 @@ world
  'latex :body-only-please))))
 
 (deftest "Identity blocks export to HTML preserves indentation/enumeration"
+    :expected-result :failed
 (defblock id nil nil "doc" contents)
 (should (equal
 
@@ -2479,8 +2480,6 @@ world
   ,#+end_id
   3. item three"
  'html :body-only-please))))
-
-) ;; when nil ... TODO: Fix these tests.
 #+end_src
 
 When you enable the ~org-special-block-extras~ mode, it is activated...
@@ -3724,10 +3723,8 @@ The CONTENTS string has two optional argument switches:
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
-(when nil
-
-
 (ert-deftest remark-blocks/1 ()
+  :expected-result :failed
   (should (equal
     (⟰
      "#+begin_remark
@@ -3744,6 +3741,7 @@ Let's have some sanity tests...
       ,#+end_export"))))
 
 (ert-deftest remark-blocks/2 ()
+  :expected-result :failed
   (should (equal
     (⟰
      "#+begin_remark EDITOR
@@ -3758,8 +3756,6 @@ Let's have some sanity tests...
      ,#+begin_export html
        <span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span></p>
      ,#+end_export"))))
-
-)
 #+end_src
 
 
@@ -4123,10 +4119,9 @@ source blocks. Instead, we use ~tcolorbox~.
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
-(when nil
-
 (ert-deftest details-blocks ()
   "Parallel blocks work as expected"
+  :expected-result :failed
   (should
    (equal
     (⟰
@@ -4162,8 +4157,6 @@ Y
 
                </details>
 ,#+end_export")))
-
-)
 #+end_src
 
 #+end_details
@@ -4263,10 +4256,8 @@ In the future, I will likely expose more arguments.
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
-(when nil
-
-
 (ert-deftest box-blocks ()
+  :expected-result :failed
   (should
    (equal
     (⟰
@@ -4285,10 +4276,6 @@ Y
 ,#+begin_export html
 </div>
 ,#+end_export")))
-
-
-
-)
 #+end_src
 
  #+end_details
@@ -4427,10 +4414,9 @@ would be useful in cases where one column is wide and the others are not.
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
-(when nil
-
 (ert-deftest parallel-blocks ()
   "Parallel blocks work as expected"
+  :expected-result :failed
   (should
    (equal
     (unindent
@@ -4462,8 +4448,6 @@ Let's have some sanity tests...
         ,#+end_parallel"))
       (org-special-block-extras--support-special-blocks-with-args 'html)
       (buffer-string)))))
-
-)
 #+end_src
 
 #+end_details
@@ -4736,9 +4720,8 @@ e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp
-(when nil
-
 (ert-deftest red-color-block ()
+:expected-result :failed
   (should (equal
     (⟰
       "#+begin_red
@@ -4755,6 +4738,7 @@ Let's have some sanity tests...
       ,#+end_export"))))
 
 (ert-deftest colors-block ()
+:expected-result :failed
   (should (equal
     (⟰
       "#+begin_color pink
@@ -4768,8 +4752,6 @@ XXX
 ,#+begin_export html
 </span>
 ,#+end_export")))
-
-)
 #+end_src
 
   :Old:
@@ -5163,9 +5145,6 @@ kbd
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
-(when nil
-
-
 (ert-deftest kbd-link ()
   (should (equal
     (org-export-string-as
@@ -5175,8 +5154,6 @@ Let's have some sanity tests...
     (unindent "<p>
               <kbd> C-u 80 </kbd>_-</p>
               "))))
-
-)
 #+end_src
 
 #+end_details
