@@ -29,6 +29,11 @@
 #
 # (org-special-block-extras-short-names)
 
+# Do all tests continue to pass?
+# (progn (load-file "tests.el") (ert t))
+#
+# emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
+
 # +TOC: headlines 2
 
 # MA: Final version should not have the following incantation active.
@@ -47,6 +52,900 @@
 # (defun my/ensure-headline-ids (&rest _) )
 # (advice-remove 'org-html-export-to-html   'my/ensure-headline-ids)
 # (advice-remove 'org-md-export-to-markdown 'my/ensure-headline-ids)
+
+* COMMENT Issue ♯8
+  :PROPERTIES:
+  :CUSTOM_ID: TODO-HERE
+  :END:
+
+
+To have a unified, and pleasant, interface for declaring new blocks and links,
+we take the following approach:
+
+0. [@0] ( /Fuse/ the process of link generation and special block support into
+   one macro,  [[doc:org-special-block-extras-defblock][defblock]] which is like doc:defun. )
+1. The user writes as string-valued function named 𝒳, possibly with arguments,
+   that has access to a ~contents~ and ~backend~ variables.
+
+   :Posterity_OLD_org_export_parse:
+
+(defun org-export (x)
+  "Wrap the given X in an export block for the current backend."
+  (format "\n#+begin_export %s \n%s\n#+end_export\n"
+          (if (equal org-special-block-extras--current-backend 'reveal)
+              'html
+            org-special-block-extras--current-backend)
+          x))
+
+(defun org-special-block-extras--org-parse (x)
+  "This should ONLY be called within an ORG-EXPORT call."
+   (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+           (if (equal 'reveal org-special-block-extras--current-backend)
+               'html
+             org-special-block-extras--current-backend)))
+
+    :End:
+
+   #+begin_details ‘defblock’ Implementation
+     #+begin_src emacs-lisp
+    (defvar org-special-block-extras--supported-blocks nil
+      "Which special blocks, defined with DEFBLOCK, are supported.")
+
+    (defun infer-optionals (xs)
+      "Given a list XS that may optionally begin with a keyword
+      symbol then a docstring, yield a triple of their values and the
+      remainder of the list.
+
+    This is intended for macros that consume a body of forms that may
+    optionally begin with a keyword symbol followed by an optional
+    documentation string, then the remaining forms.
+
+    See the ert test INFER-OPTIONALS/SPECIFICATION for examples."
+      (let (the-keyword
+            the-string
+            body)
+        (if (symbolp (cl-first xs))
+            ;; okay we have a symbol declaration, but do we ALSO have a doc-string?
+            (if (stringp (cl-second xs))
+                (setq the-keyword (cl-first xs)
+                      the-string (cl-second xs)
+                      body      (cddr   xs))
+              (setq the-keyword (cl-first xs)
+                    body      (cl-rest xs)))
+          ;; no newline declaration...
+          ;; maybe we have a the-string?
+          (if (stringp (cl-first xs))
+              (setq the-string (cl-first xs)
+                    body      (cl-rest xs))
+            ;; else neither newline-declaration now the-string
+            (setq body xs)))
+        (list the-keyword the-string body)))
+
+    (cl-defmacro org-special-block-extras-defblock
+      (name main-arg kwds &rest experimental&&docstring&&body)
+      "Declare a new special block, and link, in the style of DEFUN.
+
+    A full featured example is at the end of this documentation string.
+
+    This is an anaphoric macro that provides export support for
+    special blocks *and* links named NAME. Just as an Org-mode
+    src-block consumes as main argument the language for the src
+    block, our special blocks too consume a MAIN-ARG; it may be a
+    symbol or a cons-list consisting of a symbolic name (with which
+    to refer to the main argument in the definition of the block)
+    followed by a default value, then, optionally, any information
+    for a one-time setup of the associated link type.
+
+    The main arg may be a sequence of symbols separated by spaces,
+    and a few punctuation with the exception of comma ‘,’ since it is
+    a special Lisp operator. In doubt, enclose the main arg in
+    quotes.
+
+    Then, just as Org-mode src blocks consume key-value pairs, our
+    special blocks consume a number of KWDS, which is a list of the
+    form (key₀ value₀ … keyₙ valueₙ).
+
+    After that is an optional DOCSTRING, a familar feature of DEFUN.
+    The docstring is displayed as part of the tooltip for the
+    produced link type.
+
+    Finally, the BODY is a (sequence of) Lisp forms ---no progn
+    needed--- that may refer to the names BACKEND and CONTENTS which
+    refer to the current export backend and the contents of the
+    special block ---or the description clause of a link.
+
+    CONTENTS refers to an Org-mode parsed string; i.e., Org-markup is
+    acknowledged.
+
+    In, hopefully, rare circumstances, one may refer to RAW-CONTENTS
+    to look at the fully unparsed contents.
+
+    Finally, this macro exposes two functions:
+    + ORG-EXPORT: Wrap the argument in an export block for the current backend.
+    + ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
+                 to escape text to Org, and out of the export block.
+
+    ----------------------------------------------------------------------
+
+    TLDR for EXPERIMENTAL&&DOCSTRING&&BODY, the first two parts are
+    optional; they're a symbol, a string, then the main body.  The
+    symbol, OSPE-RESPECT-NEWLINES?, when present enables a highly
+    experimental [i.e., do *not* use it!] feature: No new lines for
+    blocks in HTML export.  Its need rose from developing the MARGIN
+    block type.
+
+    ----------------------------------------------------------------------
+
+    The relationship between links and special blocks:
+
+      [ [type:label][description]]
+    ≈
+       ,#+begin_type label
+        description
+       ,#+end_type
+
+    ----------------------------------------------------------------------
+
+    Example declaration, with all possible features shown:
+
+       ;; We can use variable values when defining new blocks
+       (setq angry-red '(:foreground \"red\" :weight bold))
+
+       (defblock remark
+         (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
+         \"Top level (HTML & LaTeX)OSPE-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
+         (format (if (equal backend 'html)
+                   \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
+                   \"{\\color{%s}\\bfseries %s:  %s%s}\")
+                 color editor contents signoff))
+
+       ;; I don't want to change the definition, but I'd like to have
+       ;; the following as personalised defaults for the “remark” block.
+       ;; OR, I'd like to set this for links, which do not have argument options.
+       (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+
+    Three example uses:
+
+        ;; ⟨0⟩ As a special blocks with arguments given.
+        ,#+begin_remark Bobbert Barakallah :signoff \"Thank-you for pointing this out!\" :color green
+        I was trying to explain that ${\large (n × (n + 1) \over 2}$ is always an integer.
+        ,#+end_remark
+
+        ;; ⟨1⟩ As a terse link, using default values for the args.
+        ;;     Notice that Org-mode formatting is recoqgnised even in links.
+        [ [remark:Jasim Jameson][Why are you taking about “$\mathsf{even}$” here?]]
+
+        ;; ⟨2⟩ So terse that no editor name is provided.
+        [ [remark:][Please improve your transition sentences.]]
+
+        ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
+        ;; catenated as well as the default red color.
+    "
+      ;; ⇨ The special block support
+      ;;
+      (add-to-list 'org-special-block-extras--supported-blocks name) ;; global var
+
+      ;; Identify which of the optional features is present...
+      (let* ((optionals              (infer-optionals experimental&&docstring&&body))
+             (ospe-respect-newlines? (cl-first optionals))
+             (docstring              (cl-second optionals))
+             (body                   (caddr optionals)))
+        `(progn
+           ;; Produce an associated Lisp function
+           ,(org-special-block-extras-defblock---support-block-type
+             name
+             docstring
+             (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
+             (cadr main-arg) ;; main argument's value
+             kwds
+             body
+             ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
+             ospe-respect-newlines?)
+
+           ;; ⇨ The link type support
+           ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
+           ;; are dumped here verbatim.
+           ;; ‘(main-arg-name main-arg-val :face … :follow …)’
+           ,(org-special-block-extras-defblock---support-link-type
+             name (cddr main-arg) docstring))))
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; WHERE ...
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (cl-defun org-special-block-extras-defblock---org-export (backend ospe-link? ospe-respect-newlines?)
+      "Wrap the given X in an export block for the current backend.
+
+    This is exposed as ‘org-export’ within ‘defblock’ (via ‘support-block-type’).
+
+    One can think of this function as replacing the #+begin_𝒳⋯#+end_𝒳
+    in-place in your Org document; but really that's done by the
+    org-special-block-extras--support-special-blocks-with-args."
+      `(lambda (x)
+        (if ,ospe-link?
+            x
+          ;; ospe-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
+          (cond ((and ,ospe-respect-newlines? (member (quote ,backend) '(html reveal)))
+                 (format "@@%s:%s@@" (quote ,backend) (s-replace "\n" (format "@@\n@@%s:" (quote ,backend)) x) (quote ,backend)))
+                (:else
+                 (format "#+begin_export %s\n%s\n#+end_export"
+                         (quote ,backend) x))))))
+
+
+    (cl-defun org-special-block-extras-defblock---org-parse
+        (backend ospe-link? ospe-respect-newlines?)
+      "This should ONLY be called within an ORG-EXPORT call.
+
+    This is exposed as ‘org-export’ within ‘defblock’ (via ‘support-block-type’).
+
+    One can think of this function as replacing the #+begin_𝒳⋯#+end_𝒳
+    in-place in your Org document; but really that's done by the
+    ⋯-support-blocks function."
+      `(lambda (x)
+         (if ,ospe-link?
+             x
+           (cond ((and ,ospe-respect-newlines? (member (quote ,backend) '(html reveal)))
+                  (format "@@%s@@%s:" x (quote ,backend)))
+                 (:else
+                  (format "\n#+end_export\n%s\n#+begin_export %s\n" x
+                          (quote ,backend)))))))
+
+
+    (cl-defmethod org-special-block-extras-defblock---support-block-type
+        (name docstring main-arg-name main-arg-value kwds body ospe-respect-newlines?)
+      "Helper method for org-special-block-extras-defblock.
+
+    This method creates an Org block type's associated Lisp function.
+
+    NAME, string: The name of the block type.
+    DOCSTRING, string: Documentation of block.
+    MAIN-ARG-NAME: Essentially main-arg's name
+    MAIN-ARG-VALUE: Essentially main-arg's value
+    KWDS, plist: Keyword-value pairs
+    BODY, list: Code to be executed"
+      `(cl-defun ,(intern (format "org-special-block-extras--%s" name))
+           (backend raw-contents
+                    &optional ;; ,(car main-arg)
+                    ,main-arg-name
+                    &rest _
+                    &key (ospe-link? nil) ,@(-partition 2 kwds))
+         ,docstring
+         ;; Use default for main argument
+         (when (and ',main-arg-name (s-blank-p ,main-arg-name))
+           (--if-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args)) :main-arg)
+               (setq ,main-arg-name it)
+             (setq ,main-arg-name ,main-arg-value)))
+
+         (cl-letf (((symbol-function 'org-export)
+                    (org-special-block-extras-defblock---org-export backend ospe-link? ,ospe-respect-newlines?))
+                   ((symbol-function 'org-parse)
+                    (org-special-block-extras-defblock---org-parse backend ospe-link? ,ospe-respect-newlines?)))
+
+           ;; Use any headers for this block type, if no local value is passed
+           ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
+                      collect `(--when-let (plist-get (cdr (assoc ',name org-special-block-extras--header-args))
+                                                      ,(intern (format ":%s" k)))
+                                 (when (s-blank-p ,k)
+                                   (setq ,k it))))
+
+           (org-export
+            (let ((contents (org-parse raw-contents))) ,@body)))))
+
+    (cl-defmethod org-special-block-extras-defblock---support-link-type
+        (name verbatim tooltip)
+      "Helper method for org-special-block-extras-defblock.
+
+    This method creates an Org link type.
+
+    NAME, string: The name of the link type.
+    VERBATIM, list: Code dumped into the org-link-set-parameters.
+    TOOLTIP, string: Tooltip text alongside link, for use in Emacs."
+      `(org-link-set-parameters
+        ,(format "%s" name)
+        ,@verbatim
+        :export (lambda (label description backend)
+                  ; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                  (s-replace-all `(("@@" . "")) ; (,(format "@@%s:" backend) . "")
+                   (,(intern (format "org-special-block-extras--%s" name))
+                    backend (or description label) label :ospe-link? t)))
+        ;; The tooltip alongside a link
+        :help-echo (lambda (window object position)
+                     (save-excursion
+                       (goto-char position)
+                       (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
+                                (cadr (org-element-context)))
+                               (description
+                                (when (equal format 'bracket)
+                                  (copy-region-as-kill contents-begin contents-end)
+                                  (substring-no-properties (car kill-ring)))))
+                         (format "%s\n\n%s"
+                                 raw-link ,tooltip))))))
+      #+end_src
+
+    [[color:orange][Going forward,]]
+    it would be nice to have a set of switches that apply to all
+    special blocks. For instance, ~:ignore~ to simply bypass the user-defined
+    behaviour of a block type, and ~:noexport~ to zero-out a block upon export.  These
+    are super easy to do ---just need a few minutes to breath.  It may also be
+    desirable to provide support for [[https://github.com/alhassy/emacs.d#html-folded-drawers][drawers]] ---just as we did to ‘fuse’ the
+    block-type and link-type approaches used here into one macro.
+
+    Let's have some sanity tests...
+    #+begin_src emacs-lisp :tangle tests.el
+(ert-deftest infer-optionals/specification ()
+
+  (should (equal (list :key "doc" '(1 2 3))
+                 (infer-optionals '(:key "doc" 1 2 3))))
+
+  (should (equal (list nil "doc" '(1 2 3))
+                 (infer-optionals '("doc" 1 2 3))))
+
+  (should (equal (list nil nil '(1 2 3))
+                 (infer-optionals '(1 2 3))))
+
+  (should (equal (list :key nil '(1 2 3))
+                 (infer-optionals '(:key 1 2 3))))
+
+  (should (equal (list nil "doc" '(1 2 3))
+                 (infer-optionals '("doc" 1 2 3))))
+
+  (should (equal (list nil nil nil)
+                 (infer-optionals nil))))
+
+
+(ert-deftest org-export/spec ()
+
+  (should (equal "x"
+                 (funcall (org-special-block-extras-defblock---org-export 'html :ospe-link :respect-newlines) "x")))
+
+  (should (equal "x"
+                 (funcall (org-special-block-extras-defblock---org-export 'html :ospe-link nil) "x")))
+
+  (should (equal "@@html:x@@"
+                 (funcall (org-special-block-extras-defblock---org-export 'html nil :respect-newlines) "x")))
+
+  (should (equal (unindent
+                   "#+begin_export html
+                   x
+                   ,#+end_export")
+                 (funcall (org-special-block-extras-defblock---org-export 'html nil nil) "x"))))
+
+
+(ert-deftest org-parse/spec ()
+
+  (should (equal "x"
+                 (funcall (org-special-block-extras-defblock---org-parse 'html :ospe-link :respect-newlines) "x")))
+
+  (should (equal "x"
+                 (funcall (org-special-block-extras-defblock---org-parse 'html :ospe-link nil) "x")))
+
+  (should (equal "@@x@@html:"
+                 (funcall (org-special-block-extras-defblock---org-parse 'html nil :respect-newlines) "x")))
+
+  (should (equal
+                  "
+,#+end_export
+x
+,#+begin_export html
+"
+                 (funcall (org-special-block-extras-defblock---org-parse 'html nil nil) "x"))))
+
+;; MA: TODO: Test org-special-block-extras--support-special-blocks-with-args (⟰)
+;; by mocking the evaluation.
+(deftest "Testing ⟰"
+  :expected-result :failed ;; TODO: Missing tests.
+  (should (equal 1 0)))
+
+
+(defblock hello nil nil "doc" "HELLO")
+(deftest "Constant blocks export to HTML preserves indentation/enumeration"
+  (-let [org-special-block-extras--supported-blocks '(hello)]
+    (should (equal
+      (⟰ "1. item one
+          2. item two
+             ,#+begin_hello
+          world
+          ,#+end_hello
+          3. item three")
+      (unindent
+         "1. item one
+          2. item two
+             ,#+begin_export html
+          HELLO
+          ,#+end_export
+          3. item three")))))
+(deftest "Constant blocks export to LaTeX preserves indentation/enumeration :Pre-processing:"
+  (-let [org-special-block-extras--supported-blocks '(hello)]
+    (should (equal
+      (⟰ "1. item one
+          2. item two
+             ,#+begin_hello
+          world
+          ,#+end_hello
+          3. item three" 'latex)
+      (unindent
+       "1. item one
+        2. item two
+           ,#+begin_export latex
+        HELLO
+        ,#+end_export
+        3. item three")))))
+
+(deftest "Constant blocks export to LaTex preserves indentation/enumeration :Actual_Export:"
+  (should (equal
+           (org-export-string-as
+            (unindent
+             "1. item one
+              2. item two
+                 ,#+begin_hello
+              world
+              ,#+end_hello
+              3. item three")
+            'latex :body-only-please)
+           (unindent
+            "\\begin{enumerate}
+             \\item item one
+             \\item item two
+             HELLO
+             \\item item three
+             \\end{enumerate}
+             "))))
+
+(deftest "Constant blocks export to HTML preserves indentation/enumeration :Actual_Export:"
+  (should (equal
+           (org-export-string-as
+            (unindent
+             "1. item one
+              2. item two
+                 ,#+begin_hello
+              world
+              ,#+end_hello
+              3. item three")
+            'html :body-only-please)
+           (unindent
+            "<ol class=\"org-ol\">
+             <li>item one</li>
+             <li><p>
+             item two
+             </p>
+             HELLO</li>
+             <li>item three</li>
+             </ol>
+             "))))
+
+(defblock id nil nil "doc" contents)
+(deftest "Identity blocks preserve indentation/enumeration :Pre-Processing:"
+:expected-result :failed ;; TODO: known bug
+  :tags '(core)
+  (should (equal
+           (⟰ "1. item one
+               2. item two
+                  ,#+begin_id
+               world
+               ,#+end_id
+               3. item three")
+            (unindent
+              "1. item one
+               2. item two
+                  ,#+begin_export html
+               ,#+begin_export html
+               world
+
+               ,#+end_export
+               ,#+end_export
+               3. item three"))))
+(deftest "Identity blocks export to LaTex preserves indentation/enumeration :Actual_Export:"
+  :expected-result :failed ;; TODO: This test points to a known bug.
+  (should (equal
+           (org-export-string-as
+            (unindent
+             "1. item one
+              2. item two
+                 ,#+begin_id
+              world
+              ,#+end_id
+              3. item three")
+            'latex :body-only-please)
+           (unindent
+            "\\begin{enumerate}
+             \\item item one
+             \\item item two
+             world
+             \\item item three
+             \\end{enumerate}
+             "))))
+
+(deftest "Identity blocks export to HTML preserves indentation/enumeration :Actual_Export:"
+  :expected-result :failed ;; TODO: This test points to a known bug.
+  (should (equal
+           (org-export-string-as
+            (unindent
+             "1. item one
+              2. item two
+                 ,#+begin_id
+              world
+              ,#+end_id
+              3. item three")
+            'html :body-only-please)
+           (unindent
+            "<ol class=\"org-ol\">
+            <li>item one</li>
+            <li><p>
+            item two
+            </p>
+            world</li>
+            <li>item three</li>
+            </ol>
+            "))))
+#+end_src
+
+
+ #+end_details
+
+2. [@2] We tell Org to please look at all special blocks
+   #+begin_src org :tangle no
+,#+begin_𝒳 main-arg :key₀ value₀ … :keyₙ valueₙ
+contents
+,#+end_𝒳
+   #+end_src
+   Then, before export happens, to replace all such blocks
+   with the /result/ of calling the user's 𝒳 function; i.e.,
+   replace them by, essentially,
+   #+begin_src emacs-lisp :tangle no
+(𝒳 main-arg :key₀ value₀ … :keyₙ valueₙ)
+#+end_src
+
+   #+begin_details Implementing the hooking mechanism
+
+The mechanism that rewrites your source...
+ #+begin_src emacs-lisp
+(defun org-special-block-extras--pp-list (xs)
+  "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
+  When n = 0, yield the empty string “”."
+  (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
+
+(defvar org-special-block-extras--current-backend nil
+  "A message-passing channel updated by
+org-special-block-extras--support-special-blocks-with-args
+and used by DEFBLOCK.")
+
+(defun org-special-block-extras--support-special-blocks-with-args (backend)
+  "Remove all headlines in the current buffer.
+BACKEND is the export back-end being used, as a symbol."
+  (setq org-special-block-extras--current-backend backend)
+  (let (blk-start        ;; The point at which the user's block begins.
+        header-start ;; The point at which the user's block header & args begin.
+        kwdargs          ;; The actual key-value arguments for the header.
+        main-arg         ;; The first (non-keyed) value to the block.
+        blk-column       ;; The column at which the user's block begins.
+        body-start       ;; The starting line of the user's block.
+        blk-contents         ;; The actual body string.
+        ;; ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
+        ;; ⟨body-start⟩ body
+        ;; #+end_blk
+        )
+  (cl-loop for blk in org-special-block-extras--supported-blocks
+        do (goto-char (point-min))
+        (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s" blk)))
+          ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
+          ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
+          (setq header-start (point))
+          ;; Save indentation
+          (re-search-backward (format "\\#\\+begin_%s" blk))
+          (setq blk-start (point))
+          (setq blk-column (current-column))
+          ;; actually process body
+          (goto-char header-start)
+          (setq body-start (1+ (line-end-position)))
+          (thread-last
+              (buffer-substring-no-properties header-start (line-end-position))
+            (format "(%s)")
+            read
+            (--split-with (not (keywordp it)))
+            (setq kwdargs))
+          (setq main-arg (org-special-block-extras--pp-list (car kwdargs)))
+          (setq kwdargs (cadr kwdargs))
+          (forward-line -1)
+          (re-search-forward (format "^\s*\\#\\+end_%s" blk))
+          (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
+          (kill-region blk-start (point))
+          (insert (eval `(,(intern (format "org-special-block-extras--%s" blk))
+                          (quote ,backend)
+                          ,blk-contents
+                          ,main-arg
+                          ,@(--map (list 'quote it) kwdargs))))
+          ;; The --map is so that arguments may be passed as "this" or just
+          ;; ‘this’ (raw symbols).
+
+          ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
+          (indent-region blk-start (point) blk-column)
+          ;; Go back and fix all SRC blocks’ indentation; moreover, we pretty
+          ;; print indent SRCs even if user's did not.
+          (while (and (ignore-errors (re-search-backward (format "^\s*\\#\\+end_src")))  (> (point) blk-start))
+            (-let [element (org-element-at-point)]
+              ;; (insert (format "%s" 'hi))
+              (org-with-wide-buffer
+               (org-indent-region (org-element-property :begin element)
+                                  (org-element-property :end element)))))))))
+#+end_src
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el
+(deftest "pp-list works as desired"
+  (should (equal "1 2 3 4 5"
+                 (org-special-block-extras--pp-list '(1 2 3 4 5))))
+  (should (equal "1"
+                 (org-special-block-extras--pp-list '(1))))
+  (should (equal ""
+                 (org-special-block-extras--pp-list nil))))
+
+;; Using propcheck, we run this test on /arbitrary/ buffer contents.
+(deftest "No supported blocks means buffer is unchanged"
+  :tags '(core)
+  (let* (org-special-block-extras--supported-blocks
+         (propcheck-seed (propcheck-seed))
+         (buf (propcheck-generate-string nil)))
+    (should (equal buf
+                   (with-temp-buffer
+                     (insert buf)
+                     (org-special-block-extras--support-special-blocks-with-args 'html)
+                     (buffer-string))))))
+
+(when nil
+
+
+(deftest "Constant blocks preserve indentation/enumeration"
+  :tags '(core)
+  (defblock go nil nil "doc" "hello") ;; Constantly “hello”
+  (should (equal
+"
+  1. item one
+  2. item two
+     ,#+begin_export html
+hello
+,#+end_export
+  3. item three"
+    (with-temp-buffer
+      (insert
+  "
+  1. item one
+  2. item two
+     ,#+begin_go
+  world
+  ,#+end_go
+  3. item three")
+      (org-special-block-extras--support-special-blocks-with-args 'html)
+      (buffer-string)))))
+
+(deftest "Constant blocks export to LaTex preserves indentation/enumeration"
+(should (equal
+"\\begin{enumerate}
+\\item item one
+\\item item two
+hello
+\\item item three
+\\end{enumerate}
+"
+(org-export-string-as
+  "
+  1. item one
+  2. item two
+     ,#+begin_go
+  world
+  ,#+end_go
+  3. item three"
+ 'latex :body-only-please))))
+
+(deftest "Constant blocks export to HTML preserves indentation/enumeration"
+(should (equal
+"<ol class=\"org-ol\">
+<li>item one</li>
+<li><p>
+item two
+</p>
+hello</li>
+<li>item three</li>
+</ol>
+"
+(org-export-string-as
+  "
+  1. item one
+  2. item two
+     ,#+begin_go
+  world
+  ,#+end_go
+  3. item three"
+ 'html :body-only-please))))
+
+(deftest "Identity blocks preserve indentation/enumeration"
+  :tags '(core)
+  (defblock id nil nil "doc" contents)
+  (should (equal
+"
+  1. item one
+  2. item two
+     ,#+begin_export html
+
+     ,#+end_export
+     world
+
+     ,#+begin_export html
+
+     ,#+end_export
+  3. item three"
+    (with-temp-buffer
+      (insert
+  "
+  1. item one
+  2. item two
+     ,#+begin_id
+  world
+  ,#+end_id
+  3. item three")
+      (org-special-block-extras--support-special-blocks-with-args 'html)
+      (buffer-string)))))
+
+(deftest "Identity blocks export to LaTex preserves indentation/enumeration"
+(defblock id nil nil "doc" contents)
+(should (equal
+"\\begin{enumerate}
+\\item item one
+\\item item two
+
+world
+\\item item three
+\\end{enumerate}
+"
+(org-export-string-as
+  "
+  1. item one
+  2. item two
+     ,#+begin_id
+  world
+  ,#+end_id
+  3. item three"
+ 'latex :body-only-please))))
+
+(deftest "Identity blocks export to HTML preserves indentation/enumeration"
+(defblock id nil nil "doc" contents)
+(should (equal
+
+"<ol class=\"org-ol\">
+<li>item one</li>
+<li><p>
+item two
+</p>
+
+<p>
+world
+</p></li>
+<li>item three</li>
+</ol>
+"
+(org-export-string-as
+  "
+  1. item one
+  2. item two
+     ,#+begin_id
+  world
+  ,#+end_id
+  3. item three"
+ 'html :body-only-please))))
+
+) ;; when nil ... TODO: Fix these tests.
+#+end_src
+
+When you enable the ~org-special-block-extras~ mode, it is activated...
+
+
+--------------------------------------------------------------------------------
+
+As it stands, it seems that the contents of a special-block *red:must* have the
+same indentation as the block header!
+
+It green:would be ideal if such indentation could be green:ensured by the ospe
+setup.
+
+TODO: Find the current indentation of the parent block then
+indent the contents by such offset: Insert the result of the blk
+call, then invoke an indent of that region
+to the column of the blk header.
+
+
+#+begin_box
+*Actually*, it may suffice to just invoke doc:indent-region /without/ providing
+a given column ;-)
+#+end_box
+
+:Hide:
+
+;; eftest "Non-indented contents do not escape blocks"
+(defun go ()   (insert "\n\n") (insert (⟰ (unindent
+      "1. one
+       2. two
+          #+begin_details
+       NOT ESCAPED
+       #+begin_src emacs-lisp :tangle no
+       (pp-to-string
+        (list     x
+              y
+                          z))
+       #+end_src
+          #+end_details
+       3. three"))))
+
+;; eftest "Non-indented contents do not escape blocks"
+(defun go2 ()   (insert "\n\n") (insert (⟰ (unindent
+"#+begin_stutter 1
+1. something\\
+   this loses indent
+2. something else
+   #+begin_remark
+   this loses indent
+   #+end_remark
+3. something else
+#+end_stutter
+1. something else
+   #+begin_remark
+   this keeps indent
+   #+end_remark
+"))))
+
+
+
+#+RESULTS:
+: org-special-block-extras--support-special-blocks-with-args
+
+:End:
+
+# (go)
+# (go2)
+
+#+begin_export html
+
+#+end_export
+1. something\
+this loses indent
+2. something else
+#+begin_export html
+<p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Remark:</strong></span>
+#+end_export
+this loses indent
+
+#+begin_export html
+<span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+#+end_export
+3. something else
+
+#+begin_export html
+
+#+end_export
+1. something else
+ #+begin_export html
+ <p style="color: black;"><span style="border-width:1px;border-style:solid;padding:5px"><strong>[Editor Remark:</strong></span>
+ #+end_export
+ this keeps indent
+
+ #+begin_export html
+ <span style="border-width:1px;border-style:solid;padding:5px"><strong>]</strong></span></p>
+ #+end_export
+
+
+--------------------------------------------------------------------------------
+
+
+1. something\\
+   this loses indent
+2. something else
+   #+begin_remark
+   this loses indent
+   #+end_remark
+3. something else
+
+4. something else
+   #+begin_remark
+   this keeps indent
+   #+end_remark
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -148,7 +1047,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.3
+;; Version: 2.4
 ;; Package-Requires: ((s "1.12.0") (dash "2.18.0") (emacs "26.1") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -254,6 +1153,9 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 # See https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like
 
 * Testing :noexport:
+  :PROPERTIES:
+  :CUSTOM_ID: Testing
+  :END:
 #+begin_src emacs-lisp :tangle tests.el
 (setq needed-libraries
       '(s cl-lib dash org seq quelpa))
@@ -282,6 +1184,38 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 (when nil ;; example use
   (let ((propcheck-seed (propcheck-seed)))
     (propcheck-generate-string nil)))
+
+
+;; An attempt to make multiline strings less ugly
+(require 's)
+(defun unindent (s)
+"Allow multiline strings, ignoring any initial indentation (as in Ruby).
+
+The first line of S must be an empty line.
+
+For instance,
+
+(unindent \"
+     Hello
+       and then some\")
+
+Returns the string:
+
+Hello
+  and then some
+
+Notice that the initial indentation has been stripped uniformally
+across all lines: The second line begins 2 characters indentated
+from the first."
+  (let ((indentation (length (car (s-match "\\( \\)+" (cadr (s-split "\n" s)))))))
+    (s-chop-prefix "\n"
+                   (replace-regexp-in-string (format "^ \\{%s\\}" indentation) "" s))))
+
+
+(defalias '§ #'unindent)
+(§ "
+   Hello
+       and then some")
 
 
 (load-file "org-special-block-extras.el")
@@ -365,7 +1299,7 @@ badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-badge:org-special-block-extras|2.3|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
+badge:org-special-block-extras|2.4|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
 
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
@@ -894,7 +1828,6 @@ possibilities for =params=.
  #+end_src
 
  #+RESULTS: startup-code
- : org-special-block-extras--name&doc
 
 
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
@@ -3095,10 +4028,11 @@ such as ‘background-color’.
 #+RESULTS:
 | :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (org-special-block-extras--details backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
 
+:HACK:Disabled:
 Above is a lower-case ‘d’etails block, we now make a captial-case ‘D’etails
 block, for the not-too-odd situation we want to have, right away, one details block
 within another.
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports none
 (org-special-block-extras-defblock Details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -3141,6 +4075,7 @@ such as ‘background-color’.
 #+end_src
 MA: TODO: The above should not be present, it should instead be factored out
 into a defblock-alias function.
+:End:
 
 :Posterity_Older_implementation:
 #+BEGIN_SRC emacs-lisp -n -r :tangle no
@@ -4460,7 +5395,7 @@ the green:green one does not point to a URL and so is not clickable.
 
 #+begin_details Automated Tests
 Let's have some sanity tests...
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle tests
 (ert-deftest badges/lmgtfy/1 ()
   (should (equal
      (org-export-string-as

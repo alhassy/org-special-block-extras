@@ -27,6 +27,38 @@
     (propcheck-generate-string nil)))
 
 
+;; An attempt to make multiline strings less ugly
+(require 's)
+(defun unindent (s)
+"Allow multiline strings, ignoring any initial indentation (as in Ruby).
+
+The first line of S must be an empty line.
+
+For instance,
+
+(unindent \"
+     Hello
+       and then some\")
+
+Returns the string:
+
+Hello
+  and then some
+
+Notice that the initial indentation has been stripped uniformally
+across all lines: The second line begins 2 characters indentated
+from the first."
+  (let ((indentation (length (car (s-match "\\( \\)+" (cadr (s-split "\n" s)))))))
+    (s-chop-prefix "\n"
+                   (replace-regexp-in-string (format "^ \\{%s\\}" indentation) "" s))))
+
+
+(defalias '§ #'unindent)
+(§ "
+   Hello
+       and then some")
+
+
 (load-file "org-special-block-extras.el")
 (org-special-block-extras-short-names)
 
