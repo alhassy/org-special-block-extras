@@ -3824,39 +3824,30 @@ e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block
   #+RESULTS:
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp
-(ert-deftest red-color-block ()
-:expected-result :failed
-  (should (equal
-    (⟰
-      "#+begin_red
-      XXX
-      ,#+end_red")
-    (unindent
-     "#+begin_export html
-      <span style=\"color:red;\">
-      ,#+end_export
-      XXX
+#+begin_src emacs-lisp :tangle tests.el
+(ert-deftest red-colors-block-work ()
+  (-let [red-text (⟰ "#+begin_red
+                      My cool thoughts...
+                      ,#+end_red")]
 
-      ,#+begin_export html
-      </span>
-      ,#+end_export"))))
+    ;; We have an HTML span styled red that contains the user's text
+    (should (s-matches? (rx (seq "<span style=\"color:red;\">"
+                                 (* anything)
+                                 "My cool thoughts..."
+                                 (* anything)
+                                 "</span>")) red-text))))
 
-(ert-deftest colors-block ()
-:expected-result :failed
-  (should (equal
-    (⟰
-      "#+begin_color pink
-      XXX
-      ,#+end_color")
-"#+begin_export html
-<span style=\"color:pink;\">
-,#+end_export
-XXX
+(ert-deftest color-blocks-work ()
+  (-let [pink-txt (⟰ "#+begin_color pink
+                      My cool thoughts...
+                      ,#+end_color")]
 
-,#+begin_export html
-</span>
-,#+end_export")))
+    ;; We have an HTML span styled with the user's color and it contains the user's text
+    (should (s-matches? (rx (seq "<span style=\"color:pink;\">"
+                                 (* anything)
+                                 "My cool thoughts..."
+                                 (* anything)
+                                 "</span>")) pink-txt))))
 #+end_src
 
   :Old:

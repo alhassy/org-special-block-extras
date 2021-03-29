@@ -349,6 +349,30 @@ Y
       (org-special-block-extras--support-special-blocks-with-args 'html)
       (buffer-string)))))
 
+(ert-deftest red-colors-block-work ()
+  (-let [red-text (⟰ "#+begin_red
+                      My cool thoughts...
+                      #+end_red")]
+
+    ;; We have an HTML span styled red that contains the user's text
+    (should (s-matches? (rx (seq "<span style=\"color:red;\">"
+                                 (* anything)
+                                 "My cool thoughts..."
+                                 (* anything)
+                                 "</span>")) red-text))))
+
+(ert-deftest color-blocks-work ()
+  (-let [pink-txt (⟰ "#+begin_color pink
+                      My cool thoughts...
+                      #+end_color")]
+
+    ;; We have an HTML span styled with the user's color and it contains the user's text
+    (should (s-matches? (rx (seq "<span style=\"color:pink;\">"
+                                 (* anything)
+                                 "My cool thoughts..."
+                                 (* anything)
+                                 "</span>")) pink-txt))))
+
 (ert-deftest kbd-link ()
   (should (equal
     (org-export-string-as
