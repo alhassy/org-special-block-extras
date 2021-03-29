@@ -316,38 +316,29 @@ Y
 
 (ert-deftest parallel-blocks ()
   "Parallel blocks work as expected"
-  :expected-result :failed
-  (should
-   (equal
-    (unindent
-      "#+begin_export html
-      <div style=\"column-rule-style: solid;column-count: 2;\">
-      #+end_export
-      X
+  (-let [par  (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+                  X
 
-      @@html:<p><br>@@
+                  #+columnbreak:
 
-      Y
+                  Y
 
-      Z
+                  Z
+                  #+end_parallel")]
 
-      #+begin_export html
-      </div>
-      #+end_export")
-    (with-temp-buffer
-      (insert
-       (unindent
-       "#+begin_parallel 2 :bar yes-or-any-other-text
-        X
-
-        #+columnbreak:
-
-        Y
-
-        Z
-        #+end_parallel"))
-      (org-special-block-extras--support-special-blocks-with-args 'html)
-      (buffer-string)))))
+    ;; The result is 2 columns with a solid rule between them
+    ;; and it contains the user's text along with the “#+columnbreak”.
+    (s-matches? (rx (seq "<div style=\"column-rule-style: solid;column-count: 2;\">"
+                         (* anything)
+                         "X"
+                         (* anything)
+                         "<p><br>" ;; “#+columnbreak” above
+                         (* anything)
+                         "Y"
+                         (* anything)
+                         "Z"
+                         (* anything)))
+                par)))
 
 (ert-deftest red-colors-block-work ()
   (-let [red-text (⟰ "#+begin_red

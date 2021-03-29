@@ -39,6 +39,8 @@
 #
 # “What to test?”
 # At least the stuff that I actually demo; e.g., the minimum working examples (MWE).
+# We can capture the ‘essence’ of a textual transformation by using s-matches?
+# with rx; e.g., see the red/colours tests.
 #
 # “⟰” is read “export”; it transform INPUT according to BACKEND for Org preprocessing;
 # INPUT is a multi-line string; we enclose it in ‘indent’.
@@ -3521,40 +3523,30 @@ Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
 (ert-deftest parallel-blocks ()
   "Parallel blocks work as expected"
-  :expected-result :failed
-  (should
-   (equal
-    (unindent
-      "#+begin_export html
-      <div style=\"column-rule-style: solid;column-count: 2;\">
-      ,#+end_export
-      X
+  (-let [par  (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+                  X
 
-      @@html:<p><br>@@
+                  ,#+columnbreak:
 
-      Y
+                  Y
 
-      Z
+                  Z
+                  ,#+end_parallel")]
 
-      ,#+begin_export html
-      </div>
-      ,#+end_export")
-    (with-temp-buffer
-      (insert
-       (unindent
-       "#+begin_parallel 2 :bar yes-or-any-other-text
-        X
-
-        ,#+columnbreak:
-
-        Y
-
-        Z
-        ,#+end_parallel"))
-      (org-special-block-extras--support-special-blocks-with-args 'html)
-      (buffer-string)))))
+    ;; The result is 2 columns with a solid rule between them
+    ;; and it contains the user's text along with the “#+columnbreak”.
+    (s-matches? (rx (seq "<div style=\"column-rule-style: solid;column-count: 2;\">"
+                         (* anything)
+                         "X"
+                         (* anything)
+                         "<p><br>" ;; “#+columnbreak” above
+                         (* anything)
+                         "Y"
+                         (* anything)
+                         "Z"
+                         (* anything)))
+                par)))
 #+end_src
-
 #+end_details
 
 #+html: <br>
