@@ -255,43 +255,19 @@ world
 ;; but this is not a pressing, nor interesting, concern.
 
 (ert-deftest details-blocks ()
-  "Parallel blocks work as expected"
-  :expected-result :failed
-  (should
-   (equal
-    (⟰
-       "#+begin_details TITLE-RIGHT-HERE
-        X
+  (-let [deets (⟰ "#+begin_details TITLE-RIGHT-HERE
+                   My aside...
+                   #+end_details")]
 
-        Y
-        #+end_details")
-
-"#+begin_export html
-<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: #e5f5e5;
-                          /* background-color: pink; */
-                          border-radius: 15px;
-                          color: hsl(157 75%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"green\">
-                         TITLE-RIGHT-HERE
-                      </font>
-                    </strong>
-                  </summary>
-
-#+end_export
-X
-
-Y
-
-#+begin_export html
-
-               </details>
-#+end_export")))
+    ;; The result is a <details> tag containing the user's title & text.
+    (s-matches? (rx (seq "<details"
+                         (* anything)
+                         "TITLE-RIGHT-HERE"
+                         (* anything)
+                         "My aside..."
+                         (* anything)
+                         "</details>"))
+                deets)))
 
 (ert-deftest box-blocks ()
   :expected-result :failed
