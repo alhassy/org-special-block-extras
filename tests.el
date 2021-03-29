@@ -65,11 +65,19 @@ from the first."
 (cl-defun ⟰  (input &optional (backend 'html))
   "Transform INPUT according to BACKEND for Org preprocessing.
 
-INPUT is a multi-line string; we enclose it in ‘indent’."
-  (with-temp-buffer
-    (insert (unindent input))
-    (org-special-block-extras--support-special-blocks-with-args backend)
-    (buffer-string)))
+INPUT is a multi-line string; we enclose it in ‘indent’.
+
+Since org-special-block-extras--support-special-blocks-with-args
+surrounds things in an export block, which is irrelevant for testing,
+we strip that out."
+  (s-chop-prefix
+   "#+begin_export html \n"
+   (s-chop-suffix
+    "\n#+end_export"
+    (with-temp-buffer
+      (insert (unindent input))
+      (org-special-block-extras--support-special-blocks-with-args backend)
+      (buffer-string)))))
 
 (deftest "pp-list works as desired"
   (should (equal "1 2 3 4 5"
@@ -371,3 +379,59 @@ Y
     (unindent "<p>
               <kbd> C-u 80 </kbd>_-</p>
               "))))
+
+(ert-deftest margin-links-work ()
+  (should (equal
+           (s-collapse-whitespace
+            (org-export-string-as
+             (unindent
+              "/Allah[[margin:][The God of Abraham; known as Elohim
+               in the Bible]] does not burden a soul beyond what it can bear./
+               --- Quran 2:286")
+             'html
+             :body-only))
+           (s-collapse-whitespace "<p> <i>Allah<abbr
+           class=\"tooltip\" title=\"The God of Abraham; known as
+           Elohim<br>in the Bible\">°</abbr>&emsp13; does not
+           burden a soul beyond what it can bear.</i> &#x2014;
+           Quran 2:286</p> "))))
+
+(deftest "Calculation blocks work"
+  (-let [calc (⟰ "#+begin_calc :hint-format \"\\left\\{ %s\\right.\"
+                  +     x
+                  +     y -- Explanation of why $x \;=\; y$
+                    Actually, let me explain:
+                    * x
+                    * x′ -- hint 1
+                    * y  -- hint 2
+
+                    No words can appear (in the export) *after* a nested calculation, for now.
+                  + [≤] z
+                    --
+                    Explanation of why $y \;\leq\; z$
+
+                    -- explain it more, this is ignored from export ;-)
+                  #+end_calc")]
+
+    ;; It's an align environment enclosed in $$ brackets.
+    (should
+     (s-matches? (rx (seq "$$\\begin{align*}" (* anything) "\\end{align*}$$"))
+                 calc))
+
+    ;; The calculation has 4 proof steps.
+    ;;
+    ;; The number of steps in a calculation is the number of items in each nesting, minus 1 (at each nesting).
+    ;; Above we have depth 2 with 3 items in each depth, for a total of (3-1) + (3-1) = 2 + 2 = 4.
+    (should (= 4 (s-count-matches (rx (seq "\\" (* whitespace) (any "=" "≤"))) calc)))
+
+    ;; Of our 4 steps, 3 of them are equalities and one is an inclusion.
+    (should (= 3 (s-count-matches (rx "= \\;\\;") calc)))
+    (should (= 1 (s-count-matches (rx "≤ \\;\\;") calc)))
+
+    ;; All of the hints actually appear in the calculational proof
+    (mapc (lambda (hint) (should (s-contains? hint calc)))
+          '("Explanation of why $x \;=\; y$"
+            "Actually, let me explain:"
+            "hint 1"
+            "hint 2"
+            "Explanation of why $y \;\leq\; z$"))))

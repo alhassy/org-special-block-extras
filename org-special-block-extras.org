@@ -6482,6 +6482,26 @@ burden a soul beyond what it can bear./ --- Quran 2:286
 In HTML, such “marginal remarks” appear as tooltips;
 in LaTeX, they appear in the margin.
 
+#+begin_details Tests
+#+begin_src emacs-lisp :tangle tests.el
+(ert-deftest margin-links-work ()
+  (should (equal
+           (s-collapse-whitespace
+            (org-export-string-as
+             (unindent
+              "/Allah[[margin:][The God of Abraham; known as Elohim
+               in the Bible]] does not burden a soul beyond what it can bear./
+               --- Quran 2:286")
+             'html
+             :body-only))
+           (s-collapse-whitespace "<p> <i>Allah<abbr
+           class=\"tooltip\" title=\"The God of Abraham; known as
+           Elohim<br>in the Bible\">°</abbr>&emsp13; does not
+           burden a soul beyond what it can bear.</i> &#x2014;
+           Quran 2:286</p> "))))
+#+end_src
+#+end_details
+
 --------------------------------------------------------------------------------
 
 #+begin_details Implementation :title-color pink
@@ -7072,7 +7092,7 @@ Align the proof hints with [[kbd:M-x align-regexp RET -- RET]] ...let's calculat
 #+end_box
 
 #+begin_details Tests
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle tests.el
 (deftest "Calculation blocks work"
   (-let [calc (⟰ "#+begin_calc :hint-format \"\\left\\{ %s\\right.\"
                   +     x
