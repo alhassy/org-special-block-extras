@@ -30,7 +30,10 @@
 # (org-special-block-extras-short-names)
 
 
-
+# MA: It seems one of these tests is effectful?
+# Restart Emacs and run the tests: The first time there will be a failure, but
+# the second time all tests pass.
+#
 # Do all tests continue to pass?
 # (progn (load-file "tests.el") (ert t))
 #
@@ -45,6 +48,14 @@
 # “⟰” is read “export”; it transform INPUT according to BACKEND for Org preprocessing;
 # INPUT is a multi-line string; we enclose it in ‘indent’.
 # It captures the idiom “with-temp-buffer, insert, org-special-block-extras export, buffer-string”.
+
+
+:No_tests_yet:
+1. badge links
+2. the exercises after defblock
+3. defblock and its helpers; e.g., using defblock causes certain Lisp functions
+   to be defined. ---Test should first make unbound such functions, ignoring errors.
+:End:
 
 
 
@@ -1509,7 +1520,8 @@ hello
   world
   ,#+end_go
   3. item three"
- 'latex :body-only-please))))
+  'latex :body-only-please))))
+
 
 (deftest "Constant blocks export to HTML preserves indentation/enumeration"
 (should (equal
@@ -1530,7 +1542,8 @@ hello</li>
   world
   ,#+end_go
   3. item three"
- 'html :body-only-please))))
+  'html :body-only-please))))
+
 
 (deftest "Identity blocks preserve indentation/enumeration"
     :expected-result :failed
@@ -3338,28 +3351,21 @@ In the future, I will likely expose more arguments.
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el
+
 (ert-deftest box-blocks ()
-  :expected-result :failed
-  (should
-   (equal
-    (⟰
-       "#+begin_box TITLE-RIGHT-HERE
-        X
+  (-let [box (⟰ "#+begin_box Pay Attention!
+                 This is the key insight...
+                 ,#+end_box")]
 
-        Y
-        ,#+end_box")
-    "#+begin_export html
-<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\"><h3>TITLE-RIGHT-HERE</h3>
-,#+end_export
-X
-
-Y
-
-,#+begin_export html
-</div>
-,#+end_export")))
+    ;; We have an HTML box enclosing the user's title (in <h3) and text
+    (s-matches? (rx (seq "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
+                         (* anything)
+                         "<h3>Pay Attention!</h3>"
+                         (* anything)
+                         "This is the key insight..."
+                         (* anything)))
+                box)))
 #+end_src
-
  #+end_details
 
  #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
@@ -4383,6 +4389,25 @@ would be to support more, if not all, the possible OctoIcons.
 link-here:example-location (Click the icon and see the URL has changed!)
 #+end_org-demo
 
+#+begin_details Tests
+#+begin_src emacs-lisp :tangle tests.el
+(ert-deftest link-here-works ()
+  (-let [link-here
+         (org-export-string-as
+          "link-here:example-location (Click the icon and see the URL has changed!)"
+          'html
+          :body-only)]
+    ;; We have an anchor with the given it, and the default SVG chain icon.
+    (should
+     (s-matches? (rx (* anything)
+                     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
+                     (* anything)
+                     "</svg></a> (Click the icon and see the URL has changed!)"
+                     (* anything))
+                 link-here))))
+#+end_src
+#+end_details
+
 * Badge Links
   :PROPERTIES:
   :CUSTOM_ID: Badge-Links
@@ -4435,7 +4460,9 @@ the green:green one does not point to a URL and so is not clickable.
 
 #+begin_details Automated Tests
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests
+#+begin_src emacs-lisp :tangle tests.el
+;; The following tests only check that numerous usage styles work, but otherwise are uninsightful.
+
 (ert-deftest badges/lmgtfy/1 ()
   (should (equal
      (org-export-string-as
@@ -5903,6 +5930,59 @@ My personal documentation library can be seen here:
 badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
 or
 badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
+#+end_details
+
+#+begin_details Tests
+#+begin_src emacs-lisp :tangle tests.el
+(ert-deftest docs/lisp ()
+    (-let [apply-docs (org-export-string-as
+                       "doc:apply"
+                       'html :body-only-please)]
+      ;; We get a tooltip whose title is the Lisp docs of APPLY.
+      (should (s-matches? (rx (* anything)
+                              "<abbr class=\"tooltip\" title=\""
+                              (literal (s-replace "\n" "<br>" (documentation #'apply)))
+                              "\">apply</abbr>"
+                              (* anything))
+                          apply-docs))))
+
+
+(deftest "docs/existential-angst"
+  (-let [ex (s-collapse-whitespace
+             (with-temp-buffer
+               (org-mode)
+               (load-file "./org-special-block-extras.el")
+               (org-special-block-extras-mode)
+               (insert (unindent
+                      "#+begin_documentation Existential Angst :label \"ex-angst\"
+                       A negative feeling arising from freedom and responsibility.
+
+                       Also known as
+                       1. /Existential Dread/, and
+                       2. *Existential Anxiety*.
+
+                       Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]], may help ;-)
+
+                       Then again, ~coding~ can be frustrating at times, maybe have
+                       a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
+                       ,#+end_documentation
+
+                       We now use this as doc:ex-angst."))
+               (org-export-as 'html nil nil :body-only-please)))]
+
+    ;; The #+begin_documentation produces a new osbe--docs entry
+    (should (org-special-block-extras--name&doc "ex-angst"))
+
+    ;; Upon export, the #+begin_documentation is /not/ present.
+    ;; We have the text outside that block only.
+    ;; Along, with a htmlified tooltip of the new entry.
+    (s-matches? (rx " <p> We now use this as <abbr class=\"tooltip\" title=\""
+                    (literal (org-special-block-extras--poor-mans-html-org-export
+                              (cadr (org-special-block-extras--name&doc "ex-angst"))))
+                    "\">Existential Angst</abbr>.</p> "
+                    )
+                ex)))
+#+end_src
 #+end_details
 
 ** Implementation Details: =doc= link, ~documentation~ block, and [[https://iamceege.github.io/tooltipster/#triggers][tooltipster]]

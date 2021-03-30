@@ -3,7 +3,7 @@
 ;; Copyright (c) 2020 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.3
+;; Version: 2.4
 ;; Package-Requires: ((s "1.12.0") (dash "2.18.0") (emacs "26.1") (org "9.1"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -1066,41 +1066,6 @@ which sometimes accomplishes the desired goal.
                                  (_  "<span style=\"color:%s;\">%s</span>"))
                                (quote ,colour) contents)))))
 
-(when nil
-
-(ert-deftest red-color-block ()
-  (should (equal
-    (⟰
-      "#+begin_red
-      XXX
-      #+end_red")
-    (unindent
-     "#+begin_export html
-      <span style=\"color:red;\">
-      #+end_export
-      XXX
-
-      #+begin_export html
-      </span>
-      #+end_export"))))
-
-(ert-deftest colors-block ()
-  (should (equal
-    (⟰
-      "#+begin_color pink
-      XXX
-      #+end_color")
-"#+begin_export html
-<span style=\"color:pink;\">
-#+end_export
-XXX
-
-#+begin_export html
-</span>
-#+end_export")))
-
-)
-
 (org-special-block-extras-defblock color
   (color black :face (lambda (colour) `(:foreground ,(format "%s" colour))))
   nil
@@ -1212,101 +1177,6 @@ Usage: (cadr (assoc 'ICON org-special-block-extras--supported-octoicons))")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The badge link types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(ert-deftest badges/lmgtfy/1 ()
-  (should (equal
-     (org-export-string-as
-  "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir"
-  'html :body-only)
-     "<p>
-<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a></p>
-")))
-
-(ert-deftest badges/lmgtfy/2 ()
-  (should (equal
-     (org-export-string-as
-  "[[badge: Let me google that | for you! | orange |
-   https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]"
-  'html :body-only)
-"<p>
-<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a></p>
-")))
-
-(ert-deftest badges/lmgtfy/3 ()
-  (should (equal
-     (org-export-string-as
-      "badge:Let_me_*not*_google_that|for_you"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/with-all-options ()
-  (should (equal
-     (org-export-string-as
-      "badge:key|value|informational|here|Elixir"
-      'html :body-only)
-"<p>
-<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a></p>
-")))
-
-
-(ert-deftest badges/with-spaces-and-% ()
-  (should (equal
-     (org-export-string-as
-      "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here"
-      'html :body-only)
-"<p>
-<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a></p>
-")))
-
-
-(ert-deftest badges/no-color-given ()
-  (should (equal
-     (org-export-string-as
-      "badge:key|value"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/empty-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:key"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/key--nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/empty-key-and-empty-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:||green"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/--green?logo=nil\"></p>
-")))
-
-(ert-deftest badges/just-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:|value"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/totally-empty ()
-  (should (equal
-     (org-export-string-as
-      "[[badge:]]"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/--nil?logo=nil\"></p>
-")))
-
-; (ert "badges/*")
 
 (cl-defmacro org-special-block-extras-make-badge
   (name &optional social-shields-name social-url social-shields-url )

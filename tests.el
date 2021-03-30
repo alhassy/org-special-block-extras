@@ -140,7 +140,8 @@ hello
   world
   #+end_go
   3. item three"
- 'latex :body-only-please))))
+  'latex :body-only-please))))
+
 
 (deftest "Constant blocks export to HTML preserves indentation/enumeration"
 (should (equal
@@ -161,7 +162,8 @@ hello</li>
   world
   #+end_go
   3. item three"
- 'html :body-only-please))))
+  'html :body-only-please))))
+
 
 (deftest "Identity blocks preserve indentation/enumeration"
     :expected-result :failed
@@ -270,25 +272,18 @@ world
                 deets)))
 
 (ert-deftest box-blocks ()
-  :expected-result :failed
-  (should
-   (equal
-    (⟰
-       "#+begin_box TITLE-RIGHT-HERE
-        X
+  (-let [box (⟰ "#+begin_box Pay Attention!
+                 This is the key insight...
+                 #+end_box")]
 
-        Y
-        #+end_box")
-    "#+begin_export html
-<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px; font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\"><h3>TITLE-RIGHT-HERE</h3>
-#+end_export
-X
-
-Y
-
-#+begin_export html
-</div>
-#+end_export")))
+    ;; We have an HTML box enclosing the user's title (in <h3) and text
+    (s-matches? (rx (seq "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
+                         (* anything)
+                         "<h3>Pay Attention!</h3>"
+                         (* anything)
+                         "This is the key insight..."
+                         (* anything)))
+                box)))
 
 (ert-deftest parallel-blocks ()
   "Parallel blocks work as expected"
@@ -349,6 +344,167 @@ Y
     (unindent "<p>
               <kbd> C-u 80 </kbd>_-</p>
               "))))
+
+(ert-deftest link-here-works ()
+  (-let [link-here
+         (org-export-string-as
+          "link-here:example-location (Click the icon and see the URL has changed!)"
+          'html
+          :body-only)]
+    ;; We have an anchor with the given it, and the default SVG chain icon.
+    (should
+     (s-matches? (rx (* anything)
+                     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
+                     (* anything)
+                     "</svg></a> (Click the icon and see the URL has changed!)"
+                     (* anything))
+                 link-here))))
+
+;; The following tests only check that numerous usage styles work, but otherwise are uninsightful.
+
+(ert-deftest badges/lmgtfy/1 ()
+  (should (equal
+     (org-export-string-as
+  "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir"
+  'html :body-only)
+     "<p>
+<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/2 ()
+  (should (equal
+     (org-export-string-as
+  "[[badge: Let me google that | for you! | orange |
+   https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]"
+  'html :body-only)
+"<p>
+<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a></p>
+")))
+
+(ert-deftest badges/lmgtfy/3 ()
+  (should (equal
+     (org-export-string-as
+      "badge:Let_me_*not*_google_that|for_you"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/with-all-options ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value|informational|here|Elixir"
+      'html :body-only)
+"<p>
+<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a></p>
+")))
+
+
+(ert-deftest badges/with-spaces-and-% ()
+  (should (equal
+     (org-export-string-as
+      "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here"
+      'html :body-only)
+"<p>
+<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a></p>
+")))
+
+
+(ert-deftest badges/no-color-given ()
+  (should (equal
+     (org-export-string-as
+      "badge:key|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:key"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/key--nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/empty-key-and-empty-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:||green"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--green?logo=nil\"></p>
+")))
+
+(ert-deftest badges/just-value ()
+  (should (equal
+     (org-export-string-as
+      "badge:|value"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\"></p>
+")))
+
+(ert-deftest badges/totally-empty ()
+  (should (equal
+     (org-export-string-as
+      "[[badge:]]"
+      'html :body-only)
+"<p>
+<img src=\"https://img.shields.io/badge/--nil?logo=nil\"></p>
+")))
+
+; (ert "badges/*")
+
+(ert-deftest docs/lisp ()
+    (-let [apply-docs (org-export-string-as
+                       "doc:apply"
+                       'html :body-only-please)]
+      ;; We get a tooltip whose title is the Lisp docs of APPLY.
+      (should (s-matches? (rx (* anything)
+                              "<abbr class=\"tooltip\" title=\""
+                              (literal (s-replace "\n" "<br>" (documentation #'apply)))
+                              "\">apply</abbr>"
+                              (* anything))
+                          apply-docs))))
+
+
+(deftest "docs/existential-angst"
+  (-let [ex (s-collapse-whitespace
+             (with-temp-buffer
+               (org-mode)
+               (load-file "./org-special-block-extras.el")
+               (org-special-block-extras-mode)
+               (insert (unindent
+                      "#+begin_documentation Existential Angst :label \"ex-angst\"
+                       A negative feeling arising from freedom and responsibility.
+
+                       Also known as
+                       1. /Existential Dread/, and
+                       2. *Existential Anxiety*.
+
+                       Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]], may help ;-)
+
+                       Then again, ~coding~ can be frustrating at times, maybe have
+                       a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
+                       #+end_documentation
+
+                       We now use this as doc:ex-angst."))
+               (org-export-as 'html nil nil :body-only-please)))]
+
+    ;; The #+begin_documentation produces a new osbe--docs entry
+    (should (org-special-block-extras--name&doc "ex-angst"))
+
+    ;; Upon export, the #+begin_documentation is /not/ present.
+    ;; We have the text outside that block only.
+    ;; Along, with a htmlified tooltip of the new entry.
+    (s-matches? (rx " <p> We now use this as <abbr class=\"tooltip\" title=\""
+                    (literal (org-special-block-extras--poor-mans-html-org-export
+                              (cadr (org-special-block-extras--name&doc "ex-angst"))))
+                    "\">Existential Angst</abbr>.</p> "
+                    )
+                ex)))
 
 (ert-deftest margin-links-work ()
   (should (equal
