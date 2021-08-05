@@ -305,57 +305,11 @@ pre.src-C:before { content: 'Org-mode Example!'; }
   (unless (package-installed-p pkg)
     (package-install pkg)))
 
-(defmacro deftest (desc &rest body)
-  `(ert-deftest ,(intern
-;; Convert all non-letters to ‘_’
-;; A = 65, z = 122
-(concat (seq-map (lambda (c) (if (<= 65 c 122) c ?_))
-         desc))) () ,@body))
-;; without the s-replace, “M-x ert” crashes when it comes to selecting the test to run.
-
-
-;; https://github.com/Wilfred/propcheck
-(quelpa '(propcheck :fetcher github :repo "Wilfred/propcheck"))
-(require 'propcheck)
-(when nil ;; example use
-  (let ((propcheck-seed (propcheck-seed)))
-    (propcheck-generate-string nil)))
-
-
-;; An attempt to make multiline strings less ugly
-(require 's)
-(defun unindent (s)
-"Allow multiline strings, ignoring any initial indentation (as in Ruby).
-
-The first line of S must be an empty line.
-
-For instance,
-
-(unindent \"
-     Hello
-       and then some\")
-
-Returns the string:
-
-Hello
-  and then some
-
-Notice that the initial indentation has been stripped uniformally
-across all lines: The second line begins 2 characters indentated
-from the first."
-  (let ((indentation (length (car (s-match "\\( \\)+" (cadr (s-split "\n" s)))))))
-    (s-chop-prefix "\n"
-                   (replace-regexp-in-string (format "^ \\{%s\\}" indentation) "" s))))
-
-
-(defalias '§ #'unindent)
-(§ "
-   Hello
-       and then some")
-
-
 (load-file "org-special-block-extras.el")
 (org-special-block-extras-short-names)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Personal Testing Utils ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (cl-defun ⟰  (input &optional (backend 'html))
   "Transform INPUT according to BACKEND for Org preprocessing.
@@ -373,6 +327,76 @@ we strip that out."
       (insert (unindent input))
       (org-special-block-extras--support-special-blocks-with-args backend)
       (buffer-string)))))
+
+(defmacro deftest (desc tags &rest body)
+  "Declare tests with meaningful string names, that reflect the test's main goal.
+
+DESC is a string, TAGS is a vector.
+
+The first tag should be the name of the main function being tested;
+this name is prepended to the name of underlying ert-deftest.
+This way, tests are grouped/namespaced when running ert from the command line.
+
+Example ERT call: (ert '(tag my-cool-tag))"
+  `(ert-deftest ,(intern
+                  (concat
+                   (format "%s::" (seq-elt tags 0))
+                   (seq-map (lambda (c) (if (<= 65 c 122) c ?_))
+                                   desc))) ()
+     :tags (quote ,(seq--into-list tags))
+     ,@body))
+  ;; Convert all non-letters to ‘_’; A = 65, z = 122.
+  ;; Without the replace, “M-x ert” crashes when it comes to selecting the test
+  ;; to run.
+
+(defmacro ≋ (lhs rhs)
+    "A shorthand for (should (equal LHS RHS))."
+    `(should (equal ,lhs ,rhs)))
+
+(defmacro ↯ (form &optional message)
+    "The given FORM should error (with MESSAGE, ignoring whitespace).
+
+Example: (↯ (error \"hola\") \"hola\")
+
+Pictogram explanation: You've made such a big mistake, that the
+heavens strike you down with a lightening bolt ↯↯"
+  (if message
+      `(should (equal (s-collapse-whitespace (cl-second (should-error ,form)))
+                      (s-collapse-whitespace ,message)))
+    `(should-error ,form)))
+
+
+;; I like the shapes: (× some-crashing-form) and (↯ crashes with-this-message)
+(defalias '✓ 'should)
+(defalias '× '↯)
+
+
+(defmacro ⇝ (expr &rest regexp)
+    "The given EXPR should match the given REGEXP, which is wrapped by ‘rx’.
+
+REGEXP could also be a string, in which case we are doing string equality.
+Either way, whitespace is ignored in both arguments.
+
+The symbol “⇝” should be read “rewrites to” or “elaborates to”.
+
+I prefer this form since it has the main form we're asserting
+against-at the forefront and makes it clear we're matching
+against strings.
+
+For example,
+
+  (should (s-matches? \"An English greeting.\" (documentation 'speak)))
+
+Becomes:
+
+  (⇝ (documentation 'speak) \"An English greeting.\")
+
+Pictogram explanation: A given expression “rewrites, reduces,” to
+a given matching pattern. Such arrows are popular in Term Rewriting Systems."
+  `(should (s-matches? (s-collapse-whitespace (rx ,(cons 'seq regexp)))
+                       (s-collapse-whitespace ,expr))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #+end_src
 
 --------------------------------------------------------------------------------
@@ -624,7 +648,7 @@ Installation instructions are [[#Summary][below]].
   :CUSTOM_ID: A-unified-interface-for-special-blocks-and-links-defblock
   :END:
 
-#    /How do I make a new special block?/ ---Core Utility
+**    /How do I make a new special block?/ ---Core Utility :ignore:introduction:
 
 An Org-mode block of type 𝒳 is a bunch of text enclosed in ~#+begin_𝒳~ and
 ~#+end_𝒳~, upon export it modifies the text ---e.g., to center it, or to display
