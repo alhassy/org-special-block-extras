@@ -9,7 +9,15 @@
 
 </p>
 
-![example workflow](https://github.com/alhassy/org-special-block-extras/actions/workflows/main.yml/badge.svg)
+
+
+
+
+<a href="https://github.com/alhassy/org-special-block-extras/blob/master/tests.el">
+<img src="https://github.com/alhassy/org-special-block-extras/actions/workflows/main.yml/badge.svg"></a>
+
+
+
 
 <p>
 <a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-27-green?logo=gnu-emacs"></a>

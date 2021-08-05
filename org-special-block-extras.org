@@ -8,6 +8,9 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 #+PROPERTY: header-args :eval never-export
 
+
+[[https://emacs.stackexchange.com/questions/32727/copy-to-clipboard-without-overwriting-kill-ring][functions - copy to clipboard without overwriting kill ring - Emacs Stack Exchange]]
+
 :30_blocks:
 21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
 3  ⇒ parallel, box, detail block
@@ -51,10 +54,11 @@
 
 
 :No_tests_yet:
-1. badge links
-2. the exercises after defblock
-3. defblock and its helpers; e.g., using defblock causes certain Lisp functions
-   to be defined. ---Test should first make unbound such functions, ignoring errors.
+1. the exercises after defblock
+2. defblock and its helpers; e.g., using defblock causes certain Lisp functions
+   to be defined. ---Test should first make unbound such functions, ignoring
+   errors.
+   + There may be some tests under the Issue♯8 heading below.
 :End:
 
 
@@ -968,6 +972,7 @@ possibilities for =params=.
  #+end_src
 
  #+RESULTS: startup-code
+
 
 
  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
