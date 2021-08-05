@@ -1243,7 +1243,7 @@ is coloured grey and the ‘value’ is coloured ‘color’.
                    ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
                    (""      "%s") ;; e.g., badge:key|value|color||logo
                    ('nil    "%s") ;; e.g., badge:key|value|color
-                   (t      (format "<a href=\"%s\">%%s</a>"  (s-replace "%" "%%" ,(if social-shields-name `(format ,social-url label) 'url))))
+                   (_      (format "<a href=\"%s\">%%s</a>"  (s-replace "%" "%%" ,(if social-shields-name `(format ,social-url label) 'url))))
                    )
                  ,(if social-shields-name
                      (if social-shields-url
@@ -1622,7 +1622,7 @@ COLOR is the colour of the hints."
   (cond
    ((symbolp lst) "")
    ((symbolp (car lst)) (org-special-block-extras--list-to-calc (cadr lst)))
-   (t (-let* (((conclusion₀ children) lst)
+   (_ (-let* (((conclusion₀ children) lst)
               ((expr₀ hint) (s-split "--" conclusion₀))
               ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
               (op (or op₀ rel))
