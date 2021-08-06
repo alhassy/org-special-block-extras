@@ -2710,7 +2710,7 @@ I am foo; Indeed FoO is what I fOo!
   + more ⇒ (optional-link-face-setup optional-newline-decl- optional-docstring
     actual-body)
 
-* Editor Comments
+* TODO Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
@@ -3107,7 +3107,7 @@ Completely lost one's train of thought…
 
  #+bind: org-special-block-extras-hide-editor-comments nil
 
-* Folded Details ---As well as boxed text and subtle colours
+* TODO Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -3483,7 +3483,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
  It may be useful to /fuse/ the ~box~ and ~details~ concepts into one.  Something for
  future me ---or another contributor--- to think about ;-)
 
-* Parallel
+* TODO Parallel
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
@@ -3675,7 +3675,7 @@ mode activation ---after such functions have been declared.
                   #'org-special-block-extras--2parallelNB)
  #+END_SRC
 
-* Colours
+* TODO Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
   :END:
@@ -4184,7 +4184,7 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* Nice Keystroke Renditions: kbd:C-h_h
+* TODO Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID:
   :END:
@@ -4296,7 +4296,7 @@ now render =kbd:𝒳= links in a pretty way within Emacs itself.
 #+HTML: </style>
 #+HTML:
 :End:
-*   /“Link Here!”/ & OctoIcons
+* TODO   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -4498,103 +4498,62 @@ the green:green one does not point to a URL and so is not clickable.
 
 #+begin_details Automated Tests
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el
-;; The following tests only check that numerous usage styles work, but otherwise are uninsightful.
+#+begin_src emacs-lisp :tangle tests.el
+(deftest "It works when all 5 arguments are provided"
+  [badge]
+  (⇝ (⟰ "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir")
+     "<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     "<img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a>"))
 
-(ert-deftest badges/lmgtfy/1 ()
-  (should (equal
-     (org-export-string-as
-  "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir"
-  'html :body-only)
-     "<p>
-<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a></p>
-")))
+(deftest "It works when we use [[link]] syntax with generous spaces and newlines"
+  [badge]
+  (⇝ (⟰ "[[badge: Let me google that | for you! | orange |
+         https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]")
+     "<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     "<img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a>"))
 
-(ert-deftest badges/lmgtfy/2 ()
-  (should (equal
-     (org-export-string-as
-  "[[badge: Let me google that | for you! | orange |
-   https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]"
-  'html :body-only)
-"<p>
-<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a></p>
-")))
+(deftest "It works when only the first 2 arguments are provided; asterisks are passed unaltered into the first argument"
+  [badge]
+  (⇝ (⟰ "badge:Let_me_*not*_google_that|for_you")
+     "<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\">"))
 
-(ert-deftest badges/lmgtfy/3 ()
-  (should (equal
-     (org-export-string-as
-      "badge:Let_me_*not*_google_that|for_you"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\"></p>
-")))
+(deftest "It works when all 5 arguments are provided - URL ‘here’ makes it a local link"
+  [badge]
+  (⇝ (⟰ "badge:key|value|informational|here|Elixir")
+     "<a id=\"key\" href=\"#key\">"
+     "<img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>"))
 
-(ert-deftest badges/with-all-options ()
-  (should (equal
-     (org-export-string-as
-      "badge:key|value|informational|here|Elixir"
-      'html :body-only)
-"<p>
-<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a></p>
-")))
+(deftest "We can use spaces, commas, dashes, and percentage symbols in the first argument"
+  [badge]
+  (⇝ (⟰ "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here")
+     "<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\">"
+     "<img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a>"))
 
+(deftest "It works when only first 2 arguments are given: Default colour & logo are green & no logo shown"
+  [badge]
+  (⇝ (⟰ "badge:key|value")
+     "<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\">"))
 
-(ert-deftest badges/with-spaces-and-% ()
-  (should (equal
-     (org-export-string-as
-      "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here"
-      'html :body-only)
-"<p>
-<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a></p>
-")))
+(deftest "When only a key is provided, the value slot is shown as an empty green stub"
+  [badge]
+  (⇝ (⟰ "badge:key")
+     "<img src=\"https://img.shields.io/badge/key--nil?logo=nil\">"))
+
+(deftest "When only a value is provided, only the value is shown in a default green ---no stub for the missing key, yay"
+  [badge]
+  (⇝ (⟰ "badge:|value")
+        "<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\">"))
 
 
-(ert-deftest badges/no-color-given ()
-  (should (equal
-     (org-export-string-as
-      "badge:key|value"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\"></p>
-")))
+(deftest "It's only a green stub when provided with an empty key and empty value"
+  [badge]
+  (⇝ (⟰ "badge:||green")
+     "<img src=\"https://img.shields.io/badge/--green?logo=nil\">"))
 
-(ert-deftest badges/empty-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:key"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/key--nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/empty-key-and-empty-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:||green"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/--green?logo=nil\"></p>
-")))
-
-(ert-deftest badges/just-value ()
-  (should (equal
-     (org-export-string-as
-      "badge:|value"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\"></p>
-")))
-
-(ert-deftest badges/totally-empty ()
-  (should (equal
-     (org-export-string-as
-      "[[badge:]]"
-      'html :body-only)
-"<p>
-<img src=\"https://img.shields.io/badge/--nil?logo=nil\"></p>
-")))
-
-; (ert "badges/*")
+(deftest "It's only a green stub when we use a totally [[badge:]]"
+  [badge]
+  (⇝ (⟰ "[[badge:]]")
+     "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
 #+end_src
 #+end_details
 

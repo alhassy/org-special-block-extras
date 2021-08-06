@@ -103,6 +103,62 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(deftest "It works when all 5 arguments are provided"
+  [badge]
+  (⇝ (⟰ "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir")
+     "<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     "<img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a>"))
+
+(deftest "It works when we use [[link]] syntax with generous spaces and newlines"
+  [badge]
+  (⇝ (⟰ "[[badge: Let me google that | for you! | orange |
+         https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]")
+     "<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     "<img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a>"))
+
+(deftest "It works when only the first 2 arguments are provided; asterisks are passed unaltered into the first argument"
+  [badge]
+  (⇝ (⟰ "badge:Let_me_*not*_google_that|for_you")
+     "<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\">"))
+
+(deftest "It works when all 5 arguments are provided - URL ‘here’ makes it a local link"
+  [badge]
+  (⇝ (⟰ "badge:key|value|informational|here|Elixir")
+     "<a id=\"key\" href=\"#key\">"
+     "<img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>"))
+
+(deftest "We can use spaces, commas, dashes, and percentage symbols in the first argument"
+  [badge]
+  (⇝ (⟰ "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here")
+     "<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\">"
+     "<img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a>"))
+
+(deftest "It works when only first 2 arguments are given: Default colour & logo are green & no logo shown"
+  [badge]
+  (⇝ (⟰ "badge:key|value")
+     "<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\">"))
+
+(deftest "When only a key is provided, the value slot is shown as an empty green stub"
+  [badge]
+  (⇝ (⟰ "badge:key")
+     "<img src=\"https://img.shields.io/badge/key--nil?logo=nil\">"))
+
+(deftest "When only a value is provided, only the value is shown in a default green ---no stub for the missing key, yay"
+  [badge]
+  (⇝ (⟰ "badge:|value")
+        "<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\">"))
+
+
+(deftest "It's only a green stub when provided with an empty key and empty value"
+  [badge]
+  (⇝ (⟰ "badge:||green")
+     "<img src=\"https://img.shields.io/badge/--green?logo=nil\">"))
+
+(deftest "It's only a green stub when we use a totally [[badge:]]"
+  [badge]
+  (⇝ (⟰ "[[badge:]]")
+     "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
+
 (deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
   [doc]
   (⇝ (⟰ "doc:apply")
