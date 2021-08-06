@@ -28,9 +28,10 @@ In particular, both org special blocks & links are exported into BACKEND.
 Pictogram explanation: ⟰ is read ‘export’; it “exports upward to the moon whatever we have”."
   (org-special-block-extras-mode) ;; Ensure new blocks are registered
   (org-export-string-as
-   input
-   backend
-   :body-only))
+     input
+     backend
+     :body-only))
+
 
 (defmacro deftest (desc tags &rest body)
   "Declare tests with meaningful string names, that reflect the test's main goal.
@@ -101,6 +102,47 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
                        (s-collapse-whitespace ,expr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq calc (⟰ "#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
+                  +     x
+                  +     y -- Explanation of why $x \\;=\\; y$
+                    Actually, let me explain:
+                    * x
+                    * x′ -- hint 1
+                    * y  -- hint 2
+
+                    No words can appear (in the export) *after* a nested calculation, for now.
+                  + [≤] z
+                    --
+                    Explanation of why $y \\;\\leq\\; z$
+
+                    -- explain it more, this is ignored from export ;-)
+                  #+end_calc"))
+
+(deftest "It's an align environment, in displayed math mode"
+  [calc]
+  (⇝ calc "$$\\begin{align*}" (* anything) "\\end{align*}$$"))
+
+(deftest "The calculation has 4 proof steps"
+  [calc]
+  ;; The number of steps in a calculation is the number of items in each nesting, minus 1 (at each nesting).
+  ;; Above we have depth 2 with 3 items in each depth, for a total of (3-1) + (3-1) = 2 + 2 = 4.
+  (should (= 4 (s-count-matches (rx (seq "\\" (* whitespace) (any "=" "≤"))) calc))))
+
+
+(deftest "Of our 4 steps, 3 of them are equalities and one is an inclusion."
+  [calc]
+  (should (= 3 (s-count-matches (rx "= \\;\\;") calc)))
+  (should (= 1 (s-count-matches (rx "≤ \\;\\;") calc))))
+
+(deftest "All of the hints actually appear in the calculational proof"
+  [calc]
+  (mapc (lambda (hint) (should (s-contains? hint calc)))
+        '("Explanation of why $x \\;=\\; y$"
+          "Actually, let me explain:"
+          "hint 1"
+          "hint 2"
+          "Explanation of why $y \\;\\leq\\; z$")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Run all MWE tests
