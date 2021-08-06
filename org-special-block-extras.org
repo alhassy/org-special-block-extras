@@ -5971,28 +5971,16 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
 #+end_details
 
 #+begin_details Tests
-#+begin_src emacs-lisp :tangle old_tests.el
-(ert-deftest docs/lisp ()
-    (-let [apply-docs (org-export-string-as
-                       "doc:apply"
-                       'html :body-only-please)]
-      ;; We get a tooltip whose title is the Lisp docs of APPLY.
-      (should (s-matches? (rx (* anything)
-                              "<abbr class=\"tooltip\" title=\""
-                              (literal (s-replace "\n" "<br>" (documentation #'apply)))
-                              "\">apply</abbr>"
-                              (* anything))
-                          apply-docs))))
+#+begin_src emacs-lisp :tangle tests.el
+(deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
+  [doc]
+  (⇝ (⟰ "doc:apply")
+     "<abbr class=\"tooltip\" title=\""
+     (literal (s-replace "\n" "<br>" (documentation #'apply)))
+     "\">apply</abbr>"))
 
-
-(deftest "docs/existential-angst"
-  (-let [ex (s-collapse-whitespace
-             (with-temp-buffer
-               (org-mode)
-               (load-file "./org-special-block-extras.el")
-               (org-special-block-extras-mode)
-               (insert (unindent
-                      "#+begin_documentation Existential Angst :label \"ex-angst\"
+(setq angst
+      (⟰ "#+begin_documentation Existential Angst :label \"ex-angst\"
                        A negative feeling arising from freedom and responsibility.
 
                        Also known as
@@ -6006,20 +5994,20 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
                        ,#+end_documentation
 
                        We now use this as doc:ex-angst."))
-               (org-export-as 'html nil nil :body-only-please)))]
 
-    ;; The #+begin_documentation produces a new osbe--docs entry
-    (should (org-special-block-extras--name&doc "ex-angst"))
+(deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
+  [doc documentation org-special-block-extras--name&doc]
+    (should (org-special-block-extras--name&doc "ex-angst")))
 
-    ;; Upon export, the #+begin_documentation is /not/ present.
-    ;; We have the text outside that block only.
-    ;; Along, with a htmlified tooltip of the new entry.
-    (s-matches? (rx " <p> We now use this as <abbr class=\"tooltip\" title=\""
-                    (literal (org-special-block-extras--poor-mans-html-org-export
-                              (cadr (org-special-block-extras--name&doc "ex-angst"))))
-                    "\">Existential Angst</abbr>.</p> "
-                    )
-                ex)))
+;; Upon export, the #+begin_documentation is /not/ present.
+;; We have the text outside that block only.
+;; Along, with a htmlified tooltip of the new entry.
+(deftest "The osbe--docs entry of the documentation block appears within a tooltip"
+    [doc documentation org-special-block-extras--name&doc]
+    (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
+             (literal (org-special-block-extras--poor-mans-html-org-export
+                       (cadr (org-special-block-extras--name&doc "ex-angst"))))
+                    "\">Existential Angst</abbr>.</p> "))
 #+end_src
 #+end_details
 

@@ -103,6 +103,43 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
+  [doc]
+  (⇝ (⟰ "doc:apply")
+     "<abbr class=\"tooltip\" title=\""
+     (literal (s-replace "\n" "<br>" (documentation #'apply)))
+     "\">apply</abbr>"))
+
+(setq angst
+      (⟰ "#+begin_documentation Existential Angst :label \"ex-angst\"
+                       A negative feeling arising from freedom and responsibility.
+
+                       Also known as
+                       1. /Existential Dread/, and
+                       2. *Existential Anxiety*.
+
+                       Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]], may help ;-)
+
+                       Then again, ~coding~ can be frustrating at times, maybe have
+                       a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
+                       #+end_documentation
+
+                       We now use this as doc:ex-angst."))
+
+(deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
+  [doc documentation org-special-block-extras--name&doc]
+    (should (org-special-block-extras--name&doc "ex-angst")))
+
+;; Upon export, the #+begin_documentation is /not/ present.
+;; We have the text outside that block only.
+;; Along, with a htmlified tooltip of the new entry.
+(deftest "The osbe--docs entry of the documentation block appears within a tooltip"
+    [doc documentation org-special-block-extras--name&doc]
+    (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
+             (literal (org-special-block-extras--poor-mans-html-org-export
+                       (cadr (org-special-block-extras--name&doc "ex-angst"))))
+                    "\">Existential Angst</abbr>.</p> "))
+
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
                in the Bible]] does not burden a soul beyond what it can bear./
                --- Quran 2:286"))
