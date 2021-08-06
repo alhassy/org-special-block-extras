@@ -42,6 +42,9 @@ The first tag should be the name of the main function being tested;
 this name is prepended to the name of underlying ert-deftest.
 This way, tests are grouped/namespaced when running ert from the command line.
 
+I use Org-blocks with ‘:comments link’, this then serves to delimit
+my tests into “suites”.
+
 Example ERT call: (ert '(tag my-cool-tag))"
   `(ert-deftest ,(intern
                   (concat
@@ -103,6 +106,7 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:2]]
 (deftest "It works when all 5 arguments are provided"
   [badge]
   (⇝ (⟰ "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir")
@@ -158,7 +162,9 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
   [badge]
   (⇝ (⟰ "[[badge:]]")
      "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
+;; Badge Links:2 ends here
 
+;; [[file:org-special-block-extras.org::*Tooltips for Glossaries, Dictionaries, and Documentation][Tooltips for Glossaries, Dictionaries, and Documentation:3]]
 (deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
   [doc]
   (⇝ (⟰ "doc:apply")
@@ -195,15 +201,12 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
              (literal (org-special-block-extras--poor-mans-html-org-export
                        (cadr (org-special-block-extras--name&doc "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
+;; Tooltips for Glossaries, Dictionaries, and Documentation:3 ends here
 
+;; [[file:org-special-block-extras.org::*Marginal, “one-off”, remarks][Marginal, “one-off”, remarks:2]]
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
                in the Bible]] does not burden a soul beyond what it can bear./
                --- Quran 2:286"))
-
-"<p>
-<i>Allah<abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; in the Bible\">°</abbr>&emsp13; does not burden a soul beyond what it can bear.</i>
-               &#x2014; Quran 2:286</p>
-"
 
 (deftest "It exports into an <abbr> tooltip"
   [margin]
@@ -221,7 +224,9 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 (deftest "The marginal remark appears in a tiny circle"
   [margin]
   (⇝ margin "<abbr" (* anything) "°</abbr>"))
+;; Marginal, “one-off”, remarks:2 ends here
 
+;; [[file:org-special-block-extras.org::*Equational Proofs][Equational Proofs:4]]
 (setq calc (⟰ "#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
                   +     x
                   +     y -- Explanation of why $x \\;=\\; y$
@@ -262,7 +267,9 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
           "hint 1"
           "hint 2"
           "Explanation of why $y \\;\\leq\\; z$")))
+;; Equational Proofs:4 ends here
 
+;; [[file:org-special-block-extras.org::*Minimal working example][Minimal working example:1]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Run all MWE tests
 ;; (ert "mwe")
@@ -419,3 +426,4 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
      "<img src=\"https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee\">"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Minimal working example:1 ends here
