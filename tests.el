@@ -103,6 +103,32 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
+               in the Bible]] does not burden a soul beyond what it can bear./
+               --- Quran 2:286"))
+
+"<p>
+<i>Allah<abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; in the Bible\">°</abbr>&emsp13; does not burden a soul beyond what it can bear.</i>
+               &#x2014; Quran 2:286</p>
+"
+
+(deftest "It exports into an <abbr> tooltip"
+  [margin]
+  (⇝ margin "<abbr class=\"tooltip\""))
+
+(deftest "It mentions the margin link's key before the tooltip"
+  [margin]
+  (⇝ margin "Allah<abbr class=\"tooltip\""))
+
+(deftest "Our personalised marginal remark appears in an <abbr> title"
+  [margin]
+  (⇝ margin "title=\"The God of Abraham; known as Elohim"
+            "<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; in the Bible\">"))
+
+(deftest "The marginal remark appears in a tiny circle"
+  [margin]
+  (⇝ margin "<abbr" (* anything) "°</abbr>"))
+
 (setq calc (⟰ "#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
                   +     x
                   +     y -- Explanation of why $x \\;=\\; y$
