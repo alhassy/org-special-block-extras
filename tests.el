@@ -11,7 +11,7 @@
     (package-install pkg)))
 
 (load-file "org-special-block-extras.el")
-(org-special-block-extras-short-names)
+(o-short-names)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Personal Testing Utils ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -307,17 +307,17 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
                        We now use this as doc:ex-angst."))
 
 (deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
-  [doc documentation org-special-block-extras--name&doc]
-    (should (org-special-block-extras--name&doc "ex-angst")))
+  [doc documentation o--name&doc]
+    (should (o--name&doc "ex-angst")))
 
 ;; Upon export, the #+begin_documentation is /not/ present.
 ;; We have the text outside that block only.
 ;; Along, with a htmlified tooltip of the new entry.
 (deftest "The osbe--docs entry of the documentation block appears within a tooltip"
-    [doc documentation org-special-block-extras--name&doc]
+    [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
-             (literal (org-special-block-extras--poor-mans-html-org-export
-                       (cadr (org-special-block-extras--name&doc "ex-angst"))))
+             (literal (o--poor-mans-html-org-export
+                       (cadr (o--name&doc "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
 ;; Tooltips for Glossaries, Dictionaries, and Documentation:3 ends here
 
