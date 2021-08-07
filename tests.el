@@ -106,6 +106,124 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
+(deftest "The user's remark is enclosed in the default delimiters"
+  [remark]
+  (⇝ (⟰ "#+begin_remark
+                   Here is some meta-commentary...
+                  #+end_remark")
+     (* anything) "[Editor Remark:"
+     (* anything) "Here is some meta-commentary"
+     (* anything)  "]"))
+
+;; The other features of remark blocks should be tested;
+;; but this is not a pressing, nor interesting, concern.
+;; Editor Comments:4 ends here
+
+;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:4]]
+(deftest "The result is a <details> tag containing the user's title & text."
+  [details]
+  (⇝ (⟰ "#+begin_details TITLE-RIGHT-HERE
+          My aside...
+          #+end_details")
+     "<details"
+     (* anything)
+     "TITLE-RIGHT-HERE"
+     (* anything)
+     "My aside"
+     (* anything)
+     "</details>"))
+;; Folded Details ---As well as boxed text and subtle colours:4 ends here
+
+(deftest "We have an HTML box enclosing the user's title (in <h3) and text"
+  [box]
+  (⇝ (⟰ "#+begin_box Pay Attention!
+                 This is the key insight...
+                 #+end_box")
+     "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
+     (* anything)
+     "<h3>Pay Attention!</h3>"
+     (* anything)
+     "This is the key insight"
+     (* anything)))
+
+;; [[file:org-special-block-extras.org::*Parallel][Parallel:2]]
+(deftest "Parallel blocks work as expected"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+                  X
+
+                  #+columnbreak:
+
+                  Y
+
+                  Z
+                  #+end_parallel")
+
+    ;; The result is 2 columns with a solid rule between them
+  ;; and it contains the user's text along with the “#+columnbreak”.
+
+     "<div style=\"column-rule-style: solid;column-count: 2;\">"
+     (* anything)
+     "X"
+     (* anything)
+     "<p><br>" ;; “#+columnbreak” above
+     (* anything)
+     "Y"
+     (* anything)
+     "Z"
+     (* anything)))
+;; Parallel:2 ends here
+
+;; [[file:org-special-block-extras.org::*Colours][Colours:4]]
+(deftest "It is an HTML span styled red that contains the user's text"
+  [color red block]
+  (⇝ (⟰ "#+begin_red
+          My cool thoughts...
+          #+end_red")
+     "<span style=\"color:red;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
+
+;; We have an HTML span styled with the user's color and it contains the user's text
+(deftest "It works as expected"
+  [color pink block]
+  (⇝ (⟰ "#+begin_color pink
+          My cool thoughts...
+          #+end_color")
+     "<span style=\"color:pink;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
+;; Colours:4 ends here
+
+;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:3]]
+(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
+  [kbd direct-org-links]
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd> C-u 80 </kbd>_-∀</p>"))
+
+(deftest "[[It]] becomes <kbd> tags"
+  [kbd square-org-links]
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd> C-u 80 - </kbd></p>"))
+
+(deftest "<It> becomes <kbd> tags"
+  [kbd angle-org-links]
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd> C-u 80 - </kbd></p>"))
+;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
+
+;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
+(deftest "It works as expected: We have an anchor with the given ID, and the default SVG chain icon."
+  [link:here]
+  (⇝ (⟰ "link-here:example-location (Click the icon and see the URL has changed!)")
+     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
+     (* anything)
+     "</svg></a> (Click the icon and see the URL has changed!)"
+     (* anything)))
+;;   /“Link Here!”/ & OctoIcons:3 ends here
+
 ;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:2]]
 (deftest "It works when all 5 arguments are provided"
   [badge]

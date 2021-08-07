@@ -2713,7 +2713,7 @@ I am foo; Indeed FoO is what I fOo!
   + more ⇒ (optional-link-face-setup optional-newline-decl- optional-docstring
     actual-body)
 
-* TODO Editor Comments
+* Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
@@ -2905,17 +2905,16 @@ The CONTENTS string has two optional argument switches:
 
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest remark-blocks-work ()
-  (-let [rmrk (⟰ "#+begin_remark
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "The user's remark is enclosed in the default delimiters"
+  [remark]
+  (⇝ (⟰ "#+begin_remark
                    Here is some meta-commentary...
-                  ,#+end_remark")]
+                  ,#+end_remark")
+     (* anything) "[Editor Remark:"
+     (* anything) "Here is some meta-commentary"
+     (* anything)  "]"))
 
-    ;; The user's remark is enclosed in the default starting signal.
-    (should (s-matches? (rx (seq (* anything) "[Editor Remark:"
-                                 (* anything) "Here is some meta-commentary..."
-                                 (* anything)  "]"))
-                        rmrk))))
 ;; The other features of remark blocks should be tested;
 ;; but this is not a pressing, nor interesting, concern.
 #+end_src
@@ -3110,7 +3109,7 @@ Completely lost one's train of thought…
 
  #+bind: org-special-block-extras-hide-editor-comments nil
 
-* TODO Folded Details ---As well as boxed text and subtle colours
+* Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -3279,21 +3278,19 @@ src_latex[:exports code]{\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:
 source blocks. Instead, we use ~tcolorbox~.
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest details-blocks ()
-  (-let [deets (⟰ "#+begin_details TITLE-RIGHT-HERE
-                   My aside...
-                   ,#+end_details")]
-
-    ;; The result is a <details> tag containing the user's title & text.
-    (s-matches? (rx (seq "<details"
-                         (* anything)
-                         "TITLE-RIGHT-HERE"
-                         (* anything)
-                         "My aside..."
-                         (* anything)
-                         "</details>"))
-                deets)))
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "The result is a <details> tag containing the user's title & text."
+  [details]
+  (⇝ (⟰ "#+begin_details TITLE-RIGHT-HERE
+          My aside...
+          ,#+end_details")
+     "<details"
+     (* anything)
+     "TITLE-RIGHT-HERE"
+     (* anything)
+     "My aside"
+     (* anything)
+     "</details>"))
 #+end_src
 #+end_details
 
@@ -3391,21 +3388,18 @@ In the future, I will likely expose more arguments.
  | :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (org-special-block-extras--box backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el
-
-(ert-deftest box-blocks ()
-  (-let [box (⟰ "#+begin_box Pay Attention!
+#+begin_src emacs-lisp :tangle tests.el
+(deftest "We have an HTML box enclosing the user's title (in <h3) and text"
+  [box]
+  (⇝ (⟰ "#+begin_box Pay Attention!
                  This is the key insight...
-                 ,#+end_box")]
-
-    ;; We have an HTML box enclosing the user's title (in <h3) and text
-    (s-matches? (rx (seq "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
-                         (* anything)
-                         "<h3>Pay Attention!</h3>"
-                         (* anything)
-                         "This is the key insight..."
-                         (* anything)))
-                box)))
+                 ,#+end_box")
+     "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
+     (* anything)
+     "<h3>Pay Attention!</h3>"
+     (* anything)
+     "This is the key insight"
+     (* anything)))
 #+end_src
  #+end_details
 
@@ -3486,7 +3480,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
  It may be useful to /fuse/ the ~box~ and ~details~ concepts into one.  Something for
  future me ---or another contributor--- to think about ;-)
 
-* TODO Parallel
+* Parallel
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
@@ -3542,10 +3536,10 @@ would be useful in cases where one column is wide and the others are not.
 # 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest parallel-blocks ()
-  "Parallel blocks work as expected"
-  (-let [par  (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "Parallel blocks work as expected"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
                   X
 
                   ,#+columnbreak:
@@ -3553,21 +3547,21 @@ Let's have some sanity tests...
                   Y
 
                   Z
-                  ,#+end_parallel")]
+                  ,#+end_parallel")
 
     ;; The result is 2 columns with a solid rule between them
-    ;; and it contains the user's text along with the “#+columnbreak”.
-    (s-matches? (rx (seq "<div style=\"column-rule-style: solid;column-count: 2;\">"
-                         (* anything)
-                         "X"
-                         (* anything)
-                         "<p><br>" ;; “#+columnbreak” above
-                         (* anything)
-                         "Y"
-                         (* anything)
-                         "Z"
-                         (* anything)))
-                par)))
+  ;; and it contains the user's text along with the “#+columnbreak”.
+
+     "<div style=\"column-rule-style: solid;column-count: 2;\">"
+     (* anything)
+     "X"
+     (* anything)
+     "<p><br>" ;; “#+columnbreak” above
+     (* anything)
+     "Y"
+     (* anything)
+     "Z"
+     (* anything)))
 #+end_src
 #+end_details
 
@@ -3678,7 +3672,7 @@ mode activation ---after such functions have been declared.
                   #'org-special-block-extras--2parallelNB)
  #+END_SRC
 
-* TODO Colours
+* Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
   :END:
@@ -3838,30 +3832,29 @@ e.g., [[doc:org-special-block-extras--color][color]] and [[doc:org-special-block
   #+RESULTS:
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest red-colors-block-work ()
-  (-let [red-text (⟰ "#+begin_red
-                      My cool thoughts...
-                      ,#+end_red")]
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It is an HTML span styled red that contains the user's text"
+  [color red block]
+  (⇝ (⟰ "#+begin_red
+          My cool thoughts...
+          ,#+end_red")
+     "<span style=\"color:red;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
 
-    ;; We have an HTML span styled red that contains the user's text
-    (should (s-matches? (rx (seq "<span style=\"color:red;\">"
-                                 (* anything)
-                                 "My cool thoughts..."
-                                 (* anything)
-                                 "</span>")) red-text))))
-
-(ert-deftest color-blocks-work ()
-  (-let [pink-txt (⟰ "#+begin_color pink
-                      My cool thoughts...
-                      ,#+end_color")]
-
-    ;; We have an HTML span styled with the user's color and it contains the user's text
-    (should (s-matches? (rx (seq "<span style=\"color:pink;\">"
-                                 (* anything)
-                                 "My cool thoughts..."
-                                 (* anything)
-                                 "</span>")) pink-txt))))
+;; We have an HTML span styled with the user's color and it contains the user's text
+(deftest "It works as expected"
+  [color pink block]
+  (⇝ (⟰ "#+begin_color pink
+          My cool thoughts...
+          ,#+end_color")
+     "<span style=\"color:pink;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
 #+end_src
 
   :Old:
@@ -4187,7 +4180,7 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* TODO Nice Keystroke Renditions: kbd:C-h_h
+* Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID:
   :END:
@@ -4254,16 +4247,18 @@ kbd
 #+end_src
 
 Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest kbd-link ()
-  (should (equal
-    (org-export-string-as
-     "kbd:C-u_80_-"
-     'html
-     :body-only)
-    (unindent "<p>
-              <kbd> C-u 80 </kbd>_-</p>
-              "))))
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
+  [kbd direct-org-links]
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd> C-u 80 </kbd>_-∀</p>"))
+
+(deftest "[[It]] becomes <kbd> tags"
+  [kbd square-org-links]
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd> C-u 80 - </kbd></p>"))
+
+(deftest "<It> becomes <kbd> tags"
+  [kbd angle-org-links]
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd> C-u 80 - </kbd></p>"))
 #+end_src
 
 #+end_details
@@ -4299,7 +4294,7 @@ now render =kbd:𝒳= links in a pretty way within Emacs itself.
 #+HTML: </style>
 #+HTML:
 :End:
-* TODO   /“Link Here!”/ & OctoIcons
+*   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -4431,21 +4426,14 @@ link-here:example-location (Click the icon and see the URL has changed!)
 #+end_org-demo
 
 #+begin_details Tests
-#+begin_src emacs-lisp :tangle old_tests.el :comments link
-(ert-deftest link-here-works ()
-  (-let [link-here
-         (org-export-string-as
-          "link-here:example-location (Click the icon and see the URL has changed!)"
-          'html
-          :body-only)]
-    ;; We have an anchor with the given it, and the default SVG chain icon.
-    (should
-     (s-matches? (rx (* anything)
-                     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
-                     (* anything)
-                     "</svg></a> (Click the icon and see the URL has changed!)"
-                     (* anything))
-                 link-here))))
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It works as expected: We have an anchor with the given ID, and the default SVG chain icon."
+  [link:here]
+  (⇝ (⟰ "link-here:example-location (Click the icon and see the URL has changed!)")
+     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
+     (* anything)
+     "</svg></a> (Click the icon and see the URL has changed!)"
+     (* anything)))
 #+end_src
 #+end_details
 
