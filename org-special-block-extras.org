@@ -1117,6 +1117,88 @@ The PHRASE is taken literally; no regexp operators are recognised."
 
  + More :: See =org-link-parameters= for documentation on more parameters.
 
+** TODO NEW o-deflink :needs_tests:
+#+begin_src emacs-lisp
+(cl-defmacro o-deflink
+    (name &optional docstring display &rest body)
+  "Make a new Org-link NAME that exports using form BODY.
+
+DOCSTRING is optional; it is visible with
+   (documentation 'o-link/NAME)
+
+BODY is a string-valued expression, that may make use of the names
+o-label, o-description, o-backend. The final one refers to the export
+backend, such as 'html or 'latex. The first two are obtained from uses:
+
+   [[name:o-label][o-description]]
+
+In particular, the use case “name:o-label” means that o-description is nil.
+
+Example use:
+
+   ;; In a Lisp buffer, press “C-x C-e” to load this definition
+   (o-deflink shout (upcase (or o-description o-label)))
+
+   ;; In an Org-buffer, press “C-c C-e h o” to see how this exports
+   <shout: hello world!>
+
+   ;; Or using the bracket format
+   [[shout:][hello world!]]
+   [[shout: hello world!]]
+
+   ;; or using the plain format
+   shout:hello_world
+
+DISPLAY is a vector consisting of key-value pairs that affects how the link
+is displayed in Emacs Org buffers. The keys are as follows.
+
++ :help-echo is a string-valued expression of the tooltip that should accompany
+  the new link in Org buffers. It has access to o-format being one of ‘plain’,
+  ‘angle’, ‘bracket’ which indicates the format of the link, as shown above.
+  It also has access to o-label and o-description.
+
+  By default, the tooltip is the link followed by the documentation
+  of the link, and, finally, the HTML export of the link.
+  That way, upon hover, users can visually see the link contents,
+  know what/how the link exports, and actually see the HTML export.
+
+"
+  (cl-destructuring-bind (docstring display body)
+      (lf-extract-optionals-from-rest docstring #'stringp
+                                      display   #'vectorp
+                                      body)
+    (setq display (seq--into-list display))    ;; (getf '(:me 12) :me)
+    `(progn
+       ;; Declare the documentation
+       (lf-documentation (quote ,(intern (format "o-link/%s" name))) 'function
+                       (concat (format "%s" (quote ,name))
+                               (if ,docstring (format "\n\n%s\n" ,docstring) "\n")
+                               "\nEXPORT IMPLEMENTATION:\n\n"
+                               (pp-to-string (quote ,body))))
+       ;; Construct the Org-link
+       (org-link-set-parameters
+        ,(format "%s" name)
+        :export (lambda (o-label o-description o-backend) ,@body)
+        ;; The tooltip alongside a link
+        :help-echo (lambda (window object position)
+                     (save-excursion
+                       (goto-char position)
+                       (-let* (((&plist :path :format :contents-begin :contents-end)
+                                (cadr (org-element-context)))
+                               (o-format format)
+                               (o-label path)
+                               (o-description
+                                (when (equal format 'bracket)
+                                  (copy-region-as-kill contents-begin contents-end)
+                                  (substring-no-properties (car kill-ring)))))
+                         (or ,(getf display :help-echo)
+                             (format "%s:%s\n\n%s\n\nHTML Export\n\n%s"
+                                     (quote ,name)
+                                     (or o-description o-label)
+                                     ,(or docstring "")
+                                     ,(-cons* 'let '((o-backend 'html)) body))))))))))
+#+end_src
+
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
    :CUSTOM_ID: The-Core-Utility-defblock-and-friends
