@@ -935,23 +935,52 @@ for each backend.
 this, we use Org's link mechanism./
 #+end_center
 
- Use src_emacs-lisp[:exports code]{(org-link-set-parameters params)} to add a
-new link type ---an older obsolete method is =org-add-link-type=.  The list of all
-supported link types is =org-link-parameters=; its documentation identifies the
-possibilities for =params=.
+#+begin_box "What would I use links for?" :background-color custard
++ Buttons :: ~[[elisp:(find-file user-init-file)][Go to my init!]]~ is a nice
+  clickable-/actionable/ button within Emacs. The =elisp= link is part of Emacs.
 
- Let's produce an example link type, then discuss its code.
++ Textual expansions :: =show:user-full-name= expands, upon export, to /Musa
+  Al-hassy/ on my machine. (The =show= link is defined below.)
 
- Intended usage:
- Raw use example:salam and descriptive, [[example:hola][using ‘example’ link type]] ^_^
- [[file:images/example_link.png]]
++ Definitions / Personal Glossary :: ~doc:thread-first, doc:family, doc:Hussain~
+  export as the link labels but with tooltips for the Lisp function
+  doc:thread-first, for the English definition of doc:family, and my personal
+  documentation for the phrase doc:Hussain. (The =doc= link is defined below.)
 
- # The “(ref:𝓍𝓍𝓍)” declarations are for line number referencing and not
- # part of the Lisp code needed to produce the example link type.
- # Consult the HTML/PDF rendition of this file or tangle the block below.
- # #
-#+name: startup-code
- #+begin_src emacs-lisp -n -r :tangle no
+  # (o-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
+#+end_box
+
+Just as there is doc:defun for “def”ining “fun”ctions and doc:defmacro for
+“def”ining “mac”ros, there is also doc:o-deflink for “def”ining “link”s for
+“O”rg, and it behaves similar to them.
+
+However, there are usually multiple ways to define things ---e.g., macros are
+code-valued functions defined with doc:cl-defun. Indeed, Org links are popularly
+defined using doc:org-link-set-parameters ---which, unlike doc:o-deflink, is not
+consistent with doc:defun--- and so let's take a look at it first.
+
+*** A comprehensive example of doc:org-link-set-parameters and doc:org-link-parameters
+    :PROPERTIES:
+    :CUSTOM_ID: A-comprehensive-example-of-doc-org-link-set-parameters-and-doc-org-link-parameters
+    :END:
+
+ Use src_emacs-lisp[:exports code]{(org-link-set-parameters params)} to add a new
+ link type ---an older obsolete method is doc:org-add-link-type.  The list of all
+ supported link types is doc:org-link-parameters; its documentation identifies
+ the possibilities for =params=.
+
+  Let's produce an example link type, then discuss its code.
+
+  Intended usage:
+  Raw use example:salam and descriptive, [[example:hola][using ‘example’ link type]] ^_^
+  [[file:images/example_link.png]]
+
+  # The “(ref:𝓍𝓍𝓍)” declarations are for line number referencing and not
+  # part of the Lisp code needed to produce the example link type.
+  # Consult the HTML/PDF rendition of this file or tangle the block below.
+  # #
+ #+name: startup-code
+  #+begin_src emacs-lisp -n -r :tangle no
 (org-link-set-parameters
   ;; The name of the new link type, usage: “example:label”
   "example"  (ref:extype)
@@ -1001,64 +1030,64 @@ possibilities for =params=.
              (lambda () (interactive) (re-search-forward "example:" nil t)))
            ;; Return the keymap
            map))
- #+end_src
+  #+end_src
 
- #+RESULTS: startup-code
-
-
+  #+RESULTS: startup-code
 
 
 
- + Line [[(extype)]] ="example"= :: Add a new =example= link type.
-   - If the type already exists, update it with the given arguments.
 
-   The syntax for a raw link is =example:path=
-   and for the bracketed descriptive form ~[[example:path][description]]~.
 
-   - Some of my intended uses for links including colouring text and doing
-     nothing else, as such the terminology ‘path’ is not sufficiently generic and
-     so I use the designation ‘label’ instead.
+  + Line [[(extype)]] ="example"= :: Add a new =example= link type.
+    - If the type already exists, update it with the given arguments.
 
- + Line [[(exfollow)]] =:follow= :: What should happen when a user clicks on such links?
+    The syntax for a raw link is =example:path=
+    and for the bracketed descriptive form ~[[example:path][description]]~.
 
-   This is a function taking the link path as the single argument and does
-   whatever is necessary to “follow the link”, for example find a file or display
-   a message. In our case, we open the user's browser and go to a particular URL.
+    - Some of my intended uses for links including colouring text and doing
+      nothing else, as such the terminology ‘path’ is not sufficiently generic and
+      so I use the designation ‘label’ instead.
 
- + Line [[(exexport)]] =:export= :: How should this link type be exported to HTML, LaTeX, etc?
+  + Line [[(exfollow)]] =:follow= :: What should happen when a user clicks on such links?
 
-   This is a three-argument function that formats the link according to the given
-   backend, the resulting string value os placed literally into the exported
-   file. Its arguments are:
+    This is a function taking the link path as the single argument and does
+    whatever is necessary to “follow the link”, for example find a file or display
+    a message. In our case, we open the user's browser and go to a particular URL.
 
-   1. =label= ⇒ the path of the link, the text after the link type prefix
-   2. =description= ⇒ the description of the link, if any
-   3. =backend= ⇒ the export format, a symbol like =html= or =latex= or =ascii=.
+  + Line [[(exexport)]] =:export= :: How should this link type be exported to HTML, LaTeX, etc?
 
-   In our example above, we return different values depending on the =backend=
-   value.
+    This is a three-argument function that formats the link according to the given
+    backend, the resulting string value os placed literally into the exported
+    file. Its arguments are:
 
-   - If =:export= is not provided, default Org-link exportation happens.
+    1. =label= ⇒ the path of the link, the text after the link type prefix
+    2. =description= ⇒ the description of the link, if any
+    3. =backend= ⇒ the export format, a symbol like =html= or =latex= or =ascii=.
 
- + Line [[(exdisplay)]] =:display= :: Should links be prettily folded away when a description
-   is provided?
+    In our example above, we return different values depending on the =backend=
+    value.
 
- + Line [[(exhelpecho)]] =:help-echo= :: What should happen when the user's mouse is over
-   the link?
+    - If =:export= is not provided, default Org-link exportation happens.
 
-   This is *either a string or a string-valued function* that takes the current
-   window, the current buffer object, and its position in the current window.
+  + Line [[(exdisplay)]] =:display= :: Should links be prettily folded away when a description
+    is provided?
 
-   In our example link, we go to the position of the object, destructure the Org
-   link's properties using ~-let~, find the description of the link, if any, then
-   provide a string based on the link's path and description.
+  + Line [[(exhelpecho)]] =:help-echo= :: What should happen when the user's mouse is over
+    the link?
 
-   #+begin_details The general textual property ‘help-echo’
-   We may use ~help-echo~ to attach tooltips to arbitrary text in a file, as
-   follows. I have found this to be useful in [[https://alhassy.github.io/next-700-module-systems/prototype/package-former.html][*metaprogramming*]] to have
-   elaborated, generated, code shown as a tooltip attached to its named
-   specification.
-   #+begin_src emacs-lisp :tangle no
+    This is *either a string or a string-valued function* that takes the current
+    window, the current buffer object, and its position in the current window.
+
+    In our example link, we go to the position of the object, destructure the Org
+    link's properties using ~-let~, find the description of the link, if any, then
+    provide a string based on the link's path and description.
+
+    #+begin_details The general textual property ‘help-echo’
+    We may use ~help-echo~ to attach tooltips to arbitrary text in a file, as
+    follows. I have found this to be useful in [[https://alhassy.github.io/next-700-module-systems/prototype/package-former.html][*metaprogramming*]] to have
+    elaborated, generated, code shown as a tooltip attached to its named
+    specification.
+    #+begin_src emacs-lisp :tangle no
 ;; Nearly instantaneous display of tooltips.
 (setq tooltip-delay 0)
 
@@ -1090,51 +1119,51 @@ The PHRASE is taken literally; no regexp operators are recognised."
 (tooltipify
   "Line"
   "A sequential formatation of entities or the trace of a particle in linear motion")
-   #+end_src
+    #+end_src
 
-   We will use the tooltip doc:documentation later on ^_^
+    We will use the tooltip doc:documentation later on ^_^
 
- Useful info on tooltips:
- + [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Changing-Properties.html][Changing text properties ---GNU]]
- + [[http://kitchingroup.cheme.cmu.edu/blog/2013/04/12/Tool-tips-on-text-in-Emacs/][Tooltips on text in Emacs ---Kitchin]]
- + [[http://kitchingroup.cheme.cmu.edu/blog/2016/03/16/Getting-graphical-feedback-as-tooltips-in-Emacs/][Getting graphical feedback as tooltips in Emacs ---Kitchin]]
- + [[https://stackoverflow.com/questions/293853/defining-new-tooltips-in-emacs][Defining new tooltips in Emacs ---Stackoverflow]]
+  Useful info on tooltips:
+  + [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Changing-Properties.html][Changing text properties ---GNU]]
+  + [[http://kitchingroup.cheme.cmu.edu/blog/2013/04/12/Tool-tips-on-text-in-Emacs/][Tooltips on text in Emacs ---Kitchin]]
+  + [[http://kitchingroup.cheme.cmu.edu/blog/2016/03/16/Getting-graphical-feedback-as-tooltips-in-Emacs/][Getting graphical feedback as tooltips in Emacs ---Kitchin]]
+  + [[https://stackoverflow.com/questions/293853/defining-new-tooltips-in-emacs][Defining new tooltips in Emacs ---Stackoverflow]]
 
-   #+end_details
+    #+end_details
 
- + Line [[(exface)]] =:face= :: What textual properties do these links possess?
+  + Line [[(exface)]] =:face= :: What textual properties do these links possess?
 
-   This is *either a face or a face-valued function* that takes the current link's
-   path label as the only argument. That is, we could change the face according
-   to the link's label ---which is what we will do for the =color= link type as in
-   =[[color:brown][hello]]= will be rendered in brown text.
+    This is *either a face or a face-valued function* that takes the current link's
+    path label as the only argument. That is, we could change the face according
+    to the link's label ---which is what we will do for the =color= link type as in
+    =[[color:brown][hello]]= will be rendered in brown text.
 
-   - If ~:face~ is not provided, the default underlined blue face for Org links is used.
-   - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Faces.html][Learn more about faces!]]
+    - If ~:face~ is not provided, the default underlined blue face for Org links is used.
+    - [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Faces.html][Learn more about faces!]]
 
- + More :: See =org-link-parameters= for documentation on more parameters.
+  + More :: See =org-link-parameters= for documentation on more parameters.
 
-** Define links as you define functions: ~o-deflink~
-   :PROPERTIES:
-   :CUSTOM_ID: NEW-o-deflink
-   :END:
+*** Define links as you define functions: doc:o-deflink
+    :PROPERTIES:
+    :CUSTOM_ID: NEW-o-deflink
+    :END:
 
-For export purposes, an Org link can be thought of as a string-valued function
-whose inputs are the link's label, description, and the export backend.  Since
-the input arguments are fixed, the ~o-deflink~ interface is similar to ~cl-defun~ in
-that it takes a name, (no input arguments), an optional docstring, and a body
-which may make use of (the unchanging input) names ~o-label, o-description,
-o-backend~. Moreover, after the documentation string, it may take an optional
-vector of display settings: Org links can be declared to look aesthetically
-pleasing within Emacs and to behave (via clicks/hovers/key-bindings) in
-meaningful ways.
+ For export purposes, an Org link can be thought of as a string-valued function
+ whose inputs are the link's label, description, and the export backend.  Since
+ the input arguments are fixed, the ~o-deflink~ interface is similar to ~cl-defun~ in
+ that it takes a name, (no input arguments), an optional docstring, and a body
+ which may make use of (the unchanging input) names ~o-label, o-description,
+ o-backend~. Moreover, after the documentation string, it may take an optional
+ vector of display settings: Org links can be declared to look aesthetically
+ pleasing within Emacs and to behave (via clicks/hovers/key-bindings) in
+ meaningful ways.
 
-Here is a minimal working example.  After evaluating this, in an Org buffer,
-phrases such as ~shout:hello~ will (1) be shown in bold red, (2) have a hover
-tooltip that shows the documentation of the link /and/ an HTML export preview, and
-(3) the HTML export of the Org buffer will render the label ~hello~ as capitalised
-red text.
-#+begin_src emacs-lisp :tangle no
+ Here is a minimal working example.  After evaluating this, in an Org buffer,
+ phrases such as ~shout:hello~ will (1) be shown in bold red, (2) have a hover
+ tooltip that shows the documentation of the link /and/ an HTML export preview, and
+ (3) the HTML export of the Org buffer will render the label ~hello~ as capitalised
+ red text.
+ #+begin_src emacs-lisp :tangle no
 (o-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
 
@@ -1142,21 +1171,21 @@ The link text appears as red bold in both Emacs and in HTML export."
   [:face (:foreground "red" :weight bold)]
   (format "<span style=\"color:red\"> %s </span>"
           (upcase (or o-description o-label))))
-#+end_src
-:Example_uses:
+ #+end_src
+ :Example_uses:
 
-angle <shout: hello    world budo!>
+ angle <shout: hello    world budo!>
 
-bracket [[shout:][hello world!]]
+ bracket [[shout:][hello world!]]
 
-plain shout:hola
+ plain shout:hola
 
-[[shout: hello wolrd]]
+ [[shout: hello wolrd]]
 
-:End:
+ :End:
 
-#+begin_details Implementation of o-deflink
-#+begin_src emacs-lisp
+ #+begin_details Implementation of o-deflink
+ #+begin_src emacs-lisp
 (cl-defmacro o-deflink
     (name &optional docstring display &rest body)
   "Make a new Org-link NAME that exports using form BODY.
@@ -1203,6 +1232,8 @@ definition is obtained from the command line tool ‘wn’.
       (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
       (s-replace-regexp \"\\n\" \"<br>\" it)
       (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
+
+For HTML tooltips, see `o-html-export-preserving-whitespace'.
 
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
@@ -1341,12 +1372,12 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                      (or o-description o-label)
                                      ,(concat (or docstring "") "\n\n" navigation "\n")
                                      (,o-link/NAME o-label o-description 'html)))))))))))
-#+end_src
+ #+end_src
 
-# shout:hi
+ # shout:hi
 
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
+ Let's have some sanity tests...
+ #+begin_src emacs-lisp :tangle tests.el :comments link
 (o-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
 
@@ -1377,16 +1408,16 @@ The link text appears as red bold in both Emacs and in HTML export."
   [o-deflink]
   (⇝ (⟰ "<shout: hello world!>")
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
-#+end_src
+ #+end_src
 
-#+end_details
+ #+end_details
 
-** Example links...
-   :PROPERTIES:
-   :CUSTOM_ID: COMMENT-Example-links
-   :END:
+**** COMMENT Example links...               :TestingPurposes:Already_in_docs:
+     :PROPERTIES:
+     :CUSTOM_ID: COMMENT-Example-links
+     :END:
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 (o-deflink define
   "Define the given word using WordNet, along with synonyms and coordinate terms."
   [:help-echo (shell-command-to-string (format "wn %s -over -synsn -coorn" o-label))]
@@ -1395,7 +1426,7 @@ The link text appears as red bold in both Emacs and in HTML export."
     (s-replace-regexp "\\\"" "''" it) ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
     (s-replace-regexp "\n" "<br>" it)
     (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>" it o-label)))
-#+end_src
+  #+end_src
 
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
@@ -2122,7 +2153,7 @@ has more bells and whistles … keep reading ;-)
 (o-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
  #+end_src
 
-** COMMENT Modularity with ~thread-blockcall~
+** Modularity with ~thread-blockcall~
    :PROPERTIES:
    :CUSTOM_ID: modularity_with_thread-blockcall
    :END:
@@ -6735,18 +6766,34 @@ to make “link buttons” that do useful things, as follows.
 
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
- [:face (:underline "green")
+  [:face (:underline "green")
+   :let (o-value (if (equal o-label "GLOSSARY")
+                     (pp-to-string (mapcar #'cl-second o--docs-actually-used))
+                   (pp-to-string (eval (read o-label))))
+         o-expr (if (equal o-label "GLOSSARY")
+                    (concat "GLOSSARY ---i.e., o--docs-actually-used"
+                            "\n\nWe erase the glossary not on the first export, but on the second export."
+                            "\nThe first export collects all citations, which are used in the second export.")
+                  o-label))
   :help-echo (format
               (concat "Upon export, the following will be placed literally"
                       "\n\t%s"
                       "\nWhich is the value of the expression:\n\t%s")
-              (pp-to-string (eval (read o-label)))
-              (if (equal o-label "GLOSSARY")
-                  (format "%s ---i.e., o--docs-actually-used" o-label)
-                o-label))]
+              o-value
+              o-expr)]
  (cond ((not (equal o-label "GLOSSARY")) (pp-to-string (eval (read o-label))))
+
        ;; Otherwise O-LABEL is glossary, which we do not print in HTML
-       ((equal 'html o-backend) "")
+       ((equal 'html o-backend)
+          (s-join " "
+                  (--map
+                   (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
+                           (o-html-export-preserving-whitespace (cl-third it))
+                           (cl-second it))
+                   ;; Ignore duplicates; i.e., entries with the same name/title.
+                   (cl-remove-duplicates o--docs-actually-used
+                                         :test (lambda (x y) (cl-equalp (cl-second x) (cl-second y)))))))
+
        (t (s-join "\n\n"
                   (cl-loop for (label name doc)
                            in o--docs-actually-used
@@ -6788,13 +6835,22 @@ That is what we accomplish with this new `show' link type."
  switch between different backends then only the first rendition will be used
  /unless/ we erase the database each time after export.
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+(defvar o--docs-empty! (list nil t)
+  "An indicator of when glossary entries should be erased.
+
+We erase the glossary not on the first export, but on the second export.
+The first export collects all citations, which are used in the second export."
+(setcdr (last o--docs-empty!) o--docs-empty!) ;; It's an infinite cyclic list.
+
 ;; Actual used glossary entries depends on the buffer; so clean up after each export
 (advice-add #'org-export-dispatch
   :after (lambda (&rest _)
-  (setq o--docs-actually-used nil
-        o--docs nil)))
+  (when (pop o--docs-empty!)
+      (setq o--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
+            o--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
 #+end_src
-# ‼ TODO MA: I don't usually want to evaluate this block?
+#
+# (-let [sym 'org-export-dispatch]  (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
 
 ** Next Steps
   :PROPERTIES:
