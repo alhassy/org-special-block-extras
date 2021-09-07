@@ -8,10 +8,7 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 #+PROPERTY: header-args :eval never-export
 
-
-
 # emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
-
 
 # [[https://emacs.stackexchange.com/questions/32727/copy-to-clipboard-without-overwriting-kill-ring][functions - copy to clipboard without overwriting kill ring - Emacs Stack Exchange]]
 
@@ -65,8 +62,6 @@
    + There may be some tests under the Issue♯8 heading below.
 :End:
 
-
-
 # +TOC: headlines 2
 
 # MA: Final version should not have the following incantation active.
@@ -86,6 +81,9 @@
 # (advice-remove 'org-html-export-to-html   'my/ensure-headline-ids)
 # (advice-remove 'org-md-export-to-markdown 'my/ensure-headline-ids)
 
+
+TODO relies on an unpublished version of lf.el ?
+Need to update dependencies.
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -1006,7 +1004,6 @@ possibilities for =params=.
  #+end_src
 
  #+RESULTS: startup-code
- : o--name&doc
 
 
 
@@ -1117,11 +1114,55 @@ The PHRASE is taken literally; no regexp operators are recognised."
 
  + More :: See =org-link-parameters= for documentation on more parameters.
 
-** TODO NEW o-deflink :needs_tests:
+** Define links as you define functions: ~o-deflink~
+   :PROPERTIES:
+   :CUSTOM_ID: NEW-o-deflink
+   :END:
+
+For export purposes, an Org link can be thought of as a string-valued function
+whose inputs are the link's label, description, and the export backend.  Since
+the input arguments are fixed, the ~o-deflink~ interface is similar to ~cl-defun~ in
+that it takes a name, (no input arguments), an optional docstring, and a body
+which may make use of (the unchanging input) names ~o-label, o-description,
+o-backend~. Moreover, after the documentation string, it may take an optional
+vector of display settings: Org links can be declared to look aesthetically
+pleasing within Emacs and to behave (via clicks/hovers/key-bindings) in
+meaningful ways.
+
+Here is a minimal working example.  After evaluating this, in an Org buffer,
+phrases such as ~shout:hello~ will (1) be shown in bold red, (2) have a hover
+tooltip that shows the documentation of the link /and/ an HTML export preview, and
+(3) the HTML export of the Org buffer will render the label ~hello~ as capitalised
+red text.
+#+begin_src emacs-lisp :tangle no
+(o-deflink shout
+  "Capitalise the link description, if any, otherwise capitalise the label.
+
+The link text appears as red bold in both Emacs and in HTML export."
+  [:face (:foreground "red" :weight bold)]
+  (format "<span style=\"color:red\"> %s </span>"
+          (upcase (or o-description o-label))))
+#+end_src
+:Example_uses:
+
+angle <shout: hello    world budo!>
+
+bracket [[shout:][hello world!]]
+
+plain shout:hola
+
+[[shout: hello wolrd]]
+
+:End:
+
+#+begin_details Implementation of o-deflink
 #+begin_src emacs-lisp
 (cl-defmacro o-deflink
     (name &optional docstring display &rest body)
   "Make a new Org-link NAME that exports using form BODY.
+
+Since Org links are essentially string-valued functions,
+a function ‘o-link/NAME’ is created.
 
 DOCSTRING is optional; it is visible with
    (documentation 'o-link/NAME)
@@ -1149,6 +1190,31 @@ Example use:
    ;; or using the plain format
    shout:hello_world
 
+Here is a more complex, involved, example that makes use of
+‘:let’ for local declarations. For instance, “define:hello”
+renders as the word “hello” with a tooltip defining the word; the
+definition is obtained from the command line tool ‘wn’.
+
+  (o-deflink define
+    \"Define the given word using WordNet, along with synonyms and coordinate terms.\"
+    [:let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" o-label)))
+     :help-echo definition]
+    (--> definition
+      (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
+      (s-replace-regexp \"\\n\" \"<br>\" it)
+      (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
+
+More generally, org-special-block-extra's “doc” link type
+supports, in order of precedence: User definitions, Emacs Lisp
+documentation of functions & variables, and definitions of
+English words. For example, “doc:existential_angst” for an entry
+‘existential_angst’ whose associated documentation-glossary is
+user-defined in a ‘#+documentation’ Org-block, or
+“doc:thread-first” for the Emacs Lisp documentation of the
+function `thread-first', or “doc:user-mail-address” for the Emacs
+Lisp documentation of the variable `user-mail-address', or
+“doc:hello” for the definition of the English word ‘hello’.
+
 DISPLAY is a vector consisting of key-value pairs that affects how the link
 is displayed in Emacs Org buffers. The keys are as follows.
 
@@ -1157,28 +1223,106 @@ is displayed in Emacs Org buffers. The keys are as follows.
   ‘angle’, ‘bracket’ which indicates the format of the link, as shown above.
   It also has access to o-label and o-description.
 
-  By default, the tooltip is the link followed by the documentation
+  By default, the tooltip is the link name followed by the documentation
   of the link, and, finally, the HTML export of the link.
   That way, upon hover, users can visually see the link contents,
   know what/how the link exports, and actually see the HTML export.
 
-"
+  That is to say, for the ‘shout’ example aboce, the default display is essentially:
+  [:help-echo (o-link/shout o-label o-description 'html)]
+
+  You may want to add the following to your Emacs init file:
+
+    ;; Nearly instantaneous display of tooltips.
+    (setq tooltip-delay 0)
+    ;; Give user 30 seconds before tooltip automatically disappears.
+    (setq tooltip-hide-delay 300)
+
++ :face specifies how should these links be displayed within Emacs.
+
++ [:display full] if you do not want bracket links to be
+  folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
+
++ :follow is a form that is executed when you click on such links; e.g., to open
+   another buffer, browser, or other action. It makes use of (an implicit argument) ‘o-label’.
+   Be aware that ‘o-label’ is a string that may contain spaces; e.g., when the action is to open
+   a URL in a browser.
+
+   If you are in need of providing similar, related, actions on a single link
+   then your :follow can condition on the current prefix argument via ‘o-prefix’
+   (which is essentially `current-prefix-arg').
+   For instance, a user presses “C-u RET” on your link to do one thing
+   but “C-u 72 RET” to do another action.
+
++ :keymap is an alternating list of keys and actions to be
+  performed when those keys are pressed while point is on the link.
+  For example:
+      [:keymap (C-h (message-box \"hola\"))]
+
+  By default, C-n and C-p are for moving to next and previous occruances of the same link type.
+
++ :let is a list of alternating variable symbol name and value, which are then used to form
+  a concrete `let*' clause. This is useful for introducing local variables for use in the DISPLAY
+  as well as in the CONTENTS. Such local declarations may make use of O-LABEL and O-DESCRIPTION, as usual."
   (cl-destructuring-bind (docstring display body)
       (lf-extract-optionals-from-rest docstring #'stringp
                                       display   #'vectorp
                                       body)
-    (setq display (seq--into-list display))    ;; (getf '(:me 12) :me)
-    `(progn
-       ;; Declare the documentation
-       (lf-documentation (quote ,(intern (format "o-link/%s" name))) 'function
-                       (concat (format "%s" (quote ,name))
-                               (if ,docstring (format "\n\n%s\n" ,docstring) "\n")
-                               "\nEXPORT IMPLEMENTATION:\n\n"
-                               (pp-to-string (quote ,body))))
+    (setq display (seq--into-list display))
+    (let ((o-link/NAME (intern (format "o-link/%s" name)))
+          (navigation "Press “C-h” to see possible actions on this link type.")
+          (lets (loop for (variable value)
+                      on (getf display :let)
+                      by #'cddr
+                      collect (list variable value))))
+      `(progn
+       ;; Declare the underlying function and documentation
+       (cl-defun ,o-link/NAME ;; function name
+           (o-label o-description o-backend)         ;; function args
+           ;; new function documentation
+           (concat (if ,docstring (format "\n\n%s\n" ,docstring) "\n")
+                   ,navigation
+                   "\nEXPORT IMPLEMENTATION:\n\n"
+                   (pp-to-string (quote (let ,lets ,body))))
+           ;; function body
+           (let* ,lets ,@body))
        ;; Construct the Org-link
        (org-link-set-parameters
         ,(format "%s" name)
-        :export (lambda (o-label o-description o-backend) ,@body)
+        :export (quote ,o-link/NAME)
+        ;; How should these links be displayed
+        :face (quote ,(getf display :face))
+        ;; When you click on such links, what should happen?
+        ;; (We augment the namespace with the missing o-description that local variables may be using.)
+        :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(getf display :follow))))
+         ;; These links should *never* be folded in descriptive display;
+        ;; i.e., “[[example:lable][description]]” will always appear verbatim
+        ;; and not hide the first pair […].
+        :display (quote ,(getf display :display)) ;; e.g.,: 'full
+        ;; Any special keybindings when cursour is on this link type?
+        ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
+        :keymap (let ((o-keymap (copy-keymap org-mouse-map))
+                      (pattern (format "%s:" (quote ,name)))
+                      (msg  (concat
+                             (documentation (quote ,o-link/NAME))
+                             "\nKEY BINDINGS:\n"
+                             "\nUnless indicated below otherwise..."
+                             "\n\tC-h: Shows this helpful message buffer"
+                             "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
+                             "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
+                             (pp-to-string (quote ,(getf display :keymap))))))
+                  ;; Populate the keymap
+                  (loop for (key action)
+                        on (-cons* 'C-p `(re-search-backward ,pattern nil t)
+                                   'C-n `(re-search-forward ,pattern nil t)
+                                   'C-h `(-let [max-mini-window-height 0] ;; i.e., insist on displaying in a dedicated buffer
+                                           (display-message-or-buffer ,msg))
+                                   (quote ,(getf display :keymap)))
+                        by #'cddr
+                        do (define-key o-keymap (kbd (format "%s" key))
+                             `(lambda () (interactive) ,action)))
+                  ;; Return the keymap
+                  o-keymap)
         ;; The tooltip alongside a link
         :help-echo (lambda (window object position)
                      (save-excursion
@@ -1191,18 +1335,73 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                 (when (equal format 'bracket)
                                   (copy-region-as-kill contents-begin contents-end)
                                   (substring-no-properties (car kill-ring)))))
-                         (or ,(getf display :help-echo)
-                             (format "%s:%s\n\n%s\n\nHTML Export\n\n%s"
+                         (or (let* ,lets ,(getf display :help-echo))
+                             (format "%s:%s\n\n%s\nHTML Export:\n\n%s"
                                      (quote ,name)
                                      (or o-description o-label)
-                                     ,(or docstring "")
-                                     ,(-cons* 'let '((o-backend 'html)) body))))))))))
+                                     ,(concat (or docstring "") "\n\n" navigation "\n")
+                                     (,o-link/NAME o-label o-description 'html)))))))))))
+#+end_src
+
+# shout:hi
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(o-deflink shout
+  "Capitalise the link description, if any, otherwise capitalise the label.
+
+The link text appears as red bold in both Emacs and in HTML export."
+  [:face (:foreground "red" :weight bold)
+   ;; :help-echo (o-link/shout o-label o-description 'html)
+   :display full
+   :keymap (C-m (message-box "hola"))
+   :follow (message-box "%s and %s" pre current-prefix-arg)
+   ]
+  (format "<span style=\"color:red\"> %s </span>"
+          (upcase (or o-description o-label))))
+
+(deftest "o-deflink works as expected, plain links"
+  [o-deflink]
+  (should (not (null (symbol-function 'o-link/shout))))
+  (⇝ (⟰ "shout:hello")
+     "<p> <span style=\"color:red\"> HELLO </span></p>"))
+
+(deftest "o-deflink works as expected, bracket links"
+  [o-deflink]
+  (⇝ (⟰ "[[shout:hello]]")
+     "<p> <span style=\"color:red\"> HELLO </span></p>")
+  (⇝ (⟰ "[[shout:hello][world!]]")
+     "<p> <span style=\"color:red\"> WORLD! </span></p>"))
+
+(deftest "o-deflink works as expected, angle links"
+  [o-deflink]
+  (⇝ (⟰ "<shout: hello world!>")
+     "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
+#+end_src
+
+#+end_details
+
+** Example links...
+   :PROPERTIES:
+   :CUSTOM_ID: COMMENT-Example-links
+   :END:
+
+#+begin_src emacs-lisp
+(o-deflink define
+  "Define the given word using WordNet, along with synonyms and coordinate terms."
+  [:help-echo (shell-command-to-string (format "wn %s -over -synsn -coorn" o-label))]
+  (--> o-label
+    (shell-command-to-string (format "wn %s -over -coorn" it))
+    (s-replace-regexp "\\\"" "''" it) ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
+    (s-replace-regexp "\n" "<br>" it)
+    (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>" it o-label)))
 #+end_src
 
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
    :CUSTOM_ID: The-Core-Utility-defblock-and-friends
    :END:
+
 
 #+latex_header: \newunicodechar{≈}{\ensuremath{\approx}}
 #+latex_header: \newunicodechar{⟦}{\ensuremath{[\![}}
@@ -1214,8 +1413,10 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
 To have a unified, and pleasant, interface for declaring new blocks and links,
 we take the following approach:
+
 0. [@0] ( /Fuse/ the process of link generation and special block support into
    one macro,  [[doc:o-defblock][defblock]] which is like doc:defun. )
+
 1. The user writes as string-valued function named 𝒳, possibly with arguments,
    that has access to a ~contents~ and ~backend~ variables.
 
@@ -1510,10 +1711,10 @@ contents
    with the /result/ of calling the user's 𝒳 function; i.e.,
    replace them by, essentially,
    #+begin_src emacs-lisp :tangle no
-(𝒳 main-arg :key₀ value₀ … :keyₙ valueₙ)
+(𝒳 main-arg :key₀ value₀ … :keyₙ valueₙ :o-contents contents)
 #+end_src
 
-   #+begin_details Implementing the hooking mechanism
+   #+ begin_details Implementing the hooking mechanism
 
 The mechanism that rewrites your source...
  #+begin_src emacs-lisp
@@ -1921,7 +2122,7 @@ has more bells and whistles … keep reading ;-)
 (o-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
  #+end_src
 
-** Modularity with ~thread-blockcall~
+** COMMENT Modularity with ~thread-blockcall~
    :PROPERTIES:
    :CUSTOM_ID: modularity_with_thread-blockcall
    :END:
@@ -2594,7 +2795,7 @@ parallel columns of text, etc.
 
 Enjoy ;-)
 
-** The Older =o--𝒳= Utility
+** COMMENT The Older =o--𝒳= Utility
    :PROPERTIES:
    :CUSTOM_ID: Core-Utility
    :END:
@@ -4263,31 +4464,53 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* Nice Keystroke Renditions: kbd:C-h_h
+* TODO Nice Keystroke Renditions: kbd:C-h_h             :outdated_screenshot:
   :PROPERTIES:
   :CUSTOM_ID:
   :END:
 
 Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
-aesthetically pleasing way, such as [[kbd:doit][C-u 80 -]] to insert 80 dashes
+aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes
 or kbd:C-c_C-e_h_o to export an Org-mode file to HTML.
 
-- If there is a description, we render it in keystroke style.
-- If there is only a label, we translate underscores into spaces.
+- For instance, =[[kbd:key sequence][description]]= will show as [[kbd:key
+  sequence][description]]; i.e., the key sequence in nice key font along with a
+  tooltip explaining it.
+
+  Whereas, ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if
+  possible.  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is
+  <kbd:M-s h .> (we need to use ~<...>~ since punctuation is not picked up as part
+  of link labels).
 
 [[file:./images/kbd.png]]
 
 #+begin_details Implementation
 
 #+begin_src emacs-lisp
-(org-link-set-parameters
- "kbd"
-  :follow (lambda (_))
-  :export (lambda (label description backend)
-            (format (pcase backend
-                      ('latex "\\texttt{%s}")
-                      (_ "<kbd> %s </kbd>") )
-                    (or description (s-replace "_" " " label)))))
+(o-deflink kbd
+  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
+
+Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
+
+Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
+
+Examples:
+    [[kbd:C-x C-s]]
+  ≈ <kbd: C-x C-s>
+  ≈ kbd:C-x_C-s"
+  [:display 'full
+   :face (custom-button)
+   :help-echo (let ((it (s-replace "_" " " o-label))) (format "%s ∷ %s" it (documentation (cl-second (help--analyze-key (kbd it) it)))))]
+  (if (equal o-backend 'latex)
+      (format "\\texttt{%s}" (s-replace "_" " " o-label))
+  (--> (s-replace "_" " " o-label)
+    (or o-description (ignore-errors (documentation (cl-second (help--analyze-key (kbd it) it)))) "")
+    (s-replace-regexp "\\\"" "''" it) ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
+    (s-replace-regexp "\n" "<br>" it)
+    (let ((keystrokes (format "<kbd>%s</kbd>" (s-replace "_" " " o-label))))
+      (if (equal "" it) ;; i.e., we do not have a tooltip definition
+        keystrokes
+        (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>" it keystrokes))))))
 #+end_src
 
 The following styling rule is used to make the keystrokes displayed nicely.
@@ -4345,9 +4568,6 @@ Let's have some sanity tests...
 #+end_src
 
 #+end_details
-
-Using the ~o-fancy-links~ variable, defined below, we can
-now render =kbd:𝒳= links in a pretty way within Emacs itself.
 
 :Hide:
 #+HTML: <style>
@@ -4460,35 +4680,30 @@ The following SVGs are obtained from: https://primer.style/octicons/
 Usage: (cadr (assoc 'ICON o--supported-octoicons))")
 #+end_src
 
-#+RESULTS:
-: o--supported-octoicons
-
 #+begin_src emacs-lisp
-;; Show an OctoIcon: home, link, mail, report, tag, clock
-(org-link-set-parameters
-  "octoicon"
-  :follow (lambda (_))
-  :export (lambda (icon _ backend)
-    (pcase backend
-      (`html  (format
-               (s-collapse-whitespace
-                (cadr (assoc (intern icon)
-                             o--supported-octoicons)))))
-      (_ ""))))
+(o-deflink octoicon
+  "Show an OctoIcon: home, link, mail, report, tag, clock"
+  [:help-echo "Show an OctoIcon: home, link, mail, report, tag, clock"]
+  (unless (member (intern o-label) '(home link mail report tag clock))
+    (error "octoicon:%s ⇒ This label is not supported!" o-label))
+  (if (not (equal o-backend 'html))
+      ""
+    (s-collapse-whitespace
+     (cadr (assoc (intern o-label)
+                  o--supported-octoicons)))))
 
 ;; Export a link to the current location in an Org file.
-(org-link-set-parameters
-  "link-here"
-  :follow (lambda (path) (message "This is a local anchor link named “%s”" path))
-  :export  (lambda (label _ backend)
-    (pcase backend
-      (`html  (format (s-collapse-whitespace
-          "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
+(o-deflink link-here
+  [:help-echo (format "This is a local anchor link named “%s”" path)]
+  (if (not (equal o-backend 'html))
+      ""
+    (format (s-collapse-whitespace
+     "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
           href=\"#%s\">%s</a>")
-                      label label (cadr (assoc 'link
-                              o--supported-octoicons))))
-      (_ ""))))
+    o-label o-label (cadr (assoc 'link
+                             o--supported-octoicons)))))
 #+end_src
+
 
 # [[color:orange][Going forward,]]
 Going forward, it would be desirable to provide a non-whitespace alternative for
@@ -4737,83 +4952,84 @@ E.g., to create a badge named “go”:
 
 Then the following exports nicely from an Org file:
 
-     go:key|value|blue|here|gnu-emacs
+     go:key|value|blue|here|gnu-emacs"
+  `(o-deflink ,(intern name)
+    [:display 'full
+     :follow (--> (s-split "|" path)
+               (or (nth 3 it) o-label)
+               (browse-url it))
+    :help-echo
+      (-let [ (key value color url logo)  (s-split "|" o-label) ]
+        (lf-string "${o-label}
+                    \nGeneral Syntax:  badge:key|value|colour|url|logo
+                           Key    : ${key}
+                           Value  : ${(or value \"\")}
+                           Colour : ${(or color \"green\")}
+                           URL    : ${(or url \"\")}
+                           Logo   : ${(or logo \"\")}
 
---------------------------------------------------------------------------------
+                    This results in an SVG badge “[key∣value]”, where the ‘key’
+                    is coloured grey and the ‘value’ is coloured ‘color’;
+                    for the HTML backend, and otherwise are silently omitted.
+                    Descriptions are ignored; i.e., ‘[[badge:label][description]]’
+                    is the same as ‘[[badge:label]]’.
 
-The LABEL should be of the shape ‘key|value|color|url|logo’
-resulting in a badge “|key|value|” where the ‘key’
-is coloured grey and the ‘value’ is coloured ‘color’.
+                    ► ‘key’ and ‘value’ have their underscores interpreted as spaces.
+                       ⇒ ‘__’ is interpreted as an underscore;
+                         Of course, you can write ‘<badge: ⋯>’, then ‘⋯’ may have multiword, spaced, content.
+                       ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
 
-+ Only the syntax ‘badge:key|value|color|url’ is supported.
-  - ‘key’ and ‘value’ have their underscores interpreted as spaces.
-     ⇒ Underscores are interpreted as spaces;
-     ⇒ ‘__’ is interpreted as an underscore;
-     ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
-  - ‘|color|url|logo’ are optional;
-     if ‘url’ is ‘here’ then the resulting badge behaves
-     like ‘link-here:key’.
-  - ‘color’ may be: ‘brightgreen’ or ‘success’,
-                    ‘red’         or ‘important’,
-                    ‘orange’      or ‘critical’,
-                    ‘lightgrey’   or ‘inactive’,
-                    ‘blue’        or ‘informational’,
-            or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
-+ Of course, you can write ‘⟦badge: ⋯⟧’, then ‘⋯’ may have multiword, spaced, content.
-+ Such links are displayed using a SVG badges
-  and so do not support the DESCRIPTION syntax
-  ‘⟦link:label][description⟧’.
-+ Besides the HTML BACKEND, such links are silently omitted.
-"
+                    ► ‘|color|url|logo’ are optional;
+                       ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink.
+                       ⇒ if ‘url’ is ‘here’ then we have a local link;
+                          i.e., the resulting badge behaves like ‘link-here:key’.
+                       ⇒ ‘color’ may be: ‘brightgreen’ or ‘success’,
+                                         ‘red’         or ‘important’,
+                                         ‘orange’      or ‘critical’,
+                                         ‘lightgrey’   or ‘inactive’,
+                                         ‘blue’        or ‘informational’,
+                         or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
+                         Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
+                       ⇒ ‘logo’ examples and how they look can be found at
+                          https://alhassy.github.io/org-special-block-extras/#Example-Badge-Icons
 
-  `(org-link-set-parameters ,name
-    :follow (lambda (path) (--> (s-split "|" path)
-                         (or (nth 3 it) path)
-                         (browse-url it)))
+                   See also: https://alhassy.github.io/org-special-block-extras/#Common-Project-Badges"))]
+
     ;; :export #'o--link--badge
-    :export (lambda (label description backend)
-              (if (equal backend 'latex) ""
-               (-let [ (key value color url logo)  (s-split "|" label) ]
-                (format
-                 (pcase ,(if social-shields-name `(format ,social-url label) 'url)
-                   ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
-                   (""      "%s") ;; e.g., badge:key|value|color||logo
-                   ('nil    "%s") ;; e.g., badge:key|value|color
-                   (t      (format "<a href=\"%s\">%%s</a>"  (s-replace "%" "%%" ,(if social-shields-name `(format ,social-url label) 'url))))
-                   )
-                 ,(if social-shields-name
-                     (if social-shields-url
-                         `(format ,social-shields-url label)
-                       `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
-                                ,social-shields-name label))
-                   '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s?logo=%s\">"
-                           (url-hexify-string (s-replace "-" "--" key))
-                           (url-hexify-string (s-replace "-" "--" (or value "")))
-                           color logo)))
-                 )))
-    ;; The tooltip alongside a link
-    :help-echo (lambda (window object position)
-                 (save-excursion
-                   (goto-char position)
-                   (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
-                            (cadr (org-element-context)))
-                           (description
-                            (when (equal format 'bracket)
-                              (copy-region-as-kill contents-begin contents-end)
-                              (substring-no-properties (car kill-ring)))))
-                     (format "%s\n\n General Syntax:\n\t badge:key|value|colour|url|logo"
-                             raw-link))))))
-
+    (if (equal o-backend 'latex) ""
+      (-let [ (key value color url logo)  (s-split "|" o-label) ]
+        (format
+         (pcase ,(if social-shields-name `(format ,social-url o-label) 'url)
+           ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
+           (""      "%s") ;; e.g., badge:key|value|color||logo
+           ('nil    "%s") ;; e.g., badge:key|value|color
+           (t (format "<a href=\"%s\">%%s</a>"
+                      (s-replace "%" "%%"
+                                 ,(if social-shields-name
+                                      `(format ,social-url o-label)
+                                    'url)))))
+         ,(if social-shields-name
+              (if social-shields-url
+                  `(format ,social-shields-url o-label)
+                `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">"
+                         ,social-shields-name o-label))
+            '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s?logo=%s\">"
+                     (url-hexify-string (s-replace "-" "--" key))
+                     (url-hexify-string (s-replace "-" "--" (or value "")))
+                     color
+                     logo)))))))
   #+end_src
 
-  #+RESULTS:
-  : o-make-badge
+# (o-make-badge "badge")
+#
+# badge:hola
+# (Tooltip wont show for Org comments; uncomment previous line to see tooltip!)
 
 Notice that we can have special ~%~-HTML characters in URLs; e.g.,
-~[[badge:my key|my value| my
-colour|https://www.google.com/search?q=hello%20world|gnu-emacs]]~
+~<badge:my key|my value| my
+colour|https://www.google.com/search?q=hello%20world|gnu-emacs>~
 ⇒
-[[badge:my key|my value| my colour|https://www.google.com/search?q=hello%20world|gnu-emacs]].
+<badge:my key|my value| my colour|https://www.google.com/search?q=hello%20world|gnu-emacs>.
 
 #+end_details
 :OLD:
@@ -4909,10 +5125,6 @@ For example, a super simple ‘badge’ link type
 #+begin_src emacs-lisp
 (o-make-badge "badge")
 #+end_src
-
-#+RESULTS:
-| :follow | (lambda (path) (--> (s-split | path) (or (nth 3 it) path) (browse-url it))) | :export | (lambda (label description backend) (if (equal backend 'latex)  (-let [(key value color url logo) (s-split | label)] (format (pcase url (here (format <a id="%s" href="#%s">%%s</a> (s-replace % %% key) (s-replace % %% key))) ( %s) ('nil %s) (t (format <a href="%s">%%s</a> (s-replace % %% url)))) (format <img src="https://img.shields.io/badge/%s-%s-%s?logo=%s"> (url-hexify-string (s-replace - -- key)) (url-hexify-string (s-replace - -- (or value ))) color logo))))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
-
 
 --------------------------------------------------------------------------------
 
@@ -5232,6 +5444,10 @@ may be useful to colour the =|=-separated fields of a badge link.
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
 
+** Intro, motivating examples :ignore:
+   :PROPERTIES:
+   :CUSTOM_ID: COMMENT-Intro
+   :END:
 #+begin_documentation Category Theory :label "cat"
 A theory of typed composition; e.g., typed monoids.
 #+end_documentation
@@ -5261,13 +5477,11 @@ E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
 #+end_details
 #+latex: \fi
 
-*Full Example: …*
-
-
+#+begin_box Full Example :background-color custard
 #+latex_header: \newunicodechar{π}{\ensuremath{\pi}}
 
 _User enters …_
-#+begin_example org
+#+begin_src org
 ,#+begin_documentation Existential Angst :label "ex-angst"
 A negative feeling arising from freedom and responsibility.
 
@@ -5280,7 +5494,7 @@ Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]]
 Then again, ~coding~ can be frustrating at times, maybe have
 a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
 ,#+end_documentation
-#+end_example
+#+end_src
 
 #+begin_documentation Existential Angst :label ex-angst
 A negative feeling arising from freedom and responsibility.
@@ -5308,6 +5522,7 @@ bye
 
 doc:Existential_Angsty
 :End:
+#+end_box
 
 #+begin_quote
 As it stands, Emacs tooltips *only* appear after an export has happened:
@@ -5319,23 +5534,26 @@ with spaces replaced by ‘_’.  For more, see
 doc:o--documentation.
 
 Entry names do not need to be unique, but labels do!
-( The labels are like the addresses used to look up an entry. )
+( The labels are like the addresses used to look up a person's home. )
 
 # Moreover, a documentation block may have multiple entries ---the =:name:= argument
 # must appear first, then the =:label:=, and the remaining text is the
 # description-documentation of the given name.
 #+end_quote
 
-#+begin_details More Examples
+#+begin_details ‼TODO  More Examples
 
-| Supported                            | Example          | Source                                         |
-|--------------------------------------+------------------+------------------------------------------------|
-| No description                       | doc:cat          | ~doc:cat~                                        |
-TODO: FIXME
+#+begin_documentation Natural Transformation :label "natural-transformation"
+Methods that do not perform any “type casing”.
+#+end_documentation
 
-# | With description and code font       | [[doc:natural-transformation][=polymorphism=]]   | ~[[doc:natural-transformation][=polymorphism=]]~ |
-
-| Fallback; e.g., arbitrary ELisp Docs | doc:thread-first | ~doc:thread-first~                               |
+| Supported                                 | Example               | Source                                         |
+|-------------------------------------------+-----------------------+------------------------------------------------|
+| No description                            | doc:cat               | ~doc:cat~                                        |
+| With description and code font            | [[doc:natural-transformation][=polymorphism=]]       | ~[[doc:natural-transformation][=polymorphism=]]~ |
+| Fallback: Arbitrary ELisp Docs (function) | doc:thread-first      | ~doc:thread-first~                               |
+| Fallback: Arbitrary ELisp Docs (variable) | doc:user-mail-address | =doc:user-mail-address=                          |
+| Fallback: Arbitrary English word          | doc:user              | =doc:user=                                       |
 
 Notice how hovering over items makes them appear, but to make them disappear you
 should click on them or scroll away.  This is ideal when one wants to have
@@ -5351,6 +5569,8 @@ Below are the entries in my personal glossary ;-)
 (ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car o--docs-from-libraries)))))
 #+end_src
 
+‼ TODO
+:Ignore:
 #+RESULTS:
 #+begin_box
 doc:cat
@@ -5990,6 +6210,7 @@ doc:difunctional
 doc:Difunctional
 doc:nil
 #+end_box
+:end:
 
 In the export, it looks like some names are repeated, but in the source one
 would notice that we have /labels/ in both upper and lower cases and with underscores ;-)
@@ -6038,7 +6259,7 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
 (deftest "The osbe--docs entry of the documentation block appears within a tooltip"
     [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
-             (literal (o--poor-mans-html-org-export
+             (literal (o-html-export-preserving-whitespace
                        (cadr (o--name&doc "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
 #+end_src
@@ -6050,42 +6271,130 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
    :END:
 We begin by making use of a list of documentation-glossary entries
 ---a lightweight database of information, if you will.
+
+#+begin_box Overview of relevant Lisp
++ doc:o--docs is the global variable that holds the glossary/database for the
+  current session. Entries may be inserted with doc:o-docs-set and retrieved
+  with doc:o-docs-get.
+
++ doc:o-docs-fallback is a /fallback method/ for retriving documentation-glossary
+  entries from elsewhere besides the current buffer; e.g., using Emacs'
+  doc:documentation function or the ~wn~ WordNet command for definitions of
+  English words. We use doc:o-docs-load-libraries to load documentation-glossary
+  entries from external files.
+
++ doc:o-docs-insert for interactively inserting links for documented-glossary words.
+#+end_box
+
 #+begin_src emacs-lisp
 (defvar o--docs nil
-  "An alist of (label name description) entries; our glossary.
+  "An alist of (LABEL NAME DESCRIPTION) entries; our glossary.
 
-Example use: (-let [(name description) (cdr (assoc 'label docs))] ⋯)")
+Example setter:
+0. (o-docs-set \"os\" \"Emacs\" \"A place wherein I do all of my computing.\")
+
+Example getters:
+0. (o-docs-get LABEL)
+1. (-let [(name description) (cdr (assoc LABEL o--docs))] ⋯)
+
+See also `o--docs-from-libraries' and `o-docs-load-libraries'.")
+
+(cl-defun o-docs-set (label name description)
+  "Add a new documentation-glossary entry, if it is not already present.
+
+We associate LABEL to have title NAME and glossary value DESCRIPTION.
+
+Example usage:
+  (o-docs-set \"cat\"
+              \"Category Theory\"
+              \"A theory of typed  composition; e.g., typed monoids.\")"
+  (add-to-list 'o--docs (list label name description)))
+
+(cl-defun o-docs-get (label)
+  "Return the name and documentation-glossary values associated with LABEL.
+
+It returns a list of length 2.
+
+Example uses:
+
+  ;; Get the Lisp documentation of `thread-last'
+  (o-docs-get \"thread-last\")
+
+  ;; Get the English definition of ‘computing’
+  (o-docs-get \"computing\")
+
+We look for LABEL from within the current buffer first, using `o--docs',
+and otherwise look among the loaded libraries, using `o--docs-from-libraries',
+and, finally, look for the documentation entry using `o-docs-fallback'."
+  (cdr (or (assoc label o--docs)
+           (assoc label o--docs-from-libraries)
+           (funcall o-docs-fallback label)
+           (error "Error: No documentation-glossary entry for “%s”!" label))))
+
+(cl-defun o-docs-insert ()
+  "Insert a “doc:𝒳” link from user's documentation-glossary database.
+
+It can be tricky to remember what you have, or what documentation entries mention, and so
+this command gives a searchable way to insert doc links."
+  (interactive)
+  (thread-last
+      (cl-remove-duplicates (-concat o--docs o--docs-from-libraries)
+                            :test (lambda (x y) (cl-equalp (car x) (car y))))
+    (--map (format "%s ∷ %s" (car it) (cl-third it)))
+    (completing-read "Insert doc link ∷ ")
+    (s-split "∷")
+    car
+    (concat "doc:")
+    (insert)))
 #+end_src
 
-#+RESULTS:
-: o--docs
-
-For example, we may use =add-to-list= to add an entry only if it is not already in
-the list.
+:Hide_startup_code:
 #+name: startup-code
 #+begin_src emacs-lisp :tangle no
-(add-to-list 'o--docs
-  '("cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids."))
+(o-docs-set
+  "cat" "Category Theory" "A theory of typed  composition; e.g., typed monoids.")
 #+end_src
+:End:
 
-We may wish to use Emacs' ~documentation~ command to retrieve entries ---this is
-useful for an online article that refers to unfamiliar Emacs terms ;-) To avoid
-copy-pasting documentation entries from one location to another, users may
-declare a fallback method. Besides Emacs' =documentation=, the fallback can be
-refer to a user's personal ‘global glossary’ variable ---which may live in their
-Emacs' init file---, for more see: doc:o-docs-load-libraries
+We may wish to use Emacs' doc:documentation (or doc:lf-documentation) command to
+retrieve entries ---this is useful for an online article that refers to
+unfamiliar Emacs terms ;-) To avoid copy-pasting documentation entries from one
+location to another, users may declare a fallback method. Besides Emacs'
+doc:documentation, the fallback can be refer to a user's personal ‘global
+glossary’ variable ---which may live in their Emacs' init file---, for more see:
+doc:o-docs-load-libraries
 #+begin_src emacs-lisp
-(defvar o--docs-fallback
-  (lambda (label) (list label label (documentation (intern label))))
-  "The fallback method to retriving documentation or glossary entries.")
-#+end_src
+(defvar o-docs-fallback
+  (lambda (label) (list
+              ;; label
+              label
+              ;; name
+              label
+              ;; documentation
+              (or
+               (ignore-errors (documentation (intern label)))
+               (ignore-errors (documentation-property
+                               (intern label)
+                               'variable-documentation))
+               (-let [it (shell-command-to-string
+                          (format "wn %s -over -synsn" label))]
+                 (if (s-blank-p it)
+                     (error "Error: No documentation-glossary entry for “%s”!" label)
+                   it)))))
 
-#+RESULTS:
-: o--docs-fallback
+  "The fallback method to retriving documentation or glossary entries.
+
+We try to retrive the Emacs Lisp function documentation of the
+given LABEL, if possible, otherwise we try to retrive the Emacs
+Lisp variable documentation, and if that fails then we look up
+the word in the English dictionary.
+
+The English definition is obtained from the command line tool ‘wn’, WordNet.")
+#+end_src
 
 #+begin_details Implementation matter for user libraries
 #+begin_src emacs-lisp
-(defvar o--docs-libraries nil
+(defvar o-docs-libraries nil
   "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
    for use with the ‘doc:𝒳’ link type.")
 #+end_src
@@ -6094,7 +6403,7 @@ In your init, you could do the following. ( See the installation instructions
 below, for more! )
 #+name: startup-code
 #+begin_src emacs-lisp :tangle no
-(setq o--docs-libraries
+(setq o-docs-libraries
   '("~/org-special-block-extras/documentation.org"))
 #+end_src
 
@@ -6105,14 +6414,13 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
 
 #+begin_src emacs-lisp
 (cl-defun o-docs-load-libraries
-    (&optional (libs o--docs-libraries))
-"Load user's personal documentation libraries.
+    (&optional (libs o-docs-libraries))
+"Load documentation-glossary libraries LIBS.
 
 If no LIBS are provided, simply use those declared
-o--docs-libraries.
+o-docs-libraries.
 
-See o--docs-from-libraries.
-"
+See `o-docs-from-libraries'."
 (interactive)
 (cl-loop for lib in libs
       do (with-temp-buffer
@@ -6128,14 +6436,13 @@ See o--docs-from-libraries.
 
   "The alist of (label name description) entries loaded from the libraries.
 
-The initial value ‘-1’ is used to indicate that no libraries have been loaded.
 The ‘doc:𝒳’ link will load the libraries, possibly setting this variable to ‘nil’,
 then make use of this variable when looking for documentation strings.
 
-Interactively call o-docs-load-libraries
+Interactively call `o-docs-load-libraries'
 to force your documentation libraries to be reloaded.
 
-See also o--docs-libraries.")
+See also `o-docs-libraries'.")
 #+end_src
 
 When the mode is actually enabled, then we load the user's libraries.
@@ -6149,10 +6456,10 @@ When the mode is actually enabled, then we load the user's libraries.
 
 #+end_details
 
-Let's keep track of where documentation comes from ---either the current
-article or from the fallback--- so that we may process it later on.
+Let's keep track of where documentation comes from ---either the current article
+or from the fallback--- so that we may process it later on.
 #+begin_src emacs-lisp
-(defvar o--docs-GLOSSARY nil
+(defvar o--docs-actually-used nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
@@ -6160,58 +6467,55 @@ We use this listing to actually print a glossary using
 #+end_src
 
 #+RESULTS:
-: o--docs-GLOSSARY
+: o--docs-actually-used
 
 Now HTML exporting such links as tooltips and displaying them in Emacs as
 tooltips happens in two stages: First we check the documentation, if there is no
 entry, we try the fallback ---if that falls, an error is reported at export
 time. E.g., upon export =doc:wombo= will produce a no-entry error.
 
+# doc:thread-first
+
 #+begin_details ‘doc’ link implementation
 #+name: startup-code
 #+begin_src emacs-lisp
-(org-link-set-parameters
- "doc"
- :follow (lambda (_) ())
- :export
-   `(lambda (label description backend)
-     (-let [(name docs) (o--name&doc label)]
-       (add-to-list 'o--docs-GLOSSARY
-                    (list label name docs))
-       (setq name (or description name))
-       (pcase backend
-         (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                         (o--poor-mans-html-org-export docs)
-                         name))
-         ;; Make the current word refer to its glosary entry;
-         ;; also declare the location that the glossary should refer back to.
-         (`latex (format (concat "\\hyperref"
-                                 "[o-glossary-%s]{%s}"
-                                "\\label{o-glossary"
-                                "-declaration-site-%s}")
-                         label name label)))))
-  :help-echo
-  `(lambda (_ __ position)
-    (save-excursion
-      (goto-char position)
-      (-let* (((&plist :path) (cadr (org-element-context)))
-              ((name doc) (o--name&doc path)))
-        (format "[%s] %s :: %s" path name doc)))))
+(o-deflink doc
+ "Export O-LABEL as itself, or as the provided O-DESCRIPTION,
+ along with a tooltip that shows the user's
+ documentation-glossary for o-LABEL and using that entry's name
+ when no O-DESCRIPTION is provided."
+ [:let (entry (o-docs-get o-label)
+        name (cl-first entry)
+        docs (cl-second entry)
+        display-name (or o-description name))
+  :help-echo (format "[%s] %s :: %s" o-label name docs)
+  :face (custom-button)]
+   (add-to-list 'o--docs-actually-used (list o-label name docs))
+   (pcase o-backend
+     (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
+                     (o-html-export-preserving-whitespace docs)
+                     display-name))
+     ;; Make the current word refer to its glosary entry;
+     ;; also declare the location that the glossary should refer back to.
+     (`latex (format (concat "\\hyperref"
+                             "[o-glossary-%s]{%s}"
+                             "\\label{o-glossary"
+                             "-declaration-site-%s}")
+                     label display-name label))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WHERE ...
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun o--poor-mans-html-org-export (s)
-  "Make Org-markup'd string S ready for HTML presentation.
+(defun o-html-export-preserving-whitespace (s)
+  "Make Org-markup'd string S ready for HTML presentation, preserving whitespace.
 
-Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
-(org-export-string-as s 'html :body-only-please)"
-
+This is orthogonal to the  `org-export-string-as' command; i.e.,
+(org-export-string-as s 'html :body-only-please) does something
+else!  In particular, what this yields is an HTML rendition that
+does not account for whitespace, such as indentation and
+newlines.
+"
   ;; Make it look pretty!
   (thread-last s
-    ;; Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
-    ;; (org-export-string-as docs 'html :body-only-please)
     (s-replace-regexp "\\#\\+begin_src [^\n]*\n" "<pre class='tooltip'>")
     (s-replace-regexp "\\( \\)*\\#\\+end_src\n" "</pre>")
     (s-replace-regexp "\\#\\+begin_export [^\n]*\n" "")
@@ -6240,24 +6544,6 @@ Strangely produces: Lisp nesting exceeds ‘max-lisp-eval-depth’
     (s-replace-regexp "\\\\;" "&#8195;") ;; em space
     ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
     (s-replace-regexp "\\\"" "''")))
-
-(defun o--name&doc (lbl)
-  "Look for ‘lbl’ from within the current buffer first, otherwise look among the loaded libraries."
-  (let* ((wit (or (assoc lbl o--docs)
-                  (assoc lbl o--docs-from-libraries)))
-         (name (cl-second wit))
-         (doc (cl-third wit)))
-    ;; If there is no documentation, try the fallback.
-    (unless doc
-      (setq doc
-            (condition-case nil
-                (funcall o--docs-fallback lbl)
-              (error
-               (error "Error: No documentation-glossary entry for “%s”!"
-                      lbl))))
-      (setq name (nth 1 doc))
-      (setq doc (nth 2 doc)))
-    (list name doc)))
 #+end_src
 
 Since tooltips are not clickable and do not support MathJax,
@@ -6424,67 +6710,74 @@ library. Multiple imports lead to broken features.
    form of glossary entries: Using =doc:𝒳= will result in the word =𝒳= being printed
    as a hyperlink to a glossary entry, which you the user will eventually
    declare using =show:GLOSSARY=; moreover, the glossary entry will also have a
-   link back to where the =doc:𝒳= was declared.
-   E.g., doc:defmacro and doc:lambda.
+   link back to where the =doc:𝒳= was declared.  E.g., doc:defmacro and
+   doc:lambda.
 
    We make a ~show:𝒳~ link type to print the value of the variable =𝒳=
    as follows, with =GLOSSARY= being a reserved name.
    #+begin_details Implementation of ‘show’
  #+begin_src emacs-lisp
-(let ((whatdo (lambda (x)
-                (message
-                          (concat "The value of variable  %s  will be placed "
-                                  "here literally upon export, "
-                                  "which is: \n\n %s")
-                          (s-upcase x)
-                          (if (equal x "GLOSSARY")
-                              (format "A cleaned up presentation of ...\n%s"
-                                      o--docs-GLOSSARY)
-                          (pp (eval (intern x))))))))
-  (org-link-set-parameters
-    "show"
-    :face '(:underline "green")
-    :follow whatdo
-    :help-echo `(lambda (_ __ position)
-                  (save-excursion
-                    (goto-char position)
-                    (-let [(&plist :path) (cadr (org-element-context))]
-                      (funcall ,whatdo path))))
-    :export
-     (lambda (label _description backend)
-      (cond ((not (equal label "GLOSSARY")) (prin1 (eval (intern label))))
-            ((equal 'html backend) "") ;; Do not print glossary in HTML
-            (t
-             (-let ((fstr (concat "\\vspace{1em}\\phantomsection"
-                                 "\\textbf{%s}\\quad"
-                                 "\\label{o-glossary-%s}"
-                                 "%s See page "
-                                 "\\pageref{org-special-block-extras"
-                                 "-glossary-declaration-site-%s}"))
-                    (preserve ;; preserve whitespace
-                     (lambda (x)
-                       (s-replace "\n" " \\newline{\\color{white}.}"
-                                  (s-replace "  " " \\quad "
-                                             ;; Hack!
-                                             (s-replace "&" "\\&" x))))))
-               (s-join "\n\n"
-                       (cl-loop for (label name doc)
-                             in o--docs-GLOSSARY
-                             collect (format fstr name label
-                                             (when doc (funcall preserve doc))
-                                             label)))))))))
+(o-deflink show
+  "Yield the value of the expression O-LABEL, with =GLOSSARY= being a reserved name.
+
+Example uses:
+
+    show:user-full-name
+
+    <show: (* 2 (+ 3 4 (- pi))) >
+
+
+Note that there is `elisp' links with Emacs, out of the box.
+However, they only serve to evaluate Lisp expressions; for example,
+to make “link buttons” that do useful things, as follows.
+
+   [[elisp:(find-file user-init-file)][Init]]
+
+In particular, `elisp' links do not export the value of their expression.
+That is what we accomplish with this new `show' link type."
+ [:face (:underline "green")
+  :help-echo (format
+              (concat "Upon export, the following will be placed literally"
+                      "\n\t%s"
+                      "\nWhich is the value of the expression:\n\t%s")
+              (pp-to-string (eval (read o-label)))
+              (if (equal o-label "GLOSSARY")
+                  (format "%s ---i.e., o--docs-actually-used" o-label)
+                o-label))]
+ (cond ((not (equal o-label "GLOSSARY")) (pp-to-string (eval (read o-label))))
+       ;; Otherwise O-LABEL is glossary, which we do not print in HTML
+       ((equal 'html o-backend) "")
+       (t (s-join "\n\n"
+                  (cl-loop for (label name doc)
+                           in o--docs-actually-used
+                           collect
+                           (format
+                           (concat "\\vspace{1em}\\phantomsection"
+                                   "\\textbf{%s}\\quad"
+                                   "\\label{o-glossary-%s}"
+                                   "%s See page "
+                                   "\\pageref{org-special-block-extras"
+                                   "-glossary-declaration-site-%s}")
+                           name
+                           o-label
+                           (when doc
+                             (thread-last doc ;; preserve whitespace
+                               (s-replace "&" "\\&") ;; Hack!
+                               (s-replace "  " " \\quad ")
+                               (s-replace "\n" " \\newline{\\color{white}.}")))
+                           o-label))))))
  #+end_src
 #+end_details
 
  As an example, we know have generic sentences:
  | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^= |
  |----------------------------------------------------------------------------|
- | My name is show:user-full-name and I am using Emacs show:emacs-version ^_^ |
+ | My name is show:user-full-name and I am using Emacs show:emacs-version ^_^  |
 
- For example, here is a word whose documentation is obtained from Emacs
- rather than me being written: doc:thread-last.
- If you click on it, in the LaTeX output, you will be directed to the glossary
- at the end of this article ---glossaries are not printed in HTML rendering.
+ For example, here is a word whose documentation is obtained from Emacs rather
+ than me writing it: doc:thread-last.  If you click on it, in the LaTeX output,
+ you will be directed to the glossary at the end of this article ---glossaries
+ are not printed in HTML rendering.
 
  /Neato! The whitespace in the documentation is preserved in the LaTeX output as
  is the case for HTML./
@@ -6498,9 +6791,10 @@ library. Multiple imports lead to broken features.
 ;; Actual used glossary entries depends on the buffer; so clean up after each export
 (advice-add #'org-export-dispatch
   :after (lambda (&rest _)
-  (setq o--docs-GLOSSARY nil
+  (setq o--docs-actually-used nil
         o--docs nil)))
 #+end_src
+# ‼ TODO MA: I don't usually want to evaluate this block?
 
 ** Next Steps
   :PROPERTIES:
@@ -6517,8 +6811,8 @@ block types; whereas they currently break the HTML export.
   the option to print it in a sorted fashion.
 - Perhaps use the line activation feature to provide link tooltips
   immediately rather than rely on exportation.
-- The =show= link type could accept an arbitrary Lisp expression as
-  a bracketed link.
+- +The =show= link type could accept an arbitrary Lisp expression as a bracketed
+  link.+ It does ;-)
 - When one clicks on a =doc= documentation link, it would be nice to ‘jump’
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
@@ -6668,7 +6962,7 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                stepcounter))
       (_ (setq marker (or marker "°"))
          (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                 (o--poor-mans-html-org-export contents)
+                 (o-html-export-preserving-whitespace contents)
                  ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                  marker)))))
 #+end_src
@@ -7522,7 +7816,7 @@ A ‘fancy’ face setup for links /within/ Emacs.
 
 #+begin_src emacs-lisp
 (defvar o-fancy-links
-  '(badge kbd link-here doc tweet)
+  '(badge link-here tweet)
   "The links, regexps, that should be shown with a boxed face within Emacs.")
 #+end_src
 
