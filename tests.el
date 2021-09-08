@@ -11,7 +11,6 @@
     (package-install pkg)))
 
 (load-file "org-special-block-extras.el")
-(o-short-names)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Personal Testing Utils ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,6 +104,46 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
                        (s-collapse-whitespace ,expr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:o-deflink][Define links as you define functions: doc:o-deflink:3]]
+(o-deflink shout
+  "Capitalise the link description, if any, otherwise capitalise the label.
+
+The link text appears as red bold in both Emacs and in HTML export."
+  [:face (:foreground "red" :weight bold)
+   ;; :help-echo (o-link/shout o-label o-description 'html)
+   :display full
+   :keymap (C-m (message-box "hola"))
+   :follow (message-box "%s and %s" pre current-prefix-arg)
+   ]
+  (format "<span style=\"color:red\"> %s </span>"
+          (upcase (or o-description o-label))))
+
+(deftest "o-deflink makes documented functions"
+  [o-deflink]
+  (⇝ (documentation #'o-link/shout)
+     "Capitalise the link description, if any, otherwise capitalise the label.
+
+     The link text appears as red bold in both Emacs and in HTML export."))
+
+(deftest "o-deflink works as expected, plain links"
+  [o-deflink]
+  (should (not (null (symbol-function 'o-link/shout))))
+  (⇝ (⟰ "shout:hello")
+     "<p> <span style=\"color:red\"> HELLO </span></p>"))
+
+(deftest "o-deflink works as expected, bracket links"
+  [o-deflink]
+  (⇝ (⟰ "[[shout:hello]]")
+     "<p> <span style=\"color:red\"> HELLO </span></p>")
+  (⇝ (⟰ "[[shout:hello][world!]]")
+     "<p> <span style=\"color:red\"> WORLD! </span></p>"))
+
+(deftest "o-deflink works as expected, angle links"
+  [o-deflink]
+  (⇝ (⟰ "<shout: hello world!>")
+     "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
+;; Define links as you define functions: doc:o-deflink:3 ends here
 
 ;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
 (deftest "The user's remark is enclosed in the default delimiters"
@@ -203,15 +242,33 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 ;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd> C-u 80 </kbd>_-∀</p>"))
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd>C-u 80</kbd>_-∀</p>"))
 
 (deftest "[[It]] becomes <kbd> tags"
   [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd> C-u 80 - </kbd></p>"))
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd>C-u 80 -</kbd></p>"))
 
 (deftest "<It> becomes <kbd> tags"
   [kbd angle-org-links]
   (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd> C-u 80 - </kbd></p>"))
+
+(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
+  [kbd tooltip]
+  (⇝ (⟰ "<kbd: M-s h .>")
+     "<abbr class=\"tooltip\" title="
+     (* anything)
+     "Highlight each instance of the symbol at point.<br>Uses the
+     next face from ‘hi-lock-face-defaults’ without
+     prompting,<br>unless you use a prefix argument.<br>Uses
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at
+     point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the highlighting
+     will not update as you type.  The Font<br>Lock mode is considered
+     ''enabled'' in a buffer if its ‘major-mode’<br>causes
+     ‘font-lock-specified-p’ to return non-nil, which means<br>the
+     major mode specifies support for Font Lock."
+     (* anything)
+     "<kbd> M-s h .</kbd></abbr>"))
 ;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
 
 ;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
@@ -235,8 +292,10 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
   [badge]
   (⇝ (⟰ "[[badge: Let me google that | for you! | orange |
          https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]")
-     "<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
-     "<img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a>"))
+
+     "<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     (* anything)
+     "<img src=\"https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir\">"))
 
 (deftest "It works when only the first 2 arguments are provided; asterisks are passed unaltered into the first argument"
   [badge]
@@ -282,7 +341,7 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
      "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
 ;; Badge Links:2 ends here
 
-;; [[file:org-special-block-extras.org::*Tooltips for Glossaries, Dictionaries, and Documentation][Tooltips for Glossaries, Dictionaries, and Documentation:3]]
+;; [[file:org-special-block-extras.org::*Intro, motivating examples][Intro, motivating examples:4]]
 (deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
   [doc]
   (⇝ (⟰ "doc:apply")
@@ -308,7 +367,7 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 (deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
   [doc documentation o--name&doc]
-    (should (o--name&doc "ex-angst")))
+    (should (o-docs-get "ex-angst")))
 
 ;; Upon export, the #+begin_documentation is /not/ present.
 ;; We have the text outside that block only.
@@ -316,10 +375,10 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 (deftest "The osbe--docs entry of the documentation block appears within a tooltip"
     [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
-             (literal (o--poor-mans-html-org-export
-                       (cadr (o--name&doc "ex-angst"))))
+             (literal (o-html-export-preserving-whitespace
+                       (cl-second (o-docs-get "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
-;; Tooltips for Glossaries, Dictionaries, and Documentation:3 ends here
+;; Intro, motivating examples:4 ends here
 
 ;; [[file:org-special-block-extras.org::*Marginal, “one-off”, remarks][Marginal, “one-off”, remarks:2]]
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
@@ -508,9 +567,9 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
          (* anything)
          "</details>"))
 
-
 (deftest "It has a title-less green box starting with an octoicon"
   [mwe box octoicon kbd]
+  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
   (⇝ mwe
      "<div style=\"padding: 1em;"
      (* anything)

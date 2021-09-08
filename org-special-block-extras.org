@@ -29,10 +29,11 @@
 1 ⇒ octoicon
 :End:
 
-# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq o--docs-libraries  '("~/org-special-block-extras/documentation.org")) (ignore-errors (o-docs-load-libraries)))
-#
-# (o-short-names)
+# TODO make this function take a varidaic number of arguments, instead of a
+# solid list. Also, when called interactively allow users to input the name of a file.
+# (o-docs-load-libraries '("~/org-special-block-extras/documentation.org"))
 
+# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq o--docs-libraries  '("~/org-special-block-extras/documentation.org")) (ignore-errors (o-docs-load-libraries)))
 
 # MA: It seems one of these tests is effectful?
 # Restart Emacs and run the tests: The first time there will be a failure, but
@@ -73,7 +74,7 @@
 # maybe rename org-parse to org-markup!
 # (E.g., math to mathjax: surround it in org-markup!)
 
-# MA: colour picker!
+# TODO MA: colour picker!
 #  (1) get that nice colour picker working
 #  (2) use /that/ code, from (1), to get red:X blue:Y etc working.
 
@@ -81,14 +82,12 @@
 # (advice-remove 'org-html-export-to-html   'my/ensure-headline-ids)
 # (advice-remove 'org-md-export-to-markdown 'my/ensure-headline-ids)
 
-
-TODO relies on an unpublished version of lf.el ?
-Need to update dependencies.
-
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
   :CUSTOM_ID: HTML-LaTeX-Setup
   :END:
+
+#+macro: newline @@latex: \newline@@
 
 # (add-to-list 'org-src-lang-modes '("org" . c))
 #+BEGIN_export html
@@ -101,7 +100,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 #+latex_header: \usepackage{newunicodechar}
 
-#+macro: newline @@latex: \newline@@
+
 
 #+latex_header: \newunicodechar{𝒳}{\ensuremath{\mathcal{X}}}
 #+latex_header: \newunicodechar{ℒ}{\ensuremath{\mathcal{L}}}
@@ -182,13 +181,14 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 #+BEGIN_SRC emacs-lisp  :noweb yes
 ;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
 
-;; Copyright (c) 2020 Musa Al-hassy
+;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 2.5
-;; Package-Requires: ((s "1.12.0") (dash "2.18.0") (emacs "26.1") (org "9.1"))
+;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "26.1") (org "9.1") (lf "1.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -260,6 +260,8 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 (require 'ox-latex)
 (require 'ox-html)
 
+(require 'lf)
+
 <<forward-decls>>
 #+END_SRC
 
@@ -273,7 +275,9 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 30 new custom blocks & 34 link types for Org-mode."
+    "Provide 30 new custom blocks & 34 link types for Org-mode.
+
+All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
@@ -308,7 +312,6 @@ pre.src-C:before { content: 'Org-mode Example!'; }
     (package-install pkg)))
 
 (load-file "org-special-block-extras.el")
-(o-short-names)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Personal Testing Utils ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1177,6 +1180,9 @@ The PHRASE is taken literally; no regexp operators are recognised."
  pleasing within Emacs and to behave (via clicks/hovers/key-bindings) in
  meaningful ways.
 
+ #+attr_html: :width 100% :height 100%
+ [[file:./images/o-deflink.png]]
+
  Here is a minimal working example.  After evaluating this, in an Org buffer,
  phrases such as ~shout:hello~ will (1) be shown in bold red, (2) have a hover
  tooltip that shows the documentation of the link /and/ an HTML export preview, and
@@ -1321,8 +1327,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
     (setq display (seq--into-list display))
     (let ((o-link/NAME (intern (format "o-link/%s" name)))
           (navigation "Press “C-h” to see possible actions on this link type.")
-          (lets (loop for (variable value)
-                      on (getf display :let)
+          (lets (cl-loop for (variable value)
+                      on (cl-getf display :let)
                       by #'cddr
                       collect (list variable value))))
       `(progn
@@ -1338,14 +1344,14 @@ is displayed in Emacs Org buffers. The keys are as follows.
         ,(format "%s" name)
         :export (quote ,o-link/NAME)
         ;; How should these links be displayed
-        :face (quote ,(getf display :face))
+        :face (quote ,(cl-getf display :face))
         ;; When you click on such links, what should happen?
         ;; (We augment the namespace with the missing o-description that local variables may be using.)
-        :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(getf display :follow))))
+        :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(cl-getf display :follow))))
          ;; These links should *never* be folded in descriptive display;
         ;; i.e., “[[example:lable][description]]” will always appear verbatim
         ;; and not hide the first pair […].
-        :display (quote ,(getf display :display)) ;; e.g.,: 'full
+        :display (quote ,(cl-getf display :display)) ;; e.g.,: 'full
         ;; Any special keybindings when cursour is on this link type?
         ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
         :keymap (let ((o-keymap (copy-keymap org-mouse-map))
@@ -1357,14 +1363,14 @@ is displayed in Emacs Org buffers. The keys are as follows.
                              "\n\tC-h: Shows this helpful message buffer"
                              "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
                              "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
-                             (pp-to-string (quote ,(getf display :keymap))))))
+                             (pp-to-string (quote ,(cl-getf display :keymap))))))
                   ;; Populate the keymap
-                  (loop for (key action)
+                  (cl-loop for (key action)
                         on (-cons* 'C-p `(re-search-backward ,pattern nil t)
                                    'C-n `(re-search-forward ,pattern nil t)
                                    'C-h `(-let [max-mini-window-height 0] ;; i.e., insist on displaying in a dedicated buffer
                                            (display-message-or-buffer ,msg))
-                                   (quote ,(getf display :keymap)))
+                                   (quote ,(cl-getf display :keymap)))
                         by #'cddr
                         do (define-key o-keymap (kbd (format "%s" key))
                              `(lambda () (interactive) ,action)))
@@ -1382,7 +1388,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                 (when (equal format 'bracket)
                                   (copy-region-as-kill contents-begin contents-end)
                                   (substring-no-properties (car kill-ring)))))
-                         (or (let* ,lets ,(getf display :help-echo))
+                         (or (let* ,lets ,(cl-getf display :help-echo))
                              (format "%s:%s\n\n%s\nHTML Export:\n\n%s"
                                      (quote ,name)
                                      (or o-description o-label)
@@ -1464,7 +1470,6 @@ The link text appears as red bold in both Emacs and in HTML export."
   (format "<span style=\"color:red\"> %s </span>"
           (upcase o-label)))
   #+end_src
-
 
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
@@ -2061,24 +2066,7 @@ Example block use:
 A full, working, example can be seen by “C-h o RET defblock”.
 "
   `(add-to-list 'o--header-args (list (quote ,blk) ,@kvs)))
-
-(defun o-short-names ()
-  "Expose shorter names to the user.
-
-Namely,
-
-  o-set-block-header-args   ↦  set-block-header-args
-  o-defblock                ↦  defblock
-  o-subtle-colors           ↦  subtle-colors
-"
-  (defalias 'defblock              'o-defblock)
-  (defalias 'set-block-header-args 'o-set-block-header-args)
-  (defalias 'thread-blockcall      'o-thread-blockcall)
-  (defalias 'subtle-colors         'o-subtle-colors))
  #+end_src
-
- #+RESULTS:
- : o-short-names
 
 #+end_details
 
@@ -2108,15 +2096,11 @@ Perhaps an example will clarify things ...
 ;; We can use variable values when defining new blocks
 (setq angry-red '(:foreground "red" :weight bold))
 
-;; Enable short names; e.g., ‘defblock’ instead of ‘o-defblock’.
-(o-short-names)
-
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
-;; (Assuming we already called o-short-names. )
-(defblock rremark
+(o-defblock rremark
   (editor "Editor Remark" :face angry-red) (color "red" signoff "")
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -2127,7 +2111,7 @@ Perhaps an example will clarify things ...
 ;; I don't want to change the definition, but I'd like to have
 ;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
-(set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+(o-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
  #+end_src
 
  #+RESULTS:
@@ -2175,7 +2159,6 @@ has more bells and whistles … keep reading ;-)
 ;; As a link, it should be shown angry-red;
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
-;; (Assuming we already called o-short-names. )
 (o-defblock rremark
   (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
   ; :please-preserve-new-lines
@@ -4533,7 +4516,7 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* TODO Nice Keystroke Renditions: kbd:C-h_h             :outdated_screenshot:
+* Nice Keystroke Renditions: kbd:C-h_h :Outdated_Screenshot:
   :PROPERTIES:
   :CUSTOM_ID:
   :END:
@@ -4625,15 +4608,33 @@ Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el :comments link
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd> C-u 80 </kbd>_-∀</p>"))
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd>C-u 80</kbd>_-∀</p>"))
 
 (deftest "[[It]] becomes <kbd> tags"
   [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd> C-u 80 - </kbd></p>"))
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd>C-u 80 -</kbd></p>"))
 
 (deftest "<It> becomes <kbd> tags"
   [kbd angle-org-links]
   (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd> C-u 80 - </kbd></p>"))
+
+(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
+  [kbd tooltip]
+  (⇝ (⟰ "<kbd: M-s h .>")
+     "<abbr class=\"tooltip\" title="
+     (* anything)
+     "Highlight each instance of the symbol at point.<br>Uses the
+     next face from ‘hi-lock-face-defaults’ without
+     prompting,<br>unless you use a prefix argument.<br>Uses
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at
+     point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the highlighting
+     will not update as you type.  The Font<br>Lock mode is considered
+     ''enabled'' in a buffer if its ‘major-mode’<br>causes
+     ‘font-lock-specified-p’ to return non-nil, which means<br>the
+     major mode specifies support for Font Lock."
+     (* anything)
+     "<kbd> M-s h .</kbd></abbr>"))
 #+end_src
 
 #+end_details
@@ -4867,8 +4868,10 @@ Let's have some sanity tests...
   [badge]
   (⇝ (⟰ "[[badge: Let me google that | for you! | orange |
          https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]")
-     "<a href=\" https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
-     "<img src=\"https://img.shields.io/badge/%20Let%20me%20google%20that%20-%20for%20you%21%20- orange ?logo=Elixir\"></a>"))
+
+     "<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\">"
+     (* anything)
+     "<img src=\"https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir\">"))
 
 (deftest "It works when only the first 2 arguments are provided; asterisks are passed unaltered into the first argument"
   [badge]
@@ -6322,7 +6325,7 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
 
 (deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
   [doc documentation o--name&doc]
-    (should (o--name&doc "ex-angst")))
+    (should (o-docs-get "ex-angst")))
 
 ;; Upon export, the #+begin_documentation is /not/ present.
 ;; We have the text outside that block only.
@@ -6331,7 +6334,7 @@ badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/docum
     [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
              (literal (o-html-export-preserving-whitespace
-                       (cadr (o--name&doc "ex-angst"))))
+                       (cl-second (o-docs-get "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
 #+end_src
 #+end_details
@@ -6878,7 +6881,7 @@ That is what we accomplish with this new `show' link type."
   "An indicator of when glossary entries should be erased.
 
 We erase the glossary not on the first export, but on the second export.
-The first export collects all citations, which are used in the second export."
+The first export collects all citations, which are used in the second export.")
 (setcdr (last o--docs-empty!) o--docs-empty!) ;; It's an infinite cyclic list.
 
 ;; Actual used glossary entries depends on the buffer; so clean up after each export
@@ -8007,7 +8010,7 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
   :hook (org-mode . org-special-block-extras-mode)
   :custom
     ;; The places where I keep my ‘#+documentation’
-    (o--docs-libraries
+    (o-docs-libraries
      '("~/org-special-block-extras/documentation.org"))
     ;; Disable the in-Emacs fancy-links feature?
     ;; (o-fancy-links nil)
@@ -8015,11 +8018,7 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
     (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
     ;; The message prefixing a ‘tweet:url’ badge
     (o-link-twitter-excitement
-     "This looks super neat (•̀ᴗ•́)و:")
-  :config
-  ;; Use short names like ‘defblock’ instead of the fully qualified name
-  ;; ‘o-defblock’
-    (o-short-names))
+     "This looks super neat (•̀ᴗ•́)و:"))
 #+END_SRC
 
 Then, provide support for a new type of special block, say re-using the ~src~
@@ -8233,9 +8232,9 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
          (* anything)
          "</details>"))
 
-
 (deftest "It has a title-less green box starting with an octoicon"
   [mwe box octoicon kbd]
+  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
   (⇝ mwe
      "<div style=\"padding: 1em;"
      (* anything)
