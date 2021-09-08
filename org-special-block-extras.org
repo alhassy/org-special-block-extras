@@ -939,13 +939,31 @@ this, we use Org's link mechanism./
 + Buttons :: ~[[elisp:(find-file user-init-file)][Go to my init!]]~ is a nice
   clickable-/actionable/ button within Emacs. The =elisp= link is part of Emacs.
 
+  #+html: <br>
+
 + Textual expansions :: =show:user-full-name= expands, upon export, to /Musa
-  Al-hassy/ on my machine. (The =show= link is defined below.)
+  Al-hassy/ on my machine. (doc:o-link/show is defined below.)
+
+  Similarly, ~link-here:usefulness-of-links~ becomes:
+  link-here:usefulness-of-links. When you click on it, the URL of the webpage
+  changes: It is a local anchor to a possibly interesting location in your
+  article. (doc:o-link/link-here is defined below; as is doc:o-link/octoicon
+  with example use: ~octoicon:home~ being octoicon:home.)
+
+  More aesthetically, =<badge: Emacs | is awesome | blue |
+  https://www.google.com/search?q=hello%20world | gnu-emacs>= exports to <badge:
+  Emacs | is awesome | blue | https://www.google.com/search?q=hello%20world |
+  gnu-emacs>. (doc:o-link/badge)
+
+  #+html: <br>
 
 + Definitions / Personal Glossary :: ~doc:thread-first, doc:family, doc:Hussain~
   export as the link labels but with tooltips for the Lisp function
   doc:thread-first, for the English definition of doc:family, and my personal
-  documentation for the phrase doc:Hussain. (The =doc= link is defined below.)
+  documentation for the phrase doc:Hussain. (doc:o-link/doc is defined below.)
+
+  Similarly, ~[[kbd:M-s h .]]~ becomes [[kbd:M-s h .]], which has a tooltip for
+  the Lisp function associated with the keybinding.
 
   # (o-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
 #+end_box
@@ -1033,6 +1051,7 @@ consistent with doc:defun--- and so let's take a look at it first.
   #+end_src
 
   #+RESULTS: startup-code
+  : o-html-export-preserving-whitespace
 
 
 
@@ -1311,10 +1330,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
        (cl-defun ,o-link/NAME ;; function name
            (o-label o-description o-backend)         ;; function args
            ;; new function documentation
-           (concat (if ,docstring (format "\n\n%s\n" ,docstring) "\n")
-                   ,navigation
-                   "\nEXPORT IMPLEMENTATION:\n\n"
-                   (pp-to-string (quote (let ,lets ,body))))
+           ,docstring
            ;; function body
            (let* ,lets ,@body))
        ;; Construct the Org-link
@@ -1371,7 +1387,10 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                      (quote ,name)
                                      (or o-description o-label)
                                      ,(concat (or docstring "") "\n\n" navigation "\n")
-                                     (,o-link/NAME o-label o-description 'html)))))))))))
+                                     (,o-link/NAME o-label o-description 'html)))))))
+        ;; Return value is the name of the underlying function.
+        ;; We do this to be consistent with `defun'.
+        (quote ,o-link/NAME)))))
  #+end_src
 
  # shout:hi
@@ -1390,6 +1409,13 @@ The link text appears as red bold in both Emacs and in HTML export."
    ]
   (format "<span style=\"color:red\"> %s </span>"
           (upcase (or o-description o-label))))
+
+(deftest "o-deflink makes documented functions"
+  [o-deflink]
+  (⇝ (documentation #'o-link/shout)
+     "Capitalise the link description, if any, otherwise capitalise the label.
+
+     The link text appears as red bold in both Emacs and in HTML export."))
 
 (deftest "o-deflink works as expected, plain links"
   [o-deflink]
@@ -1426,7 +1452,19 @@ The link text appears as red bold in both Emacs and in HTML export."
     (s-replace-regexp "\\\"" "''" it) ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
     (s-replace-regexp "\n" "<br>" it)
     (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>" it o-label)))
+
+#+end_src
+
+#+begin_src emacs-lisp
+(o-deflink shout
+  "Capitalise the link description, if any, otherwise capitalise the label.
+
+The link text appears as red bold in both Emacs and in HTML export."
+  [:face (:foreground "red" :weight bold)]
+  (format "<span style=\"color:red\"> %s </span>"
+          (upcase o-label)))
   #+end_src
+
 
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
@@ -4723,8 +4761,8 @@ Usage: (cadr (assoc 'ICON o--supported-octoicons))")
      (cadr (assoc (intern o-label)
                   o--supported-octoicons)))))
 
-;; Export a link to the current location in an Org file.
 (o-deflink link-here
+  "Export a link to the current location in an Org file."
   [:help-echo (format "This is a local anchor link named “%s”" path)]
   (if (not (equal o-backend 'html))
       ""
@@ -4985,12 +5023,14 @@ Then the following exports nicely from an Org file:
 
      go:key|value|blue|here|gnu-emacs"
   `(o-deflink ,(intern name)
+    "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
+Precise details for each argument are shown in the Emacs tooltip for this badge."
     [:display 'full
      :follow (--> (s-split "|" path)
                (or (nth 3 it) o-label)
                (browse-url it))
     :help-echo
-      (-let [ (key value color url logo)  (s-split "|" o-label) ]
+      (-let [ (key value color url logo)  (mapcar #'s-trim (s-split "|" o-label)) ]
         (lf-string "${o-label}
                     \nGeneral Syntax:  badge:key|value|colour|url|logo
                            Key    : ${key}
@@ -5028,7 +5068,7 @@ Then the following exports nicely from an Org file:
 
     ;; :export #'o--link--badge
     (if (equal o-backend 'latex) ""
-      (-let [ (key value color url logo)  (s-split "|" o-label) ]
+      (-let [ (key value color url logo)  (mapcar #'s-trim (s-split "|" o-label)) ]
         (format
          (pcase ,(if social-shields-name `(format ,social-url o-label) 'url)
            ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
@@ -6769,7 +6809,7 @@ That is what we accomplish with this new `show' link type."
   [:face (:underline "green")
    :let (o-value (if (equal o-label "GLOSSARY")
                      (pp-to-string (mapcar #'cl-second o--docs-actually-used))
-                   (pp-to-string (eval (read o-label))))
+                   (pp-to-string (eval (car (read-from-string o-label)))))
          o-expr (if (equal o-label "GLOSSARY")
                     (concat "GLOSSARY ---i.e., o--docs-actually-used"
                             "\n\nWe erase the glossary not on the first export, but on the second export."
@@ -6781,9 +6821,9 @@ That is what we accomplish with this new `show' link type."
                       "\nWhich is the value of the expression:\n\t%s")
               o-value
               o-expr)]
- (cond ((not (equal o-label "GLOSSARY")) (pp-to-string (eval (read o-label))))
+  (cond ((not (equal o-label "GLOSSARY")) o-value)
 
-       ;; Otherwise O-LABEL is glossary, which we do not print in HTML
+       ;; Otherwise O-LABEL is glossary, which we print in HTML & LaTeX
        ((equal 'html o-backend)
           (s-join " "
                   (--map
@@ -6793,7 +6833,6 @@ That is what we accomplish with this new `show' link type."
                    ;; Ignore duplicates; i.e., entries with the same name/title.
                    (cl-remove-duplicates o--docs-actually-used
                                          :test (lambda (x y) (cl-equalp (cl-second x) (cl-second y)))))))
-
        (t (s-join "\n\n"
                   (cl-loop for (label name doc)
                            in o--docs-actually-used
@@ -6817,7 +6856,7 @@ That is what we accomplish with this new `show' link type."
 #+end_details
 
  As an example, we know have generic sentences:
- | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^= |
+ | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^=  |
  |----------------------------------------------------------------------------|
  | My name is show:user-full-name and I am using Emacs show:emacs-version ^_^  |
 
