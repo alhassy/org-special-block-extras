@@ -475,7 +475,7 @@ badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-badge:org-special-block-extras|2.4|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
+badge:org-special-block-extras|3.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
 
 #+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 #+html: </span>
