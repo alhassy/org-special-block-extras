@@ -27,7 +27,7 @@
 <span>
 
 <p>
-<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-2.0-informational?logo=Gnu-Emacs"></a>
+<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-3.0-informational?logo=Gnu-Emacs"></a>
 </p>
 
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
