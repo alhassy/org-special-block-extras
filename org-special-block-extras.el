@@ -191,16 +191,8 @@ All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'."
           (when (pop o--docs-empty!)
               (setq o--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
                     o--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
-        (cl-loop for lnk in o-fancy-links
-              do (highlight-phrase (format "%s:[^ \n]*" lnk)
-                                   'custom-button))
-        
-        ;; Other faces to consider: custom-button-mouse, custom-button-unraised,
-        ;; custom-button, custom-button-pressed, custom-link
       ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'o--support-special-blocks-with-args)
-    (cl-loop for lnk in o-fancy-links
-          do (unhighlight-regexp (format "%s:[^ \n]*" lnk)))
     )) ;; Must be on a new line; I'm using noweb-refs
 
 (cl-defmacro o-deflink
@@ -287,6 +279,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
     (setq tooltip-hide-delay 300)
 
 + :face specifies how should these links be displayed within Emacs.
+   It is a list-valued expression.
+   As usual, it may make use of O-LABEL (but O-DESCRIPTION has value nil).
 
 + [:display full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
@@ -335,8 +329,9 @@ is displayed in Emacs Org buffers. The keys are as follows.
        (org-link-set-parameters
         ,(format "%s" name)
         :export (quote ,o-link/NAME)
-        ;; How should these links be displayed
-        :face (quote ,(cl-getf display :face))
+        ;; How should these links be displayed?
+        ;; (We augment the namespace with the missing o-description that local variables may be using.)
+        :face (lambda (o-label)  (let (o-description) (let* ,lets ,(cl-getf display :face))))
         ;; When you click on such links, what should happen?
         ;; (We augment the namespace with the missing o-description that local variables may be using.)
         :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(cl-getf display :follow))))
@@ -1225,18 +1220,23 @@ Examples:
   ≈ <kbd: C-x C-s>
   ≈ kbd:C-x_C-s"
   [:display 'full
-   :face (custom-button)
-   :help-echo (let ((it (s-replace "_" " " o-label))) (format "%s ∷ %s" it (documentation (cl-second (help--analyze-key (kbd it) it)))))]
+   :let (the-label  (s-trim (s-replace "_" " " o-label))
+         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
+         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
+         tooltip?   (not (equal tooltip ""))
+         style      (if tooltip? "border-color: red" "")
+         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
+   ;; o-description is always nil when it comes to deciding the :face.
+   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
+   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
   (if (equal o-backend 'latex)
-      (format "\\texttt{%s}" (s-replace "_" " " o-label))
-  (--> (s-replace "_" " " o-label)
-    (or o-description (ignore-errors (documentation (cl-second (help--analyze-key (kbd it) it)))) "")
-    (s-replace-regexp "\\\"" "''" it) ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
-    (s-replace-regexp "\n" "<br>" it)
-    (let ((keystrokes (format "<kbd>%s</kbd>" (s-replace "_" " " o-label))))
-      (if (equal "" it) ;; i.e., we do not have a tooltip definition
-        keystrokes
-        (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>" it keystrokes))))))
+      (format "\\texttt{%s}" the-label)
+    (if tooltip?
+        ;; The style=⋯ is to remove the underlying caused by <abbr>.
+        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
+                the-label (or lisp-func "") (o-html-export-preserving-whitespace tooltip)
+                keystrokes)
+      keystrokes)))
 
 (defvar
  o--supported-octoicons
@@ -1581,7 +1581,7 @@ We use this listing to actually print a glossary using
         docs (cl-second entry)
         display-name (or o-description name))
   :help-echo (format "[%s] %s :: %s" o-label name docs)
-  :face (custom-button)]
+  :face '(custom-button)]
    (add-to-list 'o--docs-actually-used (list o-label name docs))
    (pcase o-backend
      (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
@@ -1691,7 +1691,7 @@ to make “link buttons” that do useful things, as follows.
 
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
-  [:face (:underline "green")
+  [:face '(:underline "green")
    :let (o-value (if (equal o-label "GLOSSARY")
                      (pp-to-string (mapcar #'cl-second o--docs-actually-used))
                    (pp-to-string (eval (car (read-from-string o-label)))))
@@ -1910,10 +1910,6 @@ what is required by MathJaX."
     (--map (format "%s" (o--list-to-calc it rel hint-format explicit-vspace color)))
     (s-join "\\\\")
     (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
-
-(defvar o-fancy-links
-  '(badge link-here tweet)
-  "The links, regexps, that should be shown with a boxed face within Emacs.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

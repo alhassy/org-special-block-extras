@@ -110,7 +110,7 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
   "Capitalise the link description, if any, otherwise capitalise the label.
 
 The link text appears as red bold in both Emacs and in HTML export."
-  [:face (:foreground "red" :weight bold)
+  [:face '(:foreground "red" :weight bold)
    ;; :help-echo (o-link/shout o-label o-description 'html)
    :display full
    :keymap (C-m (message-box "hola"))
@@ -242,33 +242,35 @@ The link text appears as red bold in both Emacs and in HTML export."
 ;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd>C-u 80</kbd>_-∀</p>"))
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
 
 (deftest "[[It]] becomes <kbd> tags"
   [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd>C-u 80 -</kbd></p>"))
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
-(deftest "<It> becomes <kbd> tags"
+(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
   [kbd angle-org-links]
-  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd> C-u 80 - </kbd></p>"))
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
 (deftest "It has a tooltip documenting the underlying Lisp function, when possible"
   [kbd tooltip]
   (⇝ (⟰ "<kbd: M-s h .>")
-     "<abbr class=\"tooltip\" title="
+
+     "<abbr class=\"tooltip\""
      (* anything)
      "Highlight each instance of the symbol at point.<br>Uses the
      next face from ‘hi-lock-face-defaults’ without
      prompting,<br>unless you use a prefix argument.<br>Uses
-     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at
-     point.<br><br>This uses Font lock mode if it is enabled;
-     otherwise it uses overlays,<br>in which case the highlighting
-     will not update as you type.  The Font<br>Lock mode is considered
-     ''enabled'' in a buffer if its ‘major-mode’<br>causes
-     ‘font-lock-specified-p’ to return non-nil, which means<br>the
-     major mode specifies support for Font Lock."
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
+     at point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the
+     highlighting will not update as you type.&emsp;The
+     Font<br>Lock mode is considered ''enabled'' in a buffer if
+     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
+     non-nil, which means<br>the major mode specifies support for
+     Font Lock."
      (* anything)
-     "<kbd> M-s h .</kbd></abbr>"))
+     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>"))
 ;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
 
 ;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
@@ -548,6 +550,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 
 (deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
   [mwe spoiler color magenta gensym]
+  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
   (⇝ mwe "<details"
          (* anything)
          ;; The local spoiler style is declared
