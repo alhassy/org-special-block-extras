@@ -147,22 +147,17 @@ Manually or using [quelpa](https://github.com/alhassy/emacs.d#installing-emacs-p
     (use-package org-special-block-extras
       :ensure t
       :hook (org-mode . org-special-block-extras-mode)
+      ;; All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'.
       :custom
-        (org-special-block-extras--docs-libraries
+        (o-docs-libraries
          '("~/org-special-block-extras/documentation.org")
-         "The places where I keep my ‘#+documentation’")
-        ;; (org-special-block-extras-fancy-links
-        ;; nil "Disable this feature.")
-      :config
-      ;; Use short names like ‘defblock’ instead of the fully qualified name
-      ;; ‘org-special-block-extras--defblock’
-        (org-special-block-extras-short-names))
+         "The places where I keep my ‘#+documentation’")))
 
 Then, provide support for a new type of special block, say re-using the `src`
 blocks that, say, folds up all such blocks in HTML export, by declaring the
 following.
 
-    (org-special-block-extras--defblock src (lang nil) (title nil exports nil file nil)
+    (o-defblock src (lang nil) (title nil exports nil file nil)
       "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
     If a block has a ‘:title’, use that to title the ‘<details>’."
       (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
