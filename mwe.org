@@ -1,5 +1,28 @@
 #+title: Minimal Working Example
 
+
+# Is non-nil upon a second export, since no doc:𝒳 encountered yet.
+My glossary: show:GLOSSARY
+
+# + [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
+# + Pop-quiz: How does doc:apply work?
+# + link-here:solution
+# + Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
+# + [[remark:Musa][Ain't that cool?]]
+#
+#+begin_spoiler aqua
+That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
+#+end_spoiler
+
+--------------------------------------------------------------------------------
+
+#+begin_documentation Salamun Alayakum :label salam
+A form of Arabic greeting. It literally means “peace be upon you”.
+#+end_documentation
+
+Sometimes I say doc:salam, other times I say doc:hello, and other times I say
+doc:hi.
+
 #+begin_parallel
 [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 
@@ -30,8 +53,29 @@ beyond what it can bear./ --- Quran 2:286
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
 
-show:GLOSSARY
+My glossary: show:GLOSSARY
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+
+
+#+begin_details "SDOF equations are \\(m\\ddot{x}=f(t)\\)"
+The above is a differential equation with $\ddot{x}$.
+#+end_details
+
+#+begin_calc :hint-format "\\left\\{ %s\\right."
+                  +     x
+                  +     y -- Explanation of why $x \;=\; y$
+                    Actually, let me explain:
+                    * x
+                    * x′ -- hint 1
+                    * y  -- hint 2
+
+                    No words can appear (in the export) *after* a nested calculation, for now.
+                  + [≤] z
+                    --
+                    Explanation of why $y \;\leq\; z$
+
+                    -- explain it more, this is ignored from export ;-)
+#+end_calc
