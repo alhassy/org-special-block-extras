@@ -492,6 +492,11 @@ tweet:https://github.com/alhassy/org-special-block-extras
 badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
 "))
 
+(deftest "It exports to HTML without any problems"
+  [mwe html-export]
+  (find-file "mwe.org")
+  (should (org-html-export-to-html)))
+
 (deftest "It starts with a 2-column div for ‘parallel’"
   [mwe parallel]
   (⇝ mwe "<div style=\"column-rule-style: none;column-count: 2;\">"
@@ -550,7 +555,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 
 (deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
   [mwe spoiler color magenta gensym]
-  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
+
   (⇝ mwe "<details"
          (* anything)
          ;; The local spoiler style is declared

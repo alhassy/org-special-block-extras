@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 2.5
+;; Version: 3.0
 ;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "26.1") (org "9.1") (lf "1.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -389,7 +389,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (cl-defmacro o-defblock
-  (name main-arg kwds &rest experimental&&docstring&&body)
+  (name main-arg kwds &optional experimental docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
 A full featured example is at the end of this documentation string.
@@ -434,9 +434,9 @@ Finally, this macro exposes two functions:
 
 ----------------------------------------------------------------------
 
-TLDR for EXPERIMENTAL&&DOCSTRING&&BODY, the first two parts are
+TLDR for EXPERIMENTAL and DOCSTRING and BODY, the first two parts are
 optional; they're a symbol, a string, then the main body.  The
-symbol, OSPE-RESPECT-NEWLINES?, when present enables a highly
+symbol, O-RESPECT-NEWLINES?, when present enables a highly
 experimental [i.e., do *not* use it!] feature: No new lines for
 blocks in HTML export.  Its need rose from developing the MARGIN
 block type.
@@ -460,7 +460,7 @@ Example declaration, with all possible features shown:
 
    (defblock remark
      (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
-     \"Top level (HTML & LaTeX)OSPE-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
+     \"Top level (HTML & LaTeX)O-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
@@ -486,32 +486,16 @@ Three example uses:
     [ [remark:][Please improve your transition sentences.]]
 
     ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
-    ;; catenated as well as the default red color.
-"
+    ;; catenated as well as the default red color."
   ;; ⇨ The special block support
   ;;
   (add-to-list 'o--supported-blocks name) ;; global var
 
   ;; Identify which of the optional features is present...
-  (let (ospe-respect-newlines?
-        docstring
-        body)
-    (if (symbolp (cl-first experimental&&docstring&&body))
-        ;; okay we have a newline declaration, but do we ALSO have a doc-string?
-        (if (stringp (cl-second experimental&&docstring&&body))
-            (setq ospe-respect-newlines? t
-                  docstring (cl-second experimental&&docstring&&body)
-                  body      (cddr   experimental&&docstring&&body))
-          (setq ospe-respect-newlines? t
-                body      (cl-rest experimental&&docstring&&body)))
-      ;; no newline declaration...
-      ;; maybe we have a docstring?
-      (if (stringp (cl-first experimental&&docstring&&body))
-          (setq docstring (cl-first experimental&&docstring&&body)
-                body      (cl-rest experimental&&docstring&&body))
-        ;; else neither newline-declaration now docstring
-        (setq body experimental&&docstring&&body)))
-
+  (cl-destructuring-bind (o-respect-newlines? docstring body)
+      (lf-extract-optionals-from-rest experimental #'keywordp
+                                      docstring    #'stringp
+                                      body)
     `(progn
        ;; Produce an associated Lisp function
        ,(o-defblock---support-block-type
@@ -522,22 +506,26 @@ Three example uses:
          kwds
          body
          ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-         ospe-respect-newlines?
+         o-respect-newlines?
          )
 
        ;; ⇨ The link type support
        ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
        ;; are dumped here verbatim.
        ;; ‘(main-arg-name main-arg-val :face … :follow …)’
-       ,(o-defblock---support-link-type
-         name (cddr main-arg) docstring))))
+           (o-deflink ,name
+             [:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)
+             ,@(cddr main-arg) ;; verbatim link extras
+             ]
+             ;; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+             (s-replace-all `(("@@" . "")) ;; (,(format "@@%s:" backend) . "")
+                            (,(intern (format "o--%s" name))
+                             o-backend (or o-description o-label) o-label :o-link? t))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WHERE ...
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (cl-defmethod o-defblock---support-block-type
-    (name docstring main-arg-name main-arg-value kwds body ospe-respect-newlines?)
+    (name docstring main-arg-name main-arg-value kwds body o-respect-newlines?)
   "Helper method for o-defblock.
 
 This method creates an Org block type's associated Lisp function.
@@ -553,7 +541,7 @@ BODY, list: Code to be executed"
                 &optional ;; ,(car main-arg)
                 ,main-arg-name
                 &rest _
-                &key (ospe-link? nil) ,@(-partition 2 kwds))
+                &key (o-link? nil) ,@(-partition 2 kwds))
      ,docstring
      ;; Use default for main argument
      (when (and ',main-arg-name (s-blank-p ,main-arg-name))
@@ -569,10 +557,10 @@ BODY, list: Code to be executed"
           in-place in your Org document; but really that's done by the
           ⋯-support-blocks function.
           "
-            (if ospe-link?
+            (if o-link?
                 x
-            ;; ospe-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
-            (cond ((and ,ospe-respect-newlines? (member backend '(html reveal)))
+            ;; o-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
+            (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
                    (format "@@%s:%s@@" backend (s-replace "\n" (format "@@\n@@%s:" backend) x) backend))
                   (:else
                    (format "#+begin_export %s \n%s\n#+end_export"
@@ -581,9 +569,9 @@ BODY, list: Code to be executed"
                ((symbol-function 'org-parse)
                 (lambda (x)
                   "This should ONLY be called within an ORG-EXPORT call."
-                  (if ospe-link?
+                  (if o-link?
                       x
-                    (cond ((and ,ospe-respect-newlines? (member backend '(html reveal)))
+                    (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
                            (format "@@%s@@%s:" x backend))
                           (:else
                            (format "\n#+end_export\n%s\n#+begin_export %s\n" x
@@ -598,36 +586,6 @@ BODY, list: Code to be executed"
 
        (org-export
         (let ((contents (org-parse raw-contents))) ,@body)))))
-
-(cl-defmethod o-defblock---support-link-type
-    (name verbatim tooltip)
-  "Helper method for o-defblock.
-
-This method creates an Org link type.
-
-NAME, string: The name of the link type.
-VERBATIM, list: Code dumped into the org-link-set-parameters.
-TOOLTIP, string: Tooltip text alongside link, for use in Emacs."
-  `(org-link-set-parameters
-    ,(format "%s" name)
-    ,@verbatim
-    :export (lambda (label description backend)
-              ; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-              (s-replace-all `(("@@" . "")) ; (,(format "@@%s:" backend) . "")
-               (,(intern (format "o--%s" name))
-                backend (or description label) label :ospe-link? t)))
-    ;; The tooltip alongside a link
-    :help-echo (lambda (window object position)
-                 (save-excursion
-                   (goto-char position)
-                   (-let* (((&plist :path :format :raw-link :contents-begin :contents-end)
-                            (cadr (org-element-context)))
-                           (description
-                            (when (equal format 'bracket)
-                              (copy-region-as-kill contents-begin contents-end)
-                              (substring-no-properties (car kill-ring)))))
-                     (format "%s\n\n%s"
-                             raw-link ,tooltip))))))
 
 (defun o--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
@@ -1740,6 +1698,7 @@ That is what we accomplish with this new `show' link type."
 
 (o-defblock margin
   (marker nil
+          :display 'full
           :face '(:foreground "grey" :weight bold
           :underline "orange" :overline "orange"))
   (color "gray!80"
