@@ -262,6 +262,13 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 (require 'lf)
 
+(defconst org-special-block-extras-version (package-get-version))
+(defun org-special-block-extras-version ()
+  "Print the current version of the package in the minibuffer."
+  (interactive)
+  (message org-special-block-extras-version))
+(defalias #'o-version #'org-special-block-extras-version)
+
 <<forward-decls>>
 #+END_SRC
 
