@@ -3861,33 +3861,79 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{tcolorbox}}
 
  #+begin_details Implementation
  #+begin_src emacs-lisp
-(o-defblock box (title "") (background-color nil)
+(o-defblock box (title "") (background-color nil shadow nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
 and it has no TITLE.
 
-The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox pacakge.
+SHADOW is an alternate style of boxing: It shows the contents in a centred
+box with a shadow colour being the given non-nil value of SHADOW.
+If SHADOW is a hexidecimal colour, it should be a string enclosed in double quotes.
+More accurately, the following are all valid uses:
 
-In the future, I will likely expose more arguments.
-"
-  (apply #'concat
+    ,#+begin_box title :shadow t
+    ,#+begin_box title :shadow inset
+
+    ,#+begin_box title :shadow \"pink\"
+    ,#+begin_box title :shadow pink
+
+    ,#+begin_box title :shadow (cyan pink orange yellow)
+    ,#+begin_box title :shadow (cyan \"inset pink\" orange)
+    ,#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
+
+Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
+
+The HTML export uses a padded div, whereas the LaTeX export
+requires the tcolorbox package.
+
+In the future, I will likely expose more arguments."
+
   (pcase backend
-   (`latex `("\\begin{tcolorbox}[title={" ,title "}"
-             ",colback=" ,(pp-to-string (or background-color 'red!5!white))
-             ",colframe=red!75!black, colbacktitle=yellow!50!red"
-             ",coltitle=red!25!black, fonttitle=\\bfseries,"
-             "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
-             ,contents
-             "\\end{tcolorbox}"))
-    (_ `("<div style=\"padding: 1em; background-color: "
-             ,(o-subtle-colors (format "%s" (or background-color "green")))
-             ";border-radius: 15px; font-size: 0.9em"
-             "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
-             "<h3>" ,title "</h3>"
-            ,contents "</div>")))))
- #+end_src
+    (`latex
+     (apply #'concat
+            `("\\begin{tcolorbox}[title={" ,title "}"
+              ",colback=" ,(pp-to-string (or background-color 'red!5!white))
+              ",colframe=red!75!black, colbacktitle=yellow!50!red"
+              ",coltitle=red!25!black, fonttitle=\\bfseries,"
+              "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
+              ,contents
+              "\\end{tcolorbox}")))
+    ;; CSS syntax: “box-shadow: specification, specification, ...”
+    ;; where a specification is of the shape “[inset] x_offset y_offset [blur [spread]] color”.
+    (_ (-let [haze (lambda (left right deep-right deep-left)
+                     `[:box-shadow ,(thread-last (list (cons right      "8px 6px 13px 8px %s")
+                                                       (cons left       "-16px 12px 20px 16px %s")
+                                                       (cons deep-right "48px 36px 71px 28px %s")
+                                                       (cons deep-left  "-48px -20px 71px 28px %s"))
+                                      (--filter (car it))
+                                      (--map (format (cdr it) (car it)))
+                                      (s-join ","))
+                                   :width 50% :margin auto])]
+         (o-ml div [:style
+                    [:padding 1em
+                     :eval (vector :background-color (o-subtle-colors (format "%s" (or background-color "green"))))
+                     :border-radius 15px
+                     :font-size 0.9em
+                     :eval (when shadow
+                             (cond
+                              ((equal shadow t)
+                               (funcall haze "hsl(60, 100%, 50%)" "hsl(1, 100%, 50%)" "hsl(180, 100%, 50%)" nil))
+                              ((equal shadow 'inset)
+                               (funcall haze "inset hsl(60, 100%, 50%)" "inset hsl(1, 100%, 50%)" "inset hsl(180, 100%, 50%)" nil))
+                              ((or (stringp shadow) (symbolp shadow))
+                               `[:box-shadow (10px 10px 20px 0px ,(pp-to-string shadow)) :width 50% :margin auto])
+                              ((json-plist-p shadow)
+                               (-let [(&plist :left X :right Y :deep-right Z :deep-left W) shadow]
+                                 (funcall haze X Y Z W)))
+                              (t (-let [(X Y Z W) shadow]
+                                   (funcall haze X Y Z W)))))
+                   ]]
+               (o-ml h3 title)
+               contents)))))
+#+end_src
+
 
  #+RESULTS:
  | :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (o--box backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
@@ -3916,13 +3962,37 @@ Let's have some sanity tests...
  right-most point and walk 180ᵒ, then you will be at its left-most point. That
  is, \[ e^{i · \pi} \;=\; - 1 \]
 
+ #+end_box
+
+ #+html: <br>
+ Or, with just the header option ~:shadow t~ …
+ #+begin_box Example: A super boring observation presented obscurely :shadow t
+
+ If you start walking ---say, counterclockwise--- along the unit circle from its
+ right-most point and walk 180ᵒ, then you will be at its left-most point. That
+ is, \[ e^{i · \pi} \;=\; - 1 \]
 
  #+end_box
 
- /How did we get that nice light blue? What is its HTML code?/
- That's not something I care to remember, so let's make a handy
- dandy utility … Now when users request a colour to ~box~ their text,
- it will be a ‘subtle colour’ ;-)
+ #+html: <br>
+Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
+:deep-right orange)~ …
+ #+begin_box Example: A super boring observation presented obscurely :background-color blue :shadow (:left "inset cyan" :right "inset pink" :deep-right orange)
+
+ If you start walking ---say, counterclockwise--- along the unit circle from its
+ right-most point and walk 180ᵒ, then you will be at its left-most point. That
+ is, \[ e^{i · \pi} \;=\; - 1 \]
+
+ #+end_box
+
+ For further header options, see the documentation of [[doc:o--box][box]].
+
+
+ #+html: <br>
+ In the first example above, /how did we get that nice light blue? What is its
+ HTML code?/ That's not something I care to remember, so let's make a handy dandy
+ utility … Now when users request a colour to ~box~ their text, it will be a
+ ‘subtle colour’ ;-)
 
  #+begin_details Implementation for Subtle Colours
  #+begin_src emacs-lisp -r -n
