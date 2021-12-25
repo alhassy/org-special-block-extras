@@ -1281,6 +1281,11 @@ definition is obtained from the command line tool ‘wn’.
 
 For HTML tooltips, see `o-html-export-preserving-whitespace'.
 
+Manipulating strings for making HTML can be tricky, especially with the need to escape characters.
+A more Lispy approach would be to use `o-ml'; a macro that produces HTML using Lisp symbols, vectors, and keywords.
+For instance, the final `format' above would become:
+      (o-ml abbr [:class tooltip :eval (vector :title it)] o-label)
+
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
 documentation of functions & variables, and definitions of
