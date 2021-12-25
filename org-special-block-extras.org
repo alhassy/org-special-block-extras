@@ -184,8 +184,8 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 3.0
-;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "26.1") (org "9.1") (lf "1.0"))
+;; Version: 4.0
+;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
