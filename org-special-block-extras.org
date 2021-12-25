@@ -4549,7 +4549,7 @@ Examples:
   (if (equal o-backend 'latex)
       (format "\\texttt{%s}" the-label)
     (if tooltip?
-        ;; The style=⋯ is to remove the underlying caused by <abbr>.
+        ;; The style=⋯ is to remove the underlining caused by <abbr>.
         (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
                 the-label (or lisp-func "") (o-html-export-preserving-whitespace tooltip)
                 keystrokes)
