@@ -1473,6 +1473,29 @@ The link text appears as red bold in both Emacs and in HTML export."
 
  #+end_details
 
+
+*pink:Exercise* Here's a useful link we might want: ~melpa:𝒳~ produces a nice badge
+for the package 𝒳 that links to the associated Melpa page and shows the version
+number of the package, if possible/convenient. For instance,
+~melpa:org-special-block-extras~ and ~<melpa:s>~ become
+melpa:org-special-block-extras and <melpa:s>.
+
+#+begin_details "One possible arcane implementation"
+
+#+begin_src emacs-lisp
+(o-deflink melpa
+ "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
+We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
+ [:face '(:box "purple")]
+ (o-ml a [:eval `[:href ,(concat "https://melpa.org/#/" o-label)]]
+       (o-ml img [:eval `[:alt "MELPA"
+                          :src ,(format "https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs"
+                                        (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
+                                        (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa"))]])))
+#+end_src
+
+#+end_details
+
 **** COMMENT Example links...               :TestingPurposes:Already_in_docs:
      :PROPERTIES:
      :CUSTOM_ID: COMMENT-Example-links
