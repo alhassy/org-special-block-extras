@@ -1772,6 +1772,9 @@ Finally, this macro exposes two functions:
 + ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
              to escape text to Org, and out of the export block.
 
+⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
+⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
+
 ----------------------------------------------------------------------
 
 TLDR for EXPERIMENTAL and DOCSTRING and BODY, the first two parts are
@@ -4070,51 +4073,109 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{multicol}}
 
 #+begin_details Implementation
   #+begin_src emacs-lisp -r -n
-(o-defblock parallel (cols 2) (bar nil)
+(o-defblock parallel (cols "2") (bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
-There are COLS many columns, and they may be seperated by black
-solid vertical rules if BAR is a non-nil value.
+There are COLS many columns, and they may be seperated by solid
+vertical rules if BAR is a non-nil (colour) value.
 
-Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”
-will produce a parallel of 𝓃 many columns, possibly
-seperated by solid rules, or a “bar”.
++ COLS is either a number or a sequence of the shape: 10% 20% 30%.
++ BAR is either `t', `nil', or a colour such as `red' or `blue'.
 
-The contents of the block may contain ‘#+columnbreak:’ to request
-a columnbreak. This has no effect on HTML export since HTML
-describes how text should be formatted on a browser, which can
-dynamically shrink and grow and thus it makes no sense to have
-hard columnbreaks. We do replace such declarations by ‘<p><br>’,
-which sometimes accomplishes the desired goal.
-"
+----------------------------------------------------------------------
+
+“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
+𝒏-many parallel columns, possibly separated by solid rules, or a
+“bar”. This style allows text to freely move between columns,
+depending on the size of the browser, which may dynamically
+shrink and grow.  BAR can either be `t', `nil', or
+any (backend)-valid colour specification; such as `red' or
+`green'.
+
+“Hard Columns”: Alternatively, for non-uniform column widths,
+COLS may instead be a specification of the widths of the
+columns. However, this extra flexibility comes at an additional
+cost: The contents of the block must now contain 𝒏-1 lines
+consisting of ‘#+columnbreak:’, when the specification determines
+𝒏 columns, as shown in the following example.
+
+   ,#+begin_parallel 20% 60% 20% :bar green
+   Hello, to the left!
+
+   ,#+columnbreak:
+   A super duper wide middle margin!
+
+   ,#+columnbreak:
+   Goodbye (“God-be-with-ye”) to the right!
+   ,#+end_parallel
+
+The specification is 𝒏 measurements denoting widths; which may be
+in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
+I personally advise only the use of percentage measurements.
+
+In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
   (let ((rule (pcase backend
                (`latex (if bar 2 0))
-               (_  (if bar "solid" "none"))))
-        (contents′  (s-replace "#+columnbreak:"
-                               (if (equal 'latex backend) "\\columnbreak" "@@html:<p><br>@@")
-                               contents)))
-  (format (pcase backend
-   (`latex "\\par \\setlength{\\columnseprule}{%s pt}
+               (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
+        (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
+    (pcase backend
+      (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
           \\begin{minipage}[t]{\\linewidth}
           \\begin{multicols}{%s}
           %s
-          \\end{multicols}\\end{minipage}")
-   (_ "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"))
-   rule cols contents′)))
+          \\end{multicols}\\end{minipage}"    rule cols contents′))
+      (_ (if (not (s-contains-p "%" cols))
+             (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
+                     rule cols contents)
+           ;; Otherwise: cols ≈ "10% 40% 50%", for example.
+           (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
+                 (columnBreak (lambda (width omit-rule?)
+                                (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
+                                        (if omit-rule? "none" rule)))) )
+             (format "<div>%s%s</div>"
+                     (funcall columnBreak (pop spec) nil)
+                     (s-replace-regexp (regexp-quote "#+columnbreak:")
+                                       ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
+                                       ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
+                                       (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
+                                       contents))))))))
 #+end_src
-
-# [[color:orange][Going forward,]]
-Going forward, it would be desirable to have the columns take a specified percentage of
-the available width ---whereas currently it splits it uniformly.  Such a feature
-would be useful in cases where one column is wide and the others are not.
-
-# 2pt ↦ 0.5pt ?? Maybe use a #+bind? or make column seperator a top-level configurable item?
 
 Let's have some sanity tests...
 #+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "Parallel blocks work as expected"
+(deftest "Parallel blocks work as expected - Defaults"
   [parallel block]
-  (⇝ (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+  (⇝ (⟰ "#+begin_parallel
+         Hello, to the left!
+
+         ,#+columnbreak:
+         A super duper wide middle margin!
+
+
+         ,#+columnbreak:
+         Goodbye (“God-be-with-ye”) to the right!
+
+         ,#+columnbreak:
+         woah
+         ,#+end_parallel")
+
+     ;; The result is 2 columns with no rule between them and it contains the
+     ;; user's text, but ignores the “#+columnbreak”.
+     "<div style=\"column-rule-style: none nil;column-count: 2;\">"
+     (* anything)
+     "Hello, to the left!"
+     (* anything)
+     "A super duper wide middle margin!"
+     (* anything)
+     "Goodbye (“God-be-with-ye”) to the right!"
+     (* anything)
+     "woah"))
+
+
+(deftest "Parallel blocks work as expected - Soft Columns"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 2 :bar t
                   X
 
                   ,#+columnbreak:
@@ -4124,19 +4185,46 @@ Let's have some sanity tests...
                   Z
                   ,#+end_parallel")
 
-    ;; The result is 2 columns with a solid rule between them
-  ;; and it contains the user's text along with the “#+columnbreak”.
-
-     "<div style=\"column-rule-style: solid;column-count: 2;\">"
+     ;; The result is 2 columns with a solid BLACK rule between them and it
+     ;; contains the user's text, but ignores the “#+columnbreak”.
+     "<div style=\"column-rule-style: solid black;column-count: 2;\">"
      (* anything)
      "X"
-     (* anything)
-     "<p><br>" ;; “#+columnbreak” above
      (* anything)
      "Y"
      (* anything)
      "Z"
      (* anything)))
+
+
+(deftest "Parallel blocks work as expected - Hard Columns"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 20% 60% 20% :bar green
+                  X
+
+                  ,#+columnbreak:
+
+                  Y
+
+                  ,#+columnbreak:
+
+                  Z
+                  ,#+end_parallel")
+
+     ;; The result is 3 columns with a solid GREEN rule between them and it
+     ;; contains the user's text along with the “#+columnbreak” evaluated at the
+     ;; expected positions.
+     "<div><div style=\"width: 20%; margin: 10px; border-right:4px solid green; float:  left;\">"
+     (* anything)
+     "X"
+     (* anything)
+     "</div><div style=\"width: 60%; margin: 10px; border-right:4px solid green; float:  left;\">"
+     (* anything)
+     "Y"
+     (* anything)
+     "</div><div style=\"width: 20%; margin: 10px; border-right:4px none; float:  left;\">"
+     (* anything)
+     "Z"))
 #+end_src
 #+end_details
 
@@ -4144,7 +4232,7 @@ Let's have some sanity tests...
 #+begin_box Example
 _This_
 #+begin_src org :tangle no
-,#+begin_parallel 2 :bar yes-or-any-other-text
+,#+begin_parallel 2 :bar t
 X
 
 ,#+columnbreak:
