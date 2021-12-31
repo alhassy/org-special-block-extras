@@ -1230,8 +1230,96 @@ The link text appears as red bold in both Emacs and in HTML export."
 
  :End:
 
- #+begin_details Implementation of o-deflink
+ #+begin_details A parent keymap inherited by o-deflink keymaps
  #+begin_src emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We define a parent keymap that o-deflink keymaps inherit from.
+;; We also define a few useful functions that we then bind to this parent map.
+
+(defvar org-special-block-extras-mode-map (make-keymap)
+  "A keymap of actions, on link types, that is inherited by all `o-deflink' link keymaps.
+
+To learn about keymap inheritance, run:  C-h i m elisp RETURN m Inheritance and Keymaps RETURN.
+
+This keymap has the following bindings setup:
+
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'o-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'o-this-link-previous)
+    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'o-this-link-show-docs)
+
+The use of `C-n' and `C-p' may be a nuisance to some users, since they override `forward-line'
+and `previous-line' when the cursor is on an org-link type. As such, place something like the following
+in your initialisation file.
+
+    ;; Use  C-c C-f  to move to the next link of the same link-type as the one under the cursor
+    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'o-this-link-next)
+
+Alternatively, if you don't find much value in these basic bindings, you can remove them all:
+
+    ;; Disable basic org-special-block-extras link keybindings
+    (setcdr org-special-block-extras-mode-map nil)
+
+    ;; Or, remove a single binding
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") nil)")
+
+(defvar org-special-block-extras-mode-map--link-keymap-docs nil
+  "An alist referencing key bindings for Org links; used in `o-this-link-show-docs'.")
+
+(defun o-link-at-point ()
+  "Get the Org link type at point, with suffix colon."
+  (interactive)
+  (let ((working-line (line-number-at-pos)))
+    (save-excursion
+      ;; Account for cursour being on anywhere on the links “name:key”.
+      (backward-word 2)
+      (unless (= working-line (line-number-at-pos))
+        (goto-line working-line))
+      (let* ((here-to-eol (buffer-substring-no-properties (point) (point-at-eol)))
+             ;; E.g., “kbd:”, the name part of an Org link
+             (link-name (cl-second (s-match "\\([^ ]+:\\).+" here-to-eol))))
+        link-name))))
+
+(defun o-this-link-next ()
+  "Go to the next Org link that is similar to the link at point."
+  (interactive)
+  (re-search-forward (o-link-at-point) nil t))
+(defun o-this-link-previous ()
+  "Go to the previous Org link that is similar to the link at point."
+  (interactive)
+  (re-search-backward (o-link-at-point) nil t))
+(defun o-this-link-show-docs ()
+  "Show documentation for the Org link at point in a read-only buffer.
+
+                     Press ‘q’ to kill the resulting buffer and window."
+  (interactive)
+  (let* ((link (s-chop-suffix ":" (o-link-at-point)))
+         (msg (ignore-errors
+                (concat
+                 (documentation (intern (format "o-link/%s" link)))
+                 "\nKEY BINDINGS:\n"
+                 "\nUnless indicated below otherwise..."
+                 "\n\tC-h: Shows this helpful message buffer"
+                 "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
+                 "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
+                 (pp-to-string
+                  (cdr (assoc link org-special-block-extras-mode-map--link-keymap-docs))))))
+         ;; i.e., insist on displaying in a dedicated buffer
+         (max-mini-window-height 0))
+    (display-message-or-buffer msg)
+    (switch-to-buffer-other-window "*Message*")
+    (rename-buffer (format "Help: Org Link “%s”" link))
+    (read-only-mode)
+    (local-set-key "q" #'kill-buffer-and-window)
+    (message "Read-only; “q” to kill buffer and window.")))
+
+(define-key org-special-block-extras-mode-map (kbd "C-n") #'o-this-link-next)
+(define-key org-special-block-extras-mode-map (kbd "C-p") #'o-this-link-previous)
+(define-key org-special-block-extras-mode-map (kbd "C-h") #'o-this-link-show-docs)
+#+end_src
+#+end_details
+
+ #+begin_details Implementation of o-deflink
+#+begin_src emacs-lisp
 (cl-defmacro o-deflink
     (name &optional docstring display &rest body)
   "Make a new Org-link NAME that exports using form BODY.
@@ -1249,6 +1337,8 @@ backend, such as 'html or 'latex. The first two are obtained from uses:
    [[name:o-label][o-description]]
 
 In particular, the use case “name:o-label” means that o-description is nil.
+
+---------------------------------------------------------------------------
 
 Example use:
 
@@ -1384,25 +1474,22 @@ is displayed in Emacs Org buffers. The keys are as follows.
         ;; Any special keybindings when cursour is on this link type?
         ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
         :keymap (let ((o-keymap (copy-keymap org-mouse-map))
-                      (pattern (format "%s:" (quote ,name)))
-                      (msg  (concat
-                             (documentation (quote ,o-link/NAME))
-                             "\nKEY BINDINGS:\n"
-                             "\nUnless indicated below otherwise..."
-                             "\n\tC-h: Shows this helpful message buffer"
-                             "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
-                             "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
-                             (pp-to-string (quote ,(cl-getf display :keymap))))))
+                      (pattern (format "%s:" (quote ,name))))
+
+                  ;; If this Org-link has additional key bindings, then save
+                  ;; them in an alist for reference in `o-this-link-show-docs'.
+                  (when (quote ,(cl-getf display :keymap))
+                    (push (cons (format "%s" (quote ,name)) (quote ,(cl-getf display :keymap)))
+                          org-special-block-extras-mode-map--link-keymap-docs))
+
+                  ;; Let's inherit some possibly useful key bindings.
+                  (set-keymap-parent o-keymap org-special-block-extras-mode-map)
+
                   ;; Populate the keymap
-                  (cl-loop for (key action)
-                        on (-cons* 'C-p `(re-search-backward ,pattern nil t)
-                                   'C-n `(re-search-forward ,pattern nil t)
-                                   'C-h `(-let [max-mini-window-height 0] ;; i.e., insist on displaying in a dedicated buffer
-                                           (display-message-or-buffer ,msg))
-                                   (quote ,(cl-getf display :keymap)))
-                        by #'cddr
-                        do (define-key o-keymap (kbd (format "%s" key))
-                             `(lambda () (interactive) ,action)))
+                  (cl-loop for (key action) on (quote ,(cl-getf display :keymap))
+                           by #'cddr
+                           do (define-key o-keymap (kbd (format "%s" key))
+                                `(lambda () (interactive) ,action)))
                   ;; Return the keymap
                   o-keymap)
         ;; The tooltip alongside a link
@@ -8299,6 +8386,11 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
      '("~/org-special-block-extras/documentation.org"))
     ;; Details heading “flash pink” whenever the user hovers over them?
     (org-html-head-extra (concat org-html-head-extra "<style>  summary:hover {background:pink;} </style>"))
+    ;; For the “doc:𝒳” link type
+    ;;;; Nearly instantaneous display of tooltips.
+    (setq tooltip-delay 0)
+    ;;;;; Give user 30 seconds before tooltip automatically disappears.
+    (setq tooltip-hide-delay 300)
     ;; The message prefixing a ‘tweet:url’ badge
     (o-link-twitter-excitement
      "This looks super neat (•̀ᴗ•́)و:"))
