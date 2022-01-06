@@ -8,7 +8,26 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 #+PROPERTY: header-args :eval never-export
 
-# emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
+# C-c C-c  ⇒ Run all tests
+#+begin_src emacs-lisp :exports none :tangle no
+;; Press ‘q’ to kill the resulting buffer and window.
+;;
+;; i.e., insist on displaying in a dedicated buffer
+(let ((max-mini-window-height 0))
+  (ignore-errors (kill-buffer "ERT: tests.el"))
+  (message "Running tests...")
+  (display-message-or-buffer (shell-command-to-string "emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit"))
+  (switch-to-buffer-other-window "*Message*")
+  (rename-buffer (format "ERT: tests.el"))
+  (highlight-regexp "failed" 'hi-red-b)
+  (highlight-regexp "failures" 'hi-red-b)
+  (highlight-regexp "passed" 'hi-green-b)
+  (highlight-regexp "deprecated" 'hi-blue-b)
+  (re-search-forward "failed")
+  (read-only-mode)
+  (local-set-key "q" #'kill-buffer-and-window)
+  (message "Read-only; “q” to kill buffer and window."))
+#+end_src
 
 # +TOC: headlines 2
 
