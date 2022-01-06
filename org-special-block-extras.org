@@ -10,77 +10,10 @@
 
 # emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
 
-# [[https://emacs.stackexchange.com/questions/32727/copy-to-clipboard-without-overwriting-kill-ring][functions - copy to clipboard without overwriting kill ring - Emacs Stack Exchange]]
-
-:30_blocks:
-21 ⇒ 19 colours and the ‘colors’ block; & latex-definitions
-3  ⇒ parallel, box, detail block
-1  ⇒ editorial comments
-4  ⇒ Solution, org-demo, spoiler, rename (textual substitution)
-1  ⇒ documentation
-:End:
-:34_links:
-20 ⇒ 19 colours and the ‘colors’ type
-1  ⇒ editorial comments
-1  ⇒ link here
-8  ⇒ badges and socials
-2  ⇒ doc and show
-1 ⇒ kbd
-1 ⇒ octoicon
-:End:
-
-# TODO make this function take a varidaic number of arguments, instead of a
-# solid list. Also, when called interactively allow users to input the name of a file.
-# (o-docs-load-libraries '("~/org-special-block-extras/documentation.org"))
-
-# (progn (load-file "org-special-block-extras.el") (org-special-block-extras-mode) (setq o--docs-libraries  '("~/org-special-block-extras/documentation.org")) (ignore-errors (o-docs-load-libraries)))
-
-# MA: It seems one of these tests is effectful?
-# Restart Emacs and run the tests: The first time there will be a failure, but
-# the second time all tests pass.
-#
-# Do all tests continue to pass?
-# (progn (load-file "tests.el") (ert t))
-#
-# emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit
-#
-#
-# “What to test?”
-# At least the stuff that I actually demo; e.g., the minimum working examples (MWE).
-# We can capture the ‘essence’ of a textual transformation by using s-matches?
-# with rx; e.g., see the red/colours tests.
-#
-# “⟰” is read “export”; it transform INPUT according to BACKEND for Org preprocessing;
-# INPUT is a multi-line string; we enclose it in ‘indent’.
-# It captures the idiom “with-temp-buffer, insert, org-special-block-extras export, buffer-string”.
-
-
-:No_tests_yet:
-1. the exercises after defblock
-2. defblock and its helpers; e.g., using defblock causes certain Lisp functions
-   to be defined. ---Test should first make unbound such functions, ignoring
-   errors.
-   + There may be some tests under the Issue♯8 heading below.
-:End:
-
 # +TOC: headlines 2
 
-# MA: Final version should not have the following incantation active.
+# TODO: Final version should not have the following incantation active.
 #+OPTIONS: broken-links:auto
-
-# MA: NEW, if a block type need something to be parsed as org-markup,
-# it should be wrapped in   (org-parse ...)!
-# ...
-# maybe rename org-parse to org-markup!
-# (E.g., math to mathjax: surround it in org-markup!)
-
-# TODO MA: colour picker!
-#  (1) get that nice colour picker working
-#  (2) use /that/ code, from (1), to get red:X blue:Y etc working.
-
-# (defun my/ensure-headline-ids (&rest _) )
-# (advice-remove 'org-html-export-to-html   'my/ensure-headline-ids)
-# (advice-remove 'org-md-export-to-markdown 'my/ensure-headline-ids)
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
