@@ -8,7 +8,7 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 #+PROPERTY: header-args :eval never-export
 
-# C-c C-c  ⇒ Run all tests
+# TODO C-c C-c  ⇒ Run all tests
 #+begin_src emacs-lisp :exports none :tangle no
 ;; Press ‘q’ to kill the resulting buffer and window.
 ;;
@@ -137,7 +137,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.0
-;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0"))
+;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -1365,6 +1365,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
 + :face specifies how should these links be displayed within Emacs.
    It is a list-valued expression.
    As usual, it may make use of O-LABEL (but O-DESCRIPTION has value nil).
+   Example:
+               :face '(:underline \"green\")
 
 + [:display full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
@@ -8345,7 +8347,12 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
     (setq tooltip-hide-delay 300)
     ;; The message prefixing a ‘tweet:url’ badge
     (o-link-twitter-excitement
-     "This looks super neat (•̀ᴗ•́)و:"))
+     "This looks super neat (•̀ᴗ•́)و:")
+    :config
+    ;; For use with the “fortune” links, if you want to use them.
+    (system-packages-ensure "cowsay")  ;; ≈ brew install cowsay
+    (system-packages-ensure "fortune") ;; ≈ brew install fortune
+    (system-packages-ensure "aha"))    ;; ≈ brew install aha
 #+END_SRC
 
 Then, provide support for a new type of special block, say re-using the ~src~
