@@ -105,13 +105,13 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:o-deflink][Define links as you define functions: doc:o-deflink:3]]
-(o-deflink shout
+;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:org-deflink][Define links as you define functions: doc:org-deflink:4]]
+(org-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
 
 The link text appears as red bold in both Emacs and in HTML export."
   [:face '(:foreground "red" :weight bold)
-   ;; :help-echo (o-link/shout o-label o-description 'html)
+   ;; :help-echo (org-link/shout o-label o-description 'html)
    :display full
    :keymap (C-m (message-box "hola"))
    :follow (message-box "%s and %s" pre current-prefix-arg)
@@ -119,31 +119,70 @@ The link text appears as red bold in both Emacs and in HTML export."
   (format "<span style=\"color:red\"> %s </span>"
           (upcase (or o-description o-label))))
 
-(deftest "o-deflink makes documented functions"
-  [o-deflink]
-  (⇝ (documentation #'o-link/shout)
+(deftest "org-deflink makes documented functions"
+  [org-deflink]
+  (⇝ (documentation #'org-link/shout)
      "Capitalise the link description, if any, otherwise capitalise the label.
 
      The link text appears as red bold in both Emacs and in HTML export."))
 
-(deftest "o-deflink works as expected, plain links"
-  [o-deflink]
-  (should (not (null (symbol-function 'o-link/shout))))
+(deftest "org-deflink works as expected, plain links"
+  [org-deflink]
+  (should (not (null (symbol-function 'org-link/shout))))
   (⇝ (⟰ "shout:hello")
      "<p> <span style=\"color:red\"> HELLO </span></p>"))
 
-(deftest "o-deflink works as expected, bracket links"
-  [o-deflink]
+(deftest "org-deflink works as expected, bracket links"
+  [org-deflink]
   (⇝ (⟰ "[[shout:hello]]")
      "<p> <span style=\"color:red\"> HELLO </span></p>")
   (⇝ (⟰ "[[shout:hello][world!]]")
      "<p> <span style=\"color:red\"> WORLD! </span></p>"))
 
-(deftest "o-deflink works as expected, angle links"
-  [o-deflink]
+(deftest "org-deflink works as expected, angle links"
+  [org-deflink]
   (⇝ (⟰ "<shout: hello world!>")
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
-;; Define links as you define functions: doc:o-deflink:3 ends here
+;; Define links as you define functions: doc:org-deflink:4 ends here
+
+(setq it/org->html
+    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
+          (place "World")) ;; For use in the content (3ʳ) argument
+          (org->html div [:title "A form of greeting"
+                     :style [:padding 1em
+                             :eval (when centred? [:margin auto :width 50%])
+                             :background-color "#00000057"
+                             :box-shadow (0.05em 0.1em 5px 0.01em green)
+                           ]
+                     ]
+                ;; Notice no explicit empty attributes vector provided.
+                (org->html em (format "Hello, %s!" place))
+                (org->html b [:random yup] "noice"))))
+
+(deftest "It produces a <div> containing both the <em> then the <b>"
+  [org->html]
+  (⇝ it/org->html
+     "<div"
+     (* anything)
+     "<em "
+     (* anything)
+     "<b "))
+
+(deftest "It contains the declared top-level (and nested) attributes"
+  [org->html]
+  (⇝ it/org->html
+     "title="
+     (* anything)
+     "style="
+     (* anything)
+     "random="))
+
+(deftest "It contains the content of the inner child elements"
+  [org->html]
+  (⇝ it/org->html
+  "Hello, World!"
+  (* anything)
+  "noice"))
 
 ;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
 (deftest "The user's remark is enclosed in the default delimiters"
@@ -179,7 +218,7 @@ The link text appears as red bold in both Emacs and in HTML export."
   (⇝ (⟰ "#+begin_box Pay Attention!
                  This is the key insight...
                  #+end_box")
-     "<div style=\"padding: 1em; background-color: #CCFFCC;border-radius: 15px;"
+     "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;"
      (* anything)
      "<h3>Pay Attention!</h3>"
      (* anything)
@@ -187,9 +226,38 @@ The link text appears as red bold in both Emacs and in HTML export."
      (* anything)))
 
 ;; [[file:org-special-block-extras.org::*Parallel][Parallel:2]]
-(deftest "Parallel blocks work as expected"
+(deftest "Parallel blocks work as expected - Defaults"
   [parallel block]
-  (⇝ (⟰ "#+begin_parallel 2 :bar yes-or-any-other-text
+  (⇝ (⟰ "#+begin_parallel
+         Hello, to the left!
+
+         #+columnbreak:
+         A super duper wide middle margin!
+
+
+         #+columnbreak:
+         Goodbye (“God-be-with-ye”) to the right!
+
+         #+columnbreak:
+         woah
+         #+end_parallel")
+
+     ;; The result is 2 columns with no rule between them and it contains the
+     ;; user's text, but ignores the “#+columnbreak”.
+     "<div style=\"column-rule-style: none nil;column-count: 2;\">"
+     (* anything)
+     "Hello, to the left!"
+     (* anything)
+     "A super duper wide middle margin!"
+     (* anything)
+     "Goodbye (“God-be-with-ye”) to the right!"
+     (* anything)
+     "woah"))
+
+
+(deftest "Parallel blocks work as expected - Soft Columns"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 2 :bar t
                   X
 
                   #+columnbreak:
@@ -199,19 +267,46 @@ The link text appears as red bold in both Emacs and in HTML export."
                   Z
                   #+end_parallel")
 
-    ;; The result is 2 columns with a solid rule between them
-  ;; and it contains the user's text along with the “#+columnbreak”.
-
-     "<div style=\"column-rule-style: solid;column-count: 2;\">"
+     ;; The result is 2 columns with a solid BLACK rule between them and it
+     ;; contains the user's text, but ignores the “#+columnbreak”.
+     "<div style=\"column-rule-style: solid black;column-count: 2;\">"
      (* anything)
      "X"
-     (* anything)
-     "<p><br>" ;; “#+columnbreak” above
      (* anything)
      "Y"
      (* anything)
      "Z"
      (* anything)))
+
+
+(deftest "Parallel blocks work as expected - Hard Columns"
+  [parallel block]
+  (⇝ (⟰ "#+begin_parallel 20% 60% 20% :bar green
+                  X
+
+                  #+columnbreak:
+
+                  Y
+
+                  #+columnbreak:
+
+                  Z
+                  #+end_parallel")
+
+     ;; The result is 3 columns with a solid GREEN rule between them and it
+     ;; contains the user's text along with the “#+columnbreak” evaluated at the
+     ;; expected positions.
+     "<div><div style=\"width: 20%; margin: 10px; border-right:4px solid green; float:  left;\">"
+     (* anything)
+     "X"
+     (* anything)
+     "</div><div style=\"width: 60%; margin: 10px; border-right:4px solid green; float:  left;\">"
+     (* anything)
+     "Y"
+     (* anything)
+     "</div><div style=\"width: 20%; margin: 10px; border-right:4px none; float:  left;\">"
+     (* anything)
+     "Z"))
 ;; Parallel:2 ends here
 
 ;; [[file:org-special-block-extras.org::*Colours][Colours:4]]
@@ -369,7 +464,7 @@ The link text appears as red bold in both Emacs and in HTML export."
 
 (deftest "Documentation blocks are not exported; they produce a new osbe--docs entry"
   [doc documentation o--name&doc]
-    (should (o-docs-get "ex-angst")))
+    (should (org-docs-get "ex-angst")))
 
 ;; Upon export, the #+begin_documentation is /not/ present.
 ;; We have the text outside that block only.
@@ -377,8 +472,8 @@ The link text appears as red bold in both Emacs and in HTML export."
 (deftest "The osbe--docs entry of the documentation block appears within a tooltip"
     [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
-             (literal (o-html-export-preserving-whitespace
-                       (cl-second (o-docs-get "ex-angst"))))
+             (literal (org-ospe-html-export-preserving-whitespace
+                       (cl-second (org-docs-get "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
 ;; Intro, motivating examples:4 ends here
 
@@ -447,168 +542,3 @@ The link text appears as red bold in both Emacs and in HTML export."
           "hint 2"
           "Explanation of why $y \\;\\leq\\; z$")))
 ;; Equational Proofs:4 ends here
-
-;; [[file:org-special-block-extras.org::*Minimal working example][Minimal working example:1]]
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Run all MWE tests
-;; (ert "mwe")
-
-(setq mwe (⟰
- "
-#+begin_parallel
-[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
-
-Pop-quiz: How does doc:apply work?
-#+end_parallel
-
-#+begin_details Answer
-link-here:solution
-Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
-
-[[remark:Musa][Ain't that cool?]]
-
-#+begin_spoiler aqua
-That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
-#+end_spoiler
-
-#+end_details
-
-#+html: <br>
-#+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
-#+end_box
-
-/Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
-beyond what it can bear./ --- Quran 2:286
-
-#+LATEX_HEADER: \\usepackage{multicol}
-#+LATEX_HEADER: \\usepackage{tcolorbox}
-#+latex: In the LaTeX output, we have a glossary.
-
-show:GLOSSARY
-
-badge:Thanks|for_reading
-tweet:https://github.com/alhassy/org-special-block-extras
-badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-"))
-
-(deftest "It exports to HTML without any problems"
-  [mwe html-export]
-  (find-file "mwe.org")
-  (should (org-html-export-to-html)))
-
-(deftest "It starts with a 2-column div for ‘parallel’"
-  [mwe parallel]
-  (⇝ mwe "<div style=\"column-rule-style: none;column-count: 2;\">"
-         (* anything)
-         "</div>"))
-
-(deftest "Its initial question is in ‘orange’, with answer in ‘blue’"
-  [mwe color orange blue]
-  (⇝ mwe "<span style=\"color:orange;\">Are you excited to learn some Lisp?</span>"
-         (* anything)
-         "<span style=\"color:blue;\">Yes!</span>"))
-
-(deftest "Its second question, about ‘apply’, has a tooltip"
-  [mwe doc]
-  (⇝ mwe "Pop-quiz: How does "
-         "<abbr class=\"tooltip\" title=\"Call FUNCTION with our remaining args, "
-         "using our last arg as list of args.<br>Then return the value FUNCTION returns."
-         "<br>Thus, (apply '+ 1 2 '(3 4)) returns 10.<br><br>(fn FUNCTION &rest ARGUMENTS)\""
-         ">apply</abbr> work?"))
-
-(deftest "Its ‘details’ block is titled “Answer”, in green"
-  [mwe details]
-  (⇝ mwe
-     "<details"
-     (* anything) ;; styling
-     "<summary>"
-     (* anything) ;; styling
-     "<font face=\"Courier\" size=\"3\" color=\"green\">"
-     (* anything)
-     "Answer"))
-
-(deftest "Its details block begins with an SVG anchor identified as ‘solution’"
-  [mwe link-here]
-  (⇝ mwe "<details"
-         (* anything) ;; styling
-         "<a class=\"anchor\""
-         (* anything)
-         "href=\"#solution\">" ;; link-here:solution
-         "<svg"
-         (* anything)
-         "</svg></a>"
-         (* anything)
-         "Syntactically, <code>(apply f '(x0 ... xN)) = (f x0 ... xN)</code>."))
-
-(deftest "Its top-level remark is my name in a box, then the text, then a closing box delimiter"
-  [mwe remark]
-  (⇝ mwe "<details"
-         (* anything)
-         "<p style=\"color: black;\">"
-         "<span style=\"border-width:1px;border-style:solid;padding:5px\">"
-         "<strong>[Musa:</strong>"
-         "</span>"
-         " Ain't that cool?  "
-         "<span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span>"
-         ))
-
-(deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
-  [mwe spoiler color magenta gensym]
-
-  (⇝ mwe "<details"
-         (* anything)
-         ;; The local spoiler style is declared
-         "<style>"
-         (* anything) ;; A random id; e.g., #g289
-         "{color: aqua; background-color:aqua;}"
-         (* anything)
-         ":hover {color: black; background-color:white;} "
-         "</style>"
-         (* anything)
-         ;; Then it is used
-         "That is, <span style=\"color:magenta;\">"
-         "we can <span id="
-         (* anything) ;; our random id is used here
-         "> apply </span>" ;; Here is the spoiler!
-         " a function to a list of arguments!</span>"
-         (* anything)
-         "</details>"))
-
-(deftest "It has a title-less green box starting with an octoicon"
-  [mwe box octoicon kbd]
-  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
-  (⇝ mwe
-     "<div style=\"padding: 1em;"
-     (* anything)
-     "<h3></h3>"
-     (* anything)
-     "<svg" ;; octoicon:report
-     (* anything)
-     "Note that <kbd> C-x C-e </kbd> evaluates a Lisp form!"
-     (* anything)
-     "</div>"))
-
-(deftest "Its Quranic quote has the user requested tooltip indicated by a small raised circle"
-  [mwe margin]
-  (⇝ mwe
-     "Allah <abbr class=\"tooltip\""
-     " title=\"The God of Abraham; known as Elohim in the Bible\">°</abbr>&emsp13;" ;; ∘ !
-     " does not burden a soul beyond what it can bear."
-     (* anything)
-     "Quran 2:286"))
-
-(deftest "It concludes with three beautiful badges"
-  [mwe badge]
-  ;; badge:Thanks|for_reading
-  ;; tweet:https://github.com/alhassy/org-special-block-extras
-  ;; badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-  (⇝ mwe
-     "<img src=\"https://img.shields.io/badge/Thanks-for_reading-nil?logo=nil\">"
-     (* anything)
-     "<img src=\"https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras\">"
-     (* anything)
-     "<img src=\"https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee\">"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Minimal working example:1 ends here

@@ -3,8 +3,8 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 3.0
-;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "26.1") (org "9.1") (lf "1.0"))
+;; Version: 4.0
+;; Package-Requires: ((s "1.12.0") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -81,22 +81,29 @@
 
 (require 'lf)
 
+(defconst org-special-block-extras-version (package-get-version))
+(defun org-special-block-extras-version ()
+  "Print the current version of the package in the minibuffer."
+  (interactive)
+  (message org-special-block-extras-version))
+(defalias #'o-version #'org-special-block-extras-version)
+
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
-All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'."
+All relevant Lisp functions are prefixed ‘o-’; e.g., `org-docs-insert'."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
-        (add-hook 'org-export-before-parsing-hook 'o--support-special-blocks-with-args)
+        (add-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
         (setq org-export-allow-bind-keywords t)
-        (defvar o--kbd-html-setup nil
+        (defvar org--ospe-kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
         
-        (unless o--kbd-html-setup
-          (setq o--kbd-html-setup t)
+        (unless org--ospe-kbd-html-setup
+          (setq org--ospe-kbd-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
@@ -128,13 +135,13 @@ All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'."
         }
         </style>")))
         ;; Ensure user's documentation libraries have loaded
-        (unless o--docs-from-libraries
-          (o-docs-load-libraries))
-        (defvar o--tooltip-html-setup nil
+        (unless org--docs-from-libraries
+          (org-docs-load-libraries))
+        (defvar org--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
         
-        (unless o--tooltip-html-setup
-          (setq o--tooltip-html-setup t)
+        (unless org--tooltip-html-setup
+          (setq org--tooltip-html-setup t)
         (setq org-html-head-extra
          (concat org-html-head-extra
         "
@@ -178,32 +185,116 @@ All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'."
                       text-decoration: none;}
         </style>
         ")))
-        (defvar o--docs-empty! (list nil t)
+        (defvar org--docs-empty! (list nil t)
           "An indicator of when glossary entries should be erased.
         
         We erase the glossary not on the first export, but on the second export.
         The first export collects all citations, which are used in the second export.")
-        (setcdr (last o--docs-empty!) o--docs-empty!) ;; It's an infinite cyclic list.
+        (setcdr (last org--docs-empty!) org--docs-empty!) ;; It's an infinite cyclic list.
         
         ;; Actual used glossary entries depends on the buffer; so clean up after each export
         (advice-add #'org-export-dispatch
           :after (lambda (&rest _)
-          (when (pop o--docs-empty!)
-              (setq o--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
-                    o--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
+          (when (pop org--docs-empty!)
+              (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
+                    org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
       ) ;; Must be on a new line; I'm using noweb-refs
-    (remove-hook 'org-export-before-parsing-hook 'o--support-special-blocks-with-args)
+    (remove-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
     )) ;; Must be on a new line; I'm using noweb-refs
 
-(cl-defmacro o-deflink
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; We define a parent keymap that org-deflink keymaps inherit from.
+;; We also define a few useful functions that we then bind to this parent map.
+
+(defvar org-special-block-extras-mode-map (make-keymap)
+  "A keymap of actions, on link types, that is inherited by all `org-deflink' link keymaps.
+
+To learn about keymap inheritance, run:  C-h i m elisp RETURN m Inheritance and Keymaps RETURN.
+
+This keymap has the following bindings setup:
+
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'o-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'o-this-link-previous)
+    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'o-this-link-show-docs)
+
+The use of `C-n' and `C-p' may be a nuisance to some users, since they override `forward-line'
+and `previous-line' when the cursor is on an org-link type. As such, place something like the following
+in your initialisation file.
+
+    ;; Use  C-c C-f  to move to the next link of the same link-type as the one under the cursor
+    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'o-this-link-next)
+
+Alternatively, if you don't find much value in these basic bindings, you can remove them all:
+
+    ;; Disable basic org-special-block-extras link keybindings
+    (setcdr org-special-block-extras-mode-map nil)
+
+    ;; Or, remove a single binding
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") nil)")
+
+(defvar org-special-block-extras-mode-map--link-keymap-docs nil
+  "An alist referencing key bindings for Org links; used in `o-this-link-show-docs'.")
+
+(defun org-link-at-point ()
+  "Get the Org link type at point, with suffix colon."
+  (interactive)
+  (let ((working-line (line-number-at-pos)))
+    (save-excursion
+      ;; Account for cursour being on anywhere on the links “name:key”.
+      (backward-word 2)
+      (unless (= working-line (line-number-at-pos))
+        (goto-line working-line))
+      (let* ((here-to-eol (buffer-substring-no-properties (point) (point-at-eol)))
+             ;; E.g., “kbd:”, the name part of an Org link
+             (link-name (cl-second (s-match "\\([^ ]+:\\).+" here-to-eol))))
+        link-name))))
+
+(defun org-this-link-next ()
+  "Go to the next Org link that is similar to the link at point."
+  (interactive)
+  (re-search-forward (org-link-at-point) nil t))
+(defun org-this-link-previous ()
+  "Go to the previous Org link that is similar to the link at point."
+  (interactive)
+  (re-search-backward (org-link-at-point) nil t))
+(defun org-this-link-show-docs ()
+  "Show documentation for the Org link at point in a read-only buffer.
+
+                     Press ‘q’ to kill the resulting buffer and window."
+  (interactive)
+  (let* ((link (s-chop-suffix ":" (org-link-at-point)))
+         (msg (ignore-errors
+                (concat
+                 (documentation (intern (format "org-link/%s" link)))
+                 "\nKEY BINDINGS:\n"
+                 "\nUnless indicated below otherwise..."
+                 "\n\tC-h: Shows this helpful message buffer"
+                 "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
+                 "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
+                 (pp-to-string
+                  (cdr (assoc link org-special-block-extras-mode-map--link-keymap-docs))))))
+         ;; i.e., insist on displaying in a dedicated buffer
+         (max-mini-window-height 0))
+    (display-message-or-buffer msg)
+    (switch-to-buffer-other-window "*Message*")
+    (rename-buffer (format "Help: Org Link “%s”" link))
+    (read-only-mode)
+    (local-set-key "q" #'kill-buffer-and-window)
+    (message "Read-only; “q” to kill buffer and window.")))
+
+(define-key org-special-block-extras-mode-map (kbd "C-n") #'o-this-link-next)
+(define-key org-special-block-extras-mode-map (kbd "C-p") #'o-this-link-previous)
+(define-key org-special-block-extras-mode-map (kbd "C-h") #'o-this-link-show-docs)
+
+(cl-defmacro org-deflink
     (name &optional docstring display &rest body)
   "Make a new Org-link NAME that exports using form BODY.
 
 Since Org links are essentially string-valued functions,
-a function ‘o-link/NAME’ is created.
+a function ‘org-link/NAME’ is created.
 
 DOCSTRING is optional; it is visible with
-   (documentation 'o-link/NAME)
+   (documentation 'org-link/NAME)
 
 BODY is a string-valued expression, that may make use of the names
 o-label, o-description, o-backend. The final one refers to the export
@@ -213,10 +304,12 @@ backend, such as 'html or 'latex. The first two are obtained from uses:
 
 In particular, the use case “name:o-label” means that o-description is nil.
 
+---------------------------------------------------------------------------
+
 Example use:
 
    ;; In a Lisp buffer, press “C-x C-e” to load this definition
-   (o-deflink shout (upcase (or o-description o-label)))
+   (org-deflink shout (upcase (or o-description o-label)))
 
    ;; In an Org-buffer, press “C-c C-e h o” to see how this exports
    <shout: hello world!>
@@ -233,7 +326,7 @@ Here is a more complex, involved, example that makes use of
 renders as the word “hello” with a tooltip defining the word; the
 definition is obtained from the command line tool ‘wn’.
 
-  (o-deflink define
+  (org-deflink define
     \"Define the given word using WordNet, along with synonyms and coordinate terms.\"
     [:let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" o-label)))
      :help-echo definition]
@@ -242,7 +335,12 @@ definition is obtained from the command line tool ‘wn’.
       (s-replace-regexp \"\\n\" \"<br>\" it)
       (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
 
-For HTML tooltips, see `o-html-export-preserving-whitespace'.
+For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
+
+Manipulating strings for making HTML can be tricky, especially with the need to escape characters.
+A more Lispy approach would be to use `org->html'; a macro that produces HTML using Lisp symbols, vectors, and keywords.
+For instance, the final `format' above would become:
+      (org->html abbr [:class tooltip :eval (vector :title it)] o-label)
 
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
@@ -269,7 +367,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
   know what/how the link exports, and actually see the HTML export.
 
   That is to say, for the ‘shout’ example aboce, the default display is essentially:
-  [:help-echo (o-link/shout o-label o-description 'html)]
+  [:help-echo (org-link/shout o-label o-description 'html)]
 
   You may want to add the following to your Emacs init file:
 
@@ -281,6 +379,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
 + :face specifies how should these links be displayed within Emacs.
    It is a list-valued expression.
    As usual, it may make use of O-LABEL (but O-DESCRIPTION has value nil).
+   Example:
+               :face '(:underline \"green\")
 
 + [:display full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
@@ -311,7 +411,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                       display   #'vectorp
                                       body)
     (setq display (seq--into-list display))
-    (let ((o-link/NAME (intern (format "o-link/%s" name)))
+    (let ((org-link/NAME (intern (format "org-link/%s" name)))
           (navigation "Press “C-h” to see possible actions on this link type.")
           (lets (cl-loop for (variable value)
                       on (cl-getf display :let)
@@ -319,7 +419,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                       collect (list variable value))))
       `(progn
        ;; Declare the underlying function and documentation
-       (cl-defun ,o-link/NAME ;; function name
+       (cl-defun ,org-link/NAME ;; function name
            (o-label o-description o-backend)         ;; function args
            ;; new function documentation
            ,docstring
@@ -328,7 +428,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
        ;; Construct the Org-link
        (org-link-set-parameters
         ,(format "%s" name)
-        :export (quote ,o-link/NAME)
+        :export (quote ,org-link/NAME)
         ;; How should these links be displayed?
         ;; (We augment the namespace with the missing o-description that local variables may be using.)
         :face (lambda (o-label)  (let (o-description) (let* ,lets ,(cl-getf display :face))))
@@ -342,25 +442,22 @@ is displayed in Emacs Org buffers. The keys are as follows.
         ;; Any special keybindings when cursour is on this link type?
         ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
         :keymap (let ((o-keymap (copy-keymap org-mouse-map))
-                      (pattern (format "%s:" (quote ,name)))
-                      (msg  (concat
-                             (documentation (quote ,o-link/NAME))
-                             "\nKEY BINDINGS:\n"
-                             "\nUnless indicated below otherwise..."
-                             "\n\tC-h: Shows this helpful message buffer"
-                             "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
-                             "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
-                             (pp-to-string (quote ,(cl-getf display :keymap))))))
+                      (pattern (format "%s:" (quote ,name))))
+
+                  ;; If this Org-link has additional key bindings, then save
+                  ;; them in an alist for reference in `o-this-link-show-docs'.
+                  (when (quote ,(cl-getf display :keymap))
+                    (push (cons (format "%s" (quote ,name)) (quote ,(cl-getf display :keymap)))
+                          org-special-block-extras-mode-map--link-keymap-docs))
+
+                  ;; Let's inherit some possibly useful key bindings.
+                  (set-keymap-parent o-keymap org-special-block-extras-mode-map)
+
                   ;; Populate the keymap
-                  (cl-loop for (key action)
-                        on (-cons* 'C-p `(re-search-backward ,pattern nil t)
-                                   'C-n `(re-search-forward ,pattern nil t)
-                                   'C-h `(-let [max-mini-window-height 0] ;; i.e., insist on displaying in a dedicated buffer
-                                           (display-message-or-buffer ,msg))
-                                   (quote ,(cl-getf display :keymap)))
-                        by #'cddr
-                        do (define-key o-keymap (kbd (format "%s" key))
-                             `(lambda () (interactive) ,action)))
+                  (cl-loop for (key action) on (quote ,(cl-getf display :keymap))
+                           by #'cddr
+                           do (define-key o-keymap (kbd (format "%s" key))
+                                `(lambda () (interactive) ,action)))
                   ;; Return the keymap
                   o-keymap)
         ;; The tooltip alongside a link
@@ -369,7 +466,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                        (goto-char position)
                        (-let* (((&plist :path :format :contents-begin :contents-end)
                                 (cadr (org-element-context)))
-                               (o-format format)
+                               (org-format format)
                                (o-label path)
                                (o-description
                                 (when (equal format 'bracket)
@@ -380,15 +477,129 @@ is displayed in Emacs Org buffers. The keys are as follows.
                                      (quote ,name)
                                      (or o-description o-label)
                                      ,(concat (or docstring "") "\n\n" navigation "\n")
-                                     (,o-link/NAME o-label o-description 'html)))))))
+                                     (,org-link/NAME o-label o-description 'html)))))))
         ;; Return value is the name of the underlying function.
         ;; We do this to be consistent with `defun'.
-        (quote ,o-link/NAME)))))
+        (quote ,org-link/NAME)))))
 
-(defvar o--supported-blocks nil
+(org-deflink melpa
+ "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
+We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
+ [:face '(:box "purple")]
+ (org->html a [:eval `[:href ,(concat "https://melpa.org/#/" o-label)]]
+       (org->html img [:eval `[:alt "MELPA"
+                          :src ,(format "https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs"
+                                        (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
+                                        (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa"))]])))
+
+(cl-defun org->html--pair-to-css (vec sep)
+  "Convert a vector of Lisp keyword-value pairs into a string of HTML attributes.
+
+That is, given a vector VEC consisting of :key-value pairs, yield
+a string of them as attribute values for use in HTML, with
+separator SEP.
+
+(1) A key :eval takes a value being any Lisp expression that
+evaluates to a vector of [:attribute value] pairs, and we
+recursively call this method, and we insert the results in-line.
+
+(2) Any key whose value is a vector will have its value be a
+semicolon separated list; e.g., style attributes.
+
+(3) If the value is a string, then the resulting string renders
+the value as an escaped string.
+
+(4) If the value is a list, then we're likely within a
+  vector (e.g., style=) and so are already within an escaped
+  string, so we just render the list without the
+  delimiting (parens)."
+  (-flatten
+   (cl-loop for (key value) on (seq--into-list vec) by #'cddr
+        collect (cond ((equal :eval key) (org->html--pair-to-css (eval value) sep))
+                      ((vectorp value) (-->
+                                           (cl-loop for (k v) on (seq--into-list value) by #'cddr
+                                                 collect (org->html--pair-to-css (vector k v) ":"))
+                                         -flatten
+                                         (s-join "; " it)
+                                         (org->html--pair-to-css (vector key it) sep)
+                                         (--map (s-replace "\\\"" "" it) it)))
+                      (t (format "%s%s%s" (s-chop-prefix ":" (symbol-name key)) sep
+                                 (cond ((stringp value) (pp-to-string value))
+                                       ((listp value) (org--pp-list value))
+                                       (t value))))))))
+
+(defmacro org->html (tag &optional attributes &rest content)
+  "Org Markup Language: A quick way to write HTML.
+
+TAG is an HTML element tag.
+ATTRIBUTES is a vector of :keys and values.
+CONTENT is any string-valued Lisp expression.
+
+--------------------------------------------------------------------------------
+
+Some notes regarding ATTRIBUTES:
+
+(1) A key :eval takes a value being any Lisp expression that
+evaluates to a vector of [:attribute value] pairs, and we
+recursively call this method, and we insert the results in-line.
+
+(2) Any key whose value is a vector will have its value be a
+semicolon separated list; e.g., style attributes.
+
+(3) If the value is a string, then the resulting string renders
+the value as an escaped string.
+
+(4) If the value is a list, then we're likely within a
+  vector (e.g., style=) and so are already within an escaped
+  string, so we just render the list without the
+  delimiting (parens).
+
+--------------------------------------------------------------------------------
+
+Example usage: Here we use a local variable to decide whether some
+styling attributes should be included or not, using ‘:eval’;
+and we use a local variable for the inner-most content.
+
+    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
+          (place \"World\")) ;; For use in the content (3ʳ) argument
+          (org->html div [:title \"A form of greeting\"
+                     :style [:padding 1em
+                             :eval (when centred? [:margin auto :width 50%])
+                             :background-color \"#00000057\"
+                             :box-shadow (0.05em 0.1em 5px 0.01em green)
+                           ]
+                   ]
+                (org->html em (format \"Hello, %s!\" place))))
+              ;; Notice no explicit empty attributes vector provided.
+
+Another usage of ‘:eval’ would be to have attribute values that
+are dynamically computed; e.g., “ :eval (vector :key (+ 1 2)) ”,
+or more tersely: “ :eval `[:key ,(+ 1 2)] ”.
+
+See the definition of the `org-defblock' “box” for a working example.
+
+If a value is a hexidecimal colour, it should be a string enclosed in double quotes.
+More generally, use strings for anything that includes a ‘#’ in its name.
+
+--------------------------------------------------------------------------------
+
+Since an HTML tag can take any number of child elements, CONTENT
+is actually a variable number of string-valued expressions which
+are then catenated to produce a single string."
+  `(cl-destructuring-bind (attributes _ content)
+       (lf-extract-optionals-from-rest ,attributes #'vectorp
+                                       nil #'null
+                                       (mapcar #'eval (quote ,content))) ;; Realise each form as a string-valued expression
+     (format "<%s %s> %s </%s>"
+             (quote ,tag)
+             (s-join " " (org->html--pair-to-css attributes "="))
+             (apply #'concat content)
+             (quote ,tag))))
+
+(defvar org--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
-(cl-defmacro o-defblock
+(cl-defmacro org-defblock
   (name main-arg kwds &optional experimental docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
@@ -431,6 +642,9 @@ Finally, this macro exposes two functions:
 + ORG-EXPORT: Wrap the argument in an export block for the current backend.
 + ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
              to escape text to Org, and out of the export block.
+
+⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
+⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
 
 ----------------------------------------------------------------------
 
@@ -489,7 +703,7 @@ Three example uses:
     ;; catenated as well as the default red color."
   ;; ⇨ The special block support
   ;;
-  (add-to-list 'o--supported-blocks name) ;; global var
+  (add-to-list 'org--supported-blocks name) ;; global var
 
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (o-respect-newlines? docstring body)
@@ -498,7 +712,7 @@ Three example uses:
                                       body)
     `(progn
        ;; Produce an associated Lisp function
-       ,(o-defblock---support-block-type
+       ,(org-defblock---support-block-type
          name
          docstring
          (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
@@ -513,20 +727,20 @@ Three example uses:
        ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
        ;; are dumped here verbatim.
        ;; ‘(main-arg-name main-arg-val :face … :follow …)’
-           (o-deflink ,name
+           (org-deflink ,name
              [:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)
              ,@(cddr main-arg) ;; verbatim link extras
              ]
              ;; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
              (s-replace-all `(("@@" . "")) ;; (,(format "@@%s:" backend) . "")
-                            (,(intern (format "o--%s" name))
+                            (,(intern (format "org--%s" name))
                              o-backend (or o-description o-label) o-label :o-link? t))))))
 
 ;; WHERE ...
 
-(cl-defmethod o-defblock---support-block-type
+(cl-defmethod org-defblock---support-block-type
     (name docstring main-arg-name main-arg-value kwds body o-respect-newlines?)
-  "Helper method for o-defblock.
+  "Helper method for org-defblock.
 
 This method creates an Org block type's associated Lisp function.
 
@@ -536,7 +750,7 @@ MAIN-ARG-NAME: Essentially main-arg's name
 MAIN-ARG-VALUE: Essentially main-arg's value
 KWDS, plist: Keyword-value pairs
 BODY, list: Code to be executed"
-  `(cl-defun ,(intern (format "o--%s" name))
+  `(cl-defun ,(intern (format "org--%s" name))
        (backend raw-contents
                 &optional ;; ,(car main-arg)
                 ,main-arg-name
@@ -545,7 +759,7 @@ BODY, list: Code to be executed"
      ,docstring
      ;; Use default for main argument
      (when (and ',main-arg-name (s-blank-p ,main-arg-name))
-       (--if-let (plist-get (cdr (assoc ',name o--header-args)) :main-arg)
+       (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
            (setq ,main-arg-name it)
          (setq ,main-arg-name ,main-arg-value)))
 
@@ -579,7 +793,7 @@ BODY, list: Code to be executed"
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
-                  collect `(--when-let (plist-get (cdr (assoc ',name o--header-args))
+                  collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
                                                   ,(intern (format ":%s" k)))
                              (when (s-blank-p ,k)
                                (setq ,k it))))
@@ -587,20 +801,20 @@ BODY, list: Code to be executed"
        (org-export
         (let ((contents (org-parse raw-contents))) ,@body)))))
 
-(defun o--pp-list (xs)
+(defun org--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
   When n = 0, yield the empty string “”."
   (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
 
-(defvar o--current-backend nil
+(defvar org--current-backend nil
   "A message-passing channel updated by
-o--support-special-blocks-with-args
+org--support-special-blocks-with-args
 and used by DEFBLOCK.")
 
-(defun o--support-special-blocks-with-args (backend)
+(defun org--support-special-blocks-with-args (backend)
   "Remove all headlines in the current buffer.
 BACKEND is the export back-end being used, as a symbol."
-  (setq o--current-backend backend)
+  (setq org--current-backend backend)
   (let (blk-start        ;; The point at which the user's block begins.
         header-start ;; The point at which the user's block header & args begin.
         kwdargs          ;; The actual key-value arguments for the header.
@@ -612,7 +826,7 @@ BACKEND is the export back-end being used, as a symbol."
         ;; ⟨body-start⟩ body
         ;; #+end_blk
         )
-  (cl-loop for blk in o--supported-blocks
+  (cl-loop for blk in org--supported-blocks
         do (goto-char (point-min))
         (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s" blk)))
           ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
@@ -631,13 +845,13 @@ BACKEND is the export back-end being used, as a symbol."
             read
             (--split-with (not (keywordp it)))
             (setq kwdargs))
-          (setq main-arg (o--pp-list (car kwdargs)))
+          (setq main-arg (org--pp-list (car kwdargs)))
           (setq kwdargs (cadr kwdargs))
           (forward-line -1)
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
           (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
           (kill-region blk-start (point))
-          (insert (eval `(,(intern (format "o--%s" blk))
+          (insert (eval `(,(intern (format "org--%s" blk))
                           (quote ,backend)
                           ,blk-contents
                           ,main-arg
@@ -650,14 +864,14 @@ BACKEND is the export back-end being used, as a symbol."
           ;; as "this" or just ‘this’ (raw symbols)
       ))))
 
-(defvar o--header-args nil
+(defvar org--header-args nil
   "Alist (name plist) where “:main-arg” is a special plist key.
 
   It serves a similar role to that of Org's src ‘header-args’.
 
   See doc of SET-BLOCK-HEADER-ARGS for more information.")
 
-(defmacro o-set-block-header-args (blk &rest kvs)
+(defmacro org-set-block-header-args (blk &rest kvs)
   "Set default valuts for special block arguments.
 
 This is similar to, and inspired by, Org-src block header-args.
@@ -670,13 +884,13 @@ Example block use:
 
 A full, working, example can be seen by “C-h o RET defblock”.
 "
-  `(add-to-list 'o--header-args (list (quote ,blk) ,@kvs)))
+  `(add-to-list 'org--header-args (list (quote ,blk) ,@kvs)))
 
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
-(o-defblock rremark
+(org-defblock rremark
   (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
   ; :please-preserve-new-lines
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
@@ -688,9 +902,9 @@ A full, working, example can be seen by “C-h o RET defblock”.
 ;; I don't want to change the definition, but I'd like to have
 ;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
-(o-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+(org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
 
-(cl-defmacro o--blockcall (blk &optional main-arg &rest keyword-args-then-contents)
+(cl-defmacro org--blockcall (blk &optional main-arg &rest keyword-args-then-contents)
   "An anaologue to `funcall` but for blocks.
 
 Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
@@ -698,7 +912,7 @@ Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
 One should rarely use this directly; instead use
 o-thread-blockcall.
 "
-  `(concat "#+end_export\n" (,(intern (format "o--%s" blk))
+  `(concat "#+end_export\n" (,(intern (format "org--%s" blk))
     backend ;; defblock internal
     ; (format "\n#+begin_export html\n\n%s\n#+end_export\n" ,(car (last keyword-args-then-contents))) ;; contents
     ,@(last keyword-args-then-contents) ;; contents
@@ -723,36 +937,36 @@ between conseqeuctive blockcalls.
 
 A full example:
 
-    (o-defblock nesting (name) nil
+    (org-defblock nesting (name) nil
       \"Show text in a box, within details, which contains a box.\"
 
-      (o-thread-blockcall raw-contents
+      (org-thread-blockcall raw-contents
                         (box name)
                         (details (upcase name) :title-color \"green\")
                         (box (format \"⇨ %s ⇦\" name) :background-color \"blue\")
                         ))
 "
   (if (not forms) body
-     `(-let [result (o--blockcall ,@(car forms) ,body)]
+     `(-let [result (org--blockcall ,@(car forms) ,body)]
     ,@(cl-loop for b in (cdr forms)
-          collect `(setq result (o--blockcall ,@b
+          collect `(setq result (org--blockcall ,@b
                                      (concat
                                    "#+begin_export\n"
                                    result
                                    "\n#+end_export"
                                    )))) result)))
 
-(o-defblock solution
+(org-defblock solution
   (title "Solution")
   (reprimand "Did you actually try? Maybe see the ‘hints’ above!"
    really "Solution, for real")
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
-  (o-thread-blockcall raw-contents
+  (org-thread-blockcall raw-contents
                     (details really :title-color "red")
                     (box reprimand :background-color "blue")
                     (details title)))
 
-(o-defblock org-demo nil (source "Source" result "Result"
+(org-defblock org-demo nil (source "Source" result "Result"
                         source-color "cyan" result-color "cyan"
                         style "parallel"
                         sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
@@ -773,25 +987,25 @@ SEP is the separator; e.g., a rule ‘<hr>'.
                              "<div ><pre class=\"src src-org\">%s</pre></div>"
                            "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
                  org-export
-                 (o--blockcall box source :background-color source-color)
+                 (org--blockcall box source :background-color source-color)
                  org-export)
                ;; Separator
                sep
                ;; Result
                (thread-last raw-contents
-                 (o--blockcall box result :background-color result-color)
+                 (org--blockcall box result :background-color result-color)
                  org-export))]
 
    (if (equal style "parallel")
-       (o--blockcall parallel "2" :bar nil text)
+       (org--blockcall parallel "2" :bar nil text)
        (concat "#+end_export\n" text "\n#+begin_export"))))
 
-(o-defblock stutter (reps 2) nil
+(org-defblock stutter (reps 2) nil
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
 
-(o-defblock rename (list "") nil
+(org-defblock rename (list "") nil
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
@@ -801,7 +1015,7 @@ In a link, no quotes are needed."
                  (s-split "," list)))
    contents))
 
-(o-defblock spoiler (color "grey") (left "((" right "))")
+(org-defblock spoiler (color "grey") (left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -825,11 +1039,11 @@ in the footnotes."
       (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
       contents)))))
 
-(defun o--list-to-math (lst)
+(defun org--list-to-math (lst)
   "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
   (cond
    ((symbolp lst) "")
-   ((symbolp (car lst)) (o--list-to-math (cadr lst)))
+   ((symbolp (car lst)) (org--list-to-math (cadr lst)))
    (t
     (-let* (((conclusion₀ children) lst)
             ((name named?) (s-split " :: " conclusion₀))
@@ -838,11 +1052,11 @@ in the footnotes."
           (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
         (format "\\frac{\\displaystyle %s}{%s}%s"
                 (s-join " \\qquad "
-                        (mapcar #'o--list-to-math children))
+                        (mapcar #'org--list-to-math children))
                 conclusion
                 (if named? (format "[\\text{%s}]" name) "")))))))
 
-(o-defblock tree (main-arg) nil
+(org-defblock tree (main-arg) nil
   "Write a proof tree using Org-lists.
 
 To get
@@ -889,16 +1103,16 @@ the following proves P = R.
           - ✓
   #+end_tree"
   (s-join "" (--map (format "\\[%s\\]"
-                                (o--list-to-math it))
+                                (org--list-to-math it))
                         (cdr (with-temp-buffer
                                (insert raw-contents)
                                (goto-char (point-min))
                                (org-list-to-lisp))))))
 
-(defvar o-hide-editor-comments nil
+(defvar org-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
 
-(o-defblock remark
+(org-defblock remark
       (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
 "Format CONTENTS as an first-class editor comment according to BACKEND.
@@ -948,7 +1162,7 @@ that is appended to the remark.
           (edcomm-end (funcall boxed "]")))
 
     (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
-    (if o-hide-editor-comments
+    (if org-hide-editor-comments
         ""
       (format (pcase backend
                 ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
@@ -959,7 +1173,7 @@ that is appended to the remark.
  "edcomm"
   :follow (lambda (_))
   :export (lambda (label description backend)
-            (o--edcomm
+            (org--edcomm
              backend
              (format ":ed:%s\n%s" label description)))
   :help-echo (lambda (_ __ position)
@@ -969,7 +1183,7 @@ that is appended to the remark.
                    (format "%s made this remark" (s-upcase path)))))
   :face '(:foreground "red" :weight bold))
 
-(o-defblock details (title "Details") (title-color "green")
+(org-defblock details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1009,7 +1223,7 @@ such as ‘background-color’.
                </details>"))
    title-color title contents))
 
-(o-defblock Details (title "Details") (title-color "green")
+(org-defblock Details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1049,34 +1263,77 @@ such as ‘background-color’.
                </details>"))
    title-color title contents))
 
-(o-defblock box (title "") (background-color nil)
+(org-defblock box (title "") (background-color nil shadow nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
 and it has no TITLE.
 
+SHADOW is an alternate style of boxing: It shows the contents in a centred
+box with a shadow colour being the given non-nil value of SHADOW.
+If SHADOW is a hexidecimal colour, it should be a string enclosed in double quotes.
+More accurately, the following are all valid uses:
+
+    #+begin_box title :shadow t
+    #+begin_box title :shadow inset
+
+    #+begin_box title :shadow \"pink\"
+    #+begin_box title :shadow pink
+
+    #+begin_box title :shadow (cyan pink orange yellow)
+    #+begin_box title :shadow (cyan \"inset pink\" orange)
+    #+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
+
+Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
+
 The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox pacakge.
+requires the tcolorbox package.
 
-In the future, I will likely expose more arguments.
-"
-  (apply #'concat
+In the future, I will likely expose more arguments."
+
   (pcase backend
-   (`latex `("\\begin{tcolorbox}[title={" ,title "}"
-             ",colback=" ,(pp-to-string (or background-color 'red!5!white))
-             ",colframe=red!75!black, colbacktitle=yellow!50!red"
-             ",coltitle=red!25!black, fonttitle=\\bfseries,"
-             "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
-             ,contents
-             "\\end{tcolorbox}"))
-    (_ `("<div style=\"padding: 1em; background-color: "
-             ,(o-subtle-colors (format "%s" (or background-color "green")))
-             ";border-radius: 15px; font-size: 0.9em"
-             "; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">"
-             "<h3>" ,title "</h3>"
-            ,contents "</div>")))))
+    (`latex
+     (apply #'concat
+            `("\\begin{tcolorbox}[title={" ,title "}"
+              ",colback=" ,(pp-to-string (or background-color 'red!5!white))
+              ",colframe=red!75!black, colbacktitle=yellow!50!red"
+              ",coltitle=red!25!black, fonttitle=\\bfseries,"
+              "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
+              ,contents
+              "\\end{tcolorbox}")))
+    ;; CSS syntax: “box-shadow: specification, specification, ...”
+    ;; where a specification is of the shape “[inset] x_offset y_offset [blur [spread]] color”.
+    (_ (-let [haze (lambda (left right deep-right deep-left)
+                     (format "width: 50%%; margin: auto; box-shadow: %s"
+                             (thread-last (list (cons right      "8px 6px 13px 8px %s")
+                                                (cons left       "-16px 12px 20px 16px %s")
+                                                (cons deep-right "48px 36px 71px 28px %s")
+                                                (cons deep-left  "-48px -20px 71px 28px %s"))
+                               (--filter (car it))
+                               (--map (format (cdr it) (car it)))
+                               (s-join ","))))]
+         (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
+                 (s-join ";" `("padding: 1em"
+                               ,(format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))
+                               "border-radius: 15px"
+                               "font-size: 0.9em"
+                               ,(when shadow
+                                  (cond
+                                   ((equal shadow t)
+                                    (funcall haze "hsl(60, 100%, 50%)" "hsl(1, 100%, 50%)" "hsl(180, 100%, 50%)" nil))
+                                   ((equal shadow 'inset)
+                                    (funcall haze "inset hsl(60, 100%, 50%)" "inset hsl(1, 100%, 50%)" "inset hsl(180, 100%, 50%)" nil))
+                                   ((or (stringp shadow) (symbolp shadow))
+                                    (format "box-shadow: 10px 10px 20px 0px %s; width: 50%%; margin: auto" (pp-to-string shadow)))
+                                   ((json-plist-p shadow)
+                                    (-let [(&plist :left X :right Y :deep-right Z :deep-left W) shadow]
+                                      (funcall haze X Y Z W)))
+                                   (t (-let [(X Y Z W) shadow]
+                                        (funcall haze X Y Z W)))))))
+                 title contents)))))
 
-(defun o-subtle-colors (c)
+(defun org-subtle-colors (c)
   "HTML codes for common colours.
 
 Names are very rough approximates.
@@ -1098,49 +1355,85 @@ Names are very rough approximates.
     (c c)
   ))
 
-(o-defblock parallel (cols 2) (bar nil)
+(org-defblock parallel (cols "2") (bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
-There are COLS many columns, and they may be seperated by black
-solid vertical rules if BAR is a non-nil value.
+There are COLS many columns, and they may be seperated by solid
+vertical rules if BAR is a non-nil (colour) value.
 
-Writing “#+begin_parallel 𝓃 :bar (any text except ‘nil’)”
-will produce a parallel of 𝓃 many columns, possibly
-seperated by solid rules, or a “bar”.
++ COLS is either a number or a sequence of the shape: 10% 20% 30%.
++ BAR is either `t', `nil', or a colour such as `red' or `blue'.
 
-The contents of the block may contain ‘#+columnbreak:’ to request
-a columnbreak. This has no effect on HTML export since HTML
-describes how text should be formatted on a browser, which can
-dynamically shrink and grow and thus it makes no sense to have
-hard columnbreaks. We do replace such declarations by ‘<p><br>’,
-which sometimes accomplishes the desired goal.
-"
+----------------------------------------------------------------------
+
+“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
+𝒏-many parallel columns, possibly separated by solid rules, or a
+“bar”. This style allows text to freely move between columns,
+depending on the size of the browser, which may dynamically
+shrink and grow.  BAR can either be `t', `nil', or
+any (backend)-valid colour specification; such as `red' or
+`green'.
+
+“Hard Columns”: Alternatively, for non-uniform column widths,
+COLS may instead be a specification of the widths of the
+columns. However, this extra flexibility comes at an additional
+cost: The contents of the block must now contain 𝒏-1 lines
+consisting of ‘#+columnbreak:’, when the specification determines
+𝒏 columns, as shown in the following example.
+
+   #+begin_parallel 20% 60% 20% :bar green
+   Hello, to the left!
+
+   #+columnbreak:
+   A super duper wide middle margin!
+
+   #+columnbreak:
+   Goodbye (“God-be-with-ye”) to the right!
+   #+end_parallel
+
+The specification is 𝒏 measurements denoting widths; which may be
+in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
+I personally advise only the use of percentage measurements.
+
+In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
   (let ((rule (pcase backend
                (`latex (if bar 2 0))
-               (_  (if bar "solid" "none"))))
-        (contents′  (s-replace "#+columnbreak:"
-                               (if (equal 'latex backend) "\\columnbreak" "@@html:<p><br>@@")
-                               contents)))
-  (format (pcase backend
-   (`latex "\\par \\setlength{\\columnseprule}{%s pt}
+               (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
+        (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
+    (pcase backend
+      (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
           \\begin{minipage}[t]{\\linewidth}
           \\begin{multicols}{%s}
           %s
-          \\end{multicols}\\end{minipage}")
-   (_ "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"))
-   rule cols contents′)))
+          \\end{multicols}\\end{minipage}"    rule cols contents′))
+      (_ (if (not (s-contains-p "%" cols))
+             (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
+                     rule cols contents)
+           ;; Otherwise: cols ≈ "10% 40% 50%", for example.
+           (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
+                 (columnBreak (lambda (width omit-rule?)
+                                (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
+                                        (if omit-rule? "none" rule)))) )
+             (format "<div>%s%s</div>"
+                     (funcall columnBreak (pop spec) nil)
+                     (s-replace-regexp (regexp-quote "#+columnbreak:")
+                                       ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
+                                       ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
+                                       (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
+                                       contents))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load support for 20 colour custom blocks and 20 colour link types
 
-(defvar o--colors
+(defvar org--ospe-colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(cl-loop for colour in o--colors
-         do (eval `(o-defblock ,colour
+(cl-loop for colour in org--ospe-colors
+         do (eval `(org-defblock ,colour
                      (the-color "black" :face `(:foreground ,(format "%s" (quote ,colour))))
                      nil
                      ,(format "Show text in %s color." colour)
@@ -1150,7 +1443,7 @@ which sometimes accomplishes the desired goal.
                                  (_  "<span style=\"color:%s;\">%s</span>"))
                                (quote ,colour) contents)))))
 
-(o-defblock color
+(org-defblock color
   (color black :face (lambda (colour) `(:foreground ,(format "%s" colour))))
   nil
   "Format text according to a given COLOR, which is black by default."
@@ -1159,14 +1452,14 @@ which sometimes accomplishes the desired goal.
             (`html  "<span style=\"color:%s;\">%s</span>"))
           color contents))
 
-(o-defblock latex-definitions nil nil
+(org-defblock latex-definitions nil nil
   "Declare but do not display the CONTENTS according to the BACKEND."
   (format (pcase backend
             ('html "<p style=\"display:none\">\\[%s\\]</p>")
             (_ "%s"))
           raw-contents))
 
-(o-deflink kbd
+(org-deflink kbd
   "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
 
 Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
@@ -1190,14 +1483,14 @@ Examples:
   (if (equal o-backend 'latex)
       (format "\\texttt{%s}" the-label)
     (if tooltip?
-        ;; The style=⋯ is to remove the underlying caused by <abbr>.
+        ;; The style=⋯ is to remove the underlining caused by <abbr>.
         (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
-                the-label (or lisp-func "") (o-html-export-preserving-whitespace tooltip)
+                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
                 keystrokes)
       keystrokes)))
 
 (defvar
- o--supported-octoicons
+ org--supported-octoicons
  (-partition 2
  '(
    home
@@ -1252,9 +1545,9 @@ Examples:
 
 "An association list of supported OctoIcons.
 
-Usage: (cadr (assoc 'ICON o--supported-octoicons))")
+Usage: (cadr (assoc 'ICON org--supported-octoicons))")
 
-(o-deflink octoicon
+(org-deflink octoicon
   "Show an OctoIcon: home, link, mail, report, tag, clock"
   [:help-echo "Show an OctoIcon: home, link, mail, report, tag, clock"]
   (unless (member (intern o-label) '(home link mail report tag clock))
@@ -1263,9 +1556,9 @@ Usage: (cadr (assoc 'ICON o--supported-octoicons))")
       ""
     (s-collapse-whitespace
      (cadr (assoc (intern o-label)
-                  o--supported-octoicons)))))
+                  org--supported-octoicons)))))
 
-(o-deflink link-here
+(org-deflink link-here
   "Export a link to the current location in an Org file."
   [:help-echo (format "This is a local anchor link named “%s”" path)]
   (if (not (equal o-backend 'html))
@@ -1274,13 +1567,13 @@ Usage: (cadr (assoc 'ICON o--supported-octoicons))")
      "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
           href=\"#%s\">%s</a>")
     o-label o-label (cadr (assoc 'link
-                             o--supported-octoicons)))))
+                             org--supported-octoicons)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The badge link types
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(cl-defmacro o-make-badge
+(cl-defmacro org-make-badge
   (name &optional social-shields-name social-url social-shields-url )
   "Make a link NAME whose export is presented as an SVG badge.
 
@@ -1299,12 +1592,12 @@ which has a single ‘%s’ for the link's label argument.
 
 E.g., to create a badge named “go”:
 
-     (o-make-badge \"go\")
+     (org-make-badge \"go\")
 
 Then the following exports nicely from an Org file:
 
      go:key|value|blue|here|gnu-emacs"
-  `(o-deflink ,(intern name)
+  `(org-deflink ,(intern name)
     "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
     [:display 'full
@@ -1348,7 +1641,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
 
                    See also: https://alhassy.github.io/org-special-block-extras/#Common-Project-Badges"))]
 
-    ;; :export #'o--link--badge
+    ;; :export #'org--link--badge
     (if (equal o-backend 'latex) ""
       (-let [ (key value color url logo)  (mapcar #'s-trim (s-split "|" o-label)) ]
         (format
@@ -1372,20 +1665,20 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                      color
                      logo)))))))
 
-(o-make-badge "badge")
+(org-make-badge "badge")
 
 ;; Since we're invoking a macro, the twitter-excitement is used lazily; i.e.,
 ;; consulted when needed instead of being evaluated once.
-(defvar o-link-twitter-excitement
+(defvar org-link-twitter-excitement
   "This looks super neat (•̀ᴗ•́)و:"
   "The string prefixing the URL being shared.")
 
-(o-make-badge
+(org-make-badge
  "tweet"
  "twitter/url?=url="
  (format
    "https://twitter.com/intent/tweet?text=%s:&url=%%s"
-   o-link-twitter-excitement)
+   org-link-twitter-excitement)
  "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
                )
 
@@ -1399,32 +1692,32 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
              ("github/forks" "https://www.github.com/%s/fork")
              ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
          for name′ = (or name (s-replace "/" "-" social))
-         do (eval `(o-make-badge ,name′ ,social ,url)))
+         do (eval `(org-make-badge ,name′ ,social ,url)))
 
-(defvar o--docs nil
+(defvar org--docs nil
   "An alist of (LABEL NAME DESCRIPTION) entries; our glossary.
 
 Example setter:
-0. (o-docs-set \"os\" \"Emacs\" \"A place wherein I do all of my computing.\")
+0. (org-docs-set \"os\" \"Emacs\" \"A place wherein I do all of my computing.\")
 
 Example getters:
-0. (o-docs-get LABEL)
+0. (org-docs-get LABEL)
 1. (-let [(name description) (cdr (assoc LABEL o--docs))] ⋯)
 
-See also `o--docs-from-libraries' and `o-docs-load-libraries'.")
+See also `org--docs-from-libraries' and `org-docs-load-libraries'.")
 
-(cl-defun o-docs-set (label name description)
+(cl-defun org-docs-set (label name description)
   "Add a new documentation-glossary entry, if it is not already present.
 
 We associate LABEL to have title NAME and glossary value DESCRIPTION.
 
 Example usage:
-  (o-docs-set \"cat\"
+  (org-docs-set \"cat\"
               \"Category Theory\"
               \"A theory of typed  composition; e.g., typed monoids.\")"
-  (add-to-list 'o--docs (list label name description)))
+  (add-to-list 'org--docs (list label name description)))
 
-(cl-defun o-docs-get (label)
+(cl-defun org-docs-get (label)
   "Return the name and documentation-glossary values associated with LABEL.
 
 It returns a list of length 2.
@@ -1432,27 +1725,27 @@ It returns a list of length 2.
 Example uses:
 
   ;; Get the Lisp documentation of `thread-last'
-  (o-docs-get \"thread-last\")
+  (org-docs-get \"thread-last\")
 
   ;; Get the English definition of ‘computing’
-  (o-docs-get \"computing\")
+  (org-docs-get \"computing\")
 
-We look for LABEL from within the current buffer first, using `o--docs',
-and otherwise look among the loaded libraries, using `o--docs-from-libraries',
-and, finally, look for the documentation entry using `o-docs-fallback'."
-  (cdr (or (assoc label o--docs)
-           (assoc label o--docs-from-libraries)
-           (funcall o-docs-fallback label)
+We look for LABEL from within the current buffer first, using `org--docs',
+and otherwise look among the loaded libraries, using `org--docs-from-libraries',
+and, finally, look for the documentation entry using `org-docs-fallback'."
+  (cdr (or (assoc label org--docs)
+           (assoc label org--docs-from-libraries)
+           (funcall org-docs-fallback label)
            (error "Error: No documentation-glossary entry for “%s”!" label))))
 
-(cl-defun o-docs-insert ()
+(cl-defun org-docs-insert ()
   "Insert a “doc:𝒳” link from user's documentation-glossary database.
 
 It can be tricky to remember what you have, or what documentation entries mention, and so
 this command gives a searchable way to insert doc links."
   (interactive)
   (thread-last
-      (cl-remove-duplicates (-concat o--docs o--docs-from-libraries)
+      (cl-remove-duplicates (-concat org--docs org--docs-from-libraries)
                             :test (lambda (x y) (cl-equalp (car x) (car y))))
     (--map (format "%s ∷ %s" (car it) (cl-third it)))
     (completing-read "Insert doc link ∷ ")
@@ -1461,7 +1754,7 @@ this command gives a searchable way to insert doc links."
     (concat "doc:")
     (insert)))
 
-(defvar o-docs-fallback
+(defvar org-docs-fallback
   (lambda (label) (list
               ;; label
               label
@@ -1488,18 +1781,18 @@ the word in the English dictionary.
 
 The English definition is obtained from the command line tool ‘wn’, WordNet.")
 
-(defvar o-docs-libraries nil
+(defvar org-docs-libraries nil
   "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
    for use with the ‘doc:𝒳’ link type.")
 
-(cl-defun o-docs-load-libraries
-    (&optional (libs o-docs-libraries))
+(cl-defun org-docs-load-libraries
+    (&optional (libs org-docs-libraries))
 "Load documentation-glossary libraries LIBS.
 
 If no LIBS are provided, simply use those declared
-o-docs-libraries.
+org-docs-libraries.
 
-See `o-docs-from-libraries'."
+See `org-docs-from-libraries'."
 (interactive)
 (cl-loop for lib in libs
       do (with-temp-buffer
@@ -1508,42 +1801,42 @@ See `o-docs-from-libraries'."
            (-let [org-export-with-broken-links t] (org-html-export-as-html))
            (kill-buffer)
            (delete-window)
-           (setq o--docs-from-libraries (-concat o--docs o--docs-from-libraries))
-           (setq o--docs nil))))
+           (setq org--docs-from-libraries (-concat org--docs org--docs-from-libraries))
+           (setq org--docs nil))))
 
-(defvar o--docs-from-libraries nil
+(defvar org--docs-from-libraries nil
 
   "The alist of (label name description) entries loaded from the libraries.
 
 The ‘doc:𝒳’ link will load the libraries, possibly setting this variable to ‘nil’,
 then make use of this variable when looking for documentation strings.
 
-Interactively call `o-docs-load-libraries'
+Interactively call `org-docs-load-libraries'
 to force your documentation libraries to be reloaded.
 
-See also `o-docs-libraries'.")
+See also `org-docs-libraries'.")
 
-(defvar o--docs-actually-used nil
+(defvar org--docs-actually-used nil
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
 ‘show:GLOSSARY’.")
 
-(o-deflink doc
+(org-deflink doc
  "Export O-LABEL as itself, or as the provided O-DESCRIPTION,
  along with a tooltip that shows the user's
  documentation-glossary for o-LABEL and using that entry's name
  when no O-DESCRIPTION is provided."
- [:let (entry (o-docs-get o-label)
+ [:let (entry (org-docs-get o-label)
         name (cl-first entry)
         docs (cl-second entry)
         display-name (or o-description name))
   :help-echo (format "[%s] %s :: %s" o-label name docs)
   :face '(custom-button)]
-   (add-to-list 'o--docs-actually-used (list o-label name docs))
+   (add-to-list 'org--docs-actually-used (list o-label name docs))
    (pcase o-backend
      (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                     (o-html-export-preserving-whitespace docs)
+                     (org-ospe-html-export-preserving-whitespace docs)
                      display-name))
      ;; Make the current word refer to its glosary entry;
      ;; also declare the location that the glossary should refer back to.
@@ -1555,7 +1848,7 @@ We use this listing to actually print a glossary using
 
 ;; WHERE ...
 
-(defun o-html-export-preserving-whitespace (s)
+(defun org-ospe-html-export-preserving-whitespace (s)
   "Make Org-markup'd string S ready for HTML presentation, preserving whitespace.
 
 This is orthogonal to the  `org-export-string-as' command; i.e.,
@@ -1595,12 +1888,12 @@ newlines.
     ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
     (s-replace-regexp "\\\"" "''")))
 
-(o-defblock documentation
+(org-defblock documentation
   (name (error "Documentation block: Name must be provided"))
   (label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
-The dictionary variable is ‘o--docs’.
+The dictionary variable is ‘org--docs’.
 
 A documentation entry may have its LABEL, its primary identifier,
 be:
@@ -1626,12 +1919,12 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
   (push (s-replace " " "_" name) label)
   (push (downcase (s-replace " " "_" name)) label)
   (cl-loop for l in label
-        do  (add-to-list 'o--docs
+        do  (add-to-list 'org--docs
                          (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
   ;; Should the special block show something upon export?
-  (if show (o--blockcall box name :background-color color raw-contents) ""))
+  (if show (org--blockcall box name :background-color color raw-contents) ""))
 
-(o-deflink show
+(org-deflink show
   "Yield the value of the expression O-LABEL, with =GLOSSARY= being a reserved name.
 
 Example uses:
@@ -1650,11 +1943,11 @@ to make “link buttons” that do useful things, as follows.
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
   [:face '(:underline "green")
-   :let (o-value (if (equal o-label "GLOSSARY")
-                     (pp-to-string (mapcar #'cl-second o--docs-actually-used))
+   :let (org-value (if (equal o-label "GLOSSARY")
+                     (pp-to-string (mapcar #'cl-second org--docs-actually-used))
                    (pp-to-string (eval (car (read-from-string o-label)))))
          o-expr (if (equal o-label "GLOSSARY")
-                    (concat "GLOSSARY ---i.e., o--docs-actually-used"
+                    (concat "GLOSSARY ---i.e., org--docs-actually-used"
                             "\n\nWe erase the glossary not on the first export, but on the second export."
                             "\nThe first export collects all citations, which are used in the second export.")
                   o-label))
@@ -1671,14 +1964,14 @@ That is what we accomplish with this new `show' link type."
           (s-join " "
                   (--map
                    (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                           (o-html-export-preserving-whitespace (cl-third it))
+                           (org-ospe-html-export-preserving-whitespace (cl-third it))
                            (cl-second it))
                    ;; Ignore duplicates; i.e., entries with the same name/title.
-                   (cl-remove-duplicates o--docs-actually-used
+                   (cl-remove-duplicates org--docs-actually-used
                                          :test (lambda (x y) (cl-equalp (cl-second x) (cl-second y)))))))
        (t (s-join "\n\n"
                   (cl-loop for (label name doc)
-                           in o--docs-actually-used
+                           in org--docs-actually-used
                            collect
                            (format
                            (concat "\\vspace{1em}\\phantomsection"
@@ -1696,7 +1989,7 @@ That is what we accomplish with this new `show' link type."
                                (s-replace "\n" " \\newline{\\color{white}.}")))
                            o-label))))))
 
-(o-defblock margin
+(org-defblock margin
   (marker nil
           :display 'full
           :face '(:foreground "grey" :weight bold
@@ -1779,11 +2072,11 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                stepcounter))
       (_ (setq marker (or marker "°"))
          (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                 (o-html-export-preserving-whitespace contents)
+                 (org-ospe-html-export-preserving-whitespace contents)
                  ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                  marker)))))
 
-(defun o--list-to-calc (lst rel hint-format NL-length color)
+(defun org--list-to-calc (lst rel hint-format NL-length color)
   "Get a result from org-list-to-lisp and render it as a calculational proof.
 
 LST is an expression, possibly with a hint and dedicated relation.
@@ -1801,7 +2094,7 @@ a single normal sized letter.
 COLOR is the colour of the hints."
   (cond
    ((symbolp lst) "")
-   ((symbolp (car lst)) (o--list-to-calc (cadr lst)))
+   ((symbolp (car lst)) (org--list-to-calc (cadr lst)))
    (t (-let* (((conclusion₀ children) lst)
               ((expr₀ hint) (s-split "--" conclusion₀))
               ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
@@ -1835,11 +2128,11 @@ COLOR is the colour of the hints."
                           (s-chop-prefix
                            "\\\\" (s-join
                                    "\\\\"
-                                   (--map (format "%s" (o--list-to-calc it rel hint-format NL-length color))
+                                   (--map (format "%s" (org--list-to-calc it rel hint-format NL-length color))
                                           children))))
                   expr))))))
 
-(o-defblock calc
+(org-defblock calc
   (main-arg)
   (rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
   "Render an Org-list as an equational proof.
@@ -1866,7 +2159,7 @@ what is required by MathJaX."
                  (goto-char (point-min))
                  (org-list-to-lisp))
     cdr
-    (--map (format "%s" (o--list-to-calc it rel hint-format explicit-vspace color)))
+    (--map (format "%s" (org--list-to-calc it rel hint-format explicit-vspace color)))
     (s-join "\\\\")
     (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
