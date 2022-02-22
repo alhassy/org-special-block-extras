@@ -78,6 +78,7 @@
 (require 'org)
 (require 'ox-latex)
 (require 'ox-html)
+(require 'seq)
 
 (require 'lf)
 
@@ -86,13 +87,12 @@
   "Print the current version of the package in the minibuffer."
   (interactive)
   (message org-special-block-extras-version))
-(defalias #'o-version #'org-special-block-extras-version)
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
-All relevant Lisp functions are prefixed ‘o-’; e.g., `org-docs-insert'."
+All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
   nil nil nil
   (if org-special-block-extras-mode
       (progn
@@ -1109,80 +1109,6 @@ the following proves P = R.
                                (goto-char (point-min))
                                (org-list-to-lisp))))))
 
-(defvar org-hide-editor-comments nil
-  "Should editor comments be shown in the output or not.")
-
-(org-defblock remark
-      (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
-; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
-"Format CONTENTS as an first-class editor comment according to BACKEND.
-
-The CONTENTS string has an optional switch: If it contains a line
-with having only ‘#+replacewith:’, then the text preceding this
-clause should be replaced by the text after it; i.e., this is
-what the EDITOR (the person editing) intends and so we fromat the
-replacement instruction (to the authour) as such.
-
-In Emacs, as links, editor remarks are shown with a bold red; but
-the exported COLOR of a remark is black by default and it is not
-STRONG ---i.e., bold---. There is an optional SIGNOFF message
-that is appended to the remark.
-"
-  (-let* (;; Are we in the html backend?
-          (tex? (equal backend 'latex))
-
-          ;; fancy display style
-          (boxed (lambda (x)
-                   (if tex?
-                       (concat "\\fbox{\\bf " x "}")
-                     (concat "<span style=\"border-width:1px"
-                             ";border-style:solid;padding:5px\">"
-                             "<strong>" x "</strong></span>"))))
-
-          ;; Is this a replacement clause?
-          ((this that) (s-split "\\#\\+replacewith:" contents))
-          (replacement-clause? that) ;; There is a ‘that’
-          (replace-keyword (if tex?
-                             "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
-          (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
-                             ))
-          (editor (format "[%s:%s" editor
-                          (if replacement-clause?
-                              replace-keyword
-                            "")))
-          (contents′ (if replacement-clause?
-                         (format "%s %s %s" this
-                                 (org-export (funcall boxed with-keyword))
-                                 that)
-                       contents))
-
-          ;; “[Editor Comment:”
-          (edcomm-begin (funcall boxed editor))
-          ;; “]”
-          (edcomm-end (funcall boxed "]")))
-
-    (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
-    (if org-hide-editor-comments
-        ""
-      (format (pcase backend
-                ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
-                (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
-              color edcomm-begin contents′ signoff edcomm-end))))
-
-(org-link-set-parameters
- "edcomm"
-  :follow (lambda (_))
-  :export (lambda (label description backend)
-            (org--edcomm
-             backend
-             (format ":ed:%s\n%s" label description)))
-  :help-echo (lambda (_ __ position)
-               (save-excursion
-                 (goto-char position)
-                 (-let [(&plist :path) (cadr (org-element-context))]
-                   (format "%s made this remark" (s-upcase path)))))
-  :face '(:foreground "red" :weight bold))
-
 (org-defblock details (title "Details") (title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -1422,6 +1348,141 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                        ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
                                        (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
                                        contents))))))))
+
+(defvar org--html-export-style-choice "default"
+  "This variable holds the link label declared by users.
+  It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
+
+(defvar org-html-export-styles
+      `((default . "")
+        (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
+        (readtheorg . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup")
+        (rose .   ,(concat "#+HTML_HEAD: <link href=\"https://alhassy.github.io/org-notes-style.css\" rel=\"stylesheet\" type=\"text/css\" />"
+                          "<link href=\"https://alhassy.github.io/floating-toc.css\" rel=\"stylesheet\" type=\"text/css\" />"
+                          "<link href=\"https://alhassy.github.io/blog-banner.css\" rel=\"stylesheet\" type=\"text/css\" />"))
+        (latexcss . "#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://latex.now.sh/style.min.css\" />"))
+      "An alist of theme-to-setup pairs, symbols-to-strings, used by `org-link/html-export-style'.
+
+  For live examples of many of the themes, see
+  https://olmon.gitlab.io/org-themes/.
+
+  In due time, I would like to add more, such as those linked from
+  the discussion https://news.ycombinator.com/item?id=23130104.
+  A nice, simple, opportunity for someone else to contribute.") ;; TODO: Make this into a Github Issue.
+;;
+;; Add a bunch more
+(cl-loop for theme in '(comfy_inline imagine_light
+                        rethink_inline simple_whiteblue
+                        retro_dark simple_gray solarized_dark
+                        solarized_light stylish_white)
+         do (push (cons theme (format "#+SETUPFILE: https://gitlab.com/OlMon/org-themes/-/raw/master/src/%s/%s.theme" theme theme)) org-html-export-styles))
+
+(defun org--html-export-style-setup (_backend)
+  "Insert an HTML theme link setup, according to `org-html-export-styles'."
+  (save-excursion
+    (goto-char (point-min))
+    (thread-last (or (assoc org--html-export-style-choice org-html-export-styles)
+                     (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
+                             org--html-export-style-choice
+                             (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
+      cdr
+      (format "\n %s \n")
+      insert)))
+
+(org-deflink html-export-style
+  "Add a dedicated style theme, from `org-html-export-styles'."
+  [:let (whatdo (progn
+                  (setq org--html-export-style-choice
+                        (if (equal "random" o-label)
+                            (seq-random-elt (mapcar 'car _XYZ_))
+                          (intern o-label)))
+                  (pcase o-label
+                    ;; TODO: Move this to when the mode is enabled/disabled?
+                    ("default" (remove-hook 'org-export-before-processing-hook
+                                            'org--html-export-style-setup))
+                    (t   (add-hook 'org-export-before-processing-hook
+                                   'org--html-export-style-setup)))))
+  :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
+               (-partition 4)
+               (--map (s-join "     " it))
+               (s-join "\n")
+               (format "Supported themes include:\n\n%s"))]
+  ;; Result string, nothing.
+  "")
+
+(defvar org-hide-editor-comments nil
+  "Should editor comments be shown in the output or not.")
+
+(org-defblock remark
+      (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
+; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
+"Format CONTENTS as an first-class editor comment according to BACKEND.
+
+The CONTENTS string has an optional switch: If it contains a line
+with having only ‘#+replacewith:’, then the text preceding this
+clause should be replaced by the text after it; i.e., this is
+what the EDITOR (the person editing) intends and so we fromat the
+replacement instruction (to the authour) as such.
+
+In Emacs, as links, editor remarks are shown with a bold red; but
+the exported COLOR of a remark is black by default and it is not
+STRONG ---i.e., bold---. There is an optional SIGNOFF message
+that is appended to the remark.
+"
+  (-let* (;; Are we in the html backend?
+          (tex? (equal backend 'latex))
+
+          ;; fancy display style
+          (boxed (lambda (x)
+                   (if tex?
+                       (concat "\\fbox{\\bf " x "}")
+                     (concat "<span style=\"border-width:1px"
+                             ";border-style:solid;padding:5px\">"
+                             "<strong>" x "</strong></span>"))))
+
+          ;; Is this a replacement clause?
+          ((this that) (s-split "\\#\\+replacewith:" contents))
+          (replacement-clause? that) ;; There is a ‘that’
+          (replace-keyword (if tex?
+                             "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
+          (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
+                             ))
+          (editor (format "[%s:%s" editor
+                          (if replacement-clause?
+                              replace-keyword
+                            "")))
+          (contents′ (if replacement-clause?
+                         (format "%s %s %s" this
+                                 (org-export (funcall boxed with-keyword))
+                                 that)
+                       contents))
+
+          ;; “[Editor Comment:”
+          (edcomm-begin (funcall boxed editor))
+          ;; “]”
+          (edcomm-end (funcall boxed "]")))
+
+    (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+    (if org-hide-editor-comments
+        ""
+      (format (pcase backend
+                ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
+                (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
+              color edcomm-begin contents′ signoff edcomm-end))))
+
+(org-link-set-parameters
+ "edcomm"
+  :follow (lambda (_))
+  :export (lambda (label description backend)
+            (org--edcomm
+             backend
+             (format ":ed:%s\n%s" label description)))
+  :help-echo (lambda (_ __ position)
+               (save-excursion
+                 (goto-char position)
+                 (-let [(&plist :path) (cadr (org-element-context))]
+                   (format "%s made this remark" (s-upcase path)))))
+  :face '(:foreground "red" :weight bold))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load support for 20 colour custom blocks and 20 colour link types
