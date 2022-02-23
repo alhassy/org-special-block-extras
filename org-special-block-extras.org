@@ -1322,11 +1322,6 @@ definition is obtained from the command line tool ‘wn’.
 
 For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
 
-Manipulating strings for making HTML can be tricky, especially with the need to escape characters.
-A more Lispy approach would be to use `org->html'; a macro that produces HTML using Lisp symbols, vectors, and keywords.
-For instance, the final `format' above would become:
-      (org->html abbr [:class tooltip :eval (vector :title it)] o-label)
-
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
 documentation of functions & variables, and definitions of
@@ -1366,6 +1361,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
    As usual, it may make use of O-LABEL (but O-DESCRIPTION has value nil).
    Example:
                :face '(:underline \"green\")
+
+   See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
 + [:display full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
@@ -1430,7 +1427,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                       (pattern (format "%s:" (quote ,name))))
 
                   ;; If this Org-link has additional key bindings, then save
-                  ;; them in an alist for reference in `o-this-link-show-docs'.
+                  ;; them in an alist for reference in `org-this-link-show-docs'.
                   (when (quote ,(cl-getf display :keymap))
                     (push (cons (format "%s" (quote ,name)) (quote ,(cl-getf display :keymap)))
                           org-special-block-extras-mode-map--link-keymap-docs))
@@ -1526,12 +1523,13 @@ melpa:org-special-block-extras and <melpa:s>.
 (org-deflink melpa
  "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
 We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
- [:face '(:box "purple")]
- (org->html a [:eval `[:href ,(concat "https://melpa.org/#/" o-label)]]
-       (org->html img [:eval `[:alt "MELPA"
-                          :src ,(format "https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs"
-                                        (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
-                                        (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa"))]])))
+ [:face '(:box "purple" :foreground "purple")]
+ (format (concat "<a href=\"https://melpa.org/#/%s\">"
+                 "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
+                 "</a>")
+         o-label
+         (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
+         (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
 #+end_src
 
 #+end_details
@@ -1566,161 +1564,6 @@ The link text appears as red bold in both Emacs and in HTML export."
 
 [[# orange:Going forward]] it would be nice to make use of doc:org-edit-special to
 # edit the various link types introduced in this article.
-** The doc:org->html macro                      :ignore:needs_cleaning_up:tests:
-   :PROPERTIES:
-   :CUSTOM_ID: The-doc-org->html-macro
-   :END:
-
-#+begin_details "org->html: A ‘M’arkup ‘L’anguage for making HTML using Lisp symbols, vectors, and keywords"
-#+begin_src emacs-lisp
-(cl-defun org->html--pair-to-css (vec sep)
-  "Convert a vector of Lisp keyword-value pairs into a string of HTML attributes.
-
-That is, given a vector VEC consisting of :key-value pairs, yield
-a string of them as attribute values for use in HTML, with
-separator SEP.
-
-(1) A key :eval takes a value being any Lisp expression that
-evaluates to a vector of [:attribute value] pairs, and we
-recursively call this method, and we insert the results in-line.
-
-(2) Any key whose value is a vector will have its value be a
-semicolon separated list; e.g., style attributes.
-
-(3) If the value is a string, then the resulting string renders
-the value as an escaped string.
-
-(4) If the value is a list, then we're likely within a
-  vector (e.g., style=) and so are already within an escaped
-  string, so we just render the list without the
-  delimiting (parens)."
-  (-flatten
-   (cl-loop for (key value) on (seq--into-list vec) by #'cddr
-        collect (cond ((equal :eval key) (org->html--pair-to-css (eval value) sep))
-                      ((vectorp value) (-->
-                                           (cl-loop for (k v) on (seq--into-list value) by #'cddr
-                                                 collect (org->html--pair-to-css (vector k v) ":"))
-                                         -flatten
-                                         (s-join "; " it)
-                                         (org->html--pair-to-css (vector key it) sep)
-                                         (--map (s-replace "\\\"" "" it) it)))
-                      (t (format "%s%s%s" (s-chop-prefix ":" (symbol-name key)) sep
-                                 (cond ((stringp value) (pp-to-string value))
-                                       ((listp value) (org--pp-list value))
-                                       (t value))))))))
-
-(defmacro org->html (tag &optional attributes &rest content)
-  "Org Markup Language: A quick way to write HTML.
-
-TAG is an HTML element tag.
-ATTRIBUTES is a vector of :keys and values.
-CONTENT is any string-valued Lisp expression.
-
---------------------------------------------------------------------------------
-
-Some notes regarding ATTRIBUTES:
-
-(1) A key :eval takes a value being any Lisp expression that
-evaluates to a vector of [:attribute value] pairs, and we
-recursively call this method, and we insert the results in-line.
-
-(2) Any key whose value is a vector will have its value be a
-semicolon separated list; e.g., style attributes.
-
-(3) If the value is a string, then the resulting string renders
-the value as an escaped string.
-
-(4) If the value is a list, then we're likely within a
-  vector (e.g., style=) and so are already within an escaped
-  string, so we just render the list without the
-  delimiting (parens).
-
---------------------------------------------------------------------------------
-
-Example usage: Here we use a local variable to decide whether some
-styling attributes should be included or not, using ‘:eval’;
-and we use a local variable for the inner-most content.
-
-    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
-          (place \"World\")) ;; For use in the content (3ʳ) argument
-          (org->html div [:title \"A form of greeting\"
-                     :style [:padding 1em
-                             :eval (when centred? [:margin auto :width 50%])
-                             :background-color \"#00000057\"
-                             :box-shadow (0.05em 0.1em 5px 0.01em green)
-                           ]
-                   ]
-                (org->html em (format \"Hello, %s!\" place))))
-              ;; Notice no explicit empty attributes vector provided.
-
-Another usage of ‘:eval’ would be to have attribute values that
-are dynamically computed; e.g., “ :eval (vector :key (+ 1 2)) ”,
-or more tersely: “ :eval `[:key ,(+ 1 2)] ”.
-
-See the definition of the `org-defblock' “box” for a working example.
-
-If a value is a hexidecimal colour, it should be a string enclosed in double quotes.
-More generally, use strings for anything that includes a ‘#’ in its name.
-
---------------------------------------------------------------------------------
-
-Since an HTML tag can take any number of child elements, CONTENT
-is actually a variable number of string-valued expressions which
-are then catenated to produce a single string."
-  `(cl-destructuring-bind (attributes _ content)
-       (lf-extract-optionals-from-rest ,attributes #'vectorp
-                                       nil #'null
-                                       (mapcar #'eval (quote ,content))) ;; Realise each form as a string-valued expression
-     (format "<%s %s> %s </%s>"
-             (quote ,tag)
-             (s-join " " (org->html--pair-to-css attributes "="))
-             (apply #'concat content)
-             (quote ,tag))))
-#+end_src
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el
-(setq it/org->html
-    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
-          (place "World")) ;; For use in the content (3ʳ) argument
-          (org->html div [:title "A form of greeting"
-                     :style [:padding 1em
-                             :eval (when centred? [:margin auto :width 50%])
-                             :background-color "#00000057"
-                             :box-shadow (0.05em 0.1em 5px 0.01em green)
-                           ]
-                     ]
-                ;; Notice no explicit empty attributes vector provided.
-                (org->html em (format "Hello, %s!" place))
-                (org->html b [:random yup] "noice"))))
-
-(deftest "It produces a <div> containing both the <em> then the <b>"
-  [org->html]
-  (⇝ it/org->html
-     "<div"
-     (* anything)
-     "<em "
-     (* anything)
-     "<b "))
-
-(deftest "It contains the declared top-level (and nested) attributes"
-  [org->html]
-  (⇝ it/org->html
-     "title="
-     (* anything)
-     "style="
-     (* anything)
-     "random="))
-
-(deftest "It contains the content of the inner child elements"
-  [org->html]
-  (⇝ it/org->html
-  "Hello, World!"
-  (* anything)
-  "noice"))
-  #+end_src
-#+end_details
-
 ** The Core Utility: ~defblock~ and friends
    :PROPERTIES:
    :CUSTOM_ID: The-Core-Utility-defblock-and-friends
