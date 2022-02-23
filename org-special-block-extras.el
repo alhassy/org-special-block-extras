@@ -213,16 +213,16 @@ To learn about keymap inheritance, run:  C-h i m elisp RETURN m Inheritance and 
 
 This keymap has the following bindings setup:
 
-    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'o-this-link-next)
-    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'o-this-link-previous)
-    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'o-this-link-show-docs)
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'org-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'org-this-link-previous)
+    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'org-this-link-show-docs)
 
 The use of `C-n' and `C-p' may be a nuisance to some users, since they override `forward-line'
 and `previous-line' when the cursor is on an org-link type. As such, place something like the following
 in your initialisation file.
 
     ;; Use  C-c C-f  to move to the next link of the same link-type as the one under the cursor
-    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'o-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'org-this-link-next)
 
 Alternatively, if you don't find much value in these basic bindings, you can remove them all:
 
@@ -233,7 +233,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
     (define-key org-special-block-extras-mode-map (kbd \"C-n\") nil)")
 
 (defvar org-special-block-extras-mode-map--link-keymap-docs nil
-  "An alist referencing key bindings for Org links; used in `o-this-link-show-docs'.")
+  "An alist referencing key bindings for Org links; used in `org-this-link-show-docs'.")
 
 (defun org-link-at-point ()
   "Get the Org link type at point, with suffix colon."
@@ -282,9 +282,9 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
     (local-set-key "q" #'kill-buffer-and-window)
     (message "Read-only; “q” to kill buffer and window.")))
 
-(define-key org-special-block-extras-mode-map (kbd "C-n") #'o-this-link-next)
-(define-key org-special-block-extras-mode-map (kbd "C-p") #'o-this-link-previous)
-(define-key org-special-block-extras-mode-map (kbd "C-h") #'o-this-link-show-docs)
+(define-key org-special-block-extras-mode-map (kbd "C-n") #'org-this-link-next)
+(define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
+(define-key org-special-block-extras-mode-map (kbd "C-h") #'org-this-link-show-docs)
 
 (cl-defmacro org-deflink
     (name &optional docstring display &rest body)
@@ -337,11 +337,6 @@ definition is obtained from the command line tool ‘wn’.
 
 For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
 
-Manipulating strings for making HTML can be tricky, especially with the need to escape characters.
-A more Lispy approach would be to use `org->html'; a macro that produces HTML using Lisp symbols, vectors, and keywords.
-For instance, the final `format' above would become:
-      (org->html abbr [:class tooltip :eval (vector :title it)] o-label)
-
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
 documentation of functions & variables, and definitions of
@@ -381,6 +376,8 @@ is displayed in Emacs Org buffers. The keys are as follows.
    As usual, it may make use of O-LABEL (but O-DESCRIPTION has value nil).
    Example:
                :face '(:underline \"green\")
+
+   See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
 + [:display full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
@@ -445,7 +442,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
                       (pattern (format "%s:" (quote ,name))))
 
                   ;; If this Org-link has additional key bindings, then save
-                  ;; them in an alist for reference in `o-this-link-show-docs'.
+                  ;; them in an alist for reference in `org-this-link-show-docs'.
                   (when (quote ,(cl-getf display :keymap))
                     (push (cons (format "%s" (quote ,name)) (quote ,(cl-getf display :keymap)))
                           org-special-block-extras-mode-map--link-keymap-docs))
@@ -485,116 +482,13 @@ is displayed in Emacs Org buffers. The keys are as follows.
 (org-deflink melpa
  "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
 We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
- [:face '(:box "purple")]
- (org->html a [:eval `[:href ,(concat "https://melpa.org/#/" o-label)]]
-       (org->html img [:eval `[:alt "MELPA"
-                          :src ,(format "https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs"
-                                        (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
-                                        (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa"))]])))
-
-(cl-defun org->html--pair-to-css (vec sep)
-  "Convert a vector of Lisp keyword-value pairs into a string of HTML attributes.
-
-That is, given a vector VEC consisting of :key-value pairs, yield
-a string of them as attribute values for use in HTML, with
-separator SEP.
-
-(1) A key :eval takes a value being any Lisp expression that
-evaluates to a vector of [:attribute value] pairs, and we
-recursively call this method, and we insert the results in-line.
-
-(2) Any key whose value is a vector will have its value be a
-semicolon separated list; e.g., style attributes.
-
-(3) If the value is a string, then the resulting string renders
-the value as an escaped string.
-
-(4) If the value is a list, then we're likely within a
-  vector (e.g., style=) and so are already within an escaped
-  string, so we just render the list without the
-  delimiting (parens)."
-  (-flatten
-   (cl-loop for (key value) on (seq--into-list vec) by #'cddr
-        collect (cond ((equal :eval key) (org->html--pair-to-css (eval value) sep))
-                      ((vectorp value) (-->
-                                           (cl-loop for (k v) on (seq--into-list value) by #'cddr
-                                                 collect (org->html--pair-to-css (vector k v) ":"))
-                                         -flatten
-                                         (s-join "; " it)
-                                         (org->html--pair-to-css (vector key it) sep)
-                                         (--map (s-replace "\\\"" "" it) it)))
-                      (t (format "%s%s%s" (s-chop-prefix ":" (symbol-name key)) sep
-                                 (cond ((stringp value) (pp-to-string value))
-                                       ((listp value) (org--pp-list value))
-                                       (t value))))))))
-
-(defmacro org->html (tag &optional attributes &rest content)
-  "Org Markup Language: A quick way to write HTML.
-
-TAG is an HTML element tag.
-ATTRIBUTES is a vector of :keys and values.
-CONTENT is any string-valued Lisp expression.
-
---------------------------------------------------------------------------------
-
-Some notes regarding ATTRIBUTES:
-
-(1) A key :eval takes a value being any Lisp expression that
-evaluates to a vector of [:attribute value] pairs, and we
-recursively call this method, and we insert the results in-line.
-
-(2) Any key whose value is a vector will have its value be a
-semicolon separated list; e.g., style attributes.
-
-(3) If the value is a string, then the resulting string renders
-the value as an escaped string.
-
-(4) If the value is a list, then we're likely within a
-  vector (e.g., style=) and so are already within an escaped
-  string, so we just render the list without the
-  delimiting (parens).
-
---------------------------------------------------------------------------------
-
-Example usage: Here we use a local variable to decide whether some
-styling attributes should be included or not, using ‘:eval’;
-and we use a local variable for the inner-most content.
-
-    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
-          (place \"World\")) ;; For use in the content (3ʳ) argument
-          (org->html div [:title \"A form of greeting\"
-                     :style [:padding 1em
-                             :eval (when centred? [:margin auto :width 50%])
-                             :background-color \"#00000057\"
-                             :box-shadow (0.05em 0.1em 5px 0.01em green)
-                           ]
-                   ]
-                (org->html em (format \"Hello, %s!\" place))))
-              ;; Notice no explicit empty attributes vector provided.
-
-Another usage of ‘:eval’ would be to have attribute values that
-are dynamically computed; e.g., “ :eval (vector :key (+ 1 2)) ”,
-or more tersely: “ :eval `[:key ,(+ 1 2)] ”.
-
-See the definition of the `org-defblock' “box” for a working example.
-
-If a value is a hexidecimal colour, it should be a string enclosed in double quotes.
-More generally, use strings for anything that includes a ‘#’ in its name.
-
---------------------------------------------------------------------------------
-
-Since an HTML tag can take any number of child elements, CONTENT
-is actually a variable number of string-valued expressions which
-are then catenated to produce a single string."
-  `(cl-destructuring-bind (attributes _ content)
-       (lf-extract-optionals-from-rest ,attributes #'vectorp
-                                       nil #'null
-                                       (mapcar #'eval (quote ,content))) ;; Realise each form as a string-valued expression
-     (format "<%s %s> %s </%s>"
-             (quote ,tag)
-             (s-join " " (org->html--pair-to-css attributes "="))
-             (apply #'concat content)
-             (quote ,tag))))
+ [:face '(:box "purple" :foreground "purple")]
+ (format (concat "<a href=\"https://melpa.org/#/%s\">"
+                 "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
+                 "</a>")
+         o-label
+         (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
+         (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
 
 (defvar org--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
@@ -1353,6 +1247,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
   "This variable holds the link label declared by users.
   It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
 
+;; TODO: Make this into a Github Issue.
 (defvar org-html-export-styles
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
@@ -1368,7 +1263,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 
   In due time, I would like to add more, such as those linked from
   the discussion https://news.ycombinator.com/item?id=23130104.
-  A nice, simple, opportunity for someone else to contribute.") ;; TODO: Make this into a Github Issue.
+  A nice, simple, opportunity for someone else to contribute.")
 ;;
 ;; Add a bunch more
 (cl-loop for theme in '(comfy_inline imagine_light
@@ -1381,20 +1276,35 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
   "Insert an HTML theme link setup, according to `org-html-export-styles'."
   (save-excursion
     (goto-char (point-min))
-    (thread-last (or (assoc org--html-export-style-choice org-html-export-styles)
-                     (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
-                             org--html-export-style-choice
-                             (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
-      cdr
-      (format "\n %s \n")
-      insert)))
+    (-> (or (assoc org--html-export-style-choice org-html-export-styles)
+           (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
+                   org--html-export-style-choice
+                   (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
+       cdr
+       (format "\n %s \n")
+       insert)))
 
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
-  [:let (whatdo (progn
+  [:face '(:underline "green")
+   :keymap (C-c ;; Let use select new “c”hoice of style.
+            (-let [choice (completing-read
+                           "New HTML style: "
+                           (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
+              (save-excursion
+                (beginning-of-line)
+                (while (re-search-forward
+                        (rx (seq "html-export-style:" (one-or-more word))) nil t)
+                  (replace-match (concat "html-export-style:" choice))))))
+   :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
+                (-partition 4)
+                (--map (s-join "     " it))
+                (s-join "\n")
+                (format "Press “C-c” to change the theme. \n\n Supported themes include:\n\n%s"))
+   :let (whatdo (progn
                   (setq org--html-export-style-choice
                         (if (equal "random" o-label)
-                            (seq-random-elt (mapcar 'car _XYZ_))
+                            (seq-random-elt (mapcar 'car org-html-export-styles))
                           (intern o-label)))
                   (pcase o-label
                     ;; TODO: Move this to when the mode is enabled/disabled?
@@ -1402,11 +1312,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                             'org--html-export-style-setup))
                     (t   (add-hook 'org-export-before-processing-hook
                                    'org--html-export-style-setup)))))
-  :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
-               (-partition 4)
-               (--map (s-join "     " it))
-               (s-join "\n")
-               (format "Supported themes include:\n\n%s"))]
+   ]
   ;; Result string, nothing.
   "")
 
