@@ -1194,16 +1194,16 @@ To learn about keymap inheritance, run:  C-h i m elisp RETURN m Inheritance and 
 
 This keymap has the following bindings setup:
 
-    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'o-this-link-next)
-    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'o-this-link-previous)
-    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'o-this-link-show-docs)
+    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'org-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'org-this-link-previous)
+    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'org-this-link-show-docs)
 
 The use of `C-n' and `C-p' may be a nuisance to some users, since they override `forward-line'
 and `previous-line' when the cursor is on an org-link type. As such, place something like the following
 in your initialisation file.
 
     ;; Use  C-c C-f  to move to the next link of the same link-type as the one under the cursor
-    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'o-this-link-next)
+    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'org-this-link-next)
 
 Alternatively, if you don't find much value in these basic bindings, you can remove them all:
 
@@ -1214,7 +1214,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
     (define-key org-special-block-extras-mode-map (kbd \"C-n\") nil)")
 
 (defvar org-special-block-extras-mode-map--link-keymap-docs nil
-  "An alist referencing key bindings for Org links; used in `o-this-link-show-docs'.")
+  "An alist referencing key bindings for Org links; used in `org-this-link-show-docs'.")
 
 (defun org-link-at-point ()
   "Get the Org link type at point, with suffix colon."
@@ -1263,9 +1263,9 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
     (local-set-key "q" #'kill-buffer-and-window)
     (message "Read-only; “q” to kill buffer and window.")))
 
-(define-key org-special-block-extras-mode-map (kbd "C-n") #'o-this-link-next)
-(define-key org-special-block-extras-mode-map (kbd "C-p") #'o-this-link-previous)
-(define-key org-special-block-extras-mode-map (kbd "C-h") #'o-this-link-show-docs)
+(define-key org-special-block-extras-mode-map (kbd "C-n") #'org-this-link-next)
+(define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
+(define-key org-special-block-extras-mode-map (kbd "C-h") #'org-this-link-show-docs)
 #+end_src
 #+end_details
 
