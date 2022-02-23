@@ -3803,7 +3803,7 @@ mode activation ---after such functions have been declared.
         (defalias 'org--parallelNB
                   #'org--2parallelNB)
  #+END_SRC
-* HTML Export Styles as Links
+*  :fire: HTML Export Styles as Links
   :PROPERTIES:
   :CUSTOM_ID: HTML-Export-Styles-as-Links
   :END:
@@ -3826,6 +3826,7 @@ mode activation ---after such functions have been declared.
   "This variable holds the link label declared by users.
   It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
 
+;; TODO: Make this into a Github Issue.
 (defvar org-html-export-styles
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
@@ -3841,7 +3842,7 @@ mode activation ---after such functions have been declared.
 
   In due time, I would like to add more, such as those linked from
   the discussion https://news.ycombinator.com/item?id=23130104.
-  A nice, simple, opportunity for someone else to contribute.") ;; TODO: Make this into a Github Issue.
+  A nice, simple, opportunity for someone else to contribute.")
 ;;
 ;; Add a bunch more
 (cl-loop for theme in '(comfy_inline imagine_light
@@ -3854,20 +3855,35 @@ mode activation ---after such functions have been declared.
   "Insert an HTML theme link setup, according to `org-html-export-styles'."
   (save-excursion
     (goto-char (point-min))
-    (thread-last (or (assoc org--html-export-style-choice org-html-export-styles)
-                     (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
-                             org--html-export-style-choice
-                             (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
-      cdr
-      (format "\n %s \n")
-      insert)))
+    (-> (or (assoc org--html-export-style-choice org-html-export-styles)
+           (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
+                   org--html-export-style-choice
+                   (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
+       cdr
+       (format "\n %s \n")
+       insert)))
 
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
-  [:let (whatdo (progn
+  [:face '(:underline "green")
+   :keymap (C-c ;; Let use select new “c”hoice of style.
+            (-let [choice (completing-read
+                           "New HTML style: "
+                           (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
+              (save-excursion
+                (beginning-of-line)
+                (while (re-search-forward
+                        (rx (seq "html-export-style:" (one-or-more word))) nil t)
+                  (replace-match (concat "html-export-style:" choice))))))
+   :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
+                (-partition 4)
+                (--map (s-join "     " it))
+                (s-join "\n")
+                (format "Press “C-c” to change the theme. \n\n Supported themes include:\n\n%s"))
+   :let (whatdo (progn
                   (setq org--html-export-style-choice
                         (if (equal "random" o-label)
-                            (seq-random-elt (mapcar 'car _XYZ_))
+                            (seq-random-elt (mapcar 'car org-html-export-styles))
                           (intern o-label)))
                   (pcase o-label
                     ;; TODO: Move this to when the mode is enabled/disabled?
@@ -3875,11 +3891,7 @@ mode activation ---after such functions have been declared.
                                             'org--html-export-style-setup))
                     (t   (add-hook 'org-export-before-processing-hook
                                    'org--html-export-style-setup)))))
-  :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
-               (-partition 4)
-               (--map (s-join "     " it))
-               (s-join "\n")
-               (format "Supported themes include:\n\n%s"))]
+   ]
   ;; Result string, nothing.
   "")
 #+end_src
