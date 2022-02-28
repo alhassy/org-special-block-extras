@@ -3831,9 +3831,7 @@ mode activation ---after such functions have been declared.
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
         (readtheorg . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup")
-        (rose .   ,(concat "#+HTML_HEAD: <link href=\"https://alhassy.github.io/org-notes-style.css\" rel=\"stylesheet\" type=\"text/css\" />"
-                          "<link href=\"https://alhassy.github.io/floating-toc.css\" rel=\"stylesheet\" type=\"text/css\" />"
-                          "<link href=\"https://alhassy.github.io/blog-banner.css\" rel=\"stylesheet\" type=\"text/css\" />"))
+        (rose . "#+HTML_HEAD: <link href=\"https://taopeng.me/org-notes-style/css/notes.css\" rel=\"stylesheet\" type=\"text/css\" />")
         (latexcss . "#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://latex.now.sh/style.min.css\" />"))
       "An alist of theme-to-setup pairs, symbols-to-strings, used by `org-link/html-export-style'.
 
@@ -3866,7 +3864,7 @@ mode activation ---after such functions have been declared.
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
   [:face '(:underline "green")
-   :keymap (C-c ;; Let use select new “c”hoice of style.
+   :keymap ("?" ;; Let use select new choice of style with the “?” key.
             (-let [choice (completing-read
                            "New HTML style: "
                            (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
@@ -3879,7 +3877,7 @@ mode activation ---after such functions have been declared.
                 (-partition 4)
                 (--map (s-join "     " it))
                 (s-join "\n")
-                (format "Press “C-c” to change the theme. \n\n Supported themes include:\n\n%s"))
+                (format "Press “?” to change the theme. \n\n Supported themes include:\n\n%s"))
    :let (whatdo (progn
                   (setq org--html-export-style-choice
                         (if (equal "random" o-label)
