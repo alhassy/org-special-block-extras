@@ -3406,7 +3406,7 @@ In the future, I will likely expose more arguments."
                                    ((json-plist-p shadow)
                                     (-let [(&plist :left X :right Y :deep-right Z :deep-left W) shadow]
                                       (funcall haze X Y Z W)))
-                                   (t (-let [(X Y Z W) shadow]
+                                   (:otherwise (-let [(X Y Z W) shadow]
                                         (funcall haze X Y Z W)))))))
                  title contents)))))
 #+end_src
@@ -3887,7 +3887,7 @@ mode activation ---after such functions have been declared.
                     ;; TODO: Move this to when the mode is enabled/disabled?
                     ("default" (remove-hook 'org-export-before-processing-hook
                                             'org--html-export-style-setup))
-                    (t   (add-hook 'org-export-before-processing-hook
+                    (:otherwise   (add-hook 'org-export-before-processing-hook
                                    'org--html-export-style-setup)))))
    ]
   ;; Result string, nothing.
@@ -3967,7 +3967,7 @@ When you click, it takes a seconds to fetch jokes; so await a moment when hoveri
           saying (cond
                   (o-description (format "echo %s" (pp-to-string o-description)))
                   ((equal "joke" (s-trim o-label)) (format "echo %s" (pp-to-string (dad-joke-get))))
-                  (t "fortune"))
+                  (:otherwise "fortune"))
           result (format "%s\t\t\t%s"
                          (shell-command-to-string (format "%s | cowsay -f %s" saying animal))
                          animal₀)
@@ -7241,7 +7241,7 @@ That is what we accomplish with this new `show' link type."
                    ;; Ignore duplicates; i.e., entries with the same name/title.
                    (cl-remove-duplicates org--docs-actually-used
                                          :test (lambda (x y) (cl-equalp (cl-second x) (cl-second y)))))))
-       (t (s-join "\n\n"
+       (:otherwise (s-join "\n\n"
                   (cl-loop for (label name doc)
                            in org--docs-actually-used
                            collect
@@ -7815,7 +7815,7 @@ COLOR is the colour of the hints."
   (cond
    ((symbolp lst) "")
    ((symbolp (car lst)) (org--list-to-calc (cadr lst)))
-   (t (-let* (((conclusion₀ children) lst)
+   (:otherwise (-let* (((conclusion₀ children) lst)
               ((expr₀ hint) (s-split "--" conclusion₀))
               ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
               (op (or op₀ rel))
