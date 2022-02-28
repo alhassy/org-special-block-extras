@@ -145,59 +145,6 @@ The link text appears as red bold in both Emacs and in HTML export."
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
-(setq it/org->html
-    (let ((centred? t)     ;; For use in the [attributes] (2ⁿᵈ) argument
-          (place "World")) ;; For use in the content (3ʳ) argument
-          (org->html div [:title "A form of greeting"
-                     :style [:padding 1em
-                             :eval (when centred? [:margin auto :width 50%])
-                             :background-color "#00000057"
-                             :box-shadow (0.05em 0.1em 5px 0.01em green)
-                           ]
-                     ]
-                ;; Notice no explicit empty attributes vector provided.
-                (org->html em (format "Hello, %s!" place))
-                (org->html b [:random yup] "noice"))))
-
-(deftest "It produces a <div> containing both the <em> then the <b>"
-  [org->html]
-  (⇝ it/org->html
-     "<div"
-     (* anything)
-     "<em "
-     (* anything)
-     "<b "))
-
-(deftest "It contains the declared top-level (and nested) attributes"
-  [org->html]
-  (⇝ it/org->html
-     "title="
-     (* anything)
-     "style="
-     (* anything)
-     "random="))
-
-(deftest "It contains the content of the inner child elements"
-  [org->html]
-  (⇝ it/org->html
-  "Hello, World!"
-  (* anything)
-  "noice"))
-
-;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
-(deftest "The user's remark is enclosed in the default delimiters"
-  [remark]
-  (⇝ (⟰ "#+begin_remark
-                   Here is some meta-commentary...
-                  #+end_remark")
-     (* anything) "[Editor Remark:"
-     (* anything) "Here is some meta-commentary"
-     (* anything)  "]"))
-
-;; The other features of remark blocks should be tested;
-;; but this is not a pressing, nor interesting, concern.
-;; Editor Comments:4 ends here
-
 ;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:4]]
 (deftest "The result is a <details> tag containing the user's title & text."
   [details]
@@ -308,6 +255,20 @@ The link text appears as red bold in both Emacs and in HTML export."
      (* anything)
      "Z"))
 ;; Parallel:2 ends here
+
+;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
+(deftest "The user's remark is enclosed in the default delimiters"
+  [remark]
+  (⇝ (⟰ "#+begin_remark
+                   Here is some meta-commentary...
+                  #+end_remark")
+     (* anything) "[Editor Remark:"
+     (* anything) "Here is some meta-commentary"
+     (* anything)  "]"))
+
+;; The other features of remark blocks should be tested;
+;; but this is not a pressing, nor interesting, concern.
+;; Editor Comments:4 ends here
 
 ;; [[file:org-special-block-extras.org::*Colours][Colours:4]]
 (deftest "It is an HTML span styled red that contains the user's text"

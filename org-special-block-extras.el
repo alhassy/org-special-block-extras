@@ -1252,9 +1252,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
         (readtheorg . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup")
-        (rose .   ,(concat "#+HTML_HEAD: <link href=\"https://alhassy.github.io/org-notes-style.css\" rel=\"stylesheet\" type=\"text/css\" />"
-                          "<link href=\"https://alhassy.github.io/floating-toc.css\" rel=\"stylesheet\" type=\"text/css\" />"
-                          "<link href=\"https://alhassy.github.io/blog-banner.css\" rel=\"stylesheet\" type=\"text/css\" />"))
+        (rose . "#+HTML_HEAD: <link href=\"https://taopeng.me/org-notes-style/css/notes.css\" rel=\"stylesheet\" type=\"text/css\" />")
         (latexcss . "#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://latex.now.sh/style.min.css\" />"))
       "An alist of theme-to-setup pairs, symbols-to-strings, used by `org-link/html-export-style'.
 
@@ -1287,7 +1285,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
   [:face '(:underline "green")
-   :keymap (C-c ;; Let use select new “c”hoice of style.
+   :keymap ("?" ;; Let use select new choice of style with the “?” key.
             (-let [choice (completing-read
                            "New HTML style: "
                            (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
@@ -1300,7 +1298,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                 (-partition 4)
                 (--map (s-join "     " it))
                 (s-join "\n")
-                (format "Press “C-c” to change the theme. \n\n Supported themes include:\n\n%s"))
+                (format "Press “?” to change the theme. \n\n Supported themes include:\n\n%s"))
    :let (whatdo (progn
                   (setq org--html-export-style-choice
                         (if (equal "random" o-label)
@@ -1315,6 +1313,91 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
    ]
   ;; Result string, nothing.
   "")
+
+(org-deflink fortune
+   "Print an ASCII animal saying the given link's description, a fortune, or a joke.
+
+This is essentially a wrapper around the following command-line incantation
+
+    fortune | cowsay | lolcat -f
+
+We show colourful sayings both in Emacs (when you click on the link) and in HTML export.
+
+This requires you have the command-line packages ‘fortune’, ‘cowsay’, ‘lolcat’,
+and ‘aha’ for converting coloured terminal output into HTML.
+On MacOS, all of these can be installed with `brew install 𝒳';
+better-yet use the Emacs Lisp `system-packages-install' package.
+
+The help-echo, hover tooltip, provides useful information on possibly link types and their effects.
+
+Example uses:
+
+   fortune:joke    ;; Show a random animal saying a punny joke
+
+   fortune:random  ;; Show a random animal saying a random fortune/phrase
+
+   fortune:dragon  ;; Show a dragon saying a random fortune/phrase
+
+   ;; Show a the given animal saying the given phrase
+   [[fortune:mutilated][Opps, I broke the thing!]]
+
+   ;; The ‘fortune’ link grew out of the following link in my work journal
+   [[elisp:(dad-joke-get)][I wanna smile!]]
+
+For HTML export, the resulting HTML element has class ‘org-fortune’,
+to which users may adorn CSS styling. For instance, in an Org file:
+
+  #+html: <style> .org-fortune {font-style: italic; font-family: Monaco} </style>
+  # Chalkduster font-family is good for one-line sayings, phrases.
+
+We intentionally do not fold-up such links when they have associated descriptions.
+
+When you click, it takes a seconds to fetch jokes; so await a moment when hovering over joke fortunes."
+   [:display 'full
+    :face '(:box (:color "orange" :style released-button) :underline "green" :overline "green")
+    :let (animals '(blowfish bud-frogs cower default dragon
+                    dragon-and-cow flaming-sheep ghostbusters
+                    moose mutilated sheep stegosaurus turkey
+                    turtle tux)
+          animal (if (string-equal "cow" (s-trim o-label))
+                     'default
+                   (seq-random-elt animals))
+          animal₀ (if (equal 'default animal) 'cow animal)
+          _loads (progn (require 'dad-joke) (require 'seq) (require 'lolcat))
+          saying (cond
+                  (o-description (format "echo %s" (pp-to-string o-description)))
+                  ((equal "joke" (s-trim o-label)) (format "echo %s" (pp-to-string (dad-joke-get))))
+                  (t "fortune"))
+          result (format "%s\t\t\t%s"
+                         (shell-command-to-string (format "%s | cowsay -f %s" saying animal))
+                         animal₀)
+          buf-name (format "fortune:%s" animal₀))
+   :follow (progn (display-message-or-buffer result)
+                  (ignore-errors (kill-buffer buf-name))
+                  (switch-to-buffer-other-window "*Message*")
+                  (rename-buffer buf-name)
+                  (highlight-regexp (format "%s" animal₀) 'hi-green-b)
+                  (lolcat-this-buffer)
+                  (local-set-key "q" #'kill-buffer-and-window)
+                  (message "“q” to kill buffer and window."))
+   :help-echo (s-join "\n" (list "“fortune:𝒳” or “[[fortune:𝒳][description 𝒟]]” where 𝒳 is "
+                                 "⇢ joke   ⟦A random animal that says a punny joke⟧"
+                                 "⇢ random ⟦A random animal that says 𝒟, or a random fortune phrase⟧"
+                                 "⇢ ⟦This animal says 𝒟, or a random fortune phrase⟧"
+                                 "\t cow, blowfish, bud-frogs, cower, dragon, dragon-and-cow,"
+                                 "\t flaming-sheep, ghostbusters, moose, mutilated, sheep,"
+                                 "\t stegosaurus, turkey, turtle tux"
+                                 "\n"
+                                 "\n" result))
+   ]
+   (if (equal o-backend 'html)
+       (--> (shell-command-to-string (format "%s | cowsay -f %s | lolcat -f | aha -n" saying animal))
+          (if (s-starts-with? "/System/Library" it)
+              (s-join "\n" (cdr (s-split "\n" it)))
+            it)
+          (format "%s\t\t\t%s" it animal₀)
+          (format "<pre class=\"org-fortune\"> %s </pre>" it))
+     result))
 
 (defvar org-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
