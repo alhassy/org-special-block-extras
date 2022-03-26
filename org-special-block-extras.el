@@ -566,7 +566,7 @@ Example declaration, with all possible features shown:
    ;; We can use variable values when defining new blocks
    (setq angry-red '(:foreground \"red\" :weight bold))
 
-   (defblock remark
+   (org-defblock remark
      (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
      \"Top level (HTML & LaTeX)O-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
@@ -1308,7 +1308,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                     ;; TODO: Move this to when the mode is enabled/disabled?
                     ("default" (remove-hook 'org-export-before-processing-hook
                                             'org--html-export-style-setup))
-                    (:otherwise   (add-hook 'org-export-before-processing-hook
+                    (_   (add-hook 'org-export-before-processing-hook
                                    'org--html-export-style-setup)))))
    ]
   ;; Result string, nothing.
