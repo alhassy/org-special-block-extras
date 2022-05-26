@@ -682,8 +682,7 @@ BODY, list: Code to be executed"
                     (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
                            (format "@@%s@@%s:" x backend))
                           (:else
-                           (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-                                   backend)))))))
+                           (format "%s" x)))))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
