@@ -82,6 +82,10 @@
 
 (require 'lf)
 
+;;; Lets make the 's' library in version 1.12 work by creating an alias!
+(unless (fboundp 's-replace-regexp)
+  (defalias 's-replace-regexp 'replace-regexp-in-string))
+
 (defconst org-special-block-extras-version (package-get-version))
 (defun org-special-block-extras-version ()
   "Print the current version of the package in the minibuffer."
@@ -90,7 +94,7 @@
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 30 new custom blocks & 34 link types for Org-mode.
+  "Provide 30 new custom blocks & 34 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
   nil nil nil
@@ -101,12 +105,12 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
         (setq org-export-allow-bind-keywords t)
         (defvar org--ospe-kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-        
+
         (unless org--ospe-kbd-html-setup
           (setq org--ospe-kbd-html-setup t)
-        (setq org-html-head-extra
-         (concat org-html-head-extra
-        "
+          (setq org-html-head-extra
+                (concat org-html-head-extra
+                        "
         <style>
         /* From: https://endlessparentheses.com/public/css/endless.css */
         /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
@@ -130,7 +134,7 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
           padding: .08em .4em;
           text-shadow: 0 1px 0 #fff;
           word-spacing: -4px;
-        
+
           box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
         }
         </style>")))
@@ -139,24 +143,24 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
           (org-docs-load-libraries))
         (defvar org--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-        
+
         (unless org--tooltip-html-setup
           (setq org--tooltip-html-setup t)
-        (setq org-html-head-extra
-         (concat org-html-head-extra
-        "
+          (setq org-html-head-extra
+                (concat org-html-head-extra
+                        "
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
+
         <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
+
         <script type=\"text/javascript\">
             if (typeof jQuery == 'undefined') {
                 document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
             }
         </script>
-        
+
          <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
+
           <script>
                  $(document).ready(function() {
                      $('.tooltip').tooltipster({
@@ -176,10 +180,10 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
          });
                  });
              </script>
-        
+
         <style>
            abbr {color: red;}
-        
+
            .tooltip { border-bottom: 1px dotted #000;
                       color:red;
                       text-decoration: none;}
@@ -187,18 +191,18 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
         ")))
         (defvar org--docs-empty! (list nil t)
           "An indicator of when glossary entries should be erased.
-        
+
         We erase the glossary not on the first export, but on the second export.
         The first export collects all citations, which are used in the second export.")
         (setcdr (last org--docs-empty!) org--docs-empty!) ;; It's an infinite cyclic list.
-        
+
         ;; Actual used glossary entries depends on the buffer; so clean up after each export
         (advice-add #'org-export-dispatch
-          :after (lambda (&rest _)
-          (when (pop org--docs-empty!)
-              (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
-                    org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
-      ) ;; Must be on a new line; I'm using noweb-refs
+                    :after (lambda (&rest _)
+                             (when (pop org--docs-empty!)
+                               (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
+                                     org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
+        ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
     )) ;; Must be on a new line; I'm using noweb-refs
 
