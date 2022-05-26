@@ -742,7 +742,7 @@ BACKEND is the export back-end being used, as a symbol."
           (setq kwdargs (cadr kwdargs))
           (forward-line -1)
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
-          (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
+          (setq blk-contents (buffer-substring-no-properties body-start (1- (line-beginning-position))))
           (kill-region blk-start (point))
           (insert (eval `(,(intern (format "org--%s" blk))
                           (quote ,backend)
