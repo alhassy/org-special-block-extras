@@ -683,7 +683,7 @@ BODY, list: Code to be executed"
                            (format "@@%s@@%s:" x backend))
                           (:else
                            (s-replace-regexp "\n\\'" "" (org-export-string-as x 
-                                   backend))))))))
+                                   backend t (org-export-get-environment)))))))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
