@@ -1003,31 +1003,35 @@ the following proves P = R.
                                (goto-char (point-min))
                                (org-list-to-lisp))))))
 
-(org-defblock details (title "Details") (title-color "green")
+(org-defblock details (title "Details")
+	      (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
 
-By default, the TITLE of such blocks is “Details”
-and its TITLE-COLOR is green.
+By default, the TITLE of such blocks is “Details”,
+its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
 
 In HTML, we show folded, details, regions with a nice greenish colour.
 
 In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments,
-such as ‘background-color’.
+it may be prudent to expose more aspects as arguments.
 "
-  (format
    (pcase backend
-     (`latex "\\begin{quote}
-                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
-                    %s
-                  \\end{tcolorbox}
-                \\end{quote}")
-     (_ "<details class=\"code-details\"
+     (`latex (concat (pcase (substring background-color 0 1)
+		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+		     (pcase (substring title-color 0 1)
+		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+		     (format "\\begin{quote}
+                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
+                                   %s
+                               \\end{tcolorbox}
+                \\end{quote}" title contents)))
+     (_ (format "<details class=\"code-details\"
                  style =\"padding: 1em;
-                          background-color: #e5f5e5;
-                          /* background-color: pink; */
+                          background-color: %s;
                           border-radius: 15px;
                           color: hsl(157 75% 20%);
                           font-size: 0.9em;
@@ -1040,34 +1044,37 @@ such as ‘background-color’.
                     </strong>
                   </summary>
                   %s
-               </details>"))
-   title-color title contents))
+               </details>" background-color title-color title contents))))
 
-(org-defblock Details (title "Details") (title-color "green")
+(org-defblock Details (title "Details")
+	      (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
 
 By default, the TITLE of such blocks is “Details”
-and its TITLE-COLOR is green.
+its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
 
 In HTML, we show folded, details, regions with a nice greenish colour.
 
 In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments,
-such as ‘background-color’.
+it may be prudent to expose more aspects as arguments.
 "
-  (format
    (pcase backend
-     (`latex "\\begin{quote}
-                  \\begin{tcolorbox}[colback=%s,title={%s},sharp corners,boxrule=0.4pt]
-                    %s
-                  \\end{tcolorbox}
-                \\end{quote}")
-     (_ "<details class=\"code-details\"
+     (`latex (concat (pcase (substring background-color 0 1)
+		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+		     (pcase (substring title-color 0 1)
+		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+		     (format "\\begin{quote}
+                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
+                                   %s
+                               \\end{tcolorbox}
+                \\end{quote}" title contents)))
+     (_ (format "<details class=\"code-details\"
                  style =\"padding: 1em;
-                          background-color: #e5f5e5;
-                          /* background-color: pink; */
+                          background-color: %s;
                           border-radius: 15px;
                           color: hsl(157 75% 20%);
                           font-size: 0.9em;
@@ -1080,8 +1087,7 @@ such as ‘background-color’.
                     </strong>
                   </summary>
                   %s
-               </details>"))
-   title-color title contents))
+               </details>" background-color title-color title contents))))
 
 (org-defblock box (title "") (background-color nil shadow nil)
   "Enclose text in a box, possibly with a title.
