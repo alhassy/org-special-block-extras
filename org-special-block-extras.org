@@ -232,6 +232,10 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 # ;; delimited by the custom block.  - BACKEND: The current exportation backend;
 # ;; e.g., 'html or 'latex.  The handler must return a string.
 #
+#+BEGIN_SRC emacs-lisp :noweb yes
+  (defcustom org-special-block-add-html-extra nil
+    "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag")
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
@@ -4979,41 +4983,42 @@ Examples:
 
 The following styling rule is used to make the keystrokes displayed nicely.
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-(defvar org--ospe-kbd-html-setup nil
-  "Has the necessary keyboard styling HTML beeen added?")
+  (defvar org--ospe-kbd-html-setup nil
+    "Has the necessary keyboard styling HTML beeen added?")
 
-(unless org--ospe-kbd-html-setup
-  (setq org--ospe-kbd-html-setup t)
-(setq org-html-head-extra
- (concat org-html-head-extra
-"
-<style>
-/* From: https://endlessparentheses.com/public/css/endless.css */
-/* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
-kbd
-{
-  -moz-border-radius: 6px;
-  -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-  -webkit-border-radius: 6px;
-  -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-  color: #333;
-  display: inline-block;
-  font-family: 'Droid Sans Mono', monospace;
-  font-size: 80%;
-  font-weight: normal;
-  line-height: inherit;
-  margin: 0 .1em;
-  padding: .08em .4em;
-  text-shadow: 0 1px 0 #fff;
-  word-spacing: -4px;
+  (unless org--ospe-kbd-html-setup
+    (setq org--ospe-kbd-html-setup t))
+  (when org-special-block-add-html-extra
+   (setq org-html-head-extra
+    (concat org-html-head-extra
+     "
+  <style>
+  /* From: https://endlessparentheses.com/public/css/endless.css */
+  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+  kbd
+  {
+    -moz-border-radius: 6px;
+    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    -webkit-border-radius: 6px;
+    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    color: #333;
+    display: inline-block;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 80%;
+    font-weight: normal;
+    line-height: inherit;
+    margin: 0 .1em;
+    padding: .08em .4em;
+    text-shadow: 0 1px 0 #fff;
+    word-spacing: -4px;
 
-  box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-}
-</style>")))
+    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+  }
+  </style>")))
 #+end_src
 
 Let's have some sanity tests...
@@ -7136,54 +7141,55 @@ sets up the required magic to make this happen.
 
 #+begin_details "Fast, Sleek, and Beautiful Tooltips: Touching ‘org-html-head-extra’"
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-(defvar org--tooltip-html-setup nil
-  "Has the necessary HTML beeen added?")
+  (defvar org--tooltip-html-setup nil
+    "Has the necessary HTML beeen added?")
 
-(unless org--tooltip-html-setup
-  (setq org--tooltip-html-setup t)
-(setq org-html-head-extra
- (concat org-html-head-extra
-"
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+  (unless org--tooltip-html-setup
+    (setq org--tooltip-html-setup t))
+  (when org-special-block-add-html-extra
+   (setq org-html-head-extra
+    (concat org-html-head-extra
+     "
+  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
 
-<link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
 
-<script type=\"text/javascript\">
-    if (typeof jQuery == 'undefined') {
-        document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
-    }
-</script>
+  <script type=\"text/javascript\">
+      if (typeof jQuery == 'undefined') {
+          document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
+      }
+  </script>
 
- <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+   <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
 
-  <script>
-         $(document).ready(function() {
-             $('.tooltip').tooltipster({
-                 theme: 'tooltipster-punk',
-                 contentAsHTML: true,
-                 animation: 'grow',
-                 delay: [100,500],
-                 // trigger: 'click'
-                 trigger: 'custom',
-                 triggerOpen: {
-                     mouseenter: true
-                 },
-                 triggerClose: {
-                     originClick: true,
-                     scroll: true
-                 }
- });
-         });
-     </script>
+    <script>
+           $(document).ready(function() {
+               $('.tooltip').tooltipster({
+                   theme: 'tooltipster-punk',
+                   contentAsHTML: true,
+                   animation: 'grow',
+                   delay: [100,500],
+                   // trigger: 'click'
+                   trigger: 'custom',
+                   triggerOpen: {
+                       mouseenter: true
+                   },
+                   triggerClose: {
+                       originClick: true,
+                       scroll: true
+                   }
+   });
+           });
+       </script>
 
-<style>
-   abbr {color: red;}
+  <style>
+     abbr {color: red;}
 
-   .tooltip { border-bottom: 1px dotted #000;
-              color:red;
-              text-decoration: none;}
-</style>
-")))
+     .tooltip { border-bottom: 1px dotted #000;
+                color:red;
+                text-decoration: none;}
+  </style>
+  ")))
     #+end_src
 
 Note that we have a conditional in the middle to avoid loading jQuery multiple
