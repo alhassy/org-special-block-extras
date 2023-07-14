@@ -138,7 +138,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.0.1
+;; Version: 4.0.2
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -233,8 +233,18 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 # ;; e.g., 'html or 'latex.  The handler must return a string.
 #
 #+BEGIN_SRC emacs-lisp :noweb yes
-  (defcustom org-special-block-add-html-extra nil
-    "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag")
+  (defcustom org-special-block-add-html-extra t
+    "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag.
+
+The `org-special-block-extras' mode adds a lot of extra HTML/JS code that
+1. [Bloat] may not be needed by everyone using this package,
+2. [Security Threat] loads stuff from foreign websites.
+
+Since the extra stuff is for beautiful tooltips or styles,
+for ease of use, the default behaviour is to use such
+“untrusted data from untrusted websites”.
+
+To avoid such behaviour, set this variable to `nil'.")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :noweb yes
@@ -242,7 +252,12 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 (define-minor-mode org-special-block-extras-mode
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
-All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
+All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
+
+This minor mode uses “untrusted data from untrusted websites” when exporting
+to HTML, this is done for beautiful tooltips or styles.
+Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
+"
   :lighter " OSPE"
   (if org-special-block-extras-mode
       (progn
@@ -3135,7 +3150,7 @@ Requires: src_latex[:exports code]{,#+latex_header:  \usepackage{tcolorbox}}
 #+begin_details Implementation
 #+begin_src emacs-lisp
 (org-defblock details (title "Details")
-	      (background-color "#e5f5e5" title-color "green")
+              (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -3150,12 +3165,12 @@ it may be prudent to expose more aspects as arguments.
 "
    (pcase backend
      (`latex (concat (pcase (substring background-color 0 1)
-		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-		     (pcase (substring title-color 0 1)
-		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-		     (format "\\begin{quote}
+                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+                     (pcase (substring title-color 0 1)
+                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+                     (format "\\begin{quote}
                               \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
                                    %s
                                \\end{tcolorbox}
@@ -3187,7 +3202,7 @@ block, for the not-too-odd situation we want to have, right away, one details bl
 within another.
 #+begin_src emacs-lisp :exports none
 (org-defblock Details (title "Details")
-	      (background-color "#e5f5e5" title-color "green")
+              (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -3202,12 +3217,12 @@ it may be prudent to expose more aspects as arguments.
 "
    (pcase backend
      (`latex (concat (pcase (substring background-color 0 1)
-		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-		     (pcase (substring title-color 0 1)
-		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-		     (format "\\begin{quote}
+                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+                     (pcase (substring title-color 0 1)
+                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+                     (format "\\begin{quote}
                               \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
                                    %s
                                \\end{tcolorbox}

@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.0.1
+;; Version: 4.0.2
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -88,103 +88,123 @@
   (interactive)
   (message org-special-block-extras-version))
 
+  (defcustom org-special-block-add-html-extra t
+    "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag.
+
+The `org-special-block-extras' mode adds a lot of extra HTML/JS code that
+1. [Bloat] may not be needed by everyone using this package,
+2. [Security Threat] loads stuff from foreign websites.
+
+Since the extra stuff is for beautiful tooltips or styles,
+for ease of use, the default behaviour is to use such
+“untrusted data from untrusted websites”.
+
+To avoid such behaviour, set this variable to `nil'.")
+
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
-All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
+All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
+
+This minor mode uses “untrusted data from untrusted websites” when exporting
+to HTML, this is done for beautiful tooltips or styles.
+Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
+"
   :lighter " OSPE"
   (if org-special-block-extras-mode
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
         (add-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
         (setq org-export-allow-bind-keywords t)
-        (defvar org--ospe-kbd-html-setup nil
-          "Has the necessary keyboard styling HTML beeen added?")
+          (defvar org--ospe-kbd-html-setup nil
+            "Has the necessary keyboard styling HTML beeen added?")
         
-        (unless org--ospe-kbd-html-setup
-          (setq org--ospe-kbd-html-setup t)
-        (setq org-html-head-extra
-         (concat org-html-head-extra
-        "
-        <style>
-        /* From: https://endlessparentheses.com/public/css/endless.css */
-        /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
-        kbd
-        {
-          -moz-border-radius: 6px;
-          -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-          -webkit-border-radius: 6px;
-          -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-          background-color: #f7f7f7;
-          border: 1px solid #ccc;
-          border-radius: 6px;
-          box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-          color: #333;
-          display: inline-block;
-          font-family: 'Droid Sans Mono', monospace;
-          font-size: 80%;
-          font-weight: normal;
-          line-height: inherit;
-          margin: 0 .1em;
-          padding: .08em .4em;
-          text-shadow: 0 1px 0 #fff;
-          word-spacing: -4px;
+          (unless org--ospe-kbd-html-setup
+            (setq org--ospe-kbd-html-setup t))
+          (when org-special-block-add-html-extra
+           (setq org-html-head-extra
+            (concat org-html-head-extra
+             "
+          <style>
+          /* From: https://endlessparentheses.com/public/css/endless.css */
+          /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+          kbd
+          {
+            -moz-border-radius: 6px;
+            -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+            -webkit-border-radius: 6px;
+            -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+            background-color: #f7f7f7;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+            color: #333;
+            display: inline-block;
+            font-family: 'Droid Sans Mono', monospace;
+            font-size: 80%;
+            font-weight: normal;
+            line-height: inherit;
+            margin: 0 .1em;
+            padding: .08em .4em;
+            text-shadow: 0 1px 0 #fff;
+            word-spacing: -4px;
         
-          box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-        }
-        </style>")))
+            box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+          }
+          </style>")))
         ;; Ensure user's documentation libraries have loaded
         (unless org--docs-from-libraries
           (org-docs-load-libraries))
-        (defvar org--tooltip-html-setup nil
-          "Has the necessary HTML beeen added?")
+          (defvar org--tooltip-html-setup nil
+            "Has the necessary HTML beeen added?")
         
-        (unless org--tooltip-html-setup
-          (setq org--tooltip-html-setup t)
-        (setq org-html-head-extra
-         (concat org-html-head-extra
-        "
-        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
+          (unless org--tooltip-html-setup
+            (setq org--tooltip-html-setup t))
+          (when org-special-block-add-html-extra
+           (setq org-html-head-extra
+            (concat org-html-head-extra
+             "
+          <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
         
-        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
+          <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
         
-        <script type=\"text/javascript\">
-            if (typeof jQuery == 'undefined') {
-                document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
-            }
-        </script>
+          <script type=\"text/javascript\">
+              if (typeof jQuery == 'undefined') {
+                  document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
+              }
+          </script>
         
-         <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
+           <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
         
-          <script>
-                 $(document).ready(function() {
-                     $('.tooltip').tooltipster({
-                         theme: 'tooltipster-punk',
-                         contentAsHTML: true,
-                         animation: 'grow',
-                         delay: [100,500],
-                         // trigger: 'click'
-                         trigger: 'custom',
-                         triggerOpen: {
-                             mouseenter: true
-                         },
-                         triggerClose: {
-                             originClick: true,
-                             scroll: true
-                         }
-         });
-                 });
-             </script>
+            <script>
+                   $(document).ready(function() {
+                       $('.tooltip').tooltipster({
+                           theme: 'tooltipster-punk',
+                           contentAsHTML: true,
+                           animation: 'grow',
+                           delay: [100,500],
+                           // trigger: 'click'
+                           trigger: 'custom',
+                           triggerOpen: {
+                               mouseenter: true
+                           },
+                           triggerClose: {
+                               originClick: true,
+                               scroll: true
+                           }
+           });
+                   });
+               </script>
         
-        <style>
-           abbr {color: red;}
+          <style>
+             abbr {color: red;}
         
-           .tooltip { border-bottom: 1px dotted #000;
-                      color:red;
-                      text-decoration: none;}
-        </style>
-        ")))
+             .tooltip { border-bottom: 1px dotted #000;
+                        color:red;
+                        text-decoration: none;}
+          </style>
+          ")))
         (defvar org--docs-empty! (list nil t)
           "An indicator of when glossary entries should be erased.
         
@@ -1004,7 +1024,7 @@ the following proves P = R.
                                (org-list-to-lisp))))))
 
 (org-defblock details (title "Details")
-	      (background-color "#e5f5e5" title-color "green")
+              (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1019,12 +1039,12 @@ it may be prudent to expose more aspects as arguments.
 "
    (pcase backend
      (`latex (concat (pcase (substring background-color 0 1)
-		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-		     (pcase (substring title-color 0 1)
-		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-		     (format "\\begin{quote}
+                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+                     (pcase (substring title-color 0 1)
+                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+                     (format "\\begin{quote}
                               \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
                                    %s
                                \\end{tcolorbox}
@@ -1047,7 +1067,7 @@ it may be prudent to expose more aspects as arguments.
                </details>" background-color title-color title contents))))
 
 (org-defblock Details (title "Details")
-	      (background-color "#e5f5e5" title-color "green")
+              (background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1062,12 +1082,12 @@ it may be prudent to expose more aspects as arguments.
 "
    (pcase backend
      (`latex (concat (pcase (substring background-color 0 1)
-		       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-		       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-		     (pcase (substring title-color 0 1)
-		       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-		       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-		     (format "\\begin{quote}
+                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
+                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
+                     (pcase (substring title-color 0 1)
+                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
+                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
+                     (format "\\begin{quote}
                               \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
                                    %s
                                \\end{tcolorbox}
