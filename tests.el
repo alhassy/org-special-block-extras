@@ -105,14 +105,14 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
+;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
 
 The link text appears as red bold in both Emacs and in HTML export."
   [:face '(:foreground "red" :weight bold)
    ;; :help-echo (org-link/shout o-label o-description 'html)
-   :display full
+   :display 'full
    :keymap (C-m (message-box "hola"))
    :follow (message-box "%s and %s" pre current-prefix-arg)
    ]
@@ -145,7 +145,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
-;; [[file:org-special-block-extras.org::#Folded-Details][Folded Details ---As well as boxed text and subtle colours:4]]
+;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:4]]
 (deftest "The result is a <details> tag containing the user's title & text."
   [details]
   (⇝ (⟰ "#+begin_details TITLE-RIGHT-HERE
@@ -172,7 +172,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "This is the key insight"
      (* anything)))
 
-;; [[file:org-special-block-extras.org::#Parallel][Parallel:2]]
+;; [[file:org-special-block-extras.org::*Parallel][Parallel:2]]
 (deftest "Parallel blocks work as expected - Defaults"
   [parallel block]
   (⇝ (⟰ "#+begin_parallel
@@ -256,7 +256,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "Z"))
 ;; Parallel:2 ends here
 
-;; [[file:org-special-block-extras.org::#editor-comments][Editor Comments:4]]
+;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
 (deftest "The user's remark is enclosed in the default delimiters"
   [remark]
   (⇝ (⟰ "#+begin_remark
@@ -270,7 +270,7 @@ The link text appears as red bold in both Emacs and in HTML export."
 ;; but this is not a pressing, nor interesting, concern.
 ;; Editor Comments:4 ends here
 
-;; [[file:org-special-block-extras.org::#Colours][Colours:4]]
+;; [[file:org-special-block-extras.org::*Colours][Colours:4]]
 (deftest "It is an HTML span styled red that contains the user's text"
   [color red block]
   (⇝ (⟰ "#+begin_red
@@ -295,7 +295,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "</span>"))
 ;; Colours:4 ends here
 
-;; [[file:org-special-block-extras.org::#kbd:nice-keystroke-renditions][Nice Keystroke Renditions: kbd:C-h_h:3]]
+;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
   (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
@@ -331,7 +331,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
 ;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
 
-;; [[file:org-special-block-extras.org::#Link-Here-OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
+;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
 (deftest "It works as expected: We have an anchor with the given ID, and the default SVG chain icon."
   [link:here]
   (⇝ (⟰ "link-here:example-location (Click the icon and see the URL has changed!)")
@@ -341,7 +341,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      (* anything)))
 ;;   /“Link Here!”/ & OctoIcons:3 ends here
 
-;; [[file:org-special-block-extras.org::#Badge-Links][Badge Links:2]]
+;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:2]]
 (deftest "It works when all 5 arguments are provided"
   [badge]
   (⇝ (⟰ "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir")
@@ -401,7 +401,7 @@ The link text appears as red bold in both Emacs and in HTML export."
      "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
 ;; Badge Links:2 ends here
 
-;; [[file:org-special-block-extras.org::#COMMENT-Intro][Intro, motivating examples:4]]
+;; [[file:org-special-block-extras.org::*Intro, motivating examples][Intro, motivating examples:4]]
 (deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
   [doc]
   (⇝ (⟰ "doc:apply")
@@ -440,7 +440,7 @@ The link text appears as red bold in both Emacs and in HTML export."
                     "\">Existential Angst</abbr>.</p> "))
 ;; Intro, motivating examples:4 ends here
 
-;; [[file:org-special-block-extras.org::#Marginal-one-off-remarks][Marginal, “one-off”, remarks:2]]
+;; [[file:org-special-block-extras.org::*Marginal, “one-off”, remarks][Marginal, “one-off”, remarks:2]]
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
                in the Bible]] does not burden a soul beyond what it can bear./
                --- Quran 2:286"))
@@ -463,7 +463,7 @@ The link text appears as red bold in both Emacs and in HTML export."
   (⇝ margin "<abbr" (* anything) "°</abbr>"))
 ;; Marginal, “one-off”, remarks:2 ends here
 
-;; [[file:org-special-block-extras.org::#Equational-Proofs][Equational Proofs:4]]
+;; [[file:org-special-block-extras.org::*Equational Proofs][Equational Proofs:4]]
 (setq calc (⟰ "#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
                   +     x
                   +     y -- Explanation of why $x \\;=\\; y$
@@ -505,3 +505,175 @@ The link text appears as red bold in both Emacs and in HTML export."
           "hint 2"
           "Explanation of why $y \\;\\leq\\; z$")))
 ;; Equational Proofs:4 ends here
+
+;; [[file:org-special-block-extras.org::*Minimal working example][Minimal working example:1]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Run all MWE tests
+;; (ert "mwe")
+
+;; TODO: This should just be the text of mwe.org
+(setq mwe (⟰
+ "
+#+begin_parallel
+[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
+
+Pop-quiz: How does doc:apply work?
+#+end_parallel
+
+#+begin_details Answer
+link-here:solution
+Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
+
+[[remark:Musa][Ain't that cool?]]
+
+#+begin_spoiler aqua
+That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
+#+end_spoiler
+
+#+end_details
+
+#+html: <br>
+#+begin_box
+octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+#+end_box
+
+/Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
+beyond what it can bear./ --- Quran 2:286
+
+#+LATEX_HEADER: \\usepackage{multicol}
+#+LATEX_HEADER: \\usepackage{tcolorbox}
+#+latex: In the LaTeX output, we have a glossary.
+
+show:GLOSSARY
+
+badge:Thanks|for_reading
+tweet:https://github.com/alhassy/org-special-block-extras
+badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+"))
+
+(deftest "It exports to HTML without any problems"
+  [mwe html-export]
+  (find-file "mwe.org")
+  (should (org-html-export-to-html)))
+
+(deftest "It starts with a 2-column div for ‘parallel’"
+  [mwe parallel]
+  (⇝ mwe "<div style=\"column-rule-style: none nil;column-count: 2;\">"
+         (* anything)
+         "</div>"))
+
+(deftest "Its initial question is in ‘orange’, with answer in ‘blue’"
+  [mwe color orange blue]
+  (⇝ mwe "<span style=\"color:orange;\">Are you excited to learn some Lisp?</span>"
+         (* anything)
+         "<span style=\"color:blue;\">Yes!</span>"))
+
+(deftest "Its second question, about ‘apply’, has a tooltip"
+  [mwe doc]
+  (⇝ mwe
+     "Pop-quiz: How does "
+     "<abbr class=\"tooltip\" title=\"Call FUNCTION with our remaining args, "
+     "using our last arg as list of args.<br>Then return the value FUNCTION returns."
+     "<br>With a single argument, call the argument’s first element using the"
+     "<br>other elements as args.<br>Thus, (apply '+ 1 2 '(3 4)) returns 10."
+     "<br><br>(fn FUNCTION &rest ARGUMENTS)\">apply</abbr> work?"))
+
+(deftest "Its ‘details’ block is titled “Answer”, in green"
+  [mwe details]
+  (⇝ mwe
+     "<details"
+     (* anything) ;; styling
+     "<summary>"
+     (* anything) ;; styling
+     "<font face=\"Courier\" size=\"3\" color=\"green\">"
+     (* anything)
+     "Answer"))
+
+(deftest "Its details block begins with an SVG anchor identified as ‘solution’"
+  [mwe link-here]
+  (⇝ mwe "<details"
+         (* anything) ;; styling
+         "<a class=\"anchor\""
+         (* anything)
+         "href=\"#solution\">" ;; link-here:solution
+         "<svg"
+         (* anything)
+         "</svg></a>"
+         (* anything)
+         "Syntactically, <code>(apply f '(x0 ... xN)) = (f x0 ... xN)</code>."))
+
+(deftest "Its top-level remark is my name in a box, then the text, then a closing box delimiter"
+  [mwe remark]
+  (⇝ mwe "<details"
+         (* anything)
+         "<p style=\"color: black;\">"
+         "<span style=\"border-width:1px;border-style:solid;padding:5px\">"
+         "<strong>[Musa:</strong>"
+         "</span>"
+         " Ain't that cool?  "
+         "<span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span>"
+         ))
+
+(deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
+  [mwe spoiler color magenta gensym]
+
+  (⇝ mwe "<details"
+         (* anything)
+         ;; The local spoiler style is declared
+         "<style>"
+         (* anything) ;; A random id; e.g., #g289
+         "{color: aqua; background-color:aqua;}"
+         (* anything)
+         ":hover {color: black; background-color:white;} "
+         "</style>"
+         (* anything)
+         ;; Then it is used
+         "That is, <span style=\"color:magenta;\">"
+         "we can <span id="
+         (* anything) ;; our random id is used here
+         "> apply </span>" ;; Here is the spoiler!
+         " a function to a list of arguments!</span>"
+         (* anything)
+         "</details>"))
+
+(deftest "It has a title-less green box starting with an octoicon & kbd links have tooltips"
+  [mwe box octoicon kbd]
+  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
+  (⇝ mwe
+     "<div style=\"padding: 1em;"
+     (* anything)
+     "<h3></h3>"
+     (* anything)
+     "<svg" ;; octoicon:report
+     (* anything)
+     "Note that <abbr class=\"tooltip\""
+     (* anything)
+     "title=\"C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area."
+     (* anything)
+     "<kbd style=\"border-color: red\">C-x C-e</kbd></abbr> evaluates a Lisp form!"
+     (* anything)
+     "</div>"))
+
+(deftest "Its Quranic quote has the user requested tooltip indicated by a small raised circle"
+  [mwe margin]
+  (⇝ mwe
+     "Allah <abbr class=\"tooltip\""
+     " title=\"The God of Abraham; known as Elohim in the Bible\">°</abbr>&emsp13;" ;; ∘ !
+     " does not burden a soul beyond what it can bear."
+     (* anything)
+     "Quran 2:286"))
+
+(deftest "It concludes with three beautiful badges"
+  [mwe badge]
+  ;; badge:Thanks|for_reading
+  ;; tweet:https://github.com/alhassy/org-special-block-extras
+  ;; badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
+  (⇝ mwe
+     "<img src=\"https://img.shields.io/badge/Thanks-for_reading-nil?logo=nil\">"
+     (* anything)
+     "<img src=\"https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras\">"
+     (* anything)
+     "<img src=\"https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee\">"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Minimal working example:1 ends here

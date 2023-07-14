@@ -93,7 +93,7 @@
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
-  nil nil nil
+  :lighter " OSPE"
   (if org-special-block-extras-mode
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
@@ -379,7 +379,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
    See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
-+ [:display full] if you do not want bracket links to be
++ [:display 'full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
 
 + :follow is a form that is executed when you click on such links; e.g., to open
@@ -435,7 +435,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
          ;; These links should *never* be folded in descriptive display;
         ;; i.e., “[[example:lable][description]]” will always appear verbatim
         ;; and not hide the first pair […].
-        :display (quote ,(cl-getf display :display)) ;; e.g.,: 'full
+        :display (cl-the symbol ,(cl-getf display :display)) ;; e.g.,: 'full
         ;; Any special keybindings when cursour is on this link type?
         ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
         :keymap (let ((o-keymap (copy-keymap org-mouse-map))
@@ -1699,7 +1699,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
            ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
            (""      "%s") ;; e.g., badge:key|value|color||logo
            ('nil    "%s") ;; e.g., badge:key|value|color
-           (t (format "<a href=\"%s\">%%s</a>"
+           (_ (format "<a href=\"%s\">%%s</a>"
                       (s-replace "%" "%%"
                                  ,(if social-shields-name
                                       `(format ,social-url o-label)

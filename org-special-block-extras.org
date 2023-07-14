@@ -9,7 +9,7 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 # +toc: headlines 2
 # TODO: Final version should not have the following incantation active.
-#+OPTIONS: broken-links:auto
+#+options: broken-links:auto
 
 # TODO C-c C-c  ⇒ Run all tests
 #+begin_src emacs-lisp :exports none :tangle no
@@ -18,6 +18,7 @@
 ;; i.e., insist on displaying in a dedicated buffer
 (let ((max-mini-window-height 0))
   (ignore-errors (kill-buffer "ERT: tests.el"))
+  (message "Tangling source & tests...") (org-babel-tangle)
   (message "Running tests...")
   (display-message-or-buffer (shell-command-to-string "emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit"))
   (switch-to-buffer-other-window "*Message*")
@@ -26,11 +27,14 @@
   (highlight-regexp "failures" 'hi-red-b)
   (highlight-regexp "passed" 'hi-green-b)
   (highlight-regexp "deprecated" 'hi-blue-b)
-  (re-search-forward "failed")
+  (or (re-search-forward "failed" nil t) (message "Yay, everything passes!"))
   (read-only-mode)
-  (local-set-key "q" #'kill-buffer-and-window)
-  (message "Read-only; “q” to kill buffer and window."))
+  (local-set-key "q" #'kill-buffer-and-window) ;; (message "Read-only; “q” to kill buffer and window.")
+  )
 #+end_src
+
+#+RESULTS:
+: kill-buffer-and-window
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -235,7 +239,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
     "Provide 30 new custom blocks & 34 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'."
-  nil nil nil
+  :lighter " OSPE"
   (if org-special-block-extras-mode
       (progn
         <<enable-mode>>
@@ -363,6 +367,9 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #+end_src
+
+#+RESULTS:
+: ⇝
 
 --------------------------------------------------------------------------------
 
@@ -1363,7 +1370,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
    See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
-+ [:display full] if you do not want bracket links to be
++ [:display 'full] if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
 
 + :follow is a form that is executed when you click on such links; e.g., to open
@@ -1419,7 +1426,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
          ;; These links should *never* be folded in descriptive display;
         ;; i.e., “[[example:lable][description]]” will always appear verbatim
         ;; and not hide the first pair […].
-        :display (quote ,(cl-getf display :display)) ;; e.g.,: 'full
+        :display (cl-the symbol ,(cl-getf display :display)) ;; e.g.,: 'full
         ;; Any special keybindings when cursour is on this link type?
         ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
         :keymap (let ((o-keymap (copy-keymap org-mouse-map))
@@ -1474,7 +1481,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
 The link text appears as red bold in both Emacs and in HTML export."
   [:face '(:foreground "red" :weight bold)
    ;; :help-echo (org-link/shout o-label o-description 'html)
-   :display full
+   :display 'full
    :keymap (C-m (message-box "hola"))
    :follow (message-box "%s and %s" pre current-prefix-arg)
    ]
@@ -5480,7 +5487,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
            ("here" (format "<a id=\"%s\" href=\"#%s\">%%s</a>" (s-replace "%" "%%" key) (s-replace "%" "%%" key)))
            (""      "%s") ;; e.g., badge:key|value|color||logo
            ('nil    "%s") ;; e.g., badge:key|value|color
-           (t (format "<a href=\"%s\">%%s</a>"
+           (_ (format "<a href=\"%s\">%%s</a>"
                       (s-replace "%" "%%"
                                  ,(if social-shields-name
                                       `(format ,social-url o-label)
@@ -8471,6 +8478,7 @@ Here is what it looks like as HTML (left) and LaTeX (right):
 ;; Run all MWE tests
 ;; (ert "mwe")
 
+;; TODO: This should just be the text of mwe.org
 (setq mwe (⟰
  "
 ,#+begin_parallel
@@ -8517,7 +8525,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 
 (deftest "It starts with a 2-column div for ‘parallel’"
   [mwe parallel]
-  (⇝ mwe "<div style=\"column-rule-style: none;column-count: 2;\">"
+  (⇝ mwe "<div style=\"column-rule-style: none nil;column-count: 2;\">"
          (* anything)
          "</div>"))
 
@@ -8529,11 +8537,13 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 
 (deftest "Its second question, about ‘apply’, has a tooltip"
   [mwe doc]
-  (⇝ mwe "Pop-quiz: How does "
-         "<abbr class=\"tooltip\" title=\"Call FUNCTION with our remaining args, "
-         "using our last arg as list of args.<br>Then return the value FUNCTION returns."
-         "<br>Thus, (apply '+ 1 2 '(3 4)) returns 10.<br><br>(fn FUNCTION &rest ARGUMENTS)\""
-         ">apply</abbr> work?"))
+  (⇝ mwe
+     "Pop-quiz: How does "
+     "<abbr class=\"tooltip\" title=\"Call FUNCTION with our remaining args, "
+     "using our last arg as list of args.<br>Then return the value FUNCTION returns."
+     "<br>With a single argument, call the argument’s first element using the"
+     "<br>other elements as args.<br>Thus, (apply '+ 1 2 '(3 4)) returns 10."
+     "<br><br>(fn FUNCTION &rest ARGUMENTS)\">apply</abbr> work?"))
 
 (deftest "Its ‘details’ block is titled “Answer”, in green"
   [mwe details]
@@ -8593,7 +8603,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
          (* anything)
          "</details>"))
 
-(deftest "It has a title-less green box starting with an octoicon"
+(deftest "It has a title-less green box starting with an octoicon & kbd links have tooltips"
   [mwe box octoicon kbd]
   :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
   (⇝ mwe
@@ -8603,7 +8613,11 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
      (* anything)
      "<svg" ;; octoicon:report
      (* anything)
-     "Note that <kbd> C-x C-e </kbd> evaluates a Lisp form!"
+     "Note that <abbr class=\"tooltip\""
+     (* anything)
+     "title=\"C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area."
+     (* anything)
+     "<kbd style=\"border-color: red\">C-x C-e</kbd></abbr> evaluates a Lisp form!"
      (* anything)
      "</div>"))
 
