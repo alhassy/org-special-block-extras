@@ -833,7 +833,7 @@ o-thread-blockcall.
     ,main-arg
     ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))
 
-(defmacro o-thread-blockcall (body &rest forms)
+(defmacro org-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
 
 BODY is likely to be ‘raw-contents’, possibly with user manipulations.
@@ -2019,7 +2019,7 @@ to make “link buttons” that do useful things, as follows.
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
   [:face '(:underline "green")
-   :let (org-value (if (equal o-label "GLOSSARY")
+   :let (o-value (if (equal o-label "GLOSSARY")
                      (pp-to-string (mapcar #'cl-second org--docs-actually-used))
                    (pp-to-string (eval (car (read-from-string o-label)))))
          o-expr (if (equal o-label "GLOSSARY")

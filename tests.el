@@ -31,6 +31,22 @@ Pictogram explanation: ⟰ is read ‘export’; it “exports upward to the moo
      backend
      :body-only))
 
+(defvar deftest-space "·"
+  "The symbol used in-places of whitespace.
+
+The default is interpunct style, or middle-dot, see 0 below.
+
+Here are other symbols I've considered using:
+0. Interpunct style is barely noticeable and non-intrusive.
+   ⇒ OSBE·org·source·exports·to·HTML·without·any·problems
+1. Hyphens is a common Lisp & English convention for forming compounds.
+   ⇒ OSBE-org-source-exports-to-HTML-without-any-problems
+2. Snakecase is also popular
+   ⇒ OSBE_org_source_exports_to_HTML_without_any_problems
+3. The underbracket is also neat
+   ⇒ OSBE␣org␣source␣exports␣to␣HTML␣without␣any␣problems
+4. There is no need to force convention onto ourselves; get funky:
+   ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
 
 (defmacro deftest (desc tags &rest body)
   "Declare tests with meaningful string names, that reflect the test's main goal.
@@ -44,16 +60,22 @@ This way, tests are grouped/namespaced when running ert from the command line.
 I use Org-blocks with ‘:comments link’, this then serves to delimit
 my tests into “suites”.
 
-Example ERT call: (ert '(tag my-cool-tag))"
+Example ERT call: (ert '(tag my-cool-tag))
+"
   `(ert-deftest ,(intern
                   (concat
-                   (format "%s::" (seq-elt tags 0))
-                   (seq-map (lambda (c) (if (<= 65 c 122) c ?_))
-                                   desc))) ()
+                   ;; ⇨ ➝ ➡ ➩ ➾ ⚝
+                   (format "%s··⇨··" (seq-elt tags 0))
+                   (s-replace-all `((" " . ,deftest-space) ("'" . "’") ("," . "︐") ("`" . "‵") (";" . "︔") ("[" . "⁅") ("]" . "⁆"))
+                                  (s-collapse-whitespace (s-trim desc)))))
+     ()
      :tags (quote ,(seq--into-list tags))
      ,@body))
-  ;; Convert all non-letters to ‘_’; A = 65, z = 122.
-  ;; Without the replace, “M-x ert” crashes when it comes to selecting the test
+  ;;
+  ;; DESC may contain spaces, commas, quotes, and other natural punctuation and ASCII.
+  ;; For example, the description “Howdy, Musa's 3 `friends!`” is acceptable (and it
+  ;; gets converted into the Lisp name “ Howdy︐·Musa’s·3·‵friends!‵ ”).
+  ;; Without the s-replace-all, “M-x ert” crashes when it comes to selecting the test
   ;; to run.
 
 (defmacro ≋ (lhs rhs)
@@ -104,6 +126,26 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
                        (s-collapse-whitespace ,expr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Even though I intend to “C-c C-e h o” myself to update
+;; the webpage for this package, I like having this test
+;; since it's run in “emacs -Q” which ensures there's no
+;; implicit state / packages being used when I run “C-c C-e h o”.
+;;
+(deftest "OSBE org source exports to HTML without any problems"
+  [html-export]
+  (find-file "org-special-block-extras.org")
+
+  ;; The html-export-style:𝒳 link downloads styles, let's disable/mock it.
+  (org-deflink html-export-style () "")
+
+  ;; Some doc:𝒳 links refer to my personal docs, so let's get those.
+  (org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
+
+  ;; FIXME: I should not have to set this up; this is an error with “show:𝒳”?
+  (setq o-value "whoops")
+
+  (should (org-html-export-to-html)))
 
 ;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout
@@ -505,175 +547,3 @@ The link text appears as red bold in both Emacs and in HTML export."
           "hint 2"
           "Explanation of why $y \\;\\leq\\; z$")))
 ;; Equational Proofs:4 ends here
-
-;; [[file:org-special-block-extras.org::*Minimal working example][Minimal working example:1]]
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Run all MWE tests
-;; (ert "mwe")
-
-;; TODO: This should just be the text of mwe.org
-(setq mwe (⟰
- "
-#+begin_parallel
-[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
-
-Pop-quiz: How does doc:apply work?
-#+end_parallel
-
-#+begin_details Answer
-link-here:solution
-Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
-
-[[remark:Musa][Ain't that cool?]]
-
-#+begin_spoiler aqua
-That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
-#+end_spoiler
-
-#+end_details
-
-#+html: <br>
-#+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
-#+end_box
-
-/Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
-beyond what it can bear./ --- Quran 2:286
-
-#+LATEX_HEADER: \\usepackage{multicol}
-#+LATEX_HEADER: \\usepackage{tcolorbox}
-#+latex: In the LaTeX output, we have a glossary.
-
-show:GLOSSARY
-
-badge:Thanks|for_reading
-tweet:https://github.com/alhassy/org-special-block-extras
-badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-"))
-
-(deftest "It exports to HTML without any problems"
-  [mwe html-export]
-  (find-file "mwe.org")
-  (should (org-html-export-to-html)))
-
-(deftest "It starts with a 2-column div for ‘parallel’"
-  [mwe parallel]
-  (⇝ mwe "<div style=\"column-rule-style: none nil;column-count: 2;\">"
-         (* anything)
-         "</div>"))
-
-(deftest "Its initial question is in ‘orange’, with answer in ‘blue’"
-  [mwe color orange blue]
-  (⇝ mwe "<span style=\"color:orange;\">Are you excited to learn some Lisp?</span>"
-         (* anything)
-         "<span style=\"color:blue;\">Yes!</span>"))
-
-(deftest "Its second question, about ‘apply’, has a tooltip"
-  [mwe doc]
-  (⇝ mwe
-     "Pop-quiz: How does "
-     "<abbr class=\"tooltip\" title=\"Call FUNCTION with our remaining args, "
-     "using our last arg as list of args.<br>Then return the value FUNCTION returns."
-     "<br>With a single argument, call the argument’s first element using the"
-     "<br>other elements as args.<br>Thus, (apply '+ 1 2 '(3 4)) returns 10."
-     "<br><br>(fn FUNCTION &rest ARGUMENTS)\">apply</abbr> work?"))
-
-(deftest "Its ‘details’ block is titled “Answer”, in green"
-  [mwe details]
-  (⇝ mwe
-     "<details"
-     (* anything) ;; styling
-     "<summary>"
-     (* anything) ;; styling
-     "<font face=\"Courier\" size=\"3\" color=\"green\">"
-     (* anything)
-     "Answer"))
-
-(deftest "Its details block begins with an SVG anchor identified as ‘solution’"
-  [mwe link-here]
-  (⇝ mwe "<details"
-         (* anything) ;; styling
-         "<a class=\"anchor\""
-         (* anything)
-         "href=\"#solution\">" ;; link-here:solution
-         "<svg"
-         (* anything)
-         "</svg></a>"
-         (* anything)
-         "Syntactically, <code>(apply f '(x0 ... xN)) = (f x0 ... xN)</code>."))
-
-(deftest "Its top-level remark is my name in a box, then the text, then a closing box delimiter"
-  [mwe remark]
-  (⇝ mwe "<details"
-         (* anything)
-         "<p style=\"color: black;\">"
-         "<span style=\"border-width:1px;border-style:solid;padding:5px\">"
-         "<strong>[Musa:</strong>"
-         "</span>"
-         " Ain't that cool?  "
-         "<span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span>"
-         ))
-
-(deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
-  [mwe spoiler color magenta gensym]
-
-  (⇝ mwe "<details"
-         (* anything)
-         ;; The local spoiler style is declared
-         "<style>"
-         (* anything) ;; A random id; e.g., #g289
-         "{color: aqua; background-color:aqua;}"
-         (* anything)
-         ":hover {color: black; background-color:white;} "
-         "</style>"
-         (* anything)
-         ;; Then it is used
-         "That is, <span style=\"color:magenta;\">"
-         "we can <span id="
-         (* anything) ;; our random id is used here
-         "> apply </span>" ;; Here is the spoiler!
-         " a function to a list of arguments!</span>"
-         (* anything)
-         "</details>"))
-
-(deftest "It has a title-less green box starting with an octoicon & kbd links have tooltips"
-  [mwe box octoicon kbd]
-  :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
-  (⇝ mwe
-     "<div style=\"padding: 1em;"
-     (* anything)
-     "<h3></h3>"
-     (* anything)
-     "<svg" ;; octoicon:report
-     (* anything)
-     "Note that <abbr class=\"tooltip\""
-     (* anything)
-     "title=\"C-x C-e ∷ eval-last-sexp<br>Evaluate sexp before point; print value in the echo area."
-     (* anything)
-     "<kbd style=\"border-color: red\">C-x C-e</kbd></abbr> evaluates a Lisp form!"
-     (* anything)
-     "</div>"))
-
-(deftest "Its Quranic quote has the user requested tooltip indicated by a small raised circle"
-  [mwe margin]
-  (⇝ mwe
-     "Allah <abbr class=\"tooltip\""
-     " title=\"The God of Abraham; known as Elohim in the Bible\">°</abbr>&emsp13;" ;; ∘ !
-     " does not burden a soul beyond what it can bear."
-     (* anything)
-     "Quran 2:286"))
-
-(deftest "It concludes with three beautiful badges"
-  [mwe badge]
-  ;; badge:Thanks|for_reading
-  ;; tweet:https://github.com/alhassy/org-special-block-extras
-  ;; badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffee
-  (⇝ mwe
-     "<img src=\"https://img.shields.io/badge/Thanks-for_reading-nil?logo=nil\">"
-     (* anything)
-     "<img src=\"https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras\">"
-     (* anything)
-     "<img src=\"https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee\">"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Minimal working example:1 ends here

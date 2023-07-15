@@ -11,7 +11,9 @@
 # TODO: Final version should not have the following incantation active.
 #+options: broken-links:auto
 
-# TODO C-c C-c  ⇒ Run all tests
+html-export-style:solarized_light
+
+# TODO C-c C-c  ⇒ Run all tests, and see them printed with their descriptions nicely.
 #+begin_src emacs-lisp :exports none :tangle no
 ;; Press ‘q’ to kill the resulting buffer and window.
 ;;
@@ -23,6 +25,8 @@
   (display-message-or-buffer (shell-command-to-string "emacs -batch -l ert -l tests.el -f ert-run-tests-batch-and-exit"))
   (switch-to-buffer-other-window "*Message*")
   (rename-buffer (format "ERT: tests.el"))
+  ;; Make · look like a space
+  (font-lock-mode -1) (font-lock-add-keywords nil '(("·" 0 '(face default display " ") t))) (font-lock-mode +1)
   (highlight-regexp "failed" 'hi-red-b)
   (highlight-regexp "failures" 'hi-red-b)
   (highlight-regexp "passed" 'hi-green-b)
@@ -35,6 +39,11 @@
 
 #+RESULTS:
 : kill-buffer-and-window
+
+#+name: startup-code
+#+begin_src emacs-lisp :exports none :tangle no :exports none
+(org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
+#+end_src
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -312,6 +321,22 @@ Pictogram explanation: ⟰ is read ‘export’; it “exports upward to the moo
      backend
      :body-only))
 
+(defvar deftest-space "·"
+  "The symbol used in-places of whitespace.
+
+The default is interpunct style, or middle-dot, see 0 below.
+
+Here are other symbols I've considered using:
+0. Interpunct style is barely noticeable and non-intrusive.
+   ⇒ OSBE·org·source·exports·to·HTML·without·any·problems
+1. Hyphens is a common Lisp & English convention for forming compounds.
+   ⇒ OSBE-org-source-exports-to-HTML-without-any-problems
+2. Snakecase is also popular
+   ⇒ OSBE_org_source_exports_to_HTML_without_any_problems
+3. The underbracket is also neat
+   ⇒ OSBE␣org␣source␣exports␣to␣HTML␣without␣any␣problems
+4. There is no need to force convention onto ourselves; get funky:
+   ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
 
 (defmacro deftest (desc tags &rest body)
   "Declare tests with meaningful string names, that reflect the test's main goal.
@@ -325,16 +350,22 @@ This way, tests are grouped/namespaced when running ert from the command line.
 I use Org-blocks with ‘:comments link’, this then serves to delimit
 my tests into “suites”.
 
-Example ERT call: (ert '(tag my-cool-tag))"
+Example ERT call: (ert '(tag my-cool-tag))
+"
   `(ert-deftest ,(intern
                   (concat
-                   (format "%s::" (seq-elt tags 0))
-                   (seq-map (lambda (c) (if (<= 65 c 122) c ?_))
-                                   desc))) ()
+                   ;; ⇨ ➝ ➡ ➩ ➾ ⚝
+                   (format "%s··⇨··" (seq-elt tags 0))
+                   (s-replace-all `((" " . ,deftest-space) ("'" . "’") ("," . "︐") ("`" . "‵") (";" . "︔") ("[" . "⁅") ("]" . "⁆"))
+                                  (s-collapse-whitespace (s-trim desc)))))
+     ()
      :tags (quote ,(seq--into-list tags))
      ,@body))
-  ;; Convert all non-letters to ‘_’; A = 65, z = 122.
-  ;; Without the replace, “M-x ert” crashes when it comes to selecting the test
+  ;;
+  ;; DESC may contain spaces, commas, quotes, and other natural punctuation and ASCII.
+  ;; For example, the description “Howdy, Musa's 3 `friends!`” is acceptable (and it
+  ;; gets converted into the Lisp name “ Howdy︐·Musa’s·3·‵friends!‵ ”).
+  ;; Without the s-replace-all, “M-x ert” crashes when it comes to selecting the test
   ;; to run.
 
 (defmacro ≋ (lhs rhs)
@@ -446,6 +477,33 @@ jobs:
 
       # Upload coverage
       - uses: codecov/codecov-action@v1
+* Test that this org file itself exports without problems :noexport:
+:PROPERTIES:
+:CUSTOM_ID: Test-that-this-org-file-itself-exports-without-problems
+:END:
+
+#+begin_src emacs-lisp :exports none :tangle "tests.el"
+;; Even though I intend to “C-c C-e h o” myself to update
+;; the webpage for this package, I like having this test
+;; since it's run in “emacs -Q” which ensures there's no
+;; implicit state / packages being used when I run “C-c C-e h o”.
+;;
+(deftest "OSBE org source exports to HTML without any problems"
+  [html-export]
+  (find-file "org-special-block-extras.org")
+
+  ;; The html-export-style:𝒳 link downloads styles, let's disable/mock it.
+  (org-deflink html-export-style () "")
+
+  ;; Some doc:𝒳 links refer to my personal docs, so let's get those.
+  (org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
+
+  ;; FIXME: I should not have to set this up; this is an error with “show:𝒳”?
+  (setq o-value "whoops")
+
+  (should (org-html-export-to-html)))
+#+end_src
+
 * Abstract :ignore:
   :PROPERTIES:
   :CUSTOM_ID: Abstract
@@ -553,7 +611,7 @@ relatively advanced ELisp concepts, such as macros and hooks; as such, users may
 not be willing to put in the time and instead use ad-hoc solutions.
 
 #+latex: \vspace{1em}
-We present a new macro, [[doc:o-defblock][defblock]], which is similar in-spirit to Lisp's standard
+We present a new macro, [[doc:org-defblock][defblock]], which is similar in-spirit to Lisp's standard
 doc:defun except that where the latter defines functions, ours defines new
 special blocks for Emacs' Org-mode ---as well as, simultaneously, defining new
 Org link types. Besides the macro, the primary contribution of this effort is an
@@ -647,7 +705,7 @@ Installation instructions are [[#Summary][below]].
 An Org-mode block of type 𝒳 is a bunch of text enclosed in ~#+begin_𝒳~ and
 ~#+end_𝒳~, upon export it modifies the text ---e.g., to center it, or to display
 it as code. We show how to make /new/ blocks using a simple interface
----[[doc:o-defblock][defblock]]--- that lets users treat 𝒳 as a string-valued function in the style
+---[[doc:org-defblock][defblock]]--- that lets users treat 𝒳 as a string-valued function in the style
 of doc:defun.
 
 The notable features of the system are as follows.
@@ -2261,7 +2319,7 @@ has more bells and whistles … keep reading ;-)
 Since [[doc:org-defblock][defblock]] let's us pretend block ---and link--- types are string-valued
 functions, then one would expect that we can compose blocks /modularly/ as
 functions compose. Somewhat analogously to doc:funcall and doc:thread-last, we
-provide a macro [[doc:o-thread-blockcall][thread-blockcall]].
+provide a macro [[doc:org-thread-blockcall][thread-blockcall]].
 
 #+begin_box Example
 #+begin_src emacs-lisp :tangle no
@@ -2305,7 +2363,7 @@ o-thread-blockcall.
 Using the above sequentially does not work due to the plumbing of
 ~defblock~, so we handle that plumbing below …
 #+BEGIN_SRC emacs-lisp
-(defmacro o-thread-blockcall (body &rest forms)
+(defmacro org-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
 
 BODY is likely to be ‘raw-contents’, possibly with user manipulations.
@@ -3925,7 +3983,7 @@ mode activation ---after such functions have been declared.
   "")
 #+end_src
 
-# html-export-style:default
+# html-export-style:solarized_light
 * Fortune Links: Smiles inside and outside of Emacs
    :PROPERTIES:
    :CUSTOM_ID: Fortune-Links-Smiles-inside-and-outside-of-Emacs
@@ -5429,10 +5487,10 @@ Within Emacs, hovering over a badge displays a tooltip indicating which values
 corresponds to which badge fields.
 
 You can make your /own/ badge types with
-doc:o-make-badge.
+doc:org-make-badge.
 #+end_box
 
-#+begin_details o-make-badge
+#+begin_details org-make-badge
 The implementation is a bit lengthy since it attempts to capture a useful
 portion of the shilelds.io badge interface.
 
@@ -7247,7 +7305,7 @@ to make “link buttons” that do useful things, as follows.
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
   [:face '(:underline "green")
-   :let (org-value (if (equal o-label "GLOSSARY")
+   :let (o-value (if (equal o-label "GLOSSARY")
                      (pp-to-string (mapcar #'cl-second org--docs-actually-used))
                    (pp-to-string (eval (car (read-from-string o-label)))))
          o-expr (if (equal o-label "GLOSSARY")
@@ -8356,7 +8414,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | OctoIcons & Link Here  |                             | ~octoicon~, ~link-here~ |
 | Documentation-Glossary | [[doc:org--documentation][documentation]]               | ~doc~                 |
 | Marginal remarks       | [[doc:org--margin][margin]]                      |                     |
-| Badges                 | [[doc:o-make-badge][badge]]                       |                     |
+| Badges                 | [[doc:org-make-badge][badge]]                     |                     |
 | Equational proofs      | [[doc:org--calc][calc]]                        |                     |
 
 Other fun stuff: [[doc:org--solution][solution]], [[doc:org--org-demo][org-demo]], [[doc:org--stutter][stutter]], [[doc:org--rename][rename]], [[doc:org--spoiler][spoiler]], [[doc:org--tree][tree]] :grin:
