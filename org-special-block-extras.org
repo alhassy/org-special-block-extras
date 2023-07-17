@@ -3176,6 +3176,48 @@ I am foo; Indeed FoO is what I fOo!
 # that behaves differently depending on the export backend.
 
 :End:
+** Basic defblock test                                    :relocate:noexport:
+#    scream:hello
+#
+#    ≈
+#
+#    #+begin_scream hello
+#    words
+#    #+end_scream
+#
+#+begin_src elisp :tangle "tests.el"
+(org-defblock scream
+  (speaker "Editor Remark"  :face '(:foreground "red" :weight bold)) ()
+  [:face '(:foreground "green" :weight bold)]
+  "Capitalise the contents! Seen in red bold in Emacs!"
+  (format "%s: %s" speaker (upcase contents)))
+
+(deftest "Upcase works as expected on links, with only labels"
+         [basic-defblock org-link]
+         (⇝ (⟰ "pre scream:hello post")
+            "pre hello: HELLO post"))
+
+(deftest "Upcase works as expected on links, with descriptions"
+         [basic-defblock org-link]
+         (⇝ (⟰ "pre [[scream:hello][my dear friends]] post")
+            "hello: MY DEAR FRIENDS post"))
+
+(deftest "Upcase works as expected on blocks"
+         [basic-defblock]
+         (⇝ (⟰ "pre
+#+begin_scream hello
+my amigos
+#+end_scream
+post")
+"pre"
+(* anything)
+"hello: "
+"\n<p>"
+"\nMY AMIGOS"
+"\n</p>"
+(* anything)
+"<p>\npost"))
+#+end_src
 * Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -3915,7 +3957,6 @@ mode activation ---after such functions have been declared.
   "This variable holds the link label declared by users.
   It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
 
-;; TODO: Make this into a Github Issue.
 (defvar org-html-export-styles
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
