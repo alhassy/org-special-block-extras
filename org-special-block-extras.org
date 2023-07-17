@@ -1695,7 +1695,7 @@ we take the following approach:
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (cl-defmacro org-defblock
-  (name main-arg kwds &optional experimental docstring &rest body)
+  (name main-arg kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
 A full featured example is at the end of this documentation string.
@@ -1801,8 +1801,8 @@ Three example uses:
   (add-to-list 'org--supported-blocks name) ;; global var
 
   ;; Identify which of the optional features is present...
-  (cl-destructuring-bind (o-respect-newlines? docstring body)
-      (lf-extract-optionals-from-rest experimental #'keywordp
+  (cl-destructuring-bind (link-display docstring body)
+      (lf-extract-optionals-from-rest link-display #'vectorp
                                       docstring    #'stringp
                                       body)
     `(progn
@@ -1815,7 +1815,7 @@ Three example uses:
          kwds
          body
          ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-         o-respect-newlines?
+         nil ;; o-respect-newlines?
          )
 
        ;; ⇨ The link type support
@@ -7451,7 +7451,7 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* Marginal, “one-off”, remarks
+* TODO Marginal, “one-off”, remarks :FIXME:HTML_EXPORT_HAS_UNEXPECTED_NEW_LINES:
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
