@@ -694,8 +694,8 @@ BODY, list: Code to be executed"
                     (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
                            (format "@@%s@@%s:" x backend))
                           (:else
-                           (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-                                   backend)))))))
+                           (s-replace-regexp "\n\\'" "" (org-export-string-as x 
+                                   backend t (org-export-get-environment)))))))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
@@ -755,7 +755,7 @@ BACKEND is the export back-end being used, as a symbol."
           (setq kwdargs (cadr kwdargs))
           (forward-line -1)
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
-          (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
+          (setq blk-contents (buffer-substring-no-properties body-start (1-(line-beginning-position))))
           (kill-region blk-start (point))
           (insert (eval `(,(intern (format "org--%s" blk))
                           (quote ,backend)
