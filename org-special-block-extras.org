@@ -740,7 +740,7 @@ mimic the usual ~src~-block syntax for argument passing to support special block
 For instance, here is a sample declaration.
 
 #+begin_src emacs-lisp :tangle no
-(org-defblock stutter () (nil nil reps 2)
+(org-defblock stutter (nil nil reps 2)
   "Output the CONTENTS of the block REPS many times"
   (org-parse (s-repeat reps contents)))
 #+end_src
@@ -1695,7 +1695,7 @@ we take the following approach:
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (cl-defmacro org-defblock
-  (name main-arg kwds &optional link-display docstring &rest body)
+  (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
 A full featured example is at the end of this documentation string.
@@ -1768,8 +1768,7 @@ Example declaration, with all possible features shown:
    (setq angry-red '(:foreground \"red\" :weight bold))
 
    (org-defblock remark
-     (editor \"Editor Remark\" color \"red\" signoff \"\")
-     (vector :face angry-red)
+     (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
      \"Top level (HTML & LaTeX)O-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
@@ -1807,9 +1806,6 @@ Three example uses:
                                       docstring    #'stringp
                                       body)
     `(progn
-       ;; TODO: Temp, delete this when done refactoring.
-       (cl-assert (null (quote ,main-arg)))
-
        ;; Produce an associated Lisp function
        ,(org-defblock---support-block-type
          name
@@ -2022,7 +2018,7 @@ Let's have some sanity tests...
 (deftest "Constant blocks preserve indentation/enumeration"
   :expected-result :failed
   :tags '(core)
-  (org-defblock go nil nil "doc" "hello") ;; Constantly “hello”
+  (org-defblock go nil "doc" "hello") ;; Constantly “hello”
   (should (equal
 "
   1. item one
@@ -2088,7 +2084,7 @@ hello</li>
 (deftest "Identity blocks preserve indentation/enumeration"
     :expected-result :failed
   :tags '(core)
-  (org-defblock id nil nil "doc" contents)
+  (org-defblock id nil "doc" contents)
   (should (equal
 "
   1. item one
@@ -2116,7 +2112,7 @@ hello</li>
 
 (deftest "Identity blocks export to LaTex preserves indentation/enumeration"
     :expected-result :failed
-(org-defblock id nil nil "doc" contents)
+(org-defblock id nil "doc" contents)
 (should (equal
 "\\begin{enumerate}
 \\item item one
@@ -2138,7 +2134,7 @@ world
 
 (deftest "Identity blocks export to HTML preserves indentation/enumeration"
     :expected-result :failed
-(org-defblock id nil nil "doc" contents)
+(org-defblock id nil "doc" contents)
 (should (equal
 
 "<ol class=\"org-ol\">
@@ -2242,7 +2238,7 @@ Perhaps an example will clarify things ...
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  nil (editor "Editor Remark" color "red" signoff "")
+  (editor "Editor Remark" color "red" signoff "")
   (vector :face angry-red)
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -2302,7 +2298,7 @@ has more bells and whistles … keep reading ;-)
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  nil (editor "Editor Remark" color "red" signoff "")
+  (editor "Editor Remark" color "red" signoff "")
   [:face '(:foreground "red" :weight bold)]
   ; :please-preserve-new-lines
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
@@ -2387,7 +2383,7 @@ between conseqeuctive blockcalls.
 
 A full example:
 
-    (org-defblock nesting nil (name nil)
+    (org-defblock nesting (name nil)
       \"Show text in a box, within details, which contains a box.\"
 
       (org-thread-blockcall raw-contents
@@ -2424,7 +2420,7 @@ text before seeing the answer ----this works well in HTML, not so in LaTeX.
 
 #+begin_src emacs-lisp
 (org-defblock solution
-  nil (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
+  (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
    really "Solution, for real")
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
   (org-thread-blockcall raw-contents
@@ -2471,7 +2467,7 @@ error-prone tedium.
 
 #+begin_details Implementation
  #+begin_src emacs-lisp
-(org-defblock org-demo nil (nil nil source "Source" result "Result"
+(org-defblock org-demo (nil nil source "Source" result "Result"
                         source-color "cyan" result-color "cyan"
                         style "parallel"
                         sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
@@ -2647,7 +2643,7 @@ In contrast …
 #+html: <br>
 #+begin_solution
 #+begin_src emacs-lisp
-(org-defblock stutter nil (reps 2)
+(org-defblock stutter (reps 2)
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
@@ -2704,7 +2700,7 @@ bank of the river/ …]]
 
 #+begin_solution
 #+begin_src emacs-lisp
-(org-defblock rename nil (list "")
+(org-defblock rename (list "")
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
@@ -2805,7 +2801,7 @@ Whereas, the following begins with ~#+begin_spoiler orange~ ...
 --------------------------------------------------------------------------------
 
 #+begin_src emacs-lisp
-(org-defblock spoiler nil (color "grey" left "((" right "))")
+(org-defblock spoiler (color "grey" left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -2913,7 +2909,7 @@ Possibly using ID's as the current working solution above.
                 conclusion
                 (if named? (format "[\\text{%s}]" name) "")))))))
 
-(org-defblock tree nil (main-arg)
+(org-defblock tree (main-arg)
   "Write a proof tree using Org-lists.
 
 To get
@@ -3195,7 +3191,7 @@ I am foo; Indeed FoO is what I fOo!
 #
 #+begin_src elisp :tangle "tests.el"
 (org-defblock scream
-  nil (speaker "Default_Speaker")
+  (speaker "Default_Speaker")
   [:face '(:foreground "green" :weight bold)]
   "Capitalise the contents! Seen in red bold in Emacs!"
   (format "%s: %s" speaker (upcase contents)))
@@ -3273,7 +3269,7 @@ Requires: src_latex[:exports code]{,#+latex_header:  \usepackage{tcolorbox}}
 
 #+begin_details Implementation
 #+begin_src emacs-lisp
-(org-defblock details nil (title "Details"
+(org-defblock details (title "Details"
               background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -3325,7 +3321,7 @@ Above is a lower-case ‘d’etails block, we now make a captial-case ‘D’eta
 block, for the not-too-odd situation we want to have, right away, one details block
 within another.
 #+begin_src emacs-lisp :exports none
-(org-defblock Details nil (title "Details"
+(org-defblock Details (title "Details"
               background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
@@ -3495,7 +3491,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{tcolorbox}}
 
 #+begin_details Implementation
  #+begin_src emacs-lisp
-(org-defblock box nil (title "" background-color nil shadow nil)
+(org-defblock box (title "" background-color nil shadow nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
@@ -3697,7 +3693,7 @@ Requires: src_latex[:exports code]{#+latex_header:  \usepackage{multicol}}
 
 #+begin_details Implementation
   #+begin_src emacs-lisp -r -n
-(org-defblock parallel nil (cols "2" bar nil)
+(org-defblock parallel (cols "2" bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be seperated by solid
@@ -4211,7 +4207,7 @@ _Yields_
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-      nil (editor "Editor Remark" color "black" signoff "" strong nil)
+      (editor "Editor Remark" color "black" signoff "" strong nil)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
 [:face '(:foreground "red" :weight bold)]
 "Format CONTENTS as an first-class editor comment according to BACKEND.
@@ -4698,7 +4694,7 @@ e.g., [[doc:org--color][color]] and [[doc:org--teal][teal]].
 
 (cl-loop for colour in org--ospe-colors
          do (eval `(org-defblock ,colour
-                     nil (the-color "black")
+                     (the-color "black")
                      (vector :face `(:foreground ,(format "%s" (quote ,colour))))
                      ,(format "Show text in %s color." colour)
                      (let ()
@@ -4765,7 +4761,7 @@ Let's have some sanity tests...
 
     #+begin_src emacs-lisp
 (org-defblock color
-  nil (color black)
+  (color black)
   (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
   "Format text according to a given COLOR, which is black by default."
   (format (pcase backend
@@ -4892,7 +4888,7 @@ Let's have some sanity tests...
 
  #+begin_details ‘latex-definitions’ Implementation
   #+begin_src emacs-lisp
-(org-defblock latex-definitions nil nil
+(org-defblock latex-definitions nil
   "Declare but do not display the CONTENTS according to the BACKEND."
   (format (pcase backend
             ('html "<p style=\"display:none\">\\[%s\\]</p>")
@@ -7200,7 +7196,7 @@ the problem of *producing* documentation entries with a block type interface...
 #+begin_details ‘documentation’ Implementation: An Example of Mandatory Arguments and Using ‘raw-contents’
 #+BEGIN_SRC emacs-lisp
 (org-defblock documentation
-  nil (name (error "Documentation block: Name must be provided")
+  (name (error "Documentation block: Name must be provided")
        label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
@@ -7540,7 +7536,7 @@ in LaTeX, they appear in the margin.
 #+begin_details Implementation :title-color pink
 #+begin_src emacs-lisp
 (org-defblock margin
-  nil (marker nil
+  (marker nil
   color "gray!80"
           counter "footnote"
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
@@ -8009,7 +8005,7 @@ COLOR is the colour of the hints."
                   expr))))))
 
 (org-defblock calc
-  nil (main-arg nil
+  (main-arg nil
   rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
   "Render an Org-list as an equational proof.
 
@@ -8538,7 +8534,7 @@ Then, provide support for a new type of special block, say re-using the ~src~
 blocks that, say, folds up all such blocks in HTML export, by declaring the
 following.
 #+BEGIN_SRC emacs-lisp :tangle no
-(org-defblock src (lang nil) (title nil exports nil file nil)
+(org-defblock src (lang nil title nil exports nil file nil)
   "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
 If a block has a ‘:title’, use that to title the ‘<details>’."
   (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
@@ -8964,8 +8960,6 @@ https://github.com/riscy/melpazoid
       #+BEGIN_SRC emacs-lisp
 (package-install-file "~/melpa/packages/o-20200417.238.el")
 #+END_SRC
-      #+RESULTS:
-      : #s(package-desc org-special-block-extras (20200417 238) "Twenty-four new custom blocks for Org-mode" ((s (1 12 0)) (dash (2 16 0)) (emacs (24 4))) single nil nil ((:authors ("Musa Al-hassy" . "alhassy@gmail.com")) (:maintainer "Musa Al-hassy" . "alhassy@gmail.com") (:url . "https://alhassy.github.io/org-special-block-extras")) nil)
 
 13. [@13] Produce a dedicated pull request branch
 
