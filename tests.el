@@ -187,6 +187,54 @@ The link text appears as red bold in both Emacs and in HTML export."
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
+(org-defblock scream
+  (speaker "Default_Speaker")
+  [:face '(:foreground "green" :weight bold)]
+  "Capitalise the contents! Seen in red bold in Emacs!"
+  (format "%s: %s" speaker (upcase contents)))
+
+(deftest "Upcase works as expected on links, with only labels"
+         [basic-defblock org-link]
+         (⇝ (⟰ "pre scream:hello post")
+            "pre hello: HELLO post"))
+
+(deftest "Upcase works as expected on links, with descriptions"
+         [basic-defblock org-link]
+         (⇝ (⟰ "pre [[scream:hello][my dear friends]] post")
+            "hello: MY DEAR FRIENDS post"))
+
+(deftest "Upcase works as expected on blocks"
+         [basic-defblock]
+         (⇝ (⟰ "pre
+#+begin_scream hello
+my amigos
+#+end_scream
+post")
+"pre"
+(* anything)
+"hello: "
+"\n<p>"
+"\nMY AMIGOS"
+"\n</p>"
+(* anything)
+"<p>\npost"))
+
+(deftest "Upcase works as expected on blocks, with default main argument"
+         [basic-defblock main-arg]
+         (⇝ (⟰ "pre
+#+begin_scream
+my amigos
+#+end_scream
+post")
+"pre"
+(* anything)
+"Default_Speaker: "
+"\n<p>"
+"\nMY AMIGOS"
+"\n</p>"
+(* anything)
+"<p>\npost"))
+
 ;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:4]]
 (deftest "The result is a <details> tag containing the user's title & text."
   [details]

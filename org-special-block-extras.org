@@ -45,6 +45,8 @@ html-export-style:solarized_light
 (org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
 #+end_src
 
+# MA: TODO: Margin blocks produce extra newlines!
+
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
   :CUSTOM_ID: HTML-LaTeX-Setup
@@ -147,7 +149,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.0.2
+;; Version: 4.1.0
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -1743,15 +1745,6 @@ Finally, this macro exposes two functions:
 
 ----------------------------------------------------------------------
 
-TLDR for EXPERIMENTAL and DOCSTRING and BODY, the first two parts are
-optional; they're a symbol, a string, then the main body.  The
-symbol, O-RESPECT-NEWLINES?, when present enables a highly
-experimental [i.e., do *not* use it!] feature: No new lines for
-blocks in HTML export.  Its need rose from developing the MARGIN
-block type.
-
-----------------------------------------------------------------------
-
 The relationship between links and special blocks:
 
   [ [type:label][description]]
@@ -1811,13 +1804,14 @@ Three example uses:
          name
          docstring
          ;; (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
-         (cl-first kwds)  ;; main argument's name
+         (or (cl-first kwds) 'main-arg)  ;; main argument's name
          (cl-second kwds) ;; main argument's value
          (cddr kwds)
          body
          ;; TODO: Clean up the following.
          ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-         nil ;; o-respect-newlines?
+         ;; Presence means: No new lines for blocks in HTML export.
+         (seq-contains link-display :respect-newlines)
          )
 
        ;; ⇨ The link type support
@@ -3238,6 +3232,55 @@ post")
 (* anything)
 "<p>\npost"))
 #+end_src
+** Fontifying all blocks as if they were Org blocks                :relocate:noexport:
+:PROPERTIES:
+:CUSTOM_ID: Fontifying-all-blocks-as-if-they-were-Org-blocks
+:END:
+
+Looking at =org-src-fontify-natively='s documentation leads up to looking at =org-fontify-meta-lines-and-blocks-1= which
+uses ~(match-string 7)~ to obtain the language used to fontify a block.  We advice this function so that it's call to
+~match-string~ behaves slightly different on input 7: We try to get the language used for fontification from
+=my/block-fontifications= if possible, otherwise defaulting to the existing mechanism.
+
+#+begin_src emacs-lisp
+(defun osbe--block-fontifications ()
+"Yields a cons list of block type and language pairs.
+
+The intent is that the block types are fontified using the given language name."
+    (--map (cons (symbol-name it) "org") org--supported-blocks))
+
+(defvar osbe--original-match-string (symbol-function 'match-string))
+
+(cl-defun osbe--match-string (n &optional str)
+          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
+(advice-add 'org-fontify-meta-lines-and-blocks
+            :around (lambda (fontify &rest args)
+                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                    (apply fontify args))))
+ #+end_src
+
+With the above setup, the following is fontified nicely in Org mode.
+#+begin_box musa and then some more!
+woah, nelly
+
+# hello
+# world
+
+then:
+#+begin_src emacs-lisp :tangle no
+;; super neato
+(defun hola () "HI")
+#+end_src
+
+Bye!
+#+end_box
 * Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -4573,7 +4616,7 @@ e.g., [[doc:org--color][color]] and [[doc:org--teal][teal]].
       collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
   #+END_SRC
   :End:
-  #+begin_details A Picture and Block Examples
+#+begin_details A Picture and Block Examples
 
   [[file:images/colours.jpg]]
 
@@ -4661,13 +4704,13 @@ e.g., [[doc:org--color][color]] and [[doc:org--teal][teal]].
   #+end_details
 
   :Header:
-  #+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Load support for 20 colour custom blocks and 20 colour link types
   #+END_SRC
   :End:
   #+html: <br>
-  #+begin_details Implementation of numerous colour blocks/links
+#+begin_details Implementation of numerous colour blocks/links
   We declare a list of colors that should be available on most systems.  Then
   using this list, we evaluate the code necessary to produce the necessary
   functions that format special blocks.
@@ -7472,7 +7515,7 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* TODO Marginal, “one-off”, remarks :FIXME:HTML_EXPORT_HAS_UNEXPECTED_NEW_LINES:
+* Marginal, “one-off”, remarks
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
@@ -7541,10 +7584,10 @@ in LaTeX, they appear in the margin.
           counter "footnote"
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
           ;; Width: https://tex.stackexchange.com/a/101861/69371
-  ;; :please-inline__no-extra-newlines__k-thx-bye!
   (vector :display 'full
           :face '(:foreground "grey" :weight bold
-          :underline "orange" :overline "orange"))
+          :underline "orange" :overline "orange")
+          :respect-newlines "Please don't use newlines around this element, thx!")
   "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.

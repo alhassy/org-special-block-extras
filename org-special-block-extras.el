@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.0.2
+;; Version: 4.1.0
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -514,7 +514,7 @@ We try to get the package's version from a constant “⟨O-LABEL⟩-version” 
   "Which special blocks, defined with DEFBLOCK, are supported.")
 
 (cl-defmacro org-defblock
-  (name main-arg kwds &optional experimental docstring &rest body)
+  (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
 
 A full featured example is at the end of this documentation string.
@@ -559,15 +559,6 @@ Finally, this macro exposes two functions:
 
 ⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
 ⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
-
-----------------------------------------------------------------------
-
-TLDR for EXPERIMENTAL and DOCSTRING and BODY, the first two parts are
-optional; they're a symbol, a string, then the main body.  The
-symbol, O-RESPECT-NEWLINES?, when present enables a highly
-experimental [i.e., do *not* use it!] feature: No new lines for
-blocks in HTML export.  Its need rose from developing the MARGIN
-block type.
 
 ----------------------------------------------------------------------
 
@@ -620,8 +611,8 @@ Three example uses:
   (add-to-list 'org--supported-blocks name) ;; global var
 
   ;; Identify which of the optional features is present...
-  (cl-destructuring-bind (o-respect-newlines? docstring body)
-      (lf-extract-optionals-from-rest experimental #'keywordp
+  (cl-destructuring-bind (link-display docstring body)
+      (lf-extract-optionals-from-rest link-display #'vectorp
                                       docstring    #'stringp
                                       body)
     `(progn
@@ -629,12 +620,15 @@ Three example uses:
        ,(org-defblock---support-block-type
          name
          docstring
-         (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
-         (cadr main-arg) ;; main argument's value
-         kwds
+         ;; (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
+         (or (cl-first kwds) 'main-arg)  ;; main argument's name
+         (cl-second kwds) ;; main argument's value
+         (cddr kwds)
          body
+         ;; TODO: Clean up the following.
          ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-         o-respect-newlines?
+         ;; Presence means: No new lines for blocks in HTML export.
+         (seq-contains link-display :respect-newlines)
          )
 
        ;; ⇨ The link type support
@@ -642,9 +636,7 @@ Three example uses:
        ;; are dumped here verbatim.
        ;; ‘(main-arg-name main-arg-val :face … :follow …)’
            (org-deflink ,name
-             [:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)
-             ,@(cddr main-arg) ;; verbatim link extras
-             ]
+             ,link-display ;; TODO: (vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] link-display)
              ;; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
              (s-replace-all `(("@@" . "")) ;; (,(format "@@%s:" backend) . "")
                             (,(intern (format "org--%s" name))
@@ -805,7 +797,8 @@ A full, working, example can be seen by “C-h o RET defblock”.
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "red" signoff "")
+  (editor "Editor Remark" color "red" signoff "")
+  [:face '(:foreground "red" :weight bold)]
   ; :please-preserve-new-lines
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -851,7 +844,7 @@ between conseqeuctive blockcalls.
 
 A full example:
 
-    (org-defblock nesting (name) nil
+    (org-defblock nesting (name nil)
       \"Show text in a box, within details, which contains a box.\"
 
       (org-thread-blockcall raw-contents
@@ -871,8 +864,7 @@ A full example:
                                    )))) result)))
 
 (org-defblock solution
-  (title "Solution")
-  (reprimand "Did you actually try? Maybe see the ‘hints’ above!"
+  (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
    really "Solution, for real")
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
   (org-thread-blockcall raw-contents
@@ -880,7 +872,7 @@ A full example:
                     (box reprimand :background-color "blue")
                     (details title)))
 
-(org-defblock org-demo nil (source "Source" result "Result"
+(org-defblock org-demo (nil nil source "Source" result "Result"
                         source-color "cyan" result-color "cyan"
                         style "parallel"
                         sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
@@ -914,12 +906,12 @@ SEP is the separator; e.g., a rule ‘<hr>'.
        (org--blockcall parallel "2" :bar nil text)
        (concat "#+end_export\n" text "\n#+begin_export"))))
 
-(org-defblock stutter (reps 2) nil
+(org-defblock stutter (reps 2)
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
 
-(org-defblock rename (list "") nil
+(org-defblock rename (list "")
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
@@ -929,7 +921,7 @@ In a link, no quotes are needed."
                  (s-split "," list)))
    contents))
 
-(org-defblock spoiler (color "grey") (left "((" right "))")
+(org-defblock spoiler (color "grey" left "((" right "))")
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -970,7 +962,7 @@ in the footnotes."
                 conclusion
                 (if named? (format "[\\text{%s}]" name) "")))))))
 
-(org-defblock tree (main-arg) nil
+(org-defblock tree (main-arg)
   "Write a proof tree using Org-lists.
 
 To get
@@ -1023,8 +1015,30 @@ the following proves P = R.
                                (goto-char (point-min))
                                (org-list-to-lisp))))))
 
-(org-defblock details (title "Details")
-              (background-color "#e5f5e5" title-color "green")
+(defun osbe--block-fontifications ()
+"Yields a cons list of block type and language pairs.
+
+The intent is that the block types are fontified using the given language name."
+    (--map (cons (symbol-name it) "org") org--supported-blocks))
+
+(defvar osbe--original-match-string (symbol-function 'match-string))
+
+(cl-defun osbe--match-string (n &optional str)
+          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
+(advice-add 'org-fontify-meta-lines-and-blocks
+            :around (lambda (fontify &rest args)
+                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                    (apply fontify args))))
+
+(org-defblock details (title "Details"
+              background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1066,8 +1080,8 @@ it may be prudent to expose more aspects as arguments.
                   %s
                </details>" background-color title-color title contents))))
 
-(org-defblock Details (title "Details")
-              (background-color "#e5f5e5" title-color "green")
+(org-defblock Details (title "Details"
+              background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -1109,7 +1123,7 @@ it may be prudent to expose more aspects as arguments.
                   %s
                </details>" background-color title-color title contents))))
 
-(org-defblock box (title "") (background-color nil shadow nil)
+(org-defblock box (title "" background-color nil shadow nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
@@ -1201,7 +1215,7 @@ Names are very rough approximates.
     (c c)
   ))
 
-(org-defblock parallel (cols "2") (bar nil)
+(org-defblock parallel (cols "2" bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be seperated by solid
@@ -1273,7 +1287,6 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
   "This variable holds the link label declared by users.
   It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
 
-;; TODO: Make this into a Github Issue.
 (defvar org-html-export-styles
       `((default . "")
         (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
@@ -1429,8 +1442,9 @@ When you click, it takes a seconds to fetch jokes; so await a moment when hoveri
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-      (editor "Editor Remark" :face '(:foreground "red" :weight bold)) (color "black" signoff "" strong nil)
+      (editor "Editor Remark" color "black" signoff "" strong nil)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
+[:face '(:foreground "red" :weight bold)]
 "Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
@@ -1510,8 +1524,8 @@ that is appended to the remark.
 
 (cl-loop for colour in org--ospe-colors
          do (eval `(org-defblock ,colour
-                     (the-color "black" :face `(:foreground ,(format "%s" (quote ,colour))))
-                     nil
+                     (the-color "black")
+                     (vector :face `(:foreground ,(format "%s" (quote ,colour))))
                      ,(format "Show text in %s color." colour)
                      (let ()
                        (format (pcase backend
@@ -1520,15 +1534,15 @@ that is appended to the remark.
                                (quote ,colour) contents)))))
 
 (org-defblock color
-  (color black :face (lambda (colour) `(:foreground ,(format "%s" colour))))
-  nil
+  (color black)
+  (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
   "Format text according to a given COLOR, which is black by default."
   (format (pcase backend
             (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
             (`html  "<span style=\"color:%s;\">%s</span>"))
           color contents))
 
-(org-defblock latex-definitions nil nil
+(org-defblock latex-definitions nil
   "Declare but do not display the CONTENTS according to the BACKEND."
   (format (pcase backend
             ('html "<p style=\"display:none\">\\[%s\\]</p>")
@@ -1965,8 +1979,8 @@ newlines.
     (s-replace-regexp "\\\"" "''")))
 
 (org-defblock documentation
-  (name (error "Documentation block: Name must be provided"))
-  (label nil show nil color "green")
+  (name (error "Documentation block: Name must be provided")
+       label nil show nil color "green")
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
 The dictionary variable is ‘org--docs’.
@@ -2067,14 +2081,14 @@ That is what we accomplish with this new `show' link type."
 
 (org-defblock margin
   (marker nil
-          :display 'full
-          :face '(:foreground "grey" :weight bold
-          :underline "orange" :overline "orange"))
-  (color "gray!80"
+  color "gray!80"
           counter "footnote"
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
           ;; Width: https://tex.stackexchange.com/a/101861/69371
-  :please-inline__no-extra-newlines__k-thx-bye!
+  (vector :display 'full
+          :face '(:foreground "grey" :weight bold
+          :underline "orange" :overline "orange")
+          :respect-newlines "Please don't use newlines around this element, thx!")
   "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
@@ -2209,8 +2223,8 @@ COLOR is the colour of the hints."
                   expr))))))
 
 (org-defblock calc
-  (main-arg)
-  (rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
+  (main-arg nil
+  rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
   "Render an Org-list as an equational proof.
 
 Sometimes the notation delimiting justification hints may clash
