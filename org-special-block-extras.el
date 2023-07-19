@@ -618,13 +618,7 @@ Three example uses:
     `(progn
        ;; Produce an associated Lisp function
        ,(org-defblock---support-block-type
-         name
-         docstring
-         ;; (if (consp `,main-arg) (car main-arg) 'main-arg) ;; main argument's name
-         (or (cl-first kwds) 'main-arg)  ;; main argument's name
-         (cl-second kwds) ;; main argument's value
-         (cddr kwds)
-         body
+         name docstring kwds body
          ;; TODO: Clean up the following.
          ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
          ;; Presence means: No new lines for blocks in HTML export.
@@ -645,7 +639,7 @@ Three example uses:
 ;; WHERE ...
 
 (cl-defmethod org-defblock---support-block-type
-    (name docstring main-arg-name main-arg-value kwds body o-respect-newlines?)
+    (name docstring kwds body o-respect-newlines?)
   "Helper method for org-defblock.
 
 This method creates an Org block type's associated Lisp function.
@@ -656,6 +650,9 @@ MAIN-ARG-NAME: Essentially main-arg's name
 MAIN-ARG-VALUE: Essentially main-arg's value
 KWDS, plist: Keyword-value pairs
 BODY, list: Code to be executed"
+  (let ((main-arg-name (or (cl-first kwds) 'main-arg))
+        (main-arg-value (cl-second kwds))
+        (kwds (cddr kwds)))
   `(cl-defun ,(intern (format "org--%s" name))
        (backend raw-contents
                 &optional ;; ,(car main-arg)
@@ -705,7 +702,7 @@ BODY, list: Code to be executed"
                                (setq ,k it))))
 
        (org-export
-        (let ((contents (org-parse raw-contents))) ,@body)))))
+        (let ((contents (org-parse raw-contents))) ,@body))))))
 
 (defun org--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
