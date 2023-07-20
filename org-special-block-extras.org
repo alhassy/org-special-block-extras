@@ -1793,23 +1793,29 @@ Three example uses:
   ;;
   (add-to-list 'org--supported-blocks name) ;; global var
 
+  ;; TODO: Relocate
+  (defvar org--block--link-display nil
+    "Association list of block name symbols to link display vectors.")
+
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
                                       docstring    #'stringp
                                       body)
-    `(list
-      ,(org--create-defmethod-of-defblock2 name docstring (plist-get kwds :backend) kwds body)
+      `(progn
+        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
+       (list
+      ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
        ;; ⇨ The link type support
-      (org-deflink ,name
-                   ,link-display ;; TODO: (vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] link-display)
+      (eval (backquote (org-deflink ,name
+                   ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (cdr (assoc name org--block--link-display)))
                    ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
                    (s-replace-regexp "@@" ""
-                                     (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t))))))
+                                     (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
 
 ;; WHERE ...
 
-(cl-defmethod org--create-defmethod-of-defblock2 ((name symbol) docstring backend-type (kwds list) (body list))
+(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring backend-type (kwds list) (body list))
   "Helper method to produce an associated Lisp function for org-defblock.
 
 + NAME: The name of the block type.
@@ -1822,7 +1828,12 @@ Three example uses:
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
-  `(cl-defmethod ,(intern (format "org-block/%s" name))
+       ;; Unless we've already set the docs for the generic function, don't re-declare it.
+       `(if ,(null body)
+         (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
+           ,docstring)
+
+       (cl-defmethod ,(intern (format "org-block/%s" name))
      ((backend ,(if backend-type `(eql ,backend-type) t))
       (raw-contents string)
       &optional
@@ -1852,7 +1863,7 @@ Three example uses:
                                (setq ,k it))))
 
        (org-export
-        (let ((contents (org-parse raw-contents))) ,@body))))))
+        (let ((contents (org-parse raw-contents))) ,@body)))))))
   #+end_src
 
   #+RESULTS:
@@ -3135,7 +3146,56 @@ I am foo; Indeed FoO is what I fOo!
 # that behaves differently depending on the export backend.
 
 :End:
-** Basic defblock test                                    :relocate:noexport:
+** Fontifying all blocks as if they were Org blocks                :relocate:noexport:
+:PROPERTIES:
+:CUSTOM_ID: Fontifying-all-blocks-as-if-they-were-Org-blocks
+:END:
+
+Looking at =org-src-fontify-natively='s documentation leads up to looking at =org-fontify-meta-lines-and-blocks-1= which
+uses ~(match-string 7)~ to obtain the language used to fontify a block.  We advice this function so that it's call to
+~match-string~ behaves slightly different on input 7: We try to get the language used for fontification from
+=my/block-fontifications= if possible, otherwise defaulting to the existing mechanism.
+
+#+begin_src emacs-lisp
+(defun osbe--block-fontifications ()
+"Yields a cons list of block type and language pairs.
+
+The intent is that the block types are fontified using the given language name."
+    (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
+
+(defvar osbe--original-match-string (symbol-function 'match-string))
+
+(cl-defun osbe--match-string (n &optional str)
+          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
+(advice-add 'org-fontify-meta-lines-and-blocks
+            :around (lambda (fontify &rest args)
+                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                    (apply fontify args))))
+ #+end_src
+
+With the above setup, the following is fontified nicely in Org mode.
+#+begin_box musa and then some more!
+woah, nelly
+
+# hello
+# world
+
+then:
+#+begin_src emacs-lisp :tangle no
+;; super neato
+(defun hola () "HI")
+#+end_src
+
+Bye!
+#+end_box
+* Basic defblock test                                     :relocate:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Basic-defblock-test
 :END:
@@ -3196,55 +3256,7 @@ post")
 (* anything)
 "<p>\npost"))
 #+end_src
-** Fontifying all blocks as if they were Org blocks                :relocate:noexport:
-:PROPERTIES:
-:CUSTOM_ID: Fontifying-all-blocks-as-if-they-were-Org-blocks
-:END:
 
-Looking at =org-src-fontify-natively='s documentation leads up to looking at =org-fontify-meta-lines-and-blocks-1= which
-uses ~(match-string 7)~ to obtain the language used to fontify a block.  We advice this function so that it's call to
-~match-string~ behaves slightly different on input 7: We try to get the language used for fontification from
-=my/block-fontifications= if possible, otherwise defaulting to the existing mechanism.
-
-#+begin_src emacs-lisp
-(defun osbe--block-fontifications ()
-"Yields a cons list of block type and language pairs.
-
-The intent is that the block types are fontified using the given language name."
-    (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
-
-(defvar osbe--original-match-string (symbol-function 'match-string))
-
-(cl-defun osbe--match-string (n &optional str)
-          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
-             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
-        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
-        (if (and (equal n 7) fontification)
-            fontification
-          (funcall osbe--original-match-string n str))))
-
-;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
-(advice-add 'org-fontify-meta-lines-and-blocks
-            :around (lambda (fontify &rest args)
-                  (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
-                    (apply fontify args))))
- #+end_src
-
-With the above setup, the following is fontified nicely in Org mode.
-#+begin_box musa and then some more!
-woah, nelly
-
-# hello
-# world
-
-then:
-#+begin_src emacs-lisp :tangle no
-;; super neato
-(defun hola () "HI")
-#+end_src
-
-Bye!
-#+end_box
 * Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
