@@ -1799,7 +1799,7 @@ Three example uses:
                                       docstring    #'stringp
                                       body)
     `(list
-      ,(org--create-defmethod-of-defblock name docstring kwds body)
+      ,(org--create-defmethod-of-defblock2 name docstring (plist-get kwds :backend) kwds body)
        ;; ⇨ The link type support
       (org-deflink ,name
                    ,link-display ;; TODO: (vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] link-display)
@@ -1809,7 +1809,7 @@ Three example uses:
 
 ;; WHERE ...
 
-(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring (kwds list) (body list))
+(cl-defmethod org--create-defmethod-of-defblock2 ((name symbol) docstring backend-type (kwds list) (body list))
   "Helper method to produce an associated Lisp function for org-defblock.
 
 + NAME: The name of the block type.
@@ -1817,16 +1817,19 @@ Three example uses:
 + KWDS: Keyword-value pairs
 + BODY: Code to be executed"
   (cl-assert (or (stringp docstring) (null docstring)))
+  (cl-assert (or (symbolp backend-type) (null backend-type)))
 
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
   `(cl-defmethod ,(intern (format "org-block/%s" name))
-       (backend raw-contents
-                &optional
-                ,main-arg-name
-                &rest _
-                &key (o-link? nil) ,@(-partition 2 kwds))
+     ((backend ,(if backend-type `(eql ,backend-type) t))
+      (raw-contents string)
+      &optional
+      ,main-arg-name
+      &rest _
+      &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
+      &allow-other-keys)
      ,docstring
      ;; Use default for main argument
      (when (and ',main-arg-name (s-blank-p ,main-arg-name))
@@ -6073,7 +6076,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
 may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
-* Tooltips for Glossaries, Dictionaries, and Documentation
+* COMMENT Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
@@ -7474,7 +7477,7 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* Marginal, “one-off”, remarks
+* COMMENT Marginal, “one-off”, remarks
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
