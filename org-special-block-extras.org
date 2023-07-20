@@ -1799,12 +1799,7 @@ Three example uses:
                                       docstring    #'stringp
                                       body)
     `(list
-      ,(org--create-defun-of-defblock name docstring kwds body
-              ;; TODO: Clean up the following.
-              ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-              ;; Presence means: No new lines for blocks in HTML export.
-              (seq-contains link-display :respect-newlines))
-
+      ,(org--create-defmethod-of-defblock name docstring kwds body)
        ;; ⇨ The link type support
       (org-deflink ,name
                    ,link-display ;; TODO: (vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] link-display)
@@ -1814,24 +1809,21 @@ Three example uses:
 
 ;; WHERE ...
 
-(cl-defmethod org--create-defun-of-defblock
-    (name docstring kwds body o-respect-newlines?)
+(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring (kwds list) (body list))
   "Helper method to produce an associated Lisp function for org-defblock.
 
-This method creates an Org block type's associated Lisp function.
++ NAME: The name of the block type.
++ DOCSTRING, string|null: Documentation of block.
++ KWDS: Keyword-value pairs
++ BODY: Code to be executed"
+  (cl-assert (or (stringp docstring) (null docstring)))
 
-NAME, string: The name of the block type.
-DOCSTRING, string: Documentation of block.
-MAIN-ARG-NAME: Essentially main-arg's name
-MAIN-ARG-VALUE: Essentially main-arg's value
-KWDS, plist: Keyword-value pairs
-BODY, list: Code to be executed"
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
-  `(cl-defun ,(intern (format "org-block/%s" name))
+  `(cl-defmethod ,(intern (format "org-block/%s" name))
        (backend raw-contents
-                &optional ;; ,(car main-arg)
+                &optional
                 ,main-arg-name
                 &rest _
                 &key (o-link? nil) ,@(-partition 2 kwds))
@@ -1843,32 +1835,11 @@ BODY, list: Code to be executed"
          (setq ,main-arg-name ,main-arg-value)))
 
      (cl-letf (((symbol-function 'org-export)
-                 (lambda (x)
-            "Wrap the given X in an export block for the current backend.
-
-          One can think of this function as replacing the #+begin_𝒳⋯#+end_𝒳
-          in-place in your Org document; but really that's done by the
-          ⋯-support-blocks function.
-          "
-            (if o-link?
-                x
-            ;; o-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
-            (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
-                   (format "@@%s:%s@@" backend (s-replace "\n" (format "@@\n@@%s:" backend) x) backend))
-                  (:else
-                   (format "#+begin_export %s \n%s\n#+end_export"
-                           backend x))))))
-
-               ((symbol-function 'org-parse)
-                (lambda (x)
-                  "This should ONLY be called within an ORG-EXPORT call."
-                  (if o-link?
-                      x
-                    (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
-                           (format "@@%s@@%s:" x backend))
-                          (:else
-                           (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-                                   backend)))))))
+                 (lambda (x) "Wrap the given X in an export block for the current backend."
+                   (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+         ((symbol-function 'org-parse)
+          (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+            (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
@@ -3193,9 +3164,9 @@ I am foo; Indeed FoO is what I fOo!
 (deftest "Upcase works as expected on blocks"
          [basic-defblock]
          (⇝ (⟰ "pre
-,#+begin_scream hello
+#+begin_scream hello
 my amigos
-,#+end_scream
+#+end_scream
 post")
 "pre"
 (* anything)
@@ -3237,7 +3208,7 @@ uses ~(match-string 7)~ to obtain the language used to fontify a block.  We advi
 "Yields a cons list of block type and language pairs.
 
 The intent is that the block types are fontified using the given language name."
-    (--map (cons (symbol-name it) "org") org--supported-blocks))
+    (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
 
 (defvar osbe--original-match-string (symbol-function 'match-string))
 
@@ -7573,9 +7544,7 @@ in LaTeX, they appear in the margin.
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
           ;; Width: https://tex.stackexchange.com/a/101861/69371
   (vector :display 'full
-          :face '(:foreground "grey" :weight bold
-          :underline "orange" :overline "orange")
-          :respect-newlines "Please don't use newlines around this element, thx!")
+          :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
   "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
