@@ -8473,6 +8473,40 @@ z
 #+end_src
 #+end_details
 
+* Case Studies
+** Example of preventing Org from adding new paragraph line breaks within div-s
+
+The following style ensures that the ~<p>~ tags produced by Org have their line feeds disabled
+/only while/ in a ~<div class="theorem">~.
+#+html: <style> .theorem p { display:inline; } </style>
+
+With that in-hand, let's define our theorem block.
+#+begin_src emacs-lisp
+(setq my/theorem-counter 0)
+
+(org-defblock theorem (title)
+  "Show block contents prefixed with “Theorem 𝒏”, where the 𝒏umbering automatically increments."
+  (format "<div class=\"theorem\"><b>Theorem %s%s.</b>&nbsp;%s</div>"
+          (cl-incf my/theorem-counter)
+          (if title (format " [“%s”]" title) "")
+          (org-parse raw-contents)))
+#+end_src
+
+To enable MathJax to load, we need some inline math, such as $x = x$. With that
+out of the way, we can look at some example uses of our “theorem” block.
+
+#+begin_theorem Russel & Whitehead
+After 372 pages, it was shown that $1 + 1 = 2$
+#+end_theorem
+
+#+begin_theorem
+It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
+#+end_theorem
+
+
+
+
+
 * TODO [#A] COMMENT Summary
   :PROPERTIES:
   :CUSTOM_ID: Summary
