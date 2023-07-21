@@ -149,7 +149,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.1.0
+;; Version: 4.1.1
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -518,10 +518,7 @@ badge:Emacs|27|green|https://www.gnu.org/software/emacs|gnu-emacs
 badge:Org|9.4|blue|https://orgmode.org|gnu
 
 #+html: <span>
-badge:org-special-block-extras|3.0|informational|https://github.com/alhassy/org-special-block-extras|Gnu-Emacs
-
-#+html: <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
-#+html: </span>
+melpa:org-special-block-extras
 
 [[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]]
 [[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]]
@@ -1808,7 +1805,7 @@ Three example uses:
       ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
        ;; ⇨ The link type support
       (eval (backquote (org-deflink ,name
-                   ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (cdr (assoc name org--block--link-display)))
+                   ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
                    ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
                    (s-replace-regexp "@@" ""
                                      (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
@@ -3195,7 +3192,7 @@ then:
 
 Bye!
 #+end_box
-* Basic defblock test                                     :relocate:noexport:
+** Basic defblock test                                    :relocate:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Basic-defblock-test
 :END:
@@ -3256,6 +3253,70 @@ post")
 (* anything)
 "<p>\npost"))
 #+end_src
+
+** Dispatch on =backend= ---open for extensibility
+:PROPERTIES:
+:CUSTOM_ID: Dispatch-on-backend-open-for-extensibility
+:END:
+
+Consider the source and how it exports ...
+#+begin_org-demo
+The link “ [[shout:me the author][hello to the world]] ” exports with bold in HTML and large in LaTeX.
+#+end_org-demo
+# C-c C-e h o ⇒ bold
+# C-c C-e l o ⇒ large
+
+This could be declared via ...
+#+begin_src elisp :tangle no
+;; Declare the new defblock, along with how it should be displayed as an org link
+(org-defblock shout0 (speaker)
+  [:face '(:foreground "orange" :weight bold) :display 'full]
+  "Capitalise the contents! Seen in orange bold in Emacs!"
+  (pcase backend
+    ('html (format "Yuck/%s: <strong>%s</strong>" speaker contents))
+    ('latex (format "Yuck/%s: \\emph{\\LARGE %s}" speaker contents))
+    (t (error "org-block/shout: Unsupported backend “%s”" backend))))
+#+end_src
+
+Rather than defining it with a single defblock declaration and a condition on the backend, we can define it using three
+defblock declarations: One to declare the block along with top-level documentation and display link information; the
+second for the HTML export; the third for the LaTeX backend export. (Your favourite backend ℬ can easily be supported by
+declaring a new defblock in /your own code/!)
+
+#+name: startup-code
+#+begin_src elisp :tangle no
+;; Declare the new defblock, along with how it should be displayed as an org link
+(org-defblock shout (speaker)
+  [:face '(:foreground "orange" :weight bold) :display 'full]
+  "Capitalise the contents! Seen in orange bold in Emacs!")
+
+
+;; Specialise its definition for when we export to the HTML backend
+(org-defblock shout (speaker nil :backend html)
+   "To shout is to be bold; i.e., strong."
+  (format "%s: <strong>%s</strong>" speaker contents))
+
+
+;; Specialise its definition for when we export to the LaTeX backend
+(org-defblock shout (speaker nil :backend latex)
+  "Shouting is a what LARGE brutes do"
+  (format "%s: \\emph{\\LARGE %s}" speaker contents))
+#+end_src
+
+Try kbd:C-h_o_org-defblock/shout and see two implementations.
+- This means that users can always re-define an org special block, or extend it to support a new backend. Neato!
+- Free user extensibility!
+
+Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgeneric and doc:cl-defmethod.
+
+:Multimethod_invocation_examples_of_SHOUT:
+#+begin_src elisp :tangle no
+;; Example uses of the multimethods approach
+(org-block/shout 'random-backend "hi") ;; should error!
+(org-block/shout 'html "hi")
+(org-block/shout 'latex "hi")
+#+end_src
+:End:
 
 * Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
@@ -3331,61 +3392,6 @@ it may be prudent to expose more aspects as arguments.
                   %s
                </details>" background-color title-color title contents))))
 #+end_src
-
-#+RESULTS:
-| :export | (lambda (label description backend) (s-replace-all `((#+end_export . ) (,(format #+begin_export %s backend) . )) (org--details backend (or description label) label))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
-
-:HACK:Disabled:
-Above is a lower-case ‘d’etails block, we now make a captial-case ‘D’etails
-block, for the not-too-odd situation we want to have, right away, one details block
-within another.
-#+begin_src emacs-lisp :exports none
-(org-defblock Details (title "Details"
-              background-color "#e5f5e5" title-color "green")
-  "Enclose contents in a folded up box, for HTML.
-
-For LaTeX, this is just a boring, but centered, box.
-
-By default, the TITLE of such blocks is “Details”
-its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
-
-In HTML, we show folded, details, regions with a nice greenish colour.
-
-In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments.
-"
-   (pcase backend
-     (`latex (concat (pcase (substring background-color 0 1)
-                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-                     (pcase (substring title-color 0 1)
-                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-                     (format "\\begin{quote}
-                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
-                                   %s
-                               \\end{tcolorbox}
-                \\end{quote}" title contents)))
-     (_ (format "<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: %s;
-                          border-radius: 15px;
-                          color: hsl(157 75% 20%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"%s\">
-                         %s
-                      </font>
-                    </strong>
-                  </summary>
-                  %s
-               </details>" background-color title-color title contents))))
-#+end_src
-MA: TODO: The above should not be present, it should instead be factored out
-into a defblock-alias function.
-:End:
 
 :Posterity_Older_implementation:
 #+BEGIN_SRC emacs-lisp -n -r :tangle no
@@ -6088,7 +6094,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
 may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
-* COMMENT Tooltips for Glossaries, Dictionaries, and Documentation
+* Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
@@ -7489,7 +7495,7 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* COMMENT Marginal, “one-off”, remarks
+* Marginal, “one-off”, remarks
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
