@@ -8474,6 +8474,24 @@ z
 #+end_details
 
 * Case Studies
+** In doubt, a block's main argument should be enclosed in quotes
+:PROPERTIES:
+:CUSTOM_ID: In-doubt-a-block's-main-argument-should-be-enclosed-in-quotes
+:END:
+
+The following wont work as expected...
+
+#+begin_details SDOF equations are \\(m\\ddot{x}=f(t)\\)
+The above is a differential equation with $\ddot{x}$.
+#+end_details
+
+But using quotes will fix all the problems...
+
+#+begin_details "SDOF equations are \\(m\\ddot{x}=f(t)\\)"
+The above is a differential equation with $\ddot{x}$.
+#+end_details
+
+
 ** Example of preventing Org from adding new paragraph line breaks within div-s
 
 In the produced HTML code, a paragraph ~<p> bla bla </p>~ environment is added inside a ~div~; how do we prevent this from
