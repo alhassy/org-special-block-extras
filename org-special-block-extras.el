@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 4.1.0
+;; Version: 4.1.1
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -610,55 +610,54 @@ Three example uses:
   ;;
   (add-to-list 'org--supported-blocks name) ;; global var
 
+  ;; TODO: Relocate
+  (defvar org--block--link-display nil
+    "Association list of block name symbols to link display vectors.")
+
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
                                       docstring    #'stringp
                                       body)
-    `(progn
-       ;; Produce an associated Lisp function
-       ,(org-defblock---support-block-type
-         name docstring kwds body
-         ;; TODO: Clean up the following.
-         ;; MA: I'd like it to be always ‘true’, but it's experimental and breaks so much stuff.
-         ;; Presence means: No new lines for blocks in HTML export.
-         (seq-contains link-display :respect-newlines)
-         )
-
+      `(progn
+        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
+       (list
+      ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
        ;; ⇨ The link type support
-       ;; The ‘main-arg’ may contain a special key ‘:link-type’ whose contents
-       ;; are dumped here verbatim.
-       ;; ‘(main-arg-name main-arg-val :face … :follow …)’
-           (org-deflink ,name
-             ,link-display ;; TODO: (vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] link-display)
-             ;; s-replace-all `(("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-             (s-replace-all `(("@@" . "")) ;; (,(format "@@%s:" backend) . "")
-                            (,(intern (format "org--%s" name))
-                             o-backend (or o-description o-label) o-label :o-link? t))))))
+      (eval (backquote (org-deflink ,name
+                   ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
+                   ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                   (s-replace-regexp "@@" ""
+                                     (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
 
 ;; WHERE ...
 
-(cl-defmethod org-defblock---support-block-type
-    (name docstring kwds body o-respect-newlines?)
-  "Helper method for org-defblock.
+(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring backend-type (kwds list) (body list))
+  "Helper method to produce an associated Lisp function for org-defblock.
 
-This method creates an Org block type's associated Lisp function.
++ NAME: The name of the block type.
++ DOCSTRING, string|null: Documentation of block.
++ KWDS: Keyword-value pairs
++ BODY: Code to be executed"
+  (cl-assert (or (stringp docstring) (null docstring)))
+  (cl-assert (or (symbolp backend-type) (null backend-type)))
 
-NAME, string: The name of the block type.
-DOCSTRING, string: Documentation of block.
-MAIN-ARG-NAME: Essentially main-arg's name
-MAIN-ARG-VALUE: Essentially main-arg's value
-KWDS, plist: Keyword-value pairs
-BODY, list: Code to be executed"
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
-  `(cl-defun ,(intern (format "org--%s" name))
-       (backend raw-contents
-                &optional ;; ,(car main-arg)
-                ,main-arg-name
-                &rest _
-                &key (o-link? nil) ,@(-partition 2 kwds))
+       ;; Unless we've already set the docs for the generic function, don't re-declare it.
+       `(if ,(null body)
+         (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
+           ,docstring)
+
+       (cl-defmethod ,(intern (format "org-block/%s" name))
+     ((backend ,(if backend-type `(eql ,backend-type) t))
+      (raw-contents string)
+      &optional
+      ,main-arg-name
+      &rest _
+      &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
+      &allow-other-keys)
      ,docstring
      ;; Use default for main argument
      (when (and ',main-arg-name (s-blank-p ,main-arg-name))
@@ -667,32 +666,11 @@ BODY, list: Code to be executed"
          (setq ,main-arg-name ,main-arg-value)))
 
      (cl-letf (((symbol-function 'org-export)
-                 (lambda (x)
-            "Wrap the given X in an export block for the current backend.
-
-          One can think of this function as replacing the #+begin_𝒳⋯#+end_𝒳
-          in-place in your Org document; but really that's done by the
-          ⋯-support-blocks function.
-          "
-            (if o-link?
-                x
-            ;; o-respect-newlines? is super experimental: It's a bit ugly on the LaTeX side.
-            (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
-                   (format "@@%s:%s@@" backend (s-replace "\n" (format "@@\n@@%s:" backend) x) backend))
-                  (:else
-                   (format "#+begin_export %s \n%s\n#+end_export"
-                           backend x))))))
-
-               ((symbol-function 'org-parse)
-                (lambda (x)
-                  "This should ONLY be called within an ORG-EXPORT call."
-                  (if o-link?
-                      x
-                    (cond ((and ,o-respect-newlines? (member backend '(html reveal)))
-                           (format "@@%s@@%s:" x backend))
-                          (:else
-                           (format "\n#+end_export\n%s\n#+begin_export %s\n" x
-                                   backend)))))))
+                 (lambda (x) "Wrap the given X in an export block for the current backend."
+                   (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+         ((symbol-function 'org-parse)
+          (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+            (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
@@ -702,7 +680,7 @@ BODY, list: Code to be executed"
                                (setq ,k it))))
 
        (org-export
-        (let ((contents (org-parse raw-contents))) ,@body))))))
+        (let ((contents (org-parse raw-contents))) ,@body)))))))
 
 (defun org--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
@@ -754,7 +732,7 @@ BACKEND is the export back-end being used, as a symbol."
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
           (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
           (kill-region blk-start (point))
-          (insert (eval `(,(intern (format "org--%s" blk))
+          (insert (eval `(,(intern (format "org-block/%s" blk))
                           (quote ,backend)
                           ,blk-contents
                           ,main-arg
@@ -816,7 +794,7 @@ Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
 One should rarely use this directly; instead use
 o-thread-blockcall.
 "
-  `(concat "#+end_export\n" (,(intern (format "org--%s" blk))
+  `(concat "#+end_export\n" (,(intern (format "org-block/%s" blk))
     backend ;; defblock internal
     ; (format "\n#+begin_export html\n\n%s\n#+end_export\n" ,(car (last keyword-args-then-contents))) ;; contents
     ,@(last keyword-args-then-contents) ;; contents
@@ -1016,7 +994,7 @@ the following proves P = R.
 "Yields a cons list of block type and language pairs.
 
 The intent is that the block types are fontified using the given language name."
-    (--map (cons (symbol-name it) "org") org--supported-blocks))
+    (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
 
 (defvar osbe--original-match-string (symbol-function 'match-string))
 
@@ -1041,49 +1019,6 @@ The intent is that the block types are fontified using the given language name."
 For LaTeX, this is just a boring, but centered, box.
 
 By default, the TITLE of such blocks is “Details”,
-its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
-
-In HTML, we show folded, details, regions with a nice greenish colour.
-
-In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments.
-"
-   (pcase backend
-     (`latex (concat (pcase (substring background-color 0 1)
-                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-                     (pcase (substring title-color 0 1)
-                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-                     (format "\\begin{quote}
-                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
-                                   %s
-                               \\end{tcolorbox}
-                \\end{quote}" title contents)))
-     (_ (format "<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: %s;
-                          border-radius: 15px;
-                          color: hsl(157 75% 20%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"%s\">
-                         %s
-                      </font>
-                    </strong>
-                  </summary>
-                  %s
-               </details>" background-color title-color title contents))))
-
-(org-defblock Details (title "Details"
-              background-color "#e5f5e5" title-color "green")
-  "Enclose contents in a folded up box, for HTML.
-
-For LaTeX, this is just a boring, but centered, box.
-
-By default, the TITLE of such blocks is “Details”
 its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
 
 In HTML, we show folded, details, regions with a nice greenish colour.
@@ -2083,9 +2018,7 @@ That is what we accomplish with this new `show' link type."
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
           ;; Width: https://tex.stackexchange.com/a/101861/69371
   (vector :display 'full
-          :face '(:foreground "grey" :weight bold
-          :underline "orange" :overline "orange")
-          :respect-newlines "Please don't use newlines around this element, thx!")
+          :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
   "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
