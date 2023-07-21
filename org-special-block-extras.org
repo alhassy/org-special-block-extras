@@ -8476,6 +8476,16 @@ z
 * Case Studies
 ** Example of preventing Org from adding new paragraph line breaks within div-s
 
+In the produced HTML code, a paragraph ~<p> bla bla </p>~ environment is added inside a ~div~; how do we prevent this from
+happening?
+
+This is hinted at in the docstrings: C-h o RET o-defblock yields
+~...In, hopefully, rare circumstances, one may refer to RAW-CONTENTS to look at the fully unparsed contents....~
+# TODO: The docstring should also mention “org-parse” and its use with “raw-contents”?
+
+
+--------------------------------------------------------------------------------
+
 The following style ensures that the ~<p>~ tags produced by Org have their line feeds disabled
 /only while/ in a ~<div class="theorem">~.
 #+html: <style> .theorem p { display:inline; } </style>
