@@ -1,0 +1,190 @@
+input: |-
+
+  1. It works when all 5 arguments are provided
+
+     badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir
+
+  2. It works when we use [ [ link ] ] syntax with generous spaces and newlines
+
+     [[badge: Let me google that | for you! | orange |
+           https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]
+
+  3. It works when only the first 2 arguments are provided;
+     asterisks are passed unaltered into the first argument
+     
+     badge:Let_me_*not*_google_that|for_you
+
+  4. It works when all 5 arguments are provided - URL ‘here’ makes it a local link
+
+     badge:key|value|informational|here|Elixir
+
+  5. We can use spaces, commas, dashes, and percentage symbols in the first argument
+
+     badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
+
+  6. It works when only first 2 arguments are given: Default colour & logo are green & no logo shown
+
+     badge:key|value
+
+  7. When only a key is provided, the value slot is shown as an empty green stub
+
+     badge:key
+
+  8. When only a value is provided, only the value is shown in a default green
+     ---no stub for the missing key, yay
+
+     badge:|value
+
+  9. It's only a green stub when provided with an empty key and empty value
+
+     badge:||green
+
+  10. It's only a green stub when we use no options at all
+
+     [[badge:]]
+
+expectations:
+  html: |-
+    <ol class="org-ol">
+      <li>
+        <p>It works when all 5 arguments are provided</p>
+
+        <p>
+          <a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"
+            ><img
+              src="https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir"
+          /></a>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It works when we use [ [ link ] ] syntax with generous spaces and newlines
+        </p>
+
+        <p>
+          <a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"
+            ><img
+              src="https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir"
+          /></a>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It works when only the first 2 arguments are provided; asterisks are
+          passed unaltered into the first argument
+        </p>
+
+        <p>
+          <img
+            src="https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil"
+          />
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It works when all 5 arguments are provided - URL ‘here’ makes it a local
+          link
+        </p>
+
+        <p>
+          <a id="key" href="#key"
+            ><img
+              src="https://img.shields.io/badge/key-value-informational?logo=Elixir"
+          /></a>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          We can use spaces, commas, dashes, and percentage symbols in the first
+          argument
+        </p>
+
+        <p>
+          <a
+            id="example_with_spaces,_-,_and_%"
+            href="#example_with_spaces,_-,_and_%"
+            ><img
+              src="https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil"
+          /></a>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It works when only first 2 arguments are given: Default colour &amp; logo
+          are green &amp; no logo shown
+        </p>
+
+        <p>
+          <img src="https://img.shields.io/badge/key-value-nil?logo=nil" />
+        </p>
+      </li>
+
+      <li>
+        <p>
+          When only a key is provided, the value slot is shown as an empty green
+          stub
+        </p>
+
+        <p>
+          <img src="https://img.shields.io/badge/key--nil?logo=nil" />
+        </p>
+      </li>
+
+      <li>
+        <p>
+          When only a value is provided, only the value is shown in a default green
+          &#x2014;no stub for the missing key, yay
+        </p>
+
+        <p>
+          <img src="https://img.shields.io/badge/-value-nil?logo=nil" />
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It's only a green stub when provided with an empty key and empty value
+        </p>
+
+        <p>
+          <img src="https://img.shields.io/badge/--green?logo=nil" />
+        </p>
+      </li>
+
+      <li>
+        <p>It's only a green stub when we use no options at all</p>
+
+        <p>
+          <img src="https://img.shields.io/badge/--nil?logo=nil" />
+        </p>
+      </li>
+    </ol>
+  latex: |-
+    \begin{enumerate}
+    	\item It works when all 5 arguments are provided
+
+    	\item It works when we use [ [ link ] ] syntax with generous spaces and newlines
+
+    	\item It works when only the first 2 arguments are provided;
+    	      asterisks are passed unaltered into the first argument
+
+    	\item It works when all 5 arguments are provided - URL ‘here’ makes it a local link
+
+    	\item We can use spaces, commas, dashes, and percentage symbols in the first argument
+
+    	\item It works when only first 2 arguments are given: Default colour \& logo are green \& no logo shown
+
+    	\item When only a key is provided, the value slot is shown as an empty green stub
+
+    	\item When only a value is provided, only the value is shown in a default green
+    	      ---no stub for the missing key, yay
+
+    	\item It's only a green stub when provided with an empty key and empty value
+
+    	\item It's only a green stub when we use no options at all
+    \end{enumerate}

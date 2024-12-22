@@ -1,0 +1,82 @@
+input: |-
+
+  1. It becomes <kbd> tags, but final symbol non-ascii *may* be ignored
+
+     kbd:C-u_80_-∀
+
+  2. [ [ It ] ] becomes <kbd> tags
+
+     [[kbd:C-u_80_-]]
+
+  3. Using syntax <it> becomes <kbd> tags, and surrounding space is trimmed
+
+     <kbd: C-u 80 - >
+
+  4. It has a tooltip documenting the underlying Lisp function, when possible
+
+     <kbd: M-s h .>
+
+expectations:
+  html: |-
+    <ol class="org-ol">
+      <li>
+        <p>
+          It becomes &lt;kbd&gt; tags, but final symbol non-ascii <b>may</b> be
+          ignored
+        </p>
+
+        <p><kbd style="">C-u 80</kbd>_-∀</p>
+      </li>
+
+      <li>
+        <p>[ [ It ] ] becomes &lt;kbd&gt; tags</p>
+
+        <p>
+          <kbd style="">C-u 80 -</kbd>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          Using syntax &lt;it&gt; becomes &lt;kbd&gt; tags, and surrounding space is
+          trimmed
+        </p>
+
+        <p>
+          <kbd style="">C-u 80 -</kbd>
+        </p>
+      </li>
+
+      <li>
+        <p>
+          It has a tooltip documenting the underlying Lisp function, when possible
+        </p>
+
+        <p>
+          <abbr
+            class="tooltip"
+            style="border: none; text-decoration: none"
+            title="M-s h . ∷ highlight-symbol-at-point<br>Highlight each instance of the symbol at point.<br>Uses the next face from ‘hi-lock-face-defaults’ without prompting,<br>unless you use a prefix argument.<br>Uses ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at point.<br><br>If REGEXP contains upper case characters (excluding those preceded by ‘\’)<br>and ‘search-upper-case’ is non-nil, the matching is case-sensitive.<br><br>This uses Font lock mode if it is enabled; otherwise it uses overlays,<br>in which case the highlighting will not update as you type.&emsp;The Font<br>Lock mode is considered ''enabled'' in a buffer if its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return non-nil, which means<br>the major mode specifies support for Font Lock."
+            ><kbd style="border-color: red">M-s h .</kbd></abbr
+          >
+        </p>
+      </li>
+    </ol>
+  latex: |-
+    \begin{enumerate}
+    	\item It becomes <kbd> tags, but final symbol non-ascii \textbf{may} be ignored
+
+    	      \texttt{C-u 80}\_-∀
+
+    	\item {[} [ It ] ] becomes <kbd> tags
+
+    	      \texttt{C-u 80 -}
+
+    	\item Using syntax <it> becomes <kbd> tags, and surrounding space is trimmed
+
+    	      \texttt{C-u 80 -}
+
+    	\item It has a tooltip documenting the underlying Lisp function, when possible
+
+    	      \texttt{M-s h .}
+    \end{enumerate}

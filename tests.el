@@ -147,7 +147,7 @@ a given matching pattern. Such arrows are popular in Term Rewriting Systems."
 
   (should (org-html-export-to-html)))
 
-;; [[file:org-special-block-extras.org::*Define links as you define functions: doc:org-deflink][Define links as you define functions: doc:org-deflink:4]]
+;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
 
@@ -235,7 +235,7 @@ post")
 (* anything)
 "<p>\npost"))
 
-;; [[file:org-special-block-extras.org::*Folded Details ---As well as boxed text and subtle colours][Folded Details ---As well as boxed text and subtle colours:4]]
+;; [[file:org-special-block-extras.org::#Folded-Details][Folded Details ---As well as boxed text and subtle colours:3]]
 (deftest "The result is a <details> tag containing the user's title & text."
   [details]
   (⇝ (⟰ "#+begin_details TITLE-RIGHT-HERE
@@ -248,7 +248,7 @@ post")
      "My aside"
      (* anything)
      "</details>"))
-;; Folded Details ---As well as boxed text and subtle colours:4 ends here
+;; Folded Details ---As well as boxed text and subtle colours:3 ends here
 
 (deftest "We have an HTML box enclosing the user's title (in <h3) and text"
   [box]
@@ -262,7 +262,7 @@ post")
      "This is the key insight"
      (* anything)))
 
-;; [[file:org-special-block-extras.org::*Parallel][Parallel:2]]
+;; [[file:org-special-block-extras.org::#Parallel][Parallel:2]]
 (deftest "Parallel blocks work as expected - Defaults"
   [parallel block]
   (⇝ (⟰ "#+begin_parallel
@@ -346,7 +346,7 @@ post")
      "Z"))
 ;; Parallel:2 ends here
 
-;; [[file:org-special-block-extras.org::*Editor Comments][Editor Comments:4]]
+;; [[file:org-special-block-extras.org::#editor-comments][Editor Comments:4]]
 (deftest "The user's remark is enclosed in the default delimiters"
   [remark]
   (⇝ (⟰ "#+begin_remark
@@ -360,7 +360,7 @@ post")
 ;; but this is not a pressing, nor interesting, concern.
 ;; Editor Comments:4 ends here
 
-;; [[file:org-special-block-extras.org::*Colours][Colours:4]]
+;; [[file:org-special-block-extras.org::#Colours][Colours:4]]
 (deftest "It is an HTML span styled red that contains the user's text"
   [color red block]
   (⇝ (⟰ "#+begin_red
@@ -385,7 +385,7 @@ post")
      "</span>"))
 ;; Colours:4 ends here
 
-;; [[file:org-special-block-extras.org::*Nice Keystroke Renditions: kbd:C-h_h][Nice Keystroke Renditions: kbd:C-h_h:3]]
+;; [[file:org-special-block-extras.org::#kbd:nice-keystroke-renditions][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
   (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
@@ -421,7 +421,7 @@ post")
      "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
 ;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
 
-;; [[file:org-special-block-extras.org::*  /“Link Here!”/ & OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
+;; [[file:org-special-block-extras.org::#Link-Here-OctoIcons][  /“Link Here!”/ & OctoIcons:3]]
 (deftest "It works as expected: We have an anchor with the given ID, and the default SVG chain icon."
   [link:here]
   (⇝ (⟰ "link-here:example-location (Click the icon and see the URL has changed!)")
@@ -431,7 +431,7 @@ post")
      (* anything)))
 ;;   /“Link Here!”/ & OctoIcons:3 ends here
 
-;; [[file:org-special-block-extras.org::*Badge Links][Badge Links:2]]
+;; [[file:org-special-block-extras.org::#Badge-Links][Badge Links:2]]
 (deftest "It works when all 5 arguments are provided"
   [badge]
   (⇝ (⟰ "badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir")
@@ -491,7 +491,7 @@ post")
      "<img src=\"https://img.shields.io/badge/--nil?logo=nil\">"))
 ;; Badge Links:2 ends here
 
-;; [[file:org-special-block-extras.org::*Intro, motivating examples][Intro, motivating examples:4]]
+;; [[file:org-special-block-extras.org::#COMMENT-Intro][Intro, motivating examples:4]]
 (deftest "It gives a tooltip whose title is the Lisp docs of APPLY"
   [doc]
   (⇝ (⟰ "doc:apply")
@@ -530,7 +530,7 @@ post")
                     "\">Existential Angst</abbr>.</p> "))
 ;; Intro, motivating examples:4 ends here
 
-;; [[file:org-special-block-extras.org::*Marginal, “one-off”, remarks][Marginal, “one-off”, remarks:2]]
+;; [[file:org-special-block-extras.org::#Marginal-one-off-remarks][Marginal, “one-off”, remarks:2]]
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
                in the Bible]] does not burden a soul beyond what it can bear./
                --- Quran 2:286"))
@@ -553,7 +553,7 @@ post")
   (⇝ margin "<abbr" (* anything) "°</abbr>"))
 ;; Marginal, “one-off”, remarks:2 ends here
 
-;; [[file:org-special-block-extras.org::*Equational Proofs][Equational Proofs:4]]
+;; [[file:org-special-block-extras.org::#Equational-Proofs][Equational Proofs:4]]
 (setq calc (⟰ "#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
                   +     x
                   +     y -- Explanation of why $x \\;=\\; y$

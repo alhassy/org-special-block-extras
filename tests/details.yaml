@@ -1,0 +1,48 @@
+input: |-
+
+  #+begin_details TITLE-RIGHT-HERE :title-color "cyan"
+  The result is a <details> tag containing the user's title & text.
+  But, in LaTeX, this is a colourful box.
+  #+end_details
+
+  (FIXME: The use of quotes in the :title-color keyword is only required for the LaTeX backend.)
+
+expectations:
+  html: |-
+    <details
+      class="code-details"
+      style="
+        padding: 1em;
+        background-color: #e5f5e5;
+        border-radius: 15px;
+        color: hsl(157 75%);
+        font-size: 0.9em;
+        box-shadow: 0.05em 0.1em 5px 0.01em #00000057;
+      "
+    >
+      <summary>
+        <strong>
+          <font face="Courier" size="3" color="cyan"> TITLE-RIGHT-HERE </font>
+        </strong>
+      </summary>
+      <p>
+        The result is a &lt;details&gt; tag containing the user's title &amp; text.
+        But, in LaTeX, this is a colourful box.
+      </p>
+    </details>
+
+    <p>
+      (FIXME: The use of quotes in the :title-color keyword is only required for the
+      LaTeX backend.)
+    </p>
+  latex: |-
+    \definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{cyan}\begin{quote}
+    	\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={TITLE-RIGHT-HERE},sharp corners,boxrule=0.4pt]
+    		The result is a <details> tag containing the user's title \& text.
+    		But, in \LaTeX{}, this is a colourful box.
+
+
+    	\end{tcolorbox}
+    \end{quote}
+
+    (FIXME: The use of quotes in the :title-color keyword is only required for the \LaTeX{} backend.)

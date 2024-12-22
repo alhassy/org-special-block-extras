@@ -15,3 +15,5 @@
 /ltximg/
 **/.DS_Store
 
+/tests/indent.log
+/indent.log

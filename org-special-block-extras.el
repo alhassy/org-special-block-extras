@@ -579,7 +579,7 @@ Example declaration, with all possible features shown:
 
    (org-defblock remark
      (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
-     \"Top level (HTML & LaTeX)O-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
+     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
@@ -1791,7 +1791,7 @@ this command gives a searchable way to insert doc links."
                                'variable-documentation))
                (-let [it (shell-command-to-string
                           (format "wn %s -over -synsn" label))]
-                 (if (s-blank-p it)
+                 (if (and (s-blank-p it) (not org-export-with-broken-links))
                      (error "Error: No documentation-glossary entry for “%s”!" label)
                    it)))))
 
@@ -2183,6 +2183,15 @@ what is required by MathJaX."
     (--map (format "%s" (org--list-to-calc it rel hint-format explicit-vspace color)))
     (s-join "\\\\")
     (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
+
+(setq my/theorem-counter 0)
+
+(org-defblock theorem (title)
+  "Show block contents prefixed with “Theorem 𝒏”, where the 𝒏umbering automatically increments."
+  (format "<div class=\"theorem\"><b>Theorem %s%s.</b>&nbsp;%s</div>"
+          (cl-incf my/theorem-counter)
+          (if title (format " [“%s”]" title) "")
+          (org-parse raw-contents)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

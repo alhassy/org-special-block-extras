@@ -1759,7 +1759,7 @@ Example declaration, with all possible features shown:
 
    (org-defblock remark
      (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
-     \"Top level (HTML & LaTeX)O-RESPECT-NEWLINES? editorial remarks; in Emacs they're angry red.\"
+     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
@@ -2427,6 +2427,7 @@ We will make use of this block below when we get to guided problems ;-)
   :CUSTOM_ID: Longer_Example_Demonstrating_Org-markup_with_org-demo
   :END:
 
+  
 Sometimes, we want to show verbatim source and its resulting rendition ---which
 is a major part of this article! So, let's make a block to mitigate such an
 error-prone tedium.
@@ -7034,7 +7035,7 @@ doc:org-docs-load-libraries
                                'variable-documentation))
                (-let [it (shell-command-to-string
                           (format "wn %s -over -synsn" label))]
-                 (if (s-blank-p it)
+                 (if (and (s-blank-p it) (not org-export-with-broken-links))
                      (error "Error: No documentation-glossary entry for “%s”!" label)
                    it)))))
 

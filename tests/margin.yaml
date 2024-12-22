@@ -1,0 +1,73 @@
+input: |-
+  The ~doc~ link is for explanatory remarks, documentation, or personal glossary that is
+  intended to be used in multiple places.
+
+  However, sometimes we want a “one-off” remark, containing, say, references or additional
+  explanation and we want it without the ceremony of first defining a glossary term
+  then invoking it. Enter the ~margin~ link. For example:
+
+    
+         /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not
+                       burden a soul beyond what it can bear./
+                                ---Quran 2:286
+
+  In HTML, such “marginal remarks” appear as tooltips; in LaTeX, they appear in the margin.
+
+expectations:
+  html: |-
+    <p>
+      The <code>doc</code> link is for explanatory remarks, documentation, or
+      personal glossary that is intended to be used in multiple places.
+    </p>
+
+    <p>
+      However, sometimes we want a “one-off” remark, containing, say, references or
+      additional explanation and we want it without the ceremony of first defining a
+      glossary term then invoking it. Enter the <code>margin</code> link. For
+      example:
+    </p>
+
+    <p>
+      <i
+        >Allah<abbr
+          class="tooltip"
+          title="The God of Abraham; known as Elohim in the Bible"
+          >°</abbr
+        >&emsp13; does not burden a soul beyond what it can bear.</i
+      >
+      &#x2014;Quran 2:286
+    </p>
+
+    <p>
+      In HTML, such “marginal remarks” appear as tooltips; in LaTeX, they appear in
+      the margin.
+    </p>
+  latex: |-
+    The \texttt{doc} link is for explanatory remarks, documentation, or personal glossary that is
+    intended to be used in multiple places.
+
+    However, sometimes we want a “one-off” remark, containing, say, references or additional
+    explanation and we want it without the ceremony of first defining a glossary term
+    then invoking it. Enter the \texttt{margin} link. For example:
+
+
+    \emph{Allah\!\!${}^{\textnormal{{\thefootnote}}}$
+    \newsavebox{\OrgSpecialBlockExtrasMarginBox}
+    \begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}
+    	\begin{minipage}{\paperwidth - \textwidth - \oddsidemargin - 1in - 3ex}
+    		\raggedright \iffalse Otherwise default alignment is fully justified. \fi
+    		\footnotesize
+    		\setminted{fontsize=\footnotesize, breaklines} \iffalse HACK! \fi
+    		\color{gray!80}
+    		{\color{black}${}^{\textnormal{{\thefootnote}}}$}
+    		\normalfont
+    		The God of Abraham; known as Elohim in the Bible
+    	\end{minipage}
+    \end{lrbox}
+    \marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}\stepcounter{footnote}}
+    \hspace{-1.9ex}
+    \global\let\OrgSpecialBlockExtrasMarginBox\relax does not
+    burden a soul beyond what it can bear.}
+    ---Quran 2:286
+
+    In HTML, such “marginal remarks” appear as tooltips; in \LaTeX{}, they appear in the margin.

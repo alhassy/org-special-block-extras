@@ -1,0 +1,42 @@
+input: |-
+  The ~rename~ block is for Textual Substitution. For example, as a translation tool:
+
+  #+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
+  Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father,
+  indeed I have seen (in a dream) eleven stars and the sun and the
+  moon; I saw them prostrating to me.”/
+  #+end_rename
+
+  In the rendered result, the Arabic names are replaed with their English counterparts.
+
+expectations:
+  html: |-
+    <p>
+      The <code>rename</code> block is for Textual Substitution. For example, as a
+      translation tool:
+    </p>
+
+    <p>
+      Quran 12-4: <b><span class="underline">Joseph</span></b> said to his father (
+      <span class="underline"><b>Jacob</b></span> ),
+      <i
+        >“O my father, indeed I have seen (in a dream) eleven stars and the sun and
+        the moon; I saw them prostrating to me.”</i
+      >
+    </p>
+
+    <p>
+      In the rendered result, the Arabic names are replaed with their English
+      counterparts.
+    </p>
+  latex: |-
+    The \texttt{rename} block is for Textual Substitution. For example, as a translation tool:
+
+
+    Quran 12-4: \textbf{\uline{Joseph}} said to his father ( \uline{\textbf{Jacob}} ), \emph{“O my father,
+    	indeed I have seen (in a dream) eleven stars and the sun and the
+    	moon; I saw them prostrating to me.”}
+
+
+
+    In the rendered result, the Arabic names are replaed with their English counterparts.

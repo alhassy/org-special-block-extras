@@ -1,0 +1,185 @@
+input: |-
+
+  In the HTML Export, The result is 2 columns with no rule between
+  them and it contains the user's text, but ignores the
+  “#+columnbreak”.
+
+  #+begin_parallel
+  Hello, to the left!
+
+  #+columnbreak:
+  A super duper wide middle margin!
+
+
+  #+columnbreak:
+  Goodbye (“God-be-with-ye”) to the right!
+
+  #+columnbreak:
+  woah
+  #+end_parallel
+
+
+  [Soft Columns] Below, the result is 2 columns with a solid BLACK
+  rule between them and it contains the user's text, but ignores the
+  “#+columnbreak”.
+
+  #+begin_parallel 2 :bar t
+  X
+
+  #+columnbreak:
+
+  Y
+
+  Z
+  #+end_parallel
+
+
+  [Hard Columns] The result is 3 columns with a solid GREEN rule
+  between them and it contains the user's text along with the
+  “#+columnbreak” evaluated at the expected positions.
+  #+begin_parallel 20% 60% 20% :bar green X
+
+  #+columnbreak:
+
+  Y
+
+  #+columnbreak:
+
+  Z
+  #+end_parallel
+no-prettier: t
+expectations:
+  html: |-
+    <p>
+    In the HTML Export, The result is 2 columns with no rule between
+    them and it contains the user's text, but ignores the
+    “#+columnbreak”.
+    </p>
+
+    <div style="column-rule-style: none nil;column-count: 2;">
+    <p>
+    Hello, to the left!
+    </p>
+
+    <p>
+    A super duper wide middle margin!
+    </p>
+
+
+    <p>
+    Goodbye (“God-be-with-ye”) to the right!
+    </p>
+
+    <p>
+    woah
+    </p>
+
+    </div>
+
+
+    <p>
+    [Soft Columns] Below, the result is 2 columns with a solid BLACK
+    rule between them and it contains the user's text, but ignores the
+    “#+columnbreak”.
+    </p>
+
+    <div style="column-rule-style: solid black;column-count: 2;">
+    <p>
+    X
+    </p>
+
+    <p>
+    Y
+    </p>
+
+    <p>
+    Z
+    </p>
+
+    </div>
+
+
+    <p>
+    [Hard Columns] The result is 3 columns with a solid GREEN rule
+    between them and it contains the user's text along with the
+    “#+columnbreak” evaluated at the expected positions.
+    </p>
+    <div><div style="width: 20%; margin: 10px; border-right:4px solid green; float:  left;">
+
+    <p>
+    </div><div style="width: 60%; margin: 10px; border-right:4px solid green; float:  left;">
+    </p>
+
+    <p>
+    Y
+    </p>
+
+    <p>
+    </div><div style="width: 20%; margin: 10px; border-right:4px none; float:  left;">
+    </p>
+
+    <p>
+    Z
+    </p>
+
+    </div>
+  latex: |-
+    In the HTML Export, The result is 2 columns with no rule between
+    them and it contains the user's text, but ignores the
+    “\#+columnbreak”.
+
+    \par \setlength{\columnseprule}{0 pt}
+              \begin{minipage}[t]{\linewidth}
+              \begin{multicols}{2}
+    Hello, to the left!
+
+    \columnbreak
+    A super duper wide middle margin!
+
+
+    \columnbreak
+    Goodbye (“God-be-with-ye”) to the right!
+
+    \columnbreak
+    woah
+
+
+    \end{multicols}\end{minipage}
+
+
+    {[}Soft Columns] Below, the result is 2 columns with a solid BLACK
+    rule between them and it contains the user's text, but ignores the
+    “\#+columnbreak”.
+
+    \par \setlength{\columnseprule}{2 pt}
+              \begin{minipage}[t]{\linewidth}
+              \begin{multicols}{2}
+    X
+
+    \columnbreak
+
+    Y
+
+    Z
+
+
+    \end{multicols}\end{minipage}
+
+
+    {[}Hard Columns] The result is 3 columns with a solid GREEN rule
+    between them and it contains the user's text along with the
+    “\#+columnbreak” evaluated at the expected positions.
+    \par \setlength{\columnseprule}{2 pt}
+              \begin{minipage}[t]{\linewidth}
+              \begin{multicols}{20% 60% 20%}
+
+    \columnbreak
+
+    Y
+
+    \columnbreak
+
+    Z
+
+
+    \end{multicols}\end{minipage}

@@ -1,0 +1,13 @@
+fails: This link type works fine as a clickable element in Emacs, but fails on export.
+priority: low
+no-prettier: true
+input: "[[fortune:cow][howdy buddo]]"
+expectations:
+  html: |-
+    <p>
+    <pre class="org-fortune"> zsh:28: parse error near `|'
+    			cow </pre>
+    </p>
+  latex: |-
+    input: |-
+      [[fortune:cow][howdy buddo]]

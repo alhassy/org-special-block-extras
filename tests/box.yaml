@@ -1,0 +1,28 @@
+input: |-
+  #+begin_box Pay Attention!
+  This is the key insight...
+  (We have an HTML box enclosing the user's title and text)
+  #+end_box
+
+expectations:
+  html: |-
+    <div
+      style="
+        padding: 1em;
+        background-color: #ccffcc;
+        border-radius: 15px;
+        font-size: 0.9em;
+      "
+    >
+      <h3>Pay Attention!</h3>
+      <p>
+        This is the key insight&#x2026; (We have an HTML box enclosing the user's
+        title and text)
+      </p>
+    </div>
+  latex: |-
+    \begin{tcolorbox}[title={Pay Attention!},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+    	This is the key insight\ldots{}
+    	(We have an HTML box enclosing the user's title and text)
+
+    \end{tcolorbox}
