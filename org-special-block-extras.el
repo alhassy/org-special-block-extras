@@ -1055,7 +1055,7 @@ it may be prudent to expose more aspects as arguments.
                   %s
                </details>" background-color title-color title contents))))
 
-(org-defblock box (title "" background-color nil shadow nil)
+(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
   "Enclose text in a box, possibly with a title.
 
 By default, the box's COLOR is green for HTML and red for LaTeX,
@@ -1089,7 +1089,8 @@ In the future, I will likely expose more arguments."
      (apply #'concat
             `("\\begin{tcolorbox}[title={" ,title "}"
               ",colback=" ,(pp-to-string (or background-color 'red!5!white))
-              ",colframe=red!75!black, colbacktitle=yellow!50!red"
+              ",colframe=" ,(pp-to-string (or frame-color 'red!75!black))
+              ",colbacktitle=" ,(pp-to-string (or title-background-color 'yellow!50!red))
               ",coltitle=red!25!black, fonttitle=\\bfseries,"
               "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
               ,contents
