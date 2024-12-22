@@ -23,14 +23,17 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - name: Unit test runner
+        uses: emilyseville7cfg-better-emacs/unit-test-runner@v1.1
+            
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Set up Emacs
-        uses: purcell/setup-emacs@v3.0
-        with:
-          # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
-          version: 27.1 # optional
+      # - name: Set up Emacs
+      #  uses: purcell/setup-emacs@v3.0
+      #  with:
+      #    # The version of Emacs to install, e.g. "24.3", or "snapshot" for a recent development version.
+      #    version: 27.1 # optional
 
       # Runs a single command using the runners shell
       # - name: Run a one-line script
