@@ -7,7 +7,7 @@ input: |-
   moon; I saw them prostrating to me.”/
   #+end_rename
 
-  In the rendered result, the Arabic names are replaed with their English counterparts.
+  In the rendered result, the Arabic names are replaced with their English counterparts.
 
 expectations:
   html: |-

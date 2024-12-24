@@ -1,185 +1,88 @@
 input: |-
 
-  In the HTML Export, The result is 2 columns with no rule between
-  them and it contains the user's text, but ignores the
-  “#+columnbreak”.
+  Articles can get lengthy when vertical whitespace is wasted on thin
+  lines; instead, one could save space by using
+  /[[doc:org-block/parallel][parallel]] columns of text/.
 
-  #+begin_parallel
-  Hello, to the left!
+  ----------------------------------------------------------------------
 
-  #+columnbreak:
-  A super duper wide middle margin!
+  #+begin_parallel 2
+  *“Soft Columns”:* Writing ~#+begin_parallel 𝓃 :bar BAR~ will produce
+  𝒏-many parallel columns, possibly separated by solid rules, or a
+  “bar”. /This style allows text to freely move between columns,
+  depending on the size of the browser, which may dynamically shrink
+  and grow./ The value ~BAR~ can either be ~t~, ~nil~, or any
+  (backend)-valid colour specification; such as ~red~ or ~green~.
+  #+end_parallel
 
+  ----------------------------------------------------------------------
+
+  #+begin_parallel 25% 50% 25% :bar green
+
+  *“Hard Columns”:* Alternatively, /for non-uniform column widths, 𝓃 may
+  instead be a specification of the widths of the columns./
+
+  #+columnbreak:  
+  However, this extra flexibility comes at an additional cost: The
+  contents of the block must now contain /𝓃-1/ lines consisting of
+  ~#+columnbreak:~, when the specification determines 𝓃-many columns.
 
   #+columnbreak:
   Goodbye (“God-be-with-ye”) to the right!
 
-  #+columnbreak:
-  woah
   #+end_parallel
 
+  # Moreover:  
+  # → In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+  # → With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
+  #   \usepackage{multicol}
 
-  [Soft Columns] Below, the result is 2 columns with a solid BLACK
-  rule between them and it contains the user's text, but ignores the
-  “#+columnbreak”.
-
-  #+begin_parallel 2 :bar t
-  X
-
-  #+columnbreak:
-
-  Y
-
-  Z
-  #+end_parallel
-
-
-  [Hard Columns] The result is 3 columns with a solid GREEN rule
-  between them and it contains the user's text along with the
-  “#+columnbreak” evaluated at the expected positions.
-  #+begin_parallel 20% 60% 20% :bar green X
-
-  #+columnbreak:
-
-  Y
-
-  #+columnbreak:
-
-  Z
-  #+end_parallel
-no-prettier: t
 expectations:
   html: |-
     <p>
-    In the HTML Export, The result is 2 columns with no rule between
-    them and it contains the user's text, but ignores the
-    “#+columnbreak”.
+    Articles can get lengthy when vertical whitespace is wasted on thin
+    lines; instead, one could save space by using
+    <i><abbr class="tooltip" title="Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be seperated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>(fn BACKEND RAW-CONTENTS &rest _)">parallel</abbr> columns of text</i>.
     </p>
+
+    <hr />
 
     <div style="column-rule-style: none nil;column-count: 2;">
     <p>
-    Hello, to the left!
+    <b>“Soft Columns”:</b> Writing <code>#+begin_parallel 𝓃 :bar BAR</code> will produce
+    𝒏-many parallel columns, possibly separated by solid rules, or a
+    “bar”. <i>This style allows text to freely move between columns,
+    depending on the size of the browser, which may dynamically shrink
+    and grow.</i> The value <code>BAR</code> can either be <code>t</code>, <code>nil</code>, or any
+    (backend)-valid colour specification; such as <code>red</code> or <code>green</code>.
+    </p>
+
+    </div>
+
+    <hr />
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="width: 25%; margin: 10px; border-right:4px solid green; float:  left;">
+
+    <p>
+    <b>“Hard Columns”:</b> Alternatively, <i>for non-uniform column widths, 𝓃 may
+    instead be a specification of the widths of the columns.</i>
     </p>
 
     <p>
-    A super duper wide middle margin!
+    </div><div style="width: 50%; margin: 10px; border-right:4px solid green; float:  left;">  
+    However, this extra flexibility comes at an additional cost: The
+    contents of the block must now contain <i>𝓃-1</i> lines consisting of
+    <code>@@html:&lt;/div&gt;&lt;div style="width: 25%; margin: 10px; border-right:4px none; float:  left;"&gt;@@</code>, when the specification determines 𝓃-many columns.
     </p>
 
-
     <p>
+    </div><div style="width: nil; margin: 10px; border-right:4px none; float:  left;">
     Goodbye (“God-be-with-ye”) to the right!
     </p>
 
-    <p>
-    woah
-    </p>
 
-    </div>
-
-
-    <p>
-    [Soft Columns] Below, the result is 2 columns with a solid BLACK
-    rule between them and it contains the user's text, but ignores the
-    “#+columnbreak”.
-    </p>
-
-    <div style="column-rule-style: solid black;column-count: 2;">
-    <p>
-    X
-    </p>
-
-    <p>
-    Y
-    </p>
-
-    <p>
-    Z
-    </p>
-
-    </div>
-
-
-    <p>
-    [Hard Columns] The result is 3 columns with a solid GREEN rule
-    between them and it contains the user's text along with the
-    “#+columnbreak” evaluated at the expected positions.
-    </p>
-    <div><div style="width: 20%; margin: 10px; border-right:4px solid green; float:  left;">
-
-    <p>
-    </div><div style="width: 60%; margin: 10px; border-right:4px solid green; float:  left;">
-    </p>
-
-    <p>
-    Y
-    </p>
-
-    <p>
-    </div><div style="width: 20%; margin: 10px; border-right:4px none; float:  left;">
-    </p>
-
-    <p>
-    Z
-    </p>
-
-    </div>
+    </div></div>
   latex: |-
-    In the HTML Export, The result is 2 columns with no rule between
-    them and it contains the user's text, but ignores the
-    “\#+columnbreak”.
-
-    \par \setlength{\columnseprule}{0 pt}
-              \begin{minipage}[t]{\linewidth}
-              \begin{multicols}{2}
-    Hello, to the left!
-
-    \columnbreak
-    A super duper wide middle margin!
-
-
-    \columnbreak
-    Goodbye (“God-be-with-ye”) to the right!
-
-    \columnbreak
-    woah
-
-
-    \end{multicols}\end{minipage}
-
-
-    {[}Soft Columns] Below, the result is 2 columns with a solid BLACK
-    rule between them and it contains the user's text, but ignores the
-    “\#+columnbreak”.
-
-    \par \setlength{\columnseprule}{2 pt}
-              \begin{minipage}[t]{\linewidth}
-              \begin{multicols}{2}
-    X
-
-    \columnbreak
-
-    Y
-
-    Z
-
-
-    \end{multicols}\end{minipage}
-
-
-    {[}Hard Columns] The result is 3 columns with a solid GREEN rule
-    between them and it contains the user's text along with the
-    “\#+columnbreak” evaluated at the expected positions.
-    \par \setlength{\columnseprule}{2 pt}
-              \begin{minipage}[t]{\linewidth}
-              \begin{multicols}{20% 60% 20%}
-
-    \columnbreak
-
-    Y
-
-    \columnbreak
-
-    Z
-
-
-    \end{multicols}\end{minipage}
+    🚫 The LaTex backend is intentionally unmaintained.
+    🫠 Whoops, there seems to be an error: 
+     (void-variable label)

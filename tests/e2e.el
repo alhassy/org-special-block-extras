@@ -193,7 +193,7 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
 (let ((seed 0))
 (cl-letf (((symbol-function 'gensym)
            (lambda () (format "g%s" (incf seed)))))
-   (list
+  (list
     (cons 'html
 	  (with-temp-buffer
 	    (org-special-block-extras-mode)
@@ -216,5 +216,37 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
 		    (latex-mode) (format-all-buffer)))
 		(s-trim (buffer-string)))
 	    (error (format "🚫 The LaTex backend is intentionally unmaintained.\n🫠 Whoops, there seems to be an error: \n %S" err)))))))
-   'hash-table))
+'hash-table))
 
+
+(defun my/hash-get-or-compute (hash key compute-fn)
+  "Retrieve or compute the value for KEY in HASH, and store it if computed."
+  (or (gethash key hash)
+      (let ((value (funcall compute-fn)))
+        (puthash key value hash)
+        value)))
+
+(defvar  osbe-example-yaml-cache (make-hash-table :test 'equal)
+  "Cache to avoid time re-reading yaml files!")
+(org-defblock osbe-example (file)
+ "Render the given FILE as both Org source and rendered HTML result.
+
+The source is the `input' key; the target is the `expectations.html' key.
+
+Workflow: Write the `input' in an Org buffer, and once the export is to
+my liking, then move the `input' to the relevant yaml file."
+ (let* ((yaml (my/hash-get-or-compute osbe-example-yaml-cache
+				      file
+				      (lambda () (e2e--read-yaml-file file))))
+         (input (map-elt yaml 'input))
+	 (src (s-trim input))
+	 (tgt (map-elt (map-elt yaml 'expectations) 'html))
+	 ;; "teal" "brown" "gray" "purple" "lime" "green" "blue" "orange" "peach" "pink" "yellow" "custard" 
+	 (src.color (org-subtle-colors "lime"))
+	 (tgt.color (org-subtle-colors "peach")))
+    (cl-letf* (((symbol-function 'make-title) (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
+	      (src.title (make-title "What You Write"))
+	      (tgt.title (make-title "What You Get")))
+    (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\"> %s </pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div>"
+	    src.color src.title src
+	    tgt.color tgt.title tgt))))

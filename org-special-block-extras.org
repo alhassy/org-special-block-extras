@@ -13,6 +13,28 @@
 
 html-export-style:solarized_light
 
+
+#+RESULTS:
+: kill-buffer-and-window
+
+#+name: startup-code
+#+begin_src emacs-lisp :exports none :tangle no :exports none
+(org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
+#+end_src
+
+# MA: TODO: Margin blocks produce extra newlines!
+
+# TODO: Make org-defblock looks almost the same as cl-defun, namely argslist has args being either pairs or singletons!
+
+# TODO: Since the implementation is a find-replace, nested blocks do not honor enclosing blocks.
+# For example, try placing a `rename` block within an `example` block and see that it is expanded!
+
+  Look:
+#  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
+#  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
+
+* COMMENT Run all /unit/ tests
+
 # TODO C-c C-c  ⇒ Run all tests, and see them printed with their descriptions nicely.
 #+begin_src emacs-lisp :exports none :tangle no
 ;; Press ‘q’ to kill the resulting buffer and window.
@@ -36,16 +58,6 @@ html-export-style:solarized_light
   (local-set-key "q" #'kill-buffer-and-window) ;; (message "Read-only; “q” to kill buffer and window.")
   )
 #+end_src
-
-#+RESULTS:
-: kill-buffer-and-window
-
-#+name: startup-code
-#+begin_src emacs-lisp :exports none :tangle no :exports none
-(org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
-#+end_src
-
-# MA: TODO: Margin blocks produce extra newlines!
 
 * HTML & LaTeX Setup                                                 :ignore:
   :PROPERTIES:
@@ -285,7 +297,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 # #
 # See https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like
 
-* Testing :noexport:
+* COMMENT Testing :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Testing
   :END:
@@ -479,7 +491,7 @@ jobs:
 
       # Upload coverage
       - uses: codecov/codecov-action@v1
-* Test that this org file itself exports without problems :noexport:
+* COMMENT Test that this org file itself exports without problems :noexport:
 :PROPERTIES:
 :CUSTOM_ID: Test-that-this-org-file-itself-exports-without-problems
 :END:
@@ -506,7 +518,7 @@ jobs:
   (should (org-html-export-to-html)))
 #+end_src
 
-* Abstract :ignore:
+* COMMENT Abstract :ignore:
   :PROPERTIES:
   :CUSTOM_ID: Abstract
   :END:
@@ -669,7 +681,7 @@ and the result looks nice. “Look ma, no HTML required!”
 #+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
 [[file:images/minimal-working-example-multiforms.png]]
 
-* org-tutorial :ignore:
+* COMMENT org-tutorial :ignore:
   :PROPERTIES:
   :CUSTOM_ID: org-tutorial
   :END:
@@ -691,7 +703,7 @@ Installation instructions are [[#Summary][below]].
 #+end_quote
 #+latex: \newpage
 
-* A unified interface for special blocks and links: ~defblock~
+* COMMENT A unified interface for special blocks and links: ~defblock~
   :PROPERTIES:
   :CUSTOM_ID: A-unified-interface-for-special-blocks-and-links-defblock
   :END:
@@ -1826,7 +1838,7 @@ Three example uses:
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
        ;; Unless we've already set the docs for the generic function, don't re-declare it.
-       `(if ,(null body)
+       `(progn ;; if ,(null body)
          (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
            ,docstring)
 
@@ -3319,7 +3331,7 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 #+end_src
 :End:
 
-* Folded Details ---As well as boxed text and subtle colours
+* COMMENT Folded Details ---As well as boxed text and subtle colours
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -3705,21 +3717,18 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
 
  It may be useful to /fuse/ the ~box~ and ~details~ concepts into one.  Something for
  future me ---or another contributor--- to think about ;-)
-* Parallel
+* Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
 
-  Articles can get lengthy when vertical whitespace is wasted on thin lines;
-  instead, one could save space by using /[[doc:org--parallel][parallel]] columns of text/.
-
-#+latex_header:  \usepackage{multicol}
-#+begin_center
-Requires: src_latex[:exports code]{#+latex_header:  \usepackage{multicol}}
-#+end_center
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+      osbe-example:~/org-special-block-extras/tests/parallel.yaml
+  
+#+latex_header: \usepackage{multicol}
 
 #+begin_details Implementation
-  #+begin_src emacs-lisp -r -n
+#+begin_src emacs-lisp -r -n
 (org-defblock parallel (cols "2" bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
@@ -3780,133 +3789,16 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                  (columnBreak (lambda (width omit-rule?)
                                 (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
                                         (if omit-rule? "none" rule)))) )
-             (format "<div>%s%s</div>"
+             (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
                      (funcall columnBreak (pop spec) nil)
                      (s-replace-regexp (regexp-quote "#+columnbreak:")
                                        ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
                                        ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
                                        (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
-                                       contents))))))))
-#+end_src
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "Parallel blocks work as expected - Defaults"
-  [parallel block]
-  (⇝ (⟰ "#+begin_parallel
-         Hello, to the left!
-
-         ,#+columnbreak:
-         A super duper wide middle margin!
-
-
-         ,#+columnbreak:
-         Goodbye (“God-be-with-ye”) to the right!
-
-         ,#+columnbreak:
-         woah
-         ,#+end_parallel")
-
-     ;; The result is 2 columns with no rule between them and it contains the
-     ;; user's text, but ignores the “#+columnbreak”.
-     "<div style=\"column-rule-style: none nil;column-count: 2;\">"
-     (* anything)
-     "Hello, to the left!"
-     (* anything)
-     "A super duper wide middle margin!"
-     (* anything)
-     "Goodbye (“God-be-with-ye”) to the right!"
-     (* anything)
-     "woah"))
-
-
-(deftest "Parallel blocks work as expected - Soft Columns"
-  [parallel block]
-  (⇝ (⟰ "#+begin_parallel 2 :bar t
-                  X
-
-                  ,#+columnbreak:
-
-                  Y
-
-                  Z
-                  ,#+end_parallel")
-
-     ;; The result is 2 columns with a solid BLACK rule between them and it
-     ;; contains the user's text, but ignores the “#+columnbreak”.
-     "<div style=\"column-rule-style: solid black;column-count: 2;\">"
-     (* anything)
-     "X"
-     (* anything)
-     "Y"
-     (* anything)
-     "Z"
-     (* anything)))
-
-
-(deftest "Parallel blocks work as expected - Hard Columns"
-  [parallel block]
-  (⇝ (⟰ "#+begin_parallel 20% 60% 20% :bar green
-                  X
-
-                  ,#+columnbreak:
-
-                  Y
-
-                  ,#+columnbreak:
-
-                  Z
-                  ,#+end_parallel")
-
-     ;; The result is 3 columns with a solid GREEN rule between them and it
-     ;; contains the user's text along with the “#+columnbreak” evaluated at the
-     ;; expected positions.
-     "<div><div style=\"width: 20%; margin: 10px; border-right:4px solid green; float:  left;\">"
-     (* anything)
-     "X"
-     (* anything)
-     "</div><div style=\"width: 60%; margin: 10px; border-right:4px solid green; float:  left;\">"
-     (* anything)
-     "Y"
-     (* anything)
-     "</div><div style=\"width: 20%; margin: 10px; border-right:4px none; float:  left;\">"
-     (* anything)
-     "Z"))
+                                       contents)
+		     (if (s-contains-p " " cols) "</div>" ""))))))))
 #+end_src
 #+end_details
-
-#+html: <br>
-#+begin_box Example
-_This_
-#+begin_src org :tangle no
-,#+begin_parallel 2 :bar t
-X
-
-,#+columnbreak:
-
-Y
-
-Z
-,#+end_parallel
-#+end_src
-
-_Yields_
-
-#+begin_parallel 2 :bar t
-X
-
-#+columnbreak:
-
-Y
-
-Z
-#+end_parallel
-#+end_box
-
-#+begin_center
-( The [[https://www.gnu.org/software/emacs/manual/html_mono/eww.html][Emacs Web Wowser]], ~M-x eww~, does not display =parallel= environments as
-desired. )
-#+end_center
 
 ** COMMENT Older setup :Possibly_delete:
    :PROPERTIES:
@@ -3981,7 +3873,7 @@ mode activation ---after such functions have been declared.
         (defalias 'org--parallelNB
                   #'org--2parallelNB)
  #+END_SRC
-*  :fire: HTML Export Styles as Links
+* COMMENT  :fire: HTML Export Styles as Links
   :PROPERTIES:
   :CUSTOM_ID: HTML-Export-Styles-as-Links
   :END:
@@ -4072,7 +3964,7 @@ mode activation ---after such functions have been declared.
 #+end_src
 
 # html-export-style:solarized_light
-* Fortune Links: Smiles inside and outside of Emacs
+* COMMENT Fortune Links: Smiles inside and outside of Emacs
    :PROPERTIES:
    :CUSTOM_ID: Fortune-Links-Smiles-inside-and-outside-of-Emacs
    :END:
@@ -4177,7 +4069,7 @@ When you click, it takes a seconds to fetch jokes; so await a moment when hoveri
      result))
 #+end_src
 
-* Editor Comments
+* COMMENT Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
   :END:
@@ -4574,7 +4466,7 @@ Completely lost one's train of thought…
 
  #+bind: org-hide-editor-comments nil
 
-* Colours
+* COMMENT Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
   :END:
@@ -5082,7 +4974,7 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* Nice Keystroke Renditions: kbd:C-h_h
+* COMMENT Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID: kbd:nice-keystroke-renditions
   :END:
@@ -5250,7 +5142,7 @@ Let's have some sanity tests...
 #+HTML: </style>
 #+HTML:
 :End:
-*   /“Link Here!”/ & OctoIcons
+* COMMENT   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
   :END:
@@ -5388,7 +5280,7 @@ link-here:example-location (Click the icon and see the URL has changed!)
 #+end_src
 #+end_details
 
-* Badge Links
+* COMMENT Badge Links
   :PROPERTIES:
   :CUSTOM_ID: Badge-Links
   :END:
@@ -6096,7 +5988,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
 may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
-* Tooltips for Glossaries, Dictionaries, and Documentation
+* COMMENT Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
@@ -6986,7 +6878,7 @@ and, finally, look for the documentation entry using `org-docs-fallback'."
   (cdr (or (assoc label org--docs)
            (assoc label org--docs-from-libraries)
            (funcall org-docs-fallback label)
-           (error "Error: No documentation-glossary entry for “%s”!" label))))
+	   (unless org-export-with-broken-links (error "Error: No documentation-glossary entry for “%s”!" label)))))
 
 (cl-defun org-docs-insert ()
   "Insert a “doc:𝒳” link from user's documentation-glossary database.
@@ -7497,7 +7389,7 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* Marginal, “one-off”, remarks
+* COMMENT Marginal, “one-off”, remarks
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
@@ -7962,7 +7854,7 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
-* Equational Proofs
+* COMMENT Equational Proofs
   :PROPERTIES:
   :CUSTOM_ID: Equational-Proofs
   :END:
@@ -8475,7 +8367,7 @@ z
 #+end_src
 #+end_details
 
-* Case Studies
+* COMMENT Case Studies
 ** In doubt, a block's main argument should be enclosed in quotes
 :PROPERTIES:
 :CUSTOM_ID: In-doubt-a-block's-main-argument-should-be-enclosed-in-quotes
@@ -8532,7 +8424,6 @@ After 372 pages, it was shown that $1 + 1 = 2$
 #+begin_theorem
 It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 #+end_theorem
-
 
 
 

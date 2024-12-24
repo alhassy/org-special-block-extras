@@ -1,0 +1,47 @@
+input: |-
+  Look:
+
+  #+begin_osbe-example
+  hola
+  #+end_osbe-example
+no-prettier: "t"
+expectations:
+  expansion: |-
+    #+setupfile: https://gitlab.com/OlMon/org-themes/-/raw/master/src/solarized_light/solarized_light.theme
+    Look:
+
+    <pre> The ~rename~ block is for Textual Substitution. For example, as a translation tool:
+
+    #+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
+    Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father,
+    indeed I have seen (in a dream) eleven stars and the sun and the
+    moon; I saw them prostrating to me.”/
+    #+end_rename
+
+    In the rendered result, the Arabic names are replaced with their English counterparts. </pre>
+  html: |-
+    <p>
+    Look:
+    </p>
+
+    <pre> The ~rename~ block is for Textual Substitution. For example, as a translation tool:
+
+    #+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
+    Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father,
+    indeed I have seen (in a dream) eleven stars and the sun and the
+    moon; I saw them prostrating to me.”/
+    #+end_rename
+
+    In the rendered result, the Arabic names are replaced with their English counterparts. </pre>
+  latex: |-
+    Look:
+
+    <pre> The ~rename~ block is for Textual Substitution. For example, as a translation tool:
+
+    #+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
+    Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father,
+    indeed I have seen (in a dream) eleven stars and the sun and the
+    moon; I saw them prostrating to me.”/
+    #+end_rename
+
+    In the rendered result, the Arabic names are replaced with their English counterparts. </pre>
