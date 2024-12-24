@@ -250,3 +250,14 @@ my liking, then move the `input' to the relevant yaml file."
     (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\"> %s </pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div>"
 	    src.color src.title src
 	    tgt.color tgt.title tgt))))
+
+(org-defblock src (language "emacs-lisp" folded nil title "Details")
+	      "yup"
+	      (-let [org--supported-blocks '(details)] ;; to avoid infinite recursive calls for `src'
+		(-let [discloure (if folded "details" "box")]
+		  (org-export-string-as
+		   (format "\n#+begin_%s %s\n#+begin_src %s \n %s \n#+end_src\n#+end_%s\n" discloure title language raw-contents discloure)
+		   'html
+		   :body-only-please))))
+
+

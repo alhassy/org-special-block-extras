@@ -32,10 +32,7 @@ input: |-
 
   #+end_parallel
 
-  # Moreover:  
-  # → In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
-  # → With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
-  #   \usepackage{multicol}
+  # In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
 
 expectations:
   html: |-

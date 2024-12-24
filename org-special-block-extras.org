@@ -29,7 +29,7 @@ html-export-style:solarized_light
 # TODO: Since the implementation is a find-replace, nested blocks do not honor enclosing blocks.
 # For example, try placing a `rename` block within an `example` block and see that it is expanded!
 
-  Look:
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
 #  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
 
@@ -3722,13 +3722,10 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   :CUSTOM_ID: Parallel
   :END:
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
       osbe-example:~/org-special-block-extras/tests/parallel.yaml
   
 #+latex_header: \usepackage{multicol}
-
-#+begin_details Implementation
-#+begin_src emacs-lisp -r -n
+#+begin_src emacs-lisp -r -n :title Implementation :folded t
 (org-defblock parallel (cols "2" bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
@@ -3798,7 +3795,6 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                        contents)
 		     (if (s-contains-p " " cols) "</div>" ""))))))))
 #+end_src
-#+end_details
 
 ** COMMENT Older setup :Possibly_delete:
    :PROPERTIES:
@@ -8424,7 +8420,6 @@ After 372 pages, it was shown that $1 + 1 = 2$
 #+begin_theorem
 It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 #+end_theorem
-
 
 
 
