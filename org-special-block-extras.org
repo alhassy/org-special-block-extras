@@ -3722,7 +3722,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   :CUSTOM_ID: Parallel
   :END:
 
-      osbe-example:~/org-special-block-extras/tests/parallel.yaml
+     osbe-example:~/org-special-block-extras/tests/parallel.yaml
   
 #+latex_header: \usepackage{multicol}
 #+begin_src emacs-lisp -r -n :title Implementation :folded t
@@ -3796,79 +3796,6 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 		     (if (s-contains-p " " cols) "</div>" ""))))))))
 #+end_src
 
-** COMMENT Older setup :Possibly_delete:
-   :PROPERTIES:
-   :CUSTOM_ID: COMMENT-Older-setup
-   :END:
-
-:Header:
-#+BEGIN_SRC emacs-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Parallel blocks: 𝓃parallel[NB] for n:2..5, optionally with ‘N’o ‘b’ar
-;; in-between the columns.
-;;
-;; Common case is to have three columns, and we want to avoid invoking the
-;; attribute via org, so making this.
-#+END_SRC
-:End:
-
-We want to be able to reduce the amount of whitespace noise in our articles, and
-so use the =parallel= block to place ideas side-by-side ---with up to the chosen
-limit of 5 columns.
-
-#+caption: Displaying thoughts side-by-side ^_^ Top is browser, then Emacs, then PDF
-[[file:images/parallel.png]]
-
-#+LATEX_HEADER: \usepackage{multicol}
-| =#+LATEX_HEADER: \usepackage{multicol}= |
-
-I initially used the names =parallel𝓃= but names ending with a number =𝓃= did not
-inherit highlighting, so I shifted the number to being a prefix instead.
-+ For LaTeX, new lines are used to suggest opportunities for column breaks
-  and are needed even if explicit columnbreaks are declared.
-+ Use the nullary switch =:columnbreak:= to request a columnbreak; this has no
-  effect on HTML export since HTML describes how text should be formatted on a
-  browser, which can dynamically shrink and grow and thus it makes no sense to have
-  hard columnbreaks.
-+ We also provide ~𝓃parallelNB~ for users who want ‘N’o ‘B’ar separator
-  between columns.
-
-#+BEGIN_SRC emacs-lisp
-(cl-loop for cols in '("1" "2" "3" "4" "5")
-      do (cl-loop for rule in '("solid" "none")
-      do (eval (read (concat
-"(defun org--" cols "parallel"
-(if (equal rule "solid") "" "NB")
-"(backend contents)"
-"(format (pcase backend"
-"(`html \"<div style=\\\"column-rule-style:" rule ";column-count:" cols ";\\\"%s</div>\")"
-"(`latex \"\\\\par \\\\setlength{\\\\columnseprule}{" (if (equal rule "solid") "2" "0") "pt}"
-"          \\\\begin{minipage}[t]{\\\\linewidth}"
-"          \\\\begin{multicols}{" cols "}"
-"          %s"
-"          \\\\end{multicols}\\\\end{minipage}\"))"
-"(s-replace \":columnbreak:\" (if (equal 'html backend) \"\" \"\\\\columnbreak\")
-contents)))")))))
-#+END_SRC
-#
-# Musa: If I use “<div …> %s</div>”, the ‘>’ causes some undesirable whitespace
-# in the first column. Hence, omitting it.
-
-We also use ~parallel~ as an alias for ~2parallel~: The forward declaration is
-tangled at the top of the file, whereas the alias declarations are declared upon
-mode activation ---after such functions have been declared.
- #+BEGIN_SRC emacs-lisp :noweb-ref forward-decls :tangle no
-(declare-function org--2parallel "org-special-block-extras" t t)
-(declare-function org--2parallelNB "org-special-block-extras" t t)
-#+END_SRC
-#+BEGIN_SRC emacs-lisp :noweb-ref enable-mode :tangle no
- (defalias 'org--parallel
-                  #'org--2parallel)
-
-        (defalias 'org--parallelNB
-                  #'org--2parallelNB)
- #+END_SRC
 * COMMENT  :fire: HTML Export Styles as Links
   :PROPERTIES:
   :CUSTOM_ID: HTML-Export-Styles-as-Links
@@ -8363,6 +8290,14 @@ z
 #+end_src
 #+end_details
 
+* TODO [#A] COMMENT README improvements
+
+Add images for the “osbe-example” results and link to the html,
+since otherwise things don't look as nice in a markdown readme file.
+
+#+caption: Displaying thoughts side-by-side ^_^ Top is browser, then Emacs, then PDF
+[[file:images/parallel.png]]
+
 * COMMENT Case Studies
 ** In doubt, a block's main argument should be enclosed in quotes
 :PROPERTIES:
@@ -8420,7 +8355,6 @@ After 372 pages, it was shown that $1 + 1 = 2$
 #+begin_theorem
 It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 #+end_theorem
-
 
 
 * TODO [#A] COMMENT Summary

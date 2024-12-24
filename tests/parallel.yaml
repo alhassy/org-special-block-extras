@@ -1,8 +1,8 @@
 input: |-
 
-  Articles can get lengthy when vertical whitespace is wasted on thin
-  lines; instead, one could save space by using
-  /[[doc:org-block/parallel][parallel]] columns of text/.
+  Reduce the amount of whitespace noise in your articles by using the
+  /[[doc:org-block/parallel][parallel]] block to place ideas
+  side-by-side ---with up to 𝓃-many columns.
 
   ----------------------------------------------------------------------
 
@@ -34,12 +34,16 @@ input: |-
 
   # In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
 
+  In summary, articles can get lengthy when vertical whitespace is
+  wasted on thin lines; instead, one could save space by using
+  /[[doc:org-block/parallel][parallel]] columns of text/.
+
 expectations:
   html: |-
     <p>
-    Articles can get lengthy when vertical whitespace is wasted on thin
-    lines; instead, one could save space by using
-    <i><abbr class="tooltip" title="Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be seperated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>(fn BACKEND RAW-CONTENTS &rest _)">parallel</abbr> columns of text</i>.
+    Reduce the amount of whitespace noise in your articles by using the
+    /<abbr class="tooltip" title="Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be seperated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>(fn BACKEND RAW-CONTENTS &rest _)">parallel</abbr> block to place ideas
+    side-by-side &#x2014;with up to 𝓃-many columns.
     </p>
 
     <hr />
@@ -79,6 +83,12 @@ expectations:
 
 
     </div></div>
+
+    <p>
+    In summary, articles can get lengthy when vertical whitespace is
+    wasted on thin lines; instead, one could save space by using
+    <i><abbr class="tooltip" title="Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be seperated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>(fn BACKEND RAW-CONTENTS &rest _)">parallel</abbr> columns of text</i>.
+    </p>
   latex: |-
     🚫 The LaTex backend is intentionally unmaintained.
     🫠 Whoops, there seems to be an error: 
