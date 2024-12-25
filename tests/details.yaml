@@ -1,14 +1,47 @@
 input: |-
 
-  #+begin_details TITLE-RIGHT-HERE :title-color "cyan"
-  The result is a <details> tag containing the user's title & text.
-  But, in LaTeX, this is a colourful box.
+  Sometimes there is a remark or a code snippet that is useful to
+  have, but not relevant to the discussion at hand and so we want to
+  /fold away such [[doc:org-block/details][details]]/.
+
+  #+begin_details Example use cases
+  + ‘Conversation-style’ articles, where the author asks the reader questions
+    whose answers are “folded away” so the reader can think about the exercise
+    before seeing the answer.
+
+  + Hiding boring but important code snippets, such as a list of import
+    declarations or a tedious implementation.
   #+end_details
 
-  (FIXME: The use of quotes in the :title-color keyword is only required for the LaTeX backend.)
+  Full syntax ~#+begin_details "title" :background-color "cyan" :title-color "green"~.
+Unmaintained: |-
 
+  1. The LaTex implementation requires:
+     #+latex_header: \usepackage{tcolorbox}
+
+  2. The use of quotes in the :title-color keyword is only required for the LaTeX backend.
+
+  3. In the LaTeX implementation, We could use src_latex[:exports
+     code]{\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
+     ...}}\end{quote}}; however, this does not work well with
+     [[https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted][minted]]
+     for coloured source blocks. Instead, we use ~tcolorbox~.
+       
 expectations:
   html: |-
+    <p>
+      Sometimes there is a remark or a code snippet that is useful to have, but not
+      relevant to the discussion at hand and so we want to
+      <i
+        >fold away such
+        <abbr
+          class="tooltip"
+          title="Enclose contents in a folded up box, for HTML.<br><br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such blocks is “Details”,<br>its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.<br><br>In HTML, we show folded, details, regions with a nice greenish colour.<br><br>In the future ---i.e., when I have time---<br>it may be prudent to expose more aspects as arguments.<br><br>(fn BACKEND RAW-CONTENTS &rest _)"
+          >details</abbr
+        ></i
+      >.
+    </p>
+
     <details
       class="code-details"
       style="
@@ -22,27 +55,30 @@ expectations:
     >
       <summary>
         <strong>
-          <font face="Courier" size="3" color="cyan"> TITLE-RIGHT-HERE </font>
+          <font face="Courier" size="3" color="green"> Example use cases </font>
         </strong>
       </summary>
-      <p>
-        The result is a &lt;details&gt; tag containing the user's title &amp; text.
-        But, in LaTeX, this is a colourful box.
-      </p>
+      <ul class="org-ul">
+        <li>
+          ‘Conversation-style’ articles, where the author asks the reader questions
+          whose answers are “folded away” so the reader can think about the exercise
+          before seeing the answer.
+        </li>
+
+        <li>
+          Hiding boring but important code snippets, such as a list of import
+          declarations or a tedious implementation.
+        </li>
+      </ul>
     </details>
 
     <p>
-      (FIXME: The use of quotes in the :title-color keyword is only required for the
-      LaTeX backend.)
+      Full syntax
+      <code
+        >#+begin_details "title" :background-color "cyan" :title-color "green"</code
+      >.
     </p>
   latex: |-
-    \definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{cyan}\begin{quote}
-    	\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={TITLE-RIGHT-HERE},sharp corners,boxrule=0.4pt]
-    		The result is a <details> tag containing the user's title \& text.
-    		But, in \LaTeX{}, this is a colourful box.
-
-
-    	\end{tcolorbox}
-    \end{quote}
-
-    (FIXME: The use of quotes in the :title-color keyword is only required for the \LaTeX{} backend.)
+    🚫 The LaTex backend is intentionally unmaintained.
+    🫠 Whoops, there seems to be an error: 
+     (void-variable label)

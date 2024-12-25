@@ -29,6 +29,9 @@ html-export-style:solarized_light
 # TODO: Since the implementation is a find-replace, nested blocks do not honor enclosing blocks.
 # For example, try placing a `rename` block within an `example` block and see that it is expanded!
 
+# TODO: Add :noexport support to [all?] blocks?
+# TODO: Could generalize this to be a hook that's run before processing blocks, and :noexport support amounts to a hook that returns "" for the block.
+
 # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
 #  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
@@ -2391,7 +2394,7 @@ A full example:
   :CUSTOM_ID: Short_Example_An_opportunity_to_learn
   :END:
 
-The following tiny block is composed from two [[doc:org--details][details]] blocks and a [[doc:org--box][box]] block
+The following tiny block is composed from two [[doc:org-block/details][details]] blocks and a [[doc:org-block/box][box]] block
 ---defined elsewhere in this article. It is intended to give the reader another
 opportunity to make sure they have tried to solve the puzzle posed in the main
 text before seeing the answer ----this works well in HTML, not so in LaTeX.
@@ -3331,37 +3334,48 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 #+end_src
 :End:
 
-* COMMENT Folded Details ---As well as boxed text and subtle colours
+* DONE COMMENT Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
 
-  #+begin_center
-/How did we fold away those implementations?/
-  #+end_center
 
-Sometimes there is a remark or a code snippet that is useful to have, but not
-relevant to the discussion at hand and so we want to /fold away such [[doc:org--details][details]]/.
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+   osbe-example:~/org-special-block-extras/tests/details.yaml
 
-+ ‘Conversation-style’ articles, where the author asks the reader questions
-  whose answers are “folded away” so the reader can think about the exercise
-  before seeing the answer.
+--------------------------------------------------------------------------------
+   
+Below is a concrete example of a ‘conversation-style’ usage of the ~details~ block:
+#+begin_box "Here's a nifty puzzle, can you figure it out? 👽"
+Reductions ---incidentally also called ‘folds’[fn:1]--- embody
+primitive recursion and thus computability. For example, what does
+~(-reduce #'/ (number-sequence 1.0 𝓃))~ compute when given a whole
+number 𝓃?
 
-+ Hiding boring but important code snippets, such as a list of import
-  declarations or a tedious implementation.
+#+begin_details Solution :title-color pink
+Rather than guess-then-check, let's /calculate/!
 
-#+latex_header: \usepackage{tcolorbox}
-#+begin_center
-Requires: src_latex[:exports code]{,#+latex_header:  \usepackage{tcolorbox}}
-#+end_center
+#+begin_src emacs-lisp :tangle no
+  (-reduce #'/ (number-sequence 1.0 𝓃))
+= ;; Lisp is strict: Evaluate inner-most expression
+  (-reduce #'/ '(1.0 2.0 3.0 … 𝓃))
+= ;; Evaluate left-associating reduction
+  (/ (/ (/ 1.0 2.0) ⋯) 𝓃)
+=;; Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))
+  (/ 1.0 (* 2.0 3.0 … 𝓃))
+#+END_SRC
 
-:Pics:
-#+caption: Visually hiding, folding away, details
-[[file:images/details.png]]
-:End:
+We have thus found the above Lisp program to compute the inverse factorial of 𝓃;
+i.e., $\large \frac{1}{𝓃!}$.
+#+end_details
 
-#+begin_details Implementation
-#+begin_src emacs-lisp
+Neato, let's do more super cool stuff ^_^
+#+end_box
+
+--------------------------------------------------------------------------------
+
+Below is a concrete example of hiding a boring, but important, code snippet, using the ~details~ block:
+#+begin_src emacs-lisp :folded t  :title Implementation 
 (org-defblock details (title "Details"
               background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
@@ -3406,67 +3420,9 @@ it may be prudent to expose more aspects as arguments.
                </details>" background-color title-color title contents))))
 #+end_src
 
-:Posterity_Older_implementation:
-#+BEGIN_SRC emacs-lisp -n -r :tangle no
-(defun org--details (backend contents)
-"Format CONTENTS as a ‘folded region’ according to BACKEND.
+--------------------------------------------------------------------------------
 
-CONTENTS may have a ‘:title’ argument specifying a title for
-the folded region."
-(-let* (;; Get arguments
-        ((contents′ . (&alist 'title))
-         (org--extract-arguments contents 'title)))
-  (when (s-blank? title) (setq title "Details"))
-  (setq title (s-trim title))
-  (format
-   (s-collapse-whitespace ;; Remove the whitespace only in the nicely presented
-                          ;; strings below
-    (pcase backend
-      (`html "<details class=\"code-details\">
-                 <summary>
-                   <strong>
-                     <font face=\"Courier\" size=\"3\" color=\"green\"> %s
-                     </font>
-                   </strong>
-                 </summary>
-                 %s
-              </details>")
-      (`latex "\\begin{quote}
-                 \\begin{tcolorbox}[colback=white,sharp corners,boxrule=0.4pt]
-                   \\textbf{%s:}
-                   %s
-                 \\end{tcolorbox}
-               \\end{quote}")))
-    title contents′)))
-#+END_SRC
-
-#+RESULTS:
-: org--details
-
-:End:
-
-We could use
-src_latex[:exports code]{\begin{quote}\fbox{\parbox{\linewidth}{\textbf{Details:}
-...}}\end{quote}}; however, this does not work well with [[https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted][minted]] for coloured
-source blocks. Instead, we use ~tcolorbox~.
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "The result is a <details> tag containing the user's title & text."
-  [details]
-  (⇝ (⟰ "#+begin_details TITLE-RIGHT-HERE
-          My aside...
-          ,#+end_details")
-     "<details"
-     (* anything)
-     "TITLE-RIGHT-HERE"
-     (* anything)
-     "My aside"
-     (* anything)
-     "</details>"))
-#+end_src
-#+end_details
-
+#+begin_box "Tip 🌼"
 If you fear that your readers may not click on details boxes in the HTML export,
 you could, say, have the details heading “flash pink” whenever the user hovers
 over it. This can be accomplished by inserting the following incantation into
@@ -3477,49 +3433,16 @@ your Org file or place it into your ~org-html-head~ variable.
 
 # Which, I will do, for fun.
 #+html: <style>  summary:hover {background:pink;} </style>
+#+end_box
 
-** Example: /Here's a nifty puzzle, can you figure it out?/
-   :PROPERTIES:
-   :CUSTOM_ID: Example
-   :END:
-Reductions ---incidentally also called ‘folds’[fn:1]--- embody primitive
-recursion and thus computability. For example, what does the following compute
-when given a whole number 𝓃?
-#+BEGIN_SRC emacs-lisp :tangle no
-(-reduce #'/ (number-sequence 1.0 𝓃))
-#+END_SRC
-
-#+begin_details Solution :title-color pink
-Rather than guess-then-check, let's /calculate/!
-
-#+begin_src emacs-lisp :tangle no
-  (-reduce #'/ (number-sequence 1.0 𝓃))
-= ;; Lisp is strict: Evaluate inner-most expression
-  (-reduce #'/ '(1.0 2.0 3.0 … 𝓃))
-= ;; Evaluate left-associating reduction
-  (/ (/ (/ 1.0 2.0) ⋯) 𝓃)
-=;; Arithmetic: (/ (/ a b) c) = (* (/ a b) (/ 1 c)) = (/ a (* b c))
-  (/ 1.0 (* 2.0 3.0 … 𝓃))
-#+END_SRC
-
-We have thus found the above Lisp program to compute the inverse factorial of 𝓃;
-i.e., $\large \frac{1}{𝓃!}$.
-#+end_details
-
-Neato, let's do more super cool stuff ^_^
-
-#+begin_footnotesize
-( In the Emacs Web Wowser, folded regions are displayed unfolded similar to
-LaTeX. )
-#+end_footnotesize
-** Boxed Text
+* COMMENT Boxed Text
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
    :END:
 
  Folded regions, as implemented above, are displayed in a super neat text box
  which may be useful to enclose text to make it standout ---without having it
- folded away. As such, we provide the special block [[doc:org--box][box]] to enclosing text in
+ folded away. As such, we provide the special block [[doc:org-block/box][box]] to enclosing text in
  boxes.
 
  #+latex_header: \usepackage{tcolorbox}
@@ -3648,7 +3571,7 @@ Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
 
  #+end_box
 
- For further header options, see the documentation of [[doc:org--box][box]].
+ For further header options, see the documentation of [[doc:org-block/box][box]].
 
 
  #+html: <br>
@@ -3717,7 +3640,175 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
 
  It may be useful to /fuse/ the ~box~ and ~details~ concepts into one.  Something for
  future me ---or another contributor--- to think about ;-)
-* Parallel ---/Place ideas side-by-side, possibly with a separator/
+* DONE COMMENT Nice Keystroke Renditions: kbd:C-h_h
+  :PROPERTIES:
+  :CUSTOM_ID: kbd:nice-keystroke-renditions
+  :END:
+  
+Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
+aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
+or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
+or the useful <kbd:M-s h .>.
+
+- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
+  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
+  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
+  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
+  red border).
+
+  You can also supply explicit tooltip description: =[[kbd:key
+  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
+  the key sequence in nice key font along with a tooltip explaining it.
+
+
+# To make a screenshot, add the following to the above :PROPERTIES: drawer.
+#   :UNNUMBERED: t
+#
+#+attr_html: :width 80% :height 80%s
+[[file:./images/kbd.png]]
+
+#+begin_details Implementation
+
+#+begin_src emacs-lisp
+(org-deflink kbd
+  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
+
+Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
+
+Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
+
+Examples:
+    [[kbd:C-x C-s]]
+  ≈ <kbd: C-x C-s>
+  ≈ kbd:C-x_C-s"
+  [:display 'full
+   :let (the-label  (s-trim (s-replace "_" " " o-label))
+         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
+         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
+         tooltip?   (not (equal tooltip ""))
+         style      (if tooltip? "border-color: red" "")
+         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
+   ;; o-description is always nil when it comes to deciding the :face.
+   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
+   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
+  (if (equal o-backend 'latex)
+      (format "\\texttt{%s}" the-label)
+    (if tooltip?
+        ;; The style=⋯ is to remove the underlining caused by <abbr>.
+        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
+                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
+                keystrokes)
+      keystrokes)))
+#+end_src
+
+The following styling rule is used to make the keystrokes displayed nicely.
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+  (defvar org--ospe-kbd-html-setup nil
+    "Has the necessary keyboard styling HTML beeen added?")
+
+  (unless org--ospe-kbd-html-setup
+    (setq org--ospe-kbd-html-setup t))
+  (when org-special-block-add-html-extra
+   (setq org-html-head-extra
+    (concat org-html-head-extra
+     "
+  <style>
+  /* From: https://endlessparentheses.com/public/css/endless.css */
+  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+  kbd
+  {
+    -moz-border-radius: 6px;
+    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    -webkit-border-radius: 6px;
+    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    color: #333;
+    display: inline-block;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 80%;
+    font-weight: normal;
+    line-height: inherit;
+    margin: 0 .1em;
+    padding: .08em .4em;
+    text-shadow: 0 1px 0 #fff;
+    word-spacing: -4px;
+
+    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+  }
+  </style>")))
+#+end_src
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
+  [kbd direct-org-links]
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
+
+(deftest "[[It]] becomes <kbd> tags"
+  [kbd square-org-links]
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
+  [kbd angle-org-links]
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+;; FIXME: uh-oh!
+(when nil
+(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
+  [kbd tooltip]
+  (⇝ (⟰ "<kbd: M-s h .>")
+
+     "<abbr class=\"tooltip\""
+     (* anything)
+     "Highlight each instance of the symbol at point.<br>Uses the
+     next face from ‘hi-lock-face-defaults’ without
+     prompting,<br>unless you use a prefix argument.<br>Uses
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
+     at point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the
+     highlighting will not update as you type.&emsp;The
+     Font<br>Lock mode is considered ''enabled'' in a buffer if
+     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
+     non-nil, which means<br>the major mode specifies support for
+     Font Lock."
+     (* anything)
+     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
+#+end_src
+
+#+end_details
+
+:Hide:
+#+HTML: <style>
+#+HTML: kbd
+#+HTML: {
+#+HTML:   -moz-border-radius: 6px;
+#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   -webkit-border-radius: 6px;
+#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   background-color: #f7f7f7;
+#+HTML:   border: 1px solid #ccc;
+#+HTML:   border-radius: 6px;
+#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   color: #333;
+#+HTML:   display: inline-block;
+#+HTML:   font-family: 'Droid Sans Mono', monospace;
+#+HTML:   font-size: 80%;
+#+HTML:   font-weight: normal;
+#+HTML:   line-height: inherit;
+#+HTML:   margin: 0 .1em;
+#+HTML:   padding: .08em .4em;
+#+HTML:   text-shadow: 0 1px 0 #fff;
+#+HTML:   word-spacing: -4px;
+#+HTML:
+#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+#+HTML: }
+#+HTML: </style>
+#+HTML:
+:End:
+* DONE COMMENT Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
@@ -4897,174 +4988,6 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
 
-* COMMENT Nice Keystroke Renditions: kbd:C-h_h
-  :PROPERTIES:
-  :CUSTOM_ID: kbd:nice-keystroke-renditions
-  :END:
-
-Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
-aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
-or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
-or the useful <kbd:M-s h .>.
-
-- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
-  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
-  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
-  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
-  red border).
-
-  You can also supply explicit tooltip description: =[[kbd:key
-  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
-  the key sequence in nice key font along with a tooltip explaining it.
-
-
-# To make a screenshot, add the following to the above :PROPERTIES: drawer.
-#   :UNNUMBERED: t
-#
-#+attr_html: :width 80% :height 80%s
-[[file:./images/kbd.png]]
-
-#+begin_details Implementation
-
-#+begin_src emacs-lisp
-(org-deflink kbd
-  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
-
-Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
-
-Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
-
-Examples:
-    [[kbd:C-x C-s]]
-  ≈ <kbd: C-x C-s>
-  ≈ kbd:C-x_C-s"
-  [:display 'full
-   :let (the-label  (s-trim (s-replace "_" " " o-label))
-         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
-         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
-         tooltip?   (not (equal tooltip ""))
-         style      (if tooltip? "border-color: red" "")
-         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
-   ;; o-description is always nil when it comes to deciding the :face.
-   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
-   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
-  (if (equal o-backend 'latex)
-      (format "\\texttt{%s}" the-label)
-    (if tooltip?
-        ;; The style=⋯ is to remove the underlining caused by <abbr>.
-        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
-                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
-                keystrokes)
-      keystrokes)))
-#+end_src
-
-The following styling rule is used to make the keystrokes displayed nicely.
-#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-  (defvar org--ospe-kbd-html-setup nil
-    "Has the necessary keyboard styling HTML beeen added?")
-
-  (unless org--ospe-kbd-html-setup
-    (setq org--ospe-kbd-html-setup t))
-  (when org-special-block-add-html-extra
-   (setq org-html-head-extra
-    (concat org-html-head-extra
-     "
-  <style>
-  /* From: https://endlessparentheses.com/public/css/endless.css */
-  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
-  kbd
-  {
-    -moz-border-radius: 6px;
-    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    -webkit-border-radius: 6px;
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    background-color: #f7f7f7;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    color: #333;
-    display: inline-block;
-    font-family: 'Droid Sans Mono', monospace;
-    font-size: 80%;
-    font-weight: normal;
-    line-height: inherit;
-    margin: 0 .1em;
-    padding: .08em .4em;
-    text-shadow: 0 1px 0 #fff;
-    word-spacing: -4px;
-
-    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-  }
-  </style>")))
-#+end_src
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
-  [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
-
-(deftest "[[It]] becomes <kbd> tags"
-  [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
-  [kbd angle-org-links]
-  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-;; FIXME: uh-oh!
-(when nil
-(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
-  [kbd tooltip]
-  (⇝ (⟰ "<kbd: M-s h .>")
-
-     "<abbr class=\"tooltip\""
-     (* anything)
-     "Highlight each instance of the symbol at point.<br>Uses the
-     next face from ‘hi-lock-face-defaults’ without
-     prompting,<br>unless you use a prefix argument.<br>Uses
-     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
-     at point.<br><br>This uses Font lock mode if it is enabled;
-     otherwise it uses overlays,<br>in which case the
-     highlighting will not update as you type.&emsp;The
-     Font<br>Lock mode is considered ''enabled'' in a buffer if
-     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
-     non-nil, which means<br>the major mode specifies support for
-     Font Lock."
-     (* anything)
-     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
-#+end_src
-
-#+end_details
-
-:Hide:
-#+HTML: <style>
-#+HTML: kbd
-#+HTML: {
-#+HTML:   -moz-border-radius: 6px;
-#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   -webkit-border-radius: 6px;
-#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   background-color: #f7f7f7;
-#+HTML:   border: 1px solid #ccc;
-#+HTML:   border-radius: 6px;
-#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   color: #333;
-#+HTML:   display: inline-block;
-#+HTML:   font-family: 'Droid Sans Mono', monospace;
-#+HTML:   font-size: 80%;
-#+HTML:   font-weight: normal;
-#+HTML:   line-height: inherit;
-#+HTML:   margin: 0 .1em;
-#+HTML:   padding: .08em .4em;
-#+HTML:   text-shadow: 0 1px 0 #fff;
-#+HTML:   word-spacing: -4px;
-#+HTML:
-#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-#+HTML: }
-#+HTML: </style>
-#+HTML:
-:End:
 * COMMENT   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
   :CUSTOM_ID: Link-Here-OctoIcons
@@ -8298,6 +8221,11 @@ since otherwise things don't look as nice in a markdown readme file.
 #+caption: Displaying thoughts side-by-side ^_^ Top is browser, then Emacs, then PDF
 [[file:images/parallel.png]]
 
+
+
+#+caption: Visually hiding, folding away, details
+[[file:images/details.png]]
+
 * COMMENT Case Studies
 ** In doubt, a block's main argument should be enclosed in quotes
 :PROPERTIES:
@@ -8355,7 +8283,6 @@ After 372 pages, it was shown that $1 + 1 = 2$
 #+begin_theorem
 It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 #+end_theorem
-
 
 * TODO [#A] COMMENT Summary
   :PROPERTIES:

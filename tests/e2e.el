@@ -247,10 +247,12 @@ my liking, then move the `input' to the relevant yaml file."
     (cl-letf* (((symbol-function 'make-title) (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
 	      (src.title (make-title "What You Write"))
 	      (tgt.title (make-title "What You Get")))
-    (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\"> %s </pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div>"
+    (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\">%s</pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div>"
 	    src.color src.title src
 	    tgt.color tgt.title tgt))))
 
+
+;; TODO: Expose this in use-facing docs, then covert that prose into a yaml test using the workflow documented in osbe-example link type.
 (org-defblock src (language "emacs-lisp" folded nil title "Details")
 	      "yup"
 	      (-let [org--supported-blocks '(details)] ;; to avoid infinite recursive calls for `src'
