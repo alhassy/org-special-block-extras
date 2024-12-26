@@ -3334,7 +3334,9 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 #+end_src
 :End:
 
-* DONE COMMENT Folded Details ---Let the user see stuff only if they're interested
+* TODO What is this package?
+* DONE COMMENT Block and link types provided by this package
+** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -3434,7 +3436,7 @@ your Org file or place it into your ~org-html-head~ variable.
 #+html: <style>  summary:hover {background:pink;} </style>
 #+end_box
 
-* DONE COMMENT Boxed Text —Calling out super duper info
+** Boxed Text —Calling out super duper info
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
    :END:
@@ -3515,7 +3517,7 @@ In the future, I will likely expose more arguments."
                  title contents)))))
 #+end_src
 
-** Three demos of  [[doc:org-block/box][box]]
+*** Three demos of  [[doc:org-block/box][box]]
  #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
  #+html: <br>
  #+begin_box Example: A super boring observation presented obscurely :background-color blue
@@ -3549,7 +3551,7 @@ Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
 
  For further header options, see the documentation of [[doc:org-block/box][box]].
 
-** Subtle Colours
+*** Subtle Colours
  #+html: <br>
  In the first example above, /how did we get that nice light blue? What
  is its HTML code?/ That's not something I care to remember, so let's
@@ -3606,6 +3608,309 @@ your Org file.
 In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
  #+end_details
+
+**   ~latex-definitions~ for hiding LaTeX declarations in HTML
+   :PROPERTIES:
+   :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
+   :END:
+
+  To present mathematical formulae in HTML export, we may use
+  LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
+  =$=-symbols to obtain ${\color{red}x}$.  This is known as the MathJax
+  tool ---Emacs' default HTML export includes it.  (Unfortunately,
+  MathJax does not directly support arbitrary HTML elements to occur
+  within the =$=-delimiters.)
+
+  #+latex: \vspace{1em}
+  It is common to declare LaTeX definitions for convenience, but such
+  declarations occur within ~$~-delimiters and thereby produce
+  undesirable extra whitespace. See the superflous vertical whitespace
+  in the =Result= side below. 
+
+   #+begin_org-demo :source-color "custard" :result-color "custard"
+ Hello, in this blog post I'd like to talk about quantifiers.
+ # First, I'll define some helpers that I use multiple times...
+   $$
+  \def\Plus{\color{teal}\bigoplus}
+  \def\plus{\;\color{teal}\oplus\;}
+  \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
+  \def\xstart{\color{red} a}
+  \def\xend{\color{cyan} b}
+  $$
+  
+  Anyhow, let's talk about quantifiers...
+  $$
+  \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
+  \; = \;
+  \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
+  $$
+
+  The above “quantification” means [[teal:Loop sequentially with]]
+  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
+  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].
+ #+end_org-demo
+
+  As such, we declare the [[doc:org-block/latex-definitions][latex-definitions]] block type which avoids
+  displaying such extra whitespace in the resulting HTML.
+
+  # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+  osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
+  
+  #+begin_src emacs-lisp :title "‘latex-definitions’ Implementation" :folded t
+(org-defblock latex-definitions ()
+  "Declare but do not display the CONTENTS according to the BACKEND."
+  (format (pcase backend
+            ('html "<p style=\"display:none\">\\[%s\\]</p>")
+            (_ "%s"))
+          raw-contents))
+  #+end_src
+
+** Nice Keystroke Renditions: kbd:C-h_h
+  :PROPERTIES:
+  :CUSTOM_ID: kbd:nice-keystroke-renditions
+  :END:
+  
+Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
+aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
+or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
+or the useful <kbd:M-s h .>.
+
+- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
+  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
+  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
+  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
+  red border).
+
+  You can also supply explicit tooltip description: =[[kbd:key
+  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
+  the key sequence in nice key font along with a tooltip explaining it.
+
+
+# To make a screenshot, add the following to the above :PROPERTIES: drawer.
+#   :UNNUMBERED: t
+#
+#+attr_html: :width 80% :height 80%s
+[[file:./images/kbd.png]]
+
+#+begin_details Implementation
+
+#+begin_src emacs-lisp
+(org-deflink kbd
+  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
+
+Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
+
+Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
+
+Examples:
+    [[kbd:C-x C-s]]
+  ≈ <kbd: C-x C-s>
+  ≈ kbd:C-x_C-s"
+  [:display 'full
+   :let (the-label  (s-trim (s-replace "_" " " o-label))
+         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
+         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
+         tooltip?   (not (equal tooltip ""))
+         style      (if tooltip? "border-color: red" "")
+         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
+   ;; o-description is always nil when it comes to deciding the :face.
+   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
+   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
+  (if (equal o-backend 'latex)
+      (format "\\texttt{%s}" the-label)
+    (if tooltip?
+        ;; The style=⋯ is to remove the underlining caused by <abbr>.
+        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
+                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
+                keystrokes)
+      keystrokes)))
+#+end_src
+
+The following styling rule is used to make the keystrokes displayed nicely.
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+  (defvar org--ospe-kbd-html-setup nil
+    "Has the necessary keyboard styling HTML beeen added?")
+
+  (unless org--ospe-kbd-html-setup
+    (setq org--ospe-kbd-html-setup t))
+  (when org-special-block-add-html-extra
+   (setq org-html-head-extra
+    (concat org-html-head-extra
+     "
+  <style>
+  /* From: https://endlessparentheses.com/public/css/endless.css */
+  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+  kbd
+  {
+    -moz-border-radius: 6px;
+    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    -webkit-border-radius: 6px;
+    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    color: #333;
+    display: inline-block;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 80%;
+    font-weight: normal;
+    line-height: inherit;
+    margin: 0 .1em;
+    padding: .08em .4em;
+    text-shadow: 0 1px 0 #fff;
+    word-spacing: -4px;
+
+    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+  }
+  </style>")))
+#+end_src
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
+  [kbd direct-org-links]
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
+
+(deftest "[[It]] becomes <kbd> tags"
+  [kbd square-org-links]
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
+  [kbd angle-org-links]
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+;; FIXME: uh-oh!
+(when nil
+(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
+  [kbd tooltip]
+  (⇝ (⟰ "<kbd: M-s h .>")
+
+     "<abbr class=\"tooltip\""
+     (* anything)
+     "Highlight each instance of the symbol at point.<br>Uses the
+     next face from ‘hi-lock-face-defaults’ without
+     prompting,<br>unless you use a prefix argument.<br>Uses
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
+     at point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the
+     highlighting will not update as you type.&emsp;The
+     Font<br>Lock mode is considered ''enabled'' in a buffer if
+     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
+     non-nil, which means<br>the major mode specifies support for
+     Font Lock."
+     (* anything)
+     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
+#+end_src
+
+#+end_details
+
+:Hide:
+#+HTML: <style>
+#+HTML: kbd
+#+HTML: {
+#+HTML:   -moz-border-radius: 6px;
+#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   -webkit-border-radius: 6px;
+#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   background-color: #f7f7f7;
+#+HTML:   border: 1px solid #ccc;
+#+HTML:   border-radius: 6px;
+#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   color: #333;
+#+HTML:   display: inline-block;
+#+HTML:   font-family: 'Droid Sans Mono', monospace;
+#+HTML:   font-size: 80%;
+#+HTML:   font-weight: normal;
+#+HTML:   line-height: inherit;
+#+HTML:   margin: 0 .1em;
+#+HTML:   padding: .08em .4em;
+#+HTML:   text-shadow: 0 1px 0 #fff;
+#+HTML:   word-spacing: -4px;
+#+HTML:
+#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+#+HTML: }
+#+HTML: </style>
+#+HTML:
+:End:
+** Parallel ---/Place ideas side-by-side, possibly with a separator/
+  :PROPERTIES:
+  :CUSTOM_ID: Parallel
+  :END:
+
+     osbe-example:~/org-special-block-extras/tests/parallel.yaml
+  
+#+latex_header: \usepackage{multicol}
+#+begin_src emacs-lisp -r -n :title Implementation :folded t
+(org-defblock parallel (cols "2" bar nil)
+  "Place ideas side-by-side, possibly with a separator.
+
+There are COLS many columns, and they may be seperated by solid
+vertical rules if BAR is a non-nil (colour) value.
+
++ COLS is either a number or a sequence of the shape: 10% 20% 30%.
++ BAR is either `t', `nil', or a colour such as `red' or `blue'.
+
+----------------------------------------------------------------------
+
+“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
+𝒏-many parallel columns, possibly separated by solid rules, or a
+“bar”. This style allows text to freely move between columns,
+depending on the size of the browser, which may dynamically
+shrink and grow.  BAR can either be `t', `nil', or
+any (backend)-valid colour specification; such as `red' or
+`green'.
+
+“Hard Columns”: Alternatively, for non-uniform column widths,
+COLS may instead be a specification of the widths of the
+columns. However, this extra flexibility comes at an additional
+cost: The contents of the block must now contain 𝒏-1 lines
+consisting of ‘#+columnbreak:’, when the specification determines
+𝒏 columns, as shown in the following example.
+
+   ,#+begin_parallel 20% 60% 20% :bar green
+   Hello, to the left!
+
+   ,#+columnbreak:
+   A super duper wide middle margin!
+
+   ,#+columnbreak:
+   Goodbye (“God-be-with-ye”) to the right!
+   ,#+end_parallel
+
+The specification is 𝒏 measurements denoting widths; which may be
+in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
+I personally advise only the use of percentage measurements.
+
+In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
+  (let ((rule (pcase backend
+               (`latex (if bar 2 0))
+               (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
+        (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
+    (pcase backend
+      (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
+          \\begin{minipage}[t]{\\linewidth}
+          \\begin{multicols}{%s}
+          %s
+          \\end{multicols}\\end{minipage}"    rule cols contents′))
+      (_ (if (not (s-contains-p "%" cols))
+             (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
+                     rule cols contents)
+           ;; Otherwise: cols ≈ "10% 40% 50%", for example.
+           (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
+                 (columnBreak (lambda (width omit-rule?)
+                                (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
+                                        (if omit-rule? "none" rule)))) )
+             (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
+                     (funcall columnBreak (pop spec) nil)
+                     (s-replace-regexp (regexp-quote "#+columnbreak:")
+                                       ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
+                                       ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
+                                       (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
+                                       contents)
+		     (if (s-contains-p " " cols) "</div>" ""))))))))
+#+end_src
 
 * COMMENT Colours
   :PROPERTIES:
@@ -3932,309 +4237,6 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
   
-* DONE COMMENT   ~latex-definitions~ for hiding LaTeX declarations in HTML
-   :PROPERTIES:
-   :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
-   :END:
-
-  To present mathematical formulae in HTML export, we may use
-  LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
-  =$=-symbols to obtain ${\color{red}x}$.  This is known as the MathJax
-  tool ---Emacs' default HTML export includes it.  (Unfortunately,
-  MathJax does not directly support arbitrary HTML elements to occur
-  within the =$=-delimiters.)
-
-  #+latex: \vspace{1em}
-  It is common to declare LaTeX definitions for convenience, but such
-  declarations occur within ~$~-delimiters and thereby produce
-  undesirable extra whitespace. See the superflous vertical whitespace
-  in the =Result= side below. 
-
-   #+begin_org-demo :source-color "custard" :result-color "custard"
- Hello, in this blog post I'd like to talk about quantifiers.
- # First, I'll define some helpers that I use multiple times...
-   $$
-  \def\Plus{\color{teal}\bigoplus}
-  \def\plus{\;\color{teal}\oplus\;}
-  \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
-  \def\xstart{\color{red} a}
-  \def\xend{\color{cyan} b}
-  $$
-  
-  Anyhow, let's talk about quantifiers...
-  $$
-  \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
-  \; = \;
-  \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
-  $$
-
-  The above “quantification” means [[teal:Loop sequentially with]]
-  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
-  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].
- #+end_org-demo
-
-  As such, we declare the [[doc:org-block/latex-definitions][latex-definitions]] block type which avoids
-  displaying such extra whitespace in the resulting HTML.
-
-  # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-  osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
-  
-  #+begin_src emacs-lisp :title "‘latex-definitions’ Implementation" :folded t
-(org-defblock latex-definitions ()
-  "Declare but do not display the CONTENTS according to the BACKEND."
-  (format (pcase backend
-            ('html "<p style=\"display:none\">\\[%s\\]</p>")
-            (_ "%s"))
-          raw-contents))
-  #+end_src
-
-* DONE COMMENT Nice Keystroke Renditions: kbd:C-h_h
-  :PROPERTIES:
-  :CUSTOM_ID: kbd:nice-keystroke-renditions
-  :END:
-  
-Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
-aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
-or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
-or the useful <kbd:M-s h .>.
-
-- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
-  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
-  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
-  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
-  red border).
-
-  You can also supply explicit tooltip description: =[[kbd:key
-  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
-  the key sequence in nice key font along with a tooltip explaining it.
-
-
-# To make a screenshot, add the following to the above :PROPERTIES: drawer.
-#   :UNNUMBERED: t
-#
-#+attr_html: :width 80% :height 80%s
-[[file:./images/kbd.png]]
-
-#+begin_details Implementation
-
-#+begin_src emacs-lisp
-(org-deflink kbd
-  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
-
-Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
-
-Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
-
-Examples:
-    [[kbd:C-x C-s]]
-  ≈ <kbd: C-x C-s>
-  ≈ kbd:C-x_C-s"
-  [:display 'full
-   :let (the-label  (s-trim (s-replace "_" " " o-label))
-         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
-         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
-         tooltip?   (not (equal tooltip ""))
-         style      (if tooltip? "border-color: red" "")
-         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
-   ;; o-description is always nil when it comes to deciding the :face.
-   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
-   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
-  (if (equal o-backend 'latex)
-      (format "\\texttt{%s}" the-label)
-    (if tooltip?
-        ;; The style=⋯ is to remove the underlining caused by <abbr>.
-        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
-                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
-                keystrokes)
-      keystrokes)))
-#+end_src
-
-The following styling rule is used to make the keystrokes displayed nicely.
-#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-  (defvar org--ospe-kbd-html-setup nil
-    "Has the necessary keyboard styling HTML beeen added?")
-
-  (unless org--ospe-kbd-html-setup
-    (setq org--ospe-kbd-html-setup t))
-  (when org-special-block-add-html-extra
-   (setq org-html-head-extra
-    (concat org-html-head-extra
-     "
-  <style>
-  /* From: https://endlessparentheses.com/public/css/endless.css */
-  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
-  kbd
-  {
-    -moz-border-radius: 6px;
-    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    -webkit-border-radius: 6px;
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    background-color: #f7f7f7;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    color: #333;
-    display: inline-block;
-    font-family: 'Droid Sans Mono', monospace;
-    font-size: 80%;
-    font-weight: normal;
-    line-height: inherit;
-    margin: 0 .1em;
-    padding: .08em .4em;
-    text-shadow: 0 1px 0 #fff;
-    word-spacing: -4px;
-
-    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-  }
-  </style>")))
-#+end_src
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
-  [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
-
-(deftest "[[It]] becomes <kbd> tags"
-  [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
-  [kbd angle-org-links]
-  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-;; FIXME: uh-oh!
-(when nil
-(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
-  [kbd tooltip]
-  (⇝ (⟰ "<kbd: M-s h .>")
-
-     "<abbr class=\"tooltip\""
-     (* anything)
-     "Highlight each instance of the symbol at point.<br>Uses the
-     next face from ‘hi-lock-face-defaults’ without
-     prompting,<br>unless you use a prefix argument.<br>Uses
-     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
-     at point.<br><br>This uses Font lock mode if it is enabled;
-     otherwise it uses overlays,<br>in which case the
-     highlighting will not update as you type.&emsp;The
-     Font<br>Lock mode is considered ''enabled'' in a buffer if
-     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
-     non-nil, which means<br>the major mode specifies support for
-     Font Lock."
-     (* anything)
-     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
-#+end_src
-
-#+end_details
-
-:Hide:
-#+HTML: <style>
-#+HTML: kbd
-#+HTML: {
-#+HTML:   -moz-border-radius: 6px;
-#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   -webkit-border-radius: 6px;
-#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   background-color: #f7f7f7;
-#+HTML:   border: 1px solid #ccc;
-#+HTML:   border-radius: 6px;
-#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   color: #333;
-#+HTML:   display: inline-block;
-#+HTML:   font-family: 'Droid Sans Mono', monospace;
-#+HTML:   font-size: 80%;
-#+HTML:   font-weight: normal;
-#+HTML:   line-height: inherit;
-#+HTML:   margin: 0 .1em;
-#+HTML:   padding: .08em .4em;
-#+HTML:   text-shadow: 0 1px 0 #fff;
-#+HTML:   word-spacing: -4px;
-#+HTML:
-#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-#+HTML: }
-#+HTML: </style>
-#+HTML:
-:End:
-* DONE COMMENT Parallel ---/Place ideas side-by-side, possibly with a separator/
-  :PROPERTIES:
-  :CUSTOM_ID: Parallel
-  :END:
-
-     osbe-example:~/org-special-block-extras/tests/parallel.yaml
-  
-#+latex_header: \usepackage{multicol}
-#+begin_src emacs-lisp -r -n :title Implementation :folded t
-(org-defblock parallel (cols "2" bar nil)
-  "Place ideas side-by-side, possibly with a separator.
-
-There are COLS many columns, and they may be seperated by solid
-vertical rules if BAR is a non-nil (colour) value.
-
-+ COLS is either a number or a sequence of the shape: 10% 20% 30%.
-+ BAR is either `t', `nil', or a colour such as `red' or `blue'.
-
-----------------------------------------------------------------------
-
-“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
-𝒏-many parallel columns, possibly separated by solid rules, or a
-“bar”. This style allows text to freely move between columns,
-depending on the size of the browser, which may dynamically
-shrink and grow.  BAR can either be `t', `nil', or
-any (backend)-valid colour specification; such as `red' or
-`green'.
-
-“Hard Columns”: Alternatively, for non-uniform column widths,
-COLS may instead be a specification of the widths of the
-columns. However, this extra flexibility comes at an additional
-cost: The contents of the block must now contain 𝒏-1 lines
-consisting of ‘#+columnbreak:’, when the specification determines
-𝒏 columns, as shown in the following example.
-
-   ,#+begin_parallel 20% 60% 20% :bar green
-   Hello, to the left!
-
-   ,#+columnbreak:
-   A super duper wide middle margin!
-
-   ,#+columnbreak:
-   Goodbye (“God-be-with-ye”) to the right!
-   ,#+end_parallel
-
-The specification is 𝒏 measurements denoting widths; which may be
-in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
-I personally advise only the use of percentage measurements.
-
-In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
-With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
-  (let ((rule (pcase backend
-               (`latex (if bar 2 0))
-               (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
-        (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
-    (pcase backend
-      (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
-          \\begin{minipage}[t]{\\linewidth}
-          \\begin{multicols}{%s}
-          %s
-          \\end{multicols}\\end{minipage}"    rule cols contents′))
-      (_ (if (not (s-contains-p "%" cols))
-             (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
-                     rule cols contents)
-           ;; Otherwise: cols ≈ "10% 40% 50%", for example.
-           (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
-                 (columnBreak (lambda (width omit-rule?)
-                                (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
-                                        (if omit-rule? "none" rule)))) )
-             (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
-                     (funcall columnBreak (pop spec) nil)
-                     (s-replace-regexp (regexp-quote "#+columnbreak:")
-                                       ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
-                                       ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
-                                       (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
-                                       contents)
-		     (if (s-contains-p " " cols) "</div>" ""))))))))
-#+end_src
-
 * COMMENT  :fire: HTML Export Styles as Links
   :PROPERTIES:
   :CUSTOM_ID: HTML-Export-Styles-as-Links
@@ -8053,6 +8055,7 @@ z
 #+end_src
 #+end_details
 
+* TODO COMMENT How Do I make my own block and link types?
 * TODO [#A] COMMENT README improvements
 
 Add images for the “osbe-example” results and link to the html,
