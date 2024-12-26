@@ -22,7 +22,25 @@ html-export-style:solarized_light
 (org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
 #+end_src
 
+# TODO: Tersely explain how this pkg works, at the top of the README; e.g.:
+# org-defblock registers blocks (in org-supported-blocks),
+# then, just before export we replace blocks with the (verbatim) result of their definitions.
+
+# TODO: Write unit tests against org-ospe-html-export-preserving-whitespace,
+# rename it to `org-export-string-as-html-preserving-whitespace`
+# so that the new name looks similar to the built-in `org-export-string-as`
+# thereby increasing discoverability. Unit tests can mimic ‘margin’ block usage.
+# After the unit tests characterize this
+# method, then refactor it. The current implementation could be prettier:
+# Perhaps the implementation can be replace “ ” with “ ”, and “\n” with “@@html: <br>@@”,
+# then invoke built-in `org-export-string-as`?
+
 # MA: TODO: Margin blocks produce extra newlines!
+
+# TODO: Add tests involving header-args
+# Set the width onces-and-for-all using header-args:
+#
+#   (set-block-header-args margin :main-arg \"Hia\" :width \"not working...!\")
 
 # TODO: Make org-defblock looks almost the same as cl-defun, namely argslist has args being either pairs or singletons!
 
@@ -7077,15 +7095,16 @@ block types; whereas they currently break the HTML export.
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
 
-* COMMENT Marginal, “one-off”, remarks
+* COMMENT Marginal, “one-off”, remarks —Inline footnotes
   :PROPERTIES:
   :CUSTOM_ID: Marginal-one-off-remarks
   :END:
 
-# Set the width onces-and-for-all using header-args:
-#
-#   (set-block-header-args margin :main-arg \"Hia\" :width \"not working...!\")
-
+1. TODO: Can this type be incorported into “doc”? If not, then at least mimic the HTML setup of doc
+   since it does not suffer from the same issues as this type, for HTML? 
+2. TODO: Use name “tooltip” for HTML, and “margin” for LaTeX. Make them aliases?
+3. TODO: Introduce org-defblock-alias which alises org-block/X, org-link/X, registers the new name in org-supported-blocks, and registers the new name as an org-link.
+  
 #+begin_tiny
 #+begin_center
 /(Scroll to make tooltips disappear!)/
@@ -7095,7 +7114,7 @@ block types; whereas they currently break the HTML export.
 The use of ~doc:𝒳~ --- and [[doc:org-block/documentation][documentation]] --- are for explanatory remarks, personal
 documentation, or glossary, that is intended to be used in multiple places.
 However, sometimes we want a “one-off” remark containing, say, references or
-additional explanation; for that we provide [[doc:org--margin][margin]]. For example:
+additional explanation; for that we provide [[doc:org-block/margin][margin]]. For example:
 #+begin_quote
 /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not
 burden a soul beyond what it can bear./ --- Quran 2:286
@@ -7111,7 +7130,7 @@ burden a soul beyond what it can bear./ --- Quran 2:286
 In HTML, such “marginal remarks” appear as tooltips;
 in LaTeX, they appear in the margin.
 
-#+begin_details Tests
+
 #+begin_src emacs-lisp :tangle tests.el :comments link
 (setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
                in the Bible]] does not burden a soul beyond what it can bear./
@@ -7134,14 +7153,10 @@ in LaTeX, they appear in the margin.
   [margin]
   (⇝ margin "<abbr" (* anything) "°</abbr>"))
 #+end_src
-#+end_details
 
---------------------------------------------------------------------------------
-
-#+begin_details Implementation :title-color pink
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :title Implementation :folded t
 (org-defblock margin
-  (marker nil
+  (marker "°"
   color "gray!80"
           counter "footnote"
           width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
@@ -7151,6 +7166,8 @@ in LaTeX, they appear in the margin.
   "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
+
+It is essentially “inline footnotes”.
 
 For notes that you want to use repeatedly, in multiple articles
 or in multiple locations in the same article, consider using
@@ -7219,27 +7236,11 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                     "\n\\end{tabular}}")
                  (s-trim contents))
                stepcounter))
-      (_ (setq marker (or marker "°"))
-         (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+      (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
                  (org-ospe-html-export-preserving-whitespace contents)
                  ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                  marker)))))
 #+end_src
-
-#+RESULTS:
-: org-link/margin
-
-
-
-
-
-
-
-
-
-
-
-#+end_details
 
 #+begin_details Example:  "Links, without and with explict lables"
  This [[margin:][hola and *woah* ]] works!
@@ -7439,7 +7440,6 @@ This is “simple”, but involved!
 exercise to show that ℕ is fixedpoint of ~Maybe~.
 #+end_src
 #+end_details
-
 
 # HTML Setup -- I want the code in the tooltips to look nice :-)
 # +html:      <style> code, pre {color: black; background-color:Snow;} </style>
