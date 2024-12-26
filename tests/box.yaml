@@ -1,11 +1,23 @@
 input: |-
-  #+begin_box Pay Attention!
-  This is the key insight...
-  (We have an HTML box enclosing the user's title and text)
-  #+end_box
+  It can be useful to draw attention to some important text by
+  enclosing it in a [[doc:org-block/box][box]].
 
+  #+begin_box Uses of callout boxes
+  Such boxes often callout tips, warnings, cautionary info or
+  emphasises core information.
+  #+end_box
+Unmaintained: "For the LaTeX backend, the following call is required."
 expectations:
   html: |-
+    <p>
+      It can be useful to draw attention to some important text by enclosing it in a
+      <abbr
+        class="tooltip"
+        title="Enclose text in a box, possibly with a title.<br><br>By default, the box’s COLOR is green for HTML and red for LaTeX,<br>and it has no TITLE.<br><br>SHADOW is an alternate style of boxing: It shows the contents in a centred<br>box with a shadow colour being the given non-nil value of SHADOW.<br>If SHADOW is a hexidecimal colour, it should be a string enclosed in double quotes.<br>More accurately, the following are all valid uses:<br><br>&emsp;&emsp;#+begin_box title :shadow t<br>&emsp;&emsp;#+begin_box title :shadow inset<br><br>&emsp;&emsp;#+begin_box title :shadow ''pink''<br>&emsp;&emsp;#+begin_box title :shadow pink<br><br>&emsp;&emsp;#+begin_box title :shadow (cyan pink orange yellow)<br>&emsp;&emsp;#+begin_box title :shadow (cyan ''inset pink'' orange)<br>&emsp;&emsp;#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)<br><br>Notice that prefixing colours with ‘inset’ causes the colour to be within the box,<br>rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.<br><br>The HTML export uses a padded div, whereas the LaTeX export<br>requires the tcolorbox package.<br><br>In the future, I will likely expose more arguments.<br><br>(fn BACKEND RAW-CONTENTS &rest _)"
+        >box</abbr
+      >.
+    </p>
+
     <div
       style="
         padding: 1em;
@@ -14,15 +26,13 @@ expectations:
         font-size: 0.9em;
       "
     >
-      <h3>Pay Attention!</h3>
+      <h3>Uses of callout boxes</h3>
       <p>
-        This is the key insight&#x2026; (We have an HTML box enclosing the user's
-        title and text)
+        Such boxes often callout tips, warnings, cautionary info or emphasises core
+        information.
       </p>
     </div>
   latex: |-
-    \begin{tcolorbox}[title={Pay Attention!},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
-    	This is the key insight\ldots{}
-    	(We have an HTML box enclosing the user's title and text)
-
-    \end{tcolorbox}
+    🚫 The LaTex backend is intentionally unmaintained.
+    🫠 Whoops, there seems to be an error: 
+     (void-variable label)

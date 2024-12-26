@@ -3339,7 +3339,6 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
   :CUSTOM_ID: Folded-Details
   :END:
 
-
 # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
    osbe-example:~/org-special-block-extras/tests/details.yaml
 
@@ -3435,23 +3434,15 @@ your Org file or place it into your ~org-html-head~ variable.
 #+html: <style>  summary:hover {background:pink;} </style>
 #+end_box
 
-* COMMENT Boxed Text
+* DONE COMMENT Boxed Text —Calling out super duper info
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
    :END:
 
- Folded regions, as implemented above, are displayed in a super neat text box
- which may be useful to enclose text to make it standout ---without having it
- folded away. As such, we provide the special block [[doc:org-block/box][box]] to enclosing text in
- boxes.
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+   osbe-example:~/org-special-block-extras/tests/box.yaml
 
- #+latex_header: \usepackage{tcolorbox}
-#+begin_center
-Requires: src_latex[:exports code]{#+latex_header:  \usepackage{tcolorbox}}
-#+end_center
-
-#+begin_details Implementation
- #+begin_src emacs-lisp
+ #+begin_src emacs-lisp :title Implementation :folded t
 (org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
   "Enclose text in a box, possibly with a title.
 
@@ -3524,22 +3515,7 @@ In the future, I will likely expose more arguments."
                  title contents)))))
 #+end_src
 
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el
-(deftest "We have an HTML box enclosing the user's title (in <h3) and text"
-  [box]
-  (⇝ (⟰ "#+begin_box Pay Attention!
-                 This is the key insight...
-                 ,#+end_box")
-     "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;"
-     (* anything)
-     "<h3>Pay Attention!</h3>"
-     (* anything)
-     "This is the key insight"
-     (* anything)))
-#+end_src
- #+end_details
-
+** Three demos of  [[doc:org-block/box][box]]
  #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
  #+html: <br>
  #+begin_box Example: A super boring observation presented obscurely :background-color blue
@@ -3573,12 +3549,12 @@ Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
 
  For further header options, see the documentation of [[doc:org-block/box][box]].
 
-
+** Subtle Colours
  #+html: <br>
- In the first example above, /how did we get that nice light blue? What is its
- HTML code?/ That's not something I care to remember, so let's make a handy dandy
- utility … Now when users request a colour to ~box~ their text, it will be a
- ‘subtle colour’ ;-)
+ In the first example above, /how did we get that nice light blue? What
+ is its HTML code?/ That's not something I care to remember, so let's
+ make a handy dandy utility … Now when users request a colour to ~box~
+ their text, it will be a ‘subtle colour’ ;-)
 
  #+begin_details Implementation for Subtle Colours
  #+begin_src emacs-lisp -r -n
@@ -3605,12 +3581,10 @@ Names are very rough approximates.
   ))
  #+end_src
 
-#+latex: \iffalse
+To use these colour names, you will need the following incantations in
+your Org file.
 
-To use these colour names, you will need the following incantations in your
-Org file.
-
-#+begin_org-demo
+#+begin_src org :tangle no
 #+latex_header: \usepackage{xcolor}
 
 #+latex_header: \definecolor{teal}    {HTML}{99FFCC}
@@ -3627,19 +3601,12 @@ Org file.
 #+latex_header: \definecolor{custard}{HTML}{FFFFCC}
 
 #+latex_header: \definecolor{cyan}{HTML}{00FFFF}
-#+end_org-demo
-
-#+latex_header: \definecolor{"cyan"}{HTML}{00FFFF}
+#+end_src
 
 In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
-
-#+latex: \fi
-
  #+end_details
 
- It may be useful to /fuse/ the ~box~ and ~details~ concepts into one.  Something for
- future me ---or another contributor--- to think about ;-)
 * DONE COMMENT Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID: kbd:nice-keystroke-renditions
