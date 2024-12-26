@@ -3607,6 +3607,387 @@ In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
  #+end_details
 
+* COMMENT Colours
+  :PROPERTIES:
+  :CUSTOM_ID: Colours
+  :END:
+
+Let's develop blocks for colouring text and link types for inline colouring;
+e.g., [[doc:org-block/color][color]] and [[doc:org-block/teal][teal]].
+ + E.g., ~[[brown: Hello, World!]]~ ⇒ [[brown: Hello, World!]]
+ + E.g., ~brown:Friends!~
+   ⇒ brown:Friends! ( Note the ‘!’ is not coloured; use ~[[...]]~ ! )
+
+ #+begin_box :background-color custard
+ Use kbd:M-x_list-colors-display to see a list of defined colour names in Emacs
+   ---see [[http://muug.ca/mirror/ctan/macros/latex/contrib/xcolor/xcolor.pdf][xcolor]] for the LaTeX side and [[https://htmlcolorcodes.com/color-names/][htmlcolorcodes.com]] for the HTML side, or
+   just visit http://latexcolor.com/ for both.
+   # Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
+ #+end_box
+
+  #+html: <br>
+  :Examples:
+  #+BEGIN_SRC emacs-lisp :results value :wrap no :tangle no
+(s-join "\n\n"
+(cl-loop for c in org-special-block-extras/colors
+      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
+  #+END_SRC
+  :End:
+#+begin_details A Picture and Block Examples
+
+  [[file:images/colours.jpg]]
+
+  --------------------------------------------------------------------------------
+
+  #+begin_parallel
+  #+begin_black
+  This text is black!
+  #+end_black
+
+  #+begin_blue
+  This text is blue!
+  #+end_blue
+
+  #+begin_brown
+  This text is brown!
+  #+end_brown
+
+  # #+begin_cyan
+  # This text is cyan!
+  # #+end_cyan
+
+  #+begin_darkgray
+  This text is darkgray!
+  #+end_darkgray
+
+  #+begin_gray
+  This text is gray!
+  #+end_gray
+
+  #+begin_green
+  This text is green!
+  #+end_green
+
+  #+begin_lightgray
+  This text is lightgray!
+  #+end_lightgray
+
+  #+begin_lime
+  This text is lime!
+  #+end_lime
+
+  #+begin_magenta
+  This text is magenta!
+  #+end_magenta
+
+  #+begin_olive
+  This text is olive!
+  #+end_olive
+
+  #+begin_orange
+  This text is orange!
+  #+end_orange
+
+  #+begin_pink
+  This text is pink!
+  #+end_pink
+
+  #+begin_purple
+  This text is purple!
+  #+end_purple
+
+  #+begin_red
+  This text is red!
+  #+end_red
+
+  #+begin_teal
+  This text is teal!
+  #+end_teal
+
+  #+begin_violet
+  This text is violet!
+  #+end_violet
+
+  #+begin_white
+  This text is white!
+  #+end_white
+
+  #+begin_yellow
+  This text is yellow!
+  #+end_yellow
+
+  #+end_parallel
+
+  #+end_details
+
+  :Header:
+#+BEGIN_SRC emacs-lisp
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Load support for 20 colour custom blocks and 20 colour link types
+  #+END_SRC
+  :End:
+  #+html: <br>
+#+begin_details Implementation of numerous colour blocks/links
+  We declare a list of colors that should be available on most systems.  Then
+  using this list, we evaluate the code necessary to produce the necessary
+  functions that format special blocks.
+
+  # - To add support for a colour =𝒞=, simply
+  #   ~(push '𝒞 org--ospe-colors)~.
+  # #
+
+  By default, Org uses the ~graphicx~ LaTeX package which let's us colour text
+  ---see its documentation [[http://ctan.mirror.rafal.ca/macros/latex/required/graphics/grfguide.pdf][here]].  For example, in an ~#+begin_export latex~ block,
+  the following produces blue coloured text.
+  #+begin_example latex
+{  \color{blue}  This is a sample text in blue.  }
+  #+end_example
+  # Below, we format colour block types to essentially format block contents like
+  # this.
+
+  #+BEGIN_SRC emacs-lisp
+(defvar org--ospe-colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(cl-loop for colour in org--ospe-colors
+         do (eval `(org-defblock ,colour
+                     (the-color "black")
+                     (vector :face `(:foreground ,(format "%s" (quote ,colour))))
+                     ,(format "Show text in %s color." colour)
+                     (let ()
+                       (format (pcase backend
+                                 (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+                                 (_  "<span style=\"color:%s;\">%s</span>"))
+                               (quote ,colour) contents)))))
+                              #+END_SRC
+
+  #+RESULTS:
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It is an HTML span styled red that contains the user's text"
+  [color red block]
+  (⇝ (⟰ "#+begin_red
+          My cool thoughts...
+          ,#+end_red")
+     "<span style=\"color:red;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
+
+;; We have an HTML span styled with the user's color and it contains the user's text
+(deftest "It works as expected"
+  [color pink block]
+  (⇝ (⟰ "#+begin_color pink
+          My cool thoughts...
+          ,#+end_color")
+     "<span style=\"color:pink;\">"
+     (* anything)
+     "My cool thoughts"
+     (* anything)
+     "</span>"))
+#+end_src
+
+  :Old:
+  #+BEGIN_SRC emacs-lisp :tangle no
+(defvar org--ospe-colors
+  '(black blue brown cyan darkgray gray green lightgray lime
+          magenta olive orange pink purple red teal violet white
+          yellow)
+  "Colours that should be available on all systems.")
+
+(cl-loop for colour in org--ospe-colors
+      do (eval (read (format
+                      "(defun org--%s (backend contents)
+                     (format (pcase backend
+                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
+                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
+                     contents))"
+                      colour colour colour))))
+  #+END_SRC
+  :End:
+
+  #+end_details
+
+
+  #+html: <br>
+  #+begin_details Implementation of ‘color’
+  For faster experimentation between colours, we provide a generic =color= block
+  that consumes a color argument.
+
+    #+begin_src emacs-lisp
+(org-defblock color
+  (color black)
+  (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
+  "Format text according to a given COLOR, which is black by default."
+  (format (pcase backend
+            (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+            (`html  "<span style=\"color:%s;\">%s</span>"))
+          color contents))
+  #+end_src
+
+[Posterity] Old version which did /not/ allow ~wombo~ colour:
+    #+begin_src emacs-lisp :tangle no
+(org-defblock color (color black    :face (lambda (colour)
+           (if (member (intern colour) org--ospe-colors)
+               `(:foreground ,(format "%s" colour))
+             `(:height 300
+               :underline (:color "red" :style wave)
+               :overline  "red" :strike-through "red")))) nil
+  "Format text according to a given COLOR, which is black by default."
+  (format (pcase backend
+            (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+            (`html  "<span style=\"color:%s;\">%s</span>"))
+          color contents))
+  #+end_src
+
+  #+RESULTS:
+
+  :Old:
+  #+begin_src emacs-lisp :tangle no
+(defun org--color (backend contents)
+  "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
+  (-let* (((contents′ . (&alist 'color))
+           (org--extract-arguments contents 'color))
+         (block-coloring
+          (intern (format "org--%s" (s-trim color)))))
+    (if (member (intern (s-trim color)) org--ospe-colors)
+        (funcall block-coloring backend contents′)
+      (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
+  #+end_src
+  :End:
+  #+end_details
+
+  Moreover, we have that the syntax =red:text= /renders/ ‘text’ with the colour red
+  in *both* the Emacs interface and in exported backends.
+
+   [[file:images/colour_links.png]]
+
+  :Old:
+   #+begin_src emacs-lisp :tangle no
+;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
+;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
+(cl-loop for colour in org--ospe-colors
+         do (org-link-set-parameters
+             (format "%s" colour)
+              :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
+              :export `(lambda (label description backend)
+                        (-let [block-colouring
+                               (intern (format "org--%s" (quote ,colour)))]
+                          (funcall block-colouring backend (or description label))))
+              :face `(:foreground ,(format "%s" colour))))
+
+;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Colour ‘text’ by 𝒞.
+;; If 𝒞 is an unsupported colour, ‘text’ is rendered in large font
+;; and surrounded by red lines.
+(org-link-set-parameters "color"
+   :follow (lambda (_))
+   :face (lambda (colour)
+           (if (member (intern colour) org--ospe-colors)
+               `(:foreground ,(format "%s" colour))
+             `(:height 300
+               :underline (:color "red" :style wave)
+               :overline  "red" :strike-through "red")))
+ :help-echo (lambda (_ __ position)
+              (save-excursion
+                (goto-char position)
+                (-let* (((&plist :path) (cadr (org-element-context))))
+                  (if (member (intern path) org--ospe-colors)
+                      "Colour links just colour the descriptive text"
+                    (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
+   :export (lambda (colour description backend)
+             (-let [block-colouring
+                    (intern (format "org-block/%s" colour))]
+               (if (member (intern colour) org--ospe-colors)
+                   (funcall block-colouring backend description)
+                 (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
+   #+end_src
+  :End:
+
+  #+begin_center
+  Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
+
+   +Also: If we try to use an unsupported colour ‘wombo’, we render the+
+   +descriptive text larger in Emacs along with a tooltip explaining why this is
+   the case; e.g., =[[color:wombo][hi]]=.+
+
+  ~[[color:#fad][Using Hex colour code!]]~ ⇒ [[color:#fad][Using Hex colour code!]]  ;-)
+  #+end_center
+
+ #+latex: \vspace{1em}
+ [[color:orange][Moreover,]] it would be nice to extend the =color= block type to take multiple
+ arguments, say, =c₁ c₂ … cₙ= such that:
+
+ | /n/ | Behaviour                                                                          |
+ |---+------------------------------------------------------------------------------------|
+ | 0 | No colouring; likewise if no arguments altogether                                  |
+ | 1 | Colour all entries using the given colour c₁                                       |
+ | /n/ | Paragraph --region separated by a new line-- =i= is coloured by =cₖ= where =k = i mod n= |
+
+ Besides having a colourful article, another usage I envision for this
+ generalisation would be when rendering text in multiple languages; e.g., use red
+ and blue to interleave Arabic poetry with its English translation.
+  
+* DONE COMMENT   ~latex-definitions~ for hiding LaTeX declarations in HTML
+   :PROPERTIES:
+   :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
+   :END:
+
+  To present mathematical formulae in HTML export, we may use
+  LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
+  =$=-symbols to obtain ${\color{red}x}$.  This is known as the MathJax
+  tool ---Emacs' default HTML export includes it.  (Unfortunately,
+  MathJax does not directly support arbitrary HTML elements to occur
+  within the =$=-delimiters.)
+
+  #+latex: \vspace{1em}
+  It is common to declare LaTeX definitions for convenience, but such
+  declarations occur within ~$~-delimiters and thereby produce
+  undesirable extra whitespace. See the superflous vertical whitespace
+  in the =Result= side below. 
+
+   #+begin_org-demo :source-color "custard" :result-color "custard"
+ Hello, in this blog post I'd like to talk about quantifiers.
+ # First, I'll define some helpers that I use multiple times...
+   $$
+  \def\Plus{\color{teal}\bigoplus}
+  \def\plus{\;\color{teal}\oplus\;}
+  \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
+  \def\xstart{\color{red} a}
+  \def\xend{\color{cyan} b}
+  $$
+  
+  Anyhow, let's talk about quantifiers...
+  $$
+  \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
+  \; = \;
+  \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
+  $$
+
+  The above “quantification” means [[teal:Loop sequentially with]]
+  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
+  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].
+ #+end_org-demo
+
+  As such, we declare the [[doc:org-block/latex-definitions][latex-definitions]] block type which avoids
+  displaying such extra whitespace in the resulting HTML.
+
+  # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+  osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
+  
+  #+begin_src emacs-lisp :title "‘latex-definitions’ Implementation" :folded t
+(org-defblock latex-definitions ()
+  "Declare but do not display the CONTENTS according to the BACKEND."
+  (format (pcase backend
+            ('html "<p style=\"display:none\">\\[%s\\]</p>")
+            (_ "%s"))
+          raw-contents))
+  #+end_src
+
 * DONE COMMENT Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID: kbd:nice-keystroke-renditions
@@ -4446,514 +4827,6 @@ Completely lost one's train of thought…
  | ( Remember to =C-c C-c= the =#+bind= to activate it, the first time it is written. ) |
 
  #+bind: org-hide-editor-comments nil
-
-* COMMENT Colours
-  :PROPERTIES:
-  :CUSTOM_ID: Colours
-  :END:
-
-Let's develop blocks for colouring text and link types for inline colouring;
-e.g., [[doc:org--color][color]] and [[doc:org--teal][teal]].
- + E.g., ~[[brown: Hello, World!]]~ ⇒ [[brown: Hello, World!]]
- + E.g., ~brown:Friends!~
-   ⇒ brown:Friends! ( Note the ‘!’ is not coloured; use ~[[...]]~ ! )
-
- #+begin_box :background-color custard
- Use kbd:M-x_list-colors-display to see a list of defined colour names in Emacs
-   ---see [[http://muug.ca/mirror/ctan/macros/latex/contrib/xcolor/xcolor.pdf][xcolor]] for the LaTeX side and [[https://htmlcolorcodes.com/color-names/][htmlcolorcodes.com]] for the HTML side, or
-   just visit http://latexcolor.com/ for both.
-   # Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
- #+end_box
-
-  #+html: <br>
-  :Examples:
-  #+BEGIN_SRC emacs-lisp :results value :wrap no :tangle no
-(s-join "\n\n"
-(cl-loop for c in org-special-block-extras/colors
-      collect (format "#+begin_%s\n This text is %s!\n#+end_%s" c c c)))
-  #+END_SRC
-  :End:
-#+begin_details A Picture and Block Examples
-
-  [[file:images/colours.jpg]]
-
-  --------------------------------------------------------------------------------
-
-  #+begin_parallel
-  #+begin_black
-  This text is black!
-  #+end_black
-
-  #+begin_blue
-  This text is blue!
-  #+end_blue
-
-  #+begin_brown
-  This text is brown!
-  #+end_brown
-
-  # #+begin_cyan
-  # This text is cyan!
-  # #+end_cyan
-
-  #+begin_darkgray
-  This text is darkgray!
-  #+end_darkgray
-
-  #+begin_gray
-  This text is gray!
-  #+end_gray
-
-  #+begin_green
-  This text is green!
-  #+end_green
-
-  #+begin_lightgray
-  This text is lightgray!
-  #+end_lightgray
-
-  #+begin_lime
-  This text is lime!
-  #+end_lime
-
-  #+begin_magenta
-  This text is magenta!
-  #+end_magenta
-
-  #+begin_olive
-  This text is olive!
-  #+end_olive
-
-  #+begin_orange
-  This text is orange!
-  #+end_orange
-
-  #+begin_pink
-  This text is pink!
-  #+end_pink
-
-  #+begin_purple
-  This text is purple!
-  #+end_purple
-
-  #+begin_red
-  This text is red!
-  #+end_red
-
-  #+begin_teal
-  This text is teal!
-  #+end_teal
-
-  #+begin_violet
-  This text is violet!
-  #+end_violet
-
-  #+begin_white
-  This text is white!
-  #+end_white
-
-  #+begin_yellow
-  This text is yellow!
-  #+end_yellow
-
-  #+end_parallel
-
-  #+end_details
-
-  :Header:
-#+BEGIN_SRC emacs-lisp
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load support for 20 colour custom blocks and 20 colour link types
-  #+END_SRC
-  :End:
-  #+html: <br>
-#+begin_details Implementation of numerous colour blocks/links
-  We declare a list of colors that should be available on most systems.  Then
-  using this list, we evaluate the code necessary to produce the necessary
-  functions that format special blocks.
-
-  # - To add support for a colour =𝒞=, simply
-  #   ~(push '𝒞 org--ospe-colors)~.
-  # #
-
-  By default, Org uses the ~graphicx~ LaTeX package which let's us colour text
-  ---see its documentation [[http://ctan.mirror.rafal.ca/macros/latex/required/graphics/grfguide.pdf][here]].  For example, in an ~#+begin_export latex~ block,
-  the following produces blue coloured text.
-  #+begin_example latex
-{  \color{blue}  This is a sample text in blue.  }
-  #+end_example
-  # Below, we format colour block types to essentially format block contents like
-  # this.
-
-  #+BEGIN_SRC emacs-lisp
-(defvar org--ospe-colors
-  '(black blue brown cyan darkgray gray green lightgray lime
-          magenta olive orange pink purple red teal violet white
-          yellow)
-  "Colours that should be available on all systems.")
-
-(cl-loop for colour in org--ospe-colors
-         do (eval `(org-defblock ,colour
-                     (the-color "black")
-                     (vector :face `(:foreground ,(format "%s" (quote ,colour))))
-                     ,(format "Show text in %s color." colour)
-                     (let ()
-                       (format (pcase backend
-                                 (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-                                 (_  "<span style=\"color:%s;\">%s</span>"))
-                               (quote ,colour) contents)))))
-                              #+END_SRC
-
-  #+RESULTS:
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "It is an HTML span styled red that contains the user's text"
-  [color red block]
-  (⇝ (⟰ "#+begin_red
-          My cool thoughts...
-          ,#+end_red")
-     "<span style=\"color:red;\">"
-     (* anything)
-     "My cool thoughts"
-     (* anything)
-     "</span>"))
-
-;; We have an HTML span styled with the user's color and it contains the user's text
-(deftest "It works as expected"
-  [color pink block]
-  (⇝ (⟰ "#+begin_color pink
-          My cool thoughts...
-          ,#+end_color")
-     "<span style=\"color:pink;\">"
-     (* anything)
-     "My cool thoughts"
-     (* anything)
-     "</span>"))
-#+end_src
-
-  :Old:
-  #+BEGIN_SRC emacs-lisp :tangle no
-(defvar org--ospe-colors
-  '(black blue brown cyan darkgray gray green lightgray lime
-          magenta olive orange pink purple red teal violet white
-          yellow)
-  "Colours that should be available on all systems.")
-
-(cl-loop for colour in org--ospe-colors
-      do (eval (read (format
-                      "(defun org--%s (backend contents)
-                     (format (pcase backend
-                     (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
-                     (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
-                     contents))"
-                      colour colour colour))))
-  #+END_SRC
-  :End:
-
-  #+end_details
-
-
-  #+html: <br>
-  #+begin_details Implementation of ‘color’
-  For faster experimentation between colours, we provide a generic =color= block
-  that consumes a color argument.
-
-    #+begin_src emacs-lisp
-(org-defblock color
-  (color black)
-  (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
-  "Format text according to a given COLOR, which is black by default."
-  (format (pcase backend
-            (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-            (`html  "<span style=\"color:%s;\">%s</span>"))
-          color contents))
-  #+end_src
-
-[Posterity] Old version which did /not/ allow ~wombo~ colour:
-    #+begin_src emacs-lisp :tangle no
-(org-defblock color (color black    :face (lambda (colour)
-           (if (member (intern colour) org--ospe-colors)
-               `(:foreground ,(format "%s" colour))
-             `(:height 300
-               :underline (:color "red" :style wave)
-               :overline  "red" :strike-through "red")))) nil
-  "Format text according to a given COLOR, which is black by default."
-  (format (pcase backend
-            (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-            (`html  "<span style=\"color:%s;\">%s</span>"))
-          color contents))
-  #+end_src
-
-  #+RESULTS:
-
-  :Old:
-  #+begin_src emacs-lisp :tangle no
-(defun org--color (backend contents)
-  "Format CONTENTS according to the ‘:color:’ they specify for BACKEND."
-  (-let* (((contents′ . (&alist 'color))
-           (org--extract-arguments contents 'color))
-         (block-coloring
-          (intern (format "org--%s" (s-trim color)))))
-    (if (member (intern (s-trim color)) org--ospe-colors)
-        (funcall block-coloring backend contents′)
-      (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
-  #+end_src
-  :End:
-  #+end_details
-
-  Moreover, we have that the syntax =red:text= /renders/ ‘text’ with the colour red
-  in *both* the Emacs interface and in exported backends.
-
-   [[file:images/colour_links.png]]
-
-  :Old:
-   #+begin_src emacs-lisp :tangle no
-;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
-;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
-(cl-loop for colour in org--ospe-colors
-         do (org-link-set-parameters
-             (format "%s" colour)
-              :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
-              :export `(lambda (label description backend)
-                        (-let [block-colouring
-                               (intern (format "org--%s" (quote ,colour)))]
-                          (funcall block-colouring backend (or description label))))
-              :face `(:foreground ,(format "%s" colour))))
-
-;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Colour ‘text’ by 𝒞.
-;; If 𝒞 is an unsupported colour, ‘text’ is rendered in large font
-;; and surrounded by red lines.
-(org-link-set-parameters "color"
-   :follow (lambda (_))
-   :face (lambda (colour)
-           (if (member (intern colour) org--ospe-colors)
-               `(:foreground ,(format "%s" colour))
-             `(:height 300
-               :underline (:color "red" :style wave)
-               :overline  "red" :strike-through "red")))
- :help-echo (lambda (_ __ position)
-              (save-excursion
-                (goto-char position)
-                (-let* (((&plist :path) (cadr (org-element-context))))
-                  (if (member (intern path) org--ospe-colors)
-                      "Colour links just colour the descriptive text"
-                    (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
-   :export (lambda (colour description backend)
-             (-let [block-colouring
-                    (intern (format "org-block/%s" colour))]
-               (if (member (intern colour) org--ospe-colors)
-                   (funcall block-colouring backend description)
-                 (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
-   #+end_src
-  :End:
-
-  #+begin_center
-  Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
-
-   +Also: If we try to use an unsupported colour ‘wombo’, we render the+
-   +descriptive text larger in Emacs along with a tooltip explaining why this is
-   the case; e.g., =[[color:wombo][hi]]=.+
-
-  ~[[color:#fad][Using Hex colour code!]]~ ⇒ [[color:#fad][Using Hex colour code!]]  ;-)
-  #+end_center
-
-  ( Markdown does not support colour; go look at the HTML or PDF! )
-**   ~latex-definitions~ for hiding LaTeX declarations in HTML
-   :PROPERTIES:
-   :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
-   :END:
-  :Fails_idea:
-  Larger example:
-  #+begin_mathjax
-  red:\Sigma
-
-  #+end_mathjax
-  :End:
-
-  Before indicating desirable next steps, let us produce an incidentally useful
-  special block type.
-
-  #+latex: \vspace{1em}
-  We may use LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
-  =$=-symbols to obtain ${\color{red}x}$ and other commands to present mathematical
-  formulae in HTML.  This is known as the MathJax tool ---Emacs' default HTML
-  export includes it.
-
-  #+latex: \vspace{1em}
-  It is common to declare LaTeX definitions for convenience, but such
-  declarations occur within ~$~-delimiters and thereby produce undesirable extra
-  whitespace. We declare the ~latex_definitions~ block type which avoids
-  displaying such extra whitespace in the resulting HTML.
-
- #+begin_details ‘latex-definitions’ Implementation
-  #+begin_src emacs-lisp
-(org-defblock latex-definitions nil
-  "Declare but do not display the CONTENTS according to the BACKEND."
-  (format (pcase backend
-            ('html "<p style=\"display:none\">\\[%s\\]</p>")
-            (_ "%s"))
-          raw-contents))
-  #+end_src
-
-  #+RESULTS:
-
- :OLD:
-  #+begin_src emacs-lisp :tangle no
-(defun org--latex-definitions (backend contents)
-  "Declare but do not display the CONTENTS according to the BACKEND."
-  (cl-loop for (this that) in (-partition 2 '("<p>" ""
-                                           "</p>" ""
-                                           "\\{" "{"
-                                           "\\}" "}"))
-        do (setq contents (s-replace this that contents)))
-  (format (pcase backend
-            ('html "<p style=\"display:none\">\\[%s\\]</p>")
-            (_ "%s"))
-          contents))
-  #+end_src
-
-  - Org escapes ~{,}~ in LaTeX export, so we need to ‘unescape’ them.
-   This is clearly a hack.
-  :End:
- #+end_details
-
- #+latex: \iffalse
-
-  Here ---which you cannot see, as /desired/---is an example usage, where we
-  declare ~\LL~ to produce a violet left parenthesis. We then use these to produce
-  an example of quantification notation.
-  #+begin_latex-definitions
- \def\LL{\color{violet}(}
- \def\RR{\color{violet})}
-  #+end_latex-definitions
-
- # +begin_org-demo :source-color white :result-color white
-  $$
-  {\color{teal}\bigoplus}
-  _{   {\color{violet} x}
-     = {\color{red} a}}
-  ^{\color{cyan} b}
-     {\color{brown}{\,f\, x}}
-  \quad=\quad
-             {\color{brown}{f\,\LL  {\color{red} a} \RR}}
-  \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 1 \RR }}
-  \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL a + 2 \RR }}
-  \;{\color{teal}\oplus}\; \cdots
-  \;{\color{teal}\oplus}\; {\color{brown}{f \, \LL {\color{cyan} b} \RR}}
-  $$
-
-  | [[teal:⊕]]   | /Loop sequentially with loop-bodies fused using [[teal:⊕][⊕]]/ |
-  | /[[violet:x]]/ | /Use [[violet:x][x]] as the name of the current element/         |
-  | /[[red:a]]/    | /Start with [[violet:x][x]] being [[red:a][a]]/                             |
-  | /[[cyan:b]]/   | /End with [[violet:x][x]] being [[cyan:b][b]]/                               |
-  | /[[color:brown][f x]]/      | /At each [[violet:x][x]] value, compute [[color:brown][f x]]/                     |
-
-  # Note that /[[color:brown][f x]]/ is obtained by =/[[color:brown][f x]]/.=
- # +end_org-demo
-
- ( Markdown does not support MathJax; go look at the HTML or PDF! )
-
- #+latex: \fi
-
- --------------------------------------------------------------------------------
-
- Unfortunately, MathJax does not easily support arbitrary HTML elements to occur
- within the =$=-delimiters ---see [[https://stackoverflow.com/questions/58883048/mathjax-or-similar-render-arbitrary-html-element-inside-expression][this]] and [[https://github.com/mathjax/MathJax/issues/1707][this]] for ‘workarounds’.  As such, the
- MathJax producing the above example is rather ugly whereas its subsequent
- explanatory table is prettier on the writer's side.
-
- :Verbatim_pasted_from_the_above_THIS_link:
- MathJax will not process math that contains HTML tags (other than a select few),
- so you will not be able to do the kind of replacements inside an expression like
- you are attempting to do here.
-
- #+begin_export html
- <script type="text/x-mathjax-config">
- MathJax.Hub.Config({
-   CommonHTML: {
-     styles: {
-       //
-       // remove CSS for '.mjx-math *'
-       //
-       '.mjx-math *': {
-         display: null,
-         '-webkit-box-sizing': null,
-         '-moz-box-sizing': null,
-         'box-sizing': null,
-         'tex-align': null
-       },
-       //
-       // add CSS for .mjx-math span instead
-       //
-       '.mjx-math span': {
-         display: 'inline-block',
-         '-webkit-box-sizing': 'context-box !important',
-         '-moz-box-sizing': 'context-box !important',
-         'box-sizing': 'context-box !important',
-         'tex-align': 'left'
-       },
-       //
-       // override display for .mjx-char spans
-       //
-       'span.mjx-char': {
-         display: 'block'
-       }
-     }
-   }
- });
- MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
-   var MML = MathJax.ElementJax.mml;
-   var TEX = MathJax.InputJax.TeX;
-   TEX.Definitions.macros.insertHTML = 'InsertHTML';
-   TEX.Parse.Augment({
-     InsertHTML: function (name) {
-       var html = this.GetArgument(name).replace(/^\s*<!--\s*/,'').replace(/\s*-->\s*$/,'');
-       var span = MathJax.HTML.Element('mjx-reset', {style: {display:'inline-block'}});
-       span.innerHTML = html;  // serious security risk if users can enter math
-       span.setAttribute("xmlns","http://www.w3.org/1999/xhtml");
-       var mml = MML["annotation-xml"](MML.xml(span)).With({encoding:"application/xhtml+xml",isToken:true});
-       this.Push(MML.semantics(mml));
-     }
-   });
- });
- </script>
- <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_CHTML" defer></script>
-
- <div style="xfont-size: 150%">
- $$x + \left(\,\insertHTML{<!--
- <table width="100" height="100"
-   style="display:inline-table; vertical-align:-.25em; background:red; border:5px solid green;
-   box-sizing:border-box !important">
- <tr><td style="text-align:center">abc</td></tr>
- </table>
- -->}\,\right) + y$$
- </div>
-
-
- $$x+\left(\insertHTML{<!--
- <i>this</i> is <b>html</b>
- -->}\right)+y$$
- #+end_export
- :End:
-
-  #+latex: \vspace{1em}
- [[color:orange][Going forward,]] it would be nice to easily have our colour links work within
- a mathematical special block.
-
- #+latex: \vspace{1em}
- [[color:orange][Moreover,]] it would be nice to extend the =color= block type to take multiple
- arguments, say, =c₁ c₂ … cₙ= such that:
-
- | /n/ | Behaviour                                                                          |
- |---+------------------------------------------------------------------------------------|
- | 0 | No colouring; likewise if no arguments altogether                                  |
- | 1 | Colour all entries using the given colour c₁                                       |
- | /n/ | Paragraph --region separated by a new line-- =i= is coloured by =cₖ= where =k = i mod n= |
-
- Besides having a colourful article, another usage I envision for this
- generalisation would be when rendering text in multiple languages; e.g., use red
- and blue to interleave Arabic poetry with its English translation.
 
 * COMMENT   /“Link Here!”/ & OctoIcons
   :PROPERTIES:
@@ -8193,6 +8066,8 @@ since otherwise things don't look as nice in a markdown readme file.
 #+caption: Visually hiding, folding away, details
 [[file:images/details.png]]
 
+
+  ( Markdown does not support colour; go look at the HTML or PDF! )
 * COMMENT Case Studies
 ** In doubt, a block's main argument should be enclosed in quotes
 :PROPERTIES:
