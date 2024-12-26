@@ -1,0 +1,54 @@
+input: |-
+  It can be annoying to make readers jump to the bottom of the page to
+  read a footnote.  Instead, I prefer to write an /inline [[doc:org-block/remark][remark]]/
+  containing, say, references or additional explanation.
+
+     /[[remark:Allah][The God of Abraham; known as Elohim in the Bible]] does not burden a
+         soul beyond what it can bear./ --- Quran 2:286
+
+  Or, without specifying an explicit label:
+
+     /Allah[[remark:][The God of Abraham; known as Elohim in the Bible]] does not
+         burden a soul beyond what it can bear./ --- Quran 2:286
+
+expectations:
+  html: |-
+    <p>
+      It can be annoying to make readers jump to the bottom of the page to read a
+      footnote. Instead, I prefer to write an
+      <i
+        >inline
+        <abbr class="tooltip" title="<br><br>(fn BACKEND RAW-CONTENTS &rest _)"
+          >remark</abbr
+        ></i
+      >
+      containing, say, references or additional explanation.
+    </p>
+
+    <p>
+      <i
+        ><abbr
+          class="tooltip"
+          title="The God of Abraham; known as Elohim in the Bible"
+          >Allah</abbr
+        >&emsp13; does not burden a soul beyond what it can bear.</i
+      >
+      &#x2014; Quran 2:286
+    </p>
+
+    <p>Or, without specifying an explicit label:</p>
+
+    <p>
+      <i
+        >Allah<abbr
+          class="tooltip"
+          title="The God of Abraham; known as Elohim in the Bible"
+          >°</abbr
+        >&emsp13; does not burden a soul beyond what it can bear.</i
+      >
+      &#x2014; Quran 2:286
+    </p>
+  latex: |-
+    🚫 The LaTex backend is intentionally unmaintained.
+    🫠 Whoops, there seems to be an error: 
+     (void-variable label)

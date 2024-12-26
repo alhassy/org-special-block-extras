@@ -22,6 +22,11 @@ html-export-style:solarized_light
 (org-docs-load-libraries (list "~/org-special-block-extras/documentation.org"))
 #+end_src
 
+# TODO: Do I have local unpushed branches on my other machine?
+
+# TODO: The main difference between “doc” and “margin” is that the latter admits a block form,
+# whereas the former only admits a link form. We can merge the two into a single type.
+
 # TODO: Tersely explain how this pkg works, at the top of the README; e.g.:
 # org-defblock registers blocks (in org-supported-blocks),
 # then, just before export we replace blocks with the (verbatim) result of their definitions.
@@ -34,8 +39,18 @@ html-export-style:solarized_light
 # method, then refactor it. The current implementation could be prettier:
 # Perhaps the implementation can be replace “ ” with “ ”, and “\n” with “@@html: <br>@@”,
 # then invoke built-in `org-export-string-as`?
+# 
+# orange:Going orange:forward, it would be nice to get full code colouring of
+# source blocks in the HTML tooltips ---which can be done using
+# doc:org-export-string-as, just need the time.
 
-# MA: TODO: Margin blocks produce extra newlines!
+# TODO: The main difference between “doc” and “margin” is that the latter admits a block form,
+# whereas the former only admits a link form. We can merge the two into a single type.
+# For example, “[[doc: !Here's more explanatory prose]]” ≈ “[[margin: Here's more explanatory prose]]”; i.e.,
+# doc links that start with ‘!’ are considered to be inline literals and not addresses to look-up information.
+  
+# TODO: Introduce org-defblock-alias which alises org-block/X, org-link/X, registers the new name in org-supported-blocks, and registers the new name as an org-link.
+
 
 # TODO: Add tests involving header-args
 # Set the width onces-and-for-all using header-args:
@@ -1978,11 +1993,17 @@ BACKEND is the export back-end being used, as a symbol."
           (re-search-forward (format "^\s*\\#\\+end_%s" blk))
           (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
           (kill-region blk-start (point))
-          (insert (eval `(,(intern (format "org-block/%s" blk))
-                          (quote ,backend)
-                          ,blk-contents
-                          ,main-arg
-                          ,@(--map (list 'quote it) kwdargs))))
+	  ;; TODO: Make the `main-arg' just be the first keyword arg. That is “begin_X main-value :keyₖ value-k” ≈ “begin_X :key₀ main-value :keyₖ value-k”.
+	  ;; This will simplify cases where this is no sense of a main-arg, such as org-demo, whose arg list starts with “nil nil” since there's no main-arg and its default is nil.
+	  ;; One consequence of this approach is that the first keyword arg is special, it's key can be omitted when it occurs first: “begin_X main-value” ≈ “begin_X :key₀ main-value”.
+	  (-let [val (eval `(,(intern (format "org-block/%s" blk))
+                             (quote ,backend)
+                             ,blk-contents
+                             ,main-arg
+                             ,@(--map (list 'quote it) kwdargs)))]
+	    ;; TODO: This `margin` specific logic should not be here.
+	    (when (or (equal blk 'margin) (equal blk 'remark)) (setq val (format "@@html: %s@@" (s-replace "@" "＠" (s-chop-prefix "#+begin_export html \n" (s-chop-suffix "\n#+end_export" val))))))
+            (insert val))
           ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
           ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
           ;; (indent-line-to blk-column) ;; #+end...
@@ -3352,8 +3373,8 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 #+end_src
 :End:
 
-* TODO What is this package?
-* DONE COMMENT Block and link types provided by this package
+* TODO COMMENT What is this package?
+* DONE Block and link types provided by this package
 ** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -3439,6 +3460,9 @@ it may be prudent to expose more aspects as arguments.
                </details>" background-color title-color title contents))))
 #+end_src
 
+#+RESULTS:
+| org-block/details | org-link/details |
+
 --------------------------------------------------------------------------------
 
 #+begin_box "Tip 🌼"
@@ -3453,6 +3477,369 @@ your Org file or place it into your ~org-html-head~ variable.
 # Which, I will do, for fun.
 #+html: <style>  summary:hover {background:pink;} </style>
 #+end_box
+
+Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
+attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
+
+** Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
+  :PROPERTIES:
+  :CUSTOM_ID: remark
+  :END:
+
+Sometimes you want to remark on [[org-block/details][details]] without drawing too much
+attention, and so a tooltip via [[org-block/remark][remark]] suffices.
+  
+#+begin_tiny
+#+begin_center
+/(Scroll to make tooltips disappear!)/
+#+end_center
+#+end_tiny
+
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+   osbe-example:~/org-special-block-extras/tests/remark.yaml
+
+#+begin_src emacs-lisp :title Implementation :folded t
+;; We provide two synonymous names “margin” and “remark”,
+;; with the former name to be deprecated.
+;; (TODO: The other existing defblock called `remark' should be renamed to `editorRemark')
+
+(org-defblock margin
+  (marker "°"
+  color "gray!80"
+          counter "footnote"
+          width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
+          ;; Width: https://tex.stackexchange.com/a/101861/69371
+  (vector :display 'full
+          :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
+  "Produce an HTML tooltip or a LaTeX margin note.
+
+The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
+
+It is essentially “inline footnotes”.
+
+For notes that you want to use repeatedly, in multiple articles
+or in multiple locations in the same article, consider using
+‘documentation’ to declare them and ‘doc’ to invoke them.
+
+For LaTeX, place ‘#+resize:’ to have the remainder of a block be
+resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
+
+----------------------------------------------------------------------
+
+WIDTH, COUNTER, and COLOR are LaTeX specfic.
+
+When no label, marker, is used for a marginal note, we rely
+on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
+Since HTML has no margin per se, we use “∘” as default marker:
+Users hover over it to read the marginal note.
+
+Marginal notes have their labels, markers, in black
+and the notes themselves have COLOR being grey!80.
+In Emacs, margin links appear grey with an orange tinted boarder.
+
+Regarding LaTeX, since verbatim environments do not in general work well
+as arguments to other commands, such as ‘\\marginpar’, we save the contents
+of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
+a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
+
+The WIDTH argument is the width of the margin; i.e., the width of the underlying
+minipage.
+
+One could use \\maxsizebox{.25\\textwidth}{\\textheight}{ ... }
+which only resizes the content if its natural size is larger than
+the given 〈width〉 or 〈height〉.  We don't use this, since
+maxsizebox does not natively allow linebreaks
+(e.g., one would wrap contents in a tabular environment then use
+‘\\\\’, two backslashes, to request a line break; but this
+crashes if one wants to also use verbatim environments.)
+
+In LaTeX, it may be useful to invoke ‘\\dotfill’."
+  (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
+    (pcase backend
+      (`latex
+       (setq marker (or marker (format "{\\the%s}" counter))) ;; "\\circ"
+       (format "\\!\\!${}^{\\textnormal{%s}}$
+               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
+               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
+               \\begin{minipage}{%s}
+               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
+               \\footnotesize
+               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
+               \\color{%s}
+               {\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n %s
+               \\end{minipage}
+               \\end{lrbox}
+               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}%s}
+               \\hspace{-1.9ex}
+               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax"
+               marker
+               width
+               color
+               marker
+               (if (s-contains? "#+resize:" contents)
+                   (s-concat
+                    (s-replace "#+resize:"
+                               "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
+                               (s-trim contents))
+                    "\n\\end{tabular}}")
+                 (s-trim contents))
+               stepcounter))
+      (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+                 (org-ospe-html-export-preserving-whitespace contents)
+                 ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
+                 marker)))))
+
+
+(org-defblock remark (marker "°")
+	      "Produce an HTML tooltip."
+      (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+              (org-ospe-html-export-preserving-whitespace contents)
+              marker))
+#+end_src
+
+#+begin_details "★ Example: A ‘margin’ with an ‘export’ in the middle" :title-color orange
+ An HTML “marquee”
+ #+begin_remark
+ An example is best:
+ #+begin_export html
+ <marquee>Catch me if you can!</marquee>
+ #+end_export
+ It is pronounced “mar key”.
+ #+end_remark
+ is a scrolling piece of text.
+
+--------------------------------------------------------------------------------
+*Source:*
+#+begin_src org
+ An HTML “marquee”
+ ♯+begin_remark
+ An example is best:
+ ♯+begin_export html
+ <marquee>Catch me if you can!</marquee>
+ ♯+end_export
+ It is pronounced “mar key”.
+ ♯+end_remark
+ is a scrolling piece of text.
+#+end_src
+#+end_details
+#+begin_details Example: Brief code snippet in tooltip/margin
+It's a
+#+begin_remark simple
+/Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
+essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
+same as ~just~.
+
+More formally, here's one direction:
+#+begin_src haskell :tangle no
+to : Maybe ℕ → ℕ
+to nothing  = zero
+to (just n) = suc n
+  #+end_src
+
+The rest is an arduous exercise if you don't know what's going on.
+#+end_remark
+exercise to show that ℕ is fixedpoint of ~Maybe~.
+--------------------------------------------------------------------------------
+*Source:*
+#+begin_src org
+It's a
+,#+begin_remark simple
+/Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
+essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
+same as ~just~.
+
+More formally, here's one direction:
+,#+begin_src haskell :tangle no
+to : Maybe ℕ → ℕ
+to nothing  = zero
+to (just n) = suc n
+,#+end_src
+
+The rest is an arduous exercise if you don't know what's going on.
+,#+end_remark
+exercise to show that ℕ is fixedpoint of ~Maybe~.
+#+end_src
+#+end_details
+#+begin_details "★ Example: Lengthy ‘remark’ with multiple code blocks!" :title-color orange
+It's a
+#+begin_remark simple
+  We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
+  and ~ℕ~ in stages.
+
+  First, let's recall the definitions ... in Agda ...
+  #+begin_src haskell :tangle no :tangle no
+data Maybe (A : Set) : Set₁ where
+  nothing : Maybe A
+  just    : A → Maybe A
+
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+   #+end_src
+
+  We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
+  #+begin_src haskell :tangle no
+to : Maybe ℕ → ℕ
+to nothing = zero
+to (just n) = suc n
+
+from : ℕ → Maybe ℕ
+from zero = nothing
+from (suc n) = just n
+  #+end_src
+
+  ...and, finally, checking that the two functions undo each other...
+  #+begin_src emacs-lisp :tangle no
+to∘from : ∀ {n} →  to (from n)  ≡  n
+to∘from n = {! try it! }
+
+from∘to : ∀ {m} →  from (to m)  ≡  m
+from∘to m = {! try it! }
+  #+end_src
+
+
+  This is “simple”, but involved!
+   #+end_remark
+exercise to show that ℕ is fixedpoint of ~Maybe~.
+--------------------------------------------------------------------------------
+*Source:*
+#+begin_src org :tangle no
+It's a
+,#+begin_remark simple
+We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
+and ~ℕ~ in stages.
+
+First, let's recall the definitions ... in Agda ...
+,#+begin_src haskell :tangle no :tangle no
+data Maybe (A : Set) : Set₁ where
+  nothing : Maybe A
+  just    : A → Maybe A
+
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+,#+end_src
+
+We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
+,#+begin_src haskell :tangle no
+to : Maybe ℕ → ℕ
+to nothing = zero
+to (just n) = suc n
+
+from : ℕ → Maybe ℕ
+from zero = nothing
+from (suc n) = just n
+,#+end_src
+
+...and, finally, checking that the two functions undo each other...
+,#+begin_src emacs-lisp
+to∘from : ∀ {n} →  to (from n)  ≡  n
+to∘from n = {! try it! }
+
+from∘to : ∀ {m} →  from (to m)  ≡  m
+from∘to m = {! try it! }
+,#+end_src
+
+This is “simple”, but involved!
+,#+end_remark
+exercise to show that ℕ is fixedpoint of ~Maybe~.
+#+end_src
+#+end_details
+
+# HTML Setup -- I want the code in the tooltips to look nice :-)
+# +html:      <style> code, pre {color: black; background-color:Snow;} </style>
+#+html:      <style> pre.tooltip {color: black; background-color:Snow;} </style>
+
+For the tooltips containing code snippets, I've declared
+the following to make the code look nice.
+#+begin_src org :tangle no
+,#+html:      <style> pre.tooltip {color: black; background-color:Snow;} </style>
+#+end_src
+# ,#+html:      <style> code, pre {color: black; background-color:Snow;}
+# </style>
+
+*** COMMENT margins MWE
+   :PROPERTIES:
+   :CUSTOM_ID: COMMENT-margins-MWE
+   :END:
+ #+title: Margins MWE
+ #+options: toc:nil
+
+ # HTML Setup -- I want the code in the tooltips to look nice :-)
+ #+html:      <style> code, pre {color: black; background-color:Snow;} </style>
+
+ # LaTeX Setup -- For Unicode & wider margin in the examples; not needed in general!
+ # ###############################################################################
+ # https://armkeh.github.io/unicode-sty/
+ #+latex_header: \usepackage{\string~"/unicode-sty/unicode"}
+ #+latex_header: \usepackage[includemp,
+ #+latex_header:             paperwidth=18.90cm,
+ #+latex_header:             paperheight=24.58cm,
+ #+latex_header:             top=2.170cm,
+ #+latex_header:             bottom=3.510cm,
+ #+latex_header:             inner=2.1835cm,
+ #+latex_header:             outer=2.1835cm,
+ #+latex_header:             hmargin=15mm, vmargin=20mm,
+ #+latex_header:             marginparwidth=5cm,
+ #+latex_header:             marginparsep=0.4cm]{geometry}
+ # ###############################################################################
+
+**** Brief Margin Note
+    :PROPERTIES:
+    :CUSTOM_ID: Brief-Margin-Note
+    :END:
+
+   # Quran 2:286
+  /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul beyond what it can bear./
+
+**** Long Margin Note
+    :PROPERTIES:
+    :CUSTOM_ID: Long-Margin-Note
+    :END:
+
+  # Place the following in the margin header to change the width of the margin note.
+  # :width .55\\textwidth
+
+  It's a
+   #+begin_margin simple
+  We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
+  and ~ℕ~ in stages.
+
+  First, let's recall the definitions ... in Agda ...
+  #+begin_src haskell :tangle no :tangle no
+data Maybe (A : Set) : Set₁ where
+  nothing : Maybe A
+  just    : A → Maybe A
+
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+   #+end_src
+
+  We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
+  #+begin_src haskell :tangle no
+to : Maybe ℕ → ℕ
+to nothing = zero
+to (just n) = suc n
+
+from : ℕ → Maybe ℕ
+from zero = nothing
+from (suc n) = just n
+  #+end_src
+
+  ...and, finally, checking that the two functions undo each other...
+  #+begin_src emacs-lisp :tangle no
+to∘from : ∀ {n} →  to (from n)  ≡  n
+to∘from n = {! try it! }
+
+from∘to : ∀ {m} →  from (to m)  ≡  m
+from∘to m = {! try it! }
+  #+end_src
+
+
+  This is “simple”, but involved!
+   #+end_margin
+  exercise to show that ℕ is fixedpoint of ~Maybe~.
 
 ** Boxed Text —Calling out super duper info
    :PROPERTIES:
@@ -3534,6 +3921,9 @@ In the future, I will likely expose more arguments."
                                         (funcall haze X Y Z W)))))))
                  title contents)))))
 #+end_src
+
+#+RESULTS:
+| org-block/box | org-link/box |
 
 *** Three demos of  [[doc:org-block/box][box]]
  #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
@@ -3682,6 +4072,9 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
             (_ "%s"))
           raw-contents))
   #+end_src
+
+  #+RESULTS:
+  | org-block/latex-definitions | org-link/latex-definitions |
 
 ** Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
@@ -3929,6 +4322,9 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                        contents)
 		     (if (s-contains-p " " cols) "</div>" ""))))))))
 #+end_src
+
+#+RESULTS:
+| org-block/parallel | org-link/parallel |
 
 * COMMENT Colours
   :PROPERTIES:
@@ -5699,6 +6095,24 @@ may be useful to colour the =|=-separated fields of a badge link.
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
 
+# TODO: The main difference between “doc” and “margin” is that the latter admits a block form,
+# whereas the former only admits a link form. We can merge the two into a single type.
+
+# Motivation for doc as block-type#
+#
+#   The ~doc~ link is for explanatory remarks, documentation, or personal glossary that is
+#   intended to be used in multiple places.
+# 
+#   However, sometimes we want a “one-off” remark, containing, say, references or additional
+#   explanation and we want it without the ceremony of first defining a glossary term
+#   then invoking it. Enter the ~margin~ link. For example:
+#       
+# The use of ~doc:𝒳~ --- and [[doc:org-block/documentation][documentation]] --- are for explanatory remarks, personal
+# documentation, or glossary, that is intended to be used in multiple places.
+# However, sometimes we want a “one-off” remark containing, say, references or
+# additional explanation; for that we provide [[doc:org-block/margin][margin]].
+
+
 ** Intro, motivating examples :ignore:
    :PROPERTIES:
    :CUSTOM_ID: COMMENT-Intro
@@ -7094,453 +7508,6 @@ block types; whereas they currently break the HTML export.
 - When one clicks on a =doc= documentation link, it would be nice to ‘jump’
   to its associated =#+begin_documentation= declaration block in the current
   buffer, if possible.
-
-* COMMENT Marginal, “one-off”, remarks —Inline footnotes
-  :PROPERTIES:
-  :CUSTOM_ID: Marginal-one-off-remarks
-  :END:
-
-1. TODO: Can this type be incorported into “doc”? If not, then at least mimic the HTML setup of doc
-   since it does not suffer from the same issues as this type, for HTML? 
-2. TODO: Use name “tooltip” for HTML, and “margin” for LaTeX. Make them aliases?
-3. TODO: Introduce org-defblock-alias which alises org-block/X, org-link/X, registers the new name in org-supported-blocks, and registers the new name as an org-link.
-  
-#+begin_tiny
-#+begin_center
-/(Scroll to make tooltips disappear!)/
-#+end_center
-#+end_tiny
-
-The use of ~doc:𝒳~ --- and [[doc:org-block/documentation][documentation]] --- are for explanatory remarks, personal
-documentation, or glossary, that is intended to be used in multiple places.
-However, sometimes we want a “one-off” remark containing, say, references or
-additional explanation; for that we provide [[doc:org-block/margin][margin]]. For example:
-#+begin_quote
-/Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not
-burden a soul beyond what it can bear./ --- Quran 2:286
-
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org
-/Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not
-burden a soul beyond what it can bear./ --- Quran 2:286
-#+end_src
-#+end_quote
-
-In HTML, such “marginal remarks” appear as tooltips;
-in LaTeX, they appear in the margin.
-
-
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(setq margin (⟰ "/Allah[[margin:][The God of Abraham; known as Elohim
-               in the Bible]] does not burden a soul beyond what it can bear./
-               --- Quran 2:286"))
-
-(deftest "It exports into an <abbr> tooltip"
-  [margin]
-  (⇝ margin "<abbr class=\"tooltip\""))
-
-(deftest "It mentions the margin link's key before the tooltip"
-  [margin]
-  (⇝ margin "Allah<abbr class=\"tooltip\""))
-
-(deftest "Our personalised marginal remark appears in an <abbr> title"
-  [margin]
-  (⇝ margin "title=\"The God of Abraham; known as Elohim"
-            "<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; in the Bible\">"))
-
-(deftest "The marginal remark appears in a tiny circle"
-  [margin]
-  (⇝ margin "<abbr" (* anything) "°</abbr>"))
-#+end_src
-
-#+begin_src emacs-lisp :title Implementation :folded t
-(org-defblock margin
-  (marker "°"
-  color "gray!80"
-          counter "footnote"
-          width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
-          ;; Width: https://tex.stackexchange.com/a/101861/69371
-  (vector :display 'full
-          :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
-  "Produce an HTML tooltip or a LaTeX margin note.
-
-The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
-
-It is essentially “inline footnotes”.
-
-For notes that you want to use repeatedly, in multiple articles
-or in multiple locations in the same article, consider using
-‘documentation’ to declare them and ‘doc’ to invoke them.
-
-For LaTeX, place ‘#+resize:’ to have the remainder of a block be
-resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
-
-----------------------------------------------------------------------
-
-WIDTH, COUNTER, and COLOR are LaTeX specfic.
-
-When no label, marker, is used for a marginal note, we rely
-on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
-Since HTML has no margin per se, we use “∘” as default marker:
-Users hover over it to read the marginal note.
-
-Marginal notes have their labels, markers, in black
-and the notes themselves have COLOR being grey!80.
-In Emacs, margin links appear grey with an orange tinted boarder.
-
-Regarding LaTeX, since verbatim environments do not in general work well
-as arguments to other commands, such as ‘\\marginpar’, we save the contents
-of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
-a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
-
-The WIDTH argument is the width of the margin; i.e., the width of the underlying
-minipage.
-
-One could use \\maxsizebox{.25\\textwidth}{\\textheight}{ ... }
-which only resizes the content if its natural size is larger than
-the given 〈width〉 or 〈height〉.  We don't use this, since
-maxsizebox does not natively allow linebreaks
-(e.g., one would wrap contents in a tabular environment then use
-‘\\\\’, two backslashes, to request a line break; but this
-crashes if one wants to also use verbatim environments.)
-
-In LaTeX, it may be useful to invoke ‘\\dotfill’."
-  (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
-    (pcase backend
-      (`latex
-       (setq marker (or marker (format "{\\the%s}" counter))) ;; "\\circ"
-       (format "\\!\\!${}^{\\textnormal{%s}}$
-               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{minipage}{%s}
-               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
-               \\footnotesize
-               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
-               \\color{%s}
-               {\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n %s
-               \\end{minipage}
-               \\end{lrbox}
-               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}%s}
-               \\hspace{-1.9ex}
-               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax"
-               marker
-               width
-               color
-               marker
-               (if (s-contains? "#+resize:" contents)
-                   (s-concat
-                    (s-replace "#+resize:"
-                               "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
-                               (s-trim contents))
-                    "\n\\end{tabular}}")
-                 (s-trim contents))
-               stepcounter))
-      (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                 (org-ospe-html-export-preserving-whitespace contents)
-                 ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
-                 marker)))))
-#+end_src
-
-#+begin_details Example:  "Links, without and with explict lables"
- This [[margin:][hola and *woah* ]] works!
-
- This [[margin:look!][hola]] works!
-
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org
- This [[margin:][hola and *woah* ]] works!
-
- This [[margin:look!][hola]] works!
-#+end_src
-#+end_details
-#+begin_details Example:  "Middle of a sentence, no explicit label"
-
- Hello this
- #+begin_margin
- Extra details about whatever it is I'm talking about.
- #+end_margin
- is super neat!
-
---------------------------------------------------------------------------------
-*Source:*
-
-#+begin_src org :tangle no
- Hello this
- #+begin_margin
- Extra details about whatever it is I'm talking about.
- #+end_margin
- is super neat!
-#+end_src
-#+end_details
-#+begin_details Example:  "Middle of a sentence, explicit (full word) label"
- Hello
- #+begin_margin this
- Extra details about whatever it is I'm talking about.
- #+end_margin
- is super neat!
-
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org :tangle no
- Hello
- #+begin_margin this
- Extra details about whatever it is I'm talking about.
- #+end_margin
- is super neat!
-#+end_src
-
-#+end_details
-#+begin_details "★ Example: A ‘margin’ with an ‘export’ in the middle" :title-color orange
- An HTML “marquee”
- #+begin_margin
- An example is best:
- #+begin_export html
- <marquee>Catch me if you can!</marquee>
- #+end_export
- It is pronounced “mar key”.
- #+end_margin
- is a scrolling piece of text.
-
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org
- An HTML “marquee”
- ,#+begin_margin
- An example is best:
- ,#+begin_export html
- <marquee>Catch me if you can!</marquee>
- ,#+end_export
- It is pronounced “mar key”.
- ,#+end_margin
- is a scrolling piece of text.
-#+end_src
-#+end_details
-#+begin_details Example: Brief code snippet in tooltip/margin
-It's a
-#+begin_margin simple
-/Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
-essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
-same as ~just~.
-
-More formally, here's one direction:
-#+begin_src haskell :tangle no
-to : Maybe ℕ → ℕ
-to nothing  = zero
-to (just n) = suc n
-  #+end_src
-
-The rest is an arduous exercise if you don't know what's going on.
-#+end_margin
-exercise to show that ℕ is fixedpoint of ~Maybe~.
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org
-It's a
-,#+begin_margin simple
-/Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
-essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
-same as ~just~.
-
-More formally, here's one direction:
-,#+begin_src haskell :tangle no
-to : Maybe ℕ → ℕ
-to nothing  = zero
-to (just n) = suc n
-,#+end_src
-
-The rest is an arduous exercise if you don't know what's going on.
-,#+end_margin
-exercise to show that ℕ is fixedpoint of ~Maybe~.
-#+end_src
-#+end_details
-#+begin_details "★ Example: Lengthy ‘margin’ with multiple code blocks!" :title-color orange
-It's a
-#+begin_margin simple
-  We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
-  and ~ℕ~ in stages.
-
-  First, let's recall the definitions ... in Agda ...
-  #+begin_src haskell :tangle no :tangle no
-data Maybe (A : Set) : Set₁ where
-  nothing : Maybe A
-  just    : A → Maybe A
-
-data ℕ : Set where
-  zero : ℕ
-  suc  : ℕ → ℕ
-   #+end_src
-
-  We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
-  #+begin_src haskell :tangle no
-to : Maybe ℕ → ℕ
-to nothing = zero
-to (just n) = suc n
-
-from : ℕ → Maybe ℕ
-from zero = nothing
-from (suc n) = just n
-  #+end_src
-
-  ...and, finally, checking that the two functions undo each other...
-  #+begin_src emacs-lisp :tangle no
-to∘from : ∀ {n} →  to (from n)  ≡  n
-to∘from n = {! try it! }
-
-from∘to : ∀ {m} →  from (to m)  ≡  m
-from∘to m = {! try it! }
-  #+end_src
-
-
-  This is “simple”, but involved!
-   #+end_margin
-exercise to show that ℕ is fixedpoint of ~Maybe~.
---------------------------------------------------------------------------------
-*Source:*
-#+begin_src org :tangle no
-It's a
-,#+begin_margin simple
-We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
-and ~ℕ~ in stages.
-
-First, let's recall the definitions ... in Agda ...
-,#+begin_src haskell :tangle no :tangle no
-data Maybe (A : Set) : Set₁ where
-  nothing : Maybe A
-  just    : A → Maybe A
-
-data ℕ : Set where
-  zero : ℕ
-  suc  : ℕ → ℕ
-,#+end_src
-
-We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
-,#+begin_src haskell :tangle no
-to : Maybe ℕ → ℕ
-to nothing = zero
-to (just n) = suc n
-
-from : ℕ → Maybe ℕ
-from zero = nothing
-from (suc n) = just n
-,#+end_src
-
-...and, finally, checking that the two functions undo each other...
-,#+begin_src emacs-lisp
-to∘from : ∀ {n} →  to (from n)  ≡  n
-to∘from n = {! try it! }
-
-from∘to : ∀ {m} →  from (to m)  ≡  m
-from∘to m = {! try it! }
-,#+end_src
-
-This is “simple”, but involved!
-,#+end_margin
-exercise to show that ℕ is fixedpoint of ~Maybe~.
-#+end_src
-#+end_details
-
-# HTML Setup -- I want the code in the tooltips to look nice :-)
-# +html:      <style> code, pre {color: black; background-color:Snow;} </style>
-#+html:      <style> pre.tooltip {color: black; background-color:Snow;} </style>
-
-For the tooltips containing code snippets, I've declared
-the following to make the code look nice.
-#+begin_src org :tangle no
-,#+html:      <style> pre.tooltip {color: black; background-color:Snow;} </style>
-#+end_src
-# ,#+html:      <style> code, pre {color: black; background-color:Snow;}
-# </style>
-
---------------------------------------------------------------------------------
-
-orange:Going orange:forward, it would be nice to get full code colouring of
-source blocks in the HTML tooltips ---which can be done using
-doc:org-export-string-as, just need the time.
-
-** COMMENT margins MWE
-   :PROPERTIES:
-   :CUSTOM_ID: COMMENT-margins-MWE
-   :END:
- #+title: Margins MWE
- #+options: toc:nil
-
- # HTML Setup -- I want the code in the tooltips to look nice :-)
- #+html:      <style> code, pre {color: black; background-color:Snow;} </style>
-
- # LaTeX Setup -- For Unicode & wider margin in the examples; not needed in general!
- # ###############################################################################
- # https://armkeh.github.io/unicode-sty/
- #+latex_header: \usepackage{\string~"/unicode-sty/unicode"}
- #+latex_header: \usepackage[includemp,
- #+latex_header:             paperwidth=18.90cm,
- #+latex_header:             paperheight=24.58cm,
- #+latex_header:             top=2.170cm,
- #+latex_header:             bottom=3.510cm,
- #+latex_header:             inner=2.1835cm,
- #+latex_header:             outer=2.1835cm,
- #+latex_header:             hmargin=15mm, vmargin=20mm,
- #+latex_header:             marginparwidth=5cm,
- #+latex_header:             marginparsep=0.4cm]{geometry}
- # ###############################################################################
-
-*** Brief Margin Note
-    :PROPERTIES:
-    :CUSTOM_ID: Brief-Margin-Note
-    :END:
-
-   # Quran 2:286
-  /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul beyond what it can bear./
-
-*** Long Margin Note
-    :PROPERTIES:
-    :CUSTOM_ID: Long-Margin-Note
-    :END:
-
-  # Place the following in the margin header to change the width of the margin note.
-  # :width .55\\textwidth
-
-  It's a
-   #+begin_margin simple
-  We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
-  and ~ℕ~ in stages.
-
-  First, let's recall the definitions ... in Agda ...
-  #+begin_src haskell :tangle no :tangle no
-data Maybe (A : Set) : Set₁ where
-  nothing : Maybe A
-  just    : A → Maybe A
-
-data ℕ : Set where
-  zero : ℕ
-  suc  : ℕ → ℕ
-   #+end_src
-
-  We can show ~Maybe ℕ ≅ ℕ~ by writing two functions...
-  #+begin_src haskell :tangle no
-to : Maybe ℕ → ℕ
-to nothing = zero
-to (just n) = suc n
-
-from : ℕ → Maybe ℕ
-from zero = nothing
-from (suc n) = just n
-  #+end_src
-
-  ...and, finally, checking that the two functions undo each other...
-  #+begin_src emacs-lisp :tangle no
-to∘from : ∀ {n} →  to (from n)  ≡  n
-to∘from n = {! try it! }
-
-from∘to : ∀ {m} →  from (to m)  ≡  m
-from∘to m = {! try it! }
-  #+end_src
-
-
-  This is “simple”, but involved!
-   #+end_margin
-  exercise to show that ℕ is fixedpoint of ~Maybe~.
 
 * COMMENT Equational Proofs
   :PROPERTIES:
