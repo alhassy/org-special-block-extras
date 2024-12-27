@@ -1055,6 +1055,7 @@ it may be prudent to expose more aspects as arguments.
                   %s
                </details>" background-color title-color title contents))))
 
+
 (org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
   "Enclose text in a box, possibly with a title.
 
@@ -1125,6 +1126,7 @@ In the future, I will likely expose more arguments."
                                    (:otherwise (-let [(X Y Z W) shadow]
                                         (funcall haze X Y Z W)))))))
                  title contents)))))
+
 
 (defun org-subtle-colors (c)
   "HTML codes for common colours.

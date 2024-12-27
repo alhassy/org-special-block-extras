@@ -3381,8 +3381,8 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 :End:
 
 * TODO COMMENT What is this package?
-* DONE COMMENT Block and link types provided by this package
-** Folded Details ---Let the user see stuff only if they're interested
+* DONE Block and link types provided by this package
+** COMMENT Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
@@ -3488,7 +3488,7 @@ your Org file or place it into your ~org-html-head~ variable.
 Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
 attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
 
-** Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
+** COMMENT Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
   :PROPERTIES:
   :CUSTOM_ID: remark
   :END:
@@ -3856,82 +3856,6 @@ from∘to m = {! try it! }
 # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
    osbe-example:~/org-special-block-extras/tests/box.yaml
 
- #+begin_src emacs-lisp :title Implementation :folded t
-(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
-  "Enclose text in a box, possibly with a title.
-
-By default, the box's COLOR is green for HTML and red for LaTeX,
-and it has no TITLE.
-
-SHADOW is an alternate style of boxing: It shows the contents in a centred
-box with a shadow colour being the given non-nil value of SHADOW.
-If SHADOW is a hexidecimal colour, it should be a string enclosed in double quotes.
-More accurately, the following are all valid uses:
-
-    ,#+begin_box title :shadow t
-    ,#+begin_box title :shadow inset
-
-    ,#+begin_box title :shadow \"pink\"
-    ,#+begin_box title :shadow pink
-
-    ,#+begin_box title :shadow (cyan pink orange yellow)
-    ,#+begin_box title :shadow (cyan \"inset pink\" orange)
-    ,#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
-
-Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
-rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
-
-The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox package.
-
-In the future, I will likely expose more arguments."
-
-  (pcase backend
-    (`latex
-     (apply #'concat
-            `("\\begin{tcolorbox}[title={" ,title "}"
-              ",colback=" ,(pp-to-string (or background-color 'red!5!white))
-              ",colframe=" ,(pp-to-string (or frame-color 'red!75!black))
-              ",colbacktitle=" ,(pp-to-string (or title-background-color 'yellow!50!red))
-              ",coltitle=red!25!black, fonttitle=\\bfseries,"
-              "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
-              ,contents
-              "\\end{tcolorbox}")))
-    ;; CSS syntax: “box-shadow: specification, specification, ...”
-    ;; where a specification is of the shape “[inset] x_offset y_offset [blur [spread]] color”.
-    (_ (-let [haze (lambda (left right deep-right deep-left)
-                     (format "width: 50%%; margin: auto; box-shadow: %s"
-                             (thread-last (list (cons right      "8px 6px 13px 8px %s")
-                                                (cons left       "-16px 12px 20px 16px %s")
-                                                (cons deep-right "48px 36px 71px 28px %s")
-                                                (cons deep-left  "-48px -20px 71px 28px %s"))
-                               (--filter (car it))
-                               (--map (format (cdr it) (car it)))
-                               (s-join ","))))]
-         (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
-                 (s-join ";" `("padding: 1em"
-                               ,(format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))
-                               "border-radius: 15px"
-                               "font-size: 0.9em"
-                               ,(when shadow
-                                  (cond
-                                   ((equal shadow t)
-                                    (funcall haze "hsl(60, 100%, 50%)" "hsl(1, 100%, 50%)" "hsl(180, 100%, 50%)" nil))
-                                   ((equal shadow 'inset)
-                                    (funcall haze "inset hsl(60, 100%, 50%)" "inset hsl(1, 100%, 50%)" "inset hsl(180, 100%, 50%)" nil))
-                                   ((or (stringp shadow) (symbolp shadow))
-                                    (format "box-shadow: 10px 10px 20px 0px %s; width: 50%%; margin: auto" (pp-to-string shadow)))
-                                   ((json-plist-p shadow)
-                                    (-let [(&plist :left X :right Y :deep-right Z :deep-left W) shadow]
-                                      (funcall haze X Y Z W)))
-                                   (:otherwise (-let [(X Y Z W) shadow]
-                                        (funcall haze X Y Z W)))))))
-                 title contents)))))
-#+end_src
-
-#+RESULTS:
-| org-block/box | org-link/box |
-
 *** Three demos of  [[doc:org-block/box][box]]
  #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
  #+html: <br>
@@ -4024,7 +3948,7 @@ In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
  #+end_details
 
-**   ~latex-definitions~ for hiding LaTeX declarations in HTML
+** COMMENT   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
    :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
    :END:
@@ -4071,19 +3995,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
   osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
   
-  #+begin_src emacs-lisp :title "‘latex-definitions’ Implementation" :folded t
-(org-defblock latex-definitions ()
-  "Declare but do not display the CONTENTS according to the BACKEND."
-  (format (pcase backend
-            ('html "<p style=\"display:none\">\\[%s\\]</p>")
-            (_ "%s"))
-          raw-contents))
-  #+end_src
-
-  #+RESULTS:
-  | org-block/latex-definitions | org-link/latex-definitions |
-
-** Nice Keystroke Renditions: kbd:C-h_h
+** COMMENT Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID: kbd:nice-keystroke-renditions
   :END:
@@ -4251,7 +4163,7 @@ Let's have some sanity tests...
 #+HTML: </style>
 #+HTML:
 :End:
-* Parallel ---/Place ideas side-by-side, possibly with a separator/
+** COMMENT Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
