@@ -3442,7 +3442,7 @@ your Org file or place it into your ~org-html-head~ variable.
 Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
 attention, and so a tooltip via [[doc:org-block/tooltip][tooltip]] suffices.
 
-** COMMENT Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
+** Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
   :PROPERTIES:
   :CUSTOM_ID: tooltip
   :END:
@@ -3703,7 +3703,7 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
-** COMMENT Boxed Text —Calling out super duper info
+** Boxed Text —Calling out super duper info
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
    :END:
@@ -3803,7 +3803,7 @@ In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
  #+end_details
 
-** COMMENT   ~latex-definitions~ for hiding LaTeX declarations in HTML
+**   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
    :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
    :END:
@@ -3850,7 +3850,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
   osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
   
-** COMMENT Nice Keystroke Renditions: kbd:C-h_h
+** Nice Keystroke Renditions: kbd:C-h_h
   :PROPERTIES:
   :CUSTOM_ID: kbd:nice-keystroke-renditions
   :END:
@@ -4018,7 +4018,7 @@ Let's have some sanity tests...
 #+HTML: </style>
 #+HTML:
 :End:
-** COMMENT Parallel ---/Place ideas side-by-side, possibly with a separator/
+** Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
