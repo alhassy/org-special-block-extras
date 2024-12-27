@@ -37,6 +37,9 @@ input: |-
   In summary, articles can get lengthy when vertical whitespace is
   wasted on thin lines; instead, one could save space by using
   /[[doc:org-block/parallel][parallel]] columns of text/.
+LatexRequirement: |-
+
+  #+latex_header: \usepackage{multicol}
 
 expectations:
   html: |-

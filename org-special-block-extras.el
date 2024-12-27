@@ -1148,6 +1148,7 @@ Names are very rough approximates.
     (c c)
   ))
 
+
 (org-defblock parallel (cols "2" bar nil)
   "Place ideas side-by-side, possibly with a separator.
 
@@ -1208,13 +1209,15 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                  (columnBreak (lambda (width omit-rule?)
                                 (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
                                         (if omit-rule? "none" rule)))) )
-             (format "<div>%s%s</div>"
+             (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
                      (funcall columnBreak (pop spec) nil)
                      (s-replace-regexp (regexp-quote "#+columnbreak:")
                                        ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
                                        ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
                                        (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
-                                       contents))))))))
+                                       contents)
+		     (if (s-contains-p " " cols) "</div>" ""))))))))
+
 
 (defvar org--html-export-style-choice "default"
   "This variable holds the link label declared by users.

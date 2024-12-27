@@ -277,5 +277,14 @@ my liking, then move the `input' to the relevant yaml file."
 		   (format "\n#+begin_%s %s\n#+begin_src %s \n %s \n#+end_src\n#+end_%s\n" discloure title language raw-contents discloure)
 		   'html
 		   :body-only-please))))
+;;
+;; Example use
+;;
+;;     #+begin_src emacs-lisp -r -n :title Implementation :folded t
+;;     (cl-defun speak ()
+;;       (interactive)
+;;       (message-box "Hello, world"))  
+;;     #+end_src
+;;       
 
 

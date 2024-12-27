@@ -65,6 +65,13 @@ html-export-style:solarized_light
 # TODO: Add :noexport support to [all?] blocks?
 # TODO: Could generalize this to be a hook that's run before processing blocks, and :noexport support amounts to a hook that returns "" for the block.
 
+# TODO: Favour plists over HTML tags:
+#
+#   ;; dom.el has multiple methods to maniuplate HTML DOM plist values.
+#   (shr-dom-to-xml '(name ((key₀ . value₀) (key₁ . value₁)) "contents"))
+# ⇒ "<name key₀=\"value₀\" key₁=\"value₁\">contents</name>"
+
+
 # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
 #  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
@@ -3374,7 +3381,7 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 :End:
 
 * TODO COMMENT What is this package?
-* DONE Block and link types provided by this package
+* DONE COMMENT Block and link types provided by this package
 ** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -4244,88 +4251,14 @@ Let's have some sanity tests...
 #+HTML: </style>
 #+HTML:
 :End:
-** Parallel ---/Place ideas side-by-side, possibly with a separator/
+* Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
   :END:
 
+    # (setq osbe-example-cache (make-hash-table :test 'equal))
      osbe-example:~/org-special-block-extras/tests/parallel.yaml
   
-#+latex_header: \usepackage{multicol}
-#+begin_src emacs-lisp -r -n :title Implementation :folded t
-(org-defblock parallel (cols "2" bar nil)
-  "Place ideas side-by-side, possibly with a separator.
-
-There are COLS many columns, and they may be seperated by solid
-vertical rules if BAR is a non-nil (colour) value.
-
-+ COLS is either a number or a sequence of the shape: 10% 20% 30%.
-+ BAR is either `t', `nil', or a colour such as `red' or `blue'.
-
-----------------------------------------------------------------------
-
-“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
-𝒏-many parallel columns, possibly separated by solid rules, or a
-“bar”. This style allows text to freely move between columns,
-depending on the size of the browser, which may dynamically
-shrink and grow.  BAR can either be `t', `nil', or
-any (backend)-valid colour specification; such as `red' or
-`green'.
-
-“Hard Columns”: Alternatively, for non-uniform column widths,
-COLS may instead be a specification of the widths of the
-columns. However, this extra flexibility comes at an additional
-cost: The contents of the block must now contain 𝒏-1 lines
-consisting of ‘#+columnbreak:’, when the specification determines
-𝒏 columns, as shown in the following example.
-
-   ,#+begin_parallel 20% 60% 20% :bar green
-   Hello, to the left!
-
-   ,#+columnbreak:
-   A super duper wide middle margin!
-
-   ,#+columnbreak:
-   Goodbye (“God-be-with-ye”) to the right!
-   ,#+end_parallel
-
-The specification is 𝒏 measurements denoting widths; which may be
-in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
-I personally advise only the use of percentage measurements.
-
-In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
-With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
-  (let ((rule (pcase backend
-               (`latex (if bar 2 0))
-               (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
-        (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
-    (pcase backend
-      (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
-          \\begin{minipage}[t]{\\linewidth}
-          \\begin{multicols}{%s}
-          %s
-          \\end{multicols}\\end{minipage}"    rule cols contents′))
-      (_ (if (not (s-contains-p "%" cols))
-             (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
-                     rule cols contents)
-           ;; Otherwise: cols ≈ "10% 40% 50%", for example.
-           (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
-                 (columnBreak (lambda (width omit-rule?)
-                                (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
-                                        (if omit-rule? "none" rule)))) )
-             (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
-                     (funcall columnBreak (pop spec) nil)
-                     (s-replace-regexp (regexp-quote "#+columnbreak:")
-                                       ;; ‘λ’ since we need the “pop” evaluated for each find-replace instance.
-                                       ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
-                                       (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
-                                       contents)
-		     (if (s-contains-p " " cols) "</div>" ""))))))))
-#+end_src
-
-#+RESULTS:
-| org-block/parallel | org-link/parallel |
-
 * COMMENT Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
