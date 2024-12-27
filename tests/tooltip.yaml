@@ -1,14 +1,14 @@
 input: |-
   It can be annoying to make readers jump to the bottom of the page to
-  read a footnote.  Instead, I prefer to write an /inline [[doc:org-block/remark][remark]]/
+  read a footnote.  Instead, I prefer to write an /inline [[doc:org-block/tooltip][remark]]/
   containing, say, references or additional explanation.
 
-     /[[remark:Allah][The God of Abraham; known as Elohim in the Bible]] does not burden a
+     /[[tooltip:Allah][The God of Abraham; known as Elohim in the Bible]] does not burden a
          soul beyond what it can bear./ --- Quran 2:286
 
   Or, without specifying an explicit label:
 
-     /Allah[[remark:][The God of Abraham; known as Elohim in the Bible]] does not
+     /Allah[[tooltip:][The God of Abraham; known as Elohim in the Bible]] does not
          burden a soul beyond what it can bear./ --- Quran 2:286
 
 expectations:
@@ -18,7 +18,9 @@ expectations:
       footnote. Instead, I prefer to write an
       <i
         >inline
-        <abbr class="tooltip" title="<br><br>(fn BACKEND RAW-CONTENTS &rest _)"
+        <abbr
+          class="tooltip"
+          title="Produce an HTML tooltip.<br><br>(fn BACKEND RAW-CONTENTS &rest _)"
           >remark</abbr
         ></i
       >

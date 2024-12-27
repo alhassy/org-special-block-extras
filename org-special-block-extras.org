@@ -2009,7 +2009,7 @@ BACKEND is the export back-end being used, as a symbol."
                              ,main-arg
                              ,@(--map (list 'quote it) kwdargs)))]
 	    ;; TODO: This `margin` specific logic should not be here.
-	    (when (or (equal blk 'margin) (equal blk 'remark)) (setq val (format "@@html: %s@@" (s-replace "@" "＠" (s-chop-prefix "#+begin_export html \n" (s-chop-suffix "\n#+end_export" val))))))
+	    (when (or (equal blk 'margin) (equal blk 'tooltip)) (setq val (format "@@html: %s@@" (s-replace "@" "＠" (s-chop-prefix "#+begin_export html \n" (s-chop-suffix "\n#+end_export" val))))))
             (insert val))
           ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
           ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
@@ -3488,9 +3488,9 @@ your Org file or place it into your ~org-html-head~ variable.
 Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
 attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
 
-** COMMENT Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
+** Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
   :PROPERTIES:
-  :CUSTOM_ID: remark
+  :CUSTOM_ID: tooltip
   :END:
 
 Sometimes you want to remark on [[org-block/details][details]] without drawing too much
@@ -3502,136 +3502,37 @@ attention, and so a tooltip via [[org-block/remark][remark]] suffices.
 #+end_center
 #+end_tiny
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-   osbe-example:~/org-special-block-extras/tests/remark.yaml
-
-#+begin_src emacs-lisp :title Implementation :folded t
-;; We provide two synonymous names “margin” and “remark”,
-;; with the former name to be deprecated.
-;; (TODO: The other existing defblock called `remark' should be renamed to `editorRemark')
-
-(org-defblock margin
-  (marker "°"
-  color "gray!80"
-          counter "footnote"
-          width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
-          ;; Width: https://tex.stackexchange.com/a/101861/69371
-  (vector :display 'full
-          :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
-  "Produce an HTML tooltip or a LaTeX margin note.
-
-The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
-
-It is essentially “inline footnotes”.
-
-For notes that you want to use repeatedly, in multiple articles
-or in multiple locations in the same article, consider using
-‘documentation’ to declare them and ‘doc’ to invoke them.
-
-For LaTeX, place ‘#+resize:’ to have the remainder of a block be
-resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
-
-----------------------------------------------------------------------
-
-WIDTH, COUNTER, and COLOR are LaTeX specfic.
-
-When no label, marker, is used for a marginal note, we rely
-on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
-Since HTML has no margin per se, we use “∘” as default marker:
-Users hover over it to read the marginal note.
-
-Marginal notes have their labels, markers, in black
-and the notes themselves have COLOR being grey!80.
-In Emacs, margin links appear grey with an orange tinted boarder.
-
-Regarding LaTeX, since verbatim environments do not in general work well
-as arguments to other commands, such as ‘\\marginpar’, we save the contents
-of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
-a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
-
-The WIDTH argument is the width of the margin; i.e., the width of the underlying
-minipage.
-
-One could use \\maxsizebox{.25\\textwidth}{\\textheight}{ ... }
-which only resizes the content if its natural size is larger than
-the given 〈width〉 or 〈height〉.  We don't use this, since
-maxsizebox does not natively allow linebreaks
-(e.g., one would wrap contents in a tabular environment then use
-‘\\\\’, two backslashes, to request a line break; but this
-crashes if one wants to also use verbatim environments.)
-
-In LaTeX, it may be useful to invoke ‘\\dotfill’."
-  (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
-    (pcase backend
-      (`latex
-       (setq marker (or marker (format "{\\the%s}" counter))) ;; "\\circ"
-       (format "\\!\\!${}^{\\textnormal{%s}}$
-               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{minipage}{%s}
-               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
-               \\footnotesize
-               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
-               \\color{%s}
-               {\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n %s
-               \\end{minipage}
-               \\end{lrbox}
-               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}%s}
-               \\hspace{-1.9ex}
-               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax"
-               marker
-               width
-               color
-               marker
-               (if (s-contains? "#+resize:" contents)
-                   (s-concat
-                    (s-replace "#+resize:"
-                               "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
-                               (s-trim contents))
-                    "\n\\end{tabular}}")
-                 (s-trim contents))
-               stepcounter))
-      (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                 (org-ospe-html-export-preserving-whitespace contents)
-                 ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
-                 marker)))))
-
-
-(org-defblock remark (marker "°")
-	      "Produce an HTML tooltip."
-      (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-              (org-ospe-html-export-preserving-whitespace contents)
-              marker))
-#+end_src
+# (setq  osbe-example-cache (make-hash-table :test 'equal))
+   osbe-example:~/org-special-block-extras/tests/tooltip.yaml
 
 #+begin_details "★ Example: A ‘margin’ with an ‘export’ in the middle" :title-color orange
  An HTML “marquee”
- #+begin_remark
+ #+begin_tooltip
  An example is best:
  #+begin_export html
  <marquee>Catch me if you can!</marquee>
  #+end_export
  It is pronounced “mar key”.
- #+end_remark
+ #+end_tooltip
  is a scrolling piece of text.
 
 --------------------------------------------------------------------------------
 *Source:*
 #+begin_src org
  An HTML “marquee”
- ♯+begin_remark
+ ♯+begin_tooltip
  An example is best:
  ♯+begin_export html
  <marquee>Catch me if you can!</marquee>
  ♯+end_export
  It is pronounced “mar key”.
- ♯+end_remark
+ ♯+end_tooltip
  is a scrolling piece of text.
 #+end_src
 #+end_details
 #+begin_details Example: Brief code snippet in tooltip/margin
 It's a
-#+begin_remark simple
+#+begin_tooltip simple
 /Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
 essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
 same as ~just~.
@@ -3644,13 +3545,13 @@ to (just n) = suc n
   #+end_src
 
 The rest is an arduous exercise if you don't know what's going on.
-#+end_remark
+#+end_tooltip
 exercise to show that ℕ is fixedpoint of ~Maybe~.
 --------------------------------------------------------------------------------
 *Source:*
 #+begin_src org
 It's a
-,#+begin_remark simple
+,#+begin_tooltip simple
 /Proof Sketch:/ “Squint” your eyes to see ~zero : ℕ~ and ~nothing : Maybe ℕ~ as
 essentially the same, and “squint” your eyes to see that ~suc~ is essentially the
 same as ~just~.
@@ -3663,13 +3564,13 @@ to (just n) = suc n
 ,#+end_src
 
 The rest is an arduous exercise if you don't know what's going on.
-,#+end_remark
+,#+end_tooltip
 exercise to show that ℕ is fixedpoint of ~Maybe~.
 #+end_src
 #+end_details
 #+begin_details "★ Example: Lengthy ‘remark’ with multiple code blocks!" :title-color orange
 It's a
-#+begin_remark simple
+#+begin_tooltip simple
   We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
   and ~ℕ~ in stages.
 
@@ -3706,13 +3607,13 @@ from∘to m = {! try it! }
 
 
   This is “simple”, but involved!
-   #+end_remark
+   #+end_tooltip
 exercise to show that ℕ is fixedpoint of ~Maybe~.
 --------------------------------------------------------------------------------
 *Source:*
 #+begin_src org :tangle no
 It's a
-,#+begin_remark simple
+,#+begin_tooltip simple
 We show that there is an /isomorphism/; i.e., a non-lossy protocol between ~Maybe ℕ~
 and ~ℕ~ in stages.
 
@@ -3748,7 +3649,7 @@ from∘to m = {! try it! }
 ,#+end_src
 
 This is “simple”, but involved!
-,#+end_remark
+,#+end_tooltip
 exercise to show that ℕ is fixedpoint of ~Maybe~.
 #+end_src
 #+end_details
@@ -3848,7 +3749,7 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
-** Boxed Text —Calling out super duper info
+** COMMENT Boxed Text —Calling out super duper info
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
    :END:

@@ -2029,6 +2029,8 @@ That is what we accomplish with this new `show' link type."
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
 
+It is essentially “inline footnotes”.
+
 For notes that you want to use repeatedly, in multiple articles
 or in multiple locations in the same article, consider using
 ‘documentation’ to declare them and ‘doc’ to invoke them.
@@ -2096,11 +2098,18 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                     "\n\\end{tabular}}")
                  (s-trim contents))
                stepcounter))
-      (_ (setq marker (or marker "°"))
-         (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+      (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
                  (org-ospe-html-export-preserving-whitespace contents)
                  ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                  marker)))))
+
+
+(org-defblock tooltip (marker "°")
+ "Produce an HTML tooltip."
+ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
+         (org-ospe-html-export-preserving-whitespace contents)
+         marker))
+
 
 (defun org--list-to-calc (lst rel hint-format NL-length color)
   "Get a result from org-list-to-lisp and render it as a calculational proof.
