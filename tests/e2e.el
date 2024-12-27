@@ -226,7 +226,7 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
         (puthash key value hash)
         value)))
 
-(defvar  osbe-example-yaml-cache (make-hash-table :test 'equal)
+(defvar osbe-example-cache (make-hash-table :test 'equal)
   "Cache to avoid time re-reading yaml files!")
 (org-defblock osbe-example (file)
  "Render the given FILE as both Org source and rendered HTML result.
@@ -235,9 +235,11 @@ The source is the `input' key; the target is the `expectations.html' key.
 
 Workflow: Write the `input' in an Org buffer, and once the export is to
 my liking, then move the `input' to the relevant yaml file."
- (let* ((yaml (my/hash-get-or-compute osbe-example-yaml-cache
-				      file
-				      (lambda () (e2e--read-yaml-file file))))
+ (my/hash-get-or-compute
+  osbe-example-cache
+  file
+  (lambda ()
+ (let* ((yaml (e2e--read-yaml-file file))
          (input (map-elt yaml 'input))
 	 (src (s-trim input))
 	 (tgt (map-elt (map-elt yaml 'expectations) 'html))
@@ -247,9 +249,23 @@ my liking, then move the `input' to the relevant yaml file."
     (cl-letf* (((symbol-function 'make-title) (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
 	      (src.title (make-title "What You Write"))
 	      (tgt.title (make-title "What You Get")))
-    (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\">%s</pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div>"
+    (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\">%s</pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
 	    src.color src.title src
-	    tgt.color tgt.title tgt))))
+	    tgt.color tgt.title tgt
+	    (org-subtle-colors "custard")
+	    (org-export-string-as (format "\n #+begin_src emacs-lisp \n %s \n#+end_src \n" (e2e--get-definition (f-base file)))  'html :body-only-please)))))))
+
+
+(defun e2e--get-definition (block-name)
+  (save-excursion ;; TODO: Why isn't this working?
+    (switch-to-buffer (find-buffer-visiting "~/org-special-block-extras/org-special-block-extras.el"))
+    (beginning-of-buffer)
+    (search-forward (format "defblock %s" block-name))
+    (-let [result (substring-no-properties (thing-at-point 'defun))]
+      (bury-buffer)
+      result)))
+;; Example use:
+;; (e2e--get-definition 'org-demo)
 
 
 ;; TODO: Expose this in use-facing docs, then covert that prose into a yaml test using the workflow documented in osbe-example link type.
