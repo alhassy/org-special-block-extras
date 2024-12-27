@@ -1012,6 +1012,7 @@ The intent is that the block types are fontified using the given language name."
                   (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
                     (apply fontify args))))
 
+
 (org-defblock details (title "Details"
               background-color "#e5f5e5" title-color "green")
   "Enclose contents in a folded up box, for HTML.
@@ -1054,6 +1055,7 @@ it may be prudent to expose more aspects as arguments.
                   </summary>
                   %s
                </details>" background-color title-color title contents))))
+
 
 
 (org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)

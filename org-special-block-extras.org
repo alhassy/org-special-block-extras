@@ -3382,17 +3382,19 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 
 * TODO COMMENT What is this package?
 * DONE Block and link types provided by this package
-** COMMENT Folded Details ---Let the user see stuff only if they're interested
+** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
   :END:
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+# (setq  osbe-example-cache (make-hash-table :test 'equal))
    osbe-example:~/org-special-block-extras/tests/details.yaml
 
---------------------------------------------------------------------------------
-   
-Below is a concrete example of a ‘conversation-style’ usage of the ~details~ block:
+
+The implementation of ~details~ above is hidden away, and this is a
+concrete example of hiding a boring, but important, code snippet.
+Below is a concrete example of a ‘conversation-style’ usage of the
+~details~ block:
 #+begin_box "Here's a nifty puzzle, can you figure it out? 👽"
 Reductions ---incidentally also called ‘folds’[fn:1]--- embody
 primitive recursion and thus computability. For example, what does
@@ -3419,58 +3421,9 @@ i.e., $\large \frac{1}{𝓃!}$.
 Neato, let's do more super cool stuff ^_^
 #+end_box
 
---------------------------------------------------------------------------------
-
-Below is a concrete example of hiding a boring, but important, code snippet, using the ~details~ block:
-#+begin_src emacs-lisp :folded t  :title Implementation 
-(org-defblock details (title "Details"
-              background-color "#e5f5e5" title-color "green")
-  "Enclose contents in a folded up box, for HTML.
-
-For LaTeX, this is just a boring, but centered, box.
-
-By default, the TITLE of such blocks is “Details”,
-its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
-
-In HTML, we show folded, details, regions with a nice greenish colour.
-
-In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments.
-"
-   (pcase backend
-     (`latex (concat (pcase (substring background-color 0 1)
-                       ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-                       (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-                     (pcase (substring title-color 0 1)
-                       ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-                       (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-                     (format "\\begin{quote}
-                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
-                                   %s
-                               \\end{tcolorbox}
-                \\end{quote}" title contents)))
-     (_ (format "<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: %s;
-                          border-radius: 15px;
-                          color: hsl(157 75% 20%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"%s\">
-                         %s
-                      </font>
-                    </strong>
-                  </summary>
-                  %s
-               </details>" background-color title-color title contents))))
-#+end_src
-
-#+RESULTS:
-| org-block/details | org-link/details |
 
 --------------------------------------------------------------------------------
+
 
 #+begin_box "Tip 🌼"
 If you fear that your readers may not click on details boxes in the HTML export,
@@ -3485,10 +3438,11 @@ your Org file or place it into your ~org-html-head~ variable.
 #+html: <style>  summary:hover {background:pink;} </style>
 #+end_box
 
-Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
-attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
 
-** Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
+Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
+attention, and so a tooltip via [[doc:org-block/tooltip][tooltip]] suffices.
+
+** COMMENT Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin
   :PROPERTIES:
   :CUSTOM_ID: tooltip
   :END:

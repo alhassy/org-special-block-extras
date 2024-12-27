@@ -26,7 +26,7 @@ Unmaintained: |-
      ...}}\end{quote}}; however, this does not work well with
      [[https://github.com/alhassy/emacs.d#bibliography--coloured-latex-using-minted][minted]]
      for coloured source blocks. Instead, we use ~tcolorbox~.
-       
+
 expectations:
   html: |-
     <p>
