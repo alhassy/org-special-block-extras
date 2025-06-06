@@ -741,11 +741,13 @@ of equality.
 
  doc:nat-trans
  #+begin_documentation Natural Transformation :label (nat-trans polymorphism) :show t :color blue
+ Methods that do not perform any “type casing”.
+ 
  Natural transformations are essentially polymorphic functions that make /no/
  choices according to the input type; e.g., =reverse : List τ → List τ= makes no
  choices depending on the type ~τ~.
  #+end_documentation
-
+ 
  doc:cat
  #+begin_documentation Category Theory :label cat :show t
  A theory of typed  composition; e.g., typed monoids.

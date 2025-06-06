@@ -1,5 +1,9 @@
 ;; Emacs Lisp End-to-End Testing
 ;;
+;; “end to end” tests are data driven tests (e.g., using JSON or YAML) that make API calls
+;; and verify the responses. One writes a test's input, then updates its expectations using
+;; the provided M-xe2e-update-tests method, then verifies the changes are acceptable in Magit.
+;;
 ;; Read a YAML file that defines `input' and `expectations'.
 ;; Run `compute-values' on `input' and check the result is the same as `expectations'
 ;; Recursively read all YAML files in a specified directory.

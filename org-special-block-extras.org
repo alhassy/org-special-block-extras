@@ -14,6 +14,8 @@
 html-export-style:solarized_light
 
 
+(setq org-export-with-broken-links t)
+
 #+RESULTS:
 : kill-buffer-and-window
 
@@ -75,6 +77,13 @@ html-export-style:solarized_light
 # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
 #  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
+
+
+
+* See changes for current buffer only
+C-c M-g will pop up a menu just for that fie and you can hit d there to get a diff, then stage as you like!
+
+
 
 * COMMENT Run all /unit/ tests
 
@@ -3381,7 +3390,7 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 :End:
 
 * TODO COMMENT What is this package?
-* DONE Block and link types provided by this package
+* DONE COMMENT Block and link types provided by this package
 ** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -5790,7 +5799,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
 may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
-* COMMENT Tooltips for Glossaries, Dictionaries, and Documentation
+* Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
@@ -5817,14 +5826,52 @@ may be useful to colour the =|=-separated fields of a badge link.
    :PROPERTIES:
    :CUSTOM_ID: COMMENT-Intro
    :END:
-#+begin_documentation Category Theory :label "cat"
-A theory of typed composition; e.g., typed monoids.
-#+end_documentation
 
-Let's make a link type =doc= that shows a tooltip documentation ---e.g., glossary
-or abbreviation--- for a given label.
-E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
+   Sometimes I want to use the same [[doc:org-block/tooltip][tooltip]] multiple times, so I write
+   the tooltip content once in a [[org-block/documentation][documentation]] block and then
+   reference it using the the [[doc:org-block/doc][doc]] link type.
 
+   # For instance,
+   
+   #+begin_documentation Category Theory :label "cat"
+   A theory of typed composition; e.g., typed monoids, such as matrices and matrix multiplication.
+   #+end_documentation
+
+   Now I can reference this documentation entry using its label as in
+   doc:cat or using its full entry name, with spaces replaced by
+   underscores, as in doc:Category_Theory; finally, we can also use
+   descriptions as in [[doc:cat][graphs + monoids]]. 
+
+   The ~:label~ is optional; when not provided it defaults to the name of
+   the entry with spaces replaced by ‘_’.  For more, see
+   doc:org-block/documentation.  Entry names do not need to be unique,
+   but labels do!  ( The labels are like the addresses used to look up a
+   person's home. )
+      
+   In this way, I can create a custom glossary.
+   My personal documentation library can be seen here:
+   badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
+   or
+   badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
+
+   
+   Moreover, the  [[doc:org-block/doc][doc]] link type lets me reference Emacs-documentation such as
+   doc:loop or doc:thread-last, and English-dictionary entries such as
+   doc:happiness.
+
+   Finally, *in Emacs*, these links also have tooltips ☺️
+   As it stands, Emacs tooltips *only* appear after an export has happened:
+   The export updates the dictionary variable which is used for the tooltips
+   utility.
+   TODO: Make a method docs-update to update the docs database, regardless of
+   export. Low priority. THIS EXISTS AS (org-docs-load-libraries) ??
+
+   Notice how hovering over items makes them appear, but to make them disappear you
+   should click on them or scroll away.  This is ideal when one wants to have
+   multiple ‘definitions’ visible ;-)
+
+--------------------------------------------------------------------------------
+   
 # LaTeX does not allow figures in minipages, so just ignoring them in Latex
 # export
 #+latex: \iffalse
@@ -5846,87 +5893,10 @@ E.g., user-declared doc:cat and Emacs-retrieved doc:loop and doc:thread-last ^_^
 #+end_details
 #+latex: \fi
 
-#+begin_box Full Example :background-color custard
-#+latex_header: \newunicodechar{π}{\ensuremath{\pi}}
-
-_User enters …_
-#+begin_src org
-,#+begin_documentation Existential Angst :label "ex-angst"
-A negative feeling arising from freedom and responsibility.
-
-Also known as
-1. /Existential Dread/, and
-2. *Existential Anxiety*.
-
-Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]], may help ;-)
-
-Then again, ~coding~ can be frustrating at times, maybe have
-a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
-,#+end_documentation
-#+end_src
-
-#+begin_documentation Existential Angst :label ex-angst
-A negative feeling arising from freedom and responsibility.
-
-Also known as
-1. /Existential Dread/, and
-2. *Existential Anxiety*.
-
-Perhaps a distraction, such as [[https://www.w3schools.com][visiting W3Schools]], may help ;-)
-
-Then again, ~coding~ can be frustrating at times, maybe have
-a slice of pie with maths by reading “$e^{i×π} + 1 = 0$” as a poem ;-)
-#+end_documentation
-
-_Then…_ =doc:ex-angst= gives us doc:ex-angst,
-or using a description: [[doc:ex-angst][“existence is pain”?]]
-( ~[[doc:ex-angst][“existence is pain”?]]~ )
-
-:Labelless_example:
-#+begin_documentation Existential Angsty
-A negative feeling arising from freedom and responsibility.
-
-bye
-#+end_documentation
-
-doc:Existential_Angsty
-:End:
-#+end_box
-
-#+begin_quote
-As it stands, Emacs tooltips *only* appear after an export has happened:
-The export updates the dictionary variable which is used for the tooltips
-utility.
-
-The ~:label~ is optional; when not provided it defaults to the name of the entry
-with spaces replaced by ‘_’.  For more, see
-doc:org-block/documentation.
-
-Entry names do not need to be unique, but labels do!
-( The labels are like the addresses used to look up a person's home. )
-
 # Moreover, a documentation block may have multiple entries ---the =:name:= argument
 # must appear first, then the =:label:=, and the remaining text is the
 # description-documentation of the given name.
 #+end_quote
-
-#+begin_details ‼TODO  More Examples
-
-#+begin_documentation Natural Transformation :label "natural-transformation"
-Methods that do not perform any “type casing”.
-#+end_documentation
-
-| Supported                                 | Example               | Source                                         |
-|-------------------------------------------+-----------------------+------------------------------------------------|
-| No description                            | doc:cat               | ~doc:cat~                                        |
-| With description and code font            | [[doc:natural-transformation][=polymorphism=]]       | ~[[doc:natural-transformation][=polymorphism=]]~ |
-| Fallback: Arbitrary ELisp Docs (function) | doc:thread-first      | ~doc:thread-first~                               |
-| Fallback: Arbitrary ELisp Docs (variable) | doc:user-mail-address | =doc:user-mail-address=                          |
-| Fallback: Arbitrary English word          | doc:user              | =doc:user=                                       |
-
-Notice how hovering over items makes them appear, but to make them disappear you
-should click on them or scroll away.  This is ideal when one wants to have
-multiple ‘definitions’ visible ;-)
 
 Below are the entries in my personal glossary ;-)
 #+begin_src emacs-lisp :exports results :results replace value :results table pp replace :tangle no
@@ -5938,9 +5908,6 @@ Below are the entries in my personal glossary ;-)
 (ignore-errors (s-join "\n" (reverse (--map (concat "doc:" it) (mapcar #'car org--docs-from-libraries)))))
 #+end_src
 
-‼ TODO
-:Ignore:
-#+RESULTS:
 #+begin_box
 doc:cat
 doc:category_theory
@@ -6579,18 +6546,11 @@ doc:difunctional
 doc:Difunctional
 doc:nil
 #+end_box
-:end:
 
 In the export, it looks like some names are repeated, but in the source one
 would notice that we have /labels/ in both upper and lower cases and with underscores ;-)
 They just happen to be referring to the same /named/ entry.
 
--------
-
-My personal documentation library can be seen here:
-badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
-or
-badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
 #+end_details
 
 #+begin_details Tests
