@@ -7,7 +7,9 @@
 #+options: d:nil toc:nil
 #+export_file_name: index
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
-# +toc: headlines 2
+#+toc: headlines 2
+
+* COMMENT Random notes
 # TODO: Final version should not have the following incantation active.
 #+options: broken-links:auto
 
@@ -78,14 +80,12 @@ html-export-style:solarized_light
 #  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
 #  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
 
-
-
-* See changes for current buffer only
+** See changes for current buffer only
 C-c M-g will pop up a menu just for that fie and you can hit d there to get a diff, then stage as you like!
 
 
 
-* COMMENT Run all /unit/ tests
+** COMMENT Run all /unit/ tests
 
 # TODO C-c C-c  ⇒ Run all tests, and see them printed with their descriptions nicely.
 #+begin_src emacs-lisp :exports none :tangle no
@@ -349,7 +349,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 # #
 # See https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like
 
-* COMMENT Testing :noexport:
+* COMMENT Testing                                                  :noexport:
   :PROPERTIES:
   :CUSTOM_ID: Testing
   :END:
@@ -543,7 +543,7 @@ jobs:
 
       # Upload coverage
       - uses: codecov/codecov-action@v1
-* COMMENT Test that this org file itself exports without problems :noexport:
+* COMMENT Test that this org file itself exports without problems  :noexport:
 :PROPERTIES:
 :CUSTOM_ID: Test-that-this-org-file-itself-exports-without-problems
 :END:
@@ -570,7 +570,7 @@ jobs:
   (should (org-html-export-to-html)))
 #+end_src
 
-* COMMENT Abstract :ignore:
+* COMMENT Abstract                                                   :ignore:
   :PROPERTIES:
   :CUSTOM_ID: Abstract
   :END:
@@ -733,7 +733,7 @@ and the result looks nice. “Look ma, no HTML required!”
 #+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
 [[file:images/minimal-working-example-multiforms.png]]
 
-* COMMENT org-tutorial :ignore:
+* COMMENT org-tutorial                                               :ignore:
   :PROPERTIES:
   :CUSTOM_ID: org-tutorial
   :END:
@@ -3214,7 +3214,7 @@ I am foo; Indeed FoO is what I fOo!
 # that behaves differently depending on the export backend.
 
 :End:
-** Fontifying all blocks as if they were Org blocks                :relocate:noexport:
+** Fontifying all blocks as if they were Org blocks       :relocate:noexport:
 :PROPERTIES:
 :CUSTOM_ID: Fontifying-all-blocks-as-if-they-were-Org-blocks
 :END:
@@ -3389,8 +3389,374 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 #+end_src
 :End:
 
-* TODO COMMENT What is this package?
-* DONE COMMENT Block and link types provided by this package
+* 🧙‍♂️ /Write Once, Export Everywhere/: Say Hello to =org-special-block-extras=
+
+*Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
+exports?* =org-special-block-extras= is your magical toolkit for
+creating /custom Org-mode blocks/ and /links/ that work seamlessly
+across backends ---without diving into the dark arts of raw HTML or
+LaTeX!
+
+** 🎁  What Does It Do?
+
+- *🎨 Style with ease* --- add colors, badges, tooltips (from a dictionary, Emacs
+  Help, or custom file), keystroke notations, inline editorial comments, or even
+  colourful ASCII cows with fortune cookies.
+- *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
+- *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
+- badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
+- *🛠 Use =org-defblock= and =org-deflink= macros* --- familiar =defun=-like syntax lets you
+  define custom Org behaviours.
+  + Create powerful custom blocks with the ~defblock~ macro: Define a block once
+    and export to LaTeX /and/ HTML effortlessly. With /header-args/ support like
+    like =:color red :signoff "Thanks!"= for locally customised exports.
+  + Use ~org-deflink~ to create custom links using a syntax similar to ~defun~.
+    
+# - *🧩 Compose blocks modularly* --- nest and thread blocks functionally, just like  Lisp =funcall=.
+# TODO. FIXME. - Embrace *modularity*: Build new blocks from existing ones with  =thread-blockcall= --- like Lisp =funcall=.
+ 
+   # With a single macro =defblock=, this package provides *dozens of
+   # built-in Org-mode blocks*, all tailored for rich export and seamless
+   # Emacs display:
+
+--------------------------------------------------------------------------------
+   
+ *🧱 Ready-to-Use Custom Blocks*
+  
+  | Block             | Use Case                                                                              |
+  |-------------------+---------------------------------------------------------------------------------------|
+  | =details=           | Foldable sections --- perfect for hiding spoilers, proofs, or long explanations.      |
+  | =parallel=          | Display content in multiple columns --- great for comparisons or saving space.        |
+  | =margin=            | Add subtle explanatory tooltips or side remarks --- delightful for scholarly writing. |
+  | =box=               | Emphasize content with nicely styled borders --- great for callouts or side notes.    |
+  | =spoiler=           | Hide content visually until the reader chooses to see it --- useful in teaching.      |
+  | =tree=              | Display proof trees and logical derivations --- fantastic for formal logic.           |
+  | =rename=            | Automated text substitution --- great for translation or glossary effects.            |
+  | =stutter=           | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
+  | =solution=          | Reveal answers in stages --- perfect for educational content.                         |
+  | =org-demo=          | Show Org markup alongside its rendered result --- ideal for tutorials.                |
+  | =latex-definitions= | Hide LaTeX-only declarations from HTML --- keep your source clean.                    |
+  | =calc=              | Step-by-step equational reasoning --- beautiful for math walkthroughs.                |
+  # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
+  # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
+
+--------------------------------------------------------------------------------
+  
+*Ready-to-Use Custom Links*
+    | Link               | Purpose                                                                                 |
+    |--------------------+-----------------------------------------------------------------------------------------|
+    | =doc:label=          | Glossary/dictionary tooltips ---link to local or global explanations; e.g., doc:cl-loop |
+    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=.                               |
+    | =color:= or =red:=     | Inline text colouring --- supports both names and hex codes.                            |
+    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                          |
+    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                   |
+    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                      |
+    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                              |
+    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                   |
+    | =show:=              | Show a variable value --- dynamically insert content like your name or version.         |
+    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                 |
+    
+
+--------------------------------------------------------------------------------
+    
+💡 Ideal For
++ 🧑‍🏫 Educators building interactive lessons and glossaries
++ 🧑‍💻 Developers documenting APIs with style
++ 📚 Writers crafting scholarly or explorable documents
++ ✨ Emacsers who want rich export without leaving Org-mode
++ ✏️ Bloggers wanting powerful interactivity
+  - This is /the/ reason I made this package. 
++ 1️⃣ Anyone who wants to keep Org-mode as the single source of truth for pink:rich
+  exports
+ 
+
+🪄 *Just load the package, write in Org, and let =defblock= handle the
+rest.* Now your Org-mode documents are not just structured ---they're
+/spectacular/.
+
+--------
+
+
+*Write rich Org-mode documents --- one source, many formats.*
+The =org-special-block-extras= package empowers you to define and use
+/custom blocks/ and /links/ that make your Org files export beautifully
+to both *HTML and LaTeX*, /without ever writing raw HTML or LaTeX
+again/.
+
+
+* Block and link types provided by this package
+** Boxed Text —Calling out super duper info
+   :PROPERTIES:
+   :CUSTOM_ID: Boxed-Text
+   :END:
+
+# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
+   osbe-example:~/org-special-block-extras/tests/box.yaml
+
+*** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
+   
+**** Three demos of  [[doc:org-block/box][box]]
+ #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
+ #+html: <br>
+ #+begin_box Example: A super boring observation presented obscurely :background-color blue
+
+ If you start walking ---say, counterclockwise--- along the unit circle from its
+ right-most point and walk 180ᵒ, then you will be at its left-most point. That
+ is, \[ e^{i · \pi} \;=\; - 1 \]
+
+ #+end_box
+
+ #+html: <br>
+ Or, with just the header option ~:shadow t~ …
+ #+begin_box Example: A super boring observation presented obscurely :shadow t
+
+ If you start walking ---say, counterclockwise--- along the unit circle from its
+ right-most point and walk 180ᵒ, then you will be at its left-most point. That
+ is, \[ e^{i · \pi} \;=\; - 1 \]
+
+ #+end_box
+
+ #+html: <br>
+Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
+:deep-right orange)~ …
+ #+begin_box Example: A super boring observation presented obscurely :background-color blue :shadow (:left "inset cyan" :right "inset pink" :deep-right orange)
+
+ If you start walking ---say, counterclockwise--- along the unit circle from its
+ right-most point and walk 180ᵒ, then you will be at its left-most point. That
+ is, \[ e^{i · \pi} \;=\; - 1 \]
+
+ #+end_box
+
+ For further header options, see the documentation of [[doc:org-block/box][box]].
+
+**** Subtle Colours
+ #+html: <br>
+ In the first example above, /how did we get that nice light blue? What
+ is its HTML code?/ That's not something I care to remember, so let's
+ make a handy dandy utility … Now when users request a colour to ~box~
+ their text, it will be a ‘subtle colour’ ;-)
+
+ #+begin_details Implementation for Subtle Colours
+ #+begin_src emacs-lisp -r -n
+(defun org-subtle-colors (c)
+  "HTML codes for common colours.
+
+Names are very rough approximates.
+
+   Translations from: https://www.december.com/html/spec/softhues.html"
+  (pcase c
+    ("teal"    "#99FFCC") ;; close to aqua
+    ("brown"   "#CCCC99") ;; close to moss
+    ("gray"    "#CCCCCC")
+    ("purple"  "#CCCCFF")
+    ("lime"    "#CCFF99") ;; brighter than ‘green’
+    ("green"   "#CCFFCC")
+    ("blue"    "#CCFFFF")
+    ("orange"  "#FFCC99")
+    ("peach"   "#FFCCCC")
+    ("pink"    "#FFCCFF")
+    ("yellow"  "#FFFF99")
+    ("custard" "#FFFFCC") ;; paler than ‘yellow’
+    (c c)
+  ))
+ #+end_src
+
+To use these colour names, you will need the following incantations in
+your Org file.
+
+#+begin_src org :tangle no
+#+latex_header: \usepackage{xcolor}
+
+#+latex_header: \definecolor{teal}    {HTML}{99FFCC}
+#+latex_header: \definecolor{brown}   {HTML}{CCCC99}
+#+latex_header: \definecolor{gray}    {HTML}{CCCCCC}
+#+latex_header: \definecolor{purple}  {HTML}{CCCCFF}
+#+latex_header: \definecolor{lime}    {HTML}{CCFF99}
+#+latex_header: \definecolor{green}   {HTML}{CCFFCC}
+#+latex_header: \definecolor{blue}    {HTML}{CCFFFF}
+#+latex_header: \definecolor{orange}  {HTML}{FFCC99}
+#+latex_header: \definecolor{peach}   {HTML}{FFCCCC}
+#+latex_header: \definecolor{pink}{HTML}{FFCCFF}
+#+latex_header: \definecolor{yellow}  {HTML}{FFFF99}
+#+latex_header: \definecolor{custard}{HTML}{FFFFCC}
+
+#+latex_header: \definecolor{cyan}{HTML}{00FFFF}
+#+end_src
+
+In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
+src_latex[:exports code]{\color{blue}} is a nightmare. )
+ #+end_details
+
+** Nice Keystroke Renditions: kbd:C-h_h
+  :PROPERTIES:
+  :CUSTOM_ID: kbd:nice-keystroke-renditions
+  :END:
+  
+Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
+aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
+or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
+or the useful <kbd:M-s h .>.
+
+- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
+  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
+  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
+  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
+  red border).
+
+  You can also supply explicit tooltip description: =[[kbd:key
+  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
+  the key sequence in nice key font along with a tooltip explaining it.
+
+
+# To make a screenshot, add the following to the above :PROPERTIES: drawer.
+#   :UNNUMBERED: t
+#
+#+attr_html: :width 80% :height 80%s
+[[file:./images/kbd.png]]
+
+*** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
+
+#+begin_details Implementation
+
+#+begin_src emacs-lisp
+(org-deflink kbd
+  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
+
+Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
+
+Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
+
+Examples:
+    [[kbd:C-x C-s]]
+  ≈ <kbd: C-x C-s>
+  ≈ kbd:C-x_C-s"
+  [:display 'full
+   :let (the-label  (s-trim (s-replace "_" " " o-label))
+         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
+         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
+         tooltip?   (not (equal tooltip ""))
+         style      (if tooltip? "border-color: red" "")
+         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
+   ;; o-description is always nil when it comes to deciding the :face.
+   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
+   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
+  (if (equal o-backend 'latex)
+      (format "\\texttt{%s}" the-label)
+    (if tooltip?
+        ;; The style=⋯ is to remove the underlining caused by <abbr>.
+        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
+                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
+                keystrokes)
+      keystrokes)))
+#+end_src
+
+The following styling rule is used to make the keystrokes displayed nicely.
+#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
+  (defvar org--ospe-kbd-html-setup nil
+    "Has the necessary keyboard styling HTML beeen added?")
+
+  (unless org--ospe-kbd-html-setup
+    (setq org--ospe-kbd-html-setup t))
+  (when org-special-block-add-html-extra
+   (setq org-html-head-extra
+    (concat org-html-head-extra
+     "
+  <style>
+  /* From: https://endlessparentheses.com/public/css/endless.css */
+  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
+  kbd
+  {
+    -moz-border-radius: 6px;
+    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    -webkit-border-radius: 6px;
+    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    background-color: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+    color: #333;
+    display: inline-block;
+    font-family: 'Droid Sans Mono', monospace;
+    font-size: 80%;
+    font-weight: normal;
+    line-height: inherit;
+    margin: 0 .1em;
+    padding: .08em .4em;
+    text-shadow: 0 1px 0 #fff;
+    word-spacing: -4px;
+
+    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+  }
+  </style>")))
+#+end_src
+
+Let's have some sanity tests...
+#+begin_src emacs-lisp :tangle tests.el :comments link
+(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
+  [kbd direct-org-links]
+  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
+
+(deftest "[[It]] becomes <kbd> tags"
+  [kbd square-org-links]
+  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
+  [kbd angle-org-links]
+  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+
+;; FIXME: uh-oh!
+(when nil
+(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
+  [kbd tooltip]
+  (⇝ (⟰ "<kbd: M-s h .>")
+
+     "<abbr class=\"tooltip\""
+     (* anything)
+     "Highlight each instance of the symbol at point.<br>Uses the
+     next face from ‘hi-lock-face-defaults’ without
+     prompting,<br>unless you use a prefix argument.<br>Uses
+     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
+     at point.<br><br>This uses Font lock mode if it is enabled;
+     otherwise it uses overlays,<br>in which case the
+     highlighting will not update as you type.&emsp;The
+     Font<br>Lock mode is considered ''enabled'' in a buffer if
+     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
+     non-nil, which means<br>the major mode specifies support for
+     Font Lock."
+     (* anything)
+     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
+#+end_src
+
+#+end_details
+
+:Hide:
+#+HTML: <style>
+#+HTML: kbd
+#+HTML: {
+#+HTML:   -moz-border-radius: 6px;
+#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   -webkit-border-radius: 6px;
+#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   background-color: #f7f7f7;
+#+HTML:   border: 1px solid #ccc;
+#+HTML:   border-radius: 6px;
+#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
+#+HTML:   color: #333;
+#+HTML:   display: inline-block;
+#+HTML:   font-family: 'Droid Sans Mono', monospace;
+#+HTML:   font-size: 80%;
+#+HTML:   font-weight: normal;
+#+HTML:   line-height: inherit;
+#+HTML:   margin: 0 .1em;
+#+HTML:   padding: .08em .4em;
+#+HTML:   text-shadow: 0 1px 0 #fff;
+#+HTML:   word-spacing: -4px;
+#+HTML:
+#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
+#+HTML: }
+#+HTML: </style>
+#+HTML:
+:End:
 ** Folded Details ---Let the user see stuff only if they're interested
   :PROPERTIES:
   :CUSTOM_ID: Folded-Details
@@ -3398,8 +3764,10 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 
 # (setq  osbe-example-cache (make-hash-table :test 'equal))
    osbe-example:~/org-special-block-extras/tests/details.yaml
-
-
+*** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
+:PROPERTIES:
+:CREATED:  [2025-06-06 Fri 20:12]
+:END:
 The implementation of ~details~ above is hidden away, and this is a
 concrete example of hiding a boring, but important, code snippet.
 Below is a concrete example of a ‘conversation-style’ usage of the
@@ -3468,6 +3836,9 @@ attention, and so a tooltip via [[org-block/remark][remark]] suffices.
 # (setq  osbe-example-cache (make-hash-table :test 'equal))
    osbe-example:~/org-special-block-extras/tests/tooltip.yaml
 
+*** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
+
+   
 #+begin_details "★ Example: A ‘margin’ with an ‘export’ in the middle" :title-color orange
  An HTML “marquee”
  #+begin_tooltip
@@ -3712,106 +4083,14 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
-** Boxed Text —Calling out super duper info
-   :PROPERTIES:
-   :CUSTOM_ID: Boxed-Text
-   :END:
+** Parallel ---/Place ideas side-by-side, possibly with a separator/
+  :PROPERTIES:
+  :CUSTOM_ID: Parallel
+  :END:
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-   osbe-example:~/org-special-block-extras/tests/box.yaml
-
-*** Three demos of  [[doc:org-block/box][box]]
- #+latex_header: \newunicodechar{ᵒ}{\ensuremath{{}^o}}
- #+html: <br>
- #+begin_box Example: A super boring observation presented obscurely :background-color blue
-
- If you start walking ---say, counterclockwise--- along the unit circle from its
- right-most point and walk 180ᵒ, then you will be at its left-most point. That
- is, \[ e^{i · \pi} \;=\; - 1 \]
-
- #+end_box
-
- #+html: <br>
- Or, with just the header option ~:shadow t~ …
- #+begin_box Example: A super boring observation presented obscurely :shadow t
-
- If you start walking ---say, counterclockwise--- along the unit circle from its
- right-most point and walk 180ᵒ, then you will be at its left-most point. That
- is, \[ e^{i · \pi} \;=\; - 1 \]
-
- #+end_box
-
- #+html: <br>
-Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
-:deep-right orange)~ …
- #+begin_box Example: A super boring observation presented obscurely :background-color blue :shadow (:left "inset cyan" :right "inset pink" :deep-right orange)
-
- If you start walking ---say, counterclockwise--- along the unit circle from its
- right-most point and walk 180ᵒ, then you will be at its left-most point. That
- is, \[ e^{i · \pi} \;=\; - 1 \]
-
- #+end_box
-
- For further header options, see the documentation of [[doc:org-block/box][box]].
-
-*** Subtle Colours
- #+html: <br>
- In the first example above, /how did we get that nice light blue? What
- is its HTML code?/ That's not something I care to remember, so let's
- make a handy dandy utility … Now when users request a colour to ~box~
- their text, it will be a ‘subtle colour’ ;-)
-
- #+begin_details Implementation for Subtle Colours
- #+begin_src emacs-lisp -r -n
-(defun org-subtle-colors (c)
-  "HTML codes for common colours.
-
-Names are very rough approximates.
-
-   Translations from: https://www.december.com/html/spec/softhues.html"
-  (pcase c
-    ("teal"    "#99FFCC") ;; close to aqua
-    ("brown"   "#CCCC99") ;; close to moss
-    ("gray"    "#CCCCCC")
-    ("purple"  "#CCCCFF")
-    ("lime"    "#CCFF99") ;; brighter than ‘green’
-    ("green"   "#CCFFCC")
-    ("blue"    "#CCFFFF")
-    ("orange"  "#FFCC99")
-    ("peach"   "#FFCCCC")
-    ("pink"    "#FFCCFF")
-    ("yellow"  "#FFFF99")
-    ("custard" "#FFFFCC") ;; paler than ‘yellow’
-    (c c)
-  ))
- #+end_src
-
-To use these colour names, you will need the following incantations in
-your Org file.
-
-#+begin_src org :tangle no
-#+latex_header: \usepackage{xcolor}
-
-#+latex_header: \definecolor{teal}    {HTML}{99FFCC}
-#+latex_header: \definecolor{brown}   {HTML}{CCCC99}
-#+latex_header: \definecolor{gray}    {HTML}{CCCCCC}
-#+latex_header: \definecolor{purple}  {HTML}{CCCCFF}
-#+latex_header: \definecolor{lime}    {HTML}{CCFF99}
-#+latex_header: \definecolor{green}   {HTML}{CCFFCC}
-#+latex_header: \definecolor{blue}    {HTML}{CCFFFF}
-#+latex_header: \definecolor{orange}  {HTML}{FFCC99}
-#+latex_header: \definecolor{peach}   {HTML}{FFCCCC}
-#+latex_header: \definecolor{pink}{HTML}{FFCCFF}
-#+latex_header: \definecolor{yellow}  {HTML}{FFFF99}
-#+latex_header: \definecolor{custard}{HTML}{FFFFCC}
-
-#+latex_header: \definecolor{cyan}{HTML}{00FFFF}
-#+end_src
-
-In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
-src_latex[:exports code]{\color{blue}} is a nightmare. )
- #+end_details
-
+    # (setq osbe-example-cache (make-hash-table :test 'equal))
+     osbe-example:~/org-special-block-extras/tests/parallel.yaml
+  
 **   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
    :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
@@ -3859,182 +4138,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
   osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
   
-** Nice Keystroke Renditions: kbd:C-h_h
-  :PROPERTIES:
-  :CUSTOM_ID: kbd:nice-keystroke-renditions
-  :END:
-  
-Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
-aesthetically pleasing way, such as [[kbd:C-u 80 -]] to insert 80 dashes,
-or kbd:C-c_C-e_h_o to export an Org-mode file to HTML,
-or the useful <kbd:M-s h .>.
 
-- ~kbd:𝒳~ will show a tooltip defining 𝒳, as an Emacs Lisp function, if possible.
-  For example, ~kbd:C-h_h~ is kbd:C-h_h; and likewise =<kbd:M-s h .>= is <kbd:M-s h
-  .> (we need to use ~<...>~ since punctuation is not picked up as part of link
-  labels).  In contrast, ~kbd:nope~ renders as kbd:nope /without/ a tooltip (nor a
-  red border).
-
-  You can also supply explicit tooltip description: =[[kbd:key
-  sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
-  the key sequence in nice key font along with a tooltip explaining it.
-
-
-# To make a screenshot, add the following to the above :PROPERTIES: drawer.
-#   :UNNUMBERED: t
-#
-#+attr_html: :width 80% :height 80%s
-[[file:./images/kbd.png]]
-
-#+begin_details Implementation
-
-#+begin_src emacs-lisp
-(org-deflink kbd
-  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
-
-Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
-
-Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
-
-Examples:
-    [[kbd:C-x C-s]]
-  ≈ <kbd: C-x C-s>
-  ≈ kbd:C-x_C-s"
-  [:display 'full
-   :let (the-label  (s-trim (s-replace "_" " " o-label))
-         lisp-func  (ignore-errors (cl-second (help--analyze-key (kbd the-label) the-label)))
-         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
-         tooltip?   (not (equal tooltip ""))
-         style      (if tooltip? "border-color: red" "")
-         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
-   ;; o-description is always nil when it comes to deciding the :face.
-   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
-   :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)]
-  (if (equal o-backend 'latex)
-      (format "\\texttt{%s}" the-label)
-    (if tooltip?
-        ;; The style=⋯ is to remove the underlining caused by <abbr>.
-        (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
-                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
-                keystrokes)
-      keystrokes)))
-#+end_src
-
-The following styling rule is used to make the keystrokes displayed nicely.
-#+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-  (defvar org--ospe-kbd-html-setup nil
-    "Has the necessary keyboard styling HTML beeen added?")
-
-  (unless org--ospe-kbd-html-setup
-    (setq org--ospe-kbd-html-setup t))
-  (when org-special-block-add-html-extra
-   (setq org-html-head-extra
-    (concat org-html-head-extra
-     "
-  <style>
-  /* From: https://endlessparentheses.com/public/css/endless.css */
-  /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
-  kbd
-  {
-    -moz-border-radius: 6px;
-    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    -webkit-border-radius: 6px;
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    background-color: #f7f7f7;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-    color: #333;
-    display: inline-block;
-    font-family: 'Droid Sans Mono', monospace;
-    font-size: 80%;
-    font-weight: normal;
-    line-height: inherit;
-    margin: 0 .1em;
-    padding: .08em .4em;
-    text-shadow: 0 1px 0 #fff;
-    word-spacing: -4px;
-
-    box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-  }
-  </style>")))
-#+end_src
-
-Let's have some sanity tests...
-#+begin_src emacs-lisp :tangle tests.el :comments link
-(deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
-  [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
-
-(deftest "[[It]] becomes <kbd> tags"
-  [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-(deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
-  [kbd angle-org-links]
-  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
-
-;; FIXME: uh-oh!
-(when nil
-(deftest "It has a tooltip documenting the underlying Lisp function, when possible"
-  [kbd tooltip]
-  (⇝ (⟰ "<kbd: M-s h .>")
-
-     "<abbr class=\"tooltip\""
-     (* anything)
-     "Highlight each instance of the symbol at point.<br>Uses the
-     next face from ‘hi-lock-face-defaults’ without
-     prompting,<br>unless you use a prefix argument.<br>Uses
-     ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol
-     at point.<br><br>This uses Font lock mode if it is enabled;
-     otherwise it uses overlays,<br>in which case the
-     highlighting will not update as you type.&emsp;The
-     Font<br>Lock mode is considered ''enabled'' in a buffer if
-     its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return
-     non-nil, which means<br>the major mode specifies support for
-     Font Lock."
-     (* anything)
-     "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
-#+end_src
-
-#+end_details
-
-:Hide:
-#+HTML: <style>
-#+HTML: kbd
-#+HTML: {
-#+HTML:   -moz-border-radius: 6px;
-#+HTML:   -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   -webkit-border-radius: 6px;
-#+HTML:   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   background-color: #f7f7f7;
-#+HTML:   border: 1px solid #ccc;
-#+HTML:   border-radius: 6px;
-#+HTML:   box-shadow: 0 1px 0 rgba(0,0,0,0.2),0 0 0 2px #fff inset;
-#+HTML:   color: #333;
-#+HTML:   display: inline-block;
-#+HTML:   font-family: 'Droid Sans Mono', monospace;
-#+HTML:   font-size: 80%;
-#+HTML:   font-weight: normal;
-#+HTML:   line-height: inherit;
-#+HTML:   margin: 0 .1em;
-#+HTML:   padding: .08em .4em;
-#+HTML:   text-shadow: 0 1px 0 #fff;
-#+HTML:   word-spacing: -4px;
-#+HTML:
-#+HTML:   box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
-#+HTML: }
-#+HTML: </style>
-#+HTML:
-:End:
-** Parallel ---/Place ideas side-by-side, possibly with a separator/
-  :PROPERTIES:
-  :CUSTOM_ID: Parallel
-  :END:
-
-    # (setq osbe-example-cache (make-hash-table :test 'equal))
-     osbe-example:~/org-special-block-extras/tests/parallel.yaml
-  
 * COMMENT Colours
   :PROPERTIES:
   :CUSTOM_ID: Colours
@@ -5785,7 +5889,7 @@ wish to use; e.g., badge:|1d8348|1d8348
   @@html: </details>@@
 
 # +end_org-demo
-** End omitting from LaTeX output                                            :ignore:
+** End omitting from LaTeX output                                    :ignore:
    :PROPERTIES:
    :CUSTOM_ID: End-omitting-from-LaTeX-output
    :END:
@@ -5799,7 +5903,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
 may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
-* Tooltips for Glossaries, Dictionaries, and Documentation
+* COMMENT Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
   :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
   :END:
@@ -5822,7 +5926,7 @@ may be useful to colour the =|=-separated fields of a badge link.
 # additional explanation; for that we provide [[doc:org-block/margin][margin]].
 
 
-** Intro, motivating examples :ignore:
+** Intro, motivating examples                                        :ignore:
    :PROPERTIES:
    :CUSTOM_ID: COMMENT-Intro
    :END:
@@ -7682,8 +7786,8 @@ z
 #+end_src
 #+end_details
 
-* TODO COMMENT How Do I make my own block and link types?
-* TODO [#A] COMMENT README improvements
+* COMMENT How Do I make my own block and link types?
+* [#A] COMMENT README improvements
 
 Add images for the “osbe-example” results and link to the html,
 since otherwise things don't look as nice in a markdown readme file.
@@ -7756,7 +7860,7 @@ After 372 pages, it was shown that $1 + 1 = 2$
 It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 #+end_theorem
 
-* TODO [#A] COMMENT Summary
+* [#A] COMMENT Summary
   :PROPERTIES:
   :CUSTOM_ID: Summary
   :END:
@@ -8113,7 +8217,7 @@ Other cool stuff...
 #+attr_latex: :width 100px
 [[file:images/marginal_remarks.png]]
 
-** COMMENT Live MWE :ignore:
+** COMMENT Live MWE                                                  :ignore:
    :PROPERTIES:
    :CUSTOM_ID: Live-MWE
    :END:
@@ -8311,7 +8415,7 @@ https://github.com/riscy/melpazoid
 
 *Then* use =grip= to see that this looks reasonable.
 
-* Glossary                                                           :ignore:
+* COMMENT Glossary                                                   :ignore:
   :PROPERTIES:
   :CUSTOM_ID: Glossary
   :END:

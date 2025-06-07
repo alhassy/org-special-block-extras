@@ -1,38 +1,243 @@
-<h1> A unified interface for Emacs' Org-mode block & link types (•̀ᴗ•́)و </h1>
 
-<h2> Which is used to obtain 30 new custom blocks and 34 link types ¯\_(ツ)_/¯ </h2>
+# Table of Contents
 
-<div align="center">
+1.  [🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`](#org943a769)
+    1.  [🎁  What Does It Do?](#org51fbeda)
+2.  [Block and link types provided by this package](#org03f1414)
+    1.  [Nice Keystroke Renditions: kbd:C-h\_h](#org20db2d7)
+    2.  [Folded Details &#x2014;Let the user see stuff only if they're interested](#orga63cf41)
+    3.  [Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin](#orgda77e6c)
+    4.  [Parallel ---*Place ideas side-by-side, possibly with a separator*](#orgefedc89)
+    5.  [Boxed Text —Calling out super duper info](#org750e046)
+    6.  [  `latex-definitions` for hiding LaTeX declarations in HTML](#orgcb3955a)
 
-<div class="org-center">
-<p>
-
-</p>
-
-
-
+<style>
+/* Using source blocks “C” as alias for Org */
+pre.src-C:before { content: 'Org-mode Example!'; }
+/* Execute this for alias: (add-to-list 'org-src-lang-modes '("org" . C)) */
+</style>
 
 
-<a href="https://github.com/alhassy/org-special-block-extras/blob/master/tests.el">
-<img src="https://github.com/alhassy/org-special-block-extras/actions/workflows/main.yml/badge.svg"></a>
+<a id="org943a769"></a>
+
+# 🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`
+
+**Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
+exports?** `org-special-block-extras` is your magical toolkit for
+creating *custom Org-mode blocks* and *links* that work seamlessly
+across backends &#x2014;without diving into the dark arts of raw HTML or
+LaTeX!
 
 
+<a id="org51fbeda"></a>
+
+## 🎁  What Does It Do?
+
+-   **🎨 Style with ease** &#x2014; add colors, badges, tooltips (from a dictionary, Emacs
+    Help, or custom file), keystroke notations, inline editorial comments, or even
+    colourful ASCII cows with fortune cookies.
+-   **📚 Glossary support** &#x2014; embed hoverable documentation with `doc:` links and auto-generated glossaries.
+-   **📦 Add interactive content**: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
+-   <img src="https://img.shields.io/badge/Hello-World-nil?logo=nil"> Use **badge-style links** to embed GitHub stars, Reddit subs, or custom  project metadata via `shields.io`.
+-   **🛠 Use `org-defblock` and `org-deflink` macros** &#x2014; familiar `defun`-like syntax lets you
+    define custom Org behaviours.
+    -   Create powerful custom blocks with the `defblock` macro: Define a block once
+        and export to LaTeX *and* HTML effortlessly. With *header-args* support like
+        like `:color red :signoff "Thanks!"` for locally customised exports.
+    -   Use `org-deflink` to create custom links using a syntax similar to `defun`.
+
+---
+
+**🧱 Ready-to-Use Custom Blocks**
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
-<p>
-<a href="https://www.gnu.org/software/emacs"><img src="https://img.shields.io/badge/Emacs-27-green?logo=gnu-emacs"></a>
-<a href="https://orgmode.org"><img src="https://img.shields.io/badge/Org-9.4-blue?logo=gnu"></a>
-</p>
+<colgroup>
+<col  class="org-left" />
 
-<span>
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Block</th>
+<th scope="col" class="org-left">Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left"><code>details</code></td>
+<td class="org-left">Foldable sections &#x2014; perfect for hiding spoilers, proofs, or long explanations.</td>
+</tr>
 
-<p>
-<a href="https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/badge/org--special--block--extras-4.0-informational?logo=Gnu-Emacs"></a>
-</p>
+<tr>
+<td class="org-left"><code>parallel</code></td>
+<td class="org-left">Display content in multiple columns &#x2014; great for comparisons or saving space.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>margin</code></td>
+<td class="org-left">Add subtle explanatory tooltips or side remarks &#x2014; delightful for scholarly writing.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>box</code></td>
+<td class="org-left">Emphasize content with nicely styled borders &#x2014; great for callouts or side notes.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>spoiler</code></td>
+<td class="org-left">Hide content visually until the reader chooses to see it &#x2014; useful in teaching.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>tree</code></td>
+<td class="org-left">Display proof trees and logical derivations &#x2014; fantastic for formal logic.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>rename</code></td>
+<td class="org-left">Automated text substitution &#x2014; great for translation or glossary effects.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>stutter</code></td>
+<td class="org-left">Repeat content multiple times &#x2014; e.g., for emphasis or stylistic flair.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>solution</code></td>
+<td class="org-left">Reveal answers in stages &#x2014; perfect for educational content.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>org-demo</code></td>
+<td class="org-left">Show Org markup alongside its rendered result &#x2014; ideal for tutorials.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>latex-definitions</code></td>
+<td class="org-left">Hide LaTeX-only declarations from HTML &#x2014; keep your source clean.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>calc</code></td>
+<td class="org-left">Step-by-step equational reasoning &#x2014; beautiful for math walkthroughs.</td>
+</tr>
+</tbody>
+</table>
+
+---
+
+**Ready-to-Use Custom Links**
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Link</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left"><code>doc:label</code></td>
+<td class="org-left">Glossary/dictionary tooltips &#x2014;link to local or global explanations; e.g., <abbr class="tooltip" title="The Common Lisp ‘loop’ macro.<br>Valid clauses include:<br>&emsp;For clauses:<br>&emsp;&emsp;for VAR from/upfrom/downfrom EXPR1 to/upto/downto/above/below EXPR2<br>&emsp;&emsp;&emsp;&emsp;[by EXPR3]<br>&emsp;&emsp;for VAR = EXPR1 then EXPR2<br>&emsp;&emsp;for VAR in/on/in-ref LIST [by FUNC]<br>&emsp;&emsp;for VAR across/across-ref ARRAY<br>&emsp;&emsp;for VAR being:<br>&emsp;&emsp;&emsp;the elements of/of-ref SEQUENCE [using (index VAR2)]<br>&emsp;&emsp;&emsp;the symbols [of OBARRAY]<br>&emsp;&emsp;&emsp;the hash-keys/hash-values of HASH-TABLE [using (hash-values/hash-keys V2)]<br>&emsp;&emsp;&emsp;the key-codes/key-bindings/key-seqs of KEYMAP [using (key-bindings VAR2)]<br>&emsp;&emsp;&emsp;the overlays/intervals [of BUFFER] [from POS1] [to POS2]<br>&emsp;&emsp;&emsp;the frames/buffers<br>&emsp;&emsp;&emsp;the windows [of FRAME]<br>&emsp;Iteration clauses:<br>&emsp;&emsp;repeat INTEGER<br>&emsp;&emsp;while/until/always/never/thereis CONDITION<br>&emsp;Accumulation clauses:<br>&emsp;&emsp;collect/append/nconc/concat/vconcat/count/sum/maximize/minimize FORM<br>&emsp;&emsp;&emsp;[into VAR]<br>&emsp;Miscellaneous clauses:<br>&emsp;&emsp;with VAR = INIT<br>&emsp;&emsp;if/when/unless COND CLAUSE [and CLAUSE]... else CLAUSE [and CLAUSE...]<br>&emsp;&emsp;named NAME<br>&emsp;&emsp;initially/finally [do] EXPRS...<br>&emsp;&emsp;do EXPRS...<br>&emsp;&emsp;[finally] return EXPR<br><br>For more details, see Info node ‘(cl)Loop Facility’.<br><br>(fn CLAUSE...)">cl-loop</abbr></td>
+</tr>
+
+<tr>
+<td class="org-left"><code>kbd:</code></td>
+<td class="org-left">Stylized keybindings with tooltips &#x2014; e.g., <code>kbd:C-x_C-e</code>.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>color:</code> or <code>red:</code></td>
+<td class="org-left">Inline text colouring &#x2014; supports both names and hex codes.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>html-export-style:</code></td>
+<td class="org-left">Pick a visual theme for HTML exports &#x2014; one click, new style.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>badge:</code></td>
+<td class="org-left">Embed project badges &#x2014; e.g., GitHub stars, Reddit subs, versioning.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>fortune:</code></td>
+<td class="org-left">Insert ASCII animals saying jokes or phrases &#x2014; joy in your docs!</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>octoicon:</code></td>
+<td class="org-left">GitHub-style icons &#x2014; for styling and linking like a pro.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>link-here:</code></td>
+<td class="org-left">Local anchors &#x2014; create navigable sections anywhere.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>show:</code></td>
+<td class="org-left">Show a variable value &#x2014; dynamically insert content like your name or version.</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>elisp:</code></td>
+<td class="org-left">Make clickable actions &#x2014; buttons that run Emacs Lisp.</td>
+</tr>
+</tbody>
+</table>
+
+---
+
+💡 Ideal For
+
+-   🧑‍🏫 Educators building interactive lessons and glossaries
+-   🧑‍💻 Developers documenting APIs with style
+-   📚 Writers crafting scholarly or explorable documents
+-   ✨ Emacsers who want rich export without leaving Org-mode
+-   ✏️ Bloggers wanting powerful interactivity
+    -   This is *the* reason I made this package.
+-   1️⃣ Anyone who wants to keep Org-mode as the single source of truth for <span style="color:pink;">rich</span>
+    exports
+
+🪄 **Just load the package, write in Org, and let `defblock` handle the
+rest.** Now your Org-mode documents are not just structured &#x2014;they're
+*spectacular*.
+
+- Use: “M-x org-special-block-extras-mode” to turn it on/off
+
+---
+
+**Write rich Org-mode documents &#x2014; one source, many formats.**
+The `org-special-block-extras` package empowers you to define and use
+*custom blocks* and *links* that make your Org files export beautifully
+to both **HTML and LaTeX**, *without ever writing raw HTML or LaTeX
+again*.
+
+
+--------------------------------------------------------------------------------0
+
+See the [HTML Article](https://alhassy.github.io/org-special-block-extras)
+for demos and detailed uses of the block and link types provided by this package.
+
+(An outdated [PDF
+Article](https://alhassy.github.io/org-special-block-extras/index.pdf) demos
+LaTeX export.)
+
 
 <a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
 
-</span>
 
 <p>
 <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
@@ -41,13 +246,7 @@
 <a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green?logo=nil"></a>
 </p>
 
-<p>
-<a href="https://alhassy.github.io/"><img src="https://img.shields.io/badge/author-musa_al--hassy-purple?logo=nintendo-3ds"></a>
 <a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
-</p>
-
-<p>
-<a href="https://alhassy.github.io/about"><img src="https://img.shields.io/badge/Hire-me-success?logo=nil"></a>
 </p>
 
 <p>
@@ -55,114 +254,15 @@
 </p>
 </div>
 
-<div class="org-center">
-<p>
-<b>Abstract</b>
-</p>
-</div>
-
-> The aim is to write something once using Org-mode markup
-> then generate the markup for multiple backends.
-> That is, ***write once, generate many!***
->
-> In particular, we are concerned with *‘custom’, or ‘special’, blocks* which
-> delimit how a particular region of text is supposed to be formatted according to
-> the possible export backends.  In some sense, special blocks are meta-blocks.
-> Rather than writing text in, say, LaTeX environments using LaTeX commands or in
-> HTML `div`'s using HTML tags, we promote using Org-mode markup in special blocks
-> &#x2014;Org markup cannot be used explicitly within HTML or LaTeX environments.
->
-> *Special blocks*, like `centre` and `quote`, allow us to use Org-mode as the primary
-> interface regardless of whether the final result is an HTML or PDF article;
-> sometime we need to make our own special blocks to avoid a duplication of
-> effort.  However, this can be difficult and may require familiarity with
-> relatively advanced ELisp concepts, such as macros and hooks; as such, users may
-> not be willing to put in the time and instead use ad-hoc solutions.
->
-> We present a new macro, [defblock](org-special-block-extras--defblock), which is similar in-spirit to Lisp's standard
-> <defun> except that where the latter defines functions, ours defines new
-> special blocks for Emacs' Org-mode &#x2014;as well as, simultaneously, defining new
-> Org link types. Besides the macro, the primary contribution of this effort is an
-> interface for special blocks that *admits* arguments and is familar to Org users
-> &#x2014;namely, we ‘try to reuse’ the familiar `src`-block interface, including
-> header-args, but for special blocks.
->
-> It is hoped that the ease of creating custom special blocks will be a gateway
-> for many Emacs users to start using Lisp.
->
-> **
->
-> <span style="color:green;">
->
-> A 5-page PDF covering ELisp fundamentals
->
-> </span>
->
-> ** can be found **[here](https://alhassy.github.io/ElispCheatSheet/CheatSheet.pdf)**.
->
-> This article is featured in EmacsConf2020, with slides [here](https://alhassy.github.io/org-special-block-extras/emacs-conf-2020):
-> No pictures, instead we use this system to make the  slides
-> have a variety of styling information; i.e., we write Org
-> and the result looks nice. “Look ma, no HTML required!”
+This article is featured in EmacsConf2020, with slides [here](https://alhassy.github.io/org-special-block-extras/emacs-conf-2020):
+ No pictures, instead we use this system to make the  slides
+ have a variety of styling information; i.e., we write Org
+ and the result looks nice. “Look ma, no HTML required!”
 
 ![img](images/minimal-working-example-multiforms.png "Write in Emacs using Org-mode, export beautifully to HTML or LaTeX")
 
-<!--
 
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
-> Installation instructions are .
-
--->
-
-
-# Table of Contents
-
-1.  [Installation Instructions](#Installation-Instructions)
-2.  [Minimal working example](#Minimal-working-example)
-3.  [Bye!](#Bye)
-
-> The full article may be read as a [PDF](https://alhassy.github.io/org-special-block-extras/index.pdf) or as [HTML](https://alhassy.github.io/org-special-block-extras) &#x2014;or visit the [repo](https://github.com/alhassy/org-special-block-extras).
-> Installation instructions are .
-
-</div>
-
-
-<a id="Installation-Instructions"></a>
-
-# Installation Instructions
-
-Manually or using [quelpa](https://github.com/alhassy/emacs.d#installing-emacs-packages-directly-from-source):
-
-    ;; ⟨0⟩ Download the org-special-block-extras.el file manually or using quelpa
-    (quelpa '(org-special-block-extras :fetcher github :repo
-    "alhassy/org-special-block-extras"))
-
-    ;; ⟨1⟩ Have this always active in Org buffers
-    (add-hook #'org-mode-hook #'org-special-block-extras-mode)
-
-    ;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
-
-**Or** with [use-package](https://github.com/alhassy/emacs.d#use-package-the-start-of-initel):
-
-    (use-package org-special-block-extras
-      :ensure t
-      :hook (org-mode . org-special-block-extras-mode)
-      ;; All relevant Lisp functions are prefixed ‘o-’; e.g., `o-docs-insert'.
-      :custom
-        (o-docs-libraries
-         '("~/org-special-block-extras/documentation.org")
-         "The places where I keep my ‘#+documentation’")))
-
-Then, provide support for a new type of special block, say re-using the `src`
-blocks that, say, folds up all such blocks in HTML export, by declaring the
-following.
-
-    (o-defblock src (lang nil) (title nil exports nil file nil)
-      "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
-    If a block has a ‘:title’, use that to title the ‘<details>’."
-      (format "<details> <summary> %s </summary> <pre> %s </pre></details>"
-              (or title (concat "Details; " lang))
-              raw-contents))
+--------------------------------------------------------------------------------
 
 
 <a id="Minimal-working-example"></a>
@@ -207,9 +307,6 @@ The following example showcases the prominent features of this library.
 Here is what it looks like as HTML (left) and LaTeX (right):
 
 ![img](images/minimal-working-example.png)
-
-The above section, , presents a few puzzles to get you
-comfortable with `defblock` ;-)
 
 
 <a id="Bye"></a>

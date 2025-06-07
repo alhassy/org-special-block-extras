@@ -194,33 +194,33 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
   (defun hs-hide-all () t) ;; HACK. PROBLEM: “hiding all blocks”, is this hide-show-mode?
   (map-into
    ;; Temporarily redefine gensym, so tests are deterministic
-(let ((seed 0))
-(cl-letf (((symbol-function 'gensym)
-           (lambda () (format "g%s" (incf seed)))))
-  (list
-    (cons 'html
-	  (with-temp-buffer
-	    (org-special-block-extras-mode)
-            (insert (org-export-string-as (format "\n%s\n" input) 'html :body-only-please))
-	    (unless no-prettier
-		 (-let [format-all-formatters '(("HTML" prettier))]
-		   ;; TODO: When all my osbe e2e tests pass, then I should remove this ignore-errors.
-		   ;; If something doesn't format, then that means it's likely invalid and should error.
-		   ;; ignore-errors for unclosed <p> tags and other silly html errors
-		   (html-mode) (ignore-errors (format-all-buffer))))	   
-            (s-trim (buffer-string))))
-    ;; Try to export, if it fails then just get the err msg.
-    (cons 'latex
-	  (condition-case err
-	      (with-temp-buffer
-		(org-special-block-extras-mode)
-		(insert (org-export-string-as (format "\n%s\n" input) 'latex :body-only-please))
-		(unless no-prettier
-		  (-let [format-all-formatters '(("LaTeX" latexindent))] ;; !! brew install latexindent
-		    (latex-mode) (format-all-buffer)))
-		(s-trim (buffer-string)))
-	    (error (format "🚫 The LaTex backend is intentionally unmaintained.\n🫠 Whoops, there seems to be an error: \n %S" err)))))))
-'hash-table))
+   (let ((seed 0))
+     (cl-letf (((symbol-function 'gensym)
+                (lambda () (format "g%s" (cl-incf seed)))))
+       (list
+        (cons 'html
+	          (with-temp-buffer
+	            (org-special-block-extras-mode)
+                (insert (org-export-string-as (format "\n%s\n" input) 'html :body-only-please))
+	            (unless no-prettier
+		          (-let [format-all-formatters '(("HTML" prettier))]
+		            ;; TODO: When all my osbe e2e tests pass, then I should remove this ignore-errors.
+		            ;; If something doesn't format, then that means it's likely invalid and should error.
+		            ;; ignore-errors for unclosed <p> tags and other silly html errors
+		            (html-mode) (ignore-errors (format-all-buffer))))	   
+                (s-trim (buffer-string))))
+        ;; Try to export, if it fails then just get the err msg.
+        (cons 'latex
+	          (condition-case err
+	              (with-temp-buffer
+		            (org-special-block-extras-mode)
+		            (insert (org-export-string-as (format "\n%s\n" input) 'latex :body-only-please))
+		            (unless no-prettier
+		              (-let [format-all-formatters '(("LaTeX" latexindent))] ;; !! brew install latexindent
+		                (latex-mode) (format-all-buffer)))
+		            (s-trim (buffer-string)))
+	            (error (format "🚫 The LaTex backend is intentionally unmaintained.\n🫠 Whoops, there seems to be an error: \n %S" err)))))))
+   'hash-table))
 
 
 (defun my/hash-get-or-compute (hash key compute-fn)
@@ -261,8 +261,8 @@ my liking, then move the `input' to the relevant yaml file."
 
 
 (defun e2e--get-definition (block-name)
-  (save-excursion ;; TODO: Why isn't this working?
-    (switch-to-buffer (find-buffer-visiting "~/org-special-block-extras/org-special-block-extras.el"))
+  (save-excursion
+    (switch-to-buffer (find-file "~/org-special-block-extras/org-special-block-extras.el"))
     (beginning-of-buffer)
     (search-forward (format "defblock %s" block-name))
     (-let [result (substring-no-properties (thing-at-point 'defun))]
