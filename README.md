@@ -1,25 +1,4 @@
 
-# Table of Contents
-
-1.  [🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`](#org943a769)
-    1.  [🎁  What Does It Do?](#org51fbeda)
-2.  [Block and link types provided by this package](#org03f1414)
-    1.  [Nice Keystroke Renditions: kbd:C-h\_h](#org20db2d7)
-    2.  [Folded Details &#x2014;Let the user see stuff only if they're interested](#orga63cf41)
-    3.  [Remark —Inline footnotes, viz HTML tooltips and LaTeX notes in the margin](#orgda77e6c)
-    4.  [Parallel ---*Place ideas side-by-side, possibly with a separator*](#orgefedc89)
-    5.  [Boxed Text —Calling out super duper info](#org750e046)
-    6.  [  `latex-definitions` for hiding LaTeX declarations in HTML](#orgcb3955a)
-
-<style>
-/* Using source blocks “C” as alias for Org */
-pre.src-C:before { content: 'Org-mode Example!'; }
-/* Execute this for alias: (add-to-list 'org-src-lang-modes '("org" . C)) */
-</style>
-
-
-<a id="org943a769"></a>
-
 # 🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`
 
 **Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
@@ -28,8 +7,9 @@ creating *custom Org-mode blocks* and *links* that work seamlessly
 across backends &#x2014;without diving into the dark arts of raw HTML or
 LaTeX!
 
-
-<a id="org51fbeda"></a>
+<a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
+<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
+<a href="https://youtu.be/BQdNhtJSbqk"><img src="https://img.shields.io/badge/EmacsConf-2020-informational?logo=youtube"></a>
 
 ## 🎁  What Does It Do?
 
@@ -235,24 +215,7 @@ for demos and detailed uses of the block and link types provided by this package
 Article](https://alhassy.github.io/org-special-block-extras/index.pdf) demos
 LaTeX export.)
 
-
-<a href="https://melpa.org/#/org-special-block-extras"><img alt="MELPA" src="https://melpa.org/packages/org-special-block-extras-badge.svg"/></a>
-
-
-<p>
-<a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img src="https://img.shields.io/badge/license-GNU_3-informational?logo=read-the-docs"></a>
-<a href="https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like"><img src="https://img.shields.io/badge/docs-literate-success?logo=read-the-docs"></a>
-<a href="https://twitter.com/intent/tweet?text=This looks super neat (•̀ᴗ•́)و::&url=https://github.com/alhassy/org-special-block-extras"><img src="https://img.shields.io/twitter/url?url=https://github.com/alhassy/org-special-block-extras"></a>
-<a href="https://github.com/alhassy/org-special-block-extras/issues"><img src="https://img.shields.io/badge/contributions-welcome-green?logo=nil"></a>
-</p>
-
-<a href="https://www.buymeacoffee.com/alhassy"><img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee"></a>
-</p>
-
-<p>
-<a href="https://youtu.be/BQdNhtJSbqk"><img src="https://img.shields.io/badge/EmacsConf-2020-informational?logo=youtube"></a>
-</p>
-</div>
+--------------------------------------------------------------------------------
 
 This article is featured in EmacsConf2020, with slides [here](https://alhassy.github.io/org-special-block-extras/emacs-conf-2020):
  No pictures, instead we use this system to make the  slides
@@ -260,7 +223,6 @@ This article is featured in EmacsConf2020, with slides [here](https://alhassy.gi
  and the result looks nice. “Look ma, no HTML required!”
 
 ![img](images/minimal-working-example-multiforms.png "Write in Emacs using Org-mode, export beautifully to HTML or LaTeX")
-
 
 --------------------------------------------------------------------------------
 
