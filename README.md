@@ -206,7 +206,7 @@ to both **HTML and LaTeX**, *without ever writing raw HTML or LaTeX
 again*.
 
 
---------------------------------------------------------------------------------0
+--------------------------------------------------------------------------------
 
 See the [HTML Article](https://alhassy.github.io/org-special-block-extras)
 for demos and detailed uses of the block and link types provided by this package.
