@@ -1336,10 +1336,10 @@ When you click, it takes a seconds to fetch jokes; so await a moment when hoveri
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-      (editor "Editor Remark" color "black" signoff "" strong nil)
-; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
-      [:face '(:foreground "red" :weight bold)]
-      "Format CONTENTS as an first-class editor comment according to BACKEND.
+              (editor "Editor Remark" color "black" signoff "" strong nil)
+                                        ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
+              [:face '(:foreground "red" :weight bold)]
+              "Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
 with having only ‘#+replacewith:’, then the text preceding this
@@ -1352,61 +1352,46 @@ the exported COLOR of a remark is black by default and it is not
 STRONG ---i.e., bold---. There is an optional SIGNOFF message
 that is appended to the remark.
 "
-      (-let* (;; Are we in the html backend?
-        (tex? (equal backend 'latex))
+              (-let* (;; Are we in the html backend?
+                      (tex? (equal backend 'latex))
 
-              ;; fancy display style
-              (boxed (lambda (x)
-                       (if tex?
-                           (concat "\\fbox{\\bf " x "}")
-                         (concat "<span style=\"border-width:1px"
-                                 ";border-style:solid;padding:5px\">"
-                                 "<strong>" x "</strong></span>"))))
+                      ;; fancy display style
+                      (boxed (lambda (x)
+                               (if tex?
+                                   (concat "\\fbox{\\bf " x "}")
+                                 (concat "<span style=\"border-width:1px"
+                                         ";border-style:solid;padding:5px\">"
+                                         "<strong>" x "</strong></span>"))))
 
-              ;; Is this a replacement clause?
-              ((this that) (s-split "\\#\\+replacewith:" contents))
-              (replacement-clause? that) ;; There is a ‘that’
-              (replace-keyword (if tex?
-                                   "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
-              (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
-                                   ))
-              (editor (format "[%s:%s" editor
-                              (if replacement-clause?
-                                  replace-keyword
-                                "")))
-              (contents′ (if replacement-clause?
-                             (format "%s %s %s" this
-                                     (org-export (funcall boxed with-keyword))
-                                     that)
-                           contents))
+                      ;; Is this a replacement clause?
+                      ((this that) (s-split "\\#\\+replacewith:" contents))
+                      (replacement-clause? that) ;; There is a ‘that’
+                      (replace-keyword (if tex?
+                                           "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
+                      (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
+                                           ))
+                      (editor (format "[%s:%s" editor
+                                      (if replacement-clause?
+                                          replace-keyword
+                                        "")))
+                      (contents′ (if replacement-clause?
+                                     (format "%s %s %s" this
+                                             (org-export (funcall boxed with-keyword))
+                                             that)
+                                   contents))
 
-              ;; “[Editor Comment:”
-              (edcomm-begin (funcall boxed editor))
-              ;; “]”
-              (edcomm-end (funcall boxed "]")))
+                      ;; “[Editor Comment:”
+                      (edcomm-begin (funcall boxed editor))
+                      ;; “]”
+                      (edcomm-end (funcall boxed "]")))
 
-        (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
-        (if org-hide-editor-comments
-            ""
-          (format (pcase backend
-                    ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
-                    (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
-                  color edcomm-begin contents′ signoff edcomm-end))))
-
-;;;; TODO edcomm: Delete?
-(org-link-set-parameters
- "edcomm"
- :follow (lambda (_))
- :export (lambda (label description backend)
-           (org--edcomm
-            backend
-            (format ":ed:%s\n%s" label description)))
- :help-echo (lambda (_ __ position)
-              (save-excursion
-                (goto-char position)
-                (-let [(&plist :path) (cadr (org-element-context))]
-                  (format "%s made this remark" (s-upcase path)))))
- :face '(:foreground "red" :weight bold))
+                (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+                (if org-hide-editor-comments
+                    ""
+                  (format (pcase backend
+                            ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
+                            (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
+                          color edcomm-begin contents′ signoff edcomm-end))))
 
 ;;;; Color  ---Load support for 20 colour custom blocks and 20 colour link types
 
@@ -1882,7 +1867,7 @@ newlines.
                ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
                (s-replace-regexp "\\\"" "''")))
 
-;;;; Documentation
+;;;;; Documentation
 
 (org-defblock documentation
               (name (error "Documentation block: Name must be provided")
