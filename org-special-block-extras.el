@@ -63,6 +63,7 @@
 ;; https://alhassy.github.io/org-special-block-extras
 
 ;;; Code:
+;; Please use “outshine-mode” to work with this Elisp source file.
 ;;;; Imports
 
 (require 's)               ;; “The long lost Emacs string manipulation library”
@@ -635,7 +636,7 @@ Three example uses:
   (cl-assert (or (symbolp backend-type) (null backend-type)))
 
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
-        (main-arg-value (cl-second kwds))
+  (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
     ;; Unless we've already set the docs for the generic function, don't re-declare it.
     `(if ,(null body)
@@ -676,6 +677,8 @@ Three example uses:
            (org-export
             (let ((contents (org-parse raw-contents))) ,@body)))))))
 
+;;;;; org--support-special-blocks-with-args
+
 (defun org--pp-list (xs)
   "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
   When n = 0, yield the empty string “”."
@@ -703,12 +706,12 @@ BACKEND is the export back-end being used, as a symbol."
         )
     (cl-loop for blk in org--supported-blocks
              do (goto-char (point-min))
-             (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s" blk)))
+             (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s\\b" blk)))
                ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
                ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
                (setq header-start (point))
                ;; Save indentation
-               (re-search-backward (format "\\#\\+begin_%s" blk))
+               (re-search-backward (format "\\#\\+begin_%s\\b" blk))
                (setq blk-start (point))
                (setq blk-column (current-column))
                ;; actually process body
@@ -723,7 +726,7 @@ BACKEND is the export back-end being used, as a symbol."
                (setq main-arg (org--pp-list (car kwdargs)))
                (setq kwdargs (cadr kwdargs))
                (forward-line -1)
-               (re-search-forward (format "^\s*\\#\\+end_%s" blk))
+               (re-search-forward (format "^\s*\\#\\+end_%s\\b" blk))
                (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
                (kill-region blk-start (point))
                (insert (eval `(,(intern (format "org-block/%s" blk))
@@ -738,6 +741,51 @@ BACKEND is the export back-end being used, as a symbol."
                ;; the --map is so that arguments may be passed
                ;; as "this" or just ‘this’ (raw symbols)
                ))))
+
+;;;;;; Tests
+
+;; TODO Eventually relocate to a tests file
+(when nil
+
+  (require 'ert)
+  (require 'org)
+
+  (ert-deftest org--support-special-blocks-with-args/foo-block-test ()
+    (let ((org--supported-blocks '("foo")) ;; Sample supported blocks
+          (org--current-backend nil)) ;; Mocked global var
+
+      ;; A dummy handler that transforms “FOO” blocks
+      ;; (Note that OSBE would not pick this defn up if it were declared in a `cl-flet'.)
+      (defun org-block/foo (backend contents arg &rest args)  
+        (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))
+
+      ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
+      (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+      
+      (with-temp-buffer
+        (insert
+         (lf-string "#+begin_foo mainarg :x 1 :y 2
+                   This is foo block content.
+                   #+end_foo
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar
+                  "))
+        (goto-char (point-min))
+        (org--support-special-blocks-with-args 'test-backend)
+        (should (equal (s-trim (buffer-string))
+                       "FOO block (test-backend): This is foo block content.
+ [arg: mainarg] [args: (:x 1 :y 2)]
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar"
+                       )))))    
+  )
+
 
 ;;;;; header args support
 (defvar org--header-args nil
