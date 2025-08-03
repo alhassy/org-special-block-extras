@@ -63,7 +63,6 @@
 ;; https://alhassy.github.io/org-special-block-extras
 
 ;;; Code:
-
 ;;;; Imports
 
 (require 's)               ;; “The long lost Emacs string manipulation library”
@@ -2243,18 +2242,8 @@ what is required by MathJaX."
                            (s-join "\\\\")
                            (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
-;;;; TODO Theorem: Delete?
 
-(setq my/theorem-counter 0)
-
-(org-defblock theorem (title)
-  "Show block contents prefixed with “Theorem 𝒏”, where the 𝒏umbering automatically increments."
-  (format "<div class=\"theorem\"><b>Theorem %s%s.</b>&nbsp;%s</div>"
-          (cl-incf my/theorem-counter)
-          (if title (format " [“%s”]" title) "")
-          (org-parse raw-contents)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; provides clause
 
 (provide 'org-special-block-extras)
 
