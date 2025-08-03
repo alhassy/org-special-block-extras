@@ -22,6 +22,8 @@ html-export-style:solarized_light
 (load-file "./tests/e2e.el")
 (org-html-export-to-html)
 
+;; TODO Add a hook to run tests whenever I produce an export!
+
 ;; Run the next line whenever a yaml file changes.
 ;; (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #+end_src
