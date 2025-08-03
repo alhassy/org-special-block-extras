@@ -1,3 +1,55 @@
+
+(require 'ert)
+(require 'org)
+
+(ert-deftest test-org-special-block-after-point ()
+  "Test that `org-special-block-after-point' correctly parses a special block."
+  (with-temp-buffer
+    ;; Insert a sample special block
+    (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
+                        block content
+                        #+end_foo"))
+    (goto-char (point-min))
+    ;; Call the parser
+    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+           (org-special-block-after-point "foo")]
+      (should (equal name "foo"))
+      (should (equal main-arg "mainarg"))
+      (should (equal kwdargs  '(:x 1 :y 2)))
+      (should (equal contents "block content\n")))))
+
+
+(ert-deftest org--support-special-blocks-with-args/foo-block-test ()
+  (with-temp-buffer
+    ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
+    (setq org--supported-blocks '("foo") ;; Sample supported blocks
+          org--current-backend nil) ;; Mocked global var  
+    ;; A dummy handler that transforms “FOO” blocks
+    (defun org-block/foo (backend contents arg &rest args)  
+      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
+    ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
+    (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+    (insert
+     (lf-string "\t#+begin_foo mainarg :x 1 :y 2
+                   This is foo block content.
+                   #+end_foo
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar
+                  "))
+    (goto-char (point-min))
+    (org--support-special-blocks-with-args 'test-backend)
+    (should (equal (s-trim (buffer-string))
+                   "FOO block (test-backend): This is foo block content.
+ [arg: mainarg] [args: (:x 1 :y 2)]	
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar"))))
+
 ;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
@@ -10,7 +62,7 @@ The link text appears as red bold in both Emacs and in HTML export."
    :follow (message-box "%s and %s" pre current-prefix-arg)
    ]
   (format "<span style=\"color:red\"> %s </span>"
-          (upcase (or o-description o-label))))
+          )
 
 (deftest "org-deflink makes documented functions"
   [org-deflink]

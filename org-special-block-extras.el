@@ -503,8 +503,10 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
 ;;;;; org-defblock
 
-(defvar org--supported-blocks nil
-  "Which special blocks, defined with DEFBLOCK, are supported.")
+(defun org--pp-list (xs)
+  "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
+  When n = 0, yield the empty string “”."
+  (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
 
 (cl-defmacro org-defblock
     (name kwds &optional link-display docstring &rest body)
@@ -677,17 +679,100 @@ Three example uses:
            (org-export
             (let ((contents (org-parse raw-contents))) ,@body)))))))
 
+;;;;; defstruct org-special-block
+
+(defstruct org-special-block
+  "A representation of an Org special block."
+  ;; Specification of slots:
+  ;;
+  ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
+  ;;    ⟨body-start⟩ body
+  ;;    #+end_blk        
+  (name             nil :type string  :documentation "The name of the special block.")
+  (start-point      nil :type integer :documentation "Point at start of “#+begin_” line.")
+  (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
+  ;; TODO: When refactors settle down, axe this? “ header-start  =  start-point + (length name) ”
+  (header-start     nil :type integer :documentation "Point after block name; i.e., point at which block header & args begin.")
+  (main-arg         nil :type string  :documentation "First non-keyword argument")
+  (kwdargs          nil :type plist   :documentation "The key-value arguments for the header.")
+  (column           nil :type integer :documentation "Indentation of “#+begin_” line")
+  (body-start-point nil :type integer :documentation "Start of block body text")
+  (contents         nil :type string  :documentation "Body text contents"))
+
+
+(defun dash-expand:&org-special-block (key source)
+  "Destructuring which works with `org-special-block', for use with `-let'.
+
+For example,
+  
+       (let ((blk (make-org-special-block :name \"foo\" :main-arg \"hola\")))
+         (-let (((&org-special-block 'name 'main-arg) blk))
+           (message \"Block %s with arg %s\" name main-arg)))
+
+"
+  `(progn (assert (org-special-block-p ,source))
+          (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source)))
+
+
+(cl-defun org-special-block-after-point (&optional name)
+  "Parses the first `org-special-block' after point.
+
+Point should be at the start of the “#+begin_” clause.
+
+If NAME is provided, then look for that kind of block;
+otherwise look for any special block.
+
+This assumes the block is well-formed and not nested. 
+"
+  (interactive)
+  (save-excursion
+    (let (name-rx main-arg kwdargs contents end-point)
+      (setq name-rx (if name name "\\S-+"))
+      ;; Look for #+begin_⟨name⟩
+      (when (re-search-forward (format "^\\s-*#\\+begin_\\(%s\\)\\s-+\\(.*\\)$" name-rx) nil t)
+        (setq name (match-string 1))
+        ;; Parse the header line into (main-arg . keyword-args)
+        (thread-last
+          (match-string 2) ;; All args, as a string
+          (format "(%s)") ;; Wrap in list to ensure `read` parses args
+          read           ;; We now have an honest to goodness Lisp list
+          (--split-with (not (keywordp it)))
+          (setq kwdargs))
+        ;; org--pp-list is used to preserve string quoting. TODO: Simplify
+        (setq main-arg (org--pp-list (car kwdargs))
+              kwdargs (cadr kwdargs))
+        ;; Save indentation
+        ;; (re-search-backward (format "\\#\\+begin_%s\\b" blk))
+        ;; (setq blk-start (point)
+        ;;       blk-column (current-column))
+        ;; Get body
+        (let ((body-start (1+ (line-end-position))))
+          (re-search-forward (format "^\\s-*#\\+end_%s\\b" name))
+          (setq end-point (point))
+          (setq contents (buffer-substring-no-properties body-start (line-beginning-position))))
+        ;; Return structured info
+        (make-org-special-block
+         :name name
+         :start-point nil
+         :main-arg main-arg
+         :kwdargs kwdargs
+         :contents contents
+         :end-point end-point)))))
+
 ;;;;; org--support-special-blocks-with-args
 
-(defun org--pp-list (xs)
-  "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
-  When n = 0, yield the empty string “”."
-  (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
+(defvar org--supported-blocks nil
+  "Which special blocks, defined with DEFBLOCK, are supported.
+
+This is a list of strings.")
+
 
 (defvar org--current-backend nil
-  "A message-passing channel updated by
-org--support-special-blocks-with-args
-and used by DEFBLOCK.")
+  "A message-passing channel updated by `org--support-special-blocks-with-args'
+and used by `org-defblock'.
+
+This is a symbol.")
+
 
 (defun org--support-special-blocks-with-args (backend)
   "Transform supported Org special blocks into evaluated Elisp expressions.
@@ -718,17 +803,11 @@ and is bound globally to `org--current-backend' for use by block handlers.
 Note: This function mutates the current buffer."
   (setq org--current-backend backend)
   (let (
-        ;; Specification of variables:
-        ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
-        ;;    ⟨body-start⟩ body
-        ;;    #+end_blk        
         blk-start        ;; Point at start of “#+begin_” line
         header-start     ;; Point after block name; i.e., point at which block header & args begin.
-        main-arg         ;; First non-keyword argument
-        kwdargs          ;; The actual key-value arguments for the header.
         blk-column       ;; Indentation of “#+begin_” line
         body-start       ;; Start of block body text
-        blk-contents)    ;; Body text contents
+        )
     (cl-loop for blk in org--supported-blocks
              do (goto-char (point-min))
              (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
@@ -737,81 +816,24 @@ Note: This function mutates the current buffer."
                (re-search-backward (format "\\#\\+begin_%s\\b" blk))
                (setq blk-start (point)
                      blk-column (current-column))
-               ;; actually process body
-               (goto-char header-start)
-               (setq body-start (1+ (line-end-position)))
-               ;; Parse the header line into (main-arg . keyword-args)
-               (thread-last
-                 (buffer-substring-no-properties header-start (line-end-position))
-                 (format "(%s)") ;; Wrap in list to ensure `read` parses args
-                 read
-                 (--split-with (not (keywordp it)))
-                 (setq kwdargs))
-               (setq main-arg (org--pp-list (car kwdargs))
-                     kwdargs (cadr kwdargs))
-               ;; Find block end and extract contents
-               (forward-line -1)
-               (re-search-forward (format "^\\s-*\\#\\+end_%s\\b" blk))
-               (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
-               ;; Replace entire block with evaluated handler call
-               (kill-region blk-start (point))
-               (insert (eval `(,(intern (format "org-block/%s" blk))
-                               (quote ,backend)
-                               ,blk-contents
-                               ,main-arg
-                               ,@(--map (list 'quote it) kwdargs))))
-               ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
-               ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
-               ;; (indent-line-to blk-column) ;; #+end...
-               ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
-               ;; the --map is so that arguments may be passed
-               ;; as "this" or just ‘this’ (raw symbols)
-               ))))
-
-
-;;;;;; Tests
-
-;; TODO Eventually relocate to a tests file
-(when nil
-
-  (require 'ert)
-  (require 'org)
-
-  (ert-deftest org--support-special-blocks-with-args/foo-block-test ()
-    (let ((org--supported-blocks '("foo")) ;; Sample supported blocks
-          (org--current-backend nil)) ;; Mocked global var
-
-      ;; A dummy handler that transforms “FOO” blocks
-      ;; (Note that OSBE would not pick this defn up if it were declared in a `cl-flet'.)
-      (defun org-block/foo (backend contents arg &rest args)  
-        (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))
-
-      ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
-      (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
-      
-      (with-temp-buffer
-        (insert
-         (lf-string "\t#+begin_foo mainarg :x 1 :y 2
-                   This is foo block content.
-                   #+end_foo
-
-                  However, the next is left alone:
-                  #+begin_foobar mainarg :x 1 :y 2
-                  This is foobar block content.
-                  #+end_foobar
-                  "))
-        (goto-char (point-min))
-        (org--support-special-blocks-with-args 'test-backend)
-        (should (equal (s-trim (buffer-string))
-                       "FOO block (test-backend): This is foo block content.
- [arg: mainarg] [args: (:x 1 :y 2)]
-
-                  However, the next is left alone:
-                  #+begin_foobar mainarg :x 1 :y 2
-                  This is foobar block content.
-                  #+end_foobar"
-                       )))))
-  )
+               (setq _X (org-special-block-after-point blk))
+               (beginning-of-line)               
+               (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'end-point)
+                      (org-special-block-after-point blk)]
+                 ;; Replace entire block with evaluated handler call
+                 (kill-region blk-start end-point)
+                 (insert (eval `(,(intern (format "org-block/%s" name))
+                                 (quote ,backend)
+                                 ,contents
+                                 ,main-arg
+                                 ,@(--map (list 'quote it) kwdargs))))
+                 ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
+                 ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
+                 ;; (indent-line-to blk-column) ;; #+end...
+                 ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
+                 ;; the --map is so that arguments may be passed
+                 ;; as "this" or just ‘this’ (raw symbols)
+                 )))))
 
 
 ;;;;; header args support
