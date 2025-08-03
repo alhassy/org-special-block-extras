@@ -935,77 +935,6 @@ in the footnotes."
                     (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
                     contents)))))
 
-;;;; inference proof tree
-(defun org--list-to-math (lst)
-  "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
-  (cond
-   ((symbolp lst) "")
-   ((symbolp (car lst)) (org--list-to-math (cadr lst)))
-   (t
-    (-let* (((conclusion₀ children) lst)
-      ((name named?) (s-split " :: " conclusion₀))
-            (conclusion (or named? conclusion₀)))
-      (if (not children)
-          (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
-        (format "\\frac{\\displaystyle %s}{%s}%s"
-                (s-join " \\qquad "
-                        (mapcar #'org--list-to-math children))
-                conclusion
-                (if named? (format "[\\text{%s}]" name) "")))))))
-
-(org-defblock tree (main-arg)
-              "Write a proof tree using Org-lists.
-
-To get
-
-         premises₀  …   premisesₙ
-       ────────────────────────────[ reason ]
-               conclusion
-
-You type
-
-       #+begin_tree
-       + reason :: conclusion
-         - premises₀
-         - premises₁
-         ⋮
-         - premisesₙ
-       #+end_tree
-
-Where each premisesᵢ may, recursively, also have named reasons
-and (indented) child premises of its own.
-
-If there are multiple trees, they are shown one after the other.
-
-The text in this block should be considered LaTeX;
-as such, Org markup is not recognised.
-
-A proof tree, derivation, is then just a deeply nested
-itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
-the following proves P = R.
-
-  #+begin_tree
-  + Trans :: P = R
-    - P = Q(X)
-      + ✓
-    - Trans :: Q(X) = R
-      + Trans :: Q(X) = Q(Y)
-        - Refl :: Q(X) = Q(X)
-          + ✓
-        - Leibniz :: Q(X) = Q(Y)
-          + X = Y
-            - ✓
-      + Sym :: Q(Y) = R
-        - R = Q(Y)
-          - ✓
-  #+end_tree"
-              (s-join "" (--map (format "\\[%s\\]"
-                                        (org--list-to-math it))
-                                (cdr (with-temp-buffer
-                                       (insert raw-contents)
-                                       (goto-char (point-min))
-                                       (org-list-to-lisp))))))
-
 ;;;; fontification
 
 (defun osbe--block-fontifications ()
@@ -2153,7 +2082,8 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                       (org-ospe-html-export-preserving-whitespace contents)
                       marker))
 
-;;;; Calc
+;;;; Mathematical Proofs
+;;;;; Calculational style proofs
 
 (defun org--list-to-calc (lst rel hint-format NL-length color)
   "Get a result from org-list-to-lisp and render it as a calculational proof.
@@ -2242,6 +2172,76 @@ what is required by MathJaX."
                            (s-join "\\\\")
                            (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
+;;;;; inference proof tree
+(defun org--list-to-math (lst)
+  "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
+  (cond
+   ((symbolp lst) "")
+   ((symbolp (car lst)) (org--list-to-math (cadr lst)))
+   (t
+    (-let* (((conclusion₀ children) lst)
+      ((name named?) (s-split " :: " conclusion₀))
+            (conclusion (or named? conclusion₀)))
+      (if (not children)
+          (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
+        (format "\\frac{\\displaystyle %s}{%s}%s"
+                (s-join " \\qquad "
+                        (mapcar #'org--list-to-math children))
+                conclusion
+                (if named? (format "[\\text{%s}]" name) "")))))))
+
+(org-defblock tree (main-arg)
+              "Write a proof tree using Org-lists.
+
+To get
+
+         premises₀  …   premisesₙ
+       ────────────────────────────[ reason ]
+               conclusion
+
+You type
+
+       #+begin_tree
+       + reason :: conclusion
+         - premises₀
+         - premises₁
+         ⋮
+         - premisesₙ
+       #+end_tree
+
+Where each premisesᵢ may, recursively, also have named reasons
+and (indented) child premises of its own.
+
+If there are multiple trees, they are shown one after the other.
+
+The text in this block should be considered LaTeX;
+as such, Org markup is not recognised.
+
+A proof tree, derivation, is then just a deeply nested
+itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
+the following proves P = R.
+
+  #+begin_tree
+  + Trans :: P = R
+    - P = Q(X)
+      + ✓
+    - Trans :: Q(X) = R
+      + Trans :: Q(X) = Q(Y)
+        - Refl :: Q(X) = Q(X)
+          + ✓
+        - Leibniz :: Q(X) = Q(Y)
+          + X = Y
+            - ✓
+      + Sym :: Q(Y) = R
+        - R = Q(Y)
+          - ✓
+  #+end_tree"
+              (s-join "" (--map (format "\\[%s\\]"
+                                        (org--list-to-math it))
+                                (cdr (with-temp-buffer
+                                       (insert raw-contents)
+                                       (goto-char (point-min))
+                                       (org-list-to-lisp))))))
 
 ;;;; provides clause
 
