@@ -731,10 +731,7 @@ Note: This function mutates the current buffer."
         blk-contents)    ;; Body text contents
     (cl-loop for blk in org--supported-blocks
              do (goto-char (point-min))
-             (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s\\b" blk)))
-               ;; TODO: Write a test and fix this.
-               ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
-               ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
+             (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
                (setq header-start (point)) ;; End of match
                ;; Save indentation
                (re-search-backward (format "\\#\\+begin_%s\\b" blk))
@@ -754,7 +751,7 @@ Note: This function mutates the current buffer."
                      kwdargs (cadr kwdargs))
                ;; Find block end and extract contents
                (forward-line -1)
-               (re-search-forward (format "^\s*\\#\\+end_%s\\b" blk))
+               (re-search-forward (format "^\\s-*\\#\\+end_%s\\b" blk))
                (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
                ;; Replace entire block with evaluated handler call
                (kill-region blk-start (point))
@@ -794,7 +791,7 @@ Note: This function mutates the current buffer."
       
       (with-temp-buffer
         (insert
-         (lf-string "#+begin_foo mainarg :x 1 :y 2
+         (lf-string "\t#+begin_foo mainarg :x 1 :y 2
                    This is foo block content.
                    #+end_foo
 
