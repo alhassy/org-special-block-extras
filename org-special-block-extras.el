@@ -64,10 +64,6 @@
 
 ;;; Code:
 
-;; String and list manipulation libraries
-;; https://github.com/magnars/dash.el
-;; https://github.com/magnars/s.el
-
 (require 's)               ;; “The long lost Emacs string manipulation library”
 (require 'dash)            ;; “A modern list library for Emacs”
 (require 'subr-x)          ;; Extra Lisp functions; e.g., ‘when-let’.
