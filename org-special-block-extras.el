@@ -690,44 +690,73 @@ org--support-special-blocks-with-args
 and used by DEFBLOCK.")
 
 (defun org--support-special-blocks-with-args (backend)
-  "Remove all headlines in the current buffer.
-BACKEND is the export back-end being used, as a symbol."
+  "Transform supported Org special blocks into evaluated Elisp expressions.
+
+This function rewrites “#+begin_NAME” blocks (where NAME is in `org--supported-blocks')
+to the result of calling a corresponding handler function `org-block/NAME'.
+
+Each supported block may include:
+- A *main argument* (a non-keyword value immediately after the block name).
+- Any number of *keyword arguments* in the form “:key value”.
+- A body (the text between “#+begin_NAME” and “#+end_NAME”).
+
+For example:
+
+  #+begin_foo mainarg :x 1 :y 2
+  block content
+  #+end_foo
+
+Will be rewritten as:
+
+  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
+
+The result of evaluating the above expression replaces the original block.
+
+BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex),
+and is bound globally to `org--current-backend' for use by block handlers.
+
+Note: This function mutates the current buffer."
   (setq org--current-backend backend)
-  (let (blk-start        ;; The point at which the user's block begins.
-  header-start ;; The point at which the user's block header & args begin.
+  (let (
+        ;; Specification of variables:
+        ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
+        ;;    ⟨body-start⟩ body
+        ;;    #+end_blk        
+        blk-start        ;; Point at start of “#+begin_” line
+        header-start     ;; Point after block name; i.e., point at which block header & args begin.
+        main-arg         ;; First non-keyword argument
         kwdargs          ;; The actual key-value arguments for the header.
-        main-arg         ;; The first (non-keyed) value to the block.
-        blk-column       ;; The column at which the user's block begins.
-        body-start       ;; The starting line of the user's block.
-        blk-contents         ;; The actual body string.
-        ;; ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
-        ;; ⟨body-start⟩ body
-        ;; #+end_blk
-        )
+        blk-column       ;; Indentation of “#+begin_” line
+        body-start       ;; Start of block body text
+        blk-contents)    ;; Body text contents
     (cl-loop for blk in org--supported-blocks
              do (goto-char (point-min))
              (while (ignore-errors (re-search-forward (format "^\s*\\#\\+begin_%s\\b" blk)))
+               ;; TODO: Write a test and fix this.
                ;; MA: HACK: Instead of a space, it should be any non-whitespace, optionally;
                ;; otherwise it may accidentlly rewrite blocks with one being a prefix of the other!
-               (setq header-start (point))
+               (setq header-start (point)) ;; End of match
                ;; Save indentation
                (re-search-backward (format "\\#\\+begin_%s\\b" blk))
-               (setq blk-start (point))
-               (setq blk-column (current-column))
+               (setq blk-start (point)
+                     blk-column (current-column))
                ;; actually process body
                (goto-char header-start)
                (setq body-start (1+ (line-end-position)))
+               ;; Parse the header line into (main-arg . keyword-args)
                (thread-last
                  (buffer-substring-no-properties header-start (line-end-position))
-                 (format "(%s)")
+                 (format "(%s)") ;; Wrap in list to ensure `read` parses args
                  read
                  (--split-with (not (keywordp it)))
                  (setq kwdargs))
-               (setq main-arg (org--pp-list (car kwdargs)))
-               (setq kwdargs (cadr kwdargs))
+               (setq main-arg (org--pp-list (car kwdargs))
+                     kwdargs (cadr kwdargs))
+               ;; Find block end and extract contents
                (forward-line -1)
                (re-search-forward (format "^\s*\\#\\+end_%s\\b" blk))
                (setq blk-contents (buffer-substring-no-properties body-start (line-beginning-position)))
+               ;; Replace entire block with evaluated handler call
                (kill-region blk-start (point))
                (insert (eval `(,(intern (format "org-block/%s" blk))
                                (quote ,backend)
@@ -741,6 +770,7 @@ BACKEND is the export back-end being used, as a symbol."
                ;; the --map is so that arguments may be passed
                ;; as "this" or just ‘this’ (raw symbols)
                ))))
+
 
 ;;;;;; Tests
 
@@ -783,7 +813,7 @@ BACKEND is the export back-end being used, as a symbol."
                   #+begin_foobar mainarg :x 1 :y 2
                   This is foobar block content.
                   #+end_foobar"
-                       )))))    
+                       )))))
   )
 
 
