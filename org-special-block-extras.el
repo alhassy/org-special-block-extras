@@ -79,7 +79,8 @@
 
 (require 'lf)
 
-;;;; org-special-block-extras-mode autoload
+;;;; Core
+;;;;; org-special-block-extras-mode autoload
 
 (defconst org-special-block-extras-version (package-get-version))
 (defun org-special-block-extras-version ()
@@ -221,7 +222,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
     (remove-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
     )) ;; Must be on a new line; I'm using noweb-refs
 
-;;;; org-deflink
+;;;;; org-deflink
 
 ;; We define a parent keymap that org-deflink keymaps inherit from.
 ;; We also define a few useful functions that we then bind to this parent map.
@@ -499,20 +500,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
          ;; We do this to be consistent with `defun'.
          (quote ,org-link/NAME)))))
 
-;;;; melpa link
-
-(org-deflink melpa
-  "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
-We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
-  [:face '(:box "purple" :foreground "purple")]
-  (format (concat "<a href=\"https://melpa.org/#/%s\">"
-                  "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
-                  "</a>")
-          o-label
-          (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
-          (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
-
-;;;; org-defblock
+;;;;; org-defblock
 
 (defvar org--supported-blocks nil
   "Which special blocks, defined with DEFBLOCK, are supported.")
@@ -621,7 +609,7 @@ Three example uses:
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
-                                      docstring    #'stringp
+                               docstring    #'stringp
                                       body)
     `(progn
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
@@ -751,7 +739,7 @@ BACKEND is the export back-end being used, as a symbol."
                ;; as "this" or just ‘this’ (raw symbols)
                ))))
 
-;;;; header args support
+;;;;; header args support
 (defvar org--header-args nil
   "Alist (name plist) where “:main-arg” is a special plist key.
 
@@ -793,7 +781,7 @@ A full, working, example can be seen by “C-h o RET defblock”.
 ;; OR, I'd like to set this for links, which do not have argument options.
 (org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
 
-;;;; blockcall
+;;;;; blockcall
 
 (cl-defmacro org--blockcall (blk &optional main-arg &rest keyword-args-then-contents)
   "An anaologue to `funcall` but for blocks.
@@ -810,7 +798,7 @@ o-thread-blockcall.
                              ,main-arg
                              ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))
 
-;;;; thread-blockcall
+;;;;; thread-blockcall
 
 (defmacro org-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
@@ -849,7 +837,45 @@ A full example:
                                                          "\n#+end_export"
                                                          )))) result)))
 
-;;;; solution
+;;;;; fontification
+
+(defun osbe--block-fontifications ()
+  "Yields a cons list of block type and language pairs.
+
+The intent is that the block types are fontified using the given language name."
+  (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
+
+(defvar osbe--original-match-string (symbol-function 'match-string))
+
+(cl-defun osbe--match-string (n &optional str)
+ (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
+             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
+        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
+        (if (and (equal n 7) fontification)
+            fontification
+          (funcall osbe--original-match-string n str))))
+
+;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
+(advice-add 'org-fontify-meta-lines-and-blocks
+       :around (lambda (fontify &rest args)
+                      (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
+                        (apply fontify args))))
+
+;;;; Derived
+;;;;; melpa link
+
+(org-deflink melpa
+  "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
+We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
+  [:face '(:box "purple" :foreground "purple")]
+  (format (concat "<a href=\"https://melpa.org/#/%s\">"
+                  "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
+                  "</a>")
+          o-label
+          (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
+          (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
+
+;;;;; solution
 (org-defblock solution
               (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
                      really "Solution, for real")
@@ -893,13 +919,13 @@ SEP is the separator; e.g., a rule ‘<hr>'.
                     (org--blockcall parallel "2" :bar nil text)
                   (concat "#+end_export\n" text "\n#+begin_export"))))
 
-;;;; stutter
+;;;;; stutter
 (org-defblock stutter (reps 2)
               "Output the CONTENTS of the block REPS many times"
               (-let [num (if (numberp reps) reps (string-to-number reps))]
                 (s-repeat num contents)))
 
-;;;; rename
+;;;;; rename
 (org-defblock rename (list "")
               "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
@@ -910,7 +936,7 @@ In a link, no quotes are needed."
                              (s-split "," list)))
                contents))
 
-;;;; spoiler
+;;;;; spoiler
 (org-defblock spoiler (color "grey" left "((" right "))")
               "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
@@ -935,31 +961,7 @@ in the footnotes."
                     (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
                     contents)))))
 
-;;;; fontification
-
-(defun osbe--block-fontifications ()
-  "Yields a cons list of block type and language pairs.
-
-The intent is that the block types are fontified using the given language name."
-  (--map (cons (symbol-name it) "org") (-cons* 'tiny 'center 'quote  org--supported-blocks)))
-
-(defvar osbe--original-match-string (symbol-function 'match-string))
-
-(cl-defun osbe--match-string (n &optional str)
-          (let* ((block-type (string-remove-prefix "_" (funcall osbe--original-match-string 4 str)))
-             (fontification (cdr (assoc block-type (osbe--block-fontifications)))))
-        ;; (message "%s - %s -> %s" n block-type fontification) ;; For debugging.
-        (if (and (equal n 7) fontification)
-            fontification
-          (funcall osbe--original-match-string n str))))
-
-;; TODO: This should only be enabled when org-special-blocks-mode is enabled and otherwise should be removed.
-(advice-add 'org-fontify-meta-lines-and-blocks
-       :around (lambda (fontify &rest args)
-                      (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
-                        (apply fontify args))))
-
-;;;; details
+;;;;; details
 (org-defblock details (title "Details"
                              background-color "#e5f5e5" title-color "green")
               "Enclose contents in a folded up box, for HTML.
@@ -1004,7 +1006,7 @@ it may be prudent to expose more aspects as arguments.
                </details>" background-color title-color title contents))))
 
 
-;;;; box
+;;;;; box
 (org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
               "Enclose text in a box, possibly with a title.
 
@@ -1076,7 +1078,7 @@ In the future, I will likely expose more arguments."
                                                              (funcall haze X Y Z W)))))))
                              title contents)))))
 
-;;;; org-subtle-colors
+;;;;; org-subtle-colors
 (defun org-subtle-colors (c)
   "HTML codes for common colours.
 
@@ -1099,7 +1101,7 @@ Names are very rough approximates.
     (c c)
     ))
 
-;;;; parallel
+;;;;; parallel
 
 (org-defblock parallel (cols "2" bar nil)
               "Place ideas side-by-side, possibly with a separator.
@@ -1171,7 +1173,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 		                         (if (s-contains-p " " cols) "</div>" ""))))))))
 
 
-;;;; html-export-style
+;;;;; html-export-style
 
 (defvar org--html-export-style-choice "default"
   "This variable holds the link label declared by users.
@@ -1243,7 +1245,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
   ;; Result string, nothing.
   "")
 
-;;;; Fortune
+;;;;; Fortune
 
 (org-deflink fortune
   "Print an ASCII animal saying the given link's description, a fortune, or a joke.
@@ -1330,7 +1332,7 @@ When you click, it takes a seconds to fetch jokes; so await a moment when hoveri
          (format "<pre class=\"org-fortune\"> %s </pre>" it))
     result))
 
-;;;; Remark
+;;;;; Remark
 
 (defvar org-hide-editor-comments nil
   "Should editor comments be shown in the output or not.")
@@ -1393,7 +1395,7 @@ that is appended to the remark.
                             (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
                           color edcomm-begin contents′ signoff edcomm-end))))
 
-;;;; Color  ---Load support for 20 colour custom blocks and 20 colour link types
+;;;;; Color  ---Load support for 20 colour custom blocks and 20 colour link types
 
 (defvar org--ospe-colors
   '(black blue brown cyan darkgray gray green lightgray lime
@@ -1428,7 +1430,7 @@ that is appended to the remark.
                         (_ "%s"))
                       raw-contents))
 
-;;;; Kbd
+;;;;; Kbd
 (org-deflink kbd
   "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
 
@@ -1459,7 +1461,7 @@ Examples:
                 keystrokes)
       keystrokes)))
 
-;;;; Octoicon
+;;;;; Octoicon
 
 (defvar
   org--supported-octoicons
@@ -1530,7 +1532,7 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
      (cadr (assoc (intern o-label)
             org--supported-octoicons)))))
 
-;;;; Link-Here
+;;;;; Link-Here
 
 (org-deflink link-here
   "Export a link to the current location in an Org file."
@@ -1543,7 +1545,7 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
             o-label o-label (cadr (assoc 'link
                                          org--supported-octoicons)))))
 
-;;;; Badge (org-make-badge)
+;;;;; Badge (org-make-badge)
 
 (cl-defmacro org-make-badge
     (name &optional social-shields-name social-url social-shields-url )
@@ -1666,7 +1668,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
          for name′ = (or name (s-replace "/" "-" social))
          do (eval `(org-make-badge ,name′ ,social ,url)))
 
-;;;; Doc
+;;;;; Doc
 
 (defvar org--docs nil
   "An alist of (LABEL NAME DESCRIPTION) entries; our glossary.
@@ -1905,7 +1907,7 @@ That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun
               ;; Should the special block show something upon export?
               (if show (org--blockcall box name :background-color color raw-contents) ""))
 
-;;;; Show
+;;;;; Show
 
 (org-deflink show
   "Yield the value of the expression O-LABEL, with =GLOSSARY= being a reserved name.
@@ -1972,7 +1974,7 @@ That is what we accomplish with this new `show' link type."
                                                      (s-replace "\n" " \\newline{\\color{white}.}")))
                                       o-label))))))
 
-;;;; Margin (LaTeX)
+;;;;; Margin (LaTeX)
 
 (org-defblock margin
               (marker nil
@@ -2060,15 +2062,15 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                                         ; MA: FIXME: (org-export-string-as contents 'html :body-only-please)
                              marker)))))
 
-;;;; Tooltip (HTML)
+;;;;; Tooltip (HTML)
 (org-defblock tooltip (marker "°")
               "Produce an HTML tooltip."
               (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
                       (org-ospe-html-export-preserving-whitespace contents)
                       marker))
 
-;;;; Mathematical Proofs
-;;;;; Calculational style proofs
+;;;;; Mathematical Proofs
+;;;;;; Calculational style proofs
 
 (defun org--list-to-calc (lst rel hint-format NL-length color)
   "Get a result from org-list-to-lisp and render it as a calculational proof.
@@ -2157,7 +2159,7 @@ what is required by MathJaX."
                            (s-join "\\\\")
                            (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
-;;;;; inference proof tree
+;;;;;; inference proof tree
 (defun org--list-to-math (lst)
   "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
   (cond
