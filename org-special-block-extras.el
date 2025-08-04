@@ -386,7 +386,7 @@ Three example uses:
   ((name symbol)
    (docstring string)
    (backend-type symbol)
-   (kwds list)
+   (args list)
    (body list))
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
 
@@ -394,8 +394,7 @@ Three example uses:
 - DOCSTRING    [Nullable String]: Documentation of the block.
 - BACKEND-TYPE [Symbol]: Which backend this implementation is used with.
                          Dispatches via (eql BACKEND-TYPE).
-TODO: Rename to ARGS
-- KWDS: Property list beginning with main arg binding and default value,
+- ARGS: Property list beginning with main arg binding and default value,
         followed by “keyword default-value” pairs.
 - BODY: Code to be executed just before export.
 
@@ -409,9 +408,9 @@ Features:
   (cl-assert (or (stringp docstring) (null docstring)))
   (cl-assert (or (symbolp backend-type) (null backend-type)))
 
-  (let ((main-arg-name (or (cl-first kwds) 'main-arg))
-        (main-arg-value (cl-second kwds))
-        (kwds (cddr kwds)))
+  (let ((main-arg-name (or (cl-first args) 'main-arg))
+        (main-arg-value (cl-second args))
+        (args (cddr args)))
     (let* ((fn-name (intern (format "org-block/%s" name)))
            (should-generate-generic
             (or (null body)
@@ -432,7 +431,7 @@ Features:
             &optional
             ,main-arg-name
             &rest _
-            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
+            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 args))
             &allow-other-keys)
            ,docstring
            ;; Use default value for blank main argument
@@ -449,7 +448,7 @@ Features:
                         (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
 
              ;; Use any headers for this block type, if no local value is passed
-             ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
+             ,@(cl-loop for k in (mapcar #'car (-partition 2 args))
                         collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
                                                         ,(intern (format ":%s" k)))
                                    (when (s-blank-p ,k)
