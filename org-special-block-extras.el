@@ -116,7 +116,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
   (if org-special-block-extras-mode
       (progn
  ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
-        (add-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
+        (add-hook 'org-export-before-parsing-hook 'org--rewrite-special-blocks-by-handlers)
         (setq org-export-allow-bind-keywords t)
         (defvar org--ospe-kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
@@ -220,7 +220,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
                                (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
                                      org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
         ) ;; Must be on a new line; I'm using noweb-refs
-    (remove-hook 'org-export-before-parsing-hook 'org--support-special-blocks-with-args)
+    (remove-hook 'org-export-before-parsing-hook 'org--rewrite-special-blocks-by-handlers)
     )) ;; Must be on a new line; I'm using noweb-refs
 
 ;;;;; org-deflink
@@ -817,7 +817,7 @@ pre-processing steps."
         tail
         "\n")))))
 
-;;;;; org--support-special-blocks-with-args
+;;;;; org--rewrite-special-blocks-by-handlers
 
 (defvar org--supported-blocks nil
   "Which special blocks, defined with `org-defblock', are supported.
@@ -828,13 +828,13 @@ This is a list of strings.")
 
 
 (defvar org--current-backend nil
-  "A message-passing channel updated by `org--support-special-blocks-with-args'
+  "A message-passing channel updated by `org--rewrite-special-blocks-by-handlers'
 and used by `org-defblock'.
 
 This is a symbol.")
 
 
-(defun org--support-special-blocks-with-args (backend)
+(defun org--rewrite-special-blocks-by-handlers (backend)
   "Replace supported Org special blocks with the result of their handlers.
 
 BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex),

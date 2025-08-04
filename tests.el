@@ -97,7 +97,7 @@
                 
                 Take care!"))))))))
   
-  (ert-deftest org--support-special-blocks-with-args/foo-block-test ()
+  (ert-deftest org--rewrite-special-blocks-by-handlers/foo-block-test ()
     (with-temp-buffer
       ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
       (setq org--supported-blocks '("foo") ;; Sample supported blocks
@@ -118,7 +118,7 @@
                   #+end_foobar
                   "))
       (goto-char (point-min))
-      (org--support-special-blocks-with-args 'test-backend)
+      (org--rewrite-special-blocks-by-handlers 'test-backend)
       (should (equal (buffer-string)
                      "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
 
