@@ -81,6 +81,355 @@
 (require 'lf)
 
 ;;;; Core
+;;;;; defstruct org-special-block
+;; Data structure denoting special blocks, how to parse them, and how to evaluate them.
+
+(defstruct org-special-block
+  "A representation of an Org special block."
+  ;; Specification of slots:
+  ;;
+  ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
+  ;;    ⟨body-start⟩ body
+  ;;    #+end_blk        
+  (name             nil :type string  :documentation "The name of the special block.")
+  (start-point      nil :type integer :documentation "Point at start of “#+begin_” line.")
+  (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
+  ;; TODO: When refactors settle down, axe this? “ header-start  =  start-point + (length name) ”
+  (header-start     nil :type integer :documentation "Point after block name; i.e., point at which block header & args begin.")
+  (main-arg         nil :type string  :documentation "First non-keyword argument")
+  (kwdargs          nil :type plist   :documentation "The key-value arguments for the header.")
+  (column           nil :type integer :documentation "Indentation of “#+begin_” line")
+  (body-start-point nil :type integer :documentation "Start of block body text")
+  (contents         nil :type string  :documentation "Body text contents"))
+
+
+(defun dash-expand:&org-special-block (key source)
+  "Destructuring which works with `org-special-block', for use with `-let'.
+
+For example,
+  
+       (let ((blk (make-org-special-block :name \"foo\" :main-arg \"hola\")))
+         (-let (((&org-special-block 'name 'main-arg) blk))
+           (message \"Block %s with arg %s\" name main-arg)))
+
+"
+  `(progn (assert (org-special-block-p ,source))
+          (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source)))
+
+
+(cl-defun org-special-block-after-point (&optional name)
+  "Parses the first `org-special-block' after point.
+
+Point should be at the start of the “#+begin_” clause.
+
+If NAME is provided, then look for that kind of block;
+otherwise look for any special block.
+
+This assumes the block is well-formed and not nested. 
+"
+  (interactive)
+  (save-excursion
+    (let (name-rx main-arg kwdargs contents start-point start-column end-point)
+      (setq name-rx (if name name "\\S-+"))
+      ;; Look for #+begin_⟨name⟩
+      (when (re-search-forward (format "^\\s-*#\\+begin_\\(%s\\)\\s-+\\(.*\\)$" name-rx) nil t)
+        (setq name (match-string 1))
+        ;; Parse the header line into (main-arg . keyword-args)
+        (thread-last
+          (match-string 2) ;; All args, as a string
+          (format "(%s)") ;; Wrap in list to ensure `read` parses args
+          read           ;; We now have an honest to goodness Lisp list
+          (--split-with (not (keywordp it)))
+          (setq kwdargs))
+        (cl-assert (= 1 (length (car kwdargs))))        
+        (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
+              kwdargs (cadr kwdargs))
+        ;; Save indentation
+        (re-search-backward (format "\\#\\+begin_%s\\b" name))
+        (setq start-point (point)
+              start-column (current-column))
+        ;; Get body
+        (let ((body-start (1+ (line-end-position))))
+          (re-search-forward (format "^\\s-*#\\+end_%s\\b" name))
+          (setq end-point (point))
+          (setq contents (buffer-substring-no-properties body-start (1- (line-beginning-position)))))
+        ;; Return structured info
+        (make-org-special-block
+         :name name
+         :main-arg main-arg
+         :kwdargs kwdargs
+         :contents contents
+         :start-point start-point
+         :end-point end-point)))))
+
+(cl-defmethod org-eval-replace-block ((block org-special-block) backend)
+  "Replace a special Org block with the result of evaluating its handler.
+
+This function replaces the region from START-POINT to END-POINT of BLOCK
+with the result of evaluating the corresponding handler function:
+  `org-block/NAME'
+
+Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
+#+begin_NAME / #+end_NAME delimiters).
+
+Each special block can include:
+- A *main argument*: The first (optional) positional argument after the block name.
+- *Keyword arguments*: Zero or more “:key value” pairs.
+- A *body*: The content between the begin and end block markers.
+
+The corresponding handler function must be named `org-block/NAME' with signature:
+
+  (org-block/NAME BACKEND CONTENTS MAIN-ARG &rest KWDARGS)
+
+Example:
+
+  #+begin_foo mainarg :x 1 :y 2
+  block content
+  #+end_foo
+
+Will be replaced with the result of evaluating:
+
+  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
+
+The handler’s return value is inserted in place of the original block.
+Indentation is preserved via `org-replace-text-while-preserving-indentation'.
+
+This method is part of the Org export pipeline that processes supported
+blocks listed in `org--supported-blocks', typically triggered during export
+pre-processing steps."
+  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point) block]
+    (org-replace-text-while-preserving-indentation
+     start-point
+     end-point
+     (eval `(,(intern (format "org-block/%s" name))
+             (quote ,backend)
+             ,contents
+             ,main-arg
+             ;; The --map is so that args may be passed as "this" or just ‘this’ (raw symbols)
+             ,@(--map (list 'quote it) kwdargs))))))
+
+
+(defun org-replace-text-while-preserving-indentation (start-point end-point multi-line-text)
+  "Replace the region delimited by the given points with the given text, while preserving indentation."
+  (save-excursion
+    (goto-char start-point)
+    ;; NOTE Related methods: current-column, indent-region, indent-line-to.
+    (-let ((indent (current-indentation))
+           ((head . tail) (split-string multi-line-text "\n")))
+      (delete-region start-point end-point)
+      (insert head)
+      (when tail (insert "\n"))
+      (insert
+       (mapconcat
+        (lambda (line) (concat (make-string indent ?\s) line))
+        tail
+        "\n")))))
+
+;;;;; org--rewrite-special-blocks-by-handlers
+;; How to preprocess all special blocks declared with `org-defblock'.
+
+(defvar org--supported-blocks nil
+  "Which special blocks, defined with `org-defblock', are supported.
+
+Such blocks can be parsed using `org-special-block-after-point'.
+
+This is a list of strings.")
+
+
+(defvar org--current-backend nil
+  "A message-passing channel updated by `org--rewrite-special-blocks-by-handlers'
+and used by `org-defblock'.
+
+This is a symbol.")
+
+
+(defun org--rewrite-special-blocks-by-handlers (backend)
+  "Replace supported Org special blocks with the result of their handlers.
+
+BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex),
+and is bound globally to `org--current-backend' for use by block handlers.
+
+Note: This function mutates the current buffer."
+  (setq org--current-backend backend)
+  (cl-loop for blk in org--supported-blocks
+           do (goto-char (point-min))
+           (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
+             (beginning-of-line)
+             (org-eval-replace-block (org-special-block-after-point blk) backend))))
+
+;;;;; org-defblock
+
+(cl-defmacro org-defblock
+    (name kwds &optional link-display docstring &rest body)
+  "Declare a new special block, and link, in the style of DEFUN.
+
+A full featured example is at the end of this documentation string.
+
+This is an anaphoric macro that provides export support for
+special blocks *and* links named NAME. Just as an Org-mode
+src-block consumes as main argument the language for the src
+block, our special blocks too consume a MAIN-ARG; it may be a
+symbol or a cons-list consisting of a symbolic name (with which
+to refer to the main argument in the definition of the block)
+followed by a default value, then, optionally, any information
+for a one-time setup of the associated link type.
+
+The main arg may be a sequence of symbols separated by spaces,
+and a few punctuation with the exception of comma ‘,’ since it is
+a special Lisp operator. In doubt, enclose the main arg in
+quotes.
+
+Then, just as Org-mode src blocks consume key-value pairs, our
+special blocks consume a number of KWDS, which is a list of the
+form (key₀ value₀ … keyₙ valueₙ).
+
+After that is an optional DOCSTRING, a familar feature of DEFUN.
+The docstring is displayed as part of the tooltip for the
+produced link type.
+
+Finally, the BODY is a (sequence of) Lisp forms ---no progn
+needed--- that may refer to the names BACKEND and CONTENTS which
+refer to the current export backend and the contents of the
+special block ---or the description clause of a link.
+
+CONTENTS refers to an Org-mode parsed string; i.e., Org-markup is
+acknowledged.
+
+In, hopefully, rare circumstances, one may refer to RAW-CONTENTS
+to look at the fully unparsed contents.
+
+Finally, this macro exposes two functions:
++ ORG-EXPORT: Wrap the argument in an export block for the current backend.
++ ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
+             to escape text to Org, and out of the export block.
+
+⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
+⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
+
+----------------------------------------------------------------------
+
+The relationship between links and special blocks:
+
+  [ [type:label][description]]
+≈
+   #+begin_type label
+    description
+   #+end_type
+
+----------------------------------------------------------------------
+
+Example declaration, with all possible features shown:
+
+   ;; We can use variable values when defining new blocks
+   (setq angry-red '(:foreground \"red\" :weight bold))
+
+   (org-defblock remark
+     (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
+     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
+     (format (if (equal backend 'html)
+               \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
+               \"{\\color{%s}\\bfseries %s:  %s%s}\")
+             color editor contents signoff))
+
+   ;; I don't want to change the definition, but I'd like to have
+   ;; the following as personalised defaults for the “remark” block.
+   ;; OR, I'd like to set this for links, which do not have argument options.
+   (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+
+Three example uses:
+
+    ;; ⟨0⟩ As a special blocks with arguments given.
+    #+begin_remark Bobbert Barakallah :signoff \"Thank-you for pointing this out!\" :color green
+    I was trying to explain that ${\large (n × (n + 1) \over 2}$ is always an integer.
+    #+end_remark
+
+    ;; ⟨1⟩ As a terse link, using default values for the args.
+    ;;     Notice that Org-mode formatting is recoqgnised even in links.
+    [ [remark:Jasim Jameson][Why are you taking about “$\mathsf{even}$” here?]]
+
+    ;; ⟨2⟩ So terse that no editor name is provided.
+    [ [remark:][Please improve your transition sentences.]]
+
+    ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
+    ;; catenated as well as the default red color."
+  ;; ⇨ The special block support
+  ;;
+  (add-to-list 'org--supported-blocks name) ;; global var
+
+  ;; TODO: Relocate
+  (defvar org--block--link-display nil
+    "Association list of block name symbols to link display vectors.")
+
+  ;; Identify which of the optional features is present...
+  (cl-destructuring-bind (link-display docstring body)
+      (lf-extract-optionals-from-rest link-display #'vectorp
+                               docstring    #'stringp
+                                      body)
+    `(progn
+       (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
+       (list
+        ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
+        ;; ⇨ The link type support
+        (eval (backquote (org-deflink ,name
+                           ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
+                           ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                           (s-replace-regexp "@@" ""
+                                             (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
+
+;; WHERE ...
+
+(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring backend-type (kwds list) (body list))
+  "Helper method to produce an associated Lisp function for org-defblock.
+
++ NAME: The name of the block type.
++ DOCSTRING, string|null: Documentation of block.
++ KWDS: Keyword-value pairs
++ BODY: Code to be executed"
+  (cl-assert (or (stringp docstring) (null docstring)))
+  (cl-assert (or (symbolp backend-type) (null backend-type)))
+
+  (let ((main-arg-name (or (cl-first kwds) 'main-arg))
+  (main-arg-value (cl-second kwds))
+        (kwds (cddr kwds)))
+    ;; Unless we've already set the docs for the generic function, don't re-declare it.
+    `(if ,(null body)
+         (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
+           ,docstring) ;; For some reason, this “docstring” is not picked up.
+       ;; As such, let's set it manually:
+       (put (quote ,(intern (format "org-block/%s" name))) 'function-documentation ,docstring)
+       
+       (cl-defmethod ,(intern (format "org-block/%s" name))
+         ((backend ,(if backend-type `(eql ,backend-type) t))
+          (raw-contents string)
+          &optional
+          ,main-arg-name
+          &rest _
+          &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
+          &allow-other-keys)
+         ,docstring
+         ;; Use default for main argument
+         (when (and ',main-arg-name (s-blank-p ,main-arg-name))
+           (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
+               (setq ,main-arg-name it)
+             (setq ,main-arg-name ,main-arg-value)))
+
+         (cl-letf (((symbol-function 'org-export)
+                    (lambda (x) "Wrap the given X in an export block for the current backend."
+                      (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                   ((symbol-function 'org-parse)
+                    (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+                      (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+
+           ;; Use any headers for this block type, if no local value is passed
+           ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
+                      collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
+                                                      ,(intern (format ":%s" k)))
+                                 (when (s-blank-p ,k)
+                                   (setq ,k it))))
+
+           (org-export
+            (let ((contents (org-parse raw-contents))) ,@body)))))))
+
 ;;;;; org-special-block-extras-mode autoload
 
 (defconst org-special-block-extras-version (package-get-version))
@@ -500,354 +849,6 @@ is displayed in Emacs Org buffers. The keys are as follows.
          ;; Return value is the name of the underlying function.
          ;; We do this to be consistent with `defun'.
          (quote ,org-link/NAME)))))
-
-;;;;; org-defblock
-
-(cl-defmacro org-defblock
-    (name kwds &optional link-display docstring &rest body)
-  "Declare a new special block, and link, in the style of DEFUN.
-
-A full featured example is at the end of this documentation string.
-
-This is an anaphoric macro that provides export support for
-special blocks *and* links named NAME. Just as an Org-mode
-src-block consumes as main argument the language for the src
-block, our special blocks too consume a MAIN-ARG; it may be a
-symbol or a cons-list consisting of a symbolic name (with which
-to refer to the main argument in the definition of the block)
-followed by a default value, then, optionally, any information
-for a one-time setup of the associated link type.
-
-The main arg may be a sequence of symbols separated by spaces,
-and a few punctuation with the exception of comma ‘,’ since it is
-a special Lisp operator. In doubt, enclose the main arg in
-quotes.
-
-Then, just as Org-mode src blocks consume key-value pairs, our
-special blocks consume a number of KWDS, which is a list of the
-form (key₀ value₀ … keyₙ valueₙ).
-
-After that is an optional DOCSTRING, a familar feature of DEFUN.
-The docstring is displayed as part of the tooltip for the
-produced link type.
-
-Finally, the BODY is a (sequence of) Lisp forms ---no progn
-needed--- that may refer to the names BACKEND and CONTENTS which
-refer to the current export backend and the contents of the
-special block ---or the description clause of a link.
-
-CONTENTS refers to an Org-mode parsed string; i.e., Org-markup is
-acknowledged.
-
-In, hopefully, rare circumstances, one may refer to RAW-CONTENTS
-to look at the fully unparsed contents.
-
-Finally, this macro exposes two functions:
-+ ORG-EXPORT: Wrap the argument in an export block for the current backend.
-+ ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
-             to escape text to Org, and out of the export block.
-
-⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
-⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
-
-----------------------------------------------------------------------
-
-The relationship between links and special blocks:
-
-  [ [type:label][description]]
-≈
-   #+begin_type label
-    description
-   #+end_type
-
-----------------------------------------------------------------------
-
-Example declaration, with all possible features shown:
-
-   ;; We can use variable values when defining new blocks
-   (setq angry-red '(:foreground \"red\" :weight bold))
-
-   (org-defblock remark
-     (editor \"Editor Remark\" :face angry-red) (color \"red\" signoff \"\")
-     \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
-     (format (if (equal backend 'html)
-               \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
-               \"{\\color{%s}\\bfseries %s:  %s%s}\")
-             color editor contents signoff))
-
-   ;; I don't want to change the definition, but I'd like to have
-   ;; the following as personalised defaults for the “remark” block.
-   ;; OR, I'd like to set this for links, which do not have argument options.
-   (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
-
-Three example uses:
-
-    ;; ⟨0⟩ As a special blocks with arguments given.
-    #+begin_remark Bobbert Barakallah :signoff \"Thank-you for pointing this out!\" :color green
-    I was trying to explain that ${\large (n × (n + 1) \over 2}$ is always an integer.
-    #+end_remark
-
-    ;; ⟨1⟩ As a terse link, using default values for the args.
-    ;;     Notice that Org-mode formatting is recoqgnised even in links.
-    [ [remark:Jasim Jameson][Why are you taking about “$\mathsf{even}$” here?]]
-
-    ;; ⟨2⟩ So terse that no editor name is provided.
-    [ [remark:][Please improve your transition sentences.]]
-
-    ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
-    ;; catenated as well as the default red color."
-  ;; ⇨ The special block support
-  ;;
-  (add-to-list 'org--supported-blocks name) ;; global var
-
-  ;; TODO: Relocate
-  (defvar org--block--link-display nil
-    "Association list of block name symbols to link display vectors.")
-
-  ;; Identify which of the optional features is present...
-  (cl-destructuring-bind (link-display docstring body)
-      (lf-extract-optionals-from-rest link-display #'vectorp
-                               docstring    #'stringp
-                                      body)
-    `(progn
-       (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
-       (list
-        ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
-        ;; ⇨ The link type support
-        (eval (backquote (org-deflink ,name
-                           ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
-                           ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-                           (s-replace-regexp "@@" ""
-                                             (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
-
-;; WHERE ...
-
-(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring backend-type (kwds list) (body list))
-  "Helper method to produce an associated Lisp function for org-defblock.
-
-+ NAME: The name of the block type.
-+ DOCSTRING, string|null: Documentation of block.
-+ KWDS: Keyword-value pairs
-+ BODY: Code to be executed"
-  (cl-assert (or (stringp docstring) (null docstring)))
-  (cl-assert (or (symbolp backend-type) (null backend-type)))
-
-  (let ((main-arg-name (or (cl-first kwds) 'main-arg))
-  (main-arg-value (cl-second kwds))
-        (kwds (cddr kwds)))
-    ;; Unless we've already set the docs for the generic function, don't re-declare it.
-    `(if ,(null body)
-         (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
-           ,docstring) ;; For some reason, this “docstring” is not picked up.
-       ;; As such, let's set it manually:
-       (put (quote ,(intern (format "org-block/%s" name))) 'function-documentation ,docstring)
-       
-       (cl-defmethod ,(intern (format "org-block/%s" name))
-         ((backend ,(if backend-type `(eql ,backend-type) t))
-          (raw-contents string)
-          &optional
-          ,main-arg-name
-          &rest _
-          &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
-          &allow-other-keys)
-         ,docstring
-         ;; Use default for main argument
-         (when (and ',main-arg-name (s-blank-p ,main-arg-name))
-           (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
-               (setq ,main-arg-name it)
-             (setq ,main-arg-name ,main-arg-value)))
-
-         (cl-letf (((symbol-function 'org-export)
-                    (lambda (x) "Wrap the given X in an export block for the current backend."
-                      (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
-                   ((symbol-function 'org-parse)
-                    (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                      (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
-
-           ;; Use any headers for this block type, if no local value is passed
-           ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
-                      collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
-                                                      ,(intern (format ":%s" k)))
-                                 (when (s-blank-p ,k)
-                                   (setq ,k it))))
-
-           (org-export
-            (let ((contents (org-parse raw-contents))) ,@body)))))))
-
-;;;;; defstruct org-special-block
-
-(defstruct org-special-block
-  "A representation of an Org special block."
-  ;; Specification of slots:
-  ;;
-  ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
-  ;;    ⟨body-start⟩ body
-  ;;    #+end_blk        
-  (name             nil :type string  :documentation "The name of the special block.")
-  (start-point      nil :type integer :documentation "Point at start of “#+begin_” line.")
-  (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
-  ;; TODO: When refactors settle down, axe this? “ header-start  =  start-point + (length name) ”
-  (header-start     nil :type integer :documentation "Point after block name; i.e., point at which block header & args begin.")
-  (main-arg         nil :type string  :documentation "First non-keyword argument")
-  (kwdargs          nil :type plist   :documentation "The key-value arguments for the header.")
-  (column           nil :type integer :documentation "Indentation of “#+begin_” line")
-  (body-start-point nil :type integer :documentation "Start of block body text")
-  (contents         nil :type string  :documentation "Body text contents"))
-
-
-(defun dash-expand:&org-special-block (key source)
-  "Destructuring which works with `org-special-block', for use with `-let'.
-
-For example,
-  
-       (let ((blk (make-org-special-block :name \"foo\" :main-arg \"hola\")))
-         (-let (((&org-special-block 'name 'main-arg) blk))
-           (message \"Block %s with arg %s\" name main-arg)))
-
-"
-  `(progn (assert (org-special-block-p ,source))
-          (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source)))
-
-
-(cl-defun org-special-block-after-point (&optional name)
-  "Parses the first `org-special-block' after point.
-
-Point should be at the start of the “#+begin_” clause.
-
-If NAME is provided, then look for that kind of block;
-otherwise look for any special block.
-
-This assumes the block is well-formed and not nested. 
-"
-  (interactive)
-  (save-excursion
-    (let (name-rx main-arg kwdargs contents start-point start-column end-point)
-      (setq name-rx (if name name "\\S-+"))
-      ;; Look for #+begin_⟨name⟩
-      (when (re-search-forward (format "^\\s-*#\\+begin_\\(%s\\)\\s-+\\(.*\\)$" name-rx) nil t)
-        (setq name (match-string 1))
-        ;; Parse the header line into (main-arg . keyword-args)
-        (thread-last
-          (match-string 2) ;; All args, as a string
-          (format "(%s)") ;; Wrap in list to ensure `read` parses args
-          read           ;; We now have an honest to goodness Lisp list
-          (--split-with (not (keywordp it)))
-          (setq kwdargs))
-        (cl-assert (= 1 (length (car kwdargs))))        
-        (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
-              kwdargs (cadr kwdargs))
-        ;; Save indentation
-        (re-search-backward (format "\\#\\+begin_%s\\b" name))
-        (setq start-point (point)
-              start-column (current-column))
-        ;; Get body
-        (let ((body-start (1+ (line-end-position))))
-          (re-search-forward (format "^\\s-*#\\+end_%s\\b" name))
-          (setq end-point (point))
-          (setq contents (buffer-substring-no-properties body-start (1- (line-beginning-position)))))
-        ;; Return structured info
-        (make-org-special-block
-         :name name
-         :main-arg main-arg
-         :kwdargs kwdargs
-         :contents contents
-         :start-point start-point
-         :end-point end-point)))))
-
-(cl-defmethod org-eval-replace-block ((block org-special-block) backend)
-  "Replace a special Org block with the result of evaluating its handler.
-
-This function replaces the region from START-POINT to END-POINT of BLOCK
-with the result of evaluating the corresponding handler function:
-  `org-block/NAME'
-
-Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
-#+begin_NAME / #+end_NAME delimiters).
-
-Each special block can include:
-- A *main argument*: The first (optional) positional argument after the block name.
-- *Keyword arguments*: Zero or more “:key value” pairs.
-- A *body*: The content between the begin and end block markers.
-
-The corresponding handler function must be named `org-block/NAME' with signature:
-
-  (org-block/NAME BACKEND CONTENTS MAIN-ARG &rest KWDARGS)
-
-Example:
-
-  #+begin_foo mainarg :x 1 :y 2
-  block content
-  #+end_foo
-
-Will be replaced with the result of evaluating:
-
-  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
-
-The handler’s return value is inserted in place of the original block.
-Indentation is preserved via `org-replace-text-while-preserving-indentation'.
-
-This method is part of the Org export pipeline that processes supported
-blocks listed in `org--supported-blocks', typically triggered during export
-pre-processing steps."
-  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point) block]
-    (org-replace-text-while-preserving-indentation
-     start-point
-     end-point
-     (eval `(,(intern (format "org-block/%s" name))
-             (quote ,backend)
-             ,contents
-             ,main-arg
-             ;; The --map is so that args may be passed as "this" or just ‘this’ (raw symbols)
-             ,@(--map (list 'quote it) kwdargs))))))
-
-
-(defun org-replace-text-while-preserving-indentation (start-point end-point multi-line-text)
-  "Replace the region delimited by the given points with the given text, while preserving indentation."
-  (save-excursion
-    (goto-char start-point)
-    ;; NOTE Related methods: current-column, indent-region, indent-line-to.
-    (-let ((indent (current-indentation))
-           ((head . tail) (split-string multi-line-text "\n")))
-      (delete-region start-point end-point)
-      (insert head)
-      (when tail (insert "\n"))
-      (insert
-       (mapconcat
-        (lambda (line) (concat (make-string indent ?\s) line))
-        tail
-        "\n")))))
-
-;;;;; org--rewrite-special-blocks-by-handlers
-
-(defvar org--supported-blocks nil
-  "Which special blocks, defined with `org-defblock', are supported.
-
-Such blocks can be parsed using `org-special-block-after-point'.
-
-This is a list of strings.")
-
-
-(defvar org--current-backend nil
-  "A message-passing channel updated by `org--rewrite-special-blocks-by-handlers'
-and used by `org-defblock'.
-
-This is a symbol.")
-
-
-(defun org--rewrite-special-blocks-by-handlers (backend)
-  "Replace supported Org special blocks with the result of their handlers.
-
-BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex),
-and is bound globally to `org--current-backend' for use by block handlers.
-
-Note: This function mutates the current buffer."
-  (setq org--current-backend backend)
-  (cl-loop for blk in org--supported-blocks
-           do (goto-char (point-min))
-           (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
-             (beginning-of-line)
-             (org-eval-replace-block (org-special-block-after-point blk) backend))))
-
 
 ;;;;; header args support
 (defvar org--header-args nil
