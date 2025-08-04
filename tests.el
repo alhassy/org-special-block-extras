@@ -16,21 +16,99 @@
       (should (equal name "foo"))
       (should (equal main-arg "mainarg"))
       (should (equal kwdargs  '(:x 1 :y 2)))
-      (should (equal contents "block content\n")))))
+      (should (equal contents "block content")))))
 
 
-(ert-deftest org--support-special-blocks-with-args/foo-block-test ()
-  (with-temp-buffer
-    ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
-    (setq org--supported-blocks '("foo") ;; Sample supported blocks
-          org--current-backend nil) ;; Mocked global var  
-    ;; A dummy handler that transforms “FOO” blocks
-    (defun org-block/foo (backend contents arg &rest args)  
-      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
-    ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
-    (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
-    (insert
-     (lf-string "\t#+begin_foo mainarg :x 1 :y 2
+(ert-deftest test-org-eval-replace-block ()
+  "Ensure `org-eval-replace-block' replaces a block correctly."
+
+  ;; Dynamically define a mock handler function
+  (cl-letf (((symbol-function 'org-block/foo)
+             (lambda (backend contents arg &rest args)
+               (format "REPLACED: %s | %s | %s | %s"
+                       backend contents arg args))))
+
+    (with-temp-buffer
+      (insert (lf-string "Start
+               #+begin_foo mainarg :x 1
+               Body text
+               #+end_foo
+               End"))
+
+      ;; Identify the block boundaries, manually
+      (goto-char (point-min))
+      (search-forward "#+begin_foo")
+      (let* ((start (line-beginning-position))
+             (end (progn (search-forward "#+end_foo") (line-end-position)))
+             (blk (make-org-special-block
+                   :name "foo"
+                   :start-point start
+                   :end-point end
+                   :main-arg "\"mainarg\""
+                   :kwdargs '(:x 1)
+                   :contents "Body text")))
+
+        ;; Evaluate the method
+        (org-eval-replace-block blk 'test-backend)
+
+        ;; Assert buffer was transformed as expected
+        (should (equal (buffer-string)
+                       (lf-string "Start
+                                   REPLACED: test-backend | Body text | \"mainarg\" | (:x 1)
+                                   End")))))))
+
+
+(ert-deftest test-org-eval-replace-block-within-enumeration ()
+  "Ensure `org-eval-replace-block' replaces a block correctly, in an enumeration."
+  ;; Dynamically define a mock handler function
+  (cl-letf (((symbol-function 'org-block/foo)
+             (lambda (backend contents arg &rest args)
+               (format "+ Args: %s %s \n+ Contents: %s" arg args (s-trim contents)))))
+    (with-temp-buffer
+      (insert (lf-string "
+               Welcome class, today we will discuss the following:
+               0. Why are we here?
+               1. Why we do what we do?
+                  #+begin_foo mainarg :x 1
+                  Body text
+                  #+end_foo
+                  Or not do.
+               2. Why we ask ‘why’?
+
+               Take care!"))
+      ;; Identify the block and evaluate it
+      (goto-char (point-min))
+      (-let [block (org-special-block-after-point)]
+        (-let [(&org-special-block 'name 'start-point 'end-point) block]
+          (should (equal name "foo"))
+          (should (equal start-point 102))
+          (should (equal end-point 152))
+          (org-eval-replace-block block 'test-backend)
+          ;; Assert buffer was transformed as expected
+          (should (equal (buffer-string)
+                         (lf-string "
+                Welcome class, today we will discuss the following:
+                0. Why are we here?
+                1. Why we do what we do?
+                   + Args: mainarg (:x 1) 
+                   + Contents: Body text
+                   Or not do.
+                2. Why we ask ‘why’?
+                
+                Take care!"))))))))
+  
+  (ert-deftest org--support-special-blocks-with-args/foo-block-test ()
+    (with-temp-buffer
+      ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
+      (setq org--supported-blocks '("foo") ;; Sample supported blocks
+            org--current-backend nil) ;; Mocked global var  
+      ;; A dummy handler that transforms “FOO” blocks
+      (defun org-block/foo (backend contents arg &rest args)  
+        (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
+      ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
+      (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+      (insert
+       (lf-string "\t#+begin_foo mainarg :x 1 :y 2
                    This is foo block content.
                    #+end_foo
 
@@ -39,16 +117,18 @@
                   This is foobar block content.
                   #+end_foobar
                   "))
-    (goto-char (point-min))
-    (org--support-special-blocks-with-args 'test-backend)
-    (should (equal (s-trim (buffer-string))
-                   "FOO block (test-backend): This is foo block content.
- [arg: mainarg] [args: (:x 1 :y 2)]	
+      (goto-char (point-min))
+      (org--support-special-blocks-with-args 'test-backend)
+      (should (equal (buffer-string)
+                     "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
 
                   However, the next is left alone:
                   #+begin_foobar mainarg :x 1 :y 2
                   This is foobar block content.
-                  #+end_foobar"))))
+                  #+end_foobar
+                  "))))
+
+;;;; Old tests
 
 ;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout

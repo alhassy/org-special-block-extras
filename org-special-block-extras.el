@@ -726,7 +726,7 @@ This assumes the block is well-formed and not nested.
 "
   (interactive)
   (save-excursion
-    (let (name-rx main-arg kwdargs contents end-point)
+    (let (name-rx main-arg kwdargs contents start-point start-column end-point)
       (setq name-rx (if name name "\\S-+"))
       ;; Look for #+begin_⟨name⟩
       (when (re-search-forward (format "^\\s-*#\\+begin_\\(%s\\)\\s-+\\(.*\\)$" name-rx) nil t)
@@ -742,27 +742,60 @@ This assumes the block is well-formed and not nested.
         (setq main-arg (org--pp-list (car kwdargs))
               kwdargs (cadr kwdargs))
         ;; Save indentation
-        ;; (re-search-backward (format "\\#\\+begin_%s\\b" blk))
-        ;; (setq blk-start (point)
-        ;;       blk-column (current-column))
+        (re-search-backward (format "\\#\\+begin_%s\\b" name))
+        (setq start-point (point)
+              start-column (current-column))
         ;; Get body
         (let ((body-start (1+ (line-end-position))))
           (re-search-forward (format "^\\s-*#\\+end_%s\\b" name))
           (setq end-point (point))
-          (setq contents (buffer-substring-no-properties body-start (line-beginning-position))))
+          (setq contents (buffer-substring-no-properties body-start (1- (line-beginning-position)))))
         ;; Return structured info
         (make-org-special-block
          :name name
-         :start-point nil
          :main-arg main-arg
          :kwdargs kwdargs
          :contents contents
+         :start-point start-point
          :end-point end-point)))))
+
+(cl-defmethod org-eval-replace-block ((block org-special-block) backend)
+  "Replace entire block with evaluated handler method “org-block/ℬ”.
+
+Here ℬ is the name of BLOCK."
+  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point) block]
+    ;; Replace entire block with evaluated handler call
+    (org-replace-text-while-preserving-indentation
+     start-point
+     end-point
+     (eval `(,(intern (format "org-block/%s" name))
+             (quote ,backend)
+             ,contents
+             ,main-arg
+             ;; The --map is so that args may be passed as "this" or just ‘this’ (raw symbols)
+             ,@(--map (list 'quote it) kwdargs))))))
+
+
+(defun org-replace-text-while-preserving-indentation (start-point end-point multi-line-text)
+  "Replace the region delimited by the given points with the given text, while preserving indentation."
+  (save-excursion
+    (goto-char start-point)
+    ;; NOTE Related methods: current-column, indent-region, indent-line-to.
+    (-let ((indent (current-indentation))
+           ((head . tail) (split-string multi-line-text "\n")))
+      (delete-region start-point end-point)
+      (insert head)
+      (when tail (insert "\n"))
+      (insert
+       (mapconcat
+        (lambda (line) (concat (make-string indent ?\s) line))
+        tail
+        "\n")))))
 
 ;;;;; org--support-special-blocks-with-args
 
 (defvar org--supported-blocks nil
-  "Which special blocks, defined with DEFBLOCK, are supported.
+  "Which special blocks, defined with `org-defblock', are supported.
 
 This is a list of strings.")
 
@@ -814,26 +847,14 @@ Note: This function mutates the current buffer."
                (setq header-start (point)) ;; End of match
                ;; Save indentation
                (re-search-backward (format "\\#\\+begin_%s\\b" blk))
-               (setq blk-start (point)
-                     blk-column (current-column))
-               (setq _X (org-special-block-after-point blk))
-               (beginning-of-line)               
-               (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'end-point)
-                      (org-special-block-after-point blk)]
-                 ;; Replace entire block with evaluated handler call
-                 (kill-region blk-start end-point)
-                 (insert (eval `(,(intern (format "org-block/%s" name))
-                                 (quote ,backend)
-                                 ,contents
-                                 ,main-arg
-                                 ,@(--map (list 'quote it) kwdargs))))
-                 ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
-                 ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
-                 ;; (indent-line-to blk-column) ;; #+end...
-                 ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
-                 ;; the --map is so that arguments may be passed
-                 ;; as "this" or just ‘this’ (raw symbols)
-                 )))))
+               (beginning-of-line)
+               ;; Replace entire block with evaluated handler call
+               (org-eval-replace-block (org-special-block-after-point blk) backend)
+               ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
+               ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
+               ;; (indent-line-to blk-column) ;; #+end...
+               ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
+               ))))
 
 
 ;;;;; header args support
