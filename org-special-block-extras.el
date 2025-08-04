@@ -755,11 +755,41 @@ This assumes the block is well-formed and not nested.
          :end-point end-point)))))
 
 (cl-defmethod org-eval-replace-block ((block org-special-block) backend)
-  "Replace entire block with evaluated handler method “org-block/ℬ”.
+  "Replace a special Org block with the result of evaluating its handler.
 
-Here ℬ is the name of BLOCK."
+This function replaces the region from START-POINT to END-POINT of BLOCK
+with the result of evaluating the corresponding handler function:
+  `org-block/NAME'
+
+Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
+#+begin_NAME / #+end_NAME delimiters).
+
+Each special block can include:
+- A *main argument*: The first (optional) positional argument after the block name.
+- *Keyword arguments*: Zero or more “:key value” pairs.
+- A *body*: The content between the begin and end block markers.
+
+The corresponding handler function must be named `org-block/NAME' with signature:
+
+  (org-block/NAME BACKEND CONTENTS MAIN-ARG &rest KWDARGS)
+
+Example:
+
+  #+begin_foo mainarg :x 1 :y 2
+  block content
+  #+end_foo
+
+Will be replaced with the result of evaluating:
+
+  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
+
+The handler’s return value is inserted in place of the original block.
+Indentation is preserved via `org-replace-text-while-preserving-indentation'.
+
+This method is part of the Org export pipeline that processes supported
+blocks listed in `org--supported-blocks', typically triggered during export
+pre-processing steps."
   (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point) block]
-    ;; Replace entire block with evaluated handler call
     (org-replace-text-while-preserving-indentation
      start-point
      end-point
@@ -792,6 +822,8 @@ Here ℬ is the name of BLOCK."
 (defvar org--supported-blocks nil
   "Which special blocks, defined with `org-defblock', are supported.
 
+Such blocks can be parsed using `org-special-block-after-point'.
+
 This is a list of strings.")
 
 
@@ -803,53 +835,18 @@ This is a symbol.")
 
 
 (defun org--support-special-blocks-with-args (backend)
-  "Transform supported Org special blocks into evaluated Elisp expressions.
-
-This function rewrites “#+begin_NAME” blocks (where NAME is in `org--supported-blocks')
-to the result of calling a corresponding handler function `org-block/NAME'.
-
-Each supported block may include:
-- A *main argument* (a non-keyword value immediately after the block name).
-- Any number of *keyword arguments* in the form “:key value”.
-- A body (the text between “#+begin_NAME” and “#+end_NAME”).
-
-For example:
-
-  #+begin_foo mainarg :x 1 :y 2
-  block content
-  #+end_foo
-
-Will be rewritten as:
-
-  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
-
-The result of evaluating the above expression replaces the original block.
+  "Replace supported Org special blocks with the result of their handlers.
 
 BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex),
 and is bound globally to `org--current-backend' for use by block handlers.
 
 Note: This function mutates the current buffer."
   (setq org--current-backend backend)
-  (let (
-        blk-start        ;; Point at start of “#+begin_” line
-        header-start     ;; Point after block name; i.e., point at which block header & args begin.
-        blk-column       ;; Indentation of “#+begin_” line
-        body-start       ;; Start of block body text
-        )
-    (cl-loop for blk in org--supported-blocks
-             do (goto-char (point-min))
-             (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
-               (setq header-start (point)) ;; End of match
-               ;; Save indentation
-               (re-search-backward (format "\\#\\+begin_%s\\b" blk))
-               (beginning-of-line)
-               ;; Replace entire block with evaluated handler call
-               (org-eval-replace-block (org-special-block-after-point blk) backend)
-               ;; See: https://github.com/alhassy/org-special-block-extras/issues/8
-               ;; (indent-region blk-start (point) blk-column) ;; Actually, this may be needed...
-               ;; (indent-line-to blk-column) ;; #+end...
-               ;; (goto-char blk-start) (indent-line-to blk-column) ;; #+begin...
-               ))))
+  (cl-loop for blk in org--supported-blocks
+           do (goto-char (point-min))
+           (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
+             (beginning-of-line)
+             (org-eval-replace-block (org-special-block-after-point blk) backend))))
 
 
 ;;;;; header args support
