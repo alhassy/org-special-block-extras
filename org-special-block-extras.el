@@ -409,8 +409,8 @@ Features:
   (cl-assert (or (symbolp backend-type) (null backend-type)))
 
   (let ((main-arg-name (or (cl-first args) 'main-arg))
-        (main-arg-value (cl-second args))
-        (args (cddr args)))
+        (main-arg-default-value (cl-second args))
+        (keywords (cddr args)))
     (let* ((fn-name (intern (format "org-block/%s" name)))
            (should-generate-generic
             (or (null body)
@@ -428,35 +428,43 @@ Features:
          (cl-defmethod ,(intern (format "org-block/%s" name))
            ((backend ,(if backend-type `(eql ,backend-type) t))
             (raw-contents string)
-            &optional
-            ,main-arg-name
+            &optional ,main-arg-name
             &rest _
-            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 args))
+            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 keywords))
             &allow-other-keys)
            ,docstring
+           
            ;; Use default value for blank main argument
            (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
-             (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
-                 (setq ,main-arg-name it)
-               (setq ,main-arg-name ,main-arg-value)))
+             (setq ,main-arg-name
+                   (or
+                    (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
+                    ,main-arg-default-value)))
 
+           ;; Use any headers for this block type, if no local value is passed
+           ,@(cl-loop for (key default-value) in (-partition 2 keywords)
+                      collect `(when (or (null ,key) (s-blank-p ,key))
+                                 (setq ,key (or
+                                             (org--header-arg-of
+                                              ',name
+                                              ,(intern (format ":%s" key)))
+                                             ,default-value))))
+           
            (cl-letf (((symbol-function 'org-export)
                       (lambda (x) "Wrap the given X in an export block for the current backend."
                         (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
                      ((symbol-function 'org-parse)
                       (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
                         (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
-
-             ;; Use any headers for this block type, if no local value is passed
-             ,@(cl-loop for k in (mapcar #'car (-partition 2 args))
-                        collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
-                                                        ,(intern (format ":%s" k)))
-                                   (when (s-blank-p ,k)
-                                     (setq ,k it))))
-
              (org-export
               (let ((contents (org-parse raw-contents))) ,@body))))))))
 
+
+(cl-defun org--header-arg-of (block-name arg-name)
+  "Gets the header value for parameter ARG-NAME used with BLOCK-NAME blocks.
+
+ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
+  (plist-get (cdr (assoc block-name org--header-args)) arg-name))
 
 
 ;;;
@@ -468,6 +476,7 @@ Features:
                    'html                                    ;; backend
                    '(who "dev" signoff "!")                 ;; args list
                    '((format "%s says hi%s" who signoff)))))
+
 
 
 

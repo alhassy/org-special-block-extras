@@ -247,7 +247,7 @@ Something <b><b>important</b></b> here.
          '((format "%s says hi%s ⟨TEST⟩" who signoff))))
   (should (string-match "Ada says hi, cheerio!" (org-block/greet0 'html "ignored contents" "Ada" :signoff ", cheerio!")))
   (should (string-match "Ada says hi, cheerio! ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "Ada" :signoff ", cheerio!")))
-  (should (string-match "me says hi ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "" :signoff ""))))
+  (should (string-match "me says hi! ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "" :signoff ""))))
 
 ;;;; Old tests
 
