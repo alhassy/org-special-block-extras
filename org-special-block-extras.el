@@ -412,47 +412,51 @@ Features:
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
         (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
-    ;; Unless we've already set the docs for the generic function, don't re-declare it.
-    `(let ((fn-name (quote ,(intern (format "org-block/%s" name)))))
-       (when (or ,(null body)
-                 (and (fboundp fn-name)
-                      (string-match-p "\s*\n\s*\n.fn.*" (documentation fn-name))))
-         (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
-           ,docstring) ;; For some reason, this “docstring” is not picked up.
-         ;; As such, let's set it manually:
-         (put (quote ,(intern (format "org-block/%s" name))) 'function-documentation ,docstring))
+    (let* ((fn-name (intern (format "org-block/%s" name)))
+           (should-generate-generic
+            (or (null body)
+                (not (fboundp fn-name))
+                (null (documentation fn-name))
+                (string-match-p "^\s*\n\s*\n.fn.*$" (documentation fn-name)))))
+      ;; Unless we've already set the docs for the generic function, don't re-declare it.
+      `(progn
+         ,@(when should-generate-generic
+             `((cl-defgeneric ,fn-name (backend raw-contents &rest _)
+                 ,docstring) ;; For some reason, this “docstring” is not picked up.
+               ;; As such, let's set it manually:
+               (put (quote ,fn-name) 'function-documentation ,docstring)))
 
-       (cl-defmethod ,(intern (format "org-block/%s" name))
-         ((backend ,(if backend-type `(eql ,backend-type) t))
-          (raw-contents string)
-          &optional
-          ,main-arg-name
-          &rest _
-          &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
-          &allow-other-keys)
-         ,docstring
-         ;; Use default value for blank main argument
-         (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
-           (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
-               (setq ,main-arg-name it)
-             (setq ,main-arg-name ,main-arg-value)))
+         (cl-defmethod ,(intern (format "org-block/%s" name))
+           ((backend ,(if backend-type `(eql ,backend-type) t))
+            (raw-contents string)
+            &optional
+            ,main-arg-name
+            &rest _
+            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
+            &allow-other-keys)
+           ,docstring
+           ;; Use default value for blank main argument
+           (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
+             (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
+                 (setq ,main-arg-name it)
+               (setq ,main-arg-name ,main-arg-value)))
 
-         (cl-letf (((symbol-function 'org-export)
-                    (lambda (x) "Wrap the given X in an export block for the current backend."
-                      (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
-                   ((symbol-function 'org-parse)
-                    (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                      (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+           (cl-letf (((symbol-function 'org-export)
+                      (lambda (x) "Wrap the given X in an export block for the current backend."
+                        (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                     ((symbol-function 'org-parse)
+                      (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+                        (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
 
-           ;; Use any headers for this block type, if no local value is passed
-           ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
-                      collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
-                                                      ,(intern (format ":%s" k)))
-                                 (when (s-blank-p ,k)
-                                   (setq ,k it))))
+             ;; Use any headers for this block type, if no local value is passed
+             ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
+                        collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
+                                                        ,(intern (format ":%s" k)))
+                                   (when (s-blank-p ,k)
+                                     (setq ,k it))))
 
-           (org-export
-            (let ((contents (org-parse raw-contents))) ,@body)))))))
+             (org-export
+              (let ((contents (org-parse raw-contents))) ,@body))))))))
 
 
 
