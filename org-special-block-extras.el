@@ -503,11 +503,6 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
 ;;;;; org-defblock
 
-(defun org--pp-list (xs)
-  "Given XS as (x₁ x₂ … xₙ), yield the string “x₁ x₂ … xₙ”, no parens.
-  When n = 0, yield the empty string “”."
-  (s-chop-suffix ")" (s-chop-prefix "(" (format "%s" (or xs "")))))
-
 (cl-defmacro org-defblock
     (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of DEFUN.
@@ -738,8 +733,8 @@ This assumes the block is well-formed and not nested.
           read           ;; We now have an honest to goodness Lisp list
           (--split-with (not (keywordp it)))
           (setq kwdargs))
-        ;; org--pp-list is used to preserve string quoting. TODO: Simplify
-        (setq main-arg (org--pp-list (car kwdargs))
+        (cl-assert (= 1 (length (car kwdargs))))        
+        (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
               kwdargs (cadr kwdargs))
         ;; Save indentation
         (re-search-backward (format "\\#\\+begin_%s\\b" name))
