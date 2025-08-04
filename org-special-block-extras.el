@@ -261,7 +261,7 @@ Note: This function mutates the current buffer."
 
 (cl-defmacro org-defblock
     (name kwds &optional link-display docstring &rest body)
-  "Declare a new special block, and link, in the style of DEFUN.
+  "Declare a new special block, and link, in the style of `defun'.
 
 A full featured example is at the end of this documentation string.
 
@@ -334,7 +334,7 @@ Example declaration, with all possible features shown:
    ;; I don't want to change the definition, but I'd like to have
    ;; the following as personalised defaults for the “remark” block.
    ;; OR, I'd like to set this for links, which do not have argument options.
-   (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+   (org-set-block-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
 
 Three example uses:
 

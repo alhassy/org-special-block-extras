@@ -1,6 +1,10 @@
-
 (require 'ert)
 (require 'org)
+(require 'org-element)
+(require 'cl-lib)
+(require 'dash)
+
+;;; Tests for org-special-block struct
 
 (ert-deftest test-org-special-block-after-point ()
   "Test that `org-special-block-after-point' correctly parses a special block."
@@ -96,19 +100,21 @@
                 2. Why we ask ‘why’?
                 
                 Take care!"))))))))
-  
-  (ert-deftest org--rewrite-special-blocks-by-handlers/foo-block-test ()
-    (with-temp-buffer
-      ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
-      (setq org--supported-blocks '("foo") ;; Sample supported blocks
-            org--current-backend nil) ;; Mocked global var  
-      ;; A dummy handler that transforms “FOO” blocks
-      (defun org-block/foo (backend contents arg &rest args)  
-        (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
-      ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
-      (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
-      (insert
-       (lf-string "\t#+begin_foo mainarg :x 1 :y 2
+
+;;; org--rewrite-special-blocks-by-handlers
+
+(ert-deftest org--rewrite-special-blocks-by-handlers/foo-block-test ()
+  (with-temp-buffer
+    ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
+    (setq org--supported-blocks '("foo") ;; Sample supported blocks
+          org--current-backend nil) ;; Mocked global var  
+    ;; A dummy handler that transforms “FOO” blocks
+    (defun org-block/foo (backend contents arg &rest args)  
+      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
+    ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
+    (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+    (insert
+     (lf-string "\t#+begin_foo mainarg :x 1 :y 2
                    This is foo block content.
                    #+end_foo
 
@@ -117,16 +123,79 @@
                   This is foobar block content.
                   #+end_foobar
                   "))
-      (goto-char (point-min))
-      (org--rewrite-special-blocks-by-handlers 'test-backend)
-      (should (equal (buffer-string)
-                     "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
+    (goto-char (point-min))
+    (org--rewrite-special-blocks-by-handlers 'test-backend)
+    (should (equal (buffer-string)
+                   "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
 
                   However, the next is left alone:
                   #+begin_foobar mainarg :x 1 :y 2
                   This is foobar block content.
                   #+end_foobar
                   "))))
+
+
+;;; defblock
+
+(ert-deftest org-defblock/handler-definition ()
+  "Test that a block handler is defined via `org-defblock' and evaluates correctly."
+  ;; Define a simple block
+  (org-defblock hello (who "world" punct "!") "Greeter block"
+                (format "Hello, %s%s" who punct))
+  (should (fboundp 'org-block/hello))
+  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
+                   (lf-string "#+begin_export test-backend 
+                               Hello, Emacs!!
+                               #+end_export"))))
+
+
+(ert-deftest org-defblock/default-argument-values ()
+  "Test that default argument values work with `defblock-header-args'."
+  (org-defblock greet (name "user" punct "!") "Greeting block"
+                (format "Hello, %s%s" name punct))
+  ;; Set defaults
+  (org-set-block-header-args greet :main-arg "dev" :punct "!!!")
+  ;; Simulate calling with nil main arg and nil keyword arg
+  (should (string= (org-block/greet 'test-backend "some content" nil :punct nil)
+                   (lf-string "#+begin_export test-backend 
+                               Hello, dev!!!
+                               #+end_export"))))
+
+
+(ert-deftest org-defblock/link-handling ()
+  "Test that a link associated with an `org-defblock' is defined and formats correctly."
+  (org-defblock notice () [:face 'italic] "Example."
+                (format "NOTICE: %s" contents))
+  (should (fboundp 'org-block/notice))
+  (should (fboundp 'org-link/notice))
+  ;; Simulate the link function evaluation
+  ;; (org-link/notice O-LABEL O-DESCRIPTION O-BACKEND)
+  (should (equal (org-link/notice  "Some note here" nil 'test-backend)
+                 "NOTICE: Some note here")))
+
+
+(cl-defun export (input &optional (backend 'html))
+  "Export Org INPUT along BACKEND."
+  (org-export-string-as input backend :body-only))
+
+
+(ert-deftest org-defblock/export-html ()
+  "Test that `org-defblock' handlers export to HTML correctly."
+  
+  ;; Define the block
+  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+                (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
+
+  ;; Setup test buffer with an org-mode block
+  (should (equal (export "Look: \n #+begin_highlight Warning :style color:orange\nSomething **important** here.\n#+end_highlight")
+                 ;; FIXME: Where's the initial text “Look:” ?
+                 "<div style='color:orange'><strong>Warning:</strong> 
+<p>
+Something <b><b>important</b></b> here.
+</p>
+</div>
+")))
+  
 
 ;;;; Old tests
 
@@ -152,21 +221,21 @@ The link text appears as red bold in both Emacs and in HTML export."
      The link text appears as red bold in both Emacs and in HTML export."))
 
 (deftest "org-deflink works as expected, plain links"
-  [org-deflink]
-  (should (not (null (symbol-function 'org-link/shout))))
-  (⇝ (⟰ "shout:hello")
+         [org-deflink]
+         (should (not (null (symbol-function 'org-link/shout))))
+         (⇝ (export "shout:hello")
      "<p> <span style=\"color:red\"> HELLO </span></p>"))
 
 (deftest "org-deflink works as expected, bracket links"
-  [org-deflink]
-  (⇝ (⟰ "[[shout:hello]]")
+         [org-deflink]
+         (⇝ (export "[[shout:hello]]")
      "<p> <span style=\"color:red\"> HELLO </span></p>")
-  (⇝ (⟰ "[[shout:hello][world!]]")
+         (⇝ (export "[[shout:hello][world!]]")
      "<p> <span style=\"color:red\"> WORLD! </span></p>"))
 
 (deftest "org-deflink works as expected, angle links"
-  [org-deflink]
-  (⇝ (⟰ "<shout: hello world!>")
+         [org-deflink]
+         (⇝ (export "<shout: hello world!>")
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
@@ -177,18 +246,18 @@ The link text appears as red bold in both Emacs and in HTML export."
   (format "%s: %s" speaker (upcase contents)))
 
 (deftest "Upcase works as expected on links, with only labels"
-         [basic-defblock org-link]
-         (⇝ (⟰ "pre scream:hello post")
+    [basic-defblock org-link]
+         (⇝ (export "pre scream:hello post")
             "pre hello: HELLO post"))
 
 (deftest "Upcase works as expected on links, with descriptions"
          [basic-defblock org-link]
-         (⇝ (⟰ "pre [[scream:hello][my dear friends]] post")
+         (⇝ (export "pre [[scream:hello][my dear friends]] post")
             "hello: MY DEAR FRIENDS post"))
 
 (deftest "Upcase works as expected on blocks"
          [basic-defblock]
-         (⇝ (⟰ "pre
+         (⇝ (export "pre
 #+begin_scream hello
 my amigos
 #+end_scream
@@ -204,7 +273,7 @@ post")
 
 (deftest "Upcase works as expected on blocks, with default main argument"
          [basic-defblock main-arg]
-         (⇝ (⟰ "pre
+         (⇝ (export "pre
 #+begin_scream
 my amigos
 #+end_scream
@@ -221,21 +290,21 @@ post")
 ;; [[file:org-special-block-extras.org::#kbd:nice-keystroke-renditions][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
-  (⇝ (⟰ "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
+  (⇝ (export "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
 
 (deftest "[[It]] becomes <kbd> tags"
   [kbd square-org-links]
-  (⇝ (⟰ "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+  (⇝ (export "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
 (deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
   [kbd angle-org-links]
-  (⇝ (⟰ "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+  (⇝ (export "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
 ;; FIXME: uh-oh!
 (when nil
 (deftest "It has a tooltip documenting the underlying Lisp function, when possible"
   [kbd tooltip]
-  (⇝ (⟰ "<kbd: M-s h .>")
+  (⇝ (export "<kbd: M-s h .>")
 
      "<abbr class=\"tooltip\""
      (* anything)
