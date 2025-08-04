@@ -90,7 +90,7 @@
   ;;
   ;;    ⟨blk-start/column⟩#+begin_⟨header-start⟩blk main-arg :key₀ val ₀ … :keyₙ valₙ  ;; ⟵ ⟨kwdargs⟩
   ;;    ⟨body-start⟩ body
-  ;;    #+end_blk        
+  ;;    #+end_blk
   (name             nil :type string  :documentation "The name of the special block.")
   (start-point      nil :type integer :documentation "Point at start of “#+begin_” line.")
   (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
@@ -107,7 +107,7 @@
   "Destructuring which works with `org-special-block', for use with `-let'.
 
 For example,
-  
+
        (let ((blk (make-org-special-block :name \"foo\" :main-arg \"hola\")))
          (-let (((&org-special-block 'name 'main-arg) blk))
            (message \"Block %s with arg %s\" name main-arg)))
@@ -125,7 +125,7 @@ Point should be at the start of the “#+begin_” clause.
 If NAME is provided, then look for that kind of block;
 otherwise look for any special block.
 
-This assumes the block is well-formed and not nested. 
+This assumes the block is well-formed and not nested.
 "
   (interactive)
   (save-excursion
@@ -141,7 +141,7 @@ This assumes the block is well-formed and not nested.
           read           ;; We now have an honest to goodness Lisp list
           (--split-with (not (keywordp it)))
           (setq kwdargs))
-        (cl-assert (= 1 (length (car kwdargs))))        
+        (cl-assert (= 1 (length (car kwdargs))))
         (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
               kwdargs (cadr kwdargs))
         ;; Save indentation
@@ -376,28 +376,52 @@ Three example uses:
                            (s-replace-regexp "@@" ""
                                              (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
 
+
 ;; WHERE ...
 
-(cl-defmethod org--create-defmethod-of-defblock ((name symbol) docstring backend-type (kwds list) (body list))
-  "Helper method to produce an associated Lisp function for org-defblock.
 
-+ NAME: The name of the block type.
-+ DOCSTRING, string|null: Documentation of block.
-+ KWDS: Keyword-value pairs
-+ BODY: Code to be executed"
+;; TODO: Add dispatch support not via (eql BACKEND-TYPE), but rather against any derived backend.
+;; TODO: Why isn't this a macro?
+(cl-defmethod org--create-defmethod-of-defblock
+  ((name symbol)
+   (docstring string)
+   (backend-type symbol)
+   (kwds list)
+   (body list))
+  "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
+
+- NAME         [Symbol]: The name of the block type.
+- DOCSTRING    [Nullable String]: Documentation of the block.
+- BACKEND-TYPE [Symbol]: Which backend this implementation is used with.
+                         Dispatches via (eql BACKEND-TYPE).
+TODO: Rename to ARGS
+- KWDS: Property list beginning with main arg binding and default value,
+        followed by “keyword default-value” pairs.
+- BODY: Code to be executed just before export.
+
+Features:
++ Backend-specific dispatch ((eql BACKEND)).
++ Auto-defaults for main and keyword args via `org--header-args'.
+  Default values can be set long after the associated handler is created.
++ Optional `o-link?' flag for minimal output (used in links).
++ Automatic wrapping in export blocks (`org-export`, `org-parse`)."
+
   (cl-assert (or (stringp docstring) (null docstring)))
   (cl-assert (or (symbolp backend-type) (null backend-type)))
 
   (let ((main-arg-name (or (cl-first kwds) 'main-arg))
-  (main-arg-value (cl-second kwds))
+        (main-arg-value (cl-second kwds))
         (kwds (cddr kwds)))
     ;; Unless we've already set the docs for the generic function, don't re-declare it.
-    `(if ,(null body)
+    `(let ((fn-name (quote ,(intern (format "org-block/%s" name)))))
+       (when (or ,(null body)
+                 (and (fboundp fn-name)
+                      (string-match-p "\s*\n\s*\n.fn.*" (documentation fn-name))))
          (cl-defgeneric ,(intern (format "org-block/%s" name)) (backend raw-contents &rest _)
            ,docstring) ;; For some reason, this “docstring” is not picked up.
-       ;; As such, let's set it manually:
-       (put (quote ,(intern (format "org-block/%s" name))) 'function-documentation ,docstring)
-       
+         ;; As such, let's set it manually:
+         (put (quote ,(intern (format "org-block/%s" name))) 'function-documentation ,docstring))
+
        (cl-defmethod ,(intern (format "org-block/%s" name))
          ((backend ,(if backend-type `(eql ,backend-type) t))
           (raw-contents string)
@@ -407,8 +431,8 @@ Three example uses:
           &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 kwds))
           &allow-other-keys)
          ,docstring
-         ;; Use default for main argument
-         (when (and ',main-arg-name (s-blank-p ,main-arg-name))
+         ;; Use default value for blank main argument
+         (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
            (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
                (setq ,main-arg-name it)
              (setq ,main-arg-name ,main-arg-value)))
@@ -430,6 +454,24 @@ Three example uses:
            (org-export
             (let ((contents (org-parse raw-contents))) ,@body)))))))
 
+
+
+;;;
+
+(when nil insert (pp
+                  (org--create-defmethod-of-defblock
+                   'tip1                                    ;; name
+                   "A tooltip doc"                          ;; docstring
+                   'html                                    ;; backend
+                   '(who "dev" signoff "!")                 ;; args list
+                   '((format "%s says hi%s" who signoff)))))
+
+
+
+
+
+
+
 ;;;;; org-special-block-extras-mode autoload
 
 (defconst org-special-block-extras-version (package-get-version))
@@ -438,8 +480,8 @@ Three example uses:
   (interactive)
   (message org-special-block-extras-version))
 
-  (defcustom org-special-block-add-html-extra t
-    "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag.
+(defcustom org-special-block-add-html-extra t
+  "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag.
 
 The `org-special-block-extras' mode adds a lot of extra HTML/JS code that
 1. [Bloat] may not be needed by everyone using this package,
@@ -469,7 +511,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (setq org-export-allow-bind-keywords t)
         (defvar org--ospe-kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
-        
+
         (unless org--ospe-kbd-html-setup
           (setq org--ospe-kbd-html-setup t))
         (when org-special-block-add-html-extra
@@ -499,7 +541,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
             padding: .08em .4em;
             text-shadow: 0 1px 0 #fff;
             word-spacing: -4px;
-        
+
             box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
           }
           </style>")))
@@ -508,7 +550,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
           (org-docs-load-libraries))
         (defvar org--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
-        
+
         (unless org--tooltip-html-setup
           (setq org--tooltip-html-setup t))
         (when org-special-block-add-html-extra
@@ -516,17 +558,17 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
                 (concat org-html-head-extra
                         "
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-        
+
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-        
+
           <script type=\"text/javascript\">
               if (typeof jQuery == 'undefined') {
                   document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
               }
           </script>
-        
+
            <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-        
+
             <script>
                    $(document).ready(function() {
                        $('.tooltip').tooltipster({
@@ -546,10 +588,10 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
            });
                    });
                </script>
-        
+
           <style>
              abbr {color: red;}
-        
+
              .tooltip { border-bottom: 1px dotted #000;
                         color:red;
                         text-decoration: none;}
@@ -557,11 +599,11 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
           ")))
         (defvar org--docs-empty! (list nil t)
           "An indicator of when glossary entries should be erased.
-        
+
         We erase the glossary not on the first export, but on the second export.
         The first export collects all citations, which are used in the second export.")
         (setcdr (last org--docs-empty!) org--docs-empty!) ;; It's an infinite cyclic list.
-        
+
         ;; Actual used glossary entries depends on the buffer; so clean up after each export
         (advice-add #'org-export-dispatch
                     :after (lambda (&rest _)
@@ -614,7 +656,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
       ;; Account for cursour being on anywhere on the links “name:key”.
       (backward-word 2)
       (unless (= working-line (line-number-at-pos))
-        (goto-line working-line))
+  (goto-line working-line))
       (let* ((here-to-eol (buffer-substring-no-properties (point) (point-at-eol)))
              ;; E.g., “kbd:”, the name part of an Org link
              (link-name (cl-second (s-match "\\([^ ]+:\\).+" here-to-eol))))
@@ -634,7 +676,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
                      Press ‘q’ to kill the resulting buffer and window."
   (interactive)
   (let* ((link (s-chop-suffix ":" (org-link-at-point)))
-         (msg (ignore-errors
+   (msg (ignore-errors
                 (concat
                  (documentation (intern (format "org-link/%s" link)))
                  "\nKEY BINDINGS:\n"
@@ -878,14 +920,14 @@ A full, working, example can be seen by “C-h o RET defblock”.
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  (editor "Editor Remark" color "red" signoff "")
-  [:face '(:foreground "red" :weight bold)]
-  ; :please-preserve-new-lines
-  "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
-  (format (if (equal backend 'html)
-            "<strong style=\"color: %s;\">⟦%s: %s%s⟧</strong>"
-            "{\\color{%s}\\bfseries %s:  %s%s}")
-          color editor contents signoff))
+              (editor "Editor Remark" color "red" signoff "")
+              [:face '(:foreground "red" :weight bold)]
+                                        ; :please-preserve-new-lines
+              "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
+              (format (if (equal backend 'html)
+                          "<strong style=\"color: %s;\">⟦%s: %s%s⟧</strong>"
+                        "{\\color{%s}\\bfseries %s:  %s%s}")
+                      color editor contents signoff))
 
 ;; I don't want to change the definition, but I'd like to have
 ;; the following as personalised defaults for the “remark” block.

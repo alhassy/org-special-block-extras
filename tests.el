@@ -151,14 +151,14 @@
 
 (ert-deftest org-defblock/default-argument-values ()
   "Test that default argument values work with `defblock-header-args'."
-  (org-defblock greet (name "user" punct "!") "Greeting block"
+  (org-defblock greeting1 (name "user" punct "!") "Greeting block"
                 (format "Hello, %s%s" name punct))
   ;; Set defaults
-  (org-set-block-header-args greet :main-arg "dev" :punct "!!!")
+  (org-set-block-header-args greeting1 :main-arg "dev" :punct "!×4")
   ;; Simulate calling with nil main arg and nil keyword arg
-  (should (string= (org-block/greet 'test-backend "some content" nil :punct nil)
+  (should (string= (org-block/greeting1 'test-backend "some content" nil :punct nil)
                    (lf-string "#+begin_export test-backend 
-                               Hello, dev!!!
+                               Hello, dev!×4
                                #+end_export"))))
 
 
@@ -195,7 +195,59 @@ Something <b><b>important</b></b> here.
 </p>
 </div>
 ")))
-  
+
+
+
+(ert-deftest org--create-defmethod/handler-creation ()
+  "Test that a method is created from `org--create-defmethod-of-defblock'."
+  ;; Because this function returns code, we eval the result in tests to observe behaviour.
+  (should (equal (eval (org--create-defmethod-of-defblock
+                        'greet0                                   ;; name
+                        "Greet0ing block"                         ;; docstring
+                        'html                                    ;; backend 
+                        '(who "dev" signoff "!")                 ;; args list
+                        '((format "%s says hi%s" who signoff)))) ;; body
+                 'org-block/greet0))
+  (should (fboundp 'org-block/greet0))  
+  ;; Docs exist
+  (should (equal (plist-get  (symbol-plist 'org-block/greet0) 'function-documentation)
+                 "Greet0ing block"))
+  ;; Basic usage
+  (should (string= (org-block/greet0 'html "ignored contents" "Ada" :signoff ", cheerio!")
+                   (lf-string "#+begin_export html 
+                               Ada says hi, cheerio!
+                               #+end_export")))
+  ;; Default values are honoured
+  (should (string= (org-block/greet0 'html "ignored contents" "")
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export")))
+  ;; Extra args are ignored
+  (should (string= (org-block/greet0 'html "" "" "" 'extra 'args :are 'ignored)
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export")))
+  ;; Test that header arg defaults override blank block arguments.
+  (let ((org--header-args '((greet0 . (:main-arg "Mickey" :signoff ", buddo!")))))
+    (should (string= (org-block/greet0 'html "contents" "" :signoff "")
+                     (lf-string "#+begin_export html 
+                               Mickey says hi, buddo!
+                               #+end_export"))))
+  ;; Ensure method only works for specified backend via `(eql BACKEND)`.
+  ;; We already tested it works for 'html, but it should error for 'latex since it's not defined
+  ;; for it.
+  (should (org-block/greet0 'html "" ""))
+  (should-error (org-block/greet0 'latex "" "" ))
+  ;; Let's define it for another backend; the definitions are independent.
+  (eval (org--create-defmethod-of-defblock
+         'greet0
+         "A tooltip doc"
+         'test-backend
+         '(who "me" signoff "!")
+         '((format "%s says hi%s ⟨TEST⟩" who signoff))))
+  (should (string-match "Ada says hi, cheerio!" (org-block/greet0 'html "ignored contents" "Ada" :signoff ", cheerio!")))
+  (should (string-match "Ada says hi, cheerio! ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "Ada" :signoff ", cheerio!")))
+  (should (string-match "me says hi ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "" :signoff ""))))
 
 ;;;; Old tests
 
