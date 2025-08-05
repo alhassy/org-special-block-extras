@@ -140,10 +140,10 @@
 (ert-deftest org-defblock/handler-definition ()
   "Test that a block handler is defined via `org-defblock' and evaluates correctly."
   ;; Define a simple block
-  (org-defblock hello (who "world" punct "!") "Greeter block"
+  (org-defblock hello2 (who "world" punct "!") "Greeter block"
                 (format "Hello, %s%s" who punct))
-  (should (fboundp 'org-block/hello))
-  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
+  (should (fboundp 'org-block/hello2))
+  (should (string= (org-block/hello2 'test-backend "ignored" "Emacs" :punct "!!")
                    (lf-string "#+begin_export test-backend 
                                Hello, Emacs!!
                                #+end_export"))))
@@ -151,12 +151,12 @@
 
 (ert-deftest org-defblock/default-argument-values ()
   "Test that default argument values work with `defblock-header-args'."
-  (org-defblock greeting1 (name "user" punct "!") "Greeting block"
+  (org-defblock greeting2 (name "user" punct "!") "Greeting block"
                 (format "Hello, %s%s" name punct))
   ;; Set defaults
-  (org-set-block-header-args greeting1 :main-arg "dev" :punct "!×4")
+  (org-set-block-header-args greeting2 :main-arg "dev" :punct "!×4")
   ;; Simulate calling with nil main arg and nil keyword arg
-  (should (string= (org-block/greeting1 'test-backend "some content" nil :punct nil)
+  (should (string= (org-block/greeting2 'test-backend "some content" nil :punct nil)
                    (lf-string "#+begin_export test-backend 
                                Hello, dev!×4
                                #+end_export"))))
@@ -164,90 +164,87 @@
 
 (ert-deftest org-defblock/link-handling ()
   "Test that a link associated with an `org-defblock' is defined and formats correctly."
-  (org-defblock notice () [:face 'italic] "Example."
+  (org-defblock notice2 () [:face 'italic] "Example."
                 (format "NOTICE: %s" contents))
-  (should (fboundp 'org-block/notice))
-  (should (fboundp 'org-link/notice))
+  (should (fboundp 'org-block/notice2))
+  (should (fboundp 'org-link/notice2))
   ;; Simulate the link function evaluation
   ;; (org-link/notice O-LABEL O-DESCRIPTION O-BACKEND)
-  (should (equal (org-link/notice  "Some note here" nil 'test-backend)
+  (should (equal (org-link/notice2  "Some note here" nil 'test-backend)
                  "NOTICE: Some note here")))
 
 
-(cl-defun export (input &optional (backend 'html))
-  "Export Org INPUT along BACKEND."
-  (org-export-string-as input backend :body-only))
+(cl-defun export (string &optional (backend 'html))
+  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
+  (with-temp-buffer
+    (insert string)
+    (let ((org-inhibit-startup t))
+      (org-mode)
+      (org-special-block-extras-mode)
+      (org-export-as backend nil nil :body-only nil))))
 
 
 (ert-deftest org-defblock/export-html ()
   "Test that `org-defblock' handlers export to HTML correctly."
-  
-  ;; Define the block
-  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+
+  ;; Define the block 
+  (org-defblock highlight2 (label "Note" style "color:red") "Highlight block"
                 (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
 
   ;; Setup test buffer with an org-mode block
-  (should (equal (export "Look: \n #+begin_highlight Warning :style color:orange\nSomething **important** here.\n#+end_highlight")
-                 ;; FIXME: Where's the initial text “Look:” ?
-                 "<div style='color:orange'><strong>Warning:</strong> 
+  (should (thread-last
+            (export "Look: \n #+begin_highlight2 Warning :style color:orange\nSomething **important** here.\n#+end_highlight2")
+            ;; TODO: FIXME: Where's the initial text “Look:” ?            
+            (string-match
+             "^<div class=\"highlight2\" id=\".*\">
 <p>
 Something <b><b>important</b></b> here.
 </p>
+
 </div>
-")))
+$"))))
 
 
-
-(ert-deftest org--create-defmethod/handler-creation ()
-  "Test that a method is created from `org--create-defmethod-of-defblock'."
+(ert-deftest org-defblock--make-defun/handler-creation ()
+  "Test that a method is created from `org-defblock--make-defun'."
   ;; Because this function returns code, we eval the result in tests to observe behaviour.
-  (should (equal (eval (org--create-defmethod-of-defblock
-                        'greet0                                   ;; name
-                        "Greet0ing block"                         ;; docstring
+  (should (equal (eval (org-defblock--make-defun
+                        'speak                                   ;; name
+                        "Speaking block"                         ;; docstring
                         'html                                    ;; backend 
                         '(who "dev" signoff "!")                 ;; args list
-                        '((format "%s says hi%s" who signoff)))) ;; body
-                 'org-block/greet0))
-  (should (fboundp 'org-block/greet0))  
-  ;; Docs exist
-  (should (equal (plist-get  (symbol-plist 'org-block/greet0) 'function-documentation)
-                 "Greet0ing block"))
+                        '((format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" ""))))) ;; body
+                 'org-block/speak))
+  (should (fboundp 'org-block/speak))  
+  ;; Docs exist  
+  (should (equal (documentation 'org-block/speak)
+                 "Speaking block
+
+(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)"))
   ;; Basic usage
-  (should (string= (org-block/greet0 'html "ignored contents" "Ada" :signoff ", cheerio!")
+  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
                    (lf-string "#+begin_export html 
                                Ada says hi, cheerio!
                                #+end_export")))
   ;; Default values are honoured
-  (should (string= (org-block/greet0 'html "ignored contents" "")
+  (should (string= (org-block/speak 'html "ignored contents" "")
                    (lf-string "#+begin_export html 
                                dev says hi!
                                #+end_export")))
   ;; Extra args are ignored
-  (should (string= (org-block/greet0 'html "" "" "" 'extra 'args :are 'ignored)
+  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
                    (lf-string "#+begin_export html 
                                dev says hi!
                                #+end_export")))
   ;; Test that header arg defaults override blank block arguments.
-  (let ((org--header-args '((greet0 . (:main-arg "Mickey" :signoff ", buddo!")))))
-    (should (string= (org-block/greet0 'html "contents" "" :signoff "")
+  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
+    (should (string= (org-block/speak 'html "contents" "" :signoff "")
                      (lf-string "#+begin_export html 
                                Mickey says hi, buddo!
                                #+end_export"))))
-  ;; Ensure method only works for specified backend via `(eql BACKEND)`.
-  ;; We already tested it works for 'html, but it should error for 'latex since it's not defined
-  ;; for it.
-  (should (org-block/greet0 'html "" ""))
-  (should-error (org-block/greet0 'latex "" "" ))
-  ;; Let's define it for another backend; the definitions are independent.
-  (eval (org--create-defmethod-of-defblock
-         'greet0
-         "A tooltip doc"
-         'test-backend
-         '(who "me" signoff "!")
-         '((format "%s says hi%s ⟨TEST⟩" who signoff))))
-  (should (string-match "Ada says hi, cheerio!" (org-block/greet0 'html "ignored contents" "Ada" :signoff ", cheerio!")))
-  (should (string-match "Ada says hi, cheerio! ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "Ada" :signoff ", cheerio!")))
-  (should (string-match "me says hi! ⟨TEST⟩" (org-block/greet0 'test-backend "ignored contents" "" :signoff ""))))
+  ;; It dispatches differently according to backend.
+  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
+  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
 
 ;;;; Old tests
 

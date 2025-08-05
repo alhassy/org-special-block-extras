@@ -368,7 +368,7 @@ Three example uses:
     `(progn
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
        (list
-        ,(org--create-defmethod-of-defblock name docstring (plist-get kwds :backend) kwds body)
+        ,(org-defblock--make-defun name docstring (plist-get kwds :backend) kwds body)
         ;; ⇨ The link type support
         (eval (backquote (org-deflink ,name
                            ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
@@ -379,10 +379,8 @@ Three example uses:
 
 ;; WHERE ...
 
-;; TODO: Why am I generating defmethods? Consider just generating cl-defuns, much simpler.
-;; TODO: Add dispatch support not via (eql BACKEND-TYPE), but rather against any derived backend.
 ;; TODO: Why isn't this a macro?
-(cl-defmethod org--create-defmethod-of-defblock
+(cl-defmethod org-defblock--make-defun
   ((name symbol)
    (docstring string)
    (backend-type symbol)
@@ -417,47 +415,42 @@ Features:
                 (not (fboundp fn-name))
                 (null (documentation fn-name))
                 (string-match-p "^\s*\n\s*\n.fn.*$" (documentation fn-name)))))
-      ;; Unless we've already set the docs for the generic function, don't re-declare it.
-      `(progn
-         ,@(when should-generate-generic
-             `((cl-defgeneric ,fn-name (backend raw-contents &rest _)
-                 ,docstring) ;; For some reason, this “docstring” is not picked up.
-               ;; As such, let's set it manually:
-               (put (quote ,fn-name) 'function-documentation ,docstring)))
-
-         (cl-defmethod ,(intern (format "org-block/%s" name))
-           ((backend ,(if backend-type `(eql ,backend-type) t))
-            (raw-contents string)
+      `(cl-defun ,(intern (format "org-block/%s" name))
+           (backend      ;; Symbol
+            raw-contents ;; String
             &optional ,main-arg-name
             &rest _
-            &key (o-link? nil) ,@(-partition 2 keywords)
+            &key o-link? ,@(-partition 2 keywords)
             &allow-other-keys)
-           ,docstring
-           
-           ;; Use default value for blank main argument
-           (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
-             (setq ,main-arg-name
-                   (or
-                    (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
-                    ,main-arg-default-value)))
+         ,docstring
+         
+         (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
+         (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
+         
+         ;; Use default value for blank main argument
+         (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
+           (setq ,main-arg-name
+                 (or
+                  (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
+                  ,main-arg-default-value)))
 
-           ;; Use any headers for this block type, if no local value is passed
-           ,@(cl-loop for (key default-value) in (-partition 2 keywords)
-                      collect `(when (or (null ,key) (s-blank-p ,key))
-                                 (setq ,key (or
-                                             (org--header-arg-of
-                                              ',name
-                                              ,(intern (format ":%s" key)))
-                                             ,default-value))))
-           
-           (cl-letf (((symbol-function 'org-export)
-                      (lambda (x) "Wrap the given X in an export block for the current backend."
-                        (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
-                     ((symbol-function 'org-parse)
-                      (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                        (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
-             (org-export
-              (let ((contents (org-parse raw-contents))) ,@body))))))))
+         ;; Use any headers for this block type, if no local value is passed
+         ,@(cl-loop for (key default-value) in (-partition 2 keywords)
+                    collect `(when (or (null ,key) (s-blank-p ,key))
+                               (setq ,key (or
+                                           (org--header-arg-of
+                                            ',name
+                                            ,(intern (format ":%s" key)))
+                                           ,default-value))))
+         
+         (cl-letf (((symbol-function 'org-export)
+                    (lambda (x) "Wrap the given X in an export block for the current backend."
+                      (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                   ((symbol-function 'org-parse)
+                    (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+                      (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+           (org-export
+            (let ((contents (org-parse raw-contents))) ,@body)))))))
 
 
 (cl-defun org--header-arg-of (block-name arg-name)
@@ -470,12 +463,15 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
 ;;;
 
 (when nil insert (pp
-                  (org--create-defmethod-of-defblock
+                  (org-defblock--make-defun
                    'tip1                                    ;; name
                    "A tooltip doc"                          ;; docstring
                    'html                                    ;; backend
                    '(who "dev" signoff "!")                 ;; args list
                    '((format "%s says hi%s" who signoff)))))
+
+
+
 
 
 
