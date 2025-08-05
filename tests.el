@@ -4,6 +4,83 @@
 (require 'cl-lib)
 (require 'dash)
 
+;;; Bespoke test macro “deftest”
+;; I dislike writing “(ert-deftest my-method-test () "my-method does the thing" :tags '(my-method) body)”
+;; and instead prefer “(deftest "my-method does the thing" body)”.
+;; My approach also simplifies things by surfacing test :tags into the “M-x ert” view.
+;; Let's set that up!
+
+(defmacro deftest (description &rest body)
+  "Declare tests with meaningful string names, that reflect the test's main goal.
+
+DESCRIPTION is a string.
+
+Benefits of this macro:
++ Converts the description string into a readable and valid ERT symbol
++ Derives the tag from the first word in the test description (usually the method name)
++ Allows natural punctuation like quotes, commas, etc.
+
+Each test now starts with a human-readable string and gets converted
+into a test function.
+
+The first tag should be the name of the main function being tested;
+this name is prepended to the name of underlying ert-deftest.
+This way, tests are grouped/namespaced when running ert from the command line.
+
+I use Org-blocks with ‘:comments link’, this then serves to delimit
+my tests into “suites”.
+
+Example ERT call: (ert '(tag my-cool-method))
+
+DESCRIPTION may contain spaces, commas, quotes, and other natural punctuation and ASCII.
+For example, the description “Howdy, Musa's 3 `friends!`” is acceptable (and it
+gets converted into the Lisp name “ Howdy︐·Musa’s·3·‵friends!‵ ”).
+Without the s-replace-all, “M-x ert” crashes when it comes to selecting the test
+to run.
+
+Example use:
+
+(deftest \"`length' of nil is 0\"
+  (should (equal (length nil) 0)))
+
+This generates an ERT test named `length·of·nil·is·0'.
+"
+  (declare (indent defun))  
+  (cl-assert (stringp description) nil "“deftest” expects its first argument to be a string literal")
+  (let* ((test-name
+          (thread-last description
+                       s-trim
+                       s-collapse-whitespace
+                       (s-replace-all `((" " . ,deftest-space)
+                                         ("`" . "")
+                                         ("'" . "")
+                                         ("," . "︐")
+                                         ("`" . "‵")
+                                         (";" . "︔")
+                                         ("[" . "⁅")
+                                         ("]" . "⁆")))))
+         (method-being-tested (car (s-split " " (s-trim test-name)))))
+    `(ert-deftest ,(intern test-name) ()
+     :tags (quote ,method-being-tested)
+     ,@body)))
+
+(defvar deftest-space "·"
+  "The symbol used in-places of whitespace.
+
+The default is interpunct style, or middle-dot, see 0 below.
+
+Here are other symbols I've considered using:
+0. Interpunct style is barely noticeable and non-intrusive.
+   ⇒ OSBE·org·source·exports·to·HTML·without·any·problems
+1. Hyphens is a common Lisp & English convention for forming compounds.
+   ⇒ OSBE-org-source-exports-to-HTML-without-any-problems
+2. Snakecase is also popular
+   ⇒ OSBE_org_source_exports_to_HTML_without_any_problems
+3. The underbracket is also neat
+   ⇒ OSBE␣org␣source␣exports␣to␣HTML␣without␣any␣problems
+4. There is no need to force convention onto ourselves; get funky:
+   ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
+
 ;;; Tests for org-special-block struct
 
 (ert-deftest test-org-special-block-after-point ()
@@ -135,48 +212,55 @@
                   "))))
 
 
-;;; defblock
-
-;; TODO Split this up into a bunch of smaller tests.
-(ert-deftest org-defblock-only ()
-  "Test that a method is created from `org-defblock-only'."
-  ;; Because this function returns code, we eval the result in tests to observe behaviour.
+;;; org-defblock-only
+ 
+(deftest "`org-defblock-only' returns the name of the defined function"
   (should (equal
            (org-defblock-only speak (who "dev" signoff "!")
              "Speaking block"
              (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-           'org-block/speak))
-  (should (fboundp 'org-block/speak))
-  ;; Docs exist  
+           'org-block/speak)))
+
+(deftest "`org-defblock-only' defines a function with the correct symbol name"
+  (should (fboundp 'org-block/speak)))
+
+(deftest "`org-defblock-only' attaches a docstring to the generated function"
   (should (equal (documentation 'org-block/speak)
                  "Speaking block
 
-(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)"))
-  ;; Basic usage
+(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)")))
+
+(deftest "`org-defblock-only' generates expected output with explicit arguments"
   (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
                    (lf-string "#+begin_export html 
                                Ada says hi, cheerio!
-                               #+end_export")))
-  ;; Default values are honoured
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' honours default values for missing main and keyword args"
   (should (string= (org-block/speak 'html "ignored contents" "")
                    (lf-string "#+begin_export html 
                                dev says hi!
-                               #+end_export")))
-  ;; Extra args are ignored
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' ignores extra unexpected arguments safely"
   (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
                    (lf-string "#+begin_export html 
                                dev says hi!
-                               #+end_export")))
-  ;; Test that header arg defaults override blank block arguments.
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' uses header-arg defaults when block args are blank"
   (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
     (should (string= (org-block/speak 'html "contents" "" :signoff "")
                      (lf-string "#+begin_export html 
-                               Mickey says hi, buddo!
-                               #+end_export"))))
-  ;; It dispatches differently according to backend.
+                                 Mickey says hi, buddo!
+                                 #+end_export")))))
+
+(deftest "`org-defblock-only' alters output depending on export backend"
   (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
   (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
 
+
+;;; org-defblock
 
 (ert-deftest org-defblock/handler-definition ()
   "Test that a block handler is defined via `org-defblock' and evaluates correctly."
@@ -246,7 +330,7 @@ Something <b><b>important</b></b> here.
 $"))))
 
 
-;;;; Old tests
+;;; Old tests
 
 ;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout

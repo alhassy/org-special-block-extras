@@ -398,53 +398,6 @@ Pictogram explanation: ⟰ is read ‘export’; it “exports upward to the moo
      backend
      :body-only))
 
-(defvar deftest-space "·"
-  "The symbol used in-places of whitespace.
-
-The default is interpunct style, or middle-dot, see 0 below.
-
-Here are other symbols I've considered using:
-0. Interpunct style is barely noticeable and non-intrusive.
-   ⇒ OSBE·org·source·exports·to·HTML·without·any·problems
-1. Hyphens is a common Lisp & English convention for forming compounds.
-   ⇒ OSBE-org-source-exports-to-HTML-without-any-problems
-2. Snakecase is also popular
-   ⇒ OSBE_org_source_exports_to_HTML_without_any_problems
-3. The underbracket is also neat
-   ⇒ OSBE␣org␣source␣exports␣to␣HTML␣without␣any␣problems
-4. There is no need to force convention onto ourselves; get funky:
-   ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
-
-(defmacro deftest (desc tags &rest body)
-  "Declare tests with meaningful string names, that reflect the test's main goal.
-
-DESC is a string, TAGS is a vector.
-
-The first tag should be the name of the main function being tested;
-this name is prepended to the name of underlying ert-deftest.
-This way, tests are grouped/namespaced when running ert from the command line.
-
-I use Org-blocks with ‘:comments link’, this then serves to delimit
-my tests into “suites”.
-
-Example ERT call: (ert '(tag my-cool-tag))
-"
-  `(ert-deftest ,(intern
-                  (concat
-                   ;; ⇨ ➝ ➡ ➩ ➾ ⚝
-                   (format "%s··⇨··" (seq-elt tags 0))
-                   (s-replace-all `((" " . ,deftest-space) ("'" . "’") ("," . "︐") ("`" . "‵") (";" . "︔") ("[" . "⁅") ("]" . "⁆"))
-                                  (s-collapse-whitespace (s-trim desc)))))
-     ()
-     :tags (quote ,(seq--into-list tags))
-     ,@body))
-  ;;
-  ;; DESC may contain spaces, commas, quotes, and other natural punctuation and ASCII.
-  ;; For example, the description “Howdy, Musa's 3 `friends!`” is acceptable (and it
-  ;; gets converted into the Lisp name “ Howdy︐·Musa’s·3·‵friends!‵ ”).
-  ;; Without the s-replace-all, “M-x ert” crashes when it comes to selecting the test
-  ;; to run.
-
 (defmacro ≋ (lhs rhs)
     "A shorthand for (should (equal LHS RHS))."
     `(should (equal ,lhs ,rhs)))
