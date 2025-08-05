@@ -379,7 +379,7 @@ Three example uses:
 
 ;; WHERE ...
 
-
+;; TODO: Why am I generating defmethods? Consider just generating cl-defuns, much simpler.
 ;; TODO: Add dispatch support not via (eql BACKEND-TYPE), but rather against any derived backend.
 ;; TODO: Why isn't this a macro?
 (cl-defmethod org--create-defmethod-of-defblock
@@ -430,7 +430,7 @@ Features:
             (raw-contents string)
             &optional ,main-arg-name
             &rest _
-            &key (o-link? nil) ,@(--reject (keywordp (car it)) (-partition 2 keywords))
+            &key (o-link? nil) ,@(-partition 2 keywords)
             &allow-other-keys)
            ,docstring
            
