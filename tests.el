@@ -20,8 +20,9 @@ Benefits of this macro:
 + Derives the tag from the first word in the test description (usually the method name)
 + Allows natural punctuation like quotes, commas, etc.
 
-Each test now starts with a human-readable string and gets converted
-into a test function.
+Each test now starts with a readable natural-language string-based
+description and gets automatically tagged based on the function under
+test.
 
 The first tag should be the name of the main function being tested;
 this name is prepended to the name of underlying ert-deftest.
@@ -83,39 +84,31 @@ Here are other symbols I've considered using:
 
 ;;; Tests for org-special-block struct
 
-(ert-deftest test-org-special-block-after-point ()
-  "Test that `org-special-block-after-point' correctly parses a special block."
+(deftest "`org-special-block-after-point' correctly parses block structure"
   (with-temp-buffer
-    ;; Insert a sample special block
     (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
                         block content
                         #+end_foo"))
     (goto-char (point-min))
-    ;; Call the parser
     (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
            (org-special-block-after-point "foo")]
       (should (equal name "foo"))
       (should (equal main-arg "mainarg"))
-      (should (equal kwdargs  '(:x 1 :y 2)))
+      (should (equal kwdargs '(:x 1 :y 2)))
       (should (equal contents "block content")))))
 
-
-(ert-deftest test-org-eval-replace-block ()
-  "Ensure `org-eval-replace-block' replaces a block correctly."
-
+(deftest "`org-eval-replace-block' replaces a block with handler output"
   ;; Dynamically define a mock handler function
   (cl-letf (((symbol-function 'org-block/foo)
              (lambda (backend contents arg &rest args)
                (format "REPLACED: %s | %s | %s | %s"
                        backend contents arg args))))
-
     (with-temp-buffer
       (insert (lf-string "Start
                #+begin_foo mainarg :x 1
                Body text
                #+end_foo
                End"))
-
       ;; Identify the block boundaries, manually
       (goto-char (point-min))
       (search-forward "#+begin_foo")
@@ -128,20 +121,15 @@ Here are other symbols I've considered using:
                    :main-arg "\"mainarg\""
                    :kwdargs '(:x 1)
                    :contents "Body text")))
-
         ;; Evaluate the method
         (org-eval-replace-block blk 'test-backend)
-
         ;; Assert buffer was transformed as expected
         (should (equal (buffer-string)
                        (lf-string "Start
                                    REPLACED: test-backend | Body text | \"mainarg\" | (:x 1)
                                    End")))))))
 
-
-(ert-deftest test-org-eval-replace-block-within-enumeration ()
-  "Ensure `org-eval-replace-block' replaces a block correctly, in an enumeration."
-  ;; Dynamically define a mock handler function
+(deftest "`org-eval-replace-block' handles special block within numbered list"
   (cl-letf (((symbol-function 'org-block/foo)
              (lambda (backend contents arg &rest args)
                (format "+ Args: %s %s \n+ Contents: %s" arg args (s-trim contents)))))
@@ -180,16 +168,20 @@ Here are other symbols I've considered using:
 
 ;;; org--rewrite-special-blocks-by-handlers
 
-(ert-deftest org--rewrite-special-blocks-by-handlers/foo-block-test ()
+(deftest "`org--rewrite-special-blocks-by-handlers' transforms supported blocks but leaves others unchanged"
   (with-temp-buffer
-    ;; (Note that OSBE would not pick-up the following if they were declared in a `cl-flet'.)
-    (setq org--supported-blocks '("foo") ;; Sample supported blocks
-          org--current-backend nil) ;; Mocked global var  
-    ;; A dummy handler that transforms “FOO” blocks
-    (defun org-block/foo (backend contents arg &rest args)  
-      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))      
-    ;; All supported blocks ℬ have a handler function “org-block/ℬ”.
+    ;; Setup supported blocks and mock global backend
+    (setq org--supported-blocks '("foo")
+          org--current-backend nil)
+
+    ;; Dummy handler for "foo" blocks
+    (defun org-block/foo (backend contents arg &rest args)
+      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))
+
+    ;; Ensure all supported blocks have handlers
     (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+
+    ;; Insert Org content with both supported and unsupported blocks
     (insert
      (lf-string "\t#+begin_foo mainarg :x 1 :y 2
                    This is foo block content.
@@ -200,8 +192,12 @@ Here are other symbols I've considered using:
                   This is foobar block content.
                   #+end_foobar
                   "))
+
+    ;; Run the transformer
     (goto-char (point-min))
     (org--rewrite-special-blocks-by-handlers 'test-backend)
+
+    ;; Assert transformation
     (should (equal (buffer-string)
                    "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
 
@@ -210,7 +206,6 @@ Here are other symbols I've considered using:
                   This is foobar block content.
                   #+end_foobar
                   "))))
-
 
 ;;; org-defblock-only
  
@@ -259,46 +254,35 @@ Here are other symbols I've considered using:
   (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
   (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
 
-
 ;;; org-defblock
 
-(ert-deftest org-defblock/handler-definition ()
-  "Test that a block handler is defined via `org-defblock' and evaluates correctly."
-  ;; Define a simple block
-  (org-defblock hello2 (who "world" punct "!") "Greeter block"
+(deftest "`org-defblock' defines a handler function and evaluates it correctly"
+  (org-defblock hello (who "world" punct "!") "Greeter block"
                 (format "Hello, %s%s" who punct))
-  (should (fboundp 'org-block/hello2))
-  (should (string= (org-block/hello2 'test-backend "ignored" "Emacs" :punct "!!")
+  (should (fboundp 'org-block/hello))
+  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
                    (lf-string "#+begin_export test-backend 
                                Hello, Emacs!!
                                #+end_export"))))
 
-
-(ert-deftest org-defblock/default-argument-values ()
-  "Test that default argument values work with `defblock-header-args'."
-  (org-defblock greeting2 (name "user" punct "!") "Greeting block"
+(deftest "`org-defblock' uses default values set by `org-set-block-header-args'"
+  (org-defblock greeting (name "user" punct "!") "Greeting block"
                 (format "Hello, %s%s" name punct))
-  ;; Set defaults
-  (org-set-block-header-args greeting2 :main-arg "dev" :punct "!×4")
-  ;; Simulate calling with nil main arg and nil keyword arg
-  (should (string= (org-block/greeting2 'test-backend "some content" nil :punct nil)
+  (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
+  (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
                    (lf-string "#+begin_export test-backend 
                                Hello, dev!×4
                                #+end_export"))))
 
-
-(ert-deftest org-defblock/link-handling ()
-  "Test that a link associated with an `org-defblock' is defined and formats correctly."
-  (org-defblock notice2 () [:face 'italic] "Example."
+(deftest "`org-defblock' defines associated link functions that evaluate correctly"
+  (org-defblock notice () [:face 'italic] "Example."
                 (format "NOTICE: %s" contents))
-  (should (fboundp 'org-block/notice2))
-  (should (fboundp 'org-link/notice2))
-  ;; Simulate the link function evaluation
-  ;; (org-link/notice O-LABEL O-DESCRIPTION O-BACKEND)
-  (should (equal (org-link/notice2  "Some note here" nil 'test-backend)
+  (should (fboundp 'org-block/notice))
+  (should (fboundp 'org-link/notice))
+  (should (equal (org-link/notice "Some note here" nil 'test-backend)
                  "NOTICE: Some note here")))
 
-
+;; Helper function
 (cl-defun export (string &optional (backend 'html))
   "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
   (with-temp-buffer
@@ -308,27 +292,20 @@ Here are other symbols I've considered using:
       (org-special-block-extras-mode)
       (org-export-as backend nil nil :body-only nil))))
 
-
-(ert-deftest org-defblock/export-html ()
-  "Test that `org-defblock' handlers export to HTML correctly."
-
-  ;; Define the block 
-  (org-defblock highlight2 (label "Note" style "color:red") "Highlight block"
+(deftest "`org-defblock' exports a custom block to HTML with content formatting"
+  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
                 (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
-
-  ;; Setup test buffer with an org-mode block
   (should (thread-last
-            (export "Look: \n #+begin_highlight2 Warning :style color:orange\nSomething **important** here.\n#+end_highlight2")
-            ;; TODO: FIXME: Where's the initial text “Look:” ?            
+            (export "Look: \n #+begin_highlight Warning :style color:orange\nSomething **important** here.\n#+end_highlight")
+            ;; NOTE: Org prepends content before block, so “Look:” may be outside this snippet
             (string-match
-             "^<div class=\"highlight2\" id=\".*\">
+             "^<div class=\"highlight\" id=\".*\">
 <p>
 Something <b><b>important</b></b> here.
 </p>
 
 </div>
 $"))))
-
 
 ;;; Old tests
 
