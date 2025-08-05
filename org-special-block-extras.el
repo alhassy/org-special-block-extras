@@ -369,7 +369,8 @@ Three example uses:
     `(progn
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
        (list
-        ,(org-defblock--make-defun name docstring kwds body)
+        ;; TODO: Rename kwds to args
+        (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
         ;; ⇨ The link type support
         (eval (backquote (org-deflink ,name
                            ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
@@ -380,9 +381,12 @@ Three example uses:
 
 ;; WHERE ...
 
-;; TODO: Why isn't this a macro? Make it into a macro named “org-defblock-only” since it's like “defblock” but only supports blocks, not links.
-(cl-defmethod org-defblock--make-defun ((name symbol) (docstring string) (args list) (body list))
+(cl-defmacro org-defblock-only (name args docstring &rest body)
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
+
+
+★ Like `org-defblock' but only supports blocks, not links. ★
+
 
 - NAME         [Symbol]: The name of the block type.
 - DOCSTRING    [Nullable String]: Documentation of the block.
@@ -396,9 +400,7 @@ Features:
   Default values can be set long after the associated handler is created.
 + Optional `o-link?' flag for minimal output (used in links).
 + Automatic wrapping in export blocks (`org-export', `org-parse')."
-
-  (cl-assert (or (stringp docstring) (null docstring)))
-
+  (declare (indent defun))  
   (let ((main-arg-name (or (cl-first args) 'main-arg))
         (main-arg-default-value (cl-second args))
         (keywords (cddr args)))
@@ -457,11 +459,10 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
 ;;;
 
 (when nil insert (pp
-                  (org-defblock--make-defun2
-                   'tip1                                    ;; name
-                   "A tooltip doc"                          ;; docstring
-                   '(who "dev" signoff "!")                 ;; args list
-                   '((format "%s says hi%s" who signoff)))))
+                  (macroexpand
+                   
+                   '(org-defblock-only tip2 (who "dev" signoff "!")  "A tooltip doc" 
+                      (format "%s says hi%s" who signoff)))))
 
 
 

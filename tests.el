@@ -137,6 +137,47 @@
 
 ;;; defblock
 
+;; TODO Split this up into a bunch of smaller tests.
+(ert-deftest org-defblock-only ()
+  "Test that a method is created from `org-defblock-only'."
+  ;; Because this function returns code, we eval the result in tests to observe behaviour.
+  (should (equal
+           (org-defblock-only speak (who "dev" signoff "!")
+             "Speaking block"
+             (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
+           'org-block/speak))
+  (should (fboundp 'org-block/speak))
+  ;; Docs exist  
+  (should (equal (documentation 'org-block/speak)
+                 "Speaking block
+
+(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)"))
+  ;; Basic usage
+  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
+                   (lf-string "#+begin_export html 
+                               Ada says hi, cheerio!
+                               #+end_export")))
+  ;; Default values are honoured
+  (should (string= (org-block/speak 'html "ignored contents" "")
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export")))
+  ;; Extra args are ignored
+  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export")))
+  ;; Test that header arg defaults override blank block arguments.
+  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
+    (should (string= (org-block/speak 'html "contents" "" :signoff "")
+                     (lf-string "#+begin_export html 
+                               Mickey says hi, buddo!
+                               #+end_export"))))
+  ;; It dispatches differently according to backend.
+  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
+  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
+
+
 (ert-deftest org-defblock/handler-definition ()
   "Test that a block handler is defined via `org-defblock' and evaluates correctly."
   ;; Define a simple block
@@ -204,47 +245,6 @@ Something <b><b>important</b></b> here.
 </div>
 $"))))
 
-
-(ert-deftest org-defblock--make-defun/handler-creation ()
-  "Test that a method is created from `org-defblock--make-defun'."
-  ;; Because this function returns code, we eval the result in tests to observe behaviour.
-  (should (equal (eval (org-defblock--make-defun
-                        'speak                                   ;; name
-                        "Speaking block"                         ;; docstring
-                        'html                                    ;; backend 
-                        '(who "dev" signoff "!")                 ;; args list
-                        '((format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" ""))))) ;; body
-                 'org-block/speak))
-  (should (fboundp 'org-block/speak))  
-  ;; Docs exist  
-  (should (equal (documentation 'org-block/speak)
-                 "Speaking block
-
-(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)"))
-  ;; Basic usage
-  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
-                   (lf-string "#+begin_export html 
-                               Ada says hi, cheerio!
-                               #+end_export")))
-  ;; Default values are honoured
-  (should (string= (org-block/speak 'html "ignored contents" "")
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export")))
-  ;; Extra args are ignored
-  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export")))
-  ;; Test that header arg defaults override blank block arguments.
-  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
-    (should (string= (org-block/speak 'html "contents" "" :signoff "")
-                     (lf-string "#+begin_export html 
-                               Mickey says hi, buddo!
-                               #+end_export"))))
-  ;; It dispatches differently according to backend.
-  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
-  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
 
 ;;;; Old tests
 
