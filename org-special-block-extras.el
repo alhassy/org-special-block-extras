@@ -360,6 +360,7 @@ Three example uses:
   (defvar org--block--link-display nil
     "Association list of block name symbols to link display vectors.")
 
+  ;; TODO: Use `-let'
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
@@ -368,7 +369,7 @@ Three example uses:
     `(progn
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
        (list
-        ,(org-defblock--make-defun name docstring (plist-get kwds :backend) kwds body)
+        ,(org-defblock--make-defun name docstring kwds body)
         ;; ⇨ The link type support
         (eval (backquote (org-deflink ,name
                            ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
@@ -379,32 +380,24 @@ Three example uses:
 
 ;; WHERE ...
 
-;; TODO: Why isn't this a macro?
-(cl-defmethod org-defblock--make-defun
-  ((name symbol)
-   (docstring string)
-   (backend-type symbol)
-   (args list)
-   (body list))
+;; TODO: Why isn't this a macro? Make it into a macro named “org-defblock-only” since it's like “defblock” but only supports blocks, not links.
+(cl-defmethod org-defblock--make-defun ((name symbol) (docstring string) (args list) (body list))
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
 
 - NAME         [Symbol]: The name of the block type.
 - DOCSTRING    [Nullable String]: Documentation of the block.
-- BACKEND-TYPE [Symbol]: Which backend this implementation is used with.
-                         Dispatches via (eql BACKEND-TYPE).
 - ARGS: Property list beginning with main arg binding and default value,
         followed by “keyword default-value” pairs.
 - BODY: Code to be executed just before export.
+  ⇒ May mention symbol “backend” and string “raw-contents”.
 
 Features:
-+ Backend-specific dispatch ((eql BACKEND)).
 + Auto-defaults for main and keyword args via `org--header-args'.
   Default values can be set long after the associated handler is created.
 + Optional `o-link?' flag for minimal output (used in links).
-+ Automatic wrapping in export blocks (`org-export`, `org-parse`)."
++ Automatic wrapping in export blocks (`org-export', `org-parse')."
 
   (cl-assert (or (stringp docstring) (null docstring)))
-  (cl-assert (or (symbolp backend-type) (null backend-type)))
 
   (let ((main-arg-name (or (cl-first args) 'main-arg))
         (main-arg-default-value (cl-second args))
@@ -420,7 +413,8 @@ Features:
             raw-contents ;; String
             &optional ,main-arg-name
             &rest _
-            &key o-link? ,@(-partition 2 keywords)
+            ;; TODO: Rename to __body_occurs_as_link_description__
+            &key o-link? ,@(-partition 2 keywords) 
             &allow-other-keys)
          ,docstring
          
@@ -463,12 +457,18 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
 ;;;
 
 (when nil insert (pp
-                  (org-defblock--make-defun
+                  (org-defblock--make-defun2
                    'tip1                                    ;; name
                    "A tooltip doc"                          ;; docstring
-                   'html                                    ;; backend
                    '(who "dev" signoff "!")                 ;; args list
                    '((format "%s says hi%s" who signoff)))))
+
+
+
+
+
+
+
 
 
 
