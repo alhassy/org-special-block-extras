@@ -82,7 +82,7 @@ Here are other symbols I've considered using:
 4. There is no need to force convention onto ourselves; get funky:
    ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
 
-;;; Tests for org-special-block struct
+;;; Parsing & evaluating org-special-block structures
 
 (deftest "`org-special-block-after-point' correctly parses block structure"
   (with-temp-buffer
@@ -221,9 +221,14 @@ Here are other symbols I've considered using:
 
 (deftest "`org-defblock-only' attaches a docstring to the generated function"
   (should (equal (documentation 'org-block/speak)
-                 "Speaking block
+"Speaking block
 
-(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key O-LINK? (SIGNOFF \"!\") &allow-other-keys)")))
+BACKEND refers to the current export backend.
+RAW-CONTENTS refers to the text as the user wrote it verbatim.
+⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key (SIGNOFF \"!\") (CONTENTS-OCCUR-AS-LINK-DESCRIPTION nil) &allow-other-keys)")))
 
 (deftest "`org-defblock-only' generates expected output with explicit arguments"
   (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")

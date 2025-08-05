@@ -364,7 +364,7 @@ Three example uses:
   ;; Identify which of the optional features is present...
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
-                               docstring    #'stringp
+                                      docstring    #'stringp
                                       body)
     `(progn
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
@@ -376,7 +376,7 @@ Three example uses:
                            ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
                            ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
                            (s-replace-regexp "@@" ""
-                                             (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :o-link? t)))))))))
+                                             (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t)))))))))
 
 
 ;; WHERE ...
@@ -398,7 +398,7 @@ Three example uses:
 Features:
 + Auto-defaults for main and keyword args via `org--header-args'.
   Default values can be set long after the associated handler is created.
-+ Optional `o-link?' flag for minimal output (used in links).
++ Optional `contents-occur-as-link-description' flag for minimal output (used in links).
 + Automatic wrapping in export blocks (`org-export', `org-parse')."
   (declare (indent defun))  
   (let ((main-arg-name (or (cl-first args) 'main-arg))
@@ -414,11 +414,15 @@ Features:
            (backend      ;; Symbol
             raw-contents ;; String
             &optional ,main-arg-name
-            &rest _
-            ;; TODO: Rename to __body_occurs_as_link_description__
-            &key o-link? ,@(-partition 2 keywords) 
+            &rest  _
+            &key ,@(-partition 2 keywords) (contents-occur-as-link-description nil)
             &allow-other-keys)
-         ,docstring
+         ,(concat docstring
+                  "\n\nBACKEND refers to the current export backend."
+                  "\nRAW-CONTENTS refers to the text as the user wrote it verbatim."
+                  "\n⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
+                  "\n⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
+                  )
          
          (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
          (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
@@ -441,10 +445,10 @@ Features:
          
          (cl-letf (((symbol-function 'org-export)
                     (lambda (x) "Wrap the given X in an export block for the current backend."
-                      (if o-link? x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                      (if contents-occur-as-link-description x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
                    ((symbol-function 'org-parse)
                     (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                      (if o-link? x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+                      (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
            (org-export
             (let ((contents (org-parse raw-contents))) ,@body)))))))
 
@@ -463,7 +467,6 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
                    
                    '(org-defblock-only tip2 (who "dev" signoff "!")  "A tooltip doc" 
                       (format "%s says hi%s" who signoff)))))
-
 
 
 
