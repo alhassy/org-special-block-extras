@@ -91,49 +91,6 @@ Here are other symbols I've considered using:
 4. There is no need to force convention onto ourselves; get funky:
    ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
 
-;;; Test utility “exporting”
-
-(cl-defmacro exporting (string &key (to 'html) equals modulo)
-  "Asserts that exporting STRING to backend TO results in EQUALS modulo MODULO.
-
-If EQUALS is omitted, this generates the expectations only.
-This is useful in combination with `C-u C-x C-e'.
-
-Args:
-+ TO is the name of a backend, such as `html' or `latex'.
-+ STRING, EQUALS, and MODULO are strings.
-
-API Notes:
-+ (exporting A :equals B)            ≋  (should (equal (export A) B))
-+ (exporting A :equals B :modulo C)  ≋  “A equals B with all instances of C replaced by .*”
-"
-  (if (not equals)
-      `(export (lf-string ,string) ',to)
-    (let* ((actual `(export (lf-string ,string) ',to))
-          (expected (if (not modulo)
-                      `(lf-string ,equals)
-                    `(thread-last ,equals
-                                 lf-string
-                                 regexp-quote
-                                 (s-replace ,modulo ".*")
-                                 (format "^%s$"))))
-          (assertion (cond
-                      ;; The next line is not an error, `string-match' takes regex as 1ˢᵗ arg
-                      ((and equals modulo) `(= 0 (string-match-p ,expected ,actual)))
-                      (equals `(equal ,actual ,expected)))))
-      `(should ,assertion))))
-
-
-(cl-defun export (string &optional (backend 'html))
-  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
-  (with-temp-buffer
-    (insert "\n") ;; Without the newline, we lose any initial string.
-    (insert string)
-    (let ((org-inhibit-startup t))
-      (org-mode)
-      (org-special-block-extras-mode)
-      (org-export-as backend nil nil :body-only nil))))
-
 ;;; Parsing & evaluating org-special-block structures
 
 (deftest "`org-special-block-after-point' correctly parses block structure"
@@ -217,6 +174,206 @@ API Notes:
                 2. Why we ask ‘why’?
                 
                 Take care!"))))))))
+
+;;; Bugs
+
+;; TODO: FIXME: An assertion fails, with an unhelpful error message.
+(deftest "missing main arg errors-out" [BUG 🚫 URGENT]
+  (should-error (export (lf-string"
+   #+begin_testblock
+   content 3
+   #+end_stutter"))))
+
+;; TODO: FIXME: An assertion fails, with an unhelpful error message.
+(deftest "incorrectly closed blocks error-out" [BUG]
+  (should-error (export (lf-string"
+   #+begin_testblock nil
+   content 3
+   #+end_stutter"))))
+
+;;; org--rewrite-special-blocks-by-handlers
+
+(deftest "`org--rewrite-special-blocks-by-handlers' transforms supported blocks but leaves others unchanged"
+  (with-temp-buffer
+    ;; Setup supported blocks and mock global backend
+    (setq org--supported-blocks '("foo")
+          org--current-backend nil)
+
+    ;; Dummy handler for "foo" blocks
+    (defun org-block/foo (backend contents arg &rest args)
+      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))
+
+    ;; Ensure all supported blocks have handlers
+    (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
+
+    ;; Insert Org content with both supported and unsupported blocks
+    (insert
+     (lf-string "\t#+begin_foo mainarg :x 1 :y 2
+                   This is foo block content.
+                   #+end_foo
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar
+                  "))
+
+    ;; Run the transformer
+    (goto-char (point-min))
+    (org--rewrite-special-blocks-by-handlers 'test-backend)
+
+    ;; Assert transformation
+    (should (equal (buffer-string)
+                   "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
+
+                  However, the next is left alone:
+                  #+begin_foobar mainarg :x 1 :y 2
+                  This is foobar block content.
+                  #+end_foobar
+                  "))))
+
+;;; org-defblock-only
+ 
+(deftest "`org-defblock-only' returns the name of the defined function"
+  (should (equal
+           (org-defblock-only speak (who "dev" signoff "!")
+             "Speaking block"
+             (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
+           'org-block/speak)))
+
+(deftest "`org-defblock-only' defines a function with the correct symbol name"
+  (should (fboundp 'org-block/speak)))
+
+(deftest "`org-defblock-only' attaches a docstring to the generated function"
+  (should (equal (documentation 'org-block/speak)
+"Speaking block
+
+BACKEND refers to the current export backend.
+RAW-CONTENTS refers to the text as the user wrote it verbatim.
+⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key (SIGNOFF \"!\") (CONTENTS-OCCUR-AS-LINK-DESCRIPTION nil) &allow-other-keys)")))
+
+(deftest "`org-defblock-only' generates expected output with explicit arguments"
+  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
+                   (lf-string "#+begin_export html 
+                               Ada says hi, cheerio!
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' honours default values for missing main and keyword args"
+  (should (string= (org-block/speak 'html "ignored contents" "")
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' ignores extra unexpected arguments safely"
+  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
+                   (lf-string "#+begin_export html 
+                               dev says hi!
+                               #+end_export"))))
+
+(deftest "`org-defblock-only' uses header-arg defaults when block args are blank"
+  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
+    (should (string= (org-block/speak 'html "contents" "" :signoff "")
+                     (lf-string "#+begin_export html 
+                                 Mickey says hi, buddo!
+                                 #+end_export")))))
+
+(deftest "`org-defblock-only' alters output depending on export backend"
+  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
+  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
+
+;;; Test utility “exporting”
+
+(cl-defmacro exporting (string &key (to 'html) equals modulo)
+  "Asserts that exporting STRING to backend TO results in EQUALS modulo MODULO.
+
+If EQUALS is omitted, this generates the expectations only.
+This is useful in combination with `C-u C-x C-e'.
+
+Args:
++ TO is the name of a backend, such as `html' or `latex'.
++ STRING, EQUALS, and MODULO are strings.
+
+API Notes:
++ (exporting A :equals B)            ≋  (should (equal (export A) B))
++ (exporting A :equals B :modulo C)  ≋  “A equals B with all instances of C replaced by .*”
+"
+  (if (not equals)
+      `(export (lf-string ,string) ',to)
+    (let* ((actual `(export (lf-string ,string) ',to))
+          (expected (if (not modulo)
+                      `(lf-string ,equals)
+                    `(thread-last ,equals
+                                 lf-string
+                                 regexp-quote
+                                 (s-replace ,modulo ".*")
+                                 (format "^%s$"))))
+          (assertion (cond
+                      ;; The next line is not an error, `string-match' takes regex as 1ˢᵗ arg
+                      ((and equals modulo) `(= 0 (string-match-p ,expected ,actual)))
+                      (equals `(equal ,actual ,expected)))))
+      `(should ,assertion))))
+
+
+(cl-defun export (string &optional (backend 'html))
+  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
+  (with-temp-buffer
+    (insert "\n") ;; Without the newline, we lose any initial string.
+    (insert string)
+    (let ((org-inhibit-startup t))
+      (org-mode)
+      (org-special-block-extras-mode)
+      (org-export-as backend nil nil :body-only nil))))
+
+;;; org-defblock
+
+(deftest "`org-defblock' defines a handler function and evaluates it correctly"
+  (org-defblock hello (who "world" punct "!") "Greeter block"
+                (format "Hello, %s%s" who punct))
+  (should (fboundp 'org-block/hello))
+  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
+                   (lf-string "#+begin_export test-backend 
+                               Hello, Emacs!!
+                               #+end_export"))))
+
+(deftest "`org-defblock' uses default values set by `org-set-block-header-args'"
+  (org-defblock greeting (name "user" punct "!") "Greeting block"
+                (format "Hello, %s%s" name punct))
+  (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
+  (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
+                   (lf-string "#+begin_export test-backend 
+                               Hello, dev!×4
+                               #+end_export"))))
+
+(deftest "`org-defblock' defines associated link functions that evaluate correctly"
+  (org-defblock notice () [:face 'italic] "Example."
+                (format "NOTICE: %s" contents))
+  (should (fboundp 'org-block/notice))
+  (should (fboundp 'org-link/notice))
+  (should (equal (org-link/notice "Some note here" nil 'test-backend)
+                 "NOTICE: Some note here")))
+
+(deftest "`org-defblock' exports a custom block to HTML with content formatting"
+  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+                (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
+  (exporting "Look: 
+              #+begin_highlight Warning :style color:orange
+              Something **important** here.
+              #+end_highlight"             
+             :equals
+             "<p>
+              Look: 
+              </p>
+              <div class=\"highlight\" id=\"org0b5090e\">
+              <p>
+              Something <b><b>important</b></b> here.
+              </p>
+              
+              </div>
+              "
+             :modulo "org0b5090e"))
 
 ;;; Indentation preservation -- Issue ♯8
 
@@ -417,163 +574,6 @@ API Notes:
               \\end{enumerate}
               "))
   
-;;; Bugs
-
-;; TODO: FIXME: An assertion fails, with an unhelpful error message.
-(deftest "missing main arg errors-out" [BUG 🚫 URGENT]
-  (should-error (export (lf-string"
-   #+begin_testblock
-   content 3
-   #+end_stutter"))))
-
-;; TODO: FIXME: An assertion fails, with an unhelpful error message.
-(deftest "incorrectly closed blocks error-out" [BUG]
-  (should-error (export (lf-string"
-   #+begin_testblock nil
-   content 3
-   #+end_stutter"))))
-
-;;; org--rewrite-special-blocks-by-handlers
-
-(deftest "`org--rewrite-special-blocks-by-handlers' transforms supported blocks but leaves others unchanged"
-  (with-temp-buffer
-    ;; Setup supported blocks and mock global backend
-    (setq org--supported-blocks '("foo")
-          org--current-backend nil)
-
-    ;; Dummy handler for "foo" blocks
-    (defun org-block/foo (backend contents arg &rest args)
-      (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))
-
-    ;; Ensure all supported blocks have handlers
-    (should (--all-p (functionp (intern (format "org-block/%s" it))) org--supported-blocks))
-
-    ;; Insert Org content with both supported and unsupported blocks
-    (insert
-     (lf-string "\t#+begin_foo mainarg :x 1 :y 2
-                   This is foo block content.
-                   #+end_foo
-
-                  However, the next is left alone:
-                  #+begin_foobar mainarg :x 1 :y 2
-                  This is foobar block content.
-                  #+end_foobar
-                  "))
-
-    ;; Run the transformer
-    (goto-char (point-min))
-    (org--rewrite-special-blocks-by-handlers 'test-backend)
-
-    ;; Assert transformation
-    (should (equal (buffer-string)
-                   "	FOO block (test-backend): This is foo block content. [arg: mainarg] [args: (:x 1 :y 2)]
-
-                  However, the next is left alone:
-                  #+begin_foobar mainarg :x 1 :y 2
-                  This is foobar block content.
-                  #+end_foobar
-                  "))))
-
-;;; org-defblock-only
- 
-(deftest "`org-defblock-only' returns the name of the defined function"
-  (should (equal
-           (org-defblock-only speak (who "dev" signoff "!")
-             "Speaking block"
-             (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-           'org-block/speak)))
-
-(deftest "`org-defblock-only' defines a function with the correct symbol name"
-  (should (fboundp 'org-block/speak)))
-
-(deftest "`org-defblock-only' attaches a docstring to the generated function"
-  (should (equal (documentation 'org-block/speak)
-"Speaking block
-
-BACKEND refers to the current export backend.
-RAW-CONTENTS refers to the text as the user wrote it verbatim.
-⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
-
-(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key (SIGNOFF \"!\") (CONTENTS-OCCUR-AS-LINK-DESCRIPTION nil) &allow-other-keys)")))
-
-(deftest "`org-defblock-only' generates expected output with explicit arguments"
-  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
-                   (lf-string "#+begin_export html 
-                               Ada says hi, cheerio!
-                               #+end_export"))))
-
-(deftest "`org-defblock-only' honours default values for missing main and keyword args"
-  (should (string= (org-block/speak 'html "ignored contents" "")
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export"))))
-
-(deftest "`org-defblock-only' ignores extra unexpected arguments safely"
-  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export"))))
-
-(deftest "`org-defblock-only' uses header-arg defaults when block args are blank"
-  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
-    (should (string= (org-block/speak 'html "contents" "" :signoff "")
-                     (lf-string "#+begin_export html 
-                                 Mickey says hi, buddo!
-                                 #+end_export")))))
-
-(deftest "`org-defblock-only' alters output depending on export backend"
-  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
-  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
-
-;;; org-defblock
-
-(deftest "`org-defblock' defines a handler function and evaluates it correctly"
-  (org-defblock hello (who "world" punct "!") "Greeter block"
-                (format "Hello, %s%s" who punct))
-  (should (fboundp 'org-block/hello))
-  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
-                   (lf-string "#+begin_export test-backend 
-                               Hello, Emacs!!
-                               #+end_export"))))
-
-(deftest "`org-defblock' uses default values set by `org-set-block-header-args'"
-  (org-defblock greeting (name "user" punct "!") "Greeting block"
-                (format "Hello, %s%s" name punct))
-  (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
-  (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
-                   (lf-string "#+begin_export test-backend 
-                               Hello, dev!×4
-                               #+end_export"))))
-
-(deftest "`org-defblock' defines associated link functions that evaluate correctly"
-  (org-defblock notice () [:face 'italic] "Example."
-                (format "NOTICE: %s" contents))
-  (should (fboundp 'org-block/notice))
-  (should (fboundp 'org-link/notice))
-  (should (equal (org-link/notice "Some note here" nil 'test-backend)
-                 "NOTICE: Some note here")))
-
-(deftest "`org-defblock' exports a custom block to HTML with content formatting"
-  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
-                (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
-  (exporting "Look: 
-              #+begin_highlight Warning :style color:orange
-              Something **important** here.
-              #+end_highlight"             
-             :equals
-             "<p>
-              Look: 
-              </p>
-              <div class=\"highlight\" id=\"org0b5090e\">
-              <p>
-              Something <b><b>important</b></b> here.
-              </p>
-              
-              </div>
-              "
-             :modulo "org0b5090e"))
-
 ;;; Old tests
 
 ;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
