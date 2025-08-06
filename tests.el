@@ -557,17 +557,22 @@ RAW-CONTENTS refers to the text as the user wrote it verbatim.
 (deftest "`org-defblock' exports a custom block to HTML with content formatting"
   (org-defblock highlight (label "Note" style "color:red") "Highlight block"
                 (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
-  (should (thread-last
-            (export "Look: \n #+begin_highlight Warning :style color:orange\nSomething **important** here.\n#+end_highlight")
-            ;; NOTE: Org prepends content before block, so “Look:” may be outside this snippet
-            (string-match
-             "^<div class=\"highlight\" id=\".*\">
-<p>
-Something <b><b>important</b></b> here.
-</p>
-
-</div>
-$"))))
+  (exporting "Look: 
+              #+begin_highlight Warning :style color:orange
+              Something **important** here.
+              #+end_highlight"             
+             :equals
+             "<p>
+              Look: 
+              </p>
+              <div class=\"highlight\" id=\"org0b5090e\">
+              <p>
+              Something <b><b>important</b></b> here.
+              </p>
+              
+              </div>
+              "
+             :modulo "org0b5090e"))
 
 ;;; Old tests
 
