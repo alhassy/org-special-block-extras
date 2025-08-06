@@ -10,7 +10,7 @@
 ;; My approach also simplifies things by surfacing test :tags into the “M-x ert” view.
 ;; Let's set that up!
 
-(defmacro deftest (description &rest body)
+(cl-defmacro deftest (description &optional tags &rest body)
   "Declare tests with meaningful string names, that reflect the test's main goal.
 
 DESCRIPTION is a string.
@@ -41,29 +41,38 @@ to run.
 
 Example use:
 
-(deftest \"`length' of nil is 0\"
+(deftest \"`length' of nil is 0\" [zero]
   (should (equal (length nil) 0)))
+
+(ert '(tag zero))
+(ert '(tag length))
 
 This generates an ERT test named `length·of·nil·is·0'.
 "
   (declare (indent defun))  
   (cl-assert (stringp description) nil "“deftest” expects its first argument to be a string literal")
-  (let* ((test-name
-          (thread-last description
-                       s-trim
-                       s-collapse-whitespace
-                       (s-replace-all `((" " . ,deftest-space)
-                                         ("`" . "")
-                                         ("'" . "")
-                                         ("," . "︐")
-                                         ("`" . "‵")
-                                         (";" . "︔")
-                                         ("[" . "⁅")
-                                         ("]" . "⁆")))))
-         (method-being-tested (car (s-split " " (s-trim test-name)))))
+  (let*
+      ((replacements `((" " . ,deftest-space)
+                       ("`" . "")
+                       ("'" . "")
+                       ("," . "︐")
+                       ("`" . "‵")
+                       (";" . "︔")
+                       ("[" . "⁅")
+                       ("]" . "⁆")))
+       (provided-tags (seq--into-list (and (vectorp tags) tags)))
+       (test-name
+        (concat ;; ⇨ ➝ ➡ ➩ ➾ ⚝
+         (if provided-tags
+             (format "%s··⇨··" (s-join "︐" (mapcar #'prin1-to-string provided-tags)))
+           "")
+        (thread-last description s-trim s-collapse-whitespace (s-replace-all replacements))))
+       (method-being-tested
+        (thread-last description s-trim (s-split " ") car (s-replace-all replacements))))
     `(ert-deftest ,(intern test-name) ()
-     :tags (quote ,method-being-tested)
-     ,@body)))
+       :tags ',(cons method-being-tested provided-tags)
+       ;; Actually treat ‘tags’ as optional.
+       ,@(if (vectorp tags) body (cons tags body)))))
 
 (defvar deftest-space "·"
   "The symbol used in-places of whitespace.
@@ -165,6 +174,218 @@ Here are other symbols I've considered using:
                 2. Why we ask ‘why’?
                 
                 Take care!"))))))))
+
+;;; Indentation preservation -- Issue ♯8
+
+;; Test fixtures: define a simple block handler
+(org-defblock testblock ()
+  "simply echo contents"
+  (concat "HANDLED:" contents))
+
+;; TODO: FIXME: “ <li>item one</li> ” is missing from result!
+(deftest "indented blocks preserve list structure in HTML output" [issue♯8]
+  (should (equal (export
+                  (lf-string "- item one
+                              - item two
+                                #+begin_testblock foo
+                                inner
+                                #+end_testblock
+                              - item three"))
+                 (lf-string "<ul class=\"org-ul\">
+                             <li><p>
+                             item two
+                             </p>
+                             HANDLED:
+                             <p>
+                             inner
+                             </p></li>
+                             <li>item three</li>
+                             </ul>
+                             "))))
+
+;; TODO: FIXME: Expectations missing “ \\item First ”
+(deftest "indented blocks preserve list structure in LaTeX export" [issue♯8]
+  (should (equal (export
+                  (lf-string "1. First
+                              2. Second
+                                 #+begin_testblock foo
+                                 inner
+                                 #+end_testblock
+                              3. Third")
+                  'latex)
+                 (lf-string
+                 "\\begin{enumerate}
+                  \\item Second
+                  HANDLED:
+                  inner
+                  \\item Third
+                  \\end{enumerate}
+                  "))))
+                  
+;; TODO: FIXME: “<ul class=\"org-ul\"> <li><p> A </p>” is missing from expectations
+(deftest "indented blocks, in enumerations, do not introduce extra blank lines" [issue♯8]
+  (should (equal (export
+                  (lf-string "- A
+                                #+begin_testblock foo
+                                body
+                                #+end_testblock
+                                next line
+                              - B"))
+                 (lf-string "HANDLED:
+                             <p>
+                             body
+                             </p>
+                             
+                             <p>
+                             next line
+                             </p>
+                             <ul class=\"org-ul\">
+                             <li>B</li>
+                             </ul>
+                             "))))
+
+
+;; This is the reproducible test case of issue ♯8.
+;; https://github.com/alhassy/org-special-block-extras/issues/8#issue-814851814
+(deftest "enumerations are preserved when they contain special blocks, for LaTeX" [issue♯8]
+  (should (equal (export (lf-string "
+       1. builtin source block
+          #+begin_src latex
+          \\uline{content 1}
+          #+end_src
+       2. custom (unregistered) block
+          #+begin_proposition
+          content 2
+          #+end_proposition
+       3. custom (registered) block
+          #+begin_testblock nil
+          content 3
+          #+end_testblock
+       4. prose
+          \\n content 4
+       ") 'latex)
+(lf-string "\\begin{enumerate}
+            \\item builtin source block
+            \\begin{verbatim}
+               \\uline{content 1}
+            \\end{verbatim}
+            \\item custom (unregistered) block
+            \\begin{proposition}
+            content 2
+            \\end{proposition}
+            \\item custom (registered) block
+            HANDLED:
+            content 3
+            \\item prose
+            \\n content 4
+            \\end{enumerate}
+            "))))
+
+(deftest "enumerations are preserved when they contain special blocks, for HTML" [issue♯8]
+  (should (thread-last
+           (export (lf-string "
+       1. builtin source block
+          #+begin_src latex
+          \\uline{content 1}
+          #+end_src
+       2. custom (unregistered) block
+          #+begin_proposition
+          content 2
+          #+end_proposition
+       3. custom (registered) block
+          #+begin_testblock nil
+          content 3
+          #+end_testblock
+       4. prose
+          \\n content 4
+       "))
+           (string-match            
+            (thread-last "<ol class=\"org-ol\">
+   <li><p>
+   builtin source block
+   </p>
+   <div class=\"org-src-container\">
+   <pre class=\"src src-latex\">   <span style=\"color: #98971a; font-weight: bold;\">\\uline</span>{content 1}
+   </pre>
+   </div></li>
+   <li><p>
+   custom (unregistered) block
+   </p>
+   <div class=\"proposition\" id=\"org0087298\">
+   <p>
+   content 2
+   </p>
+   
+   </div></li>
+   <li><p>
+   custom (registered) block
+   </p>
+   HANDLED:
+   <p>
+   content 3
+   </p></li>
+   <li>prose
+   \\n content 4</li>
+   </ol>
+   " lf-string regexp-quote (s-replace "org0087298" ".*") (format "^%s$"))))))
+;; TODO: Prettify resulting HTML so the expectations are easier to read. See `e2e.el'.
+
+(deftest "enumerations are preserved for blocks inside lists inside blocks" [issue♯8]
+  (org-defblock foo () (format "FOO⟨%s⟩" contents))
+  (org-defblock bar () (format "BAR⟨%s⟩" contents))
+  (org-defblock baz () (format "BAZ⟨%s⟩" contents))
+  (should (equal (export (lf-string "
+#+begin_foo X
+1. Something\\
+   Indented line no. 1
+2. Something else
+   #+begin_bar Y   
+   Indented line no. 2
+   #+end_bar
+   Indented line no. 3
+3. Something else
+#+end_foo
+1. Something else
+   #+begin_baz Z
+   Indented line no. 4
+   #+end_baz
+") 'latex)
+
+"FOO⟨
+\\begin{enumerate}
+\\item Something$\\backslash$
+Indented line no. 1
+\\item Something else
+BAR⟨
+Indented line no. 2
+⟩
+Indented line no. 3
+\\item Something else
+\\end{enumerate}
+⟩
+\\begin{enumerate}
+\\item Something else
+BAZ⟨
+Indented line no. 4
+⟩
+\\end{enumerate}
+")))
+;;; Bugs
+
+;; TODO: FIXME: An assertion fails, with an unhelpful error message.
+(deftest "missing main arg errors-out" [BUG 🚫 URGENT]
+  (should-error (export (lf-string"
+   #+begin_testblock
+   content 3
+   #+end_stutter"))))
+
+;; TODO: FIXME: An assertion fails, with an unhelpful error message.
+(deftest "incorrectly closed blocks error-out" [BUG]
+  (should-error (export (lf-string"
+   #+begin_testblock nil
+   content 3
+   #+end_stutter"))))
+
 
 ;;; org--rewrite-special-blocks-by-handlers
 
