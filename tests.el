@@ -91,6 +91,49 @@ Here are other symbols I've considered using:
 4. There is no need to force convention onto ourselves; get funky:
    ⇒ OSBE◌org◌source◌exports◌to◌HTML◌without◌any◌problems")
 
+;;; Test utility “exporting”
+
+(cl-defmacro exporting (string &key (to 'html) equals modulo)
+  "Asserts that exporting STRING to backend TO results in EQUALS modulo MODULO.
+
+If EQUALS is omitted, this generates the expectations only.
+This is useful in combination with `C-u C-x C-e'.
+
+Args:
++ TO is the name of a backend, such as `html' or `latex'.
++ STRING, EQUALS, and MODULO are strings.
+
+API Notes:
++ (exporting A :equals B)            ≋  (should (equal (export A) B))
++ (exporting A :equals B :modulo C)  ≋  “A equals B with all instances of C replaced by .*”
+"
+  (if (not equals)
+      `(export (lf-string ,string) ',to)
+    (let* ((actual `(export (lf-string ,string) ',to))
+          (expected (if (not modulo)
+                      `(lf-string ,equals)
+                    `(thread-last ,equals
+                                 lf-string
+                                 regexp-quote
+                                 (s-replace ,modulo ".*")
+                                 (format "^%s$"))))
+          (assertion (cond
+                      ;; The next line is not an error, `string-match' takes regex as 1ˢᵗ arg
+                      ((and equals modulo) `(= 0 (string-match-p ,expected ,actual)))
+                      (equals `(equal ,actual ,expected)))))
+      `(should ,assertion))))
+
+
+(cl-defun export (string &optional (backend 'html))
+  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
+  (with-temp-buffer
+    (insert "\n") ;; Without the newline, we lose any initial string.
+    (insert string)
+    (let ((org-inhibit-startup t))
+      (org-mode)
+      (org-special-block-extras-mode)
+      (org-export-as backend nil nil :body-only nil))))
+
 ;;; Parsing & evaluating org-special-block structures
 
 (deftest "`org-special-block-after-point' correctly parses block structure"
@@ -182,194 +225,198 @@ Here are other symbols I've considered using:
   "simply echo contents"
   (concat "HANDLED:" contents))
 
-;; TODO: FIXME: “ <li>item one</li> ” is missing from result!
 (deftest "indented blocks preserve list structure in HTML output" [issue♯8]
-  (should (equal (export
-                  (lf-string "- item one
-                              - item two
-                                #+begin_testblock foo
-                                inner
-                                #+end_testblock
-                              - item three"))
-                 (lf-string "<ul class=\"org-ul\">
-                             <li><p>
-                             item two
-                             </p>
-                             HANDLED:
-                             <p>
-                             inner
-                             </p></li>
-                             <li>item three</li>
-                             </ul>
-                             "))))
-
-;; TODO: FIXME: Expectations missing “ \\item First ”
+  (exporting "- item one
+              - item two
+                #+begin_testblock foo
+                inner
+                #+end_testblock
+              - item three"
+             :equals
+             "<ul class=\"org-ul\">
+              <li>item one</li>
+              <li><p>
+              item two
+              </p>
+              HANDLED:
+              <p>
+              inner
+              </p></li>
+              <li>item three</li>
+              </ul>
+              "))
+              
 (deftest "indented blocks preserve list structure in LaTeX export" [issue♯8]
-  (should (equal (export
-                  (lf-string "1. First
-                              2. Second
-                                 #+begin_testblock foo
-                                 inner
-                                 #+end_testblock
-                              3. Third")
-                  'latex)
-                 (lf-string
-                 "\\begin{enumerate}
-                  \\item Second
-                  HANDLED:
+  (exporting  "1. First
+               2. Second
+                  #+begin_testblock foo
                   inner
-                  \\item Third
-                  \\end{enumerate}
-                  "))))
-                  
-;; TODO: FIXME: “<ul class=\"org-ul\"> <li><p> A </p>” is missing from expectations
+                  #+end_testblock
+               3. Third"
+              :to latex
+              :equals
+              "\\begin{enumerate}
+               \\item First
+               \\item Second
+               HANDLED:
+               inner
+               \\item Third
+               \\end{enumerate}
+               "))
+                 
 (deftest "indented blocks, in enumerations, do not introduce extra blank lines" [issue♯8]
-  (should (equal (export
-                  (lf-string "- A
-                                #+begin_testblock foo
-                                body
-                                #+end_testblock
-                                next line
-                              - B"))
-                 (lf-string "HANDLED:
-                             <p>
-                             body
-                             </p>
-                             
-                             <p>
-                             next line
-                             </p>
-                             <ul class=\"org-ul\">
-                             <li>B</li>
-                             </ul>
-                             "))))
-
+  (exporting "- A
+                #+begin_testblock foo
+                body
+                #+end_testblock
+                next line
+              - B"
+             :equals
+             "<ul class=\"org-ul\">
+              <li>A</li>
+              </ul>
+              HANDLED:
+              <p>
+              body
+              </p>
+              
+              <p>
+              next line
+              </p>
+              <ul class=\"org-ul\">
+              <li>B</li>
+              </ul>
+              "))
 
 ;; This is the reproducible test case of issue ♯8.
 ;; https://github.com/alhassy/org-special-block-extras/issues/8#issue-814851814
 (deftest "enumerations are preserved when they contain special blocks, for LaTeX" [issue♯8]
-  (should (equal (export (lf-string "
-       1. builtin source block
-          #+begin_src latex
-          \\uline{content 1}
-          #+end_src
-       2. custom (unregistered) block
-          #+begin_proposition
-          content 2
-          #+end_proposition
-       3. custom (registered) block
-          #+begin_testblock nil
-          content 3
-          #+end_testblock
-       4. prose
-          \\n content 4
-       ") 'latex)
-(lf-string "\\begin{enumerate}
-            \\item builtin source block
-            \\begin{verbatim}
-               \\uline{content 1}
-            \\end{verbatim}
-            \\item custom (unregistered) block
-            \\begin{proposition}
-            content 2
-            \\end{proposition}
-            \\item custom (registered) block
-            HANDLED:
-            content 3
-            \\item prose
-            \\n content 4
-            \\end{enumerate}
-            "))))
+  (exporting "
+              1. builtin source block
+                 #+begin_src latex
+                 \\uline{content 1}
+                 #+end_src
+              2. custom (unregistered) block
+                 #+begin_proposition
+                 content 2
+                 #+end_proposition
+              3. custom (registered) block
+                 #+begin_testblock nil
+                 content 3
+                 #+end_testblock
+              4. prose
+                 \\n content 4
+              "
+             :to latex
+             :equals
+             "\\begin{enumerate}
+              \\item builtin source block
+              \\begin{verbatim}
+                 \\uline{content 1}
+              \\end{verbatim}
+              \\item custom (unregistered) block
+              \\begin{proposition}
+              content 2
+              \\end{proposition}
+              \\item custom (registered) block
+              HANDLED:
+              content 3
+              \\item prose
+              \\n content 4
+              \\end{enumerate}
+              "))
 
 (deftest "enumerations are preserved when they contain special blocks, for HTML" [issue♯8]
-  (should (thread-last
-           (export (lf-string "
-       1. builtin source block
-          #+begin_src latex
-          \\uline{content 1}
-          #+end_src
-       2. custom (unregistered) block
-          #+begin_proposition
-          content 2
-          #+end_proposition
-       3. custom (registered) block
-          #+begin_testblock nil
-          content 3
-          #+end_testblock
-       4. prose
-          \\n content 4
-       "))
-           (string-match            
-            (thread-last "<ol class=\"org-ol\">
-   <li><p>
-   builtin source block
-   </p>
-   <div class=\"org-src-container\">
-   <pre class=\"src src-latex\">   <span style=\"color: #98971a; font-weight: bold;\">\\uline</span>{content 1}
-   </pre>
-   </div></li>
-   <li><p>
-   custom (unregistered) block
-   </p>
-   <div class=\"proposition\" id=\"org0087298\">
-   <p>
-   content 2
-   </p>
-   
-   </div></li>
-   <li><p>
-   custom (registered) block
-   </p>
-   HANDLED:
-   <p>
-   content 3
-   </p></li>
-   <li>prose
-   \\n content 4</li>
-   </ol>
-   " lf-string regexp-quote (s-replace "org0087298" ".*") (format "^%s$"))))))
+  (exporting "
+              1. builtin source block
+                 #+begin_src latex
+                 \\uline{content 1}
+                 #+end_src
+              2. custom (unregistered) block
+                 #+begin_proposition
+                 content 2
+                 #+end_proposition
+              3. custom (registered) block
+                 #+begin_testblock nil
+                 content 3
+                 #+end_testblock
+              4. prose
+                 \\n content 4
+              "
+             :equals
+             "<ol class=\"org-ol\">
+              <li><p>
+              builtin source block
+              </p>
+              <div class=\"org-src-container\">
+              <pre class=\"src src-latex\">   <span style=\"color: #98971a; font-weight: bold;\">\\uline</span>{content 1}
+              </pre>
+              </div></li>
+              <li><p>
+              custom (unregistered) block
+              </p>
+              <div class=\"proposition\" id=\"org0087298\">
+              <p>
+              content 2
+              </p>
+              
+              </div></li>
+              <li><p>
+              custom (registered) block
+              </p>
+              HANDLED:
+              <p>
+              content 3
+              </p></li>
+              <li>prose
+              \\n content 4</li>
+              </ol>
+              "
+             :modulo "org0087298"))
 ;; TODO: Prettify resulting HTML so the expectations are easier to read. See `e2e.el'.
 
 (deftest "enumerations are preserved for blocks inside lists inside blocks" [issue♯8]
   (org-defblock foo () (format "FOO⟨%s⟩" contents))
   (org-defblock bar () (format "BAR⟨%s⟩" contents))
   (org-defblock baz () (format "BAZ⟨%s⟩" contents))
-  (should (equal (export (lf-string "
-#+begin_foo X
-1. Something\\
-   Indented line no. 1
-2. Something else
-   #+begin_bar Y   
-   Indented line no. 2
-   #+end_bar
-   Indented line no. 3
-3. Something else
-#+end_foo
-1. Something else
-   #+begin_baz Z
-   Indented line no. 4
-   #+end_baz
-") 'latex)
-
-"FOO⟨
-\\begin{enumerate}
-\\item Something$\\backslash$
-Indented line no. 1
-\\item Something else
-BAR⟨
-Indented line no. 2
-⟩
-Indented line no. 3
-\\item Something else
-\\end{enumerate}
-⟩
-\\begin{enumerate}
-\\item Something else
-BAZ⟨
-Indented line no. 4
-⟩
-\\end{enumerate}
-")))
+  (exporting "
+              #+begin_foo X
+              1. Something\\
+                 Indented line no. 1
+              2. Something else
+                 #+begin_bar Y   
+                 Indented line no. 2
+                 #+end_bar
+                 Indented line no. 3
+              3. Something else
+              #+end_foo
+              1. Something else
+                 #+begin_baz Z
+                 Indented line no. 4
+                 #+end_baz
+              "
+             :to latex  
+             :equals
+             "FOO⟨
+              \\begin{enumerate}
+              \\item Something$\\backslash$
+              Indented line no. 1
+              \\item Something else
+              BAR⟨
+              Indented line no. 2
+              ⟩
+              Indented line no. 3
+              \\item Something else
+              \\end{enumerate}
+              ⟩
+              \\begin{enumerate}
+              \\item Something else
+              BAZ⟨
+              Indented line no. 4
+              ⟩
+              \\end{enumerate}
+              "))
+  
 ;;; Bugs
 
 ;; TODO: FIXME: An assertion fails, with an unhelpful error message.
@@ -385,7 +432,6 @@ Indented line no. 4
    #+begin_testblock nil
    content 3
    #+end_stutter"))))
-
 
 ;;; org--rewrite-special-blocks-by-handlers
 
@@ -507,16 +553,6 @@ RAW-CONTENTS refers to the text as the user wrote it verbatim.
   (should (fboundp 'org-link/notice))
   (should (equal (org-link/notice "Some note here" nil 'test-backend)
                  "NOTICE: Some note here")))
-
-;; Helper function
-(cl-defun export (string &optional (backend 'html))
-  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
-  (with-temp-buffer
-    (insert string)
-    (let ((org-inhibit-startup t))
-      (org-mode)
-      (org-special-block-extras-mode)
-      (org-export-as backend nil nil :body-only nil))))
 
 (deftest "`org-defblock' exports a custom block to HTML with content formatting"
   (org-defblock highlight (label "Note" style "color:red") "Highlight block"
