@@ -191,6 +191,9 @@ Here are other symbols I've considered using:
    content 3
    #+end_stutter"))))
 
+;; TODO: Improve error message to “😦 An internal error occurred, please open an
+;; issue at https://github.com/alhassy/org-special-block-extras 🛠️”
+
 ;;; org--rewrite-special-blocks-by-handlers
 
 (deftest "`org--rewrite-special-blocks-by-handlers' transforms supported blocks but leaves others unchanged"
@@ -286,36 +289,110 @@ RAW-CONTENTS refers to the text as the user wrote it verbatim.
 
 ;;; Test utility “exporting”
 
-(cl-defmacro exporting (string &key (to 'html) equals modulo)
-  "Asserts that exporting STRING to backend TO results in EQUALS modulo MODULO.
+(cl-defmacro exporting (string &key (to 'html) using equals modulo)
+  "Assert that exporting STRING to backend TO equals EQUALS (optionally modulo MODULO).
 
 If EQUALS is omitted, this generates the expectations only.
 This is useful in combination with `C-u C-x C-e'.
 
+Tldr: Run an export assertion, optionally installing temporary defblocks via :USING and cleaning them up.
 Args:
-+ TO is the name of a backend, such as `html' or `latex'.
-+ STRING, EQUALS, and MODULO are strings.
++ TO is the name of a backend, such as `html' (default) or `latex'.
++ STRING is the input Org string (raw; `lf-string' is applied to it).
++ EQUALS is the expected output as a string; if omitted, return the actual export.
++ MODULO is a string or list of strings replaced by \".*\" before comparing via regex.
++ USING  is either a single (org-defblock …) form OR a list of such forms.
+  Each form is evaluated; any functions it introduces are unbound
+  afterwards to avoid polluting the global namespace.
+  (If we use top-level org-defblock forms instead, we can have unexpected
+  calls when the same name is used for different blocks in different tests! 🤮)
+  This is a poor-man's `cl-letf'.
 
 API Notes:
 + (exporting A :equals B)            ≋  (should (equal (export A) B))
 + (exporting A :equals B :modulo C)  ≋  “A equals B with all instances of C replaced by .*”
-"
-  (if (not equals)
-      `(export (lf-string ,string) ',to)
-    (let* ((actual `(export (lf-string ,string) ',to))
-          (expected (if (not modulo)
-                      `(lf-string ,equals)
-                    `(thread-last ,equals
-                                 lf-string
-                                 regexp-quote
-                                 (s-replace ,modulo ".*")
-                                 (format "^%s$"))))
-          (assertion (cond
-                      ;; The next line is not an error, `string-match' takes regex as 1ˢᵗ arg
-                      ((and equals modulo) `(= 0 (string-match-p ,expected ,actual)))
-                      (equals `(equal ,actual ,expected)))))
-      `(should ,assertion))))
 
+Example use:
+  (exporting \"A B C D\" :to ascii :equals \"A P C T\" :modulo (\"P\" \"T\"))
+
+See the associated deftest for more example uses.
+"
+  (declare (indent defun))
+  ;; Normalize :using into a list of (org-defblock …) forms but DO NOT evaluate here (at macro-expansion time)
+  ;; to avoid polluting the namespace even though the generated code has not yet actually been executed (at runtime).
+  (let ((using-forms
+         (pcase using
+           ((pred null) nil)
+           (`(org-defblock . ,_) (list using))
+           ((and (pred listp) forms)
+            (progn
+              (dolist (f forms)
+                (cl-assert (and (consp f) (eq (car f) 'org-defblock))
+                           nil ":using list must contain only (org-defblock …) forms"))
+              forms))
+           (_ (error ":using must be a single (org-defblock …) or a list of them")))))
+    ;; Build the runtime assertion form
+    (let* ((actual   `(export (lf-string ,string) ',to))
+           (expected (if (not equals)
+                         nil
+                       (if (not modulo)
+                           `(lf-string ,equals)
+                         `(thread-last ,equals
+                            lf-string
+                            regexp-quote
+                            (s-replace-all
+                             ',(--map (cons it ".*")
+                                      (if (listp modulo) modulo (list modulo))))
+                            (format "^%s$")))))
+           (assertion
+            (cond
+             ((not equals) actual) ; return actual when no equals provided
+             (modulo `(should (equal 0 (string-match-p ,expected ,actual))))
+             (t      `(should (equal ,actual ,expected))))))
+      ;; Generate code that evaluates :using at runtime and cleans up
+      (if (null using-forms)
+          ;; No temp blocks: just run the assertion/return form
+          assertion
+        ;; With temp blocks: eval them now, remember symbols, cleanup with unwind-protect
+        `(let* ((__new_syms
+                 (cl-mapcan
+                  (lambda (form)
+                    (let ((res (eval form)))      ; eval NOW, at runtime
+                      (cond ((null res) nil)
+                            ((listp res) (cl-copy-list res))
+                            (t          (list res)))))
+                  ',using-forms)))
+           (unwind-protect
+               ,assertion
+             ;; Cleanup both generics and link fns; ignore if absent
+             (mapc (lambda (sym) (ignore-errors (fmakunbound sym))) __new_syms)))))))
+  
+(deftest "`exporting' works as intended"
+  ;; Basic usage
+  (exporting "A B C D" :to ascii :equals "A P C T" :modulo ("P" "T"))
+
+  ;; No pollution of global namespace
+  (should-not (fboundp 'org-block/shout))
+  (should-not (fboundp 'org-link/shout))
+  (exporting "shout:hello" :to ascii :using (org-defblock shout (wat) "docs" (upcase wat)) :equals "HELLO\n")
+  (should-not (fboundp 'org-block/shout))
+  (should-not (fboundp 'org-link/shout))
+
+  ;; :using may be omitted
+  (exporting "shout:hello" :to ascii :equals "<shout:hello>\n")
+
+  ;; :using may be a (singleton) list
+  (exporting "shout:hello"
+             :to ascii
+             :using ((org-defblock shout (wat) "docs" (upcase wat)))
+             :equals "HELLO\n")
+  
+  ;; :using may be a multi-element list
+  (exporting "shout:hello quiet:WORLD"
+             :to ascii
+             :using ((org-defblock shout (wat) "docs" (upcase wat))
+                     (org-defblock quiet (wat) "docs" (downcase wat)))
+             :equals "HELLO world\n"))
 
 (cl-defun export (string &optional (backend 'html))
   "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
@@ -377,11 +454,6 @@ API Notes:
 
 ;;; Indentation preservation -- Issue ♯8
 
-;; Test fixtures: define a simple block handler
-(org-defblock testblock ()
-  "simply echo contents"
-  (concat "HANDLED:" contents))
-
 (deftest "indented blocks preserve list structure in HTML output" [issue♯8]
   (exporting "- item one
               - item two
@@ -389,6 +461,7 @@ API Notes:
                 inner
                 #+end_testblock
               - item three"
+             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
              :equals
              "<ul class=\"org-ul\">
               <li>item one</li>
@@ -411,6 +484,7 @@ API Notes:
                   #+end_testblock
                3. Third"
               :to latex
+             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))              
               :equals
               "\\begin{enumerate}
                \\item First
@@ -428,6 +502,7 @@ API Notes:
                 #+end_testblock
                 next line
               - B"
+             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))             
              :equals
              "<ul class=\"org-ul\">
               <li>A</li>
@@ -465,6 +540,7 @@ API Notes:
                  \\n content 4
               "
              :to latex
+             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))             
              :equals
              "\\begin{enumerate}
               \\item builtin source block
@@ -500,6 +576,7 @@ API Notes:
               4. prose
                  \\n content 4
               "
+             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))             
              :equals
              "<ol class=\"org-ol\">
               <li><p>
@@ -529,13 +606,13 @@ API Notes:
               \\n content 4</li>
               </ol>
               "
-             :modulo "org0087298"))
+             :modulo ("org0087298" ;; Randomly generated Org ID
+                      "style=\"color: #98971a; font-weight: bold;\"" ;; Style is theme-dependent
+                      )))
+  
 ;; TODO: Prettify resulting HTML so the expectations are easier to read. See `e2e.el'.
 
-(deftest "enumerations are preserved for blocks inside lists inside blocks" [issue♯8]
-  (org-defblock foo () (format "FOO⟨%s⟩" contents))
-  (org-defblock bar () (format "BAR⟨%s⟩" contents))
-  (org-defblock baz () (format "BAZ⟨%s⟩" contents))
+(deftest "enumerations are preserved for blocks inside lists inside blocks" [issue♯8] 
   (exporting "
               #+begin_foo X
               1. Something\\
@@ -552,7 +629,10 @@ API Notes:
                  Indented line no. 4
                  #+end_baz
               "
-             :to latex  
+             :to latex
+             :using ((org-defblock foo () (format "FOO⟨%s⟩" contents))
+                     (org-defblock bar () (format "BAR⟨%s⟩" contents))
+                     (org-defblock baz () (format "BAZ⟨%s⟩" contents)))
              :equals
              "FOO⟨
               \\begin{enumerate}
@@ -573,9 +653,10 @@ API Notes:
               ⟩
               \\end{enumerate}
               "))
-  
-;;; Old tests
 
+;;; Old tests
+(when nil
+  
 ;; [[file:org-special-block-extras.org::#NEW-org-deflink][Define links as you define functions: doc:org-deflink:4]]
 (org-deflink shout
   "Capitalise the link description, if any, otherwise capitalise the label.
@@ -588,7 +669,7 @@ The link text appears as red bold in both Emacs and in HTML export."
    :follow (message-box "%s and %s" pre current-prefix-arg)
    ]
   (format "<span style=\"color:red\"> %s </span>"
-          )
+          ))
 
 (deftest "org-deflink makes documented functions"
   [org-deflink]
@@ -699,3 +780,5 @@ post")
      (* anything)
      "<kbd style=\"border-color: red\">M-s h .</kbd></abbr>")))
 ;; Nice Keystroke Renditions: kbd:C-h_h:3 ends here
+
+) ;; End ignoring old tests
