@@ -125,15 +125,28 @@ Point should be at the start of the “#+begin_” clause.
 If NAME is provided, then look for that kind of block;
 otherwise look for any special block.
 
-This assumes the block is well-formed and not nested.
-"
+This assumes the block is well-formed and not nested."
   (interactive)
   (save-excursion
     (let (name-rx main-arg kwdargs contents start-point start-column end-point)
-      (setq name-rx (if name name "\\S-+"))
+      (setq name-rx (if name `(literal ,(format "%s" name)) '(in "A-Za-z0-9_-")))
       ;; Look for #+begin_⟨name⟩
-      (when (re-search-forward (format "^\\s-*#\\+begin_\\(%s\\)\\s-+\\(.*\\)$" name-rx) nil t)
+      (when (or (re-search-forward
+                 (rx-to-string
+                  `(seq  line-start (0+ space) 
+                         "#+begin_" (group (+ ,name-rx))          ; name
+                         (optional (+ (any " \t")) (group (* (not (any "\n"))))) ; args (same line)
+                         (* (any " \t")) (or "\n" "\r\n")
+                         (group (*? anything))                               ; content (lazy)
+                         line-start (0+ space) "#+end_" (backref 1) (* (any " \t")) line-end))
+                 nil
+                 t
+                 )
+                (error "‘org-special-block-after-point’: I had trouble parsing “#+begin_%s ⟨args⟩?\n⟨content⟩?\n#+end_%s”. Are the required pieces there? 🤔" name name))
+                                        ;(debug)
         (setq name (match-string 1))
+        (setq contents (match-string 3))
+        (setq end-point (point))
         ;; Parse the header line into (main-arg . keyword-args)
         (thread-last
           (match-string 2) ;; All args, as a string
@@ -141,26 +154,24 @@ This assumes the block is well-formed and not nested.
           read           ;; We now have an honest to goodness Lisp list
           (--split-with (not (keywordp it)))
           (setq kwdargs))
-        (cl-assert (= 1 (length (car kwdargs))))
         (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
               kwdargs (cadr kwdargs))
-        ;; Save indentation
+        ;; Save indentation. 
         (re-search-backward (format "\\#\\+begin_%s\\b" name))
         (setq start-point (point)
               start-column (current-column))
-        ;; Get body
-        (let ((body-start (1+ (line-end-position))))
-          (re-search-forward (format "^\\s-*#\\+end_%s\\b" name))
-          (setq end-point (point))
-          (setq contents (buffer-substring-no-properties body-start (1- (line-beginning-position)))))
         ;; Return structured info
         (make-org-special-block
-         :name name
+         :name (substring-no-properties name)
          :main-arg main-arg
          :kwdargs kwdargs
-         :contents contents
+         :contents (s-trim (substring-no-properties contents))
          :start-point start-point
          :end-point end-point)))))
+
+
+
+
 
 (cl-defmethod org-eval-replace-block ((block org-special-block) backend)
   "Replace a special Org block with the result of evaluating its handler.
@@ -381,6 +392,11 @@ Three example uses:
 
 ;; WHERE ...
 
+
+;; TODO: This is confusing: `org-defblock-only' looks like `cl-defun' but instead of (arg val) pairs, it's all flattened out.
+;; Consider just using pairs for the sake of consistency with `cl-defun'.
+;;
+;; FIXME: TODO: FIXME: This is not like org-defblock: It does not register NAME as part of the supported blocks.
 (cl-defmacro org-defblock-only (name args docstring &rest body)
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
 
@@ -460,16 +476,17 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
   (plist-get (cdr (assoc block-name org--header-args)) arg-name))
 
 
-;;;
+;; Example use
+(when nil
+  
+  (org-defblock speak (pleasantry "" to nil)
+                "Greet someone."
+                (format "%s ⟶⟨%s⟩ %s" pleasantry to contents))
 
-(when nil insert (pp
-                  (macroexpand
-                   
-                   '(org-defblock-only tip2 (who "dev" signoff "!")  "A tooltip doc" 
-                      (format "%s says hi%s" who signoff)))))
-
-
-
+  "#+being_speak hello
+  the world
+  #+end_speak"
+  )
 
 
 
@@ -486,7 +503,7 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
 
 ;;;;; org-special-block-extras-mode autoload
 
-(defconst org-special-block-extras-version (package-get-version))
+  (defconst org-special-block-extras-version (package-get-version))
 (defun org-special-block-extras-version ()
   "Print the current version of the package in the minibuffer."
   (interactive)

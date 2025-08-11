@@ -93,7 +93,7 @@ Here are other symbols I've considered using:
 
 ;;; Parsing & evaluating org-special-block structures
 
-(deftest "`org-special-block-after-point' correctly parses block structure"
+(deftest "`org-special-block-after-point' correctly parses block structure, when given its name"
   (with-temp-buffer
     (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
                         block content
@@ -105,6 +105,109 @@ Here are other symbols I've considered using:
       (should (equal main-arg "mainarg"))
       (should (equal kwdargs '(:x 1 :y 2)))
       (should (equal contents "block content")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses any block structure after point"
+  (with-temp-buffer
+    (insert (lf-string "#+begin_bar \"The main arg\" :key₁ value₁ :key₂ value₂
+                        some content here,
+                        
+                        possibly empty
+                        #+end_bar"))
+    (goto-char (point-min))
+    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+           (org-special-block-after-point)]
+      (should (equal name "bar"))
+      (should (equal main-arg "The main arg"))
+      (should (equal kwdargs '(:key₁ value₁ :key₂ value₂)))
+      (should (equal contents
+"some content here,
+
+possibly empty")))))
+
+  
+(deftest "`org-special-block-after-point' correctly parses block structure with a main arg but no keyword args"
+  (with-temp-buffer
+    (insert (lf-string "#+begin_bar \"The main arg\"
+#+end_bar"))
+    (goto-char (point-min))
+    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+           (org-special-block-after-point)]
+      (should (equal name "bar"))
+      (should (equal main-arg "The main arg"))
+      (should (equal kwdargs nil))
+      (should (equal contents "")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses block structure with no main arg but given keyword args"
+  (with-temp-buffer
+    (insert (lf-string "#+begin_bar :key₁ value₁ :key₂ value₂
+#+end_bar"))
+    (goto-char (point-min))
+    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+           (org-special-block-after-point)]
+      (should (equal name "bar"))
+      (should (equal main-arg ""))
+      (should (equal kwdargs '(:key₁ value₁ :key₂ value₂)))
+      (should (equal contents "")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses block structure having no contents or args"
+  (with-temp-buffer
+    (insert (lf-string "#+begin_baz
+                        #+end_baz"))
+    (goto-char (point-min))
+    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+           (org-special-block-after-point)]
+      (should (equal name "baz"))
+      (should (equal main-arg ""))
+      (should (equal kwdargs nil))
+      (should (equal contents "")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses block structure with main-arg & keyword args omitted"
+    (with-temp-buffer
+      (insert (lf-string 
+       "#+begin_shout
+        world
+        #+end_shout"))
+      (goto-char (point-min))
+      (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+             (org-special-block-after-point)]
+        (should (equal name "shout"))
+        (should (equal main-arg ""))
+        (should (equal kwdargs nil))
+        (should (equal contents "world")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses block structure with no main-arg but keyword args provided"
+    (with-temp-buffer
+      (insert (lf-string 
+       "#+begin_shout :to me :and you
+        world
+        #+end_shout"))
+      (goto-char (point-min))
+      (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+             (org-special-block-after-point)]
+        (should (equal name "shout"))
+        (should (equal main-arg ""))
+        (should (equal kwdargs '(:to me :and you)))
+        (should (equal contents "world")))))
+
+
+(deftest "`org-special-block-after-point' correctly parses block structure with no main-arg nor contents but keyword args provided"
+    (with-temp-buffer
+      (insert (lf-string 
+       "#+begin_shout :to me :and you
+        #+end_shout"))
+      (goto-char (point-min))
+      (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+             (org-special-block-after-point)]
+        (should (equal name "shout"))
+        (should (equal main-arg ""))
+        (should (equal kwdargs '(:to me :and you)))
+        (should (equal contents "")))))
+
 
 (deftest "`org-eval-replace-block' replaces a block with handler output"
   ;; Dynamically define a mock handler function
@@ -137,6 +240,7 @@ Here are other symbols I've considered using:
                        (lf-string "Start
                                    REPLACED: test-backend | Body text | \"mainarg\" | (:x 1)
                                    End")))))))
+
 
 (deftest "`org-eval-replace-block' handles special block within numbered list"
   (cl-letf (((symbol-function 'org-block/foo)
@@ -175,24 +279,69 @@ Here are other symbols I've considered using:
                 
                 Take care!"))))))))
 
-;;; Bugs
+;;; Tests about header-args and delimiters, via `org-defblock'
 
-;; TODO: FIXME: An assertion fails, with an unhelpful error message.
-(deftest "missing main arg errors-out" [BUG 🚫 URGENT]
-  (should-error (export (lf-string"
-   #+begin_testblock
-   content 3
-   #+end_stutter"))))
+(deftest "mismatched begin/end is OK for unsupported blocks" [delimiters]
+  (let (org--supported-blocks) ;; Nothing is supported
+    (should
+     (exporting 
+       "#+begin_shout
+        content 3
+        #+end_stutter"))))
 
-;; TODO: FIXME: An assertion fails, with an unhelpful error message.
-(deftest "incorrectly closed blocks error-out" [BUG]
-  (should-error (export (lf-string"
-   #+begin_testblock nil
-   content 3
-   #+end_stutter"))))
 
-;; TODO: Improve error message to “😦 An internal error occurred, please open an
-;; issue at https://github.com/alhassy/org-special-block-extras 🛠️”
+(deftest "mismatched begin/end for supported blocks shows a helpful message" [delimiters]
+  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
+  (thread-last
+    (exporting "#+begin_shout 0
+              content 3
+              #+end_stutter")
+    should-error
+    cl-second
+    (equal   "‘org-special-block-after-point’: I had trouble parsing “#+begin_shout ⟨args⟩?\n⟨content⟩?\n#+end_shout”. Are the required pieces there? 🤔")
+    should)))
+
+
+(deftest "main-arg may be a quoted string" [header-args]
+  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
+     (exporting
+       "#+begin_shout \"Hello, to the \"
+        world
+        #+end_shout"
+       :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+       :equals "Hello, to the 
+                <p>
+                WORLD
+                </p>
+                ")))
+                  
+(deftest "main-arg may be omitted" [header-args]
+     (exporting
+       "#+begin_shout
+        world
+        #+end_shout"
+       :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+       :equals "
+               <p>
+               WORLD
+               </p>
+               "))
+               
+
+(deftest "main-arg may be omitted but keywords provided" [header-args]
+     (exporting
+       "
+#+begin_shout :to me
+        world
+#+end_shout
+"
+       :using (org-defblock shout (greeting nil to nil) "docs" (format "%s ⟶%s⟶ %s" greeting to (upcase contents)))
+       :equals "nil ⟶me⟶ 
+                <p>
+                WORLD
+                </p>
+                "))
+                
 
 ;;; org--rewrite-special-blocks-by-handlers
 
@@ -236,7 +385,12 @@ Here are other symbols I've considered using:
                   "))))
 
 ;;; org-defblock-only
- 
+
+(org-defblock-only speak (who "dev" signoff "!")
+  "Speaking block"
+  (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
+
+
 (deftest "`org-defblock-only' returns the name of the defined function"
   (should (equal
            (org-defblock-only speak (who "dev" signoff "!")
@@ -366,7 +520,8 @@ See the associated deftest for more example uses.
                ,assertion
              ;; Cleanup both generics and link fns; ignore if absent
              (mapc (lambda (sym) (ignore-errors (fmakunbound sym))) __new_syms)))))))
-  
+
+
 (deftest "`exporting' works as intended"
   ;; Basic usage
   (exporting "A B C D" :to ascii :equals "A P C T" :modulo ("P" "T"))
@@ -393,6 +548,7 @@ See the associated deftest for more example uses.
              :using ((org-defblock shout (wat) "docs" (upcase wat))
                      (org-defblock quiet (wat) "docs" (downcase wat)))
              :equals "HELLO world\n"))
+
 
 (cl-defun export (string &optional (backend 'html))
   "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
