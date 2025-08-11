@@ -62,6 +62,68 @@
 ;; Full documentation can be found at
 ;; https://alhassy.github.io/org-special-block-extras
 
+;;; Design: Implementation strategy, trade-offs, and constraints
+
+;; The purpose of this section is to add rigour to what are otherwise vague
+;; intuitions regarding the overall structure of this system. (Which I will
+;; forget in a month's time.)
+;;
+;;
+;; 1. [Motivating Observation] People export Org to HTML and LaTeX complex
+;; environments, such as folding text away in <details> blocks or enclosing
+;; prose in \begin{theorem} environments.
+;;
+;; 2. [Observation of Burden] This requires users to learn about HTML/LaTeX, but
+;; often there are common “blocks” that users would like to have, for which
+;; there is no `cl-defun' like mechanism to define them.
+;;
+;; 3. [Insight] We propose to provide what we think are common blocks ---such as
+;; details, box, parallel, kbd, tooltips, Lisp docs--- and to provide a
+;; `cl-defun' like macro named `org-defblock' to allow users to provide support
+;; for how new special blocks should be implemented, with respect to any
+;; backend. Moreover, we want this to be “extensible” by end-users and so borrow
+;; the existing “#+begin_src ⟨language⟩ :arg value” syntax to also work with our
+;; special blocks. That is, each special block may now have an optional “main
+;; argument” (such as ⟨language⟩) and may have optional additional keyword-value
+;; pair arguments.
+;;
+;; 4. [Additional Problems] However, sometimes it is awkward to use a verbose
+;; special block when you only want to invoke it on a single word. As such, we
+;; propose that `org-defblock' also incorporates the support of Org links; so
+;; that users may write “doc:thread-last” instead of “#+begin_doc \n thread-last
+;; \n #+end_doc”. That is, we will provide a `org-deflink' and
+;; `org-defblock-only' methods and, for the convenience of users, also provide
+;; their combination in the method `org-defblock'.
+;;
+;; 5. [Improvement] Converse to ♯4, users may have swashes of text and it can be
+;; awkward to phrase them in a large special block. As such, a future
+;; improvement (already initiated) is to introduce `org-deftag' so that users
+;; can write “* my section :my_block: \n contents” instead of “#+begin_my_block
+;; \n contents \n #+end_block”. Then, for convenience, we can incorporate this
+;; into `org-defblock'. Then, for instance, users may simplify tag a section
+;; “:details:” to have it export to HTML folded away in a <details> element.
+;;
+;; 6. [Implementation Overview] Special blocks “#+begin_foo ⟨args⟩ \n ⟨contents⟩
+;; \n #+end_foo” are captured by the structure `org-special-block', which is
+;; parsed by `org-special-block-after-point'.  Then methods that rewrite a
+;; special block by its implementation (for a backend) are called to rewrite
+;; such blocks as a pre-processing step before export actually occurs. This is
+;; handled by `org--rewrite-special-blocks-by-handlers'.  To figure out what
+;; should be rewritten and what should not be re-written, the global variable
+;; `org--supported-blocks' maintains all names introduced by `org-defblock'.
+;;
+;; 7. [Code Organisation] The code is organised into sections using
+;; `outshine-mode'.  Section “Core” contains `org-defblock' and its
+;; associates. Section “Derived” contains the definitions of what we think are
+;; common desirable special blocks, such as kbd as a nice way to render
+;; keystrokes or doc as a way to attach tooltip/footnote documentation to
+;; phrases.
+;;
+;;
+;; 🤔 Did you think “That was all straightforward, why even bother writing it down?”
+;; If so, then I've succeeded in communicating my thoughts to you and my future-self.
+;; If not, please reach out with feedback.
+
 ;;; Code:
 ;; Please use “outshine-mode” to work with this Elisp source file.
 ;;;; Imports
