@@ -279,70 +279,6 @@ possibly empty")))))
                 
                 Take care!"))))))))
 
-;;; Tests about header-args and delimiters, via `org-defblock'
-
-(deftest "mismatched begin/end is OK for unsupported blocks" [delimiters]
-  (let (org--supported-blocks) ;; Nothing is supported
-    (should
-     (exporting 
-       "#+begin_shout
-        content 3
-        #+end_stutter"))))
-
-
-(deftest "mismatched begin/end for supported blocks shows a helpful message" [delimiters]
-  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
-  (thread-last
-    (exporting "#+begin_shout 0
-              content 3
-              #+end_stutter")
-    should-error
-    cl-second
-    (equal   "‘org-special-block-after-point’: I had trouble parsing “#+begin_shout ⟨args⟩?\n⟨content⟩?\n#+end_shout”. Are the required pieces there? 🤔")
-    should)))
-
-
-(deftest "main-arg may be a quoted string" [header-args]
-  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
-     (exporting
-       "#+begin_shout \"Hello, to the \"
-        world
-        #+end_shout"
-       :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
-       :equals "Hello, to the 
-                <p>
-                WORLD
-                </p>
-                ")))
-                  
-(deftest "main-arg may be omitted" [header-args]
-     (exporting
-       "#+begin_shout
-        world
-        #+end_shout"
-       :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
-       :equals "
-               <p>
-               WORLD
-               </p>
-               "))
-               
-
-(deftest "main-arg may be omitted but keywords provided" [header-args]
-     (exporting
-       "
-#+begin_shout :to me
-        world
-#+end_shout
-"
-       :using (org-defblock shout (greeting nil to nil) "docs" (format "%s ⟶%s⟶ %s" greeting to (upcase contents)))
-       :equals "nil ⟶me⟶ 
-                <p>
-                WORLD
-                </p>
-                "))
-                
-
 ;;; org--rewrite-special-blocks-by-handlers
 
 (deftest "`org--rewrite-special-blocks-by-handlers' transforms supported blocks but leaves others unchanged"
@@ -559,6 +495,69 @@ See the associated deftest for more example uses.
       (org-mode)
       (org-special-block-extras-mode)
       (org-export-as backend nil nil :body-only nil))))
+
+;;; Tests about header-args and delimiters, via `org-defblock'
+
+(deftest "mismatched begin/end is OK for unsupported blocks" [delimiters]
+  (let (org--supported-blocks) ;; Nothing is supported
+    (should
+     (exporting 
+       "#+begin_shout
+        content 3
+        #+end_stutter"))))
+
+
+(deftest "mismatched begin/end for supported blocks shows a helpful message" [delimiters]
+  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
+    (thread-last
+      (exporting "#+begin_shout 0
+              content 3
+              #+end_stutter")
+      should-error
+      cl-second
+      (equal   "‘org-special-block-after-point’: I had trouble parsing “#+begin_shout ⟨args⟩?\n⟨content⟩?\n#+end_shout”. Are the required pieces there? 🤔")
+      should)))
+
+
+(deftest "main-arg may be a quoted string" [header-args]
+  (-let [org--supported-blocks '(shout)] ;; “shout” is supported
+    (exporting
+      "#+begin_shout \"Hello, to the \"
+        world
+        #+end_shout"
+      :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+      :equals "Hello, to the 
+                <p>
+                WORLD
+                </p>
+                ")))
+
+(deftest "main-arg may be omitted" [header-args]
+  (exporting
+    "#+begin_shout
+        world
+        #+end_shout"
+    :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+    :equals "
+               <p>
+               WORLD
+               </p>
+               "))
+
+
+(deftest "main-arg may be omitted but keywords provided" [header-args]
+  (exporting
+    "
+#+begin_shout :to me
+        world
+#+end_shout
+"
+    :using (org-defblock shout (greeting nil to nil) "docs" (format "%s ⟶%s⟶ %s" greeting to (upcase contents)))
+    :equals "nil ⟶me⟶ 
+                <p>
+                WORLD
+                </p>
+                "))
 
 ;;; org-defblock
 
