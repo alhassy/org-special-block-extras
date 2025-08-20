@@ -336,6 +336,8 @@ Note: This function mutates the current buffer."
     (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of `defun'.
 
+To remove support for a block NAME, simply use `org-undefblock'.
+
 A full featured example is at the end of this documentation string.
 
 This is an anaphoric macro that provides export support for
@@ -425,10 +427,6 @@ Three example uses:
 
     ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
     ;; catenated as well as the default red color."
-  ;; ⇨ The special block support
-  ;;
-  (add-to-list 'org--supported-blocks name) ;; global var
-
   ;; TODO: Relocate
   (defvar org--block--link-display nil
     "Association list of block name symbols to link display vectors.")
@@ -440,6 +438,10 @@ Three example uses:
                                       docstring    #'stringp
                                       body)
     `(progn
+       ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
+       ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
+       ;; that are around this `org-defblock' call.
+       (add-to-list 'org--supported-blocks ',name)
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
        (list
         ;; TODO: Rename kwds to args
@@ -550,18 +552,49 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
   #+end_speak"
   )
 
+;;;;; org-undefblock
 
+(cl-defmacro org-undefblock (name &rest _)
+  "Remove `org-special-block-extras' support for NAME special blocks.
 
+For example, if you have
 
+    (org-defblock shout () (upcase contents))
 
+Then, LaTeX export of
 
+    #+begin_shout
+    hello, world
+    #+end_shout
 
+results in
 
+    HELLO, WORLD
 
+To remove this support, simply add an “un” after the “-”
+in the “org-defblock” declaration:
 
+    (org-undefblock shout () (upcase contents))
 
+Now, the original Org source exports to LaTeX as
 
+    \\begin{shout}
+    hello, world
+    \\end{shout}
 
+As such, “shout” now exports with the default Org behaviour
+for special blocks.
+
+Note: Link support is also removed, so that “ [[shout: hello, world ]] ”
+no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
+“ \\url{shout: hello, world } ”.
+"
+  `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
+          (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
+          (fmakunbound  ',(intern (format "org-link/%s" name)))
+          (--each '(:export :face :follow :display :keymap :help-echo)
+            (setf (plist-get (org-link-set-parameters ,(format "%s" name)) it) nil))
+          (message ,(format "“%s” is no longer recognised by ‘org-special-block-extras’." name))))
 
 ;;;;; org-special-block-extras-mode autoload
 

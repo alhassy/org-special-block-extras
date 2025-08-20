@@ -559,7 +559,7 @@ See the associated deftest for more example uses.
                 </p>
                 "))
 
-;;; org-defblock
+;;; org-defblock and org-undefblock
 
 (deftest "`org-defblock' defines a handler function and evaluates it correctly"
   (org-defblock hello (who "world" punct "!") "Greeter block"
@@ -606,6 +606,43 @@ See the associated deftest for more example uses.
               </div>
               "
              :modulo "org0b5090e"))
+
+(deftest "`org-undefblock' removes org-special-block-support for a block type: Both block & link support"
+  (-let (org--supported-blocks)
+    (org-defblock shout () (upcase contents))
+    (should (-contains? org--supported-blocks 'shout))
+    (should (fboundp 'org-block/shout))
+    (should (fboundp 'org-link/shout))
+    (exporting "#+begin_shout
+  hello, world
+  #+end_shout"
+      :to latex
+      :equals "
+  HELLO, WORLD
+  ")
+    (exporting "[[shout: hello, world ]]"
+      :to latex
+      :equals " HELLO, WORLD \n")
+    
+    ;; Stick “un” after the “-” in “org-defblock” to remove support for it.
+    (org-undefblock shout () (upcase contents))
+    (should-not (-contains? org--supported-blocks 'shout))
+    (should-not (fboundp 'org-block/shout))
+    (should-not (fboundp 'org-link/shout))
+    (--all-p (should-not (plist-get (org-link-set-parameters "shout") it))
+             '(:export :face :follow :display :keymap :help-echo))
+    (exporting "#+begin_shout
+  hello, world
+  #+end_shout"
+      :to latex
+      :equals "\\begin{shout}
+  hello, world
+  \\end{shout}
+  ")
+    (exporting "[[shout: hello, world ]]"
+      :to latex
+      :equals "\\url{shout: hello, world }\n")))
+
 
 ;;; Indentation preservation -- Issue ♯8
 
