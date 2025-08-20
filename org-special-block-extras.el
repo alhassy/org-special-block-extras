@@ -427,6 +427,7 @@ Three example uses:
 
     ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
     ;; catenated as well as the default red color."
+  (declare (indent defun)) 
   ;; TODO: Relocate
   (defvar org--block--link-display nil
     "Association list of block name symbols to link display vectors.")
