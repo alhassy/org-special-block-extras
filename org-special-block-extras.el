@@ -593,8 +593,9 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
           (fmakunbound  ',(intern (format "org-link/%s" name)))
-          (--each '(:export :face :follow :display :keymap :help-echo)
-            (setf (plist-get (org-link-set-parameters ,(format "%s" name)) it) nil))
+          (-when-let (link-params (org-link-set-parameters ,(format "%s" name)))
+            (--each '(:export :face :follow :display :keymap :help-echo)
+              (setf (plist-get link-params it) nil)))
           (message ,(format "“%s” is no longer recognised by ‘org-special-block-extras’." name))))
 
 ;;;;; org-special-block-extras-mode autoload
