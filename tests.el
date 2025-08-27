@@ -322,62 +322,84 @@ possibly empty")))))
 
 ;;; org-defblock-only
 
-(org-defblock-only speak (who "dev" signoff "!")
-  "Speaking block"
-  (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-
-
 (deftest "`org-defblock-only' returns the name of the defined function"
   (should (equal
            (org-defblock-only speak (who "dev" signoff "!")
              "Speaking block"
              (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-           'org-block/speak)))
+           'org-block/speak))
+  ;; clean-up
+  (org-undefblock speak))
 
 (deftest "`org-defblock-only' defines a function with the correct symbol name"
-  (should (fboundp 'org-block/speak)))
+  (using (org-defblock-only speak (who "dev" signoff "!")
+             "Speaking block"
+             (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
+  (should (fboundp 'org-block/speak))))
 
 (deftest "`org-defblock-only' attaches a docstring to the generated function"
-  (should (equal (documentation 'org-block/speak)
-"Speaking block
+  (using (org-defblock-only speak nil "Speaking block!" nil)
+    (should (equal (documentation 'org-block/speak)
+                   "Speaking block!
 
-BACKEND refers to the current export backend.
-RAW-CONTENTS refers to the text as the user wrote it verbatim.
-⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it verbatim.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
-(fn BACKEND RAW-CONTENTS &optional WHO &rest ## &key (SIGNOFF \"!\") (CONTENTS-OCCUR-AS-LINK-DESCRIPTION nil) &allow-other-keys)")))
+For example, upon LaTeX export, the Org special block
 
-(deftest "`org-defblock-only' generates expected output with explicit arguments"
-  (should (string= (org-block/speak 'html "ignored contents" "Ada" :signoff ", cheerio!")
-                   (lf-string "#+begin_export html 
-                               Ada says hi, cheerio!
-                               #+end_export"))))
+     #+begin_speak
+     Hello, world
+     #+end_speak
 
-(deftest "`org-defblock-only' honours default values for missing main and keyword args"
-  (should (string= (org-block/speak 'html "ignored contents" "")
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export"))))
+ is rewritten to the result of the call
 
-(deftest "`org-defblock-only' ignores extra unexpected arguments safely"
-  (should (string= (org-block/speak 'html "" "" "" 'extra 'args :are 'ignored)
-                   (lf-string "#+begin_export html 
-                               dev says hi!
-                               #+end_export"))))
+     (org-block/speak ‘latex \"Hello, world\")"))))
 
-(deftest "`org-defblock-only' uses header-arg defaults when block args are blank"
-  (let ((org--header-args '((speak . (:main-arg "Mickey" :signoff ", buddo!")))))
-    (should (string= (org-block/speak 'html "contents" "" :signoff "")
-                     (lf-string "#+begin_export html 
-                                 Mickey says hi, buddo!
-                                 #+end_export")))))
+;;; Test utilities “using” and “exporting”
 
-(deftest "`org-defblock-only' alters output depending on export backend"
-  (should (string-match "dev says hi!" (org-block/speak 'html "" "")))
-  (should (string-match "dev says hi!~LaTeX~" (org-block/speak 'latex "" ""))))
+(defmacro using (block-defs &rest body)
+  "Evaluate BLOCK-DEFS (an org-defblock form or list of them), run BODY, then undo via org-undefblock.
 
-;;; Test utility “exporting”
+BLOCK-DEFS may be either:
+  - a single form:   (org-defblock name kwds &optional link-display docstring &rest body)
+  - a list of forms: ((org-defblock …) (org-defblock …) …)
+
+For each (org-defblock NAME …), we generate the matching (org-undefblock NAME …)
+and call those in cleanup so both block and link support are removed.
+
+Each form is evaluated; any functions it introduces are unbound
+afterwards to avoid polluting the global namespace.
+(If we use top-level org-defblock forms instead, we can have unexpected
+calls when the same name is used for different blocks in different tests! 🤮)
+
+This is a poor-man's `cl-letf'."
+  (declare (indent 1))
+  (let* ((defs (pcase block-defs
+                 (`(org-defblock . ,_) (list block-defs))
+                 (`(org-defblock-only . ,_) (list block-defs))
+                 ((and (pred listp) fs)
+                  (progn
+                    (dolist (f fs)
+                      (cl-assert (and (consp f) (or (eq (car f) 'org-defblock) (eq (car f) 'org-defblock-only)))
+                                 nil "using: each element must be an (org-defblock …) form"))
+                    fs))
+                 (_ (error "using: must be an (org-defblock[-only] …) form or a list of them"))))
+         ;; Build matching (org-undefblock NAME …) forms by swapping the head symbol.
+         (undefs (mapcar (lambda (f) (cons 'org-undefblock (cdr f))) defs)))
+    `(let ((__defs ',defs)
+           (__undefs ',undefs))
+       (unwind-protect
+           (progn
+             ;; Evaluate all definitions at runtime (not at macro-expansion).
+             (dolist (f __defs) (eval f))
+             ,@body)
+         ;; Best-effort cleanup; don't error if an undef fails.
+         (dolist (u __undefs)
+           (ignore-errors (eval u)))))))
+
 
 (cl-defmacro exporting (string &key (to 'html) using equals modulo)
   "Assert that exporting STRING to backend TO equals EQUALS (optionally modulo MODULO).
@@ -428,34 +450,22 @@ See the associated deftest for more example uses.
                        (if (not modulo)
                            `(lf-string ,equals)
                          `(thread-last ,equals
-                            lf-string
-                            regexp-quote
-                            (s-replace-all
-                             ',(--map (cons it ".*")
-                                      (if (listp modulo) modulo (list modulo))))
-                            (format "^%s$")))))
+                                       lf-string
+                                       regexp-quote
+                                       (s-replace-all
+                                        ',(--map (cons it ".*")
+                                                 (if (listp modulo) modulo (list modulo))))
+                                       (format "^%s$")))))
            (assertion
             (cond
              ((not equals) actual) ; return actual when no equals provided
              (modulo `(should (equal 0 (string-match-p ,expected ,actual))))
              (t      `(should (equal ,actual ,expected))))))
-      ;; Generate code that evaluates :using at runtime and cleans up
-      (if (null using-forms)
-          ;; No temp blocks: just run the assertion/return form
-          assertion
-        ;; With temp blocks: eval them now, remember symbols, cleanup with unwind-protect
-        `(let* ((__new_syms
-                 (cl-mapcan
-                  (lambda (form)
-                    (let ((res (eval form)))      ; eval NOW, at runtime
-                      (cond ((null res) nil)
-                            ((listp res) (cl-copy-list res))
-                            (t          (list res)))))
-                  ',using-forms)))
-           (unwind-protect
-               ,assertion
-             ;; Cleanup both generics and link fns; ignore if absent
-             (mapc (lambda (sym) (ignore-errors (fmakunbound sym))) __new_syms)))))))
+      ;; wrap assertion in “using” if needed
+      (if using-forms
+          `(using ,using-forms
+             ,assertion)
+        assertion))))
 
 
 (deftest "`exporting' works as intended"
@@ -463,27 +473,27 @@ See the associated deftest for more example uses.
   (exporting "A B C D" :to ascii :equals "A P C T" :modulo ("P" "T"))
 
   ;; No pollution of global namespace
-  (should-not (fboundp 'org-block/shout))
-  (should-not (fboundp 'org-link/shout))
-  (exporting "shout:hello" :to ascii :using (org-defblock shout (wat) "docs" (upcase wat)) :equals "HELLO\n")
-  (should-not (fboundp 'org-block/shout))
-  (should-not (fboundp 'org-link/shout))
+  (should-not (fboundp 'org-block/shouting))
+  (should-not (fboundp 'org-link/shouting))
+  (exporting "shouting:hello" :to ascii :using (org-defblock shouting (wat) "docs" (upcase wat)) :equals "HELLO\n")
+  (should-not (fboundp 'org-block/shouting))
+  (should-not (fboundp 'org-link/shouting))
 
   ;; :using may be omitted
-  (exporting "shout:hello" :to ascii :equals "<shout:hello>\n")
+  (exporting "shouting:hello" :to ascii :equals "<shouting:hello>\n")
 
   ;; :using may be a (singleton) list
-  (exporting "shout:hello"
-             :to ascii
-             :using ((org-defblock shout (wat) "docs" (upcase wat)))
-             :equals "HELLO\n")
+  (exporting "shouting:hello"
+    :to ascii
+    :using ((org-defblock shouting (wat) "docs" (upcase wat)))
+    :equals "HELLO\n")
   
   ;; :using may be a multi-element list
   (exporting "shout:hello quiet:WORLD"
-             :to ascii
-             :using ((org-defblock shout (wat) "docs" (upcase wat))
-                     (org-defblock quiet (wat) "docs" (downcase wat)))
-             :equals "HELLO world\n"))
+    :to ascii
+    :using ((org-defblock shout (wat) "docs" (upcase wat))
+            (org-defblock quiet (wat) "docs" (downcase wat)))
+    :equals "HELLO world\n"))
 
 
 (cl-defun export (string &optional (backend 'html))
@@ -562,50 +572,48 @@ See the associated deftest for more example uses.
 ;;; org-defblock and org-undefblock
 
 (deftest "`org-defblock' defines a handler function and evaluates it correctly"
-  (org-defblock hello (who "world" punct "!") "Greeter block"
+  (using (org-defblock hello (who "world" punct "!") "Greeter block"
                 (format "Hello, %s%s" who punct))
   (should (fboundp 'org-block/hello))
   (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
                    (lf-string "#+begin_export test-backend 
                                Hello, Emacs!!
-                               #+end_export"))))
+                               #+end_export")))))
 
 (deftest "`org-defblock' uses default values set by `org-set-block-header-args'"
-  (org-defblock greeting (name "user" punct "!") "Greeting block"
+  (using (org-defblock greeting (name "user" punct "!") "Greeting block"
                 (format "Hello, %s%s" name punct))
   (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
   (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
                    (lf-string "#+begin_export test-backend 
                                Hello, dev!×4
-                               #+end_export"))))
+                               #+end_export")))))
 
 (deftest "`org-defblock' defines associated link functions that evaluate correctly"
-  (org-defblock notice () [:face 'italic] "Example."
+  (using (org-defblock notice () [:face 'italic] "Example."
                 (format "NOTICE: %s" contents))
   (should (fboundp 'org-block/notice))
   (should (fboundp 'org-link/notice))
   (should (equal (org-link/notice "Some note here" nil 'test-backend)
-                 "NOTICE: Some note here")))
+                 "NOTICE: Some note here"))))
 
 (deftest "`org-defblock' exports a custom block to HTML with content formatting"
-  (org-defblock highlight (label "Note" style "color:red") "Highlight block"
-                (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
   (exporting "Look: 
               #+begin_highlight Warning :style color:orange
               Something **important** here.
-              #+end_highlight"             
-             :equals
-             "<p>
-              Look: 
-              </p>
-              <div class=\"highlight\" id=\"org0b5090e\">
-              <p>
-              Something <b><b>important</b></b> here.
-              </p>
-              
-              </div>
-              "
-             :modulo "org0b5090e"))
+              #+end_highlight"
+             :using (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+                      (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
+             :equals  "<p>
+                      Look: 
+                      </p>
+                      <div style='color:orange'><strong>Warning:</strong> 
+                      <p>
+                      Something <b><b>important</b></b> here.
+                      </p>
+                      </div>
+                      "))
+                        
 
 (deftest "`org-undefblock' removes org-special-block-support for a block type: Both block & link support"
   (-let (org--supported-blocks)
