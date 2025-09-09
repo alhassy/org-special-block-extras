@@ -444,15 +444,20 @@ Three example uses:
        ;; that are around this `org-defblock' call.
        (add-to-list 'org--supported-blocks ',name)
        (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
-       (list
-        ;; TODO: Rename kwds to args
-        (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
-        ;; ⇨ The link type support
-        (eval (backquote (org-deflink ,name
-                           ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
-                           ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-                           (s-replace-regexp "@@" ""
-                                             (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t)))))))))
+       (prog1
+           (list
+            ;; TODO: Rename kwds to args
+            (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
+            ;; ⇨ The link type support
+            (eval (backquote (org-deflink ,name
+                               ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
+                               ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                               (s-replace-regexp "@@" ""
+                                                 (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t))))))
+         ;; Make org-link/𝒮 have the same docs as org-block/𝒮
+         (put ',(intern (format "org-link/%s" name)) 'function-documentation
+              (documentation-property ',(intern (format "org-block/%s" name)) 'function-documentation))
+         ))))
 
 
 ;; WHERE ...
@@ -481,8 +486,16 @@ Features:
   Default values can be set long after the associated handler is created.
 + Optional `contents-occur-as-link-description' flag for minimal output (used in links).
 + Automatic wrapping in export blocks (`org-export', `org-parse')."
-  (declare (indent defun))  
-  (let ((main-arg-name (or (cl-first args) 'main-arg))
+  (declare (indent defun))
+  ;; TODO: Improve these docs so they look a little bit like those of `cl-defun' or those of `defun'.
+  ;; TODO: Improve these docs by looking at the docs of ♯+begin_src blocks.
+  ;; TODO: Improve these docs by looking at the docs of official special blocks: example, quote, comment, verbatim.
+  
+  ;; TODO: If ARGS mentions &optional or &key, then parse the args like cl-defun; otherwise continue
+  ;; with the existing terse syntax below.
+  
+  (let ((defun-name (intern (format "org-block/%s" name)))
+        (main-arg-name (or (cl-first args) 'main-arg))
         (main-arg-default-value (cl-second args))
         (keywords (cddr args)))
     (let* ((fn-name (intern (format "org-block/%s" name)))
@@ -491,48 +504,78 @@ Features:
                 (not (fboundp fn-name))
                 (null (documentation fn-name))
                 (string-match-p "^\s*\n\s*\n.fn.*$" (documentation fn-name)))))
-      `(cl-defun ,(intern (format "org-block/%s" name))
-           (backend      ;; Symbol
-            raw-contents ;; String
-            &optional ,main-arg-name
-            &rest  _
-            &key ,@(-partition 2 keywords) (contents-occur-as-link-description nil)
-            &allow-other-keys)
-         ,(concat docstring
-                  "\n\nBACKEND refers to the current export backend."
-                  "\nRAW-CONTENTS refers to the text as the user wrote it verbatim."
-                  "\n⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
-                  "\n⇒ CONTENTS and RAW-CONTENTS are identical whenever CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
-                  )
-         
-         (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
-         (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
-         
-         ;; Use default value for blank main argument
-         (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
-           (setq ,main-arg-name
-                 (or
-                  (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
-                  ,main-arg-default-value)))
+      ;; Save docs to the symbol variable, if I need them for anything in the
+      ;; future; e.g., setting docs of the function symbol or using them in
+      ;; custom special blocks (such as the one used to make the docs for this
+      ;; package).
+      (put (intern (format "org-block/%s" name)) 'variable-documentation docstring)
+      `(prog1
+           (cl-defun ,defun-name
+               (backend      ;; Symbol
+                raw-contents ;; String
+                &optional ,main-arg-name
+                &rest  _
+                &key ,@(-partition 2 keywords) (contents-occur-as-link-description nil)
+                &allow-other-keys)             
+             (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
+             (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
+             
+             ;; Use default value for blank main argument
+             (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
+               (setq ,main-arg-name
+                     (or
+                      (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
+                      ,main-arg-default-value)))
 
-         ;; Use any headers for this block type, if no local value is passed
-         ,@(cl-loop for (key default-value) in (-partition 2 keywords)
-                    collect `(when (or (null ,key) (s-blank-p ,key))
-                               (setq ,key (or
-                                           (org--header-arg-of
-                                            ',name
-                                            ,(intern (format ":%s" key)))
-                                           ,default-value))))
-         
-         (cl-letf (((symbol-function 'org-export)
-                    (lambda (x) "Wrap the given X in an export block for the current backend."
-                      (if contents-occur-as-link-description x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
-                   ((symbol-function 'org-parse)
-                    (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                      (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
-           (org-export
-            (let ((contents (org-parse raw-contents))) ,@body)))))))
-
+             ;; Use any headers for this block type, if no local value is passed
+             ,@(cl-loop for (key default-value) in (-partition 2 keywords)
+                        collect `(when (or (null ,key) (s-blank-p ,key))
+                                   (setq ,key (or
+                                               (org--header-arg-of
+                                                ',name
+                                                ,(intern (format ":%s" key)))
+                                               ,default-value))))
+             
+             (cl-letf (((symbol-function 'org-export)
+                        (lambda (x) "Wrap the given X in an export block for the current backend."
+                          (if contents-occur-as-link-description x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                       ((symbol-function 'org-parse)
+                        (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
+                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+               (org-export
+                (let ((contents (org-parse raw-contents))) ,@body))))
+         ;; Now that the defun is created, let's modify its docstring to make it richer.
+         (let ((user-docs
+                (org--replace-examples-in-string
+                 (or (documentation-property ',defun-name 'variable-documentation) "")
+                 (lambda (example backend) (format "For example,\n\n%s\n\n%s-exports to\n\n%s"
+                                                   (thread-last example (s-split "\n") (--map (concat "\t" it)) (s-join "\n"))
+                                                   (pcase (or backend 'html)
+                                                     ('html "HTML")
+                                                     ('latex "LaTeX")
+                                                     (else else))
+                                                   ;; TODO: Make `export' a public function, not just in tests.el!
+                                                   (thread-last (export example (or backend 'html))
+                                                                (s-split "\n") (--map (concat "\t" it)) (s-join "\n"))))))
+               (lisp-docs
+                ,(concat
+                  "\nRegarding the Lisp function:"
+                  "\n+ BACKEND refers to the current export backend."
+                  "\n+ RAW-CONTENTS refers to the text as the user wrote it verbatim."
+                  "\n  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
+                  "\n  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
+                  "\n\nFor example, upon LaTeX export, the Org special block"
+                  "\n"
+                  (format "\n     #+begin_%s" name)
+                  "\n     Hello, world"
+                  (format "\n     #+end_%s" name)
+                  "\n"
+                  "\n is rewritten to the result of the call"
+                  "\n"
+                  (format "\n     (org-block/%s `latex \"Hello, world\")" name))))
+           (put ',defun-name 'function-documentation
+                (format "%s%s%s" user-docs (if (s-ends-with? "\n" user-docs) "" "\n") lisp-docs)))
+         ))))
 
 (cl-defun org--header-arg-of (block-name arg-name)
   "Gets the header value for parameter ARG-NAME used with BLOCK-NAME blocks.
@@ -541,12 +584,33 @@ ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
   (plist-get (cdr (assoc block-name org--header-args)) arg-name))
 
 
+(defun org--replace-examples-in-string (string fun)
+  "Replace each #+begin_example…#+end_example block in STRING
+with a call to (FUN ⟨matched text⟩)."
+  (let ((case-fold-search t)) ; org keywords are case-insensitive
+    (replace-regexp-in-string
+     ;; NOTE: In Emacs, to match any number of characters, use .* ---the
+     ;; problem is that “ . ” matches any character _except_ newline.
+     ;; SEE: https://www.emacswiki.org/emacs/MultilineRegexp
+     "^#\\+begin_example\\([^\n]*\\)\n\\(\\(?:.\\|\n\\)*?\\)\n#\\+end_example\\b"
+     (lambda (example)
+       (let* ((hdr        (match-string 1 example))        ; everything after #+begin_example on that line
+              (body       (match-string 2 example))        ; the block contents (may include newlines)
+              (backend         (save-match-data
+                                 (and (string-match "\\(?:^\\|[ \t]\\):exporting-to\\s-+\\(\\S-+\\)" hdr)
+                                      (intern (downcase (match-string 1 hdr)))))))
+         ;; Protect outer match-data from any string matching done by FUN, such as doing an Org export.
+         ;; NOTE: If FUN produces a ‘\’, it's an invalid character in a replacement, so we escape it.
+         (save-match-data (s-replace "\\" "\\\\" (funcall fun body backend)))))
+     string)))
+
+
 ;; Example use
 (when nil
   
   (org-defblock speak (pleasantry "" to nil)
-                "Greet someone."
-                (format "%s ⟶⟨%s⟩ %s" pleasantry to contents))
+    "Greet someone."
+    (format "%s ⟶⟨%s⟩ %s" pleasantry to contents))
 
   "#+being_speak hello
   the world

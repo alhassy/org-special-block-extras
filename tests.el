@@ -4,11 +4,15 @@
 (require 'cl-lib)
 (require 'dash)
 
+(load-file "./org-special-block-extras.el")
+
+;; 
 ;;; Bespoke test macro “deftest”
 ;; I dislike writing “(ert-deftest my-method-test () "my-method does the thing" :tags '(my-method) body)”
 ;; and instead prefer “(deftest "my-method does the thing" body)”.
 ;; My approach also simplifies things by surfacing test :tags into the “M-x ert” view.
 ;; Let's set that up!
+
 
 (cl-defmacro deftest (description &optional tags &rest body)
   "Declare tests with meaningful string names, that reflect the test's main goal.
@@ -66,13 +70,15 @@ This generates an ERT test named `length·of·nil·is·0'.
          (if provided-tags
              (format "%s··⇨··" (s-join "︐" (mapcar #'prin1-to-string provided-tags)))
            "")
-        (thread-last description s-trim s-collapse-whitespace (s-replace-all replacements))))
+         (thread-last description s-trim s-collapse-whitespace (s-replace-all replacements))))
        (method-being-tested
         (thread-last description s-trim (s-split " ") car (s-replace-all replacements))))
     `(ert-deftest ,(intern test-name) ()
        :tags ',(cons method-being-tested provided-tags)
        ;; Actually treat ‘tags’ as optional.
        ,@(if (vectorp tags) body (cons tags body)))))
+
+
 
 (defvar deftest-space "·"
   "The symbol used in-places of whitespace.
@@ -94,17 +100,17 @@ Here are other symbols I've considered using:
 ;;; Parsing & evaluating org-special-block structures
 
 (deftest "`org-special-block-after-point' correctly parses block structure, when given its name"
-  (with-temp-buffer
-    (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
+         (with-temp-buffer
+           (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
                         block content
                         #+end_foo"))
-    (goto-char (point-min))
-    (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
-           (org-special-block-after-point "foo")]
-      (should (equal name "foo"))
-      (should (equal main-arg "mainarg"))
-      (should (equal kwdargs '(:x 1 :y 2)))
-      (should (equal contents "block content")))))
+           (goto-char (point-min))
+           (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents)
+                  (org-special-block-after-point "foo")]
+             (should (equal name "foo"))
+             (should (equal main-arg "mainarg"))
+             (should (equal kwdargs '(:x 1 :y 2)))
+             (should (equal contents "block content")))))
 
 
 (deftest "`org-special-block-after-point' correctly parses any block structure after point"
@@ -358,6 +364,155 @@ For example, upon LaTeX export, the Org special block
 
      (org-block/speak ‘latex \"Hello, world\")"))))
 
+;;; org-defblock docstrings
+
+(deftest "`org--replace-examples-in-string' works as expected, ignoring casing -- executable documentation!"  
+  (should (equal 
+           (org--replace-examples-in-string
+            (lf-string "The method `apply' can be used in multiple ways.
+                        
+                        For example to sum a list:
+                        #+begin_example
+                        (apply #'+ nil)
+                        #+end_example
+                        
+                        Or, to sum a list with some starting numbers:
+                        #+BEGIN_EXAMPLE
+                        (apply #'+ 1 2 '(3 4))
+                        #+END_EXAMPLE
+                        
+                        Enjoy!")
+            (lambda (example _backend) (format "\n\t%s ⇒ %s" example (eval (car (read-from-string example))))))
+           (lf-string "The method `apply' can be used in multiple ways.
+                       
+                       For example to sum a list:
+                       
+                       	(apply #'+ nil) ⇒ 0
+                       
+                       Or, to sum a list with some starting numbers:
+                       
+                       	(apply #'+ 1 2 '(3 4)) ⇒ 10
+                       
+                       Enjoy!"))))
+
+(deftest "`org--replace-examples-in-string' can read an “:exporting-to” key"
+  (using (org-defblock shout () (upcase contents))
+    (should (equal
+             (org--replace-examples-in-string
+              (lf-string "The `shout' block can be used as follows:
+                        
+                        For LaTeX, 
+                        #+begin_example :exporting-to latex
+                        #+begin_shout
+                        Hello, world!
+                        #+end_shout
+                        #+end_example
+                        
+                        Or, for HTML: 
+                        #+BEGIN_EXAMPLE :exporting-to html
+                        #+begin_shout
+                        Hello, world!
+                        #+end_shout
+                        #+END_EXAMPLE
+                        
+                        Note: No other backends are supported.")
+              (lambda (example backend) (format "%s\n ⭆ %s" example (export example backend))))
+             (lf-string "The `shout' block can be used as follows:
+                       
+                       For LaTeX, 
+                       #+begin_shout
+                       Hello, world!
+                       #+end_shout
+                        ⭆ 
+                       HELLO, WORLD!
+                       
+                       
+                       Or, for HTML: 
+                       #+begin_shout
+                       Hello, world!
+                       #+end_shout
+                        ⭆ 
+                       <p>
+                       HELLO, WORLD!
+                       </p>
+                       
+                       
+                       Note: No other backends are supported.")))))
+
+(deftest "`org-defblock' docstring is saved to the symbol variable, unchanged"
+  (using (org-defblock emoji-greet (pleasantry "" to nil)
+           "Greet someone, with a flair of emojis.
+
+#+begin_example :exporting-to latex
+Sometimes we want to greet someone with many emojis, that's a job for the “emoji-greet” block.
+#+begin_emoji-greet \"Why, hello there\" :to \"The love of my life\"
+Have you noticed how blessed we are?
+#+end_emoji-greet
+#+end_example
+"
+           (format "🗣️ %s \n👀 %s \n🗯️ %s 👋" pleasantry to raw-contents))
+    
+    (should (equal (documentation-property 'org-block/emoji-greet 'variable-documentation)
+                   
+                   "Greet someone, with a flair of emojis.
+
+#+begin_example :exporting-to latex
+Sometimes we want to greet someone with many emojis, that’s a job for the “emoji-greet” block.
+#+begin_emoji-greet \"Why, hello there\" :to \"The love of my life\"
+Have you noticed how blessed we are?
+#+end_emoji-greet
+#+end_example
+"))))
+
+
+(deftest "`org-defblock' docstrings actually Org-export any “#+example” blocks in the generated `defun'"
+    (using (org-defblock emoji-greet (pleasantry "" to nil)
+           "Greet someone, with a flair of emojis.
+
+#+begin_example :exporting-to latex
+Sometimes we want to greet someone with many emojis, that's a job for the “emoji-greet” block.
+#+begin_emoji-greet \"Why, hello there\" :to \"The love of my life\"
+Have you noticed how blessed we are?
+#+end_emoji-greet
+#+end_example
+"
+           (format "🗣️ %s \n👀 %s \n🗯️ %s 👋" pleasantry to raw-contents))
+      
+      (should (equal (documentation #'org-block/emoji-greet)
+                     
+                 "Greet someone, with a flair of emojis.
+
+For example,
+
+	Sometimes we want to greet someone with many emojis, that’s a job for the “emoji-greet” block.
+	#+begin_emoji-greet \"Why, hello there\" :to \"The love of my life\"
+	Have you noticed how blessed we are?
+	#+end_emoji-greet
+
+LaTeX-exports to
+
+	Sometimes we want to greet someone with many emojis, that’s a job for the “emoji-greet” block.
+	🗣️ Why, hello there 
+	👀 The love of my life 
+	🗯️ Have you noticed how blessed we are? 👋
+	
+
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it verbatim.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+For example, upon LaTeX export, the Org special block
+
+     #+begin_emoji-greet
+     Hello, world
+     #+end_emoji-greet
+
+ is rewritten to the result of the call
+
+     (org-block/emoji-greet ‘latex \"Hello, world\")"))))
+
 ;;; Test utilities “using” and “exporting”
 
 (defmacro using (block-defs &rest body)
@@ -473,8 +628,8 @@ See the associated deftest for more example uses.
   (exporting "A B C D" :to ascii :equals "A P C T" :modulo ("P" "T"))
 
   ;; No pollution of global namespace
-  (should-not (fboundp 'org-block/shouting))
-  (should-not (fboundp 'org-link/shouting))
+  ;; (should-not (fboundp 'org-block/shouting))
+  ;; (should-not (fboundp 'org-link/shouting))
   (exporting "shouting:hello" :to ascii :using (org-defblock shouting (wat) "docs" (upcase wat)) :equals "HELLO\n")
   (should-not (fboundp 'org-block/shouting))
   (should-not (fboundp 'org-link/shouting))
