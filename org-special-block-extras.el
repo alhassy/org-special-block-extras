@@ -554,8 +554,7 @@ Features:
                                                      ('html "HTML")
                                                      ('latex "LaTeX")
                                                      (else else))
-                                                   ;; TODO: Make `export' a public function, not just in tests.el!
-                                                   (thread-last (export example (or backend 'html))
+                                                   (thread-last (org-export-string example (or backend 'html))
                                                                 (s-split "\n") (--map (concat "\t" it)) (s-join "\n"))))))
                (lisp-docs
                 ,(concat
@@ -576,6 +575,18 @@ Features:
            (put ',defun-name 'function-documentation
                 (format "%s%s%s" user-docs (if (s-ends-with? "\n" user-docs) "" "\n") lisp-docs)))
          ))))
+
+
+(cl-defun org-export-string (string &optional (backend 'html))
+  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
+  (with-temp-buffer
+    (insert "\n") ;; Without the newline, we lose any initial string.
+    (insert string)
+    (let ((org-inhibit-startup t))
+      (org-mode)
+      (org-special-block-extras-mode)
+      (org-export-as backend nil nil :body-only nil))))
+
 
 (cl-defun org--header-arg-of (block-name arg-name)
   "Gets the header value for parameter ARG-NAME used with BLOCK-NAME blocks.

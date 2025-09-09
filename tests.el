@@ -416,7 +416,7 @@ For example, upon LaTeX export, the Org special block
                         #+END_EXAMPLE
                         
                         Note: No other backends are supported.")
-              (lambda (example backend) (format "%s\n ⭆ %s" example (export example backend))))
+              (lambda (example backend) (format "%s\n ⭆ %s" example (org-export-string example backend))))
              (lf-string "The `shout' block can be used as follows:
                        
                        For LaTeX, 
@@ -466,7 +466,7 @@ Have you noticed how blessed we are?
 
 
 (deftest "`org-defblock' docstrings actually Org-export any “#+example” blocks in the generated `defun'"
-    (using (org-defblock emoji-greet (pleasantry "" to nil)
+  (using (org-defblock emoji-greet (pleasantry "" to nil)
            "Greet someone, with a flair of emojis.
 
 #+begin_example :exporting-to latex
@@ -477,10 +477,10 @@ Have you noticed how blessed we are?
 #+end_example
 "
            (format "🗣️ %s \n👀 %s \n🗯️ %s 👋" pleasantry to raw-contents))
-      
-      (should (equal (documentation #'org-block/emoji-greet)
-                     
-                 "Greet someone, with a flair of emojis.
+    
+    (should (equal (documentation #'org-block/emoji-greet)
+
+                   "Greet someone, with a flair of emojis.
 
 For example,
 
@@ -562,7 +562,7 @@ This is a poor-man's `cl-letf'."
 If EQUALS is omitted, this generates the expectations only.
 This is useful in combination with `C-u C-x C-e'.
 
-Tldr: Run an export assertion, optionally installing temporary defblocks via :USING and cleaning them up.
+Tldr: Run an org-export-string assertion, optionally installing temporary defblocks via :USING and cleaning them up.
 Args:
 + TO is the name of a backend, such as `html' (default) or `latex'.
 + STRING is the input Org string (raw; `lf-string' is applied to it).
@@ -576,7 +576,7 @@ Args:
   This is a poor-man's `cl-letf'.
 
 API Notes:
-+ (exporting A :equals B)            ≋  (should (equal (export A) B))
++ (exporting A :equals B)            ≋  (should (equal (org-export-string A) B))
 + (exporting A :equals B :modulo C)  ≋  “A equals B with all instances of C replaced by .*”
 
 Example use:
@@ -599,7 +599,7 @@ See the associated deftest for more example uses.
               forms))
            (_ (error ":using must be a single (org-defblock …) or a list of them")))))
     ;; Build the runtime assertion form
-    (let* ((actual   `(export (lf-string ,string) ',to))
+    (let* ((actual   `(org-export-string (lf-string ,string) ',to))
            (expected (if (not equals)
                          nil
                        (if (not modulo)
@@ -649,17 +649,6 @@ See the associated deftest for more example uses.
     :using ((org-defblock shout (wat) "docs" (upcase wat))
             (org-defblock quiet (wat) "docs" (downcase wat)))
     :equals "HELLO world\n"))
-
-
-(cl-defun export (string &optional (backend 'html))
-  "Export Org STRING along BACKEND, with `org-special-block-extras' enabled."
-  (with-temp-buffer
-    (insert "\n") ;; Without the newline, we lose any initial string.
-    (insert string)
-    (let ((org-inhibit-startup t))
-      (org-mode)
-      (org-special-block-extras-mode)
-      (org-export-as backend nil nil :body-only nil))))
 
 ;;; Tests about header-args and delimiters, via `org-defblock'
 
@@ -838,10 +827,10 @@ See the associated deftest for more example uses.
                   inner
                   #+end_testblock
                3. Third"
-              :to latex
-             :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))              
-              :equals
-              "\\begin{enumerate}
+    :to latex
+    :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))              
+    :equals
+    "\\begin{enumerate}
                \\item First
                \\item Second
                HANDLED:
@@ -1034,21 +1023,21 @@ The link text appears as red bold in both Emacs and in HTML export."
      The link text appears as red bold in both Emacs and in HTML export."))
 
 (deftest "org-deflink works as expected, plain links"
-         [org-deflink]
-         (should (not (null (symbol-function 'org-link/shout))))
-         (⇝ (export "shout:hello")
+  [org-deflink]
+  (should (not (null (symbol-function 'org-link/shout))))
+  (⇝ (org-export-string "shout:hello")
      "<p> <span style=\"color:red\"> HELLO </span></p>"))
 
 (deftest "org-deflink works as expected, bracket links"
-         [org-deflink]
-         (⇝ (export "[[shout:hello]]")
+  [org-deflink]
+  (⇝ (org-export-string "[[shout:hello]]")
      "<p> <span style=\"color:red\"> HELLO </span></p>")
-         (⇝ (export "[[shout:hello][world!]]")
+  (⇝ (org-export-string "[[shout:hello][world!]]")
      "<p> <span style=\"color:red\"> WORLD! </span></p>"))
 
 (deftest "org-deflink works as expected, angle links"
          [org-deflink]
-         (⇝ (export "<shout: hello world!>")
+         (⇝ (org-export-string "<shout: hello world!>")
      "<p> <span style=\"color:red\"> HELLO WORLD! </span></p>"))
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
@@ -1060,17 +1049,17 @@ The link text appears as red bold in both Emacs and in HTML export."
 
 (deftest "Upcase works as expected on links, with only labels"
     [basic-defblock org-link]
-         (⇝ (export "pre scream:hello post")
+         (⇝ (org-export-string "pre scream:hello post")
             "pre hello: HELLO post"))
 
 (deftest "Upcase works as expected on links, with descriptions"
          [basic-defblock org-link]
-         (⇝ (export "pre [[scream:hello][my dear friends]] post")
+         (⇝ (org-export-string "pre [[scream:hello][my dear friends]] post")
             "hello: MY DEAR FRIENDS post"))
 
 (deftest "Upcase works as expected on blocks"
          [basic-defblock]
-         (⇝ (export "pre
+         (⇝ (org-export-string "pre
 #+begin_scream hello
 my amigos
 #+end_scream
@@ -1086,7 +1075,7 @@ post")
 
 (deftest "Upcase works as expected on blocks, with default main argument"
          [basic-defblock main-arg]
-         (⇝ (export "pre
+         (⇝ (org-export-string "pre
 #+begin_scream
 my amigos
 #+end_scream
@@ -1103,21 +1092,21 @@ post")
 ;; [[file:org-special-block-extras.org::#kbd:nice-keystroke-renditions][Nice Keystroke Renditions: kbd:C-h_h:3]]
 (deftest "It becomes <kbd> tags, but final symbol non-ascii *may* be ignored"
   [kbd direct-org-links]
-  (⇝ (export "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
+  (⇝ (org-export-string "kbd:C-u_80_-∀") "<p>\n<kbd style=\"\">C-u 80</kbd>_-∀</p>"))
 
 (deftest "[[It]] becomes <kbd> tags"
   [kbd square-org-links]
-  (⇝ (export "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+  (⇝ (org-export-string "[[kbd:C-u_80_-]]") "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
 (deftest "<It> becomes <kbd> tags, and surrounding space is trimmed"
   [kbd angle-org-links]
-  (⇝ (export "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
+  (⇝ (org-export-string "<kbd: C-u 80 - >")  "<p>\n<kbd style=\"\">C-u 80 -</kbd></p>"))
 
 ;; FIXME: uh-oh!
 (when nil
 (deftest "It has a tooltip documenting the underlying Lisp function, when possible"
   [kbd tooltip]
-  (⇝ (export "<kbd: M-s h .>")
+  (⇝ (org-export-string "<kbd: M-s h .>")
 
      "<abbr class=\"tooltip\""
      (* anything)
