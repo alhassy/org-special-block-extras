@@ -493,6 +493,13 @@ Features:
   
   ;; TODO: If ARGS mentions &optional or &key, then parse the args like cl-defun; otherwise continue
   ;; with the existing terse syntax below.
+
+  ;; Account for possibly omitted docstring
+  (cond
+   ;; Mimicking (cl-defun f () "hi") then (f) ⇒ "hi"
+   ((null body) (setq body docstring) (setq docstring ""))
+   ;; Mimicking (cl-defun f () 'x 'y) then (f) ⇒ 'y
+   ((not (stringp docstring)) (setq body (cons docstring body)) (setq docstring "")))
   
   (let ((defun-name (intern (format "org-block/%s" name)))
         (main-arg-name (or (cl-first args) 'main-arg))

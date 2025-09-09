@@ -339,6 +339,10 @@ possibly empty")))))
 
 (deftest "`org-defblock-only' defines a function with the correct symbol name"
   (using (org-defblock-only speak (who "dev" signoff "!")
+
+(deftest "`org-defblock-only' docstring is optional"
+  (should (org-defblock-only shout nil (upcase contents))))
+
              "Speaking block"
              (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
   (should (fboundp 'org-block/speak))))
