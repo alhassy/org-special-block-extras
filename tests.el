@@ -1,3 +1,160 @@
+;;; “html”: HTML Templating Facade: Use Lisp notation as an easy-to-type and easy-to-manipulate realization of HTML notation
+
+(defun html--stringify (x)
+  "Return X as a string for attribute values and text nodes."
+  (cond
+   ((stringp x) x)
+   ((symbolp x) (symbol-name x))
+   ((numberp x) (number-to-string x))
+   ((null x) "")
+   (t (format "%s" x))))
+
+(defun html--to-shr (node)
+  "Convert NODE written as (tag :k v ... children...) into SHR DOM:
+ (tag ((k . v) ...) child ...). Children/text are converted recursively.
+ Keywords become symbols by stripping the leading :."
+  (cond
+   ;; Base Case: Literal Node
+   ((or (stringp node) (numberp node) (symbolp node) (null node))
+    (html--stringify node))
+
+   ;; Recursive Case: Element node
+   ((consp node)
+    (let* ((tag  (car node))
+           (rest (cdr node))
+           (attrs nil))
+      ;; collect leading :key value pairs
+      (while (and rest (keywordp (car rest)))
+        (let* ((kw  (pop rest))                 ; e.g., :class
+               (val (pop rest))                 ; e.g., org-ul
+               (sym (intern (substring (symbol-name kw) 1)))) ; class
+          (push (cons sym (html--stringify val)) attrs)))
+      ;; build SHR DOM: (tag ((k . v) ...) child ...)
+      (cons tag
+            (cons (nreverse attrs)
+                  (mapcar #'html--to-shr rest)))))
+   ;; Fallback: stringify
+   (t (html--stringify node))))
+
+(defun html (form)
+  "Render FORM (in keyword-attr style) to HTML via `shr-dom-to-xml'.
+Example:
+  (html `(div :class \"c\" (a :href ,url \"link\")))
+
+This is a super simple aesthetic facade over the built-in `shr.el', the Simple HTML Renderer
+where we extend the literals to include numbers and attributes & child HTML elements are optional:
+
+     (equal (shr-dom-to-xml '(div ((class . header)) (p nil \"123\")))
+            (html '(div :class header (p 123))))
+
+Besides the extended literal support and using a keywords for attributes, this method relies
+on the existing ecosystem of Elisp evaluation, such as quasi-quoting. It is only a facade:
+Where `shr-dom-to-xml' requires an alist of attributes and string literals, this method
+uses a spliced plist of attributes and accepts string, numeric, and symbolic literals.
+
+
+In-particular, whereas many JavaScript tools use “handlebars” or “mustaches” for interpolation,
+Lisp uses quasi-quoting:
+
+   AngularJS:         <div> Hello, my name is {{userFullName}} </div>
+   Emacs Lisp:        (html `(div ,(concat \"Hello, my name is \" user-full-name)))
+
+While slightly more verbose, the Lisp approach does not require an external tool (viz AngularJS)
+& so no new syntax to learn, and the HTML templates can be composed from smaller modular pieces.
+The humble quasi-quote has existed long before JS and HTML; it makes all kinds of templating easy.
+
+NOTE: Syntax of HTML elements is defined recursively as follows.
+
+HTML ::= String | Number | Symbol
+      |  (element-name :attribute₁ value₁ … :attributeₙ valueₙ content*)
+         ;; where ‘content*’ is any number of HTML values and ‘valueᵢ’ are string|number values.
+         ;; Only ‘element-name’ is mandatory
+
+  This keeps the call-site simple and lets you use symbols/numbers naturally in attributes and text.
+
+NOTE: If you want an HTML string literal to be read verbatim, wrap it in `org-html-encode-plain-text'
+to escape HTML entities, such as: \"<This> is </verbatim> &amp;\".
+
+NOTE: To parse an HTML string in a format that `shr-dom-to-xml' can print back, use:
+
+(let* ((s \"<span class=\\\"note\\\">Hello world</span>\") 
+       (dom (with-temp-buffer
+              (insert s)
+              (libxml-parse-html-region))))
+  dom)
+
+With this DOM, one can also use `dom-by-tag', `dom-search', `dom-attr', `dom-children', etc."
+  (if (null form)
+      (error ("The ‘html’ method expects a non-empty list."))
+    (shr-dom-to-xml (html--to-shr form))))
+
+
+(deftest "`html' example use involving quasi-quoting"
+  (should (equal
+           "<div class=\"container\" id=\"top\"> <a href=\"https://google.com\">Google</a></div>"
+           (let ((my-url "https://google.com"))
+             (html
+              `(div :class "container" :id "top"
+                    (a :href ,my-url
+                       "Google")))))))
+
+
+(deftest "`html' attributes and body are optional"
+  (should (equal (html '(br)) "<br></br>")))
+
+
+(deftest "`html' attributes & body can be symbols or numbers; content is list"
+  (should (equal "<ul class=\"org-ul\"> <li>1</li> <li>2</li> <li>3</li></ul>"
+                 (html '(ul :class org-ul
+                            (li 1)
+                            (li 2)
+                            (li 3))))))
+
+(deftest "`html' content can be a symbol"
+  (should (equal "<p>hello-world</p>"
+                 (html '(p hello-world)))))
+
+(deftest "`html' content can be a number"
+  (should (equal "<p>12.3</p>"
+                 (html '(p 12.3)))))
+
+(deftest "`html' nested works as expected"
+  (should (equal "<div class=\"container\"> <div class=\"row\"> <div class=\"col-8\"> <p>paragraph 1</p></div> <div class=\"col-4\"> <p>paragraph 2</p></div></div></div>"
+                 (html
+                  '(div :class container
+                        (div :class row
+                             (div :class col-8
+                                  (p "paragraph 1"))
+                             (div :class col-4
+                                  (p "paragraph 2"))))))))
+
+(deftest "`html' forms can be generated programmatically"
+  (should (equal "<div> <p>1</p> <p>2</p> <p>3</p></div>"
+                 (html (cons 'div (mapcar (lambda (n) `(p ,n)) '(1 2 3)))))))
+
+(deftest "`html' content can be spliced forms"
+  (should (equal "<div> <p>1</p> <p>2</p> <p>3</p></div>"
+                 (html `(div ,@(mapcar (lambda (n) `(p ,n)) '(1 2 3)))))))
+
+
+(deftest "`html' semi-realistic example"
+  (should (equal "<html lang=\"en\"> <head> <meta charset=\"UTF-8\"></meta> <title>Hello, World!</title></head> <body> <div class=\"my-class\"> <h1>HTML generated by shr!</h1> <ol> <li> times 5 is 5</li> <li> times 5 is 10</li> <li> times 5 is 15</li> <li> times 5 is 20</li> <li> times 5 is 25</li></ol></div></body></html>"
+                 (html
+                  `(html :lang en
+                         (head 
+                          (meta :charset UTF-8)
+                          (title "Hello, World!"))
+                         (body 
+                          (div :class my-class
+                               (h1  "HTML generated by shr!")
+                               (ol ,@(cl-loop for i from 1 to 5 collect `(li  ,(format " times %s is %s" 5 (* i 5))))))))))))
+
+
+;; NOTE: Consider making a LaTeX Templating Facade:
+;; Use Lisp notation as an easy-to-type and easy-to-manipulate realization of mathematical notation.
+;; E.g., (latex '(lambda (x) (f x))) = $(λ x. f x)$
+
+;;; Requires
 (require 'ert)
 (require 'org)
 (require 'org-element)
