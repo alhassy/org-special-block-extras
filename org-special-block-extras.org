@@ -6943,7 +6943,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
                              "[o-glossary-%s]{%s}"
                              "\\label{o-glossary"
                              "-declaration-site-%s}")
-                     label display-name label))))
+                     o-label display-name o-label))))
 
 ;; WHERE ...
 
