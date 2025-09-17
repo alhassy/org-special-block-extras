@@ -1881,7 +1881,7 @@ We use this listing to actually print a glossary using
                              "[o-glossary-%s]{%s}"
                              "\\label{o-glossary"
                              "-declaration-site-%s}")
-                     label display-name label))))
+                     o-label display-name o-label))))
 
 ;; WHERE ...
 
