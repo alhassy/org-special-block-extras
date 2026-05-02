@@ -155,6 +155,8 @@
     (diff temp-buffer1 temp-buffer2)))
 
 
+;; ( e2e--show-string-diff "hello" "hilla")
+
 (cl-defun e2e-run-tests (&optional (directory "."))
   "Recursively define and run E2E tests for all .yaml files in DIRECTORY."  
   (interactive)
