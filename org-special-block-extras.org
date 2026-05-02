@@ -9,6 +9,41 @@
 #+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
 #+toc: headlines 2
 
+# Render diagram: (progn (use-package ob-latex-as-png :ensure t)
+#                        (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images))
+#+begin_src latex-as-png :file org-special-block-extras-overview.png :resolution "720" :results raw value replace :exports results
+\usepackage{smartdiagram}
+\usepackage{graphicx}
+\vspace{1.5em}
+\centering{One Org source $\rightarrow$ rich HTML \emph{and} \LaTeX\ export}
+
+\vspace{1em}
+\smartdiagramset{
+  planet color=black!75,
+  planet size=3.5cm,
+  planet font=\normalfont\bfseries\normalsize,
+  satellite size=3.6cm,
+  satellite font=\normalfont\small,
+  satellite text width=3.5cm,
+  distance planet-satellite=5.7cm,
+  connection color=gray!60,
+  connection line width=0.06cm,
+  text color=black,
+  font=\small\sffamily
+}
+\resizebox{1.0\textwidth}{!}{%
+\smartdiagram[constellation diagram]{%
+  {\color{white}\LARGE\texttt{org-special-block-extras}\\[0.5em]\normalsize define blocks \& links},
+  \texttt{org-defblock}\\[0.5em]{\footnotesize custom Org blocks},
+  \texttt{details}\ \texttt{parallel}\\[0.5em]\texttt{proof}\ \texttt{margin}\\[0.5em]{\footnotesize 30+ block types},
+  \texttt{org-deflink}\\[0.5em]{\footnotesize custom Org links},
+  \texttt{doc:}\ \texttt{kbd:}\\[0.5em]\texttt{badge:}\ \texttt{fortune:}\\[0.5em]{\footnotesize 34+ link types},
+  HTML \& \LaTeX\\[0.5em]{\footnotesize single Org source},
+  \texttt{spoiler}\ \texttt{tree}\\[0.5em]\texttt{demo}\ \texttt{solution}\\[0.5em]{\footnotesize interactive export}
+}} % end \resizebox + \smartdiagram
+\\{\color{white} Bye!}
+#+end_src
+
 * COMMENT Random notes
 # TODO: Final version should not have the following incantation active.
 #+options: broken-links:auto
@@ -4518,112 +4553,6 @@ Let's have some sanity tests...
   "")
 #+end_src
 
-# html-export-style:solarized_light
-* COMMENT Fortune Links: Smiles inside and outside of Emacs
-   :PROPERTIES:
-   :CUSTOM_ID: Fortune-Links-Smiles-inside-and-outside-of-Emacs
-   :END:
-
-Sometimes we need a smile, or a fortune, and want it with a nice graphic ---all
-in Emacs. Enter ~fortune:𝒳~ links!
-- These yield colourful graphics /both/ in Emacs and in HTML export.
-  + Click on the link to see it in action, in Emacs.
-- Here is an example of ~fortune:joke~.  fortune:joke
-
-# - An example usage in blog articles would be the ~[[fortune:ANIMAL][PHRASE]]~
-#  syntax:
-#           [[fortune:cow][howdy buddo]]
-#
-# TODO: This is busted? Maybe make a Github Issue; looks like an easy thing for
-# other new contributors.
-
-#+begin_src emacs-lisp
-(org-deflink fortune
-   "Print an ASCII animal saying the given link's description, a fortune, or a joke.
-
-This is essentially a wrapper around the following command-line incantation
-
-    fortune | cowsay | lolcat -f
-
-We show colourful sayings both in Emacs (when you click on the link) and in HTML export.
-
-This requires you have the command-line packages ‘fortune’, ‘cowsay’, ‘lolcat’,
-and ‘aha’ for converting coloured terminal output into HTML.
-On MacOS, all of these can be installed with `brew install 𝒳';
-better-yet use the Emacs Lisp `system-packages-install' package.
-
-The help-echo, hover tooltip, provides useful information on possibly link types and their effects.
-
-Example uses:
-
-   fortune:joke    ;; Show a random animal saying a punny joke
-
-   fortune:random  ;; Show a random animal saying a random fortune/phrase
-
-   fortune:dragon  ;; Show a dragon saying a random fortune/phrase
-
-   ;; Show a the given animal saying the given phrase
-   [[fortune:mutilated][Opps, I broke the thing!]]
-
-   ;; The ‘fortune’ link grew out of the following link in my work journal
-   [[elisp:(dad-joke-get)][I wanna smile!]]
-
-For HTML export, the resulting HTML element has class ‘org-fortune’,
-to which users may adorn CSS styling. For instance, in an Org file:
-
-  ,#+html: <style> .org-fortune {font-style: italic; font-family: Monaco} </style>
-  # Chalkduster font-family is good for one-line sayings, phrases.
-
-We intentionally do not fold-up such links when they have associated descriptions.
-
-When you click, it takes a seconds to fetch jokes; so await a moment when hovering over joke fortunes."
-   [:display 'full
-    :face '(:box (:color "orange" :style released-button) :underline "green" :overline "green")
-    :let (animals '(blowfish bud-frogs cower default dragon
-                    dragon-and-cow flaming-sheep ghostbusters
-                    moose mutilated sheep stegosaurus turkey
-                    turtle tux)
-          animal (if (string-equal "cow" (s-trim o-label))
-                     'default
-                   (seq-random-elt animals))
-          animal₀ (if (equal 'default animal) 'cow animal)
-          _loads (progn (require 'dad-joke) (require 'seq) (require 'lolcat))
-          saying (cond
-                  (o-description (format "echo %s" (pp-to-string o-description)))
-                  ((equal "joke" (s-trim o-label)) (format "echo %s" (pp-to-string (dad-joke-get))))
-                  (:otherwise "fortune"))
-          result (format "%s\t\t\t%s"
-                         (shell-command-to-string (format "%s | cowsay -f %s" saying animal))
-                         animal₀)
-          buf-name (format "fortune:%s" animal₀))
-   :follow (progn (display-message-or-buffer result)
-                  (ignore-errors (kill-buffer buf-name))
-                  (switch-to-buffer-other-window "*Message*")
-                  (rename-buffer buf-name)
-                  (highlight-regexp (format "%s" animal₀) 'hi-green-b)
-                  (lolcat-this-buffer)
-                  (local-set-key "q" #'kill-buffer-and-window)
-                  (message "“q” to kill buffer and window."))
-   :help-echo (s-join "\n" (list "“fortune:𝒳” or “[[fortune:𝒳][description 𝒟]]” where 𝒳 is "
-                                 "⇢ joke   ⟦A random animal that says a punny joke⟧"
-                                 "⇢ random ⟦A random animal that says 𝒟, or a random fortune phrase⟧"
-                                 "⇢ ⟦This animal says 𝒟, or a random fortune phrase⟧"
-                                 "\t cow, blowfish, bud-frogs, cower, dragon, dragon-and-cow,"
-                                 "\t flaming-sheep, ghostbusters, moose, mutilated, sheep,"
-                                 "\t stegosaurus, turkey, turtle tux"
-                                 "\n"
-                                 "\n" result))
-   ]
-   (if (equal o-backend 'html)
-       (--> (shell-command-to-string (format "%s | cowsay -f %s | lolcat -f | aha -n" saying animal))
-          (if (s-starts-with? "/System/Library" it)
-              (s-join "\n" (cdr (s-split "\n" it)))
-            it)
-          (format "%s\t\t\t%s" it animal₀)
-          (format "<pre class=\"org-fortune\"> %s </pre>" it))
-     result))
-#+end_src
-
 * COMMENT Editor Comments
   :PROPERTIES:
   :CUSTOM_ID: editor-comments
@@ -7896,10 +7825,8 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
     (org-link-twitter-excitement
      "This looks super neat (•̀ᴗ•́)و:")
     :config
-    ;; For use with the “fortune” links, if you want to use them.
-    (system-packages-ensure "cowsay")  ;; ≈ brew install cowsay
-    (system-packages-ensure "fortune") ;; ≈ brew install fortune
-    (system-packages-ensure "aha"))    ;; ≈ brew install aha
+    ;; fortune: link type moved to https://github.com/alhassy/fortune-of-the-day
+    )
 #+END_SRC
 
 Then, provide support for a new type of special block, say re-using the ~src~
