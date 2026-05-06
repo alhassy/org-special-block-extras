@@ -914,12 +914,17 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (defvar org--ospe-kbd-html-setup nil
           "Has the necessary keyboard styling HTML beeen added?")
 
+        ;; Append kbd styling to `org-html-head-extra' exactly once per
+        ;; Emacs session.  The setup-guard and the injection must be
+        ;; nested — previously they were siblings, so the injection
+        ;; fired on every mode activation and batch exports accumulated
+        ;; N copies of the <style> block in every page's <head>.
         (unless org--ospe-kbd-html-setup
-          (setq org--ospe-kbd-html-setup t))
-        (when org-special-block-add-html-extra
-          (setq org-html-head-extra
-                (concat org-html-head-extra
-                        "
+          (setq org--ospe-kbd-html-setup t)
+          (when org-special-block-add-html-extra
+            (setq org-html-head-extra
+                  (concat org-html-head-extra
+                          "
           <style>
           /* From: https://endlessparentheses.com/public/css/endless.css */
           /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
@@ -946,19 +951,24 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 
             box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
           }
-          </style>")))
+          </style>"))))
         ;; Ensure user's documentation libraries have loaded
         (unless org--docs-from-libraries
           (org-docs-load-libraries))
         (defvar org--tooltip-html-setup nil
           "Has the necessary HTML beeen added?")
 
+        ;; Append tooltipster CSS/JS to `org-html-head-extra' exactly
+        ;; once per Emacs session.  Nest the injection inside the
+        ;; setup-guard — previously siblings, so every activation
+        ;; stacked a duplicate copy in every subsequent page's <head>
+        ;; during batch exports.
         (unless org--tooltip-html-setup
-          (setq org--tooltip-html-setup t))
-        (when org-special-block-add-html-extra
-          (setq org-html-head-extra
-                (concat org-html-head-extra
-                        "
+          (setq org--tooltip-html-setup t)
+          (when org-special-block-add-html-extra
+            (setq org-html-head-extra
+                  (concat org-html-head-extra
+                          "
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
 
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
@@ -998,7 +1008,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
                         color:red;
                         text-decoration: none;}
           </style>
-          ")))
+          "))))
         (defvar org--docs-empty! (list nil t)
           "An indicator of when glossary entries should be erased.
 
@@ -2620,14 +2630,17 @@ as an alignment marker; otherwise math is right-justified.
 
 For HTML, to use an TeX it must be enclosed in $, since that is
 what is required by MathJaX."
-              (thread-last (with-temp-buffer
-                             (insert raw-contents)
-                             (goto-char (point-min))
-                             (org-list-to-lisp))
-                           cdr
-                           (--map (format "%s" (org--list-to-calc it rel hint-format explicit-vspace color)))
-                           (s-join "\\\\")
-                           (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
+              (let ((parsed (condition-case err
+                                (with-temp-buffer
+                                  (insert raw-contents)
+                                  (goto-char (point-min))
+                                  (org-list-to-lisp))
+                              (error (user-error "#+begin_calc block does not contain a valid Org plain list.\n\
+Each step must be a `- item` bullet.\nParsing error: %s" (error-message-string err))))))
+                (thread-last (cdr parsed)
+                             (--map (format "%s" (org--list-to-calc it rel hint-format explicit-vspace color)))
+                             (s-join "\\\\")
+                             (format "$$\\begin{align*} & %s \n\\end{align*}$$"))))
 
 ;;;;;;; inference proof tree
 (defun org--list-to-math (lst)
@@ -2693,12 +2706,15 @@ the following proves P = R.
         - R = Q(Y)
           - ✓
   #+end_tree"
-              (s-join "" (--map (format "\\[%s\\]"
-                                        (org--list-to-math it))
-                                (cdr (with-temp-buffer
-                                       (insert raw-contents)
-                                       (goto-char (point-min))
-                                       (org-list-to-lisp))))))
+              (let ((parsed (condition-case err
+                                (with-temp-buffer
+                                  (insert raw-contents)
+                                  (goto-char (point-min))
+                                  (org-list-to-lisp))
+                              (error (user-error "#+begin_tree block does not contain a valid Org plain list.\n\
+Each step must be a `- item` bullet.\nParsing error: %s" (error-message-string err))))))
+                (s-join "" (--map (format "\\[%s\\]" (org--list-to-math it))
+                                  (cdr parsed)))))
 
 ;;;; provides clause
 
