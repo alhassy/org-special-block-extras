@@ -1,5 +1,45 @@
-;; Emacs Lisp End-to-End Testing
+;;; e2e.el --- Simple End-to-End Testing for Emacs Lisp -*- lexical-binding: t -*-
+
+;; Copyright (c) 2025 Musa Al-hassy
+
+;; Author: Musa Al-hassy <alhassy@gmail.com>
+;; Version: 0.0.1
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
+;; Keywords: end-to-end, testing, yaml, org-mode
+;; URL: https://alhassy.github.io/org-special-block-extras
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
 ;;
+;; This package provides a streamlined approach to writing and updating
+;; end-to-end tests using YAML as a data-driven format. Each test specifies
+;; input data and expected output, making it easy to maintain and review.
+;;
+;; Workflow:
+;; 1. Write YAML test files specifying `input' (with no `expectations').
+;; 2. Run `M-x e2e-update-tests` (or `e2e-update-this-test`) to generate
+;;    the `expectations' based on current implementation.
+;; 3. Run `M-x e2e-run-tests` to verify tests pass.
+;; 4. Review changes via Magit and commit:
+;;    M-x magit, to see how the tests changed, commit if happy.
+;; 5. Optionally, (ert-delete-all-tests)
+;;
+;; Tests are easy to maintain and update, encouraging comprehensive test coverage.
+;;
+;;
+;; [Tell me more]
 ;; “end to end” tests are data driven tests (e.g., using JSON or YAML) that make API calls
 ;; and verify the responses. One writes a test's input, then updates its expectations using
 ;; the provided M-xe2e-update-tests method, then verifies the changes are acceptable in Magit.
@@ -7,13 +47,6 @@
 ;; Read a YAML file that defines `input' and `expectations'.
 ;; Run `compute-values' on `input' and check the result is the same as `expectations'
 ;; Recursively read all YAML files in a specified directory.
-;;
-;; Sequence:
-;; 1. Write a YAML test with no `expectations'
-;; 2. (e2e-update-this-test)  ;; Or: (e2e-update-tests)
-;; 3. (e2e-run-tests)
-;; 4. M-x magit, to see how the tests changed, commit if happy.
-;; 5. Optionally, (ert-delete-all-tests)
 ;;
 ;;
 ;; Why?
@@ -35,12 +68,11 @@
 ;;
 ;; When tests are easy to write, I'm more likely to write more of them.
 
+;;; Code:
 
 (use-package yaml)
 (use-package yaml-mode)
 (use-package ert)
-
-
 
 (defun e2e--read-yaml-file (file)
   "Read and parse a YAML FILE, returning its contents as a hash table."
@@ -48,13 +80,21 @@
     (insert-file-contents file)
     (yaml-parse-string (buffer-string))))
 
+(ert-deftest e2e--read-yaml-file/test ()
+  "Test reading a simple YAML file into a hash table."
+  (let ((tmpfile (make-temp-file "e2e-test-" nil ".yaml" "key: value")))
+    (unwind-protect
+        (let ((hash (e2e--read-yaml-file tmpfile)))
+          (should (equal (gethash 'key hash) "value")))
+      (delete-file tmpfile))))
+
 
 (defun e2e-run-this-test ()
+  "Run the ERT test corresponding to the current YAML file."
   (interactive)
   (-let [file (f-relative (buffer-file-name))]
     (e2e--make-ert-test-for-yaml-file file)
     (ert (concat "e2e/" (file-name-base file)))))
-
 
 (defun e2e--make-ert-test-for-yaml-file (file)
   "ERT-compatible test for a YAML FILE based on 'input' and 'expectations'."
@@ -115,25 +155,25 @@
     (diff temp-buffer1 temp-buffer2)))
 
 
+;; ( e2e--show-string-diff "hello" "hilla")
+
 (cl-defun e2e-run-tests (&optional (directory "."))
+  "Recursively define and run E2E tests for all .yaml files in DIRECTORY."  
   (interactive)
-  "Run all e2e tests recursively in DIRECTORY."
   (cl-loop for file in (directory-files-recursively directory "\\.yaml\\'")
-        do (e2e--make-ert-test-for-yaml-file file))
+           do (e2e--make-ert-test-for-yaml-file file))
   ;; Run all tests matching regex
   (ert "e2e/.*"))
 
-
-
 (cl-defun e2e-update-tests ()
+  "Update all YAML files in the current directory using their current input."  
   (interactive)
   ;; update all tests
   (cl-loop for file in (directory-files-recursively "." "\\.yaml\\'")
 	       do (e2e-update-test file)))
 
-exec-path 
-
 (cl-defun e2e-update-this-test ()
+  "Update the FILE by computing fresh `expectations` for its `input`."  
   (interactive)
   (e2e-update-test (buffer-file-name)))
 
@@ -151,30 +191,10 @@ exec-path
       (insert (my/prettify 'yaml (e2e--yaml-encode-alist actual))))))
 
 
-;; brew install tidy-html5
-(should (equal (my/prettify 'html "    <p>It can be useful to draw attention to some important text by enclosing it in
-    a <abbr class=\"tooltip\" title=
-    \"&lt;br&gt;&lt;br&gt;(fn ARG0 ARG &amp;rest ARGS)\">box</abbr>.</p>
-    <div style=
-    \"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
-      <h3>Uses of callout boxes</h3>
-      <p>Such boxes often callout tips, warnings, cautionary info or emphasises
-      core information.</p>
-    </div>")
-               "<p>It can be useful to draw attention to some important text by enclosing it in
-a <abbr class=\"tooltip\"
-      title=\"&lt;br&gt;&lt;br&gt;(fn ARG0 ARG &amp;rest ARGS)\">box</abbr>.</p>
 
-<div style=
-\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
-  <h3>Uses of callout boxes</h3>
-
-  <p>Such boxes often callout tips, warnings, cautionary info or emphasises
-  core information.</p>
-</div>
-"))
 ;;
 (defun my/prettify (language snippet)
+  "Using this instead of `formal-all' so I can get formatting even if errors are present."
   (if (equal language 'latex)
       (shell-command-to-string (format "latexindent <<EOF\n%s\nEOF" snippet))
     (if (equal language 'html) ;; brew install tidy-html5
@@ -221,9 +241,29 @@ a <abbr class=\"tooltip\"
 	\\item h
 \\end{enumerate}
 "
+;;
+;; brew install tidy-html5
+(should (equal (my/prettify 'html "    <p>It can be useful to draw attention to some important text by enclosing it in
+    a <abbr class=\"tooltip\" title=
+    \"&lt;br&gt;&lt;br&gt;(fn ARG0 ARG &amp;rest ARGS)\">box</abbr>.</p>
+    <div style=
+    \"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+      <h3>Uses of callout boxes</h3>
+      <p>Such boxes often callout tips, warnings, cautionary info or emphasises
+      core information.</p>
+    </div>")
+               "<p>It can be useful to draw attention to some important text by enclosing it in
+a <abbr class=\"tooltip\"
+      title=\"&lt;br&gt;&lt;br&gt;(fn ARG0 ARG &amp;rest ARGS)\">box</abbr>.</p>
 
+<div style=
+\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+  <h3>Uses of callout boxes</h3>
 
-
+  <p>Such boxes often callout tips, warnings, cautionary info or emphasises
+  core information.</p>
+</div>
+"))
 
 (defun e2e--yaml-encode-alist (alist &optional indent-level)
   "Encode an ALIST as a YAML-like string with multiline support.
@@ -258,6 +298,18 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
                    (prin1-to-string value))))))
      alist
      "")))
+
+(ert-deftest e2e--yaml-encode-alist/multiline ()
+  "Multiline strings should be encoded using |- style."
+  (let* ((alist '((input . "hello\nworld")))
+         (yaml (e2e--yaml-encode-alist alist)))
+    (should (string-match-p "input: |-\\(\n\\s-*hello\\)" yaml))))
+
+(ert-deftest compute-values/html-latex ()
+  "Ensure compute-values returns HTML and LaTeX outputs."
+  (let ((result (compute-values "*Hi*" nil)))
+    (should (gethash 'html result))
+    (should (gethash 'latex result))))
 
 
 
@@ -296,11 +348,6 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
 	            (error (format "🚫 The LaTex backend is intentionally unmaintained.\n🫠 Whoops, there seems to be an error: \n %S" err)))))))
    'hash-table))
 
-
-
-
-
-
 (defun my/hash-get-or-compute (hash key compute-fn)
   "Retrieve or compute the value for KEY in HASH, and store it if computed."
   (or (gethash key hash)
@@ -308,11 +355,14 @@ INDENT-LEVEL specifies the current indentation level, defaulting to 0."
         (puthash key value hash)
         value)))
 
-
 ;; 😲
 (setq osbe-example-cache (make-hash-table :test 'equal))
 (defvar osbe-example-cache (make-hash-table :test 'equal)
   "Cache to avoid time re-reading yaml files!")
+;; MA: Consider using a single Org file as the source of truth, instead of multiple YAML files.
+;; E.g., in the main org file, have some sections tagged :E2E: and those will be /tested/ every-time
+;; I produce a new export ---as such, I never need to “remember” to run tests. Whenever I export, tests are run.
+;; For now, I could consider just adding a hook to run tests whenever I produce an export!
 (org-defblock osbe-example (file)
               "Render the given FILE as both Org source and rendered HTML result.
 
@@ -326,6 +376,7 @@ my liking, then move the `input' to the relevant yaml file."
                (lambda ()
                  (let* ((yaml (e2e--read-yaml-file file))
                         (input (map-elt yaml 'input))
+                        (see (map-elt yaml 'see))
 	                    (src (s-trim input))
 	                    (tgt (map-elt (map-elt yaml 'expectations) 'html))
 	                    ;; "teal" "brown" "gray" "purple" "lime" "green" "blue" "orange" "peach" "pink" "yellow" "custard" 
@@ -334,23 +385,33 @@ my liking, then move the `input' to the relevant yaml file."
                    (cl-letf* (((symbol-function 'make-title) (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
 	                          (src.title (make-title "What You Write"))
 	                          (tgt.title (make-title "What You Get")))
-                     (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\">%s</pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
-	                         src.color src.title src
-	                         tgt.color tgt.title tgt
-	                         (org-subtle-colors "custard")
-	                         (org-export-string-as (format "\n #+begin_src emacs-lisp \n %s \n#+end_src \n" (e2e--get-definition (f-base file)))  'html :body-only-please)))))))
+                     (setq _X (format "<div><div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s <pre class=\"src src-org\">%s</pre></div> <div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s %s </div></div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
+	                                  src.color src.title src
+	                                  tgt.color tgt.title tgt
+	                                  (org-subtle-colors "custard")
+	                                  (org-export-string-as (format "\n #+begin_src emacs-lisp \n %s \n#+end_src \n" (e2e--get-definition (or see (f-base file))))  'html :body-only-please))))))))
+
+;; _X
+;;
+;; (org-export-string-as "hola" 'html t)
+;; MA: Why is this empty?
+
+;; (org-link/osbe-example "~/org-special-block-extras/tests/parallel.yaml" nil 'html)
+;; (org-link/osbe-example "~/org-special-block-extras/tests/box.yaml" nil 'html)
 
 (defun e2e--get-definition (block-name)
   (save-excursion
     (switch-to-buffer (find-file "~/org-special-block-extras/org-special-block-extras.el"))
-    (beginning-of-buffer)
-    (search-forward (format "defblock %s" block-name))
+    (or (progn (beginning-of-buffer) (search-forward (format "defblock %s" block-name nil t)))
+        (progn (beginning-of-buffer) (search-forward (format "deflink %s" block-name nil t)))
+        (progn (beginning-of-buffer) (search-forward (format "%s" block-name) nil t)))
     (-let [result (substring-no-properties (thing-at-point 'defun))]
       (bury-buffer)
       result)))
 ;; Example use:
 ;; (e2e--get-definition 'org-demo)
-
+;; (e2e--get-definition 'org-make-badge)
+(search-forward "TODOx" nil t)
 
 ;; TODO: Expose this in use-facing docs, then covert that prose into a yaml test using the workflow documented in osbe-example link type.
 (org-defblock src (language "emacs-lisp" folded nil title "Details")
