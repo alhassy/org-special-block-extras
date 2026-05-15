@@ -180,6 +180,34 @@ LaTeX!
 
 ---
 
+### 💡 Tip: Built-in `info:` links export to the official Emacs manual
+
+While we're on the topic of rich links — here's a delightful Org
+built-in that pairs especially well with this package.  Write
+
+```org
+See [[info:elisp#Face Attributes][=(elisp) Face Attributes=]] for the full vocabulary.
+```
+
+and you get **two** destinations from one source:
+
+- **Within Emacs** &#x2014; clicking the link opens the Info reader at
+  that exact node.  `C-c C-o` on the link works too; `M-.` in
+  relevant modes auto-resolves docstring references like `` `(elisp)
+  Face Attributes' `` the same way.
+- **On HTML export** &#x2014; the link rewrites to the canonical
+  GNU manual URL, e.g.
+  [https://www.gnu.org/software/emacs/manual/html_mono/elisp.html#Face-Attributes](https://www.gnu.org/software/emacs/manual/html_mono/elisp.html#Face-Attributes).
+  Your blog readers land in the official docs, pinpoint-accurate, no
+  handwritten URLs to rot.
+
+Same source, two perfect destinations — no raw HTML, no duplicate
+maintenance.  (This is built into Org's `ol-info.el`, not a feature
+of this package — but it composes beautifully with the custom
+blocks and links above when you're documenting Emacs topics.)
+
+---
+
 💡 Ideal For
 
 -   🧑‍🏫 Educators building interactive lessons and glossaries

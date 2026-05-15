@@ -1227,12 +1227,33 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
 + :let is a list of alternating variable symbol name and value, which are then used to form
   a concrete `let*' clause. This is useful for introducing local variables for use in the DISPLAY
-  as well as in the CONTENTS. Such local declarations may make use of O-LABEL and O-DESCRIPTION, as usual."
+  as well as in the CONTENTS. Such local declarations may make use of O-LABEL and O-DESCRIPTION, as usual.
+
+The preferred syntax supplies all keys — including :export for the export body — as a
+flat top-level plist with no enclosing vector:
+
+  (org-deflink shout
+    \"Shout the label.\"
+    :face \\='(:weight bold)
+    :export (upcase o-label))"
   (cl-destructuring-bind (docstring display body)
       (lf-extract-optionals-from-rest docstring #'stringp
                                display   #'vectorp
                                       body)
-    (setq display (seq--into-list display))
+    ;; Flat plist style: no vector supplied; body is (KEY VAL … :export FORM).
+    ;; Split :export out as the body; remaining keys become the display plist.
+    (when (and (null display) (keywordp (car body)))
+      (let* ((all    body)
+             (export (cl-getf all :export))
+             (dkeys  (cl-loop for (k v) on all by #'cddr
+                              unless (eq k :export)
+                              append (list k v))))
+        (setq display dkeys
+              body    (when export (list export)))))
+    ;; DEPRECATED: vector style ([:display … :face … :let … :follow …] BODY…).
+    ;; Supported for now; will be removed in a future release. Use the flat
+    ;; plist style with :export instead.
+    (setq display (if (vectorp display) (seq--into-list display) display))
     (let ((org-link/NAME (intern (format "org-link/%s" name)))
           (navigation "Press “C-h” to see possible actions on this link type.")
           (lets (cl-loop for (variable value)
