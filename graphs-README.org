@@ -1,0 +1,480 @@
+#+title: org-special-block-extras-graph
+#+author: Musa Al-hassy
+#+options: toc:2 num:nil
+
+# Load the package during export so #+begin_graph blocks are handled.
+#+begin_src emacs-lisp :results none :exports none
+(add-to-list 'load-path (file-name-directory (or load-file-name buffer-file-name)))
+(require 'org-special-block-extras)
+(require 'org-special-block-extras-graph)
+#+end_src
+
+* Overview
+
+~org-special-block-extras-graph~ extends [[https://alhassy.github.io/org-special-block-extras][org-special-block-extras]] with a
+~#+begin_graph~ block that compiles native Org syntax — nested plain lists and
+two-column tables — into [[https://graphviz.org][Graphviz dot]].
+
+No raw dot required.  Nesting encodes edges; inline tables encode attributes.
+
+** Setup
+
+#+begin_src emacs-lisp
+(require 'org-special-block-extras)
+(require 'org-special-block-extras-graph)
+#+end_src
+
+Graphviz must be on your ~PATH~ (~dot -V~ should work in a terminal).
+
+** Pressing =C-c C-c=
+
+Anywhere inside a ~#+begin_graph … #+end_graph~ block, ~C-c C-c~ renders a PNG
+immediately.  The output filename is auto-generated unless you supply ~:file~:
+
+#+begin_example
+#+begin_graph directed :file my-diagram.png
+…
+#+end_graph
+#+end_example
+
+* Syntax Reference
+
+| Construct                         | Dot equivalent                       |
+|-----------------------------------+--------------------------------------|
+| ~#+graph:~ table                  | ~graph [ … ]~                        |
+| ~#+node:~ table                   | ~node [ … ]~                         |
+| ~#+edge:~ table                   | ~edge [ … ]~                         |
+| ~#+rank: n1 n2~                   | ~{ rank=same; n1; n2 }~              |
+| ~#+cluster: id "Label"~ + table   | ~subgraph cluster_id { … }~          |
+| ~+ NAME~ list item                | node ~NAME~ declaration              |
+| ~∣ cluster ∣ id ∣~ on a node        | node belongs to that cluster         |
+| indent ~+ CHILD~ under ~+ PARENT~ | edge PARENT → CHILD                  |
+| ~∣ EDGE ∣ attr-string ∣~            | arc attrs — N rows = N parallel arcs |
+| ~∣ id ∣ alias ∣~                    | cross-reference name for this node   |
+| ~∣ to ∣ target ∣ attrs ∣~           | explicit outgoing edge (3-col)       |
+| ~∣ key ∣ value ∣~ (other keys)      | node attribute                       |
+
+* Minimal Example
+
+#+begin_graph directed
++ A
+  + B
+    | EDGE | label=" calls them" |
+    + C
+      | EDGE | label=returns | 
+    + D
+      | EDGE | label=spawns style=dashed |
+      + E
+        | EDGE | label="merges into" |
+#+end_graph
+#+RESULTS:
+[[file:graph-20260517-140044.png]]
+
+* Quality of Life
+
+#+begin_graph
++ functor
+  | id    | functor                                  |
+  | label | "Functor \n F : C → D"      |
+  | shape | parallelogram                            |
+  | prop  | yolo                                     |
+#+end_graph
+#+RESULTS:
+[[file:graph-20260517-142140.png]]
+
+
+1. If I press `C-u C-c C-c` I want to see the generated dot/graphivz code and not the png.
+   - Add a `:C-c_C-c [png|dot]` option so that users can do `#+begin_graph :C-c_C-c dot` if they
+     always want to see dot code; otherwise default is `png`.
+     
+2. When I go to the table and I see `| id | functor |`, I'm not sure what other key-value properties
+   are there. So let's make `C-u RET` on a table introduce a new `|key | value |` interactively:
+   A completion menu appears with a list of possible keys, then another menu for the list of possible values!
+  - All node attributes can be found at https://graphviz.org/docs/nodes/
+  - We can keep track of attributes in a new defcustom `graph-attributes` where each entry is of the form
+    `(:name "label" :description "Text label attached to objects, any HTML valid string." :values nil ;; <- this means user has to enter some raw string
+    :valid-on (edges nodes  graphs clusters) ;; <- this means we only show this attribute via `C-u RET` when the object being considered is one of these 
+   )
+    
+* ERRORS TO FIX! 
+#+begin_graph
++ Emacs
+  + "Org mode"
+    # Without the quotes, we get 2 nodes! FIXME! 
+    + "Org agenda"
+      # Without the quotes, we get a dot error! FIXME!
+      | EDGE | label="hola" | # WOAH, this edge does not appear: Cause is the ORG COMMENTS `#`!
+#+end_graph
+#+RESULTS:
+[[file:graph-20260517-140426.png]]
+
+
+* Fun Example
+
+#+begin_graph directed :file lambda-to-emacs.png
+#+graph:
+| rankdir  | TB                              |
+| label    | "From λ-Calculus to Emacs Lisp" |
+| labelloc | t                               |
+| fontname | Helvetica                       |
+| fontsize | 18                              |
+| bgcolor  | "#1e1e2e"                       |
+| splines  | curved                          |
+| nodesep  | 0.6                             |
+| ranksep  | 0.9                             |
+| pad      | 0.4                             |
+
+#+node:
+| fontname  | Helvetica        |
+| fontcolor | "#cdd6f4"        |
+| color     | "#89b4fa"        |
+| style     | "filled,rounded" |
+| fillcolor | "#313244"        |
+| shape     | box              |
+
+#+edge:
+| fontname  | Helvetica |
+| fontsize  | 10        |
+| fontcolor | "#a6e3a1" |
+| color     | "#6c7086" |
+| arrowhead | vee       |
+
+#+rank: lambda combinatory
+#+rank: church turing
+#+rank: lisp haskell
+#+rank: emacs ghc
+
+#+cluster: emacs_concepts "Emacs Concepts"
+| fontcolor | "#a6e3a1" |
+| color     | "#313244"  |
+| style     | dashed    |
+
+#+cluster: cat "Category Theory"
+| fontcolor | "#f9e2af" |
+| color     | "#45475a" |
+| style     | dashed    |
+
+#+cluster: legend "Legend"
+| fontcolor | "#cdd6f4" |
+| color     | "#45475a" |
+| style     | filled    |
+| fillcolor | "#181825" |
+| fontsize  | 11        |
+
++ lambda
+  | id        | lambda                        |
+  | label     | "λ-Calculus\n(Church, 1930s)" |
+  | shape     | ellipse                       |
+  | fillcolor | "#45475a"                     |
+  | color     | "#f38ba8"                     |
+  | fontcolor | "#f38ba8"                     |
+  | penwidth  | 2                             |
+  + church
+    | EDGE  | label=encodes |
+    | id    | church        |
+    | label | "Church Encoding\nℕ, Bool, Pairs" |
+  + lisp
+    | EDGE  | label=inspired style=dashed |
+    | id    | lisp                        |
+  + haskell
+    | EDGE  | label=formalises style=dashed |
+    | id    | haskell                       |
+
++ combinatory
+  | id        | combinatory                           |
+  | label     | "Combinatory Logic\n(Schönfinkel/Curry)" |
+  | shape     | ellipse                               |
+  | fillcolor | "#45475a"                             |
+  | color     | "#fab387"                             |
+  | fontcolor | "#fab387"                             |
+  | to        | lambda | label=equivalent dir=both color="#f9e2af" |
+
++ church
+  | id | church |
+  + turing
+    | EDGE      | label="Church–\nTuring thesis" style=dotted color="#f9e2af" fontcolor="#f9e2af" constraint=false |
+    | id        | turing                                                                                             |
+    | label     | "Turing Machines\n(equivalent power)"                                                              |
+
++ lisp
+  | id        | lisp                                    |
+  | label     | "Lisp\n(McCarthy, 1958)\ncar · cdr · cons" |
+  | fillcolor | "#1e3a5f"                               |
+  | color     | "#89dceb"                               |
+  | fontcolor | "#89dceb"                               |
+  | penwidth  | 2                                       |
+  + emacs
+    | EDGE      | label="subset of" penwidth=2 color="#89dceb" |
+    | id        | emacs                                        |
+    | label     | "Emacs Lisp\nbuffers · modes · hooks"        |
+    | shape     | doubleoctagon                                |
+    | fillcolor | "#7c3aed"                                    |
+    | color     | "#a78bfa"                                    |
+    | fontcolor | "#ffffff"                                    |
+    | fontsize  | 13                                           |
+    | penwidth  | 3                                            |
+  + macros
+    | EDGE    | label=enables                   |
+    | id      | macros                          |
+    | label   | "Macros\n(code-as-data)"        |
+    | cluster | emacs_concepts                  |
+  + closures
+    | EDGE    | label=provides                  |
+    | id      | closures                        |
+    | label   | "Closures\n(lexical scope)"     |
+    | cluster | emacs_concepts                  |
+
++ haskell
+  | id        | haskell                        |
+  | label     | "Haskell\npure · lazy · typed" |
+  | fillcolor | "#2a1e3f"                      |
+  | color     | "#cba6f7"                      |
+  | fontcolor | "#cba6f7"                      |
+  + ghc
+    | id        | ghc                       |
+    | label     | "GHC\nCore → STG → Cmm"   |
+    | fillcolor | "#2a1e3f"                 |
+    | color     | "#cba6f7"                 |
+    | fontcolor | "#cba6f7"                 |
+  + monad
+    | EDGE    | label=uses style=dashed              |
+    | id      | monad                                |
+    | label   | "Monad\nη · μ · associativity"      |
+    | shape   | parallelogram                        |
+    | cluster | cat                                  |
+    + adjoint
+      | EDGE      | label="every monad\nis an adjunction" color="#f9e2af" fontcolor="#f9e2af" |
+      | id        | adjoint                                                                   |
+      | label     | "Adjunction\nF ⊣ G"                                                      |
+      | shape     | parallelogram                                                             |
+      | cluster   | cat                                                                       |
+
++ functor
+  | id      | functor              |
+  | label   | "Functor\nF : C → D" |
+  | shape   | parallelogram        |
+  | cluster | cat                  | 
+  + monad
+    | EDGE | label="F∘F with η,μ" |
+
++ emacs
+  | id | emacs |
+  + advice
+    | EDGE    | label=implements           |
+    | id      | advice                     |
+    | label   | "Advice\n(open recursion)" |
+    | cluster | emacs_concepts             |
+
++ monad
+  | id | monad |
+  + closures
+    | EDGE | label=models style=dotted constraint=false |
+
++ leg_solid
+  | id        | leg_solid                |
+  | label     | "solid = direct lineage" |
+  | shape     | plaintext                |
+  | fontcolor | "#6c7086"                |
+  | cluster   | legend                   |
++ leg_dashed
+  | id        | leg_dashed             |
+  | label     | "dashed = inspiration" |
+  | shape     | plaintext              |
+  | fontcolor | "#6c7086"              |
+  | cluster   | legend                 |
++ leg_dotted
+  | id        | leg_dotted             |
+  | label     | "dotted = equivalence" |
+  | shape     | plaintext              |
+  | fontcolor | "#6c7086"              |
+  | cluster   | legend                 |
+
+#+end_graph
+#+RESULTS:
+[[file:graph-20260517-140645.png]]
+
+* Full Example — λ-Calculus → Emacs Lisp
+
+This is the complete graph from the design conversation: λ-calculus,
+Combinatory Logic, Church Encodings, Lisp, Haskell, Emacs, GHC, and Category
+Theory — all in one diagram.
+
+#+begin_graph directed :file lambda-to-emacs.png
+#+graph:
+| rankdir  | TB                              |
+| label    | "From λ-Calculus to Emacs Lisp" |
+| labelloc | t                               |
+| fontname | Helvetica                       |
+| fontsize | 18                              |
+| bgcolor  | "#1e1e2e"                       |
+| splines  | curved                          |
+| nodesep  | 0.6                             |
+| ranksep  | 0.9                             |
+| pad      | 0.4                             |
+
+#+node:
+| fontname  | Helvetica        |
+| fontcolor | "#cdd6f4"        |
+| color     | "#89b4fa"        |
+| style     | "filled,rounded" |
+| fillcolor | "#313244"        |
+| shape     | box              |
+
+#+edge:
+| fontname  | Helvetica |
+| fontsize  | 10        |
+| fontcolor | "#a6e3a1" |
+| color     | "#6c7086" |
+| arrowhead | vee       |
+
+#+rank: lambda combinatory
+#+rank: church turing
+#+rank: lisp haskell
+#+rank: emacs ghc
+
+#+cluster: emacs_concepts "Emacs Concepts"
+| fontcolor | "#a6e3a1" |
+| color     | "#313244"  |
+| style     | dashed    |
+
+#+cluster: cat "Category Theory"
+| fontcolor | "#f9e2af" |
+| color     | "#45475a" |
+| style     | dashed    |
+
+#+cluster: legend "Legend"
+| fontcolor | "#cdd6f4" |
+| color     | "#45475a" |
+| style     | filled    |
+| fillcolor | "#181825" |
+| fontsize  | 11        |
+
++ lambda
+  | id        | lambda                        |
+  | label     | "λ-Calculus\n(Church, 1930s)" |
+  | shape     | ellipse                       |
+  | fillcolor | "#45475a"                     |
+  | color     | "#f38ba8"                     |
+  | fontcolor | "#f38ba8"                     |
+  | penwidth  | 2                             |
+  + church
+    | EDGE  | label=encodes |
+    | id    | church        |
+    | label | "Church Encoding\nℕ, Bool, Pairs" |
+  + lisp
+    | EDGE  | label=inspired style=dashed |
+    | id    | lisp                        |
+  + haskell
+    | EDGE  | label=formalises style=dashed |
+    | id    | haskell                       |
+
++ combinatory
+  | id        | combinatory                           |
+  | label     | "Combinatory Logic\n(Schönfinkel/Curry)" |
+  | shape     | ellipse                               |
+  | fillcolor | "#45475a"                             |
+  | color     | "#fab387"                             |
+  | fontcolor | "#fab387"                             |
+  | to        | lambda | label=equivalent dir=both color="#f9e2af" |
+
++ church
+  | id | church |
+  + turing
+    | EDGE      | label="Church–\nTuring thesis" style=dotted color="#f9e2af" fontcolor="#f9e2af" constraint=false |
+    | id        | turing                                                                                             |
+    | label     | "Turing Machines\n(equivalent power)"                                                              |
+
++ lisp
+  | id        | lisp                                    |
+  | label     | "Lisp\n(McCarthy, 1958)\ncar · cdr · cons" |
+  | fillcolor | "#1e3a5f"                               |
+  | color     | "#89dceb"                               |
+  | fontcolor | "#89dceb"                               |
+  | penwidth  | 2                                       |
+  + emacs
+    | EDGE      | label="subset of" penwidth=2 color="#89dceb" |
+    | id        | emacs                                        |
+    | label     | "Emacs Lisp\nbuffers · modes · hooks"        |
+    | shape     | doubleoctagon                                |
+    | fillcolor | "#7c3aed"                                    |
+    | color     | "#a78bfa"                                    |
+    | fontcolor | "#ffffff"                                    |
+    | fontsize  | 13                                           |
+    | penwidth  | 3                                            |
+  + macros
+    | EDGE    | label=enables                   |
+    | id      | macros                          |
+    | label   | "Macros\n(code-as-data)"        |
+    | cluster | emacs_concepts                  |
+  + closures
+    | EDGE    | label=provides                  |
+    | id      | closures                        |
+    | label   | "Closures\n(lexical scope)"     |
+    | cluster | emacs_concepts                  |
+
++ haskell
+  | id        | haskell                        |
+  | label     | "Haskell\npure · lazy · typed" |
+  | fillcolor | "#2a1e3f"                      |
+  | color     | "#cba6f7"                      |
+  | fontcolor | "#cba6f7"                      |
+  + ghc
+    | id        | ghc                       |
+    | label     | "GHC\nCore → STG → Cmm"   |
+    | fillcolor | "#2a1e3f"                 |
+    | color     | "#cba6f7"                 |
+    | fontcolor | "#cba6f7"                 |
+  + monad
+    | EDGE    | label=uses style=dashed              |
+    | id      | monad                                |
+    | label   | "Monad\nη · μ · associativity"      |
+    | shape   | parallelogram                        |
+    | cluster | cat                                  |
+    + adjoint
+      | EDGE      | label="every monad\nis an adjunction" color="#f9e2af" fontcolor="#f9e2af" |
+      | id        | adjoint                                                                   |
+      | label     | "Adjunction\nF ⊣ G"                                                      |
+      | shape     | parallelogram                                                             |
+      | cluster   | cat                                                                       |
+
++ functor
+  | id      | functor              |
+  | label   | "Functor\nF : C → D" |
+  | shape   | parallelogram        |
+  | cluster | cat                  |
+  + monad
+    | EDGE | label="F∘F with η,μ" |
+
++ emacs
+  | id | emacs |
+  + advice
+    | EDGE    | label=implements           |
+    | id      | advice                     |
+    | label   | "Advice\n(open recursion)" |
+    | cluster | emacs_concepts             |
+
++ monad
+  | id | monad |
+  + closures
+    | EDGE | label=models style=dotted constraint=false |
+
++ leg_solid
+  | id        | leg_solid                |
+  | label     | "solid = direct lineage" |
+  | shape     | plaintext                |
+  | fontcolor | "#6c7086"                |
+  | cluster   | legend                   |
++ leg_dashed
+  | id        | leg_dashed             |
+  | label     | "dashed = inspiration" |
+  | shape     | plaintext              |
+  | fontcolor | "#6c7086"              |
+  | cluster   | legend                 |
++ leg_dotted
+  | id        | leg_dotted             |
+  | label     | "dotted = equivalence" |
+  | shape     | plaintext              |
+  | fontcolor | "#6c7086"              |
+  | cluster   | legend                 |
+
+#+end_graph
