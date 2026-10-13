@@ -445,7 +445,7 @@ Features:
 
              (cl-letf (((symbol-function 'org-export)
                         (lambda (x) "Wrap the given X in an export block for the current backend."
-                          (if contents-occur-as-link-description x (format "#+begin_export %s \n%s\n#+end_export" backend x))))
+                          (if contents-occur-as-link-description x (format "#+begin_export %s\n%s\n#+end_export" backend x))))
                        ((symbol-function 'org-parse)
                         (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
                           (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
@@ -456,13 +456,13 @@ Features:
                 (org--replace-examples-in-string
                  (or (documentation-property ',defun-name 'variable-documentation) "")
                  (lambda (example backend) (format "For example,\n\n%s\n\n%s-exports to\n\n%s"
-                                                   (thread-last example (s-split "\n") (--map (concat "\t" it)) (s-join "\n"))
+                                                   (thread-last example (s-split "\n") (--map (if (s-blank-p it) it (concat "    " it))) (s-join "\n"))
                                                    (pcase (or backend 'html)
                                                      ('html "HTML")
                                                      ('latex "LaTeX")
                                                      (else else))
                                                    (thread-last (org-export-string example (or backend 'html))
-                                                                (s-split "\n") (--map (concat "\t" it)) (s-join "\n"))))))
+                                                                (s-split "\n") (--map (if (s-blank-p it) it (concat "    " it))) (s-join "\n"))))))
                (lisp-docs
                 ,(concat
                   "\nRegarding the Lisp function:"

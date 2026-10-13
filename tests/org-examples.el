@@ -21,7 +21,6 @@
 
 (defun org-example--normalise (s)
   "S ↦ S without whitespace, downcased."
-  ;; ponytail: lets the old prettier/tidy-formatted goldens compare to raw exports; blind to whitespace-only regressions.
   (downcase (replace-regexp-in-string "[ \t\n\r]+" "" s)))
 
 (snap-define-relation org-example (input html latex)

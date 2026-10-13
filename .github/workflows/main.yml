@@ -35,5 +35,5 @@ jobs:
       - name: Run tests
         run: |
           emacs --batch --eval "(package-initialize)" -L . -L ~/snap -L ~/fancy-C-x-C-e \
-            $(for f in tests/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
+            $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
             -f ert-run-tests-batch-and-exit
