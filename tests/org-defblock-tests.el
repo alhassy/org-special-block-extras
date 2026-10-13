@@ -75,8 +75,7 @@ DEFAULT
     color)
   (let ((org--header-args nil))
     (org-set-block-header-args test-header-args-block :color "purple")
-    ;; Pass color as "" so the header-args fallback fires.
-    (let ((result (org-block/test-header-args-block 'html "" nil :color "")))
+    (let ((result (org-block/test-header-args-block 'html "" nil)))
       (should (string-match-p "purple" result)))))
 
 (deftest "Parser extracts name, main-arg, and contents from a temp buffer."

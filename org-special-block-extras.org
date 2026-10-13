@@ -4177,6 +4177,45 @@ from∘to m = {! try it! }
   other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
 
+** Make your own blocks with =org-defblock=
+  :PROPERTIES:
+  :CUSTOM_ID: Make-your-own-blocks
+  :END:
+
+  We declare a block just as we declare a function with ~cl-defun~: the block's main
+  argument ---written right after =#+begin_NAME=--- is its =&optional= argument, and its
+  header arguments are its =&key= arguments. In the body, ~backend~ names the current
+  export backend and ~contents~ the block's Org-parsed contents.
+
+  #+begin_src emacs-lisp
+(org-defblock note (&optional (title "Note") &key (color "teal"))
+  "Call out CONTENTS under TITLE, tinted COLOR."
+  (pcase backend
+    ('html (format "<div style=\"border-left: 4px solid %s; padding-left: 1em\"><b>%s</b>%s</div>"
+                   color title contents))
+    (_     (format "\\textbf{\\color{%s}%s} %s" color title contents))))
+  #+end_src
+
+  Now the following binds ~title~ to ="Heads up"= and ~color~ to =red=; omit either, and
+  its default is used.
+  #+begin_example
+#+begin_note "Heads up" :color red
+Mind the gap.
+#+end_note
+  #+end_example
+
+  Every block is also a link, with the label as main argument and the description as
+  contents: =[[note:Heads up][Mind the gap.]]=. Moreover, defaults may change long after the
+  block is defined; e.g., ~(org-set-block-header-args note :color "orange")~.
+
+  /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
+  and its default, followed by key-value pairs. The block above is then
+  #+begin_src emacs-lisp
+(org-defblock note (title "Note" color "teal") …)
+  #+end_src
+
+  The full story is at =C-h o org-defblock=.
+
 ** =C-c C-c= for your own blocks
   :PROPERTIES:
   :CUSTOM_ID: C-c-C-c-for-your-own-blocks

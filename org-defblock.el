@@ -231,6 +231,34 @@ Note: This function mutates the current buffer."
 
 ;;;;; org-defblock
 
+(defun org--defblock-desugar-args (args)
+  "ARGS ↦ the flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist, when ARGS is `cl-defun'-style; otherwise ARGS.
+
+  (&optional (title \"Details\") &key (color \"green\") style)  ↦  (title \"Details\" color \"green\" style nil)
+  (&key style)                                                 ↦  (main-arg nil style nil)
+
+A block takes at most one positional argument ---its main argument--- so `&optional' binds at most one
+variable, and nothing may precede `&optional' or `&key'.  Options such as `:edit-indirect-mode org-mode'
+may follow `&key', and pass through untouched."
+  (if (not (or (memq '&optional args) (memq '&key args)))
+      args
+    (let* ((before   (seq-take-while (lambda (it) (not (memq it '(&optional &key)))) args))
+           (optional (seq-take-while (lambda (it) (not (eq it '&key))) (cdr (memq '&optional args))))
+           (keys     (cdr (memq '&key args)))
+           (main     (car optional))
+           flat)
+      (when before
+        (error "‘org-defblock’: nothing may precede &optional or &key, but saw %S" before))
+      (when (cdr optional)
+        (error "‘org-defblock’: a block takes at most one &optional (main) argument, but saw %S" optional))
+      (while keys
+        (let ((it (pop keys)))
+          (cond ((keywordp it) (push it flat) (push (pop keys) flat))
+                ((consp it)    (push (car it) flat) (push (cadr it) flat))
+                (t             (push it flat) (push nil flat)))))
+      (append (if (consp main) (list (car main) (cadr main)) (list (or main 'main-arg) nil))
+              (nreverse flat)))))
+
 (defun org--plist-remove (plist key)
   "Return PLIST with KEY (and its associated value) removed."
   (cl-loop for (k v) on plist by #'cddr
@@ -266,8 +294,17 @@ a special Lisp operator. In doubt, enclose the main arg in
 quotes.
 
 Then, just as Org-mode src blocks consume key-value pairs, our
-special blocks consume a number of KWDS, which is a list of the
-form (key₀ value₀ … keyₙ valueₙ).
+special blocks consume a number of keyword arguments.
+
+Together, the main and keyword arguments form KWDS, written as a
+`cl-defun' arglist; by way of example,
+
+   (&optional (title \"Details\") &key (color \"green\") style)
+
+declares main argument TITLE, defaulting to \"Details\", and
+keyword arguments COLOR and STYLE.  As a convenience, KWDS may
+instead be flattened into (main default key₀ value₀ … keyₙ valueₙ);
+the above is then (title \"Details\" color \"green\" style nil).
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -346,7 +383,8 @@ Three example uses:
                                       body)
     ;; Pull :edit-indirect-mode out of kwds — it's a macro keyword, not a block header arg.
     ;; The extraction helpers live in org-special-block-indirect-edit.el.
-    (let* ((edit-mode (org--indirect-edit-extract-mode kwds))
+    (let* ((kwds      (org--defblock-desugar-args kwds))
+           (edit-mode (org--indirect-edit-extract-mode kwds))
            (kwds      (org--indirect-edit-strip-kwds kwds)))
       `(progn
          ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
@@ -382,8 +420,10 @@ Three example uses:
 
 - NAME         [Symbol]: The name of the block type.
 - DOCSTRING    [Nullable String]: Documentation of the block.
-- ARGS: Property list beginning with main arg binding and default value,
-        followed by “keyword default-value” pairs.
+- ARGS: A `cl-defun'-style arglist, such as (&optional (title \"Details\") &key (color \"green\") style),
+        or its flattened convenience form (title \"Details\" color \"green\" style nil): the main
+        argument and its default, followed by “keyword default-value” pairs.
+        See `org--defblock-desugar-args'.
 - BODY: Code to be executed just before export.
   ⇒ May mention symbol “backend” and string “raw-contents”.
 
@@ -394,10 +434,12 @@ Features:
 + Automatic wrapping in export blocks (`org-export', `org-parse')."
   (declare (indent defun))
 
+  (setq args (org--defblock-desugar-args args))
+
   ;; Account for possibly omitted docstring
   (cond
    ;; Mimicking (cl-defun f () "hi") then (f) ⇒ "hi"
-   ((null body) (setq body docstring) (setq docstring ""))
+   ((null body) (setq body (list docstring)) (setq docstring ""))
    ;; Mimicking (cl-defun f () 'x 'y) then (f) ⇒ 'y
    ((not (stringp docstring)) (setq body (cons docstring body)) (setq docstring "")))
 
@@ -422,7 +464,9 @@ Features:
                 raw-contents ;; String
                 &optional ,main-arg-name
                 &rest  _
-                &key ,@(-partition 2 keywords) (contents-occur-as-link-description nil)
+                ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
+                ;; prefer any `org-set-block-header-args' value over the declared default.
+                &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
                 &allow-other-keys)
              (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
              (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
