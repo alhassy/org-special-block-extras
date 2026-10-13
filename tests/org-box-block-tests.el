@@ -1,50 +1,70 @@
 ;;; org-box-block-tests.el --- Tests for the box block and org-subtle-colors  -*- lexical-binding: t; -*-
 
-(require 'ert)
-(require 'org)
-(require 'cl-lib)
+(unless (fboundp 'define-org-call-test)
+  (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
-(load-file (expand-file-name "~/org-special-block-extras/org-defblock.el"))
-(load-file (expand-file-name "~/org-special-block-extras/org-box-block.el"))
+(define-org-call-test "box block wraps content in a styled <div> for HTML."
+  :call (org-block/box 'html "inner text" nil)
+  :returns "#+begin_export html
+<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3></h3> 
+#+end_export
+inner text
+#+begin_export html
+ </div>
+#+end_export")
 
-;; (ert-run-tests-interactively "^org-defblock-box")
+(define-org-call-test "box block renders the title in an <h3> for HTML."
+  :call (org-block/box 'html "content" "My Box")
+  :returns "#+begin_export html
+<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>My Box</h3> 
+#+end_export
+content
+#+begin_export html
+ </div>
+#+end_export")
 
-(ert-deftest org-defblock-box-html-basic ()
-  "box block wraps content in a styled <div> for HTML."
-  (let ((result (org-block/box 'html "inner text" nil)))
-    (should (string-match-p "<div" result))
-    (should (string-match-p "inner text" result))))
+(define-org-call-test "box block passes background-color to the HTML div style."
+  :call (org-block/box 'html "text" nil :background-color "blue")
+  :returns "#+begin_export html
+<div style=\"padding: 1em;background-color: #CCFFFF;border-radius: 15px;font-size: 0.9em;\"> <h3></h3> 
+#+end_export
+text
+#+begin_export html
+ </div>
+#+end_export")
 
-(ert-deftest org-defblock-box-html-with-title ()
-  "box block renders the title in an <h3> for HTML."
-  (let ((result (org-block/box 'html "content" "My Box")))
-    (should (string-match-p "My Box" result))
-    (should (string-match-p "<h3>" result))))
+(define-org-call-test "box block uses tcolorbox for LaTeX."
+  :call (org-block/box 'latex "content" nil)
+  :returns "#+begin_export latex
+\\begin{tcolorbox}[title={},colback=red!5!white
+,colframe=red!75!black
+,colbacktitle=yellow!50!red
+,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+#+end_export
+content
+#+begin_export latex
+\\end{tcolorbox}
+#+end_export")
 
-(ert-deftest org-defblock-box-html-background-color ()
-  "box block passes background-color to the HTML div style."
-  (let ((result (org-block/box 'html "text" nil :background-color "blue")))
-    (should (string-match-p "background-color" result))))
+(define-org-call-test "box block passes the title to tcolorbox in LaTeX."
+  :call (org-block/box 'latex "content" "Title")
+  :returns "#+begin_export latex
+\\begin{tcolorbox}[title={Title},colback=red!5!white
+,colframe=red!75!black
+,colbacktitle=yellow!50!red
+,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+#+end_export
+content
+#+begin_export latex
+\\end{tcolorbox}
+#+end_export")
 
-(ert-deftest org-defblock-box-latex-tcolorbox ()
-  "box block uses tcolorbox for LaTeX."
-  (let ((result (org-block/box 'latex "content" nil)))
-    (should (string-match-p "tcolorbox" result))
-    (should (string-match-p "content" result))))
-
-(ert-deftest org-defblock-box-latex-with-title ()
-  "box block passes the title to tcolorbox in LaTeX."
-  (let ((result (org-block/box 'latex "content" "Title")))
-    (should (string-match-p "Title" result))))
-
-(ert-deftest org-subtle-colors-known-name ()
-  "org-subtle-colors maps known names to hex codes."
+(deftest "org-subtle-colors maps known names to hex codes."
   (should (equal "#CCFFCC" (org-subtle-colors "green")))
   (should (equal "#CCFFFF" (org-subtle-colors "blue")))
   (should (equal "#FFFF99" (org-subtle-colors "yellow"))))
 
-(ert-deftest org-subtle-colors-passthrough ()
-  "org-subtle-colors passes unknown values through unchanged."
+(deftest "org-subtle-colors passes unknown values through unchanged."
   (should (equal "#1a2b3c" (org-subtle-colors "#1a2b3c"))))
 
 (provide 'org-box-block-tests)

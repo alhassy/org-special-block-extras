@@ -1,58 +1,54 @@
 ;;; org-proof-block-tests.el --- Tests for calc and tree proof blocks  -*- lexical-binding: t; -*-
 
-(require 'ert)
-(require 'org)
-(require 'cl-lib)
+(unless (fboundp 'define-org-call-test)
+  (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
-(load-file (expand-file-name "~/org-special-block-extras/org-defblock.el"))
-(load-file (expand-file-name "~/org-special-block-extras/org-proof-block.el"))
+(define-org-call-test "calc block produces an align* LaTeX environment."
+  :call (org-block/calc 'latex "- x\n- = y\n" nil)
+  :returns "#+begin_export latex
+$$\\begin{align*} & \\begin{split}x\\end{split} 
+\\\\\\begin{split}= y\\end{split} 
+ 
+\\end{align*}$$
+#+end_export")
 
-;; (ert-run-tests-interactively "^org-defblock-proof")
+(define-org-call-test "calc block produces MathJax-compatible output for HTML."
+  :call (org-block/calc 'html "- x\n- = y\n" nil)
+  :returns "#+begin_export html
+$$\\begin{align*} & \\begin{split}x\\end{split} 
+\\\\\\begin{split}= y\\end{split} 
+ 
+\\end{align*}$$
+#+end_export")
 
-(ert-deftest org-defblock-proof-calc-align-env ()
-  "calc block produces an align* LaTeX environment."
-  (let ((result (org-block/calc 'latex "- x\n- = y\n" nil)))
-    (should (string-match-p "align\\*" result))
-    (should (string-match-p "\\$\\$" result))))
-
-(ert-deftest org-defblock-proof-calc-html ()
-  "calc block produces MathJax-compatible output for HTML."
-  (let ((result (org-block/calc 'html "- x\n- = y\n" nil)))
-    (should (string-match-p "\\$\\$" result))))
-
-(ert-deftest org-defblock-proof-calc-invalid-list-error ()
-  "calc block signals a user-error when the content is not a valid list."
+(deftest "calc block signals a user-error when the content is not a valid list."
   (should-error
    (org-block/calc 'latex "not a list at all" nil)
    :type 'user-error))
 
-(ert-deftest org-defblock-proof-tree-frac ()
-  "tree block produces \\frac for a simple rule."
-  (let ((result (org-block/tree 'latex "+ Trans :: P = Q\n  - P = P\n    + ✓\n" nil)))
-    (should (string-match-p "\\\\frac" result))
-    (should (string-match-p "Trans" result))))
+(define-org-call-test "tree block produces \\frac for a simple rule."
+  :call (org-block/tree 'latex "+ Trans :: P = Q\n  - P = P\n    + ✓\n" nil)
+  :returns "#+begin_export latex
+\\[\\frac{\\displaystyle  \\qquad \\frac{\\displaystyle  \\qquad ✓}{P = P}}{P = Q}[\\text{Trans}]\\]
+#+end_export")
 
-(ert-deftest org-defblock-proof-tree-wrapped-in-math ()
-  "tree block wraps each tree in \\[…\\]."
-  (let ((result (org-block/tree 'latex "+ A\n  - B\n" nil)))
-    (should (string-match-p "\\\\\\[" result))
-    (should (string-match-p "\\\\\\]" result))))
+(define-org-call-test "tree block wraps each tree in \\[…\\]."
+  :call (org-block/tree 'latex "+ A\n  - B\n" nil)
+  :returns "#+begin_export latex
+\\[\\frac{\\displaystyle  \\qquad B}{A}\\]
+#+end_export")
 
-(ert-deftest org-defblock-proof-tree-invalid-list-error ()
-  "tree block signals a user-error when the content is not a valid list."
+(deftest "tree block signals a user-error when the content is not a valid list."
   (should-error
    (org-block/tree 'latex "no bullets here" nil)
    :type 'user-error))
 
-(ert-deftest org-defblock-proof-list-to-math-leaf ()
-  "org--list-to-math returns a leaf node as-is."
+(deftest "org--list-to-math returns a leaf node as-is."
   (should (equal "A = B" (org--list-to-math '("A = B" nil)))))
 
-(ert-deftest org-defblock-proof-list-to-math-rule ()
-  "org--list-to-math wraps premiss/conclusion in \\frac."
-  (let ((result (org--list-to-math '("R :: C = D" (("P = Q" nil))))))
-    (should (string-match-p "\\\\frac" result))
-    (should (string-match-p "C = D" result))))
+(define-org-call-test "org--list-to-math wraps premiss/conclusion in \\frac."
+  :call (org--list-to-math '("R :: C = D" (("P = Q" nil))))
+  :returns "\\frac{\\displaystyle P = Q}{C = D}[\\text{R}]")
 
 (provide 'org-proof-block-tests)
 ;;; org-proof-block-tests.el ends here

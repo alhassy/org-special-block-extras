@@ -1,9 +1,17 @@
 #+title: Tests
 
-We have two kinds of test, both plain ERT underneath:
-- =org-*-tests.el= :: unit tests, one file per production module; e.g., =org-box-block-tests.el= ↔ =org-box-block.el=.
-- =examples/NAME.el= :: one [[https://github.com/alhassy/snap][snap]] snapshot per showcase example ---Org source ⟶ HTML & LaTeX---
+Everything is ERT underneath, written with [[https://github.com/alhassy/snap][snap]]:
+- =org-*-tests.el= :: one file per module or topic; e.g., =org-box-block-tests.el= ↔ =org-box-block.el=.
+  - =deftest "sentence" …= :: a plain test, named by its sentence.
+  - =define-org-call-test= :: a handler call ↦ its exact output; e.g., =:call (org-block/box 'html "hi" nil)=.
+  - =define-org-export-test= :: an Org string ↦ its export; e.g., =:input "#+begin_shout …" :to latex=.
+  - Shared machinery ---=deftest=, =using=, =exporting=, and both relations--- lives in =org-test-utils.el=.
+- =graph/org-graph-*-tests.el= :: the =graph= block, sharing =graph/org-graph-test-utils.el= and its =define-graph-test=.
+- =examples/NAME.el= :: one snapshot per showcase example ---Org source ⟶ HTML & LaTeX---
   sharing the relation in =org-examples.el=. The docs render these via =osbe-example:NAME=.
+- =old-tests.el= :: disabled via =(when nil …)=; kept for reference.
+
+Relations compare modulo trailing whitespace per line, since editors strip it from expectations on save.
 
 Press =C-c C-c= on any block below.
 

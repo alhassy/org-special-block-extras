@@ -198,9 +198,10 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
 ;;; define-org-call-test — relational test fixture for handler calls
 
 (snap-define-relation org-call (call returns)
-  "Evaluating CALL ---e.g., (org-block/box 'html \"hi\" nil)--- yields exactly RETURNS."
-  (let ((actual (eval call t)))
-    (should (equal returns actual))
+  "Evaluating CALL ---e.g., (org-block/box 'html \"hi\" nil)--- yields RETURNS, modulo trailing whitespace per line."
+  (let ((actual (eval call t))
+        (trim (lambda (s) (if (stringp s) (replace-regexp-in-string "[ \t]+$" "" s) s))))
+    (should (equal (funcall trim returns) (funcall trim actual)))
     (list :returns actual)))
 
 (provide 'org-test-utils)

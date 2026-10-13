@@ -1,42 +1,110 @@
 ;;; org-details-block-tests.el --- Tests for the details block  -*- lexical-binding: t; -*-
 
-(require 'ert)
-(require 'org)
-(require 'cl-lib)
+(unless (fboundp 'define-org-call-test)
+  (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
-(load-file (expand-file-name "~/org-special-block-extras/org-defblock.el"))
-(load-file (expand-file-name "~/org-special-block-extras/org-details-block.el"))
+(define-org-call-test "details block uses \"Details\" as the default title in HTML."
+  :call (org-block/details 'html "body text" nil)
+  :returns "#+begin_export html
+<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"green\">
+                         Details
+                      </font>
+                    </strong>
+                  </summary>
+                  
+#+end_export
+body text
+#+begin_export html
 
-;; (ert-run-tests-interactively "^org-defblock-details")
+               </details>
+#+end_export")
 
-(ert-deftest org-defblock-details-html-default-title ()
-  "details block uses \"Details\" as the default title in HTML."
-  (let ((result (org-block/details 'html "body text" nil)))
-    (should (string-match-p "<details" result))
-    (should (string-match-p "Details" result))
-    (should (string-match-p "body text" result))))
+(define-org-call-test "details block renders a custom title in HTML."
+  :call (org-block/details 'html "content" "Spoiler")
+  :returns "#+begin_export html
+<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #e5f5e5;
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"green\">
+                         Spoiler
+                      </font>
+                    </strong>
+                  </summary>
+                  
+#+end_export
+content
+#+begin_export html
 
-(ert-deftest org-defblock-details-html-custom-title ()
-  "details block renders a custom title in HTML."
-  (let ((result (org-block/details 'html "content" "Spoiler")))
-    (should (string-match-p "Spoiler" result))
-    (should (string-match-p "<details" result))))
+               </details>
+#+end_export")
 
-(ert-deftest org-defblock-details-html-background-color ()
-  "details block passes background-color through to HTML."
-  (let ((result (org-block/details 'html "content" nil :background-color "#ff0000")))
-    (should (string-match-p "#ff0000" result))))
+(define-org-call-test "details block passes background-color through to HTML."
+  :call (org-block/details 'html "content" nil :background-color "#ff0000")
+  :returns "#+begin_export html
+<details class=\"code-details\"
+                 style =\"padding: 1em;
+                          background-color: #ff0000;
+                          border-radius: 15px;
+                          color: hsl(157 75%);
+                          font-size: 0.9em;
+                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
+                  <summary>
+                    <strong>
+                      <font face=\"Courier\" size=\"3\" color=\"green\">
+                         Details
+                      </font>
+                    </strong>
+                  </summary>
+                  
+#+end_export
+content
+#+begin_export html
 
-(ert-deftest org-defblock-details-latex-tcolorbox ()
-  "details block produces a tcolorbox for LaTeX."
-  (let ((result (org-block/details 'latex "content" nil)))
-    (should (string-match-p "tcolorbox" result))
-    (should (string-match-p "content" result))))
+               </details>
+#+end_export")
 
-(ert-deftest org-defblock-details-latex-custom-title ()
-  "details block renders a custom title in LaTeX."
-  (let ((result (org-block/details 'latex "content" "My Title")))
-    (should (string-match-p "My Title" result))))
+(define-org-call-test "details block produces a tcolorbox for LaTeX."
+  :call (org-block/details 'latex "content" nil)
+  :returns "#+begin_export latex
+\\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{green}\\begin{quote}
+                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Details},sharp corners,boxrule=0.4pt]
+                                   
+#+end_export
+content
+#+begin_export latex
+
+                               \\end{tcolorbox}
+                \\end{quote}
+#+end_export")
+
+(define-org-call-test "details block renders a custom title in LaTeX."
+  :call (org-block/details 'latex "content" "My Title")
+  :returns "#+begin_export latex
+\\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{green}\\begin{quote}
+                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={My Title},sharp corners,boxrule=0.4pt]
+                                   
+#+end_export
+content
+#+begin_export latex
+
+                               \\end{tcolorbox}
+                \\end{quote}
+#+end_export")
 
 (provide 'org-details-block-tests)
 ;;; org-details-block-tests.el ends here
