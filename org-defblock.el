@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (seq "2.0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -78,7 +78,7 @@ For example,
            (message \"Block %s with arg %s\" name main-arg)))
 
 "
-  `(progn (cl-assert (org-special-block-p ,source))
+  `(progn (lf-assert ,source (org-special-block-p it))
           (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source)))
 
 
@@ -580,8 +580,10 @@ Features:
                 ;; prefer any `org-set-block-header-args' value over the declared default.
                 &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
                 &allow-other-keys)
-             (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
-             (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
+             ;; Assertions are expanded here, once: the handler runs interpreted, which would re-expand them on every call.
+             ,(macroexpand-all `(lf-assert ',name        t
+                                           backend      (and it (symbolp it))
+                                           raw-contents (stringp it)))
 
              ;; Use default value for blank main argument
              (when (or (null ,main-arg-name) (equal ,main-arg-name ""))
@@ -605,8 +607,12 @@ Features:
                        ((symbol-function 'org-parse)
                         (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
                           (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
-               (org-export
-                (let ((contents (org-parse raw-contents))) ,@body))))
+               ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',
+               ;; would silently export as the text “nil”.
+               (let ((result (let ((contents (org-parse raw-contents))) ,@body)))
+                 ,(macroexpand-all `(lf-assert ',name  t
+                                               result (stringp it)))
+                 (org-export result))))
          ;; Now that the defun is created, let's modify its docstring to make it richer.
          (let ((user-docs
                 (org--replace-examples-in-string

@@ -90,5 +90,17 @@ DEFAULT
 (deftest "org-thread-blockcall with no forms returns the body unchanged."
   (should (equal "hello" (org-thread-blockcall "hello"))))
 
+;;; A block's body must yield a string
+
+(deftest "a block whose body yields nil signals an error naming the block, rather than exporting the text nil"
+  (using (org-defblock test-yields-nil (&optional x) "Yield nil, by mistake." (when x "hi"))
+    (let ((err (should-error (org-export-string "#+begin_test-yields-nil\nbody\n#+end_test-yields-nil" 'html))))
+      (should (s-contains-p "test-yields-nil" (cadr err)))
+      (should (s-contains-p "(result satisfies (stringp it) = nil : symbol)" (cadr err))))))
+
+(deftest "a block handler rejects a non-symbol backend"
+  (using (org-defblock test-backend-check () "Echo." contents)
+    (should-error (org-block/test-backend-check "html" "body"))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here
