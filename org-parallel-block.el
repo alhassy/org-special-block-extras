@@ -37,19 +37,19 @@ vertical rules if BAR is a non-nil (colour) value.
 
 ----------------------------------------------------------------------
 
-'Soft Columns': Writing '#+begin_parallel 𝓃 :bar t' will produce
+“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
 𝒏-many parallel columns, possibly separated by solid rules, or a
-'bar'. This style allows text to freely move between columns,
+“bar”. This style allows text to freely move between columns,
 depending on the size of the browser, which may dynamically
 shrink and grow.  BAR can either be `t', `nil', or
 any (backend)-valid colour specification; such as `red' or
 `green'.
 
-'Hard Columns': Alternatively, for non-uniform column widths,
+“Hard Columns”: Alternatively, for non-uniform column widths,
 COLS may instead be a specification of the widths of the
 columns. However, this extra flexibility comes at an additional
 cost: The contents of the block must now contain 𝒏-1 lines
-consisting of '#+columnbreak:', when the specification determines
+consisting of ‘#+columnbreak:’, when the specification determines
 𝒏 columns, as shown in the following example.
 
    #+begin_parallel 20% 60% 20% :bar green
@@ -59,15 +59,15 @@ consisting of '#+columnbreak:', when the specification determines
    A super duper wide middle margin!
 
    #+columnbreak:
-   Goodbye ('God-be-with-ye') to the right!
+   Goodbye (“God-be-with-ye”) to the right!
    #+end_parallel
 
 The specification is 𝒏 measurements denoting widths; which may be
-in any HTML recognisable units; e.g., '5em 20px 30%' is valid.
+in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
 I personally advise only the use of percentage measurements.
 
-In the Soft Columns style above, any '#+columnbreak:' are merely ignored.
-With LaTeX export, the use of '#+columnbreak:' is used to request a column break."
+In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
               (let ((rule (pcase backend
                             (`latex (if bar 2 0))
                             (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
@@ -90,7 +90,7 @@ With LaTeX export, the use of '#+columnbreak:' is used to request a column break
                                  (funcall columnBreak (pop spec) nil)
                                  (s-replace-regexp (regexp-quote "#+columnbreak:")
                                                    ;; 'λ' since we need the "pop" evaluated for each find-replace instance.
-                                                   ;; We use "not spec" to omit the rule separator when there is NOT anymore elements in SPEC.
+                                                   ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
                                                    (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
                                                    contents)
 		                         (if (s-contains-p " " cols) "</div>" ""))))))))

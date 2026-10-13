@@ -88,12 +88,12 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
   (interactive)
   (let ((working-line (line-number-at-pos)))
     (save-excursion
-      ;; Account for cursour being on anywhere on the links "name:key".
+      ;; Account for cursour being on anywhere on the links “name:key”.
       (backward-word 2)
       (unless (= working-line (line-number-at-pos))
   (goto-line working-line))
       (let* ((here-to-eol (buffer-substring-no-properties (point) (point-at-eol)))
-             ;; E.g., "kbd:", the name part of an Org link
+             ;; E.g., “kbd:”, the name part of an Org link
              (link-name (cl-second (s-match "\\([^ ]+:\\).+" here-to-eol))))
         link-name))))
 
@@ -108,7 +108,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
 (defun org-this-link-show-docs ()
   "Show documentation for the Org link at point in a read-only buffer.
 
-                     Press 'q' to kill the resulting buffer and window."
+                     Press ‘q’ to kill the resulting buffer and window."
   (interactive)
   (let* ((link (s-chop-suffix ":" (org-link-at-point)))
    (msg (ignore-errors
@@ -125,10 +125,10 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
          (max-mini-window-height 0))
     (display-message-or-buffer msg)
     (switch-to-buffer-other-window "*Message*")
-    (rename-buffer (format "Help: Org Link \"%s\"" link))
+    (rename-buffer (format "Help: Org Link “%s”" link))
     (read-only-mode)
     (local-set-key "q" #'kill-buffer-and-window)
-    (message "Read-only; \"q\" to kill buffer and window.")))
+    (message "Read-only; “q” to kill buffer and window.")))
 
 (define-key org-special-block-extras-mode-map (kbd "C-n") #'org-this-link-next)
 (define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
@@ -139,7 +139,7 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
   "Make a new Org-link NAME that exports using form BODY.
 
 Since Org links are essentially string-valued functions,
-a function 'org-link/NAME' is created.
+a function ‘org-link/NAME’ is created.
 
 DOCSTRING is optional; it is visible with
    (documentation 'org-link/NAME)
@@ -150,16 +150,16 @@ backend, such as 'html or 'latex. The first two are obtained from uses:
 
    [[name:o-label][o-description]]
 
-In particular, the use case \"name:o-label\" means that o-description is nil.
+In particular, the use case “name:o-label” means that o-description is nil.
 
 ---------------------------------------------------------------------------
 
 Example use:
 
-   ;; In a Lisp buffer, press \"C-x C-e\" to load this definition
+   ;; In a Lisp buffer, press “C-x C-e” to load this definition
    (org-deflink shout (upcase (or o-description o-label)))
 
-   ;; In an Org-buffer, press \"C-c C-e h o\" to see how this exports
+   ;; In an Org-buffer, press “C-c C-e h o” to see how this exports
    <shout: hello world!>
 
    ;; Or using the bracket format
@@ -170,38 +170,38 @@ Example use:
    shout:hello_world
 
 Here is a more complex, involved, example that makes use of
-':let' for local declarations. For instance, \"define:hello\"
-renders as the word \"hello\" with a tooltip defining the word; the
-definition is obtained from the command line tool 'wn'.
+‘:let’ for local declarations. For instance, “define:hello”
+renders as the word “hello” with a tooltip defining the word; the
+definition is obtained from the command line tool ‘wn’.
 
   (org-deflink define
     \"Define the given word using WordNet, along with synonyms and coordinate terms.\"
     [:let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" o-label)))
      :help-echo definition]
     (--> definition
-      (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of '\\\"' in tooltips breaks things, so omit them.
+      (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
       (s-replace-regexp \"\\n\" \"<br>\" it)
       (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
 
 For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
 
-More generally, org-special-block-extra's \"doc\" link type
+More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
 documentation of functions & variables, and definitions of
-English words. For example, \"doc:existential_angst\" for an entry
-'existential_angst' whose associated documentation-glossary is
-user-defined in a '#+documentation' Org-block, or
-\"doc:thread-first\" for the Emacs Lisp documentation of the
-function `thread-first', or \"doc:user-mail-address\" for the Emacs
+English words. For example, “doc:existential_angst” for an entry
+‘existential_angst’ whose associated documentation-glossary is
+user-defined in a ‘#+documentation’ Org-block, or
+“doc:thread-first” for the Emacs Lisp documentation of the
+function `thread-first', or “doc:user-mail-address” for the Emacs
 Lisp documentation of the variable `user-mail-address', or
-\"doc:hello\" for the definition of the English word 'hello'.
+“doc:hello” for the definition of the English word ‘hello’.
 
 DISPLAY is a vector consisting of key-value pairs that affects how the link
 is displayed in Emacs Org buffers. The keys are as follows.
 
 + :help-echo is a string-valued expression of the tooltip that should accompany
-  the new link in Org buffers. It has access to o-format being one of 'plain',
-  'angle', 'bracket' which indicates the format of the link, as shown above.
+  the new link in Org buffers. It has access to o-format being one of ‘plain’,
+  ‘angle’, ‘bracket’ which indicates the format of the link, as shown above.
   It also has access to o-label and o-description.
 
   By default, the tooltip is the link name followed by the documentation
@@ -209,7 +209,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
   That way, upon hover, users can visually see the link contents,
   know what/how the link exports, and actually see the HTML export.
 
-  That is to say, for the 'shout' example above, the default display is essentially:
+  That is to say, for the ‘shout’ example above, the default display is essentially:
   [:help-echo (org-link/shout o-label o-description 'html)]
 
   You may want to add the following to your Emacs init file:
@@ -228,18 +228,18 @@ is displayed in Emacs Org buffers. The keys are as follows.
    See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
 + [:display 'full] if you do not want bracket links to be
-  folded away in Org buffers; i.e., \"[[X][Y]]\" does not render as just \"Y\".
+  folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
 
 + :follow is a form that is executed when you click on such links; e.g., to open
-   another buffer, browser, or other action. It makes use of (an implicit argument) 'o-label'.
-   Be aware that 'o-label' is a string that may contain spaces; e.g., when the action is to open
+   another buffer, browser, or other action. It makes use of (an implicit argument) ‘o-label’.
+   Be aware that ‘o-label’ is a string that may contain spaces; e.g., when the action is to open
    a URL in a browser.
 
    If you are in need of providing similar, related, actions on a single link
-   then your :follow can condition on the current prefix argument via 'o-prefix'
+   then your :follow can condition on the current prefix argument via ‘o-prefix’
    (which is essentially `current-prefix-arg').
-   For instance, a user presses \"C-u RET\" on your link to do one thing
-   but \"C-u 72 RET\" to do another action.
+   For instance, a user presses “C-u RET” on your link to do one thing
+   but “C-u 72 RET” to do another action.
 
 + :keymap is an alternating list of keys and actions to be
   performed when those keys are pressed while point is on the link.
@@ -278,7 +278,7 @@ flat top-level plist with no enclosing vector:
     ;; plist style with :export instead.
     (setq display (if (vectorp display) (seq--into-list display) display))
     (let ((org-link/NAME (intern (format "org-link/%s" name)))
-          (navigation "Press \"C-h\" to see possible actions on this link type.")
+          (navigation "Press “C-h” to see possible actions on this link type.")
           (lets (cl-loop for (variable value)
                          on (cl-getf display :let)
                          by #'cddr
@@ -303,11 +303,11 @@ flat top-level plist with no enclosing vector:
           ;; (We augment the namespace with the missing o-description that local variables may be using.)
           :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(cl-getf display :follow))))
           ;; These links should *never* be folded in descriptive display;
-          ;; i.e., "[[example:lable][description]]" will always appear verbatim
+          ;; i.e., “[[example:lable][description]]” will always appear verbatim
           ;; and not hide the first pair […].
           :display (cl-the symbol ,(cl-getf display :display)) ;; e.g.,: 'full
           ;; Any special keybindings when cursour is on this link type?
-          ;; On 'NAME:' links, C-n/p to go to the next/previous such links.
+          ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
           :keymap (let ((o-keymap (copy-keymap org-mouse-map))
                         (pattern (format "%s:" (quote ,name))))
 

@@ -30,7 +30,7 @@
 
 (org-deflink melpa
   "Produce a Melpa badge for a given pacakge O-LABEL, which links to the Melpa page.
-We try to get the package's version from a constant '⟨O-LABEL⟩-version' if it exists."
+We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
   [:face '(:box "purple" :foreground "purple")]
   (format (concat "<a href=\"https://melpa.org/#/%s\">"
                   "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
@@ -82,7 +82,7 @@ We try to get the package's version from a constant '⟨O-LABEL⟩-version' if i
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
   [:face '(:underline "green")
-         :keymap ("?" ;; Let use select new choice of style with the "?" key.
+         :keymap ("?" ;; Let use select new choice of style with the “?” key.
                   (-let [choice (completing-read
                                  "New HTML style: "
                                  (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
@@ -95,7 +95,7 @@ We try to get the package's version from a constant '⟨O-LABEL⟩-version' if i
                                  (-partition 4)
                                  (--map (s-join "     " it))
                                  (s-join "\n")
-                                 (format "Press '?' to change the theme. \n\n Supported themes include:\n\n%s"))
+                                 (format "Press “?” to change the theme. \n\n Supported themes include:\n\n%s"))
          :let (whatdo (progn
                         (setq org--html-export-style-choice
                               (if (equal "random" o-label)
@@ -117,7 +117,7 @@ We try to get the package's version from a constant '⟨O-LABEL⟩-version' if i
 
 Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
 
-Moreover, O-LABEL may use '_' in-lieu of spaces or [[bracket]] link notation.
+Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
 
 Examples:
     [[kbd:C-x C-s]]
@@ -217,7 +217,7 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
 
 (org-deflink link-here
   "Export a link to the current location in an Org file."
-  [:help-echo (format "This is a local anchor link named "%s"" path)]
+  [:help-echo (format "This is a local anchor link named “%s”" path)]
   (if (not (equal o-backend 'html))
       ""
     (format (s-collapse-whitespace
@@ -237,15 +237,15 @@ shield.io conventions, the appropriate SOCIAL-SHIELDS-NAME must
 be given.
 
 The SOCIAL-URL is a URL that the badge points to and it should
-have a single '%s' where the link label argument will go.
+have a single ‘%s’ where the link label argument will go.
 
 Some social badges have a uniform URL, but otherwise, such as
 twitter, deviate and so need their own SOCIAL-SHIELDS-URL,
-which has a single '%s' for the link's label argument.
+which has a single ‘%s’ for the link's label argument.
 
 ----------------------------------------------------------------------
 
-E.g., to create a badge named 'go':
+E.g., to create a badge named “go”:
 
      (org-make-badge \"go\")
 
@@ -269,29 +269,29 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                            URL    : ${(or url \"\")}
                            Logo   : ${(or logo \"\")}
 
-                    This results in an SVG badge "[key∣value]", where the 'key'
-                    is coloured grey and the 'value' is coloured 'color';
+                    This results in an SVG badge “[key∣value]”, where the 'key'
+                    is coloured grey and the ‘value’ is coloured ‘color’;
                     for the HTML backend, and otherwise are silently omitted.
-                    Descriptions are ignored; i.e., '[[badge:label][description]]'
-                    is the same as '[[badge:label]]'.
+                    Descriptions are ignored; i.e., ‘[[badge:label][description]]’
+                    is the same as ‘[[badge:label]]’.
 
-                    ► 'key' and 'value' have their underscores interpreted as spaces.
-                       ⇒ '__' is interpreted as an underscore;
-                         Of course, you can write '<badge: ⋯>', then '⋯' may have multiword, spaced, content.
-                       ⇒ '|' is not a valid substring, but '-, %, ?' are okay.
+                    ► ‘key’ and ‘value’ have their underscores interpreted as spaces.
+                       ⇒ ‘__’ is interpreted as an underscore;
+                         Of course, you can write ‘<badge: ⋯>’, then ‘⋯’ may have multiword, spaced, content.
+                       ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
 
-                    ► '|color|url|logo' are optional;
-                       ⇒ If 'url' is not present, the resulting badge is not a hyperlink.
-                       ⇒ if 'url' is 'here' then we have a local link;
-                          i.e., the resulting badge behaves like 'link-here:key'.
-                       ⇒ 'color' may be: 'brightgreen' or 'success',
-                                         'red'         or 'important',
-                                         'orange'      or 'critical',
-                                         'lightgrey'   or 'inactive',
-                                         'blue'        or 'informational',
-                         or 'green', 'yellowgreen', 'yellow', 'blueviolet', 'ff69b4', etc.
+                    ► ‘|color|url|logo’ are optional;
+                       ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink.
+                       ⇒ if ‘url’ is ‘here’ then we have a local link;
+                          i.e., the resulting badge behaves like ‘link-here:key’.
+                       ⇒ ‘color’ may be: ‘brightgreen’ or ‘success’,
+                                         ‘red’         or ‘important’,
+                                         ‘orange’      or ‘critical’,
+                                         ‘lightgrey’   or ‘inactive’,
+                                         ‘blue’        or ‘informational’,
+                         or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
                          Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
-                       ⇒ 'logo' examples and how they look can be found at
+                       ⇒ ‘logo’ examples and how they look can be found at
                           https://alhassy.github.io/org-special-block-extras/#Example-Badge-Icons
 
                    See also: https://alhassy.github.io/org-special-block-extras/#Common-Project-Badges"))]
@@ -337,7 +337,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
  "<img src=\"https://img.shields.io/twitter/url?url=%s\">"
  )
 
-;; MA: I don't think this is ideal for long-term maintainability, see ':OLD' below.
+;; MA: I don't think this is ideal for long-term maintainability, see ‘:OLD’ below.
 (cl-loop for (social url name)
          in '(("reddit/subreddit-subscribers" "https://www.reddit.com/r/%s" "reddit")
               ("github" "https://www.github.com/%s")
@@ -384,7 +384,7 @@ Example uses:
   ;; Get the Lisp documentation of `thread-last'
   (org-docs-get \"thread-last\")
 
-  ;; Get the English definition of 'computing'
+  ;; Get the English definition of ‘computing’
   (org-docs-get \"computing\")
 
 We look for LABEL from within the current buffer first, using `org--docs',
@@ -393,11 +393,11 @@ and, finally, look for the documentation entry using `org-docs-fallback'."
   (cdr (or (assoc label org--docs)
            (assoc label org--docs-from-libraries)
            (funcall org-docs-fallback label)
-           (error "Error: No documentation-glossary entry for "%s"!" label))))
+           (error "Error: No documentation-glossary entry for “%s”!" label))))
 
 
 (cl-defun org-docs-insert ()
-  "Insert a "doc:𝒳" link from user's documentation-glossary database.
+  "Insert a “doc:𝒳” link from user's documentation-glossary database.
 
 It can be tricky to remember what you have, or what documentation entries mention, and so
 this command gives a searchable way to insert doc links."
@@ -427,7 +427,7 @@ this command gives a searchable way to insert doc links."
                (-let [it (shell-command-to-string
                           (format "wn %s -over -synsn" label))]
                  (if (and (s-blank-p it) (not org-export-with-broken-links))
-                     (error "Error: No documentation-glossary entry for "%s"!" label)
+                     (error "Error: No documentation-glossary entry for “%s”!" label)
                    it)))))
 
   "The fallback method to retriving documentation or glossary entries.
@@ -437,11 +437,11 @@ given LABEL, if possible, otherwise we try to retrive the Emacs
 Lisp variable documentation, and if that fails then we look up
 the word in the English dictionary.
 
-The English definition is obtained from the command line tool 'wn', WordNet.")
+The English definition is obtained from the command line tool ‘wn’, WordNet.")
 
 (defvar org-docs-libraries nil
-  "List of Org files that have '#+begin_documentation' blocks that should be loaded
-   for use with the 'doc:𝒳' link type.")
+  "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
+   for use with the ‘doc:𝒳’ link type.")
 
 (cl-defun org-docs-load-libraries
     (&optional (libs org-docs-libraries))
@@ -466,7 +466,7 @@ See `org-docs-from-libraries'."
 
   "The alist of (label name description) entries loaded from the libraries.
 
-The 'doc:𝒳' link will load the libraries, possibly setting this variable to 'nil',
+The ‘doc:𝒳’ link will load the libraries, possibly setting this variable to ‘nil’,
 then make use of this variable when looking for documentation strings.
 
 Interactively call `org-docs-load-libraries'
@@ -478,7 +478,7 @@ See also `org-docs-libraries'.")
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
-'show:GLOSSARY'.")
+‘show:GLOSSARY’.")
 
 (org-deflink doc
   "Export O-LABEL as itself, or as the provided O-DESCRIPTION,
@@ -502,7 +502,7 @@ We use this listing to actually print a glossary using
                             "[o-glossary-%s]{%s}"
                             "\\label{o-glossary"
                             "-declaration-site-%s}")
-                    label display-name label))))
+                    o-label display-name o-label))))
 
 ;; WHERE ...
 
@@ -538,7 +538,7 @@ newlines.
                (s-replace-regexp "\\\\quad" "&#x2000;")
                (s-replace-regexp "\\\\," "&#8194;") ;; en space
                (s-replace-regexp "\\\\;" "&#8195;") ;; em space
-               ;; The presence of '\"' in tooltips breaks things, so omit them.
+               ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
                (s-replace-regexp "\\\"" "''")))
 
 ;;;;;;; Documentation
@@ -548,7 +548,7 @@ newlines.
                     label nil show nil color "green")
               "Register the dictionary entries in CONTENTS to the dictionary variable.
 
-The dictionary variable is 'org--docs'.
+The dictionary variable is ‘org--docs’.
 
 A documentation entry may have its LABEL, its primary identifier,
 be:
@@ -566,10 +566,10 @@ all lower case.
 
 Documentation blocks are not shown upon export;
 unless SHOW is non-nil, in which case they are shown
-using the 'box' block, with the provided COLOR passed to it.
+using the ‘box’ block, with the provided COLOR passed to it.
 
 In the futture, it may be nice to have an option to render tooltips.
-That'd require the 'doc:𝒳' link construction be refactored via a 'defun'."
+That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun’."
               (unless (consp label) (setq label (list label)))
               (push (s-replace " " "_" name) label)
               (push (downcase (s-replace " " "_" name)) label)
@@ -593,7 +593,7 @@ Example uses:
 
 Note that there is `elisp' links with Emacs, out of the box.
 However, they only serve to evaluate Lisp expressions; for example,
-to make 'link buttons' that do useful things, as follows.
+to make “link buttons” that do useful things, as follows.
 
    [[elisp:(find-file user-init-file)][Init]]
 

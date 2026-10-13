@@ -1,0 +1,66 @@
+#+title: Tests
+
+We have two kinds of test, both plain ERT underneath:
+- =org-*-tests.el= :: unit tests, one file per production module; e.g., =org-box-block-tests.el= ↔ =org-box-block.el=.
+- =examples/NAME.el= :: one [[https://github.com/alhassy/snap][snap]] snapshot per showcase example ---Org source ⟶ HTML & LaTeX---
+  sharing the relation in =org-examples.el=. The docs render these via =osbe-example:NAME=.
+
+Press =C-c C-c= on any block below.
+
+* Run all tests
+
+In this Emacs session:
+#+begin_src emacs-lisp :results none
+(dolist (f (append (directory-files "~/org-special-block-extras/tests" t "-tests\\.el\\'")
+                   (directory-files "~/org-special-block-extras/tests/examples" t "\\.el\\'")))
+  (load-file f))
+(ert t)
+#+end_src
+
+Exactly as CI does it ---see =.github/workflows/main.yml=:
+#+begin_src shell :dir .. :results output
+emacs --batch --eval "(package-initialize)" -L . -L ~/snap -L ~/fancy-C-x-C-e \
+  $(for f in tests/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
+  -f ert-run-tests-batch-and-exit 2>&1 | grep -E "^Ran|FAILED"
+#+end_src
+
+* Run one example
+
+=C-x C-e= after any =(define-org-example-test …)= form both defines and runs it.
+
+* Update snapshots
+
+One example: =C-u C-x C-e= after its form, or press =[Update Snapshot]= in the ERT failure report.
+
+All examples ---then review the changes in Magit before committing:
+#+begin_src emacs-lisp :results none
+(load-file "~/org-special-block-extras/tests/org-examples.el")
+(dolist (f (directory-files "~/org-special-block-extras/tests/examples" t "\\.el\\'"))
+  (with-current-buffer (find-file-noselect f)
+    (goto-char (point-min))
+    (search-forward "(define-org-example-test ")
+    (org-example--update-at (match-beginning 0))
+    (save-buffer)))
+#+end_src
+
+* Add an example
+
+Make =examples/NAME.el= with an =:input= and empty outputs, then =C-u C-x C-e= it:
+#+begin_src emacs-lisp
+(unless (fboundp 'define-org-example-test)
+  (load-file (expand-file-name "~/org-special-block-extras/tests/org-examples.el")))
+
+(define-org-example-test "NAME"
+  :input "#+begin_NAME\nHello\n#+end_NAME"
+  :html nil
+  :latex nil)
+#+end_src
+
+* Notes
+
+- Tests =load-file= via =~/org-special-block-extras/…=, so the repo must live there; CI symlinks it.
+- =(package-initialize)= must come /before/ =-L .=; otherwise your installed MELPA copy of
+  =org-special-block-extras= shadows the working tree, and we silently test the wrong code.
+- Snapshots compare modulo whitespace and case (=org-example--normalise=), and pin =gensym=, =user-full-name= and
+  =emacs-version= (=org-example--export=), so they agree across machines.
+- =org-element= warnings about non-Org buffers are benign.

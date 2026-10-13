@@ -54,13 +54,40 @@ html-export-style:solarized_light
 (setq org-export-with-broken-links nil)
 (setq org-export-with-broken-links t)
 (load-file "./org-special-block-extras.el")
-(load-file "./tests/e2e.el")
+
+(defun osbe--example (name)
+  "NAME ↦ plist (:input … :html … :latex …) of its `define-org-example-test' in tests/examples/NAME.el."
+  (with-temp-buffer
+    (insert-file-contents (format "./tests/examples/%s.el" name))
+    (cl-loop for form = (ignore-errors (read (current-buffer))) while form
+             when (and (eq (car-safe form) 'define-org-example-test) (equal (cadr form) name))
+             return (cddr form))))
+
+(defun osbe--definition (name)
+  "NAME ↦ source of its `org-defblock' or `org-deflink' form, from this repo's *.el files; else \"\"."
+  (or (cl-loop for f in (directory-files "." t "\\.el\\'")
+               thereis (with-temp-buffer
+                         (insert-file-contents f)
+                         (emacs-lisp-mode)
+                         (when (re-search-forward (format "(org-def\\(block\\|link\\) %s\\_>" (regexp-quote name)) nil t)
+                           (goto-char (match-beginning 0))
+                           (thing-at-point 'sexp t))))
+      ""))
+
+(org-defblock osbe-example (name)
+  "Render example NAME, from tests/examples/NAME.el, as Org source beside its HTML export and implementation."
+  (let* ((example (osbe--example name))
+         (title (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
+         (panel (lambda (colour body) (format "<div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>" (org-subtle-colors colour) body))))
+    (format "<div>%s %s</div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
+            (funcall panel "lime" (format "%s <pre class=\"src src-org\">%s</pre>" (funcall title "What You Write") (s-trim (plist-get example :input))))
+            (funcall panel "peach" (format "%s %s" (funcall title "What You Get") (plist-get example :html)))
+            (org-subtle-colors "custard")
+            (org-export-string-as (format "\n#+begin_src emacs-lisp\n%s\n#+end_src\n" (osbe--definition name)) 'html t))))
+
 (org-html-export-to-html)
 
 ;; TODO Add a hook to run tests whenever I produce an export!
-
-;; Run the next line whenever a yaml file changes.
-;; (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
 #+end_src
 
 
@@ -122,9 +149,8 @@ html-export-style:solarized_light
 # ⇒ "<name key₀=\"value₀\" key₁=\"value₁\">contents</name>"
 
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-#  1. osbe-example:~/org-special-block-extras/tests/doc.yaml
-#  2. osbe-example:~/org-special-block-extras/tests/rename.yaml
+#  1. osbe-example:doc
+#  2. osbe-example:rename
 
 ** See changes for current buffer only
 C-c M-g will pop up a menu just for that fie and you can hit d there to get a diff, then stage as you like!
@@ -3489,8 +3515,7 @@ again/.
    :CUSTOM_ID: Boxed-Text
    :END:
 
-# (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-   osbe-example:~/org-special-block-extras/tests/box.yaml
+   osbe-example:box
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
    
@@ -3591,8 +3616,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   :CUSTOM_ID: Folded-Details
   :END:
 
-# (setq  osbe-example-cache (make-hash-table :test 'equal))
-   osbe-example:~/org-special-block-extras/tests/details.yaml
+   osbe-example:details
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 :PROPERTIES:
 :CREATED:  [2025-06-06 Fri 20:12]
@@ -3832,8 +3856,7 @@ attention, and so a tooltip via [[org-block/remark][remark]] suffices.
 #+end_center
 #+end_tiny
 
-# (setq  osbe-example-cache (make-hash-table :test 'equal))
-   osbe-example:~/org-special-block-extras/tests/tooltip.yaml
+   osbe-example:tooltip
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 
@@ -4087,8 +4110,7 @@ from∘to m = {! try it! }
   :CUSTOM_ID: Parallel
   :END:
 
-    # (setq osbe-example-cache (make-hash-table :test 'equal))
-     osbe-example:~/org-special-block-extras/tests/parallel.yaml
+     osbe-example:parallel
   
 **   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
@@ -4134,8 +4156,7 @@ from∘to m = {! try it! }
   As such, we declare the [[doc:org-block/latex-definitions][latex-definitions]] block type which avoids
   displaying such extra whitespace in the resulting HTML.
 
-  # (setq  osbe-example-yaml-cache (make-hash-table :test 'equal))
-  osbe-example:~/org-special-block-extras/tests/latex-definitions.yaml
+  osbe-example:latex-definitions
   
 
 * COMMENT Colours
