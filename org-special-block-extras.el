@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.1
+;; Version: 26.10.2
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -293,7 +293,7 @@ The `org-special-block-extras' mode adds a lot of extra HTML/JS code that
 
 Since the extra stuff is for beautiful tooltips or styles,
 for ease of use, the default behaviour is to use such
-'untrusted data from untrusted websites'.
+“untrusted data from untrusted websites”.
 
 To avoid such behaviour, set this variable to `nil'.")
 
@@ -301,9 +301,9 @@ To avoid such behaviour, set this variable to `nil'.")
 (define-minor-mode org-special-block-extras-mode
   "Provide 30 new custom blocks & 34 link types for Org-mode.
 
-All relevant Lisp functions are prefixed 'org-'; e.g., `org-docs-insert'.
+All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
-This minor mode uses 'untrusted data from untrusted websites' when exporting
+This minor mode uses “untrusted data from untrusted websites” when exporting
 to HTML, this is done for beautiful tooltips or styles.
 Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 "
@@ -422,8 +422,8 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (advice-add #'org-export-dispatch
                     :after (lambda (&rest _)
                              (when (pop org--docs-empty!)
-                               (setq org--docs-actually-used nil ;; The 𝒳 of each "doc:𝒳" that appears in the current buffer.
-                                     org--docs nil))))           ;; The "#+begin_documentation ⋯ :label 𝒳" of the current buffer.
+                               (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
+                                     org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
         ) ;; Must be on a new line; I'm using noweb-refs
     (remove-hook 'org-export-before-parsing-hook 'org--rewrite-special-blocks-by-handlers)
     )) ;; Must be on a new line; I'm using noweb-refs

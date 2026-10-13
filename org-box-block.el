@@ -46,8 +46,8 @@ More accurately, the following are all valid uses:
     #+begin_box title :shadow (cyan \"inset pink\" orange)
     #+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
 
-Notice that prefixing colours with 'inset' causes the colour to be within the box,
-rather than spread, with blur, around the box. The use of 'inset' swaps left and right.
+Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
 
 The HTML export uses a padded div, whereas the LaTeX export
 requires the tcolorbox package.
@@ -65,8 +65,8 @@ In the future, I will likely expose more arguments."
                           "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
                           ,contents
                           "\\end{tcolorbox}")))
-                ;; CSS syntax: "box-shadow: specification, specification, ..."
-                ;; where a specification is of the shape "[inset] x_offset y_offset [blur [spread]] color".
+                ;; CSS syntax: “box-shadow: specification, specification, ...”
+                ;; where a specification is of the shape “[inset] x_offset y_offset [blur [spread]] color”.
                 (_ (-let [haze (lambda (left right deep-right deep-left)
                                  (format "width: 50%%; margin: auto; box-shadow: %s"
                                          (thread-last (list (cons right      "8px 6px 13px 8px %s")
@@ -108,14 +108,14 @@ Names are very rough approximates.
     ("brown"   "#CCCC99") ;; close to moss
     ("gray"    "#CCCCCC")
     ("purple"  "#CCCCFF")
-    ("lime"    "#CCFF99") ;; brighter than 'green'
+    ("lime"    "#CCFF99") ;; brighter than ‘green’
     ("green"   "#CCFFCC")
     ("blue"    "#CCFFFF")
     ("orange"  "#FFCC99")
     ("peach"   "#FFCCCC")
     ("pink"    "#FFCCFF")
     ("yellow"  "#FFFF99")
-    ("custard" "#FFFFCC") ;; paler than 'yellow'
+    ("custard" "#FFFFCC") ;; paler than ‘yellow’
     (c c)
     ))
 

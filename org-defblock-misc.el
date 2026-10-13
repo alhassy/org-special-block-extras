@@ -39,15 +39,15 @@
                       :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
               "Produce an HTML tooltip or a LaTeX margin note.
 
-The 'margin' block is intended for 'one-off' (mostly optional) remarks.
+The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
 
-It is essentially 'inline footnotes'.
+It is essentially “inline footnotes”.
 
 For notes that you want to use repeatedly, in multiple articles
 or in multiple locations in the same article, consider using
-'documentation' to declare them and 'doc' to invoke them.
+‘documentation’ to declare them and ‘doc’ to invoke them.
 
-For LaTeX, place '#+resize:' to have the remainder of a block be
+For LaTeX, place ‘#+resize:’ to have the remainder of a block be
 resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
 
 ----------------------------------------------------------------------
@@ -55,8 +55,8 @@ resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
 WIDTH, COUNTER, and COLOR are LaTeX specfic.
 
 When no label, marker, is used for a marginal note, we rely
-on a COUNTER, such as 'footnote' (default) or 'sidenote.'
-Since HTML has no margin per se, we use '∘' as default marker:
+on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
+Since HTML has no margin per se, we use “∘” as default marker:
 Users hover over it to read the marginal note.
 
 Marginal notes have their labels, markers, in black
@@ -64,9 +64,9 @@ and the notes themselves have COLOR being grey!80.
 In Emacs, margin links appear grey with an orange tinted boarder.
 
 Regarding LaTeX, since verbatim environments do not in general work well
-as arguments to other commands, such as '\\marginpar', we save the contents
-of the special block in a 'minipage' within a LaTeX 'box'; then we can unfold such
-a box in the margin. Hence, 'src' blocks can appear within 'margin' blocks (•̀ᴗ•́)و
+as arguments to other commands, such as ‘\\marginpar’, we save the contents
+of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
+a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
 
 The WIDTH argument is the width of the margin; i.e., the width of the underlying
 minipage.
@@ -76,10 +76,10 @@ which only resizes the content if its natural size is larger than
 the given 〈width〉 or 〈height〉.  We don't use this, since
 maxsizebox does not natively allow linebreaks
 (e.g., one would wrap contents in a tabular environment then use
-'\\\\', two backslashes, to request a line break; but this
+‘\\\\’, two backslashes, to request a line break; but this
 crashes if one wants to also use verbatim environments.)
 
-In LaTeX, it may be useful to invoke '\\dotfill'."
+In LaTeX, it may be useful to invoke ‘\\dotfill’."
               (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
                 (pcase backend
                   (`latex
@@ -131,7 +131,7 @@ In LaTeX, it may be useful to invoke '\\dotfill'."
 ;;;;; Blocks
 ;;;;;; solution
 (org-defblock solution
-              (title "Solution" reprimand "Did you actually try? Maybe see the 'hints' above!"
+              (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
                      really "Solution, for real")
               "Show the answers to a problem, but with a reprimand in case no attempt was made."
               (org-thread-blockcall raw-contents
@@ -149,9 +149,9 @@ In LaTeX, it may be useful to invoke '\\dotfill'."
 Label the source text by SOURCE and the result text by RESULT
 
 finally, the source-result fragments can be shown in a STYLE
-that is either "parallel" (default) or "sequential".
+that is either “parallel” (default) or “sequential”.
 
-SEP is the separator; e.g., a rule '<hr>'.
+SEP is the separator; e.g., a rule ‘<hr>'.
 "
               (-let [text (concat
                            ;; Source
@@ -182,7 +182,7 @@ SEP is the separator; e.g., a rule '<hr>'.
 ;;;;;; rename
 (org-defblock rename (list "")
               "Perform the given LIST of substitutions on the text.
-The LIST is a comma separated list of 'to' separated symbols.
+The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed."
               (s-replace-all
                (--map (cons (car it) (cadr it))
@@ -196,7 +196,7 @@ In a link, no quotes are needed."
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
 
-For LaTeX, this becomes 'fill in the blanks', with the answers
+For LaTeX, this becomes “fill in the blanks”, with the answers
 in the footnotes."
               (if (equal backend 'latex)
                   (s-replace-regexp
@@ -205,7 +205,7 @@ in the footnotes."
                    contents)
                 (-let [id (gensym)]
                   (concat
-                   ;; In HTML, a 'style' can be, technically, almost anywhere...
+                   ;; In HTML, a ‘style’ can be, technically, almost anywhere...
                    (format
                     "<style> #%s {color: %s; background-color:%s;}
        #%s:hover {color: black; background-color:white;} </style>
@@ -227,7 +227,7 @@ in the footnotes."
               "Format CONTENTS as an first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
-with having only '#+replacewith:', then the text preceding this
+with having only ‘#+replacewith:’, then the text preceding this
 clause should be replaced by the text after it; i.e., this is
 what the EDITOR (the person editing) intends and so we fromat the
 replacement instruction (to the authour) as such.
@@ -250,7 +250,7 @@ that is appended to the remark.
 
                       ;; Is this a replacement clause?
                       ((this that) (s-split "\\#\\+replacewith:" contents))
-                      (replacement-clause? that) ;; There is a 'that'
+                      (replacement-clause? that) ;; There is a ‘that’
                       (replace-keyword (if tex?
                                            "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
                       (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
@@ -265,12 +265,12 @@ that is appended to the remark.
                                              that)
                                    contents))
 
-                      ;; "[Editor Comment:"
+                      ;; “[Editor Comment:”
                       (edcomm-begin (funcall boxed editor))
-                      ;; "]"
+                      ;; “]”
                       (edcomm-end (funcall boxed "]")))
 
-                (setq org-export-allow-bind-keywords t) ;; So users can use "#+bind" immediately
+                (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
                 (if org-hide-editor-comments
                     ""
                   (format (pcase backend

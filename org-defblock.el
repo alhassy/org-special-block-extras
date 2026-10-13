@@ -56,13 +56,13 @@
   ;;    ⟨body-start⟩ body
   ;;    #+end_blk
   (name             nil :type string  :documentation "The name of the special block.")
-  (start-point      nil :type integer :documentation "Point at start of '#+begin_' line.")
-  (end-point        nil :type integer :documentation "Point at end of clause '#+end_⟨name⟩'.")
-  ;; TODO: When refactors settle down, axe this? " header-start  =  start-point + (length name) "
+  (start-point      nil :type integer :documentation "Point at start of “#+begin_” line.")
+  (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
+  ;; TODO: When refactors settle down, axe this? “ header-start  =  start-point + (length name) ”
   (header-start     nil :type integer :documentation "Point after block name; i.e., point at which block header & args begin.")
   (main-arg         nil :type string  :documentation "First non-keyword argument")
   (kwdargs          nil :type plist   :documentation "The key-value arguments for the header.")
-  (column           nil :type integer :documentation "Indentation of '#+begin_' line")
+  (column           nil :type integer :documentation "Indentation of “#+begin_” line")
   (body-start-point nil :type integer :documentation "Start of block body text")
   (contents         nil :type string  :documentation "Body text contents"))
 
@@ -84,7 +84,7 @@ For example,
 (cl-defun org-special-block-after-point (&optional name)
   "Parses the first `org-special-block' after point.
 
-Point should be at the start of the '#+begin_' clause.
+Point should be at the start of the “#+begin_” clause.
 
 If NAME is provided, then look for that kind of block;
 otherwise look for any special block.
@@ -106,24 +106,24 @@ This assumes the block is well-formed and not nested."
                  nil
                  t
                  )
-                (error "'org-special-block-after-point': I had trouble parsing '#+begin_%s ⟨args⟩?\n⟨content⟩?\n#+end_%s'. Are the required pieces there? 🤔" name name))
+                (error "‘org-special-block-after-point’: I had trouble parsing “#+begin_%s ⟨args⟩?\n⟨content⟩?\n#+end_%s”. Are the required pieces there? 🤔" name name))
                                         ;(debug)
         (setq name (match-string 1))
         (setq contents (match-string 3))
+        (setq start-point (- (match-beginning 1) (length "#+begin_")))
         (setq end-point (point))
         ;; Parse the header line into (main-arg . keyword-args)
         (thread-last
-          (match-string 2) ;; All args, as a string
+          (or (match-string 2) "") ;; All args, as a string
           (format "(%s)") ;; Wrap in list to ensure `read` parses args
           read           ;; We now have an honest to goodness Lisp list
           (--split-with (not (keywordp it)))
           (setq kwdargs))
-        (setq main-arg (format "%s" (or (car (car kwdargs)) ""))
+        (setq main-arg (mapconcat (lambda (it) (format "%s" it)) (car kwdargs) " ")
               kwdargs (cadr kwdargs))
-        ;; Save indentation.
-        (re-search-backward (format "\\#\\+begin_%s\\b" name))
-        (setq start-point (point)
-              start-column (current-column))
+        ;; Save indentation; not by searching backwards, which may land on an inline "#+begin_NAME" in CONTENTS.
+        (goto-char start-point)
+        (setq start-column (current-column))
         ;; Return structured info
         (make-org-special-block
          :name (substring-no-properties name)
@@ -146,7 +146,7 @@ Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
 
 Each special block can include:
 - A *main argument*: The first (optional) positional argument after the block name.
-- *Keyword arguments*: Zero or more \":key value\" pairs.
+- *Keyword arguments*: Zero or more “:key value” pairs.
 - A *body*: The content between the begin and end block markers.
 
 The corresponding handler function must be named `org-block/NAME' with signature:
@@ -163,7 +163,7 @@ Will be replaced with the result of evaluating:
 
   (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
 
-The handler's return value is inserted in place of the original block.
+The handler’s return value is inserted in place of the original block.
 Indentation is preserved via `org-replace-text-while-preserving-indentation'.
 
 This method is part of the Org export pipeline that processes supported
@@ -177,7 +177,7 @@ pre-processing steps."
              (quote ,backend)
              ,contents
              ,main-arg
-             ;; The --map is so that args may be passed as "this" or just 'this' (raw symbols)
+             ;; The --map is so that args may be passed as "this" or just ‘this’ (raw symbols)
              ,@(--map (list 'quote it) kwdargs))))))
 
 
@@ -255,7 +255,7 @@ followed by a default value, then, optionally, any information
 for a one-time setup of the associated link type.
 
 The main arg may be a sequence of symbols separated by spaces,
-and a few punctuation with the exception of comma ',' since it is
+and a few punctuation with the exception of comma ‘,’ since it is
 a special Lisp operator. In doubt, enclose the main arg in
 quotes.
 
@@ -283,7 +283,7 @@ Finally, this macro exposes two functions:
 + ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
              to escape text to Org, and out of the export block.
 
-⇄ We use '@@html:⋯:@@' when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
+⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
 ⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
 
 ----------------------------------------------------------------------
@@ -312,7 +312,7 @@ Example declaration, with all possible features shown:
              color editor contents signoff))
 
    ;; I don't want to change the definition, but I'd like to have
-   ;; the following as personalised defaults for the \"remark\" block.
+   ;; the following as personalised defaults for the “remark” block.
    ;; OR, I'd like to set this for links, which do not have argument options.
    (org-set-block-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
 
@@ -381,9 +381,9 @@ Three example uses:
 - NAME         [Symbol]: The name of the block type.
 - DOCSTRING    [Nullable String]: Documentation of the block.
 - ARGS: Property list beginning with main arg binding and default value,
-        followed by \"keyword default-value\" pairs.
+        followed by “keyword default-value” pairs.
 - BODY: Code to be executed just before export.
-  ⇒ May mention symbol \"backend\" and string \"raw-contents\".
+  ⇒ May mention symbol “backend” and string “raw-contents”.
 
 Features:
 + Auto-defaults for main and keyword args via `org--header-args'.
@@ -422,11 +422,11 @@ Features:
                 &rest  _
                 &key ,@(-partition 2 keywords) (contents-occur-as-link-description nil)
                 &allow-other-keys)
-             (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler '%s' expects a non-null symbol for arg1" ',name)
-             (cl-assert (stringp raw-contents) nil "Org-special-block handler '%s' expects a string for arg2" ',name)
+             (cl-assert (and backend (symbolp backend)) nil "Org-special-block handler “%s” expects a non-null symbol for arg1" ',name)
+             (cl-assert (stringp raw-contents) nil "Org-special-block handler “%s” expects a string for arg2" ',name)
 
              ;; Use default value for blank main argument
-             (when (or (null ,main-arg-name) (s-blank-p ,main-arg-name))
+             (when (or (null ,main-arg-name) (equal ,main-arg-name ""))
                (setq ,main-arg-name
                      (or
                       (org--header-arg-of ',name ,(intern (format ":%s" "main-arg")))
@@ -434,7 +434,7 @@ Features:
 
              ;; Use any headers for this block type, if no local value is passed
              ,@(cl-loop for (key default-value) in (-partition 2 keywords)
-                        collect `(when (or (null ,key) (s-blank-p ,key))
+                        collect `(when (or (null ,key) (equal ,key ""))
                                    (setq ,key (or
                                                (org--header-arg-of
                                                 ',name
@@ -466,7 +466,7 @@ Features:
                   "\nRegarding the Lisp function:"
                   "\n+ BACKEND refers to the current export backend."
                   "\n+ RAW-CONTENTS refers to the text as the user wrote it verbatim."
-                  "\n  ⇒ You may mention CONTENTS to refer to the 'org parsed' version of user text."
+                  "\n  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
                   "\n  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
                   "\n\nFor example, upon LaTeX export, the Org special block"
                   "\n"
@@ -534,8 +534,8 @@ results in
 
     HELLO, WORLD
 
-To remove this support, simply add an \"un\" after the \"-\"
-in the \"org-defblock\" declaration:
+To remove this support, simply add an “un” after the “-”
+in the “org-defblock” declaration:
 
     (org-undefblock shout () (upcase contents))
 
@@ -545,11 +545,11 @@ Now, the original Org source exports to LaTeX as
     hello, world
     \\end{shout}
 
-As such, \"shout\" now exports with the default Org behaviour
+As such, “shout” now exports with the default Org behaviour
 for special blocks.
 
 Note: Link support is also removed, so that \"[[shout: hello, world]]\"
-no longer LaTeX-exports to \"HELLO, WORLD\" but instead exports to
+no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 \"\\\\url{shout: hello, world}\".
 "
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
@@ -558,7 +558,7 @@ no longer LaTeX-exports to \"HELLO, WORLD\" but instead exports to
           (-when-let (link-params (org-link-set-parameters ,(format "%s" name)))
             (--each '(:export :face :follow :display :keymap :help-echo)
               (setf (plist-get link-params it) nil)))
-          (message ,(format "\"%s\" is no longer recognised by 'org-special-block-extras'." name))))
+          (message ,(format "“%s” is no longer recognised by ‘org-special-block-extras’." name))))
 
 (require 'org-deflink)
 
@@ -566,7 +566,7 @@ no longer LaTeX-exports to \"HELLO, WORLD\" but instead exports to
 (defvar org--header-args nil
   "Alist (name plist) where `:main-arg' is a special plist key.
 
-  It serves a similar role to that of Org's src 'header-args'.
+  It serves a similar role to that of Org's src ‘header-args’.
 
   See doc of SET-BLOCK-HEADER-ARGS for more information.")
 
@@ -581,13 +581,13 @@ Example src use:
 Example block use:
     (set-block-header-args Block :main-arg mainvalue :key value)
 
-A full, working, example can be seen by \"C-h o RET defblock\".
+A full, working, example can be seen by “C-h o RET defblock”.
 "
   `(add-to-list 'org--header-args (list (quote ,blk) ,@kvs)))
 
-;; This is our 𝒳, "remark".
+;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
-;; it takes two arguments: "color" and "signoff"
+;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
               (editor "Editor Remark" color "red" signoff "")
@@ -600,7 +600,7 @@ A full, working, example can be seen by \"C-h o RET defblock\".
                       color editor contents signoff))
 
 ;; I don't want to change the definition, but I'd like to have
-;; the following as personalised defaults for the "remark" block.
+;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
 (org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
 
@@ -625,7 +625,7 @@ o-thread-blockcall.
 (defmacro org-thread-blockcall (body &rest forms)
   "Thread text through a number of blocks.
 
-BODY is likely to be 'raw-contents', possibly with user manipulations.
+BODY is likely to be ‘raw-contents’, possibly with user manipulations.
 
 Each FORMS is of the shape '(block-name main-argument :key-value-pairs)'
 
@@ -633,8 +633,8 @@ Each FORMS is of the shape '(block-name main-argument :key-value-pairs)'
 (thread-blockcall x (f a)) = (blockcall f a x)
 (thread-blockcall x f₁ f₂) ≈ (f₂ (f₁ x))
 
-The third is a '≈', and not '=', because the RHS contains
-'blockcall's as well as massages the export matter
+The third is a ‘≈’, and not ‘=’, because the RHS contains
+‘blockcall’s as well as massages the export matter
 between conseqeuctive blockcalls.
 
 A full example:

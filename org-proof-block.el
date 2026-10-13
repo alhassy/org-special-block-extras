@@ -85,7 +85,7 @@ COLOR is the colour of the hints."
 
 (org-defblock calc
               (main-arg nil
-                        rel "=" hint-format "\\left[ %s \\right." explicit-vspace "2" color "maroon")
+                        rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
               "Render an Org-list as an equational proof.
 
 Sometimes the notation delimiting justification hints may clash
@@ -94,13 +94,13 @@ with the domain topic, so we can change the hint format, e.g., to
 empty string, \"\", to comment-out all hints in the exported
 version.
 
-The hint is the text immediately after a \"--\", if there are
+The hint is the text immediately after a “--”, if there are
 multiple such delimiters only the first is shown; this can be
 useful if we want to have multiple alternatives, say for extra
 details in the source but not so much in the export.
 
 Line breaks are taken literally in the hints, but not in the
-math; where one uses \\\\.  For math with multiple lines, use '&'
+math; where one uses \\\\.  For math with multiple lines, use ‘&’
 as an alignment marker; otherwise math is right-justified.
 
 For HTML, to use an TeX it must be enclosed in $, since that is
