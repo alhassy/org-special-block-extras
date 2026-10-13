@@ -140,7 +140,7 @@
    <li><p>
    custom (unregistered) block
    </p>
-   <div class=\"proposition\" id=\"org0087298\">
+   <div class=\"proposition\" id=\"org-id-1\">
    <p>
    content 2
    </p>
@@ -157,11 +157,9 @@
    \\n content 4</li>
    </ol>
    "
-  :modulo ("org0087298" ;; Randomly generated Org ID
-           "style=\"color: #98971a; font-weight: bold;\"" ;; Style is theme-dependent
+  :modulo ("style=\"color: #98971a; font-weight: bold;\"" ;; Style is theme-dependent
            ))
 
-;; TODO: Prettify resulting HTML so the expectations are easier to read. See `e2e.el'.
 
 (define-org-export-test "enumerations are preserved for blocks inside lists inside blocks" [issue♯8]
   :input "

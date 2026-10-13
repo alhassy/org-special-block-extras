@@ -134,9 +134,42 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
 (define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
 (define-key org-special-block-extras-mode-map (kbd "C-h") #'org-this-link-show-docs)
 
+(defun org--deflink-arglist-p (form rest)
+  "Non-nil iff FORM, followed by the forms REST, is an `org-deflink' arglist such as (label &optional description).
+
+An arglist is a list of at most 3 plain symbols ---besides `&optional'--- or a list mentioning `&optional';
+a lone form, or one whose head is a function, is the link's body instead; e.g., (upcase o-label)."
+  (and (consp form) rest (proper-list-p form)
+       (or (memq '&optional form)
+           (and (<= (length form) 3)
+                (cl-every (lambda (it) (or (consp it)
+                                           (and (symbolp it) it (not (eq it t)) (not (keywordp it)) (not (fboundp it)))))
+                          form)))))
+
+(defun org--deflink-parse-arglist (arglist)
+  "ARGLIST ↦ ((NAME ANAPHOR DEFAULT) …), pairing the names of (label &optional description backend) with o-label, o-description, o-backend.
+
+  (label &optional (description \"…\"))  ↦  ((label o-label nil) (description o-description \"…\"))"
+  (cl-loop for arg in (remq '&optional arglist)
+           for anaphor in '(o-label o-description o-backend)
+           collect (list (if (consp arg) (car arg) arg) anaphor (when (consp arg) (cadr arg)))))
+
 (cl-defmacro org-deflink
     (name &optional docstring display &rest body)
   "Make a new Org-link NAME that exports using form BODY.
+
+An optional ARGLIST may come first, naming the link's label, description,
+and export backend ---in that order--- for use in BODY and DISPLAY:
+
+   (org-deflink shout (label &optional description)
+     \"Shout the description, else the label.\"
+     :face \='(:weight bold)
+     :export (upcase (or description label)))
+
+As a convenience, ARGLIST may be omitted; then BODY and DISPLAY refer to the
+anaphoric names o-label, o-description, and o-backend, which are always
+available.  An argument written (NAME DEFAULT) falls back to DEFAULT when
+absent; e.g., (label &optional (description \"…\")).
 
 Since Org links are essentially string-valued functions,
 a function ‘org-link/NAME’ is created.
@@ -259,6 +292,13 @@ flat top-level plist with no enclosing vector:
     \"Shout the label.\"
     :face \\='(:weight bold)
     :export (upcase o-label))"
+  ;; An optional leading ARGLIST names the anaphors; see `org--deflink-arglist-p'.
+  (let ((arglist nil))
+    (when (org--deflink-arglist-p docstring (or display body))
+      (setq arglist   docstring
+            docstring display
+            display   (car body)
+            body      (cdr body)))
   (cl-destructuring-bind (docstring display body)
       (lf-extract-optionals-from-rest docstring #'stringp
                                display   #'vectorp
@@ -279,10 +319,19 @@ flat top-level plist with no enclosing vector:
     (setq display (if (vectorp display) (seq--into-list display) display))
     (let ((org-link/NAME (intern (format "org-link/%s" name)))
           (navigation "Press “C-h” to see possible actions on this link type.")
-          (lets (cl-loop for (variable value)
-                         on (cl-getf display :let)
-                         by #'cddr
-                         collect (list variable value))))
+          (lets (append
+                 ;; The ARGLIST's names for label and description, usable everywhere o-label is.
+                 (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
+                          unless (eq anaphor 'o-backend)
+                          collect (list arg (if default `(or ,anaphor ,default) anaphor)))
+                 (cl-loop for (variable value)
+                          on (cl-getf display :let)
+                          by #'cddr
+                          collect (list variable value))))
+          ;; The ARGLIST's name for the backend exists only where o-backend does: the export body.
+          (backend-lets (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
+                                 when (eq anaphor 'o-backend)
+                                 collect (list arg (if default `(or ,anaphor ,default) anaphor)))))
       `(progn
          ;; Declare the underlying function and documentation
          (cl-defun ,org-link/NAME ;; function name
@@ -291,7 +340,7 @@ flat top-level plist with no enclosing vector:
            ,docstring
            ;; function body
            (let ((o-backend (org--base-backend o-backend)))
-             (let* ,lets ,@body)))
+             (let* (,@backend-lets ,@lets) ,@body)))
          ;; Construct the Org-link
          (org-link-set-parameters
           ,(format "%s" name)
@@ -347,7 +396,7 @@ flat top-level plist with no enclosing vector:
                                        (,org-link/NAME o-label o-description 'html)))))))
          ;; Return value is the name of the underlying function.
          ;; We do this to be consistent with `defun'.
-         (quote ,org-link/NAME)))))
+         (quote ,org-link/NAME))))))
 
 (provide 'org-deflink)
 ;;; org-deflink.el ends here

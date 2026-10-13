@@ -58,5 +58,48 @@
     (funcall (lookup-key map (kbd "x")))
     (should (equal org-deflink-test--keymap-actions '(x)))))
 
+;;; Arglist style: naming the label, description, and backend
+
+(org-deflink test-arg-shout (label &optional description)
+  "Shout the description, else the label."
+  :export (upcase (or description label)))
+
+(org-deflink test-arg-whisper (label &optional (description "psst") backend)
+  "Whisper the label, with a default description, naming the backend."
+  :export (format "%s/%s/%s" (downcase label) description backend))
+
+(org-deflink test-arg-face (label)
+  "The arglist's names also reach the display forms, such as :face."
+  :face (list :foreground label)
+  :export label)
+
+(define-org-call-test "org-deflink binds the arglist's first name to the label"
+  :call (org-link/test-arg-shout "hi" nil 'html)
+  :returns "HI")
+
+(define-org-call-test "org-deflink binds the arglist's second name to the description"
+  :call (org-link/test-arg-shout "hi" "yo" 'html)
+  :returns "YO")
+
+(define-org-call-test "org-deflink falls back to an arglist default, and binds the third name to the backend"
+  :call (org-link/test-arg-whisper "HI" nil 'latex)
+  :returns "hi/psst/latex")
+
+(deftest "org-deflink arglist names reach the :face display form"
+  (should (equal '(:foreground "green")
+                 (funcall (plist-get (cdr (assoc "test-arg-face" org-link-parameters)) :face) "green"))))
+
+(define-org-call-test "org--deflink-arglist-p recognises an arglist with &optional"
+  :call (and (org--deflink-arglist-p '(label &optional description) '(:export label)) t)
+  :returns t)
+
+(define-org-call-test "org--deflink-arglist-p reads a one-form body as a body, not an arglist"
+  :call (org--deflink-arglist-p '(upcase o-label) nil)
+  :returns nil)
+
+(define-org-call-test "org--deflink-arglist-p reads a function call as a body, even when more forms follow"
+  :call (org--deflink-arglist-p '(identity o-label) '((upcase o-label)))
+  :returns nil)
+
 (provide 'org-deflink-tests)
 ;;; org-deflink-tests.el ends here

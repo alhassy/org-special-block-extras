@@ -3435,12 +3435,15 @@ LaTeX!
 - *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
 - *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
 - badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
-- *🛠 Use =org-defblock= and =org-deflink= macros* --- familiar =defun=-like syntax lets you
-  define custom Org behaviours.
-  + Create powerful custom blocks with the ~defblock~ macro: Define a block once
-    and export to LaTeX /and/ HTML effortlessly. With /header-args/ support like
-    like =:color red :signoff "Thanks!"= for locally customised exports.
-  + Use ~org-deflink~ to create custom links using a syntax similar to ~defun~.
+- *🛠 Use =org-defblock=, =org-deflink= and =org-deftag=* ---Org, extended as one extends Lisp:
+  each is declared like a ~cl-defun~, with =&optional= and =&key= arguments; or, for the
+  terse-minded, with a flattened arglist.
+  + Create powerful custom blocks with ~org-defblock~: Define a block once and export to
+    LaTeX /and/ HTML effortlessly. With /header-args/ support like
+    =:color red :signoff "Thanks!"= for locally customised exports. Each block is also a
+    link and a tag, for free.
+  + Use ~org-deflink~ to create custom links, as functions of their label and description.
+  + Use ~org-deftag~ to create custom tags, as functions of the Org sections they tag.
     
 # - *🧩 Compose blocks modularly* --- nest and thread blocks functionally, just like  Lisp =funcall=.
 # TODO. FIXME. - Embrace *modularity*: Build new blocks from existing ones with  =thread-blockcall= --- like Lisp =funcall=.
@@ -4208,6 +4211,34 @@ Mind the gap.
   contents: =[[note:Heads up][Mind the gap.]]=. Moreover, defaults may change long after the
   block is defined; e.g., ~(org-set-block-header-args note :color "orange")~.
 
+  One definition gives three uses: a block, a link, and a tag. A section tagged =:note:=
+  exports as a =note= block around its own text, up to the next heading; the tag's
+  underscore-separated items form the main argument ---tags cannot hold spaces--- and the
+  section's properties supply keyword arguments by name. So all three of these agree:
+  #+begin_example
+#+begin_note "Heads up" :color red
+Mind the gap.
+#+end_note
+
+[[note:Heads up][Mind the gap.]]
+
+,* Why bother?        :note_Heads_up:
+:PROPERTIES:
+:COLOR: red
+:END:
+Mind the gap.
+  #+end_example
+  Likewise, the package's own blocks are links and tags too; e.g., =:details_Hint:= folds a
+  section's text away under the title /Hint/.
+
+  Should we not want all three, the options =:link nil= and =:tag nil= decline the link and
+  the tag, whereas =:block nil= keeps only the link and tag ---e.g.,
+  ~(org-defblock note (&optional (title "Note") :tag nil) …)~. The variable
+  ~org-defblock-links-and-tags~ sets whether blocks come with links and tags by default; its
+  documentation weighs the trade-off ---chiefly namespacing: every block claims the link type
+  =NAME:= and the tag =:NAME:=. For just a link, or just a tag, there are =org-deflink= and
+  =org-deftag=, below.
+
   /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
   and its default, followed by key-value pairs. The block above is then
   #+begin_src emacs-lisp
@@ -4215,6 +4246,89 @@ Mind the gap.
   #+end_src
 
   The full story is at =C-h o org-defblock=.
+
+** Make your own links with =org-deflink=
+  :PROPERTIES:
+  :CUSTOM_ID: Make-your-own-links
+  :END:
+
+  An Org link =[[NAME:label][description]]= is a function of its label and description;
+  so, we declare one as we would a ~cl-defun~, then say how it exports and how it looks
+  within Emacs.
+
+  #+begin_src emacs-lisp
+(org-deflink shout (label &optional description backend)
+  "Shout the description, else the label."
+  :face '(:weight bold :foreground "red")
+  :help-echo (format "I'll shout %s" (or description label))
+  :export (format (if (eq backend 'latex) "\\textbf{%s}" "<b>%s</b>")
+                  (upcase (or description label))))
+  #+end_src
+
+  Then =shout:hello= and =[[shout:hello][hey there]]= export as *HELLO* and *HEY THERE*.
+  The arglist names the label, description, and export backend, in that order; any may be
+  omitted from the end, and =(description "…")= gives a default. Besides =:export=, the
+  keys =:face=, =:help-echo=, =:follow=, =:keymap=, =:display= and =:let= customise the link
+  within Emacs; =C-h o org-deflink= has the details.
+
+  /Convenience:/ The arglist may be omitted, whence the anaphoric names ~o-label~,
+  ~o-description~ and ~o-backend~ are used instead:
+  #+begin_src emacs-lisp
+(org-deflink shout
+  "Shout the description, else the label."
+  :export (upcase (or o-description o-label)))
+  #+end_src
+
+** Tags are functions of Org sections: =org-deftag=
+  :PROPERTIES:
+  :CUSTOM_ID: tags-are-functions-of-org-sections
+  :END:
+
+  image:https://i.redd.it/rre5ggpx9jya1.png|100%|100%|center|Musa
+
+  Just as a special block is a function on a region of text, so too a tag is construable
+  as a function on an Org section ([[https://www.reddit.com/r/emacs/comments/13bdlck/tags_are_functions_of_org_sections_%E1%B4%97%D9%88/][Reddit post]]). By way of example, the following
+  renders any section tagged =:quote:= as a =<blockquote>=.
+
+  #+begin_src emacs-lisp
+(org-deftag quote (&optional (color "black") &key cite)
+  "HTML export a section as a <blockquote>, its text coloured COLOR, crediting CITE."
+  (insert "\n#+html:" (format "<blockquote style=\"color: %s\">" color))
+  (org-next-visible-heading 1)
+  (insert (if cite (format "\n#+html: <cite>%s</cite>" cite) "") "\n#+html: </blockquote>"))
+  #+end_src
+
+  As with ~cl-defun~, the =&optional= arguments are positional: the underscore-separated
+  items after the tag's name bind them in order. Any the tag omits are read from the
+  section's property of the same name, and then default. The =&key= arguments are read from
+  properties only ---handy for lots of named info.
+  #+begin_example
+,* Tags are functions of Org sections        :quote_blue:
+,* Tags are functions of Org sections        :quote:
+:PROPERTIES:
+:COLOR: blue
+:CITE: Musa
+:END:
+  #+end_example
+  When both the tag and a property give an argument, the tag wins.
+
+  /Convenience:/ The arglist may be flattened into name-default pairs, all positional;
+  ~(org-deftag quote (color "black") …)~ is the above, sans =cite=.
+
+  The body runs at export time, with point where the heading used to be ---it has been
+  erased, along with its property drawer, so we reinsert ~o-heading~ if we want it. The body may mention
+  + ~o-backend~ ---the export backend, such as =html= or =latex=;
+  + ~o-heading~ ---the heading's text, sans the tag;
+  + ~o-properties~ ---all of the section's properties, as a plist such as =(:color "blue")=; and
+  + ~o-drawer~ ---the erased property drawer, as text, should we want it back.
+
+  Sections without the tag are left untouched, property drawers and all.
+
+  Often, all we want is for a section to export as one of our special blocks; for that, we
+  need no tag of our own ---see the =:tag t= option of =org-defblock=, [[#Make-your-own-blocks][above]]. By way of
+  example, =:details_Hint:= folds a section's text away under the title /Hint/.
+
+  The full story is at =C-h o org-deftag=.
 
 ** =C-c C-c= for your own blocks
   :PROPERTIES:
@@ -4253,7 +4367,6 @@ Mind the gap.
 
   The dispatcher itself ---a single function on ~org-ctrl-c-ctrl-c-hook~--- lives in
   [[https://github.com/alhassy/org-special-block-extras/blob/master/org-ctrl-c-ctrl-c-for-special-block.el][org-ctrl-c-ctrl-c-for-special-block.el]].
-
 
 * COMMENT Colours
   :PROPERTIES:

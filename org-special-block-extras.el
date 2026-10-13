@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.4
+;; Version: 26.10.5
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -435,6 +435,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 (require 'org-parallel-block)
 (require 'org-defblock-misc)
 (require 'org-proof-block)
+(require 'org-deftag)
 
 
 

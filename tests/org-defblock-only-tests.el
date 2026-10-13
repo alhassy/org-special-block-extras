@@ -92,14 +92,13 @@ For example, upon LaTeX export, the Org special block
     "<p>
 Look:
 </p>
-<div class=\"highlight\" id=\"orgf9d49c1\">
+<div class=\"highlight\" id=\"org-id-1\">
 <p>
 Something <b><b>important</b></b> here.
 </p>
 
 </div>
 "
-    :modulo ("orgf9d49c1") ;; Randomly generated Org ID
     ))
 
 

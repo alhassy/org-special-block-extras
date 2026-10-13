@@ -85,6 +85,23 @@ This is a poor-man's `cl-letf'."
            (ignore-errors (eval u)))))))
 
 
+;;; Org's random ids, sanitised
+
+(defun org-test--sanitise-ids (s)
+  "S with each distinct random Org id renamed org-id-1, org-id-2, … in order of first appearance.
+
+  \"\\label{sec:orga8663a9} … href=\\\"#orga8663a9\\\" … sec:org06be54e\"
+  ↦ \"\\label{sec:org-id-1} … href=\\\"#org-id-1\\\" … sec:org-id-2\"
+
+An id is exactly \"org\" then 7 hex digits, as a whole word; so words such as \"organize\" are untouched."
+  (let ((ids nil))
+    (replace-regexp-in-string
+     "\\borg[0-9a-f]\\{7\\}\\b"
+     (lambda (id)
+       (unless (assoc id ids) (push (cons id (format "org-id-%d" (1+ (length ids)))) ids))
+       (cdr (assoc id ids)))
+     s t t)))
+
 (cl-defmacro exporting (string &key (to 'html) using equals modulo)
   "Assert that exporting STRING to backend TO equals EQUALS (optionally modulo MODULO).
 
@@ -129,13 +146,14 @@ See the associated deftest for more example uses.
               forms))
            (_ (error ":using must be a single (org-defblock[-only] …) or a list of them")))))
     ;; Build the runtime assertion form
-    (let* ((actual   `(org-export-string (lf-string ,string) ',to))
+    (let* ((actual   `(org-test--sanitise-ids (org-export-string (lf-string ,string) ',to)))
            (expected (if (not equals)
                          nil
                        (if (not modulo)
-                           `(lf-string ,equals)
+                           `(org-test--sanitise-ids (lf-string ,equals))
                          `(thread-last ,equals
                                        lf-string
+                                       org-test--sanitise-ids
                                        regexp-quote
                                        (s-replace-all
                                         ',(--map (cons it ".*")
@@ -166,6 +184,7 @@ See the associated deftest for more example uses.
   "Export INPUT via backend TO, assert result EQUALS.
 USING is a list of (org-defblock ...) forms installed temporarily.
 MODULO enables regex-based approximate matching.
+Org's random ids are renamed org-id-1, org-id-2, …, in both; see `org-test--sanitise-ids'.
 Comparison ignores trailing whitespace on each line, since editors strip it from EQUALS in the source."
   (let* ((trim (lambda (s) (replace-regexp-in-string "[ \t]+$" "" s)))
          ;; The expectations were recorded with this setting; batch Emacs defaults it to nil.
@@ -180,19 +199,19 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
          (actual (unwind-protect
                      (progn
                        (dolist (f defs) (eval f))
-                       (org-export-string (lf-string input) (or to 'html)))
+                       (org-test--sanitise-ids (org-export-string (lf-string input) (or to 'html))))
                    (dolist (u undefs)
-                     (ignore-errors (eval u))))))
+                     (ignore-errors (eval u)))))
+         (equals (org-test--sanitise-ids (lf-string equals))))
     (if modulo
         (let* ((modulos (if (listp modulo) modulo (list modulo)))
                (pattern (thread-last equals
-                          lf-string
                           (funcall trim)
                           regexp-quote
                           (s-replace-all (--map (cons it ".*") modulos))
                           (format "^%s$"))))
           (should (equal 0 (string-match-p pattern (funcall trim actual)))))
-      (should (equal (funcall trim actual) (funcall trim (lf-string equals)))))
+      (should (equal (funcall trim actual) (funcall trim equals))))
     (list :equals actual)))
 
 ;;; define-org-call-test — relational test fixture for handler calls

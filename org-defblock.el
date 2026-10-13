@@ -44,6 +44,7 @@
 (require 'seq)
 (require 'lf)
 (require 'org-special-block-indirect-edit)
+(require 'org-deftag)
 
 ;;;; Core
 ;;;;; defstruct org-special-block
@@ -197,6 +198,40 @@ pre-processing steps."
         tail
         "\n")))))
 
+;;;;; org-defblock-links-and-tags
+
+(defgroup org-special-block-extras nil
+  "Special blocks, links, and tags for Org, defined as one defines functions."
+  :group 'org
+  :prefix "org-")
+
+(defcustom org-defblock-links-and-tags t
+  "Whether each `org-defblock' also makes a link and a tag of the same name.
+
+With the default t, (org-defblock note …) gives three ways to use it:
+
+  #+begin_note \"Heads up\"           ;; the block
+  Mind the gap.
+  #+end_note
+
+  [[note:Heads up][Mind the gap.]]   ;; the link
+
+  * Mind the gap.  :note_Heads_up:   ;; the tag, on a section
+
+A block's own `:link' and `:tag' options override this; e.g., (org-defblock note
+(&optional title :tag nil) …).  Since blocks read this when they are defined, set
+it before loading `org-special-block-extras', whose own blocks are defined then.
+
+The costs are slight: per block, one function and one link type or export hook;
+and each export scans once for each tag, walking the headings only when the tag
+appears.  The real concern is namespacing: every block claims the link type
+NAME: and the tag :NAME:.  By way of example, the built-in colour blocks claim
+:red:, :blue:, … ; so, with this on, a section you have tagged :red: for your
+own reasons exports in red.  Set this to nil to make blocks only, then make
+links with `org-deflink' and tags with `org-deftag' just where wanted."
+  :type 'boolean
+  :group 'org-special-block-extras)
+
 ;;;;; org--rewrite-special-blocks-by-handlers
 
 (defvar org--supported-blocks nil
@@ -238,11 +273,17 @@ Note: This function mutates the current buffer."
   (&key style)                                                 ↦  (main-arg nil style nil)
 
 A block takes at most one positional argument ---its main argument--- so `&optional' binds at most one
-variable, and nothing may precede `&optional' or `&key'.  Options such as `:edit-indirect-mode org-mode'
-may follow `&key', and pass through untouched."
+variable, and nothing may precede `&optional' or `&key'.  Options such as `:tag t' may appear anywhere
+---argument names are never keywords--- and pass through untouched, at the end."
   (if (not (or (memq '&optional args) (memq '&key args)))
       args
-    (let* ((before   (seq-take-while (lambda (it) (not (memq it '(&optional &key)))) args))
+    (let* ((options  (cl-loop for (option value) on args
+                              when (keywordp option) append (list option value)))
+           (args     (let ((rest args) kept)
+                       (while rest
+                         (if (keywordp (car rest)) (setq rest (cddr rest)) (push (pop rest) kept)))
+                       (nreverse kept)))
+           (before   (seq-take-while (lambda (it) (not (memq it '(&optional &key)))) args))
            (optional (seq-take-while (lambda (it) (not (eq it '&key))) (cdr (memq '&optional args))))
            (keys     (cdr (memq '&key args)))
            (main     (car optional))
@@ -251,13 +292,52 @@ may follow `&key', and pass through untouched."
         (error "‘org-defblock’: nothing may precede &optional or &key, but saw %S" before))
       (when (cdr optional)
         (error "‘org-defblock’: a block takes at most one &optional (main) argument, but saw %S" optional))
-      (while keys
-        (let ((it (pop keys)))
-          (cond ((keywordp it) (push it flat) (push (pop keys) flat))
-                ((consp it)    (push (car it) flat) (push (cadr it) flat))
-                (t             (push it flat) (push nil flat)))))
+      (dolist (it keys)
+        (if (consp it)
+            (progn (push (car it) flat) (push (cadr it) flat))
+          (push it flat) (push nil flat)))
       (append (if (consp main) (list (car main) (cadr main)) (list (or main 'main-arg) nil))
-              (nreverse flat)))))
+              (nreverse flat)
+              options))))
+
+(defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend)
+  "Rewrite the section at point ---its heading line and DRAWER erased by `org-deftag'--- as HEADING atop a NAME block.
+
+  * Why bother? :details_Spoiler_alert:        * Why bother?
+  :PROPERTIES:                                 :PROPERTIES:
+  :COLOR: pink                          ↦      :COLOR: pink
+  :END:                                        :END:
+  Body text…                                   #+begin_details \"Spoiler alert\" :color \"pink\"
+                                               Body text…
+                                               #+end_details
+
+TAG-ARGS, joined by spaces, form the main argument, else the section's MAIN property; each of the
+KEYWORDS found among the section's PROPERTIES becomes a keyword argument.  Only the section's own text
+is wrapped, up to the next heading of any depth.
+
+The block is then at once replaced by the result of `org-block/NAME' for BACKEND; so a tag works even
+when NAME is not registered as a block, via `:block nil'.  Point ends after that result."
+  (let* ((property (lambda (key) (plist-get properties (intern (format ":%s" (downcase (symbol-name key)))))))
+         (main-arg (if tag-args (string-join tag-args " ") (funcall property main)))
+         (header (concat (if main-arg (format " %S" main-arg) "")
+                         (mapconcat (lambda (key) (-if-let (value (funcall property key)) (format " :%s %S" key value) ""))
+                                    keywords ""))))
+    ;; Restore the heading, and its property drawer, so the section keeps its properties; e.g., CUSTOM_ID.
+    (insert heading "\n" (or drawer ""))
+    (unless (bolp) (insert "\n"))
+    (let ((start (point)) (end (make-marker)))
+      (insert (format "#+begin_%s%s\n" name header))
+      (goto-char (if (re-search-forward org-outline-regexp-bol nil t) (match-beginning 0) (point-max)))
+      (unless (bolp) (insert "\n"))
+      (insert (format "#+end_%s" name))
+      (set-marker end (point))
+      (set-marker-insertion-type end t)
+      ;; Keep #+end_NAME on a line of its own, apart from any following heading.
+      (save-excursion (insert "\n"))
+      (goto-char start)
+      (org-eval-replace-block (org-special-block-after-point name) backend)
+      (goto-char end)
+      (set-marker end nil))))
 
 (defun org--plist-remove (plist key)
   "Return PLIST with KEY (and its associated value) removed."
@@ -305,6 +385,19 @@ declares main argument TITLE, defaulting to \"Details\", and
 keyword arguments COLOR and STYLE.  As a convenience, KWDS may
 instead be flattened into (main default key₀ value₀ … keyₙ valueₙ);
 the above is then (title \"Details\" color \"green\" style nil).
+
+KWDS may also carry options, which are not arguments:
++ `:block nil' declines block support: #+begin_NAME is left to Org, yet the
+  link and tag still work, through `org-block/NAME'.
++ `:link nil' declines the link type NAME:.
++ `:tag nil' declines the tag: otherwise a section tagged :NAME: exports as a
+  NAME block around its text; the tag's underscore-separated items form the
+  main argument, and the section's properties supply keyword arguments by
+  name.  E.g., \"* Stuck? :details_Hint:\" folds its text away under the
+  title Hint.  See `org--defblock-section-to-block'.
+  The link and tag default to `org-defblock-links-and-tags'; for just one of
+  them, see `org-deflink' and `org-deftag'.
++ `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -385,27 +478,45 @@ Three example uses:
     ;; The extraction helpers live in org-special-block-indirect-edit.el.
     (let* ((kwds      (org--defblock-desugar-args kwds))
            (edit-mode (org--indirect-edit-extract-mode kwds))
-           (kwds      (org--indirect-edit-strip-kwds kwds)))
+           (kwds      (org--indirect-edit-strip-kwds kwds))
+           ;; The block is on unless declined via `:block nil'; the link and tag follow
+           ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
+           (enabled?  (lambda (option) (cond ((plist-member kwds option) (plist-get kwds option))
+                                             ((eq option :block) t)
+                                             (t org-defblock-links-and-tags))))
+           (block?    (funcall enabled? :block))
+           (link?     (funcall enabled? :link))
+           (tag?      (funcall enabled? :tag))
+           (kwds      (org--plist-remove (org--plist-remove (org--plist-remove kwds :tag) :link) :block)))
       `(progn
          ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
          ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
          ;; that are around this `org-defblock' call.
-         (add-to-list 'org--supported-blocks ',name)
+         ,@(when block? `((add-to-list 'org--supported-blocks ',name)))
          (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
          (prog1
              (list
               (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
-              ;; ⇨ The link type support
-              (eval (backquote (org-deflink ,name
+              ;; ⇨ The link type support, unless declined via `:link nil'
+              (when ,link? (eval (backquote (org-deflink ,name
                                  ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
                                  ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
                                  (s-replace-regexp "@@" ""
-                                                   (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t))))))
+                                                   (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t)))))))
            ;; Make org-link/𝒮 have the same docs as org-block/𝒮
-           (put ',(intern (format "org-link/%s" name)) 'function-documentation
-                (documentation-property ',(intern (format "org-block/%s" name)) 'function-documentation)))
+           (when ,link?
+             (put ',(intern (format "org-link/%s" name)) 'function-documentation
+                  (documentation-property ',(intern (format "org-block/%s" name)) 'function-documentation))))
          ;; ⇨ Auto-generate C-c ' handler when :edit-indirect-mode is specified.
-         (org-defblock-setup-indirect-edit ,name ,edit-mode)))))
+         (org-defblock-setup-indirect-edit ,name ,edit-mode)
+         ;; ⇨ The tag, unless declined via `:tag nil': a section tagged :NAME: exports as a NAME block around its text.
+         ,@(when tag?
+             `((org-deftag ,name ()
+                 ,(format "Export each section tagged :%s: as a %s block around its text; see `org-defblock'." name name)
+                 (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
+                                                 ',(or (car kwds) 'main-arg)
+                                                 ',(mapcar #'car (-partition 2 (cddr kwds)))
+                                                 o-backend))))))))
 
 
 ;; WHERE ...
@@ -601,6 +712,8 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
           (fmakunbound  ',(intern (format "org-link/%s" name)))
+          (remove-hook 'org-export-before-parsing-hook #',(intern (format "org-deftag/%s" name)))
+          (fmakunbound ',(intern (format "org-deftag/%s" name)))
           (-when-let (link-params (org-link-set-parameters ,(format "%s" name)))
             (--each '(:export :face :follow :display :keymap :help-echo)
               (setf (plist-get link-params it) nil)))
