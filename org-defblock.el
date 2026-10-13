@@ -335,7 +335,8 @@ when NAME is not registered as a block, via `:block nil'.  Point ends after that
       ;; Keep #+end_NAME on a line of its own, apart from any following heading.
       (save-excursion (insert "\n"))
       (goto-char start)
-      (org-eval-replace-block (org-special-block-after-point name) backend)
+      ;; As in `org--rewrite-special-blocks-by-handlers': blocks render for backends derived from html or latex.
+      (org-eval-replace-block (org-special-block-after-point name) (org--base-backend backend))
       (goto-char end)
       (set-marker end nil))))
 

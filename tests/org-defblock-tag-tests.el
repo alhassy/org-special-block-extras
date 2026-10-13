@@ -180,5 +180,15 @@ Try induction.
 </div>
 ")
 
+(ert-deftest org-defblock-tag-renders-for-derived-backends ()
+  "A tagged section exports as its block under a backend derived from html, not as an ignored export block."
+  (org-export-define-derived-backend 'org-test-derived-html 'html)
+  (org-defblock shout (&optional (title "Shout") :tag t)
+    "Wrap CONTENTS in a <shout> element."
+    (format "<shout>%s</shout>" contents))
+  (unwind-protect
+      (should (string-match-p "<shout>" (org-export-string-as "* Hi :shout:\nBody" 'org-test-derived-html t)))
+    (org-undefblock shout)))
+
 (provide 'org-defblock-tag-tests)
 ;;; org-defblock-tag-tests.el ends here
