@@ -36,7 +36,18 @@
 (require 'dash)
 (require 'cl-lib)
 (require 'org)
+(require 'ox)
 (require 'lf)
+
+(defun org--base-backend (backend)
+  "BACKEND ↦ `html' or `latex' when it is, or derives from, one of them; else BACKEND.
+
+Block and link bodies compare (equal backend 'html); normalising once, here,
+lets a derived backend (say, a blog's `org-export-define-derived-backend' of
+`html') get the HTML rendering without every body learning about derivation."
+  (cond ((org-export-derived-backend-p backend 'html) 'html)
+        ((org-export-derived-backend-p backend 'latex) 'latex)
+        (t backend)))
 
 ;;;;; org-deflink
 
@@ -279,7 +290,8 @@ flat top-level plist with no enclosing vector:
            ;; new function documentation
            ,docstring
            ;; function body
-           (let* ,lets ,@body))
+           (let ((o-backend (org--base-backend o-backend)))
+             (let* ,lets ,@body)))
          ;; Construct the Org-link
          (org-link-set-parameters
           ,(format "%s" name)

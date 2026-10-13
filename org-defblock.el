@@ -77,7 +77,7 @@ For example,
            (message \"Block %s with arg %s\" name main-arg)))
 
 "
-  `(progn (assert (org-special-block-p ,source))
+  `(progn (cl-assert (org-special-block-p ,source))
           (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source)))
 
 
@@ -146,7 +146,7 @@ Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
 
 Each special block can include:
 - A *main argument*: The first (optional) positional argument after the block name.
-- *Keyword arguments*: Zero or more ":key value" pairs.
+- *Keyword arguments*: Zero or more \":key value\" pairs.
 - A *body*: The content between the begin and end block markers.
 
 The corresponding handler function must be named `org-block/NAME' with signature:
@@ -221,7 +221,8 @@ BACKEND is a symbol representing the current export backend (e.g. 'html, 'latex)
 and is bound globally to `org--current-backend' for use by block handlers.
 
 Note: This function mutates the current buffer."
-  (setq org--current-backend backend)
+  (setq backend (org--base-backend backend)
+        org--current-backend backend)
   (cl-loop for blk in org--supported-blocks
            do (goto-char (point-min))
            (while (ignore-errors (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk)))
