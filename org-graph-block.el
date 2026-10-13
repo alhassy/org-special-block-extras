@@ -1154,7 +1154,8 @@ Example:
              ;; dot unavailable — emit the raw dot source in a <pre>
              (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot))))))
       (_
-       (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot)))))
+       ;; `org-parse' lets Org export the src block, rather than emit its raw syntax into the output.
+       (org-parse (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

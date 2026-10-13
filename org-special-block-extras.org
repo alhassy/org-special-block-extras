@@ -54,6 +54,7 @@ html-export-style:solarized_light
 (setq org-export-with-broken-links nil)
 (setq org-export-with-broken-links t)
 (load-file "./org-special-block-extras.el")
+(load-file "./org-graph-block.el")
 
 (defun osbe--example (name)
   "NAME ↦ plist (:input … :html … :latex …) of its `define-org-example-test' in tests/examples/NAME.el."
@@ -81,7 +82,11 @@ html-export-style:solarized_light
          (panel (lambda (colour body) (format "<div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>" (org-subtle-colors colour) body))))
     (format "<div>%s %s</div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
             (funcall panel "lime" (format "%s <pre class=\"src src-org\">%s</pre>" (funcall title "What You Write") (s-trim (plist-get example :input))))
-            (funcall panel "peach" (format "%s %s" (funcall title "What You Get") (plist-get example :html)))
+            (funcall panel "peach" (format "%s %s" (funcall title "What You Get")
+                                           ;; `:live' examples are exported now, not snapshotted; see tests/org-examples.el.
+                                           (if (eq (plist-get example :html) :live)
+                                               (org-export-string-as (plist-get example :input) 'html t)
+                                             (plist-get example :html))))
             (org-subtle-colors "custard")
             (org-export-string-as (format "\n#+begin_src emacs-lisp\n%s\n#+end_src\n" (osbe--definition name)) 'html t))))
 
@@ -3462,6 +3467,7 @@ LaTeX!
   | =org-demo=          | Show Org markup alongside its rendered result --- ideal for tutorials.                |
   | =latex-definitions= | Hide LaTeX-only declarations from HTML --- keep your source clean.                    |
   | =calc=              | Step-by-step equational reasoning --- beautiful for math walkthroughs.                |
+  | =graph=             | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
   # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
 
@@ -4157,7 +4163,58 @@ from∘to m = {! try it! }
   displaying such extra whitespace in the resulting HTML.
 
   osbe-example:latex-definitions
-  
+
+** Graphs ---/Org lists, drawn by Graphviz/
+  :PROPERTIES:
+  :CUSTOM_ID: Graphs
+  :END:
+
+  osbe-example:graph
+
+  The [[doc:org-block/graph][graph]] block lives in its own file, so we load it separately with
+  ~(require 'org-graph-block)~. Rendering needs the =dot= executable from [[https://graphviz.org][Graphviz]]:
+  HTML export embeds a PNG ---or an inline SVG, with tooltips intact, via =:svg t=--- whereas
+  other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
+  tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
+
+** =C-c C-c= for your own blocks
+  :PROPERTIES:
+  :CUSTOM_ID: C-c-C-c-for-your-own-blocks
+  :END:
+
+  Org's =C-c C-c= does the obvious thing at point: it runs a src block, ticks a checkbox,
+  recalculates a table. Our special blocks may join in; one call gives every
+  =#+begin_NAME= … =#+end_NAME= block a =C-c C-c= action.
+
+  #+begin_src emacs-lisp
+(org-defblock shout () "Upcase the contents." (upcase contents))
+
+(org-defblock-add-cc-handler "shout"
+  (lambda ()
+    (message "C-c C-c inside a shout block!")
+    t)) ;; Non-nil claims the keypress, so Org does nothing else with it.
+  #+end_src
+
+  The handler takes no arguments and runs with point inside the block. To see the block
+  itself, we jump to its =#+begin_shout= line and call ~org-special-block-after-point~,
+  which yields the block's name, main argument, keyword arguments, contents and extent.
+
+  For a complete worked example, we may mimic the [[doc:org-block/graph][graph]] block's handler,
+  [[https://github.com/alhassy/org-special-block-extras/blob/master/org-graph-block.el][org-graph--cc-handler]]. It
+  + finds its block via ~(re-search-backward "^[ \t]*#\\+begin_graph\\b")~ then ~(org-special-block-after-point "graph")~;
+  + reads the block's keyword arguments, so =#+begin_graph :C-c_C-c dot= changes what =C-c C-c= does;
+  + honours =C-u= via ~current-prefix-arg~ ---showing the dot source rather than rendering a PNG;
+  + inserts a =#+RESULTS:= section after =#+end_graph=, just as src blocks do; and
+  + returns =t=, claiming the keypress.
+
+  It is registered with a one-liner at the end of =org-graph-block.el=:
+  #+begin_src emacs-lisp
+(org-defblock-add-cc-handler "graph" #'org-graph--cc-handler)
+  #+end_src
+
+  The dispatcher itself ---a single function on ~org-ctrl-c-ctrl-c-hook~--- lives in
+  [[https://github.com/alhassy/org-special-block-extras/blob/master/org-ctrl-c-ctrl-c-for-special-block.el][org-ctrl-c-ctrl-c-for-special-block.el]].
+
 
 * COMMENT Colours
   :PROPERTIES:

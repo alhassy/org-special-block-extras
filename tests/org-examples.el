@@ -2,6 +2,8 @@
 
 ;; `C-u C-x C-e' on any `define-org-example-test' refreshes its `:html' and `:latex' snapshots,
 ;; and `osbe-example:NAME' in `org-special-block-extras.org' renders NAME's `:input' beside its `:html'.
+;; An `:html' of `:live' is never snapshotted, only exported when the docs render; e.g., the `graph'
+;; block's HTML embeds a Graphviz-rendered image, which varies by machine and needs Graphviz installed.
 
 (require 'ert)
 (require 'org)
@@ -9,6 +11,7 @@
 
 (load-file (expand-file-name "~/snap/snap.el"))
 (load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
+(load-file (expand-file-name "~/org-special-block-extras/org-graph-block.el"))
 (org-special-block-extras-mode 1)
 
 (defun org-example--export (input backend)
@@ -24,10 +27,10 @@
   (downcase (replace-regexp-in-string "[ \t\n\r]+" "" s)))
 
 (snap-define-relation org-example (input html latex)
-  "Org INPUT exports to HTML and LATEX, modulo whitespace and case; a nil expectation goes unchecked."
-  (let ((html* (org-example--export input 'html))
+  "Org INPUT exports to HTML and LATEX, modulo whitespace and case; a nil or `:live' expectation goes unchecked."
+  (let ((html* (if (eq html :live) :live (org-example--export input 'html)))
         (latex* (org-example--export input 'latex)))
-    (when html (should (equal (org-example--normalise html) (org-example--normalise html*))))
+    (when (stringp html) (should (equal (org-example--normalise html) (org-example--normalise html*))))
     (when latex (should (equal (org-example--normalise latex) (org-example--normalise latex*))))
     (list :html html* :latex latex*)))
 
