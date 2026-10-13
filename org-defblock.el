@@ -237,6 +237,12 @@ Note: This function mutates the current buffer."
            unless (eq k key)
            append (list k v)))
 
+(defvar org--block--link-display nil
+  "Association list of block name symbols to link display vectors.
+
+Top-level, not inside `org-defblock': expansions read it when a byte-compiled
+file loads, long after the macro body (and any defvar there) ran at compile time.")
+
 (cl-defmacro org-defblock
     (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of `defun'.
@@ -333,10 +339,6 @@ Three example uses:
     ;; ⟨★⟩ Unlike 0, examples 1 and 2 will have the default SIGNOFF
     ;; catenated as well as the default red color."
   (declare (indent defun))
-
-  ;; TODO: Relocate
-  (defvar org--block--link-display nil
-    "Association list of block name symbols to link display vectors.")
 
   (cl-destructuring-bind (link-display docstring body)
       (lf-extract-optionals-from-rest link-display #'vectorp
