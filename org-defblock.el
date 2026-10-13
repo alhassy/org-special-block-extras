@@ -43,6 +43,7 @@
 (require 'ox-html)
 (require 'seq)
 (require 'lf)
+(require 'org-special-block-indirect-edit)
 
 ;;;; Core
 ;;;;; defstruct org-special-block
@@ -229,6 +230,12 @@ Note: This function mutates the current buffer."
 
 ;;;;; org-defblock
 
+(defun org--plist-remove (plist key)
+  "Return PLIST with KEY (and its associated value) removed."
+  (cl-loop for (k v) on plist by #'cddr
+           unless (eq k key)
+           append (list k v)))
+
 (cl-defmacro org-defblock
     (name kwds &optional link-display docstring &rest body)
   "Declare a new special block, and link, in the style of `defun'.
@@ -334,25 +341,30 @@ Three example uses:
       (lf-extract-optionals-from-rest link-display #'vectorp
                                       docstring    #'stringp
                                       body)
-    `(progn
-       ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
-       ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
-       ;; that are around this `org-defblock' call.
-       (add-to-list 'org--supported-blocks ',name)
-       (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
-       (prog1
-           (list
-            (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
-            ;; ⇨ The link type support
-            (eval (backquote (org-deflink ,name
-                               ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
-                               ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
-                               (s-replace-regexp "@@" ""
-                                                 (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t))))))
-         ;; Make org-link/𝒮 have the same docs as org-block/𝒮
-         (put ',(intern (format "org-link/%s" name)) 'function-documentation
-              (documentation-property ',(intern (format "org-block/%s" name)) 'function-documentation))
-         ))))
+    ;; Pull :edit-indirect-mode out of kwds — it's a macro keyword, not a block header arg.
+    ;; The extraction helpers live in org-special-block-indirect-edit.el.
+    (let* ((edit-mode (org--indirect-edit-extract-mode kwds))
+           (kwds      (org--indirect-edit-strip-kwds kwds)))
+      `(progn
+         ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
+         ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
+         ;; that are around this `org-defblock' call.
+         (add-to-list 'org--supported-blocks ',name)
+         (when ,(not (null link-display)) (push (cons (quote ,name) ,link-display) org--block--link-display))
+         (prog1
+             (list
+              (eval (backquote (org-defblock-only ,name ,kwds ,docstring ,@body)))
+              ;; ⇨ The link type support
+              (eval (backquote (org-deflink ,name
+                                 ,(vconcat `[:help-echo (format "%s:%s\n\n%s" (quote ,name) o-label ,docstring)] (or link-display (cdr (assoc name org--block--link-display))))
+                                 ;; s-replace-all `((,(format "@@%s:" backend) . "") ("#+end_export" . "") (,(format "#+begin_export %s" backend) . ""))
+                                 (s-replace-regexp "@@" ""
+                                                   (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label :contents-occur-as-link-description t))))))
+           ;; Make org-link/𝒮 have the same docs as org-block/𝒮
+           (put ',(intern (format "org-link/%s" name)) 'function-documentation
+                (documentation-property ',(intern (format "org-block/%s" name)) 'function-documentation)))
+         ;; ⇨ Auto-generate C-c ' handler when :edit-indirect-mode is specified.
+         (org-defblock-setup-indirect-edit ,name ,edit-mode)))))
 
 
 ;; WHERE ...
@@ -667,6 +679,8 @@ The intent is that the block types are fontified using the given language name."
        :around (lambda (fontify &rest args)
                       (cl-letf (((symbol-function 'match-string) #'osbe--match-string))
                         (apply fontify args))))
+
+(require 'org-ctrl-c-ctrl-c-for-special-block)
 
 (provide 'org-defblock)
 ;;; org-defblock.el ends here
