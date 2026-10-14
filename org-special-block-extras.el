@@ -3,8 +3,8 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.5
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
+;; Version: 26.10.6
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -27,7 +27,7 @@
 ;; This library provides common desirable features using the Org interface for
 ;; blocks and links:
 ;;
-;; 0. A unified interface, the ‘defblock’ macro, for making new block and link types.
+;; 0. A unified interface, the `org-defblock' macro, for making new block and link types.
 ;;
 ;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
 ;;  easily extendable; below is an example.
@@ -96,12 +96,11 @@
 ;; their combination in the method `org-defblock'.
 ;;
 ;; 5. [Improvement] Converse to ♯4, users may have swashes of text and it can be
-;; awkward to phrase them in a large special block. As such, a future
-;; improvement (already initiated) is to introduce `org-deftag' so that users
-;; can write “* my section :my_block: \n contents” instead of “#+begin_my_block
-;; \n contents \n #+end_block”. Then, for convenience, we can incorporate this
-;; into `org-defblock'. Then, for instance, users may simplify tag a section
-;; “:details:” to have it export to HTML folded away in a <details> element.
+;; awkward to phrase them in a large special block. As such, `org-deftag' lets
+;; users write “* my section :my_block: \n contents” instead of
+;; “#+begin_my_block \n contents \n #+end_block”; `org-defblock' declares such a
+;; tag for each block, unless given “:tag nil”.  For instance, tagging a section
+;; “:details:” exports it to HTML folded away in a <details> element.
 ;;
 ;; 6. [Implementation Overview] Special blocks “#+begin_foo ⟨args⟩ \n ⟨contents⟩
 ;; \n #+end_foo” are captured by the structure `org-special-block', which is
@@ -112,12 +111,11 @@
 ;; should be rewritten and what should not be re-written, the global variable
 ;; `org--supported-blocks' maintains all names introduced by `org-defblock'.
 ;;
-;; 7. [Code Organisation] The code is organised into sections using
-;; `outshine-mode'.  Section “Core” contains `org-defblock' and its
-;; associates. Section “Derived” contains the definitions of what we think are
-;; common desirable special blocks, such as kbd as a nice way to render
-;; keystrokes or doc as a way to attach tooltip/footnote documentation to
-;; phrases.
+;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
+;; live in a file of their name.  The blocks and links built atop them live in
+;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el,
+;; org-parallel-block.el, org-proof-block.el, org-graph-block.el, and
+;; org-defblock-misc.el; this file requires them all and defines the mode.
 ;;
 ;;
 ;; 🤔 Did you think “That was all straightforward, why even bother writing it down?”
@@ -232,49 +230,17 @@
 ;;
 ;;
 
-;;; Commentary:
-
-;; This library provides common desirable features using the Org interface for
-;; blocks and links:
-;;
-;; 0. A unified interface, the ‘defblock’ macro, for making new block and link types.
-;;
-;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
-;;  easily extendable; below is an example.
-;;
-;;             #+begin_red org
-;;             /This/
-;;                   *text*
-;;                          _is_
-;;                               red!
-;;             #+end_red
-;;
-;; 2. Multiple columns: Regions of text are exported into multiple side-by-side
-;; columns
-;;
-;; 3. Remarks: First-class visible editor comments
-;;
-;; 4. Details: Regions of text can be folded away in HTML
-;;
-;; 5. Badges: SVG badges have the pleasant syntax
-;; badge:key|value|colour|url|logo; only the first two are necessary.
-;;
-;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
-;; documentation-backend, including user-defined entries; e.g., doc:thread-first
-;; retrives the documentation for thread-first and attachs it as a tooltip to
-;; the text in the HTML export and as a glossary entry in the LaTeX export
-;;
-;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
-;;
-;; This file has been tangled from a literate, org-mode, file; and so contains
-;; further examples demonstrating the special blocks it introduces.
-;;
-;; Full documentation can be found at
-;; https://alhassy.github.io/org-special-block-extras
-
 ;;; Code:
 
 (require 'org-defblock)
+(require 'org-links)
+(require 'org-color-links)
+(require 'org-details-block)
+(require 'org-box-block)
+(require 'org-parallel-block)
+(require 'org-defblock-misc)
+(require 'org-proof-block)
+(require 'org-deftag)
 
 ;;;;; Version
 
@@ -295,38 +261,14 @@ Since the extra stuff is for beautiful tooltips or styles,
 for ease of use, the default behaviour is to use such
 “untrusted data from untrusted websites”.
 
-To avoid such behaviour, set this variable to `nil'.")
+To avoid such behaviour, set this variable to `nil'."
+  :type 'boolean
+  :group 'org-special-block-extras)
 
-;;;###autoload
-(define-minor-mode org-special-block-extras-mode
-  "Provide 30 new custom blocks & 34 link types for Org-mode.
+;;;;; HTML head extras
 
-All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
-
-This minor mode uses “untrusted data from untrusted websites” when exporting
-to HTML, this is done for beautiful tooltips or styles.
-Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
-"
-  :lighter " OSPE"
-  (if org-special-block-extras-mode
-      (progn
- ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
-        (add-hook 'org-export-before-parsing-hook 'org--rewrite-special-blocks-by-handlers)
-        (setq org-export-allow-bind-keywords t)
-        (defvar org--ospe-kbd-html-setup nil
-          "Has the necessary keyboard styling HTML beeen added?")
-
-        ;; Append kbd styling to `org-html-head-extra' exactly once per
-        ;; Emacs session.  The setup-guard and the injection must be
-        ;; nested — previously they were siblings, so the injection
-        ;; fired on every mode activation and batch exports accumulated
-        ;; N copies of the <style> block in every page's <head>.
-        (unless org--ospe-kbd-html-setup
-          (setq org--ospe-kbd-html-setup t)
-          (when org-special-block-add-html-extra
-            (setq org-html-head-extra
-                  (concat org-html-head-extra
-                          "
+(defconst org--kbd-html-head
+  "
           <style>
           /* From: https://endlessparentheses.com/public/css/endless.css */
           /* See also: https://meta.superuser.com/questions/4788/css-for-the-new-kbd-style */
@@ -353,24 +295,11 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 
             box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
           }
-          </style>"))))
-        ;; Ensure user's documentation libraries have loaded
-        (unless org--docs-from-libraries
-          (org-docs-load-libraries))
-        (defvar org--tooltip-html-setup nil
-          "Has the necessary HTML beeen added?")
+          </style>"
+  "Styling for <kbd> elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
 
-        ;; Append tooltipster CSS/JS to `org-html-head-extra' exactly
-        ;; once per Emacs session.  Nest the injection inside the
-        ;; setup-guard — previously siblings, so every activation
-        ;; stacked a duplicate copy in every subsequent page's <head>
-        ;; during batch exports.
-        (unless org--tooltip-html-setup
-          (setq org--tooltip-html-setup t)
-          (when org-special-block-add-html-extra
-            (setq org-html-head-extra
-                  (concat org-html-head-extra
-                          "
+(defconst org--tooltip-html-head
+  "
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
 
           <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
@@ -410,34 +339,62 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
                         color:red;
                         text-decoration: none;}
           </style>
-          "))))
-        (defvar org--docs-empty! (list nil t)
-          "An indicator of when glossary entries should be erased.
+          "
+  "Tooltipster CSS/JS for “.tooltip” elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
 
-        We erase the glossary not on the first export, but on the second export.
-        The first export collects all citations, which are used in the second export.")
-        (setcdr (last org--docs-empty!) org--docs-empty!) ;; It's an infinite cyclic list.
+;;;;; Glossary reset
 
-        ;; Actual used glossary entries depends on the buffer; so clean up after each export
-        (advice-add #'org-export-dispatch
-                    :after (lambda (&rest _)
-                             (when (pop org--docs-empty!)
-                               (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
-                                     org--docs nil))))           ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
-        ) ;; Must be on a new line; I'm using noweb-refs
-    (remove-hook 'org-export-before-parsing-hook 'org--rewrite-special-blocks-by-handlers)
-    )) ;; Must be on a new line; I'm using noweb-refs
+(defvar org--docs-reset-next nil
+  "Whether the next `org-export-dispatch' clears the glossary; it alternates, so every second export does.
 
-(require 'org-links)
-(require 'org-color-links)
-(require 'org-details-block)
-(require 'org-box-block)
-(require 'org-parallel-block)
-(require 'org-defblock-misc)
-(require 'org-proof-block)
-(require 'org-deftag)
+We erase the glossary not on the first export, but on the second export.
+The first export collects all citations, which are used in the second export.")
 
+(defun org--docs-maybe-reset (&rest _)
+  "Every second call, forget the glossary entries the current buffer used and defined."
+  (when (setq org--docs-reset-next (not org--docs-reset-next))
+    (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
+          org--docs nil)))            ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
 
+(defvar org--docs-libraries-loaded nil
+  "Whether `org-special-block-extras-mode' has loaded `org-docs-libraries' this session.")
+
+;;;;; The mode
+
+;;;###autoload
+(define-minor-mode org-special-block-extras-mode
+  "Provide 30 new custom blocks & 34 link types for Org-mode.
+
+All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
+
+This minor mode uses “untrusted data from untrusted websites” when exporting
+to HTML, this is done for beautiful tooltips or styles.
+Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
+"
+  :global t
+  :group 'org-special-block-extras
+  :lighter " OSPE"
+  (if org-special-block-extras-mode
+      (progn
+        ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
+        (add-hook 'org-export-before-parsing-hook #'org--rewrite-special-blocks-by-handlers)
+        (add-hook 'org-export-before-processing-hook #'org--html-export-style-setup)
+        (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
+        (advice-add 'org-export-dispatch :after #'org--docs-maybe-reset)
+        (setq org-export-allow-bind-keywords t)
+        ;; Appended once: the head itself records whether a snippet is already there.
+        (when org-special-block-add-html-extra
+          (dolist (head (list org--kbd-html-head org--tooltip-html-head))
+            (unless (s-contains? head org-html-head-extra)
+              (setq org-html-head-extra (concat org-html-head-extra head)))))
+        ;; Ensure user's documentation libraries have loaded
+        (unless org--docs-libraries-loaded
+          (setq org--docs-libraries-loaded t)
+          (org-docs-load-libraries)))
+    (remove-hook 'org-export-before-parsing-hook #'org--rewrite-special-blocks-by-handlers)
+    (remove-hook 'org-export-before-processing-hook #'org--html-export-style-setup)
+    (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
+    (advice-remove 'org-export-dispatch #'org--docs-maybe-reset)))
 
 (provide 'org-special-block-extras)
 

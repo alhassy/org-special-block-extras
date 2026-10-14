@@ -80,5 +80,16 @@ body
 ]
 ")
 
+(deftest "org-defblock's :link [DISPLAY] gives the link that display, in every arglist style"
+  (using ((org-defblock opt-face-cl (&optional x :link [:face '(:foreground "red")]) "Echo X." x)
+          (org-defblock opt-face-flat (x nil :link [:face '(:foreground "red")]) "Echo X." x)
+          (org-defblock opt-face-none (:link [:face '(:foreground "red")]) "Echo." contents))
+    (dolist (name '("opt-face-cl" "opt-face-flat" "opt-face-none"))
+      (should (equal (funcall (org-link-get-parameter name :face) "label") '(:foreground "red"))))))
+
+(deftest "org-defblock rejects the retired display vector after KWDS, naming the :link option instead"
+  (should (string-match-p ":link \\[:face"
+                          (cadr (should-error (macroexpand '(org-defblock opt-old () [:face bold] "Doc." contents)))))))
+
 (provide 'org-defblock-options-tests)
 ;;; org-defblock-options-tests.el ends here

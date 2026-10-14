@@ -101,5 +101,25 @@
   :call (org--deflink-arglist-p '(identity o-label) '((upcase o-label)))
   :returns nil)
 
+;;; Within Emacs: tooltips and navigation
+
+(deftest "org-deflink's default tooltip shows a bracket link's description, leaving the kill ring alone"
+  (with-temp-buffer
+    (org-mode)
+    (insert "See [[test-arg-shout:hi][hey there]].")
+    (let ((kill-ring nil)
+          (position (progn (goto-char (point-min)) (search-forward "hey") (point))))
+      (should (s-contains-p "hey there" (funcall (org-link-get-parameter "test-arg-shout" :help-echo) nil nil position)))
+      (should (null kill-ring)))))
+
+(deftest "org-this-link-next skips text that merely ends with the link's type"
+  (with-temp-buffer
+    (org-mode)
+    (insert "[[test-arg-shout:a]], then xtest-arg-shout:no, then [[test-arg-shout:yes]]")
+    (goto-char 3)
+    (should (equal (org-link-at-point) "test-arg-shout:"))
+    (org-this-link-next)
+    (should (looking-at "yes"))))
+
 (provide 'org-deflink-tests)
 ;;; org-deflink-tests.el ends here

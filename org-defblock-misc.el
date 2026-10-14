@@ -26,6 +26,7 @@
 (require 'org-links)  ;; for org-ospe-html-export-preserving-whitespace
 (require 'org-box-block)    ;; solution uses box
 (require 'org-details-block) ;; solution uses details
+(require 'org-parallel-block) ;; org-demo uses parallel
 
 ;;;;;; Margin (LaTeX)
 
@@ -33,10 +34,10 @@
               (marker nil
                       color "gray!80"
                       counter "footnote"
-                      width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex")
-              ;; Width: https://tex.stackexchange.com/a/101861/69371
-              (vector :display 'full
-                      :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange"))
+                      ;; Width: https://tex.stackexchange.com/a/101861/69371
+                      width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex"
+                      :link [:display 'full
+                             :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
               "Produce an HTML tooltip or a LaTeX margin note.
 
 The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
@@ -52,7 +53,7 @@ resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
 
 ----------------------------------------------------------------------
 
-WIDTH, COUNTER, and COLOR are LaTeX specfic.
+WIDTH, COUNTER, and COLOR are LaTeX specific.
 
 When no label, marker, is used for a marginal note, we rely
 on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
@@ -61,7 +62,7 @@ Users hover over it to read the marginal note.
 
 Marginal notes have their labels, markers, in black
 and the notes themselves have COLOR being grey!80.
-In Emacs, margin links appear grey with an orange tinted boarder.
+In Emacs, margin links appear grey with an orange tinted border.
 
 Regarding LaTeX, since verbatim environments do not in general work well
 as arguments to other commands, such as ‘\\marginpar’, we save the contents
@@ -110,16 +111,14 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                                 "\n\\end{tabular}}")
                              (s-trim contents))
                            stepcounter))
-                  (_ (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                             (org-ospe-html-export-preserving-whitespace contents)
-                             marker)))))
+                  ;; HTML has no margin per se, so the note is a tooltip on its marker.
+                  (_ (concat (org--html-tooltip (org-ospe-html-export-preserving-whitespace contents) (or marker "∘"))
+                             "&emsp13;")))))
 
 ;;;;;; Tooltip (HTML)
 (org-defblock tooltip (marker "°")
               "Produce an HTML tooltip."
-              (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>&emsp13;"
-                      (org-ospe-html-export-preserving-whitespace contents)
-                      marker))
+              (concat (org--html-tooltip (org-ospe-html-export-preserving-whitespace contents) marker) "&emsp13;"))
 
 (org-defblock latex-definitions nil
               "Declare but do not display the CONTENTS according to the BACKEND."
@@ -203,16 +202,15 @@ in the footnotes."
                    (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
                    "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
                    contents)
-                (-let [id (gensym)]
+                ;; The styling depends only on COLOR, so a class per colour serves every spoiler of that colour.
+                (-let [class (format "spoiler-%s" color)]
                   (concat
                    ;; In HTML, a ‘style’ can be, technically, almost anywhere...
-                   (format
-                    "<style> #%s {color: %s; background-color:%s;}
-       #%s:hover {color: black; background-color:white;} </style>
-       " id color color id)
+                   (format "<style> .%s {color: %s; background-color:%s;} .%s:hover {color: black; background-color:white;} </style>\n"
+                           class color color class)
                    (s-replace-regexp
                     (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
-                    (format "@@html:<span id=\"%s\"> \\1 </span>@@" id)
+                    (format "@@html:<span class=\"%s\"> \\1 </span>@@" class)
                     contents)))))
 
 ;;;;;; Remark
@@ -221,62 +219,61 @@ in the footnotes."
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-              (editor "Editor Remark" color "black" signoff "" strong nil)
-                                        ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
-              [:face '(:foreground "red" :weight bold)]
-              "Format CONTENTS as an first-class editor comment according to BACKEND.
+              (editor "Editor Remark" color "black" signoff "" strong nil
+                      :link [:face '(:foreground "red" :weight bold)])
+              "Format CONTENTS as a first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
 with having only ‘#+replacewith:’, then the text preceding this
 clause should be replaced by the text after it; i.e., this is
-what the EDITOR (the person editing) intends and so we fromat the
-replacement instruction (to the authour) as such.
+what the EDITOR (the person editing) intends and so we format the
+replacement instruction (to the author) as such.
 
 In Emacs, as links, editor remarks are shown with a bold red; but
 the exported COLOR of a remark is black by default and it is not
 STRONG ---i.e., bold---. There is an optional SIGNOFF message
 that is appended to the remark.
 "
-              (-let* (;; Are we in the html backend?
-                      (tex? (equal backend 'latex))
+              (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
+              (if org-hide-editor-comments
+                  ""
+                (-let* (;; Are we in the html backend?
+                        (tex? (equal backend 'latex))
 
-                      ;; fancy display style
-                      (boxed (lambda (x)
-                               (if tex?
-                                   (concat "\\fbox{\\bf " x "}")
-                                 (concat "<span style=\"border-width:1px"
-                                         ";border-style:solid;padding:5px\">"
-                                         "<strong>" x "</strong></span>"))))
+                        ;; fancy display style
+                        (boxed (lambda (x)
+                                 (if tex?
+                                     (concat "\\fbox{\\bf " x "}")
+                                   (concat "<span style=\"border-width:1px"
+                                           ";border-style:solid;padding:5px\">"
+                                           "<strong>" x "</strong></span>"))))
 
-                      ;; Is this a replacement clause?
-                      ((this that) (s-split "\\#\\+replacewith:" contents))
-                      (replacement-clause? that) ;; There is a ‘that’
-                      (replace-keyword (if tex?
-                                           "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
-                      (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
-                                           ))
-                      (editor (format "[%s:%s" editor
-                                      (if replacement-clause?
-                                          replace-keyword
-                                        "")))
-                      (contents′ (if replacement-clause?
-                                     (format "%s %s %s" this
-                                             (org-export (funcall boxed with-keyword))
-                                             that)
-                                   contents))
+                        ;; Is this a replacement clause?
+                        ((this that) (s-split "\\#\\+replacewith:" contents))
+                        (replacement-clause? that) ;; There is a ‘that’
+                        (replace-keyword (if tex?
+                                             "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
+                        (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
+                                             ))
+                        (editor (format "[%s:%s" editor
+                                        (if replacement-clause?
+                                            replace-keyword
+                                          "")))
+                        (contents′ (if replacement-clause?
+                                       (format "%s %s %s" this
+                                               (org-export (funcall boxed with-keyword))
+                                               that)
+                                     contents))
 
-                      ;; “[Editor Comment:”
-                      (edcomm-begin (funcall boxed editor))
-                      ;; “]”
-                      (edcomm-end (funcall boxed "]")))
+                        ;; “[Editor Comment:”
+                        (edcomm-begin (funcall boxed editor))
+                        ;; “]”
+                        (edcomm-end (funcall boxed "]")))
 
-                (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
-                (if org-hide-editor-comments
-                    ""
-                  (format (pcase backend
-                            ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
-                            (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
-                          color edcomm-begin contents′ signoff edcomm-end))))
+                       (format (pcase backend
+                                 ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
+                                 (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
+                               color edcomm-begin contents′ signoff edcomm-end))))
 
 (provide 'org-defblock-misc)
 ;;; org-defblock-misc.el ends here

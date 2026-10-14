@@ -25,15 +25,41 @@
 (require 'org-defblock)
 
 ;;;;;; box
-(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
-              "Enclose text in a box, possibly with a title.
 
-By default, the box's COLOR is green for HTML and red for LaTeX,
-and it has no TITLE.
+(defun org--box-shadow (shadow)
+  "SHADOW, as given to the `box' block, ↦ its CSS; nil when SHADOW is.
+
+A single colour sits behind the box; otherwise up to four colours, as a list or a
+plist with keys :left, :right, :deep-right and :deep-left, spread with blur around
+it ---or within it, when prefixed with ‘inset’.  In CSS, “box-shadow: SPEC, …”
+has each SPEC of the shape “[inset] x_offset y_offset [blur [spread]] color”."
+  (let ((centred "width: 50%; margin: auto"))
+    (cond
+     ((null shadow) nil)
+     ((and (atom shadow) (not (memq shadow '(t inset))))
+      (format "box-shadow: 10px 10px 20px 0px %s; %s" shadow centred))
+     (t
+      (-let [(left right deep-right deep-left)
+             (cond ((memq shadow '(t inset))
+                    (--map (concat (if (eq shadow 'inset) "inset " "") it)
+                           '("hsl(60, 100%, 50%)" "hsl(1, 100%, 50%)" "hsl(180, 100%, 50%)")))
+                   ((keywordp (car shadow)) (--map (plist-get shadow it) '(:left :right :deep-right :deep-left)))
+                   (t shadow))]
+        (format "%s; box-shadow: %s" centred
+                (s-join "," (-non-nil (list (and right      (format "8px 6px 13px 8px %s" right))
+                                            (and left       (format "-16px 12px 20px 16px %s" left))
+                                            (and deep-right (format "48px 36px 71px 28px %s" deep-right))
+                                            (and deep-left  (format "-48px -20px 71px 28px %s" deep-left)))))))))))
+
+(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
+              "Enclose text in a box, possibly with a TITLE.
+
+By default, the box's BACKGROUND-COLOR is green for HTML and red for LaTeX;
+for LaTeX, there are also FRAME-COLOR and TITLE-BACKGROUND-COLOR.
 
 SHADOW is an alternate style of boxing: It shows the contents in a centred
 box with a shadow colour being the given non-nil value of SHADOW.
-If SHADOW is a hexidecimal colour, it should be a string enclosed in double quotes.
+If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.
 More accurately, the following are all valid uses:
 
     #+begin_box title :shadow t
@@ -50,51 +76,25 @@ Notice that prefixing colours with ‘inset’ causes the colour to be within th
 rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
 
 The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox package.
-
-In the future, I will likely expose more arguments."
-
+requires the tcolorbox package."
               (pcase backend
-                (`latex
-                 (apply #'concat
-                        `("\\begin{tcolorbox}[title={" ,title "}"
-                          ",colback=" ,(pp-to-string (or background-color 'red!5!white))
-                          ",colframe=" ,(pp-to-string (or frame-color 'red!75!black))
-                          ",colbacktitle=" ,(pp-to-string (or title-background-color 'yellow!50!red))
-                          ",coltitle=red!25!black, fonttitle=\\bfseries,"
-                          "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
-                          ,contents
-                          "\\end{tcolorbox}")))
-                ;; CSS syntax: “box-shadow: specification, specification, ...”
-                ;; where a specification is of the shape “[inset] x_offset y_offset [blur [spread]] color”.
-                (_ (-let [haze (lambda (left right deep-right deep-left)
-                                 (format "width: 50%%; margin: auto; box-shadow: %s"
-                                         (thread-last (list (cons right      "8px 6px 13px 8px %s")
-                                                            (cons left       "-16px 12px 20px 16px %s")
-                                                            (cons deep-right "48px 36px 71px 28px %s")
-                                                            (cons deep-left  "-48px -20px 71px 28px %s"))
-                                                      (--filter (car it))
-                                                      (--map (format (cdr it) (car it)))
-                                                      (s-join ","))))]
-                     (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
-                             (s-join ";" `("padding: 1em"
-                                           ,(format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))
-                                           "border-radius: 15px"
-                                           "font-size: 0.9em"
-                                           ,(when shadow
-                                              (cond
-                                               ((equal shadow t)
-                                                (funcall haze "hsl(60, 100%, 50%)" "hsl(1, 100%, 50%)" "hsl(180, 100%, 50%)" nil))
-                                               ((equal shadow 'inset)
-                                                (funcall haze "inset hsl(60, 100%, 50%)" "inset hsl(1, 100%, 50%)" "inset hsl(180, 100%, 50%)" nil))
-                                               ((or (stringp shadow) (symbolp shadow))
-                                                (format "box-shadow: 10px 10px 20px 0px %s; width: 50%%; margin: auto" (pp-to-string shadow)))
-                                               ((json-plist-p shadow)
-                                                (-let [(&plist :left X :right Y :deep-right Z :deep-left W) shadow]
-                                                  (funcall haze X Y Z W)))
-                                               (:otherwise (-let [(X Y Z W) shadow]
-                                                             (funcall haze X Y Z W)))))))
-                             title contents)))))
+                ('latex
+                 (format (concat "\\begin{tcolorbox}[title={%s},colback=%s,colframe=%s,colbacktitle=%s,"
+                                 "coltitle=red!25!black, fonttitle=\\bfseries,"
+                                 "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
+                                 "%s\\end{tcolorbox}")
+                         title
+                         (or background-color 'red!5!white)
+                         (or frame-color 'red!75!black)
+                         (or title-background-color 'yellow!50!red)
+                         contents))
+                (_ (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
+                           (s-join ";" (list "padding: 1em"
+                                             (format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))
+                                             "border-radius: 15px"
+                                             "font-size: 0.9em"
+                                             (org--box-shadow shadow)))
+                           title contents))))
 
 ;;;;;;; org-subtle-colors
 (defun org-subtle-colors (c)
@@ -116,8 +116,7 @@ Names are very rough approximates.
     ("pink"    "#FFCCFF")
     ("yellow"  "#FFFF99")
     ("custard" "#FFFFCC") ;; paler than ‘yellow’
-    (c c)
-    ))
+    (_ c)))
 
 (provide 'org-box-block)
-;;; org-defblock-box.el ends here
+;;; org-box-block.el ends here

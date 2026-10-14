@@ -93,3 +93,10 @@
   root -> rec;
   rec [ shape=record label=\"p|q\" ];
 }")
+
+(define-graph-test "record node: a field's nested item is an ordinary node of its own"
+  :input "+ R\n  | shape | record |\n  + f\n    + g\n"
+  :output "digraph {
+  R [ shape=record label=\"f\" ];
+  g [ label=g ];
+}")

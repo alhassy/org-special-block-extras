@@ -13,7 +13,8 @@
 
 ;;; Commentary:
 
-;; Provides a generic C-c C-c dispatch mechanism for org special blocks.
+;; Provides a generic C-c C-c dispatch mechanism for org special blocks,
+;; atop `org-special-block-at-point'.
 ;;
 ;; Any block type can register a handler via:
 ;;
@@ -26,6 +27,7 @@
 ;;; Code:
 
 (require 'org)
+(require 'org-special-block-at-point)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -33,34 +35,15 @@
   "Alist of (block-name-string . handler-function) for C-c C-c dispatch.
 Use `org-defblock-add-cc-handler' to register handlers.")
 
-(defun org-special-block-at-point-p (name)
-  "Return non-nil if point is inside a #+begin_NAME … #+end_NAME block."
-  (save-excursion
-    (let ((pos (point)) found)
-      (goto-char (point-min))
-      (while (and (not found)
-                  (re-search-forward
-                   (format "^[ \t]*#\\+begin_%s\\b" (regexp-quote name)) nil t))
-        (let ((block-start (match-beginning 0)))
-          (when (re-search-forward
-                 (format "^[ \t]*#\\+end_%s\\b" (regexp-quote name)) nil t)
-            (when (and (>= pos block-start) (<= pos (match-end 0)))
-              (setq found t)))))
-      found)))
-
 (defun org-defblock-add-cc-handler (block-name handler)
   "Register HANDLER as the C-c C-c action for blocks named BLOCK-NAME (string).
 HANDLER is called with no arguments when point is inside the named block
 and should return non-nil to claim the event."
-  (setf (alist-get block-name org--block-cc-handlers nil nil #'equal) handler))
+  (setf (alist-get (downcase block-name) org--block-cc-handlers nil nil #'equal) handler))
 
 (defun org--block-cc-dispatcher ()
-  "Dispatch C-c C-c to the first matching registered block handler."
-  (when (fboundp 'org-special-block-after-point)
-    (cl-some (lambda (entry)
-               (when (org-special-block-at-point-p (car entry))
-                 (funcall (cdr entry))))
-             org--block-cc-handlers)))
+  "Dispatch C-c C-c to the registered handler for the special block at point."
+  (org--special-block-dispatch org--block-cc-handlers))
 
 (add-hook 'org-ctrl-c-ctrl-c-hook #'org--block-cc-dispatcher)
 

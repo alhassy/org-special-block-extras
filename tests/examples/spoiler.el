@@ -20,60 +20,33 @@ and the color of the hidden item. These default to ~grey, ((, ))~ respectively.
 [eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/
 #+end_spoiler"
   :html "<p>
-  The <code>spoiler</code> block is for “fill in the blanks” or “guess, and
-  hover to see the results” style of exposition.
+The <code>spoiler</code> block is for “fill in the blanks” or “guess, and hover
+to see the results” style of exposition.
 </p>
 
-<style>
-  #g1 {
-    color: grey;
-    background-color: grey;
-  }
-  #g1:hover {
-    color: black;
-    background-color: white;
-  }
-</style>
+<style> .spoiler-grey {color: grey; background-color:grey;} .spoiler-grey:hover {color: black; background-color:white;} </style>
 <p>
-  <span id=\"g1\"> Yusuf </span> said to his father <span id=\"g1\"> Yacoub </span>,
-  <i
-    >“O my father, indeed I have seen <span id=\"g1\"> eleven stars </span> and
-    <span id=\"g1\"> the sun and the moon </span>; I saw them prostrating to
-    me.”</i
-  >
+<span class=\"spoiler-grey\"> Yusuf </span> said to his father <span class=\"spoiler-grey\"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span class=\"spoiler-grey\"> eleven stars </span> and <span class=\"spoiler-grey\"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>
 
+
 <p>
-  There are also options for the left delimiter of a hidden item, the right
-  delimiter, and the color of the hidden item. These default to
-  <code>grey, ((, ))</code> respectively.
+There are also options for the left delimiter of a hidden item, the right delimiter,
+and the color of the hidden item. These default to <code>grey, ((, ))</code> respectively.
 </p>
 
-<style>
-  #g2 {
-    color: orange;
-    background-color: orange;
-  }
-  #g2:hover {
-    color: black;
-    background-color: white;
-  }
-</style>
+<style> .spoiler-orange {color: orange; background-color:orange;} .spoiler-orange:hover {color: black; background-color:white;} </style>
 <p>
-  <span id=\"g2\"> Yusuf </span> said to his father <span id=\"g2\"> Yacoub </span>,
-  <i
-    >“O my father, indeed I have seen <span id=\"g2\"> eleven stars </span> and
-    <span id=\"g2\"> the sun and the moon </span>; I saw them prostrating to
-    me.”</i
-  >
+<span class=\"spoiler-orange\"> Yusuf </span> said to his father <span class=\"spoiler-orange\"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span class=\"spoiler-orange\"> eleven stars </span> and <span class=\"spoiler-orange\"> the sun and the moon </span>; I saw them prostrating to me.”</i>
 </p>"
   :latex "The \\texttt{spoiler} block is for “fill in the blanks” or “guess, and hover
 to see the results” style of exposition.
 
 
 \\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub}, \\emph{“O my father, indeed I have seen
-	\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}
-
+\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}
 
 
 There are also options for the left delimiter of a hidden item, the right delimiter,
@@ -81,4 +54,4 @@ and the color of the hidden item. These default to \\texttt{grey, ((, ))} respec
 
 
 \\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub}, \\emph{“O my father, indeed I have seen
-	\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}")
+\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}")

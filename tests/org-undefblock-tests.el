@@ -24,7 +24,7 @@
                                #+end_export")))))
 
 (deftest "`org-defblock' defines associated link functions that evaluate correctly"
-  (using (org-defblock notice () [:face 'italic] "Example."
+  (using (org-defblock notice (:link [:face 'italic]) "Example."
                 (format "NOTICE: %s" contents))
   (should (fboundp 'org-block/notice))
   (should (fboundp 'org-link/notice))

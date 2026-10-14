@@ -35,7 +35,6 @@
           :SIZE: small
           :END:"
   :output "[* Quiet | blue | small | html]
-
 ")
 
 (define-org-deftag-test "org-deftag reads omitted trailing arguments from properties"
@@ -44,7 +43,6 @@
           :SIZE: small
           :END:"
   :output "[* Mixed | red | small | html]
-
 ")
 
 (define-org-deftag-test "org-deftag prefers the tag over a property of the same name"
@@ -53,7 +51,6 @@
           :COLOR: blue
           :END:"
   :output "[* Both | red | nil | html]
-
 ")
 
 (define-org-deftag-test "org-deftag binds nil when neither tag nor property gives an argument"
@@ -67,7 +64,6 @@
           :Color: blue
           :END:"
   :output "[* Shouting | blue | nil | html]
-
 ")
 
 ;;; Which sections, and which tags, are touched
@@ -99,9 +95,7 @@
           ** Two :test-shout_blue:
           *** Three :test-shout:"
   :output "[* One | red | nil | html]
-
 [** Two | blue | nil | html]
-
 [*** Three | nil | nil | html]
 ")
 
@@ -184,6 +178,31 @@
 
 (deftest "org--deftag-parse-args rejects arguments before &optional or &key"
   (should-error (org--deftag-parse-args '(color &optional size))))
+
+;;; Edge cases of headings: planning lines, colons in titles, and Org's special properties
+
+(org-deftag test-special (&key file tags)
+  "Replace the heading with FILE and TAGS, which only properties may give."
+  (insert (format "[%s | %s]" file tags)))
+(remove-hook 'org-export-before-parsing-hook #'org-deftag/test-special)
+
+(deftest "org-deftag removes a section's property drawer even beneath a planning line"
+  (let ((result (org-test--run-tag #'org-deftag/test-shout "* Heading :test-shout_red:
+                                                            SCHEDULED: <2026-10-13 Tue>
+                                                            :PROPERTIES:
+                                                            :SIZE: big
+                                                            :END:
+                                                            Body.")))
+    (should (s-contains-p "| red | big |" result))
+    (should-not (s-contains-p ":PROPERTIES:" result))))
+
+(define-org-call-test "org-deftag ignores its name within a heading's title, outside its trailing tags"
+  :call (org-test--run-tag #'org-deftag/test-shout "* Ratio a:test-shout:b")
+  :returns "* Ratio a:test-shout:b")
+
+(define-org-call-test "org-deftag binds &key arguments named after Org's special properties, such as FILE, only from the drawer"
+  :call (org-test--run-tag #'org-deftag/test-special "* Heading :test-special:")
+  :returns "[nil | nil]")
 
 (provide 'org-deftag-tests)
 ;;; org-deftag-tests.el ends here

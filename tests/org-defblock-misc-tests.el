@@ -79,7 +79,7 @@ Answer: @@latex:\\fbox{\\phantom{x = 5}}\\footnote{x = 5}@@.
 (define-org-call-test "margin block produces an <abbr> tooltip for HTML."
   :call (org-block/margin 'html "note text" nil :marker "†" :counter "footnote")
   :returns "#+begin_export html
-<abbr class=\"tooltip\" title=\"<br><br>note text<br>\">nil</abbr>&emsp13;
+<abbr class=\"tooltip\" title=\"<br><br>note text<br>\">∘</abbr>&emsp13;
 #+end_export")
 
 (define-org-call-test "margin block produces a \\marginpar for LaTeX."

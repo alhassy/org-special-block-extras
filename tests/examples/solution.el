@@ -48,70 +48,41 @@ Hint: The father's name also starts with `y`.
 #+begin_solution
 Yacoub
 #+end_solution"
-  :html "<p>What is the name of Prophet Yusuf's father?</p>
+  :html "<p>
+What is the name of Prophet Yusuf's father?
+</p>
 
-<p>Hint: The father's name also starts with `y`.</p>
+<p>
+Hint: The father's name also starts with `y`.
+</p>
 
-<details
-  class=\"code-details\"
-  style=\"
-    padding: 1em;
-    background-color: #e5f5e5;
-    border-radius: 15px;
-    color: hsl(157 75%);
-    font-size: 0.9em;
-    box-shadow: 0.05em 0.1em 5px 0.01em #00000057;
-  \"
->
-  <summary>
-    <strong>
-      <font face=\"Courier\" size=\"3\" color=\"green\"> Solution </font>
-    </strong>
-  </summary>
-  <div
-    style=\"
-      padding: 1em;
-      background-color: #ccffff;
-      border-radius: 15px;
-      font-size: 0.9em;
-    \"
-  >
-    <h3>Did you actually try? Maybe see the ‘hints’ above!</h3>
-    <details
-      class=\"code-details\"
-      style=\"
-        padding: 1em;
-        background-color: #e5f5e5;
-        border-radius: 15px;
-        color: hsl(157 75%);
-        font-size: 0.9em;
-        box-shadow: 0.05em 0.1em 5px 0.01em #00000057;
-      \"
-    >
-      <summary>
-        <strong>
-          <font face=\"Courier\" size=\"3\" color=\"red\"> Solution, for real </font>
-        </strong>
-      </summary>
-      <p>Yacoub</p>
-    </details>
-  </div>
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Solution</font></strong></summary>
+<div style=\"padding: 1em;background-color: #CCFFFF;border-radius: 15px;font-size: 0.9em;\"> <h3>Did you actually try? Maybe see the ‘hints’ above!</h3> 
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"red\">Solution, for real</font></strong></summary>
+<p>
+Yacoub
+</p>
+
+</details>
+</div>
+
 </details>"
   :latex "What is the name of Prophet Yusuf's father?
 
 Hint: The father's name also starts with `y`.
 
 \\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{green}\\begin{quote}
-	\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution},sharp corners,boxrule=0.4pt]
-		\\begin{tcolorbox}[title={Did you actually try? Maybe see the ‘hints’ above!},colback=\"blue\",colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
-			\\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{red}\\begin{quote}
-				\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution, for real},sharp corners,boxrule=0.4pt]
-					Yacoub
+\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution},sharp corners,boxrule=0.4pt]
+\\begin{tcolorbox}[title={Did you actually try? Maybe see the ‘hints’ above!},colback=blue,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{red}\\begin{quote}
+\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution, for real},sharp corners,boxrule=0.4pt]
+Yacoub
 
+\\end{tcolorbox}
+\\end{quote}
+\\end{tcolorbox}
 
-				\\end{tcolorbox}
-			\\end{quote}
-		\\end{tcolorbox}
-
-	\\end{tcolorbox}
+\\end{tcolorbox}
 \\end{quote}")

@@ -27,15 +27,15 @@
 ;;;;;; Mathematical Proofs
 ;;;;;;; Calculational style proofs
 
-(defun org--list-to-calc (lst rel hint-format NL-length color)
-  "Get a result from org-list-to-lisp and render it as a calculational proof.
+(defun org--list-to-calc (item rel hint-format NL-length color)
+  "Render ITEM, from `org-list-to-lisp', and its nested items as one step of a calculational proof.
 
-LST is an expression, possibly with a hint and dedicated relation.
-The expression may contain multiple lines, as may the hints.
+ITEM's line is “[OP] EXPRESSION -- HINT”, each part optional; both the expression
+and the hint may span multiple lines.
 
 REL is the default relation in the left-most column.
 
-HINT_FORMAT is the formatting string for hints; e.g.,
+HINT-FORMAT is the formatting string for hints; e.g.,
 \"\\color{maroon}{\\langle\\large\\substack{\\text{ %s }}⟩}\"
 
 NL-length is how long the explicit vertical space, \\, should be.
@@ -43,45 +43,30 @@ The number refers to the vspace occupied nearly by the height of
 a single normal sized letter.
 
 COLOR is the colour of the hints."
-  (cond
-   ((symbolp lst) "")
-   ((symbolp (car lst)) (org--list-to-calc (cadr lst)))
-   (:otherwise (-let* (((conclusion₀ children) lst)
-                 ((expr₀ hint) (s-split "--" conclusion₀))
-                       ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
-                       (op (or op₀ rel))
-                       (expr (or expr₁ expr₀)))
-                 (if (not children)
-                     (if hint
-                         (format
-                          "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
-                          op
-                          color
-                          ;; the hfill is so that we do not use substack's default
-                          ;; centering, but instead left-align justificatiion
-                          ;; hints.
-                          (format (s-replace "%s" "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint-format)
-                                  (s-replace "\n" " } \\hfill\\\\\n\\text{ "
-                                             (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint))))
-                          expr)
-                       (format "\\begin{split}%s\\end{split} \n" expr))
-                   ;; MA: The following could be improved.
-                   (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
-                           op color
-                           ;; BEGIN similar as above
-                           (format (s-replace
-                                    "%s"
-                                    "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} & %s \n\\end{split}\\hfill\\\\\n}}"
-                                    hint-format)
-                                   (s-replace "\n" " } \\hfill\\\\\n\\text{ "
-                                              (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim hint)))
-                                   ;; END similar
-                                   (s-chop-prefix
-                                    "\\\\" (s-join
-                                            "\\\\"
-                                            (mapcar (lambda (it) (format "%s" (org--list-to-calc it rel hint-format NL-length color)))
-                                                   children))))
-                           expr))))))
+  (-let* (((line children) item)               ;; CHILDREN is (unordered ITEM…), or nil.
+          ((expr₀ hint) (s-split "--" line))
+          ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
+          (op (or op₀ rel))
+          (expr (or expr₁ expr₀))
+          (steps (--map (org--list-to-calc it rel hint-format NL-length color) (cdr children)))
+          ;; Hints keep their line breaks; a blank line becomes NL-length vertical space.
+          (hint (s-replace "\n" " } \\hfill\\\\\n\\text{ "
+                           (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim (or hint ""))))))
+    (if (and (equal hint "") (null steps))
+        (format "\\begin{split}%s\\end{split} \n" expr)
+      (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+              op
+              color
+              ;; The hfill is so that we do not use substack's default centering, but instead left-align
+              ;; justification hints; nested steps appear beneath their hint.
+              ;; HINT-FORMAT's %s is replaced verbatim, never via `format', so its other characters ---say, %--- stay literal.
+              (s-replace "%s"
+                         (if steps
+                             (format "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} & %s \n\\end{split}\\hfill\\\\\n}}"
+                                     hint (s-join "\\\\" steps))
+                           (format "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint))
+                         hint-format)
+              expr))))
 
 (org-defblock calc
               (main-arg nil
@@ -105,35 +90,24 @@ as an alignment marker; otherwise math is right-justified.
 
 For HTML, to use an TeX it must be enclosed in $, since that is
 what is required by MathJaX."
-              (let ((parsed (condition-case err
-                                (with-temp-buffer
-                                  (insert raw-contents)
-                                  (goto-char (point-min))
-                                  (org-list-to-lisp))
-                              (error (user-error "#+begin_calc block does not contain a valid Org plain list.\n\
-Each step must be a `- item` bullet.\nParsing error: %s" (error-message-string err))))))
-                (thread-last (cdr parsed)
-                             (mapcar (lambda (it) (format "%s" (org--list-to-calc it rel hint-format explicit-vspace color))))
-                             (s-join "\\\\")
-                             (format "$$\\begin{align*} & %s \n\\end{align*}$$"))))
+              (thread-last (cdr (org--parse-plain-list raw-contents "calc"))
+                           (--map (org--list-to-calc it rel hint-format explicit-vspace color))
+                           (s-join "\\\\")
+                           (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
 
 ;;;;;;; inference proof tree
-(defun org--list-to-math (lst)
-  "Get a result LST from ORG-LIST-TO-LISP and render it as a proof tree."
-  (cond
-   ((symbolp lst) "")
-   ((symbolp (car lst)) (org--list-to-math (cadr lst)))
-   (t
-    (-let* (((conclusion₀ children) lst)
-      ((name named?) (s-split " :: " conclusion₀))
-            (conclusion (or named? conclusion₀)))
-      (if (not children)
-          (if named? (format "\\frac{}{%s}[%s]" conclusion name) conclusion)
-        (format "\\frac{\\displaystyle %s}{%s}%s"
-                (s-join " \\qquad "
-                        (mapcar #'org--list-to-math children))
-                conclusion
-                (if named? (format "[\\text{%s}]" name) "")))))))
+(defun org--list-to-math (item)
+  "Render ITEM, from `org-list-to-lisp', as a proof tree: its line is “REASON :: CONCLUSION”, its nested items the premises."
+  (-let* (((line children) item)               ;; CHILDREN is (unordered ITEM…), or nil.
+          (parts (s-split-up-to " :: " line 1))
+          ((name conclusion) (if (cdr parts) parts (list nil line)))
+          (premises (-map #'org--list-to-math (cdr children))))
+    (cond (premises (format "\\frac{\\displaystyle %s}{%s}%s"
+                            (s-join " \\qquad " premises)
+                            conclusion
+                            (if name (format "[\\text{%s}]" name) "")))
+          (name (format "\\frac{}{%s}[%s]" conclusion name))
+          (t conclusion))))
 
 (org-defblock tree (main-arg)
               "Write a proof tree using Org-lists.
@@ -181,15 +155,9 @@ the following proves P = R.
         - R = Q(Y)
           - ✓
   #+end_tree"
-              (let ((parsed (condition-case err
-                                (with-temp-buffer
-                                  (insert raw-contents)
-                                  (goto-char (point-min))
-                                  (org-list-to-lisp))
-                              (error (user-error "#+begin_tree block does not contain a valid Org plain list.\n\
-Each step must be a `- item` bullet.\nParsing error: %s" (error-message-string err))))))
-                (s-join "" (mapcar (lambda (it) (format "\\[%s\\]" (org--list-to-math it)))
-                                   (cdr parsed)))))
+              (mapconcat (lambda (it) (format "\\[%s\\]" (org--list-to-math it)))
+                         (cdr (org--parse-plain-list raw-contents "tree"))
+                         ""))
 
 (provide 'org-proof-block)
-;;; org-defblock-proof.el ends here
+;;; org-proof-block.el ends here

@@ -136,6 +136,27 @@ Body text.
     (org-special-block-extras-mode 1)
     (should (s-contains-p "[Note: " (org-export-string "* Heading :note:\nBody." 'latex)))))
 
+(deftest "disabling the mode removes every hook and advice that enabling it installs"
+  (unwind-protect
+      (progn
+        (org-special-block-extras-mode -1)
+        (should-not (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-hook))
+        (should-not (memq #'org--html-export-style-setup org-export-before-processing-hook))
+        (should-not (advice-member-p #'osbe--fontify-blocks-as-org 'org-fontify-meta-lines-and-blocks))
+        (should-not (advice-member-p #'org--docs-maybe-reset 'org-export-dispatch))
+        (org-special-block-extras-mode 1)
+        (should (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-hook))
+        (should (memq #'org--html-export-style-setup org-export-before-processing-hook))
+        (should (advice-member-p #'osbe--fontify-blocks-as-org 'org-fontify-meta-lines-and-blocks))
+        (should (advice-member-p #'org--docs-maybe-reset 'org-export-dispatch)))
+    (org-special-block-extras-mode 1)))
+
+(deftest "enabling the mode twice appends the HTML head extras once"
+  (let ((org-html-head-extra ""))
+    (org-special-block-extras-mode 1)
+    (org-special-block-extras-mode 1)
+    (should (= 1 (s-count-matches (regexp-quote org--kbd-html-head) org-html-head-extra)))))
+
 ;;; The package's own blocks that opt in
 
 (deftest "details, box, spoiler, solution, and parallel are also tags"
@@ -157,20 +178,8 @@ Body text.
 <div id=\"outline-container-org-id-1\" class=\"outline-2\">
 <h2 id=\"org-id-1\"><span class=\"section-number-2\">1.</span> Stuck?</h2>
 <div class=\"outline-text-2\" id=\"text-1\">
-<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: #e5f5e5;
-                          border-radius: 15px;
-                          color: hsl(157 75%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"green\">
-                         Hint
-                      </font>
-                    </strong>
-                  </summary>
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Hint</font></strong></summary>
 <p>
 Try induction.
 </p>

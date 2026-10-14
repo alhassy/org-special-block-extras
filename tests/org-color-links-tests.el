@@ -53,7 +53,7 @@ text
 \\endgroup\\,
 #+end_export")
 
-(deftest "All 20 named colour blocks are registered as handler functions."
+(deftest "All 19 named colour blocks are registered as handler functions."
   (dolist (colour '(black blue brown cyan darkgray gray green lightgray lime
                           magenta olive orange pink purple red teal violet white yellow))
     (should (fboundp (intern (format "org-block/%s" colour))))))

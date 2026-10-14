@@ -83,52 +83,46 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
 (defvar org-special-block-extras-mode-map--link-keymap-docs nil
   "An alist referencing key bindings for Org links; used in `org-this-link-show-docs'.")
 
+(defun org--link-at-point ()
+  "The Org link element at point; else nil."
+  (org-element-lineage (org-element-context) '(link) t))
+
 (defun org-link-at-point ()
-  "Get the Org link type at point, with suffix colon."
+  "The type of the Org link at point, with suffix colon; e.g., \"kbd:\"; else nil."
   (interactive)
-  (let ((working-line (line-number-at-pos)))
-    (save-excursion
-      ;; Account for cursour being on anywhere on the links “name:key”.
-      (backward-word 2)
-      (unless (= working-line (line-number-at-pos))
-  (goto-line working-line))
-      (let* ((here-to-eol (buffer-substring-no-properties (point) (point-at-eol)))
-             ;; E.g., “kbd:”, the name part of an Org link
-             (link-name (cl-second (s-match "\\([^ ]+:\\).+" here-to-eol))))
-        link-name))))
+  (-some--> (org--link-at-point) (concat (org-element-property :type it) ":")))
+
+(defun org--this-link-move (search edge)
+  "Move, by SEARCH, to another Org link of the same type as the one at point, starting from its EDGE.
+SEARCH is `re-search-forward' or `re-search-backward'; EDGE is :end or :begin.  The type is matched as
+a whole symbol; e.g., \"kbd:\" but not \"xkbd:\"."
+  (let ((link (or (org--link-at-point) (user-error "Not on an Org link"))))
+    (goto-char (org-element-property edge link))
+    (funcall search (concat "\\_<" (regexp-quote (org-element-property :type link)) ":") nil t)))
 
 (defun org-this-link-next ()
   "Go to the next Org link that is similar to the link at point."
   (interactive)
-  (re-search-forward (org-link-at-point) nil t))
+  (org--this-link-move #'re-search-forward :end))
+
 (defun org-this-link-previous ()
   "Go to the previous Org link that is similar to the link at point."
   (interactive)
-  (re-search-backward (org-link-at-point) nil t))
-(defun org-this-link-show-docs ()
-  "Show documentation for the Org link at point in a read-only buffer.
+  (org--this-link-move #'re-search-backward :begin))
 
-                     Press ‘q’ to kill the resulting buffer and window."
+(defun org-this-link-show-docs ()
+  "Show documentation for the Org link at point in a help buffer; press ‘q’ to quit it."
   (interactive)
-  (let* ((link (s-chop-suffix ":" (org-link-at-point)))
-   (msg (ignore-errors
-                (concat
-                 (documentation (intern (format "org-link/%s" link)))
-                 "\nKEY BINDINGS:\n"
-                 "\nUnless indicated below otherwise..."
-                 "\n\tC-h: Shows this helpful message buffer"
-                 "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
-                 "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
-                 (pp-to-string
-                  (cdr (assoc link org-special-block-extras-mode-map--link-keymap-docs))))))
-         ;; i.e., insist on displaying in a dedicated buffer
-         (max-mini-window-height 0))
-    (display-message-or-buffer msg)
-    (switch-to-buffer-other-window "*Message*")
-    (rename-buffer (format "Help: Org Link “%s”" link))
-    (read-only-mode)
-    (local-set-key "q" #'kill-buffer-and-window)
-    (message "Read-only; “q” to kill buffer and window.")))
+  (let ((link (s-chop-suffix ":" (or (org-link-at-point) (user-error "Not on an Org link")))))
+    (with-help-window (format "*Help: Org Link “%s”*" link)
+      (princ (concat
+              (documentation (intern (format "org-link/%s" link)))
+              "\nKEY BINDINGS:\n"
+              "\nUnless indicated below otherwise..."
+              "\n\tC-h: Shows this helpful message buffer"
+              "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
+              "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
+              (pp-to-string (cdr (assoc link org-special-block-extras-mode-map--link-keymap-docs))))))))
 
 (define-key org-special-block-extras-mode-map (kbd "C-n") #'org-this-link-next)
 (define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
@@ -145,6 +139,12 @@ a lone form, or one whose head is a function, is the link's body instead; e.g., 
                 (cl-every (lambda (it) (or (consp it)
                                            (and (symbolp it) it (not (eq it t)) (not (keywordp it)) (not (fboundp it)))))
                           form)))))
+
+(defun org--deflink-mentions-p (form names)
+  "Non-nil iff FORM mentions any of the symbols NAMES, anywhere within it."
+  (cond ((symbolp form) (memq form names))
+        ((consp form) (or (org--deflink-mentions-p (car form) names) (org--deflink-mentions-p (cdr form) names)))
+        ((vectorp form) (cl-some (lambda (it) (org--deflink-mentions-p it names)) form))))
 
 (defun org--deflink-parse-arglist (arglist)
   "ARGLIST ↦ ((NAME ANAPHOR DEFAULT) …), pairing the names of (label &optional description backend) with o-label, o-description, o-backend.
@@ -207,14 +207,14 @@ Here is a more complex, involved, example that makes use of
 renders as the word “hello” with a tooltip defining the word; the
 definition is obtained from the command line tool ‘wn’.
 
-  (org-deflink define
+  (org-deflink define (word)
     \"Define the given word using WordNet, along with synonyms and coordinate terms.\"
-    [:let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" o-label)))
-     :help-echo definition]
-    (--> definition
-      (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
-      (s-replace-regexp \"\\n\" \"<br>\" it)
-      (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
+    :let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" word)))
+    :help-echo definition
+    :export (--> definition
+              (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
+              (s-replace-regexp \"\\n\" \"<br>\" it)
+              (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it word)))
 
 For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
 
@@ -229,8 +229,10 @@ function `thread-first', or “doc:user-mail-address” for the Emacs
 Lisp documentation of the variable `user-mail-address', or
 “doc:hello” for the definition of the English word ‘hello’.
 
-DISPLAY is a vector consisting of key-value pairs that affects how the link
-is displayed in Emacs Org buffers. The keys are as follows.
+Besides :export, the following keys affect how the link is displayed in Emacs
+Org buffers.  They are given alongside :export, as above; in the deprecated
+style, they form a vector DISPLAY between the docstring and BODY, such as
+[:help-echo (format \"%s\" o-label)].
 
 + :help-echo is a string-valued expression of the tooltip that should accompany
   the new link in Org buffers. It has access to o-format being one of ‘plain’,
@@ -243,7 +245,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
   know what/how the link exports, and actually see the HTML export.
 
   That is to say, for the ‘shout’ example above, the default display is essentially:
-  [:help-echo (org-link/shout o-label o-description 'html)]
+  :help-echo (org-link/shout o-label o-description 'html)
 
   You may want to add the following to your Emacs init file:
 
@@ -260,7 +262,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
 
    See https://www.gnu.org/software/emacs/manual/html_node/elisp/Face-Attributes.html
 
-+ [:display 'full] if you do not want bracket links to be
++ :display 'full if you do not want bracket links to be
   folded away in Org buffers; i.e., “[[X][Y]]” does not render as just “Y”.
 
 + :follow is a form that is executed when you click on such links; e.g., to open
@@ -277,7 +279,7 @@ is displayed in Emacs Org buffers. The keys are as follows.
 + :keymap is an alternating list of keys and actions to be
   performed when those keys are pressed while point is on the link.
   For example:
-      [:keymap (C-h (message-box \"hola\"))]
+      :keymap (C-h (message-box \"hola\"))
 
   By default, C-n and C-p are for moving to next and previous occruances of the same link type.
 
@@ -293,110 +295,88 @@ flat top-level plist with no enclosing vector:
     :face \\='(:weight bold)
     :export (upcase o-label))"
   ;; An optional leading ARGLIST names the anaphors; see `org--deflink-arglist-p'.
-  (let ((arglist nil))
+  (let (arglist)
     (when (org--deflink-arglist-p docstring (or display body))
       (setq arglist   docstring
             docstring display
             display   (car body)
             body      (cdr body)))
-  (cl-destructuring-bind (docstring display body)
-      (lf-extract-optionals-from-rest docstring #'stringp
-                               display   #'vectorp
-                                      body)
-    ;; Flat plist style: no vector supplied; body is (KEY VAL … :export FORM).
-    ;; Split :export out as the body; remaining keys become the display plist.
-    (when (and (null display) (keywordp (car body)))
-      (let* ((all    body)
-             (export (cl-getf all :export))
-             (dkeys  (cl-loop for (k v) on all by #'cddr
-                              unless (eq k :export)
-                              append (list k v))))
-        (setq display dkeys
-              body    (when export (list export)))))
-    ;; DEPRECATED: vector style ([:display … :face … :let … :follow …] BODY…).
-    ;; Supported for now; will be removed in a future release. Use the flat
-    ;; plist style with :export instead.
-    (setq display (if (vectorp display) (seq--into-list display) display))
-    (let ((org-link/NAME (intern (format "org-link/%s" name)))
-          (navigation "Press “C-h” to see possible actions on this link type.")
-          (lets (append
-                 ;; The ARGLIST's names for label and description, usable everywhere o-label is.
-                 (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
-                          unless (eq anaphor 'o-backend)
-                          collect (list arg (if default `(or ,anaphor ,default) anaphor)))
-                 (cl-loop for (variable value)
-                          on (cl-getf display :let)
-                          by #'cddr
-                          collect (list variable value))))
-          ;; The ARGLIST's name for the backend exists only where o-backend does: the export body.
-          (backend-lets (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
-                                 when (eq anaphor 'o-backend)
-                                 collect (list arg (if default `(or ,anaphor ,default) anaphor)))))
-      `(progn
-         ;; Declare the underlying function and documentation
-         (cl-defun ,org-link/NAME ;; function name
-             (o-label o-description o-backend)         ;; function args
-           ;; new function documentation
-           ,docstring
-           ;; function body
-           (let ((o-backend (org--base-backend o-backend)))
-             (let* (,@backend-lets ,@lets) ,@body)))
-         ;; Construct the Org-link
-         (org-link-set-parameters
-          ,(format "%s" name)
-          :export (quote ,org-link/NAME)
-          ;; How should these links be displayed?
-          ;; (We augment the namespace with the missing o-description that local variables may be using.)
-          :face (lambda (o-label)  (let (o-description) (let* ,lets ,(cl-getf display :face))))
-          ;; When you click on such links, what should happen?
-          ;; (We augment the namespace with the missing o-description that local variables may be using.)
-          :follow (lambda (o-label o-prefix) (let (o-description) (let* ,lets ,(cl-getf display :follow))))
-          ;; These links should *never* be folded in descriptive display;
-          ;; i.e., “[[example:lable][description]]” will always appear verbatim
-          ;; and not hide the first pair […].
-          :display (cl-the symbol ,(cl-getf display :display)) ;; e.g.,: 'full
-          ;; Any special keybindings when cursour is on this link type?
-          ;; On ‘NAME:’ links, C-n/p to go to the next/previous such links.
-          :keymap (let ((o-keymap (copy-keymap org-mouse-map))
-                        (pattern (format "%s:" (quote ,name))))
-
-                    ;; If this Org-link has additional key bindings, then save
-                    ;; them in an alist for reference in `org-this-link-show-docs'.
-                    (when (quote ,(cl-getf display :keymap))
-                      (push (cons (format "%s" (quote ,name)) (quote ,(cl-getf display :keymap)))
-                            org-special-block-extras-mode-map--link-keymap-docs))
-
-                    ;; Let's inherit some possibly useful key bindings.
-                    (set-keymap-parent o-keymap org-special-block-extras-mode-map)
-
-                    ;; Populate the keymap
-                    (cl-loop for (key action) on (quote ,(cl-getf display :keymap))
-                             by #'cddr
-                             do (define-key o-keymap (kbd (format "%s" key))
-                                            `(lambda () (interactive) ,action)))
-                    ;; Return the keymap
-                    o-keymap)
-          ;; The tooltip alongside a link
-          :help-echo (lambda (window object position)
-                       (save-excursion
-                         (goto-char position)
-                         (-let* (((&plist :path :format :contents-begin :contents-end)
-                                  (cadr (org-element-context)))
-                                 (org-format format)
-                                 (o-label path)
-                                 (o-description
-                                  (when (equal format 'bracket)
-                                    (copy-region-as-kill contents-begin contents-end)
-                                    (substring-no-properties (car kill-ring)))))
-                           (or (let* ,lets ,(cl-getf display :help-echo))
-                               (format "%s:%s\n\n%s\nHTML Export:\n\n%s"
-                                       (quote ,name)
-                                       (or o-description o-label)
-                                       ,(concat (or docstring "") "\n\n" navigation "\n")
-                                       (,org-link/NAME o-label o-description 'html)))))))
-         ;; Return value is the name of the underlying function.
-         ;; We do this to be consistent with `defun'.
-         (quote ,org-link/NAME))))))
+    (cl-destructuring-bind (docstring display body)
+        (lf-extract-optionals-from-rest docstring #'stringp display #'vectorp body)
+      ;; Flat plist style: no vector supplied; body is (KEY VAL … :export FORM).
+      ;; Split :export out as the body; remaining keys become the display plist.
+      (when (and (null display) (keywordp (car body)))
+        (setq display (org-plist-delete (copy-sequence body) :export)
+              body    (-some-> (plist-get body :export) list)))
+      ;; DEPRECATED: vector style ([:display … :face … :let … :follow …] BODY…).
+      ;; Supported for now; will be removed in a future release. Use the flat
+      ;; plist style with :export instead.
+      (setq display (append display nil))
+      (let* ((org-link/NAME (intern (format "org-link/%s" name)))
+             (navigation "Press “C-h” to see possible actions on this link type.")
+             ;; The ARGLIST's names, each paired with the anaphor it names; e.g., (o-label label o-label).
+             (arg-lets (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
+                                collect (list anaphor arg (if default `(or ,anaphor ,default) anaphor))))
+             ;; Names for the label and description, usable everywhere o-label is; then the user's :let.
+             (lets (append (mapcar #'cdr (--remove (eq (car it) 'o-backend) arg-lets))
+                           (cl-loop for (variable value) on (plist-get display :let) by #'cddr
+                                    collect (list variable value))))
+             ;; The name for the backend exists only where o-backend does: the export body.
+             (backend-lets (mapcar #'cdr (--filter (eq (car it) 'o-backend) arg-lets)))
+             (keymap (plist-get display :keymap))
+             (help-echo-default
+              `(format "%s:%s\n\n%s\nHTML Export:\n\n%s"
+                       ,(symbol-name name)
+                       (or o-description o-label)
+                       ,(concat (or docstring "") "\n\n" navigation "\n")
+                       (,org-link/NAME o-label o-description 'html))))
+        (cl-flet ((scoped (form)
+                    ;; FORM, seeing the :let names when it mentions them; so a constant :face, say, costs no :let
+                    ;; on each redisplay.  The :let names come as a whole, since each may refer to the ones before.
+                    (if (org--deflink-mentions-p form (mapcar #'car lets)) `(let* ,lets ,form) form)))
+          `(progn
+             ;; The underlying function, of label, description, and backend.
+             (defun ,org-link/NAME (o-label o-description o-backend)
+               ,docstring
+               (let* ((o-backend (org--base-backend o-backend)) ,@backend-lets ,@lets)
+                 ,@body))
+             ;; Which bindings this link type adds, for `org-this-link-show-docs'.
+             ,@(when keymap
+                 `((setf (alist-get ,(symbol-name name) org-special-block-extras-mode-map--link-keymap-docs nil nil #'equal)
+                         ',keymap)))
+             (org-link-set-parameters
+              ,(symbol-name name)
+              :export #',org-link/NAME
+              ;; How these links look, and what clicking them does, within Emacs; there is no description here.
+              :face (lambda (o-label) (let ((o-description nil)) ,(scoped (plist-get display :face))))
+              :follow (lambda (o-label o-prefix) (let ((o-description nil)) ,(scoped (plist-get display :follow))))
+              ;; E.g., 'full: such links are never folded in descriptive display; i.e.,
+              ;; “[[example:label][description]]” appears verbatim.
+              :display ,(plist-get display :display)
+              ;; On NAME: links, C-n/C-p go to the next/previous such links; see `org-special-block-extras-mode-map'.
+              :keymap (let ((o-keymap (copy-keymap org-mouse-map)))
+                        (set-keymap-parent o-keymap org-special-block-extras-mode-map)
+                        ,@(cl-loop for (key action) on keymap by #'cddr
+                                   collect `(define-key o-keymap (kbd ,(format "%s" key)) (lambda () (interactive) ,action)))
+                        o-keymap)
+              ;; The tooltip alongside a link.
+              :help-echo (lambda (_window _object position)
+                           (save-excursion
+                             (goto-char position)
+                             (let* ((link (org--link-at-point))
+                                    (o-format (org-element-property :format link))
+                                    (o-label (org-element-property :path link))
+                                    (o-description (and (eq o-format 'bracket)
+                                                        (org-element-property :contents-begin link)
+                                                        (buffer-substring-no-properties
+                                                         (org-element-property :contents-begin link)
+                                                         (org-element-property :contents-end link)))))
+                               (ignore o-format)
+                               ,(if (plist-get display :help-echo)
+                                    `(or ,(scoped (plist-get display :help-echo)) ,help-echo-default)
+                                  help-echo-default)))))
+             ;; Return value is the name of the underlying function, as with `defun'.
+             ',org-link/NAME))))))
 
 (provide 'org-deflink)
 ;;; org-deflink.el ends here

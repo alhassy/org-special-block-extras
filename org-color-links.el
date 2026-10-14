@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; The generic `color' block and 20 named colour blocks (red, blue, green, …).
+;; The generic `color' block and 19 named colour blocks (red, blue, green, …).
 ;;
 ;; Full documentation at https://alhassy.github.io/org-special-block-extras
 
@@ -23,7 +23,7 @@
 
 (require 'org-defblock)
 
-;;;;;; Color  ---Load support for 20 colour custom blocks and 20 colour link types
+;;;;;; Color  ---Load support for 19 named colour blocks and links, and a generic one
 
 (defvar org--ospe-colors
   '(black blue brown cyan darkgray gray green lightgray lime
@@ -31,25 +31,22 @@
           yellow)
   "Colours that should be available on all systems.")
 
-(cl-loop for colour in org--ospe-colors
-   do (eval `(org-defblock ,colour
-                                 (the-color "black")
-                                 (vector :face `(:foreground ,(format "%s" (quote ,colour))))
-                                 ,(format "Show text in %s color." colour)
-                                 (let ()
-                                   (format (pcase backend
-                                             (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-                                             (_  "<span style=\"color:%s;\">%s</span>"))
-                                           (quote ,colour) contents)))))
+(defun org--color-text (backend colour text)
+  "(BACKEND, COLOUR, TEXT) ↦ TEXT shown in COLOUR; LaTeX via \\color, and HTML (the default) via a styled span."
+  (format (pcase backend
+            ('latex "\\begingroup\\color{%s}%s\\endgroup\\,")
+            (_      "<span style=\"color:%s;\">%s</span>"))
+          colour text))
+
+(dolist (colour org--ospe-colors)
+  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))])
+           ,(format "Show text in %s color." colour)
+           (org--color-text backend ',colour contents))))
 
 (org-defblock color
-              (color "black")
-              (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
+              (color "black" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
               "Format text according to a given COLOR, which is black by default."
-              (format (pcase backend
-                        (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-                        (`html  "<span style=\"color:%s;\">%s</span>"))
-                      color contents))
+              (org--color-text backend color contents))
 
 (provide 'org-color-links)
 ;;; org-color-links.el ends here

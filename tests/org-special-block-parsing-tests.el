@@ -7,6 +7,7 @@
 
 (deftest "`org-special-block-after-point' correctly parses block structure, when given its name"
          (with-temp-buffer
+           (org-mode)
            (insert (lf-string "#+begin_foo mainarg :x 1 :y 2
                         block content
                         #+end_foo"))
@@ -21,6 +22,7 @@
 
 (deftest "`org-special-block-after-point' correctly parses any block structure after point"
   (with-temp-buffer
+    (org-mode)
     (insert (lf-string "#+begin_bar \"The main arg\" :key₁ value₁ :key₂ value₂
                         some content here,
 
@@ -40,6 +42,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure with a main arg but no keyword args"
   (with-temp-buffer
+    (org-mode)
     (insert (lf-string "#+begin_bar \"The main arg\"
 #+end_bar"))
     (goto-char (point-min))
@@ -53,6 +56,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure with no main arg but given keyword args"
   (with-temp-buffer
+    (org-mode)
     (insert (lf-string "#+begin_bar :key₁ value₁ :key₂ value₂
 #+end_bar"))
     (goto-char (point-min))
@@ -66,6 +70,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure having no contents or args"
   (with-temp-buffer
+    (org-mode)
     (insert (lf-string "#+begin_baz
                         #+end_baz"))
     (goto-char (point-min))
@@ -79,6 +84,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure with main-arg & keyword args omitted"
     (with-temp-buffer
+      (org-mode)
       (insert (lf-string
        "#+begin_shout
         world
@@ -94,6 +100,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure with no main-arg but keyword args provided"
     (with-temp-buffer
+      (org-mode)
       (insert (lf-string
        "#+begin_shout :to me :and you
         world
@@ -109,6 +116,7 @@ possibly empty")))))
 
 (deftest "`org-special-block-after-point' correctly parses block structure with no main-arg nor contents but keyword args provided"
     (with-temp-buffer
+      (org-mode)
       (insert (lf-string
        "#+begin_shout :to me :and you
         #+end_shout"))
@@ -128,6 +136,7 @@ possibly empty")))))
                (format "REPLACED: %s | %s | %s | %s"
                        backend contents arg args))))
     (with-temp-buffer
+      (org-mode)
       (insert (lf-string "Start
                #+begin_foo mainarg :x 1
                Body text
@@ -159,6 +168,7 @@ possibly empty")))))
              (lambda (backend contents arg &rest args)
                (format "+ Args: %s %s\n+ Contents: %s" arg args (s-trim contents)))))
     (with-temp-buffer
+      (org-mode)
       (insert (lf-string "
                Welcome class, today we will discuss the following:
                0. Why are we here?
@@ -190,3 +200,16 @@ possibly empty")))))
                 2. Why we ask ‘why’?
 
                 Take care!"))))))))
+
+
+(deftest "`org-special-block-after-point' skips a #+begin_NAME that Org reads as text, such as inside a src block"
+  (with-temp-buffer
+    (org-mode)
+    (insert (lf-string "#+begin_src org
+                        #+begin_foo shown literally
+                        #+end_foo
+                        #+end_src
+                        #+begin_foo real
+                        #+end_foo"))
+    (goto-char (point-min))
+    (should (equal (org-special-block-main-arg (org-special-block-after-point "foo")) "real"))))

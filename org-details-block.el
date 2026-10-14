@@ -25,8 +25,14 @@
 (require 'org-defblock)
 
 ;;;;;; details
-(org-defblock details (title "Details"
-                             background-color "#e5f5e5" title-color "green")
+
+(defun org--latex-define-color (name colour)
+  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, else \\colorlet."
+  (if (string-prefix-p "#" colour)
+      (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
+    (format "\\colorlet{%s}{%s}" name colour)))
+
+(org-defblock details (title "Details" background-color "#e5f5e5" title-color "green")
               "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -34,39 +40,23 @@ For LaTeX, this is just a boring, but centered, box.
 By default, the TITLE of such blocks is “Details”,
 its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
 
-In HTML, we show folded, details, regions with a nice greenish colour.
-
-In the future ---i.e., when I have time---
-it may be prudent to expose more aspects as arguments.
-"
+In HTML, we show folded, details, regions with a nice greenish colour."
               (pcase backend
-                (`latex (concat (pcase (substring background-color 0 1)
-                                  ("#" (format "\\definecolor{osbe-bg}{HTML}{%s}" (substring background-color 1)))
-                                  (_ (format "\\colorlet{osbe-bg}{%s}" background-color)))
-                                (pcase (substring title-color 0 1)
-                                  ("#" (format "\\definecolor{osbe-fg}{HTML}{%s}" (substring title-color 1)))
-                                  (_ (format "\\colorlet{osbe-fg}{%s}" title-color)))
-                                (format "\\begin{quote}
-                              \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]
-                                   %s
-                               \\end{tcolorbox}
-                \\end{quote}" title contents)))
-                (_ (format "<details class=\"code-details\"
-                 style =\"padding: 1em;
-                          background-color: %s;
-                          border-radius: 15px;
-                          color: hsl(157 75% 20%);
-                          font-size: 0.9em;
-                          box-shadow: 0.05em 0.1em 5px 0.01em  #00000057;\">
-                  <summary>
-                    <strong>
-                      <font face=\"Courier\" size=\"3\" color=\"%s\">
-                         %s
-                      </font>
-                    </strong>
-                  </summary>
-                  %s
-               </details>" background-color title-color title contents))))
+                ('latex (concat (org--latex-define-color "osbe-bg" background-color)
+                                (org--latex-define-color "osbe-fg" title-color)
+                                (format (concat "\\begin{quote}\n"
+                                                "\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={%s},sharp corners,boxrule=0.4pt]\n"
+                                                "%s\n"
+                                                "\\end{tcolorbox}\n"
+                                                "\\end{quote}")
+                                        title contents)))
+                (_ (format (concat "<details class=\"code-details\" style=\"padding: 1em; background-color: %s; "
+                                   "border-radius: 15px; color: hsl(157 75%% 20%%); font-size: 0.9em; "
+                                   "box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">\n"
+                                   "<summary><strong><font face=\"Courier\" size=\"3\" color=\"%s\">%s</font></strong></summary>\n"
+                                   "%s\n"
+                                   "</details>")
+                           background-color title-color title contents))))
 
 (provide 'org-details-block)
 ;;; org-details-block.el ends here

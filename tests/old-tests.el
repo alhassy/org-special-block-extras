@@ -47,8 +47,7 @@ The link text appears as red bold in both Emacs and in HTML export."
 ;; Define links as you define functions: doc:org-deflink:4 ends here
 
 (org-defblock scream
-  (speaker "Default_Speaker")
-  [:face '(:foreground "green" :weight bold)]
+  (speaker "Default_Speaker" :link [:face '(:foreground "green" :weight bold)])
   "Capitalise the contents! Seen in red bold in Emacs!"
   (format "%s: %s" speaker (upcase contents)))
 

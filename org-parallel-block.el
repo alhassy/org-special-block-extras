@@ -29,7 +29,7 @@
 (org-defblock parallel (cols "2" bar nil)
               "Place ideas side-by-side, possibly with a separator.
 
-There are COLS many columns, and they may be seperated by solid
+There are COLS many columns, and they may be separated by solid
 vertical rules if BAR is a non-nil (colour) value.
 
 + COLS is either a number or a sequence of the shape: 10% 20% 30%.
@@ -68,32 +68,36 @@ I personally advise only the use of percentage measurements.
 
 In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
 With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
-              (let ((rule (pcase backend
-                            (`latex (if bar 2 0))
-                            (_  (format "%s %s" (if bar "solid" "none") (if (string= bar "t") "black" bar)))))
-                    (contents′ (s-replace "#+columnbreak:" "\\columnbreak" contents)))
+              (let* ((widths (split-string cols))
+                     ;; Hard columns have their widths given; e.g., 20% 60% 20%, or 5em 20px.
+                     (hard? (--any? (not (string-match-p "\\`[0-9]+\\'" it)) widths))
+                     (colour (if (equal (format "%s" bar) "t") "black" bar))
+                     ;; A line of its own, so that mentions such as ~#+columnbreak:~ are left alone.
+                     (column-break "^[ \t]*#\\+columnbreak:[ \t]*$"))
                 (pcase backend
-                  (`latex   (format  "\\par \\setlength{\\columnseprule}{%s pt}
-          \\begin{minipage}[t]{\\linewidth}
-          \\begin{multicols}{%s}
-          %s
-          \\end{multicols}\\end{minipage}"    rule cols contents′))
-                  (_ (if (not (s-contains-p "%" cols))
-                         (format "<div style=\"column-rule-style: %s;column-count: %s;\">%s</div>"
-                                 rule cols contents)
-                       ;; Otherwise: cols ≈ "10% 40% 50%", for example.
-                       (let ((spec (s-split " " (s-collapse-whitespace (s-trim cols))))
-                             (columnBreak (lambda (width omit-rule?)
-                                            (format "<div style=\"width: %s; margin: 10px; border-right:4px %s; float:  left;\">" width
-                                                    (if omit-rule? "none" rule)))) )
-                         (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s%s%s</div>"
-                                 (funcall columnBreak (pop spec) nil)
-                                 (s-replace-regexp (regexp-quote "#+columnbreak:")
-                                                   ;; 'λ' since we need the "pop" evaluated for each find-replace instance.
-                                                   ;; We use “not spec” to omit the rule separator when there is NOT anymore elements in SPEC.
-                                                   (lambda (_) (format "@@html:</div>%s@@" (funcall columnBreak (pop spec) (not spec))))
-                                                   contents)
-		                         (if (s-contains-p " " cols) "</div>" ""))))))))
+                  ('latex (format (concat "\\par \\setlength{\\columnseprule}{%s pt}\n"
+                                          "\\begin{minipage}[t]{\\linewidth}\n"
+                                          "\\begin{multicols}{%s}\n%s\n"
+                                          "\\end{multicols}\\end{minipage}")
+                                  (if bar 2 0)
+                                  (if hard? (length widths) cols)
+                                  (replace-regexp-in-string column-break "\\\\columnbreak" contents)))
+                  ((guard (not hard?))
+                   (format "<div style=\"column-count: %s;%s\">%s</div>"
+                           cols (if bar (format " column-rule: 1px solid %s;" colour) "") contents))
+                  ;; Each width begins a column, separated by a bar unless it is the last; CONTENTS is Org
+                  ;; between export fences, so the columns after the first begin within @@html:…@@.
+                  (_ (let ((columns (cl-loop for (width . more) on widths
+                                             collect (format "<div style=\"width: %s; margin: 10px; border-right: %s;\">"
+                                                             width (if (and bar more) (format "4px solid %s" colour) "none"))))
+                           (chunks (split-string contents column-break)))
+                       (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s</div>"
+                               (concat (car columns)
+                                       (car chunks)
+                                       (cl-loop for column in (cdr columns)
+                                                for chunk in (cdr chunks)
+                                                concat (format "@@html:</div>%s@@%s" column chunk))
+                                       "</div>")))))))
 
 (provide 'org-parallel-block)
 ;;; org-parallel-block.el ends here

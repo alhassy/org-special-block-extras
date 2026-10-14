@@ -80,6 +80,7 @@ DEFAULT
 
 (deftest "Parser extracts name, main-arg, and contents from a temp buffer."
   (with-temp-buffer
+    (org-mode)
     (insert "#+begin_myblock hello\nsome content\n#+end_myblock\n")
     (goto-char (point-min))
     (let ((blk (org-special-block-after-point "myblock")))

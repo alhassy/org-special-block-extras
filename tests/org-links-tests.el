@@ -41,5 +41,33 @@
   :returns "3
 ")
 
+;;; Within Emacs, and the LaTeX glossary
+
+(deftest "the badge link's tooltip names each part of its label"
+  (with-temp-buffer
+    (org-mode)
+    (insert "See badge:key|value|blue here.")
+    (let ((tooltip (funcall (org-link-get-parameter "badge" :help-echo) nil nil 7)))
+      (should (s-contains-p "Key    : key" tooltip))
+      (should (s-contains-p "Colour : blue" tooltip)))))
+
+(define-org-call-test "the link-here link's tooltip names its anchor"
+  :call (with-temp-buffer
+          (org-mode)
+          (insert "Go link-here:top now.")
+          (funcall (org-link-get-parameter "link-here" :help-echo) nil nil 6))
+  :returns "This is a local anchor link named “top”")
+
+(deftest "a LaTeX glossary entry refers back to where its doc link declared it"
+  (let ((org--docs '(("cat" "Category Theory" "Typed composition.")))
+        (org--docs-from-libraries nil)
+        (org--docs-actually-used nil))
+    (let ((citation (org-link/doc "cat" nil 'latex))
+          (glossary (org-link/show "GLOSSARY" nil 'latex)))
+      (should (s-contains-p "\\label{o-glossary-declaration-site-cat}" citation))
+      (should (s-contains-p "\\pageref{o-glossary-declaration-site-cat}" glossary))
+      (should (s-contains-p "\\hyperref[o-glossary-cat]" citation))
+      (should (s-contains-p "\\label{o-glossary-cat}" glossary)))))
+
 (provide 'org-links-tests)
 ;;; org-links-tests.el ends here

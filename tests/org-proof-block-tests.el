@@ -29,13 +29,13 @@ $$\\begin{align*} & \\begin{split}x\\end{split}
 (define-org-call-test "tree block produces \\frac for a simple rule."
   :call (org-block/tree 'latex "+ Trans :: P = Q\n  - P = P\n    + ✓\n" nil)
   :returns "#+begin_export latex
-\\[\\frac{\\displaystyle  \\qquad \\frac{\\displaystyle  \\qquad ✓}{P = P}}{P = Q}[\\text{Trans}]\\]
+\\[\\frac{\\displaystyle \\frac{\\displaystyle ✓}{P = P}}{P = Q}[\\text{Trans}]\\]
 #+end_export")
 
 (define-org-call-test "tree block wraps each tree in \\[…\\]."
   :call (org-block/tree 'latex "+ A\n  - B\n" nil)
   :returns "#+begin_export latex
-\\[\\frac{\\displaystyle  \\qquad B}{A}\\]
+\\[\\frac{\\displaystyle B}{A}\\]
 #+end_export")
 
 (deftest "tree block signals a user-error when the content is not a valid list."
@@ -47,8 +47,14 @@ $$\\begin{align*} & \\begin{split}x\\end{split}
   (should (equal "A = B" (org--list-to-math '("A = B" nil)))))
 
 (define-org-call-test "org--list-to-math wraps premiss/conclusion in \\frac."
-  :call (org--list-to-math '("R :: C = D" (("P = Q" nil))))
+  :call (org--list-to-math '("R :: C = D" (unordered ("P = Q")))) ;; As `org-list-to-lisp' gives it
   :returns "\\frac{\\displaystyle P = Q}{C = D}[\\text{R}]")
+
+(deftest "tree keeps everything after a reason's first ::"
+  (should (s-contains-p "{x :: Int}" (org--list-to-math '("f :: x :: Int")))))
+
+(deftest "calc renders a step that has nested steps but no hint"
+  (should (stringp (org-block/calc 'latex "- x\n  - y -- h" nil))))
 
 (provide 'org-proof-block-tests)
 ;;; org-proof-block-tests.el ends here

@@ -10,6 +10,7 @@
   (let ((org--supported-blocks '("foo"))
         (org--current-backend nil))
     (with-temp-buffer
+      (org-mode)
 
       ;; Dummy handler for "foo" blocks
       (defun org-block/foo (backend contents arg &rest args)

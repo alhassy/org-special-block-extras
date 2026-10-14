@@ -48,7 +48,7 @@
   "Evaluate BLOCK-DEFS (an org-defblock form or list of them), run BODY, then undo via org-undefblock.
 
 BLOCK-DEFS may be either:
-  - a single form:   (org-defblock name kwds &optional link-display docstring &rest body)
+  - a single form:   (org-defblock name kwds &optional docstring &rest body)
   - a list of forms: ((org-defblock …) (org-defblock …) …)
 
 For each (org-defblock NAME …), we generate the matching (org-undefblock NAME …)

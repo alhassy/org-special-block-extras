@@ -1,4 +1,4 @@
-;;; org-special-block-extras-graph.el --- #+begin_graph: Org lists → Graphviz dot  -*- lexical-binding: t; -*-
+;;; org-graph-block.el --- #+begin_graph: Org lists → Graphviz dot  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2024 Musa Al-hassy
 
@@ -199,24 +199,20 @@ Each entry is a plist with:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing helpers
 
+(defun org--graph-parse-row (line)
+  "LINE ↦ its trimmed non-empty cells, e.g. \"| shape | box |\" ↦ (\"shape\" \"box\"); nil for separator rows."
+  (let ((cols (-remove #'s-blank-str-p (-map #'s-trim (s-split "|" line)))))
+    (unless (or (null cols) (s-matches-p "^[-+]+$" (car cols)))
+      cols)))
+
 (defun org--graph-parse-table (s)
-  "Parse a 2-or-3-col Org table string S into a list of row lists.
-Each row is a list of trimmed non-empty cell strings.
-Separator rows (cells containing only dashes/pluses) are skipped.
+  "Parse a 2-or-3-col Org table string S into a list of row lists, via `org--graph-parse-row'.
 Returns a list of (key value) or (key value extra) lists."
   (when (and s (not (s-blank-str-p s)))
-    (--keep
-     (let ((cols (->> it
-                      (s-split "|")
-                      (-map #'s-trim)
-                      (-remove #'s-blank-str-p))))
-       (when (and cols
-                  (not (s-matches-p "^[-+]+$" (car cols))))
-         cols))
-     (s-split "\n" (s-trim s)))))
+    (-keep #'org--graph-parse-row (s-split "\n" (s-trim s)))))
 
 (defun org--graph-parse-attrs (str)
-  "Parse attr string STR like 'label=\"foo bar\" style=dashed' into a dot fragment.
+  "Parse attr string STR like “label=\"foo bar\" style=dashed” into a dot fragment.
 Returns a space-joined string of key=value pairs, suitable for insertion
 inside a dot [ … ] attribute list."
   (let ((result '())
@@ -253,7 +249,7 @@ Returns \"key=value key=value …\" — no surrounding brackets."
 NAMES is a list of strings; NAME-TABLES is the block's template hash-table;
 EXCLUDE-KEYS is a list of key strings that should not appear in the result."
   (--mapcat (--remove (member (car it) exclude-keys)
-                      (or (gethash (s-trim it) name-tables) nil))
+                      (gethash (s-trim it) name-tables))
             names))
 
 (defun org--graph-expand-eval-rows (rows name-tables)
@@ -288,6 +284,34 @@ Returns STR unchanged when it contains no (eval …) tokens."
                             explicit-keys))))
       (s-trim (s-join " " (-remove #'s-blank-str-p
                                    (list template-str explicit-str)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Statement builders
+
+(defun org--graph-edge (src dst attr-str)
+  "(SRC, DST, ATTR-STR) ↦ \"SRC -> DST [ ATTR-STR ];\", sans brackets when ATTR-STR is blank."
+  (if (s-blank-str-p attr-str)
+      (format "%s -> %s;" src dst)
+    (format "%s -> %s [ %s ];" src dst attr-str)))
+
+(defun org--graph-nesting-edges (parent-id node-id edge-rows name-tables)
+  "The edges PARENT-ID → NODE-ID: one per | EDGE | row, else one plain arc; none for a root item."
+  (when parent-id
+    (if edge-rows
+        (--map (org--graph-edge parent-id node-id
+                                (org--graph-parse-attrs (org--graph-expand-eval-in-attr-str (cadr it) name-tables)))
+               edge-rows)
+      (list (org--graph-edge parent-id node-id "")))))
+
+(defun org--graph-scope-stmts (preamble)
+  "PREAMBLE's :graph-rows, :node-rows, :edge-rows, and :ranks ↦ the dot directives for its scope."
+  (append
+   (-keep (-lambda ((kind . key))
+            (-when-let (rows (plist-get preamble key))
+              (format "%s [ %s ]" kind (org--graph-attrs->dot rows))))
+          '(("graph" . :graph-rows) ("node" . :node-rows) ("edge" . :edge-rows)))
+   (--map (format "{ rank=same; %s }" (s-join "; " (s-split "[ \t]+" (s-trim it) t)))
+          (plist-get preamble :ranks))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Preamble extraction
@@ -342,11 +366,8 @@ Returns a plist:
          ;; Table rows dispatched to current mode or current named template.
          ;; Inside a drawer all table rows qualify; outside, only unindented ones.
          ((s-matches-p "^|" (if in-drawer trimmed line))
-          (let ((cols (->> trimmed
-                           (s-split "|")
-                           (-map #'s-trim)
-                           (-remove #'s-blank-str-p))))
-            (when (and cols (not (s-matches-p "^[-+]+$" (car cols))))
+          (let ((cols (org--graph-parse-row trimmed)))
+            (when cols
               (cond
                (current-name
                 ;; Accumulate in reverse via push; nreversed into name-tables below.
@@ -410,11 +431,8 @@ Returns a plist:
           (let ((ids (s-trim (substring trimmed (length "#+rank:")))))
             (unless (s-blank-str-p ids) (push ids ranks))))
          ((s-matches-p "^|" trimmed)
-          (let ((cols (->> trimmed
-                           (s-split "|")
-                           (-map #'s-trim)
-                           (-remove #'s-blank-str-p))))
-            (when (and cols (not (s-matches-p "^[-+]+$" (car cols))))
+          (let ((cols (org--graph-parse-row trimmed)))
+            (when cols
               (pcase mode
                 ('attr  (push cols attr-rows))
                 ('node  (push cols node-rows))
@@ -501,7 +519,7 @@ If TARGET is already in \"node:port\" form, or not in the index, return as-is."
            (owner     (gethash norm-port port-index)))
       (if owner (format "%s:%s" owner norm-port) target))))
 
-(defun org--graph-record-label-fragment (children node-id seen-nodes cluster-membership port-index)
+(defun org--graph-record-label-fragment (children node-id seen-nodes port-index name-tables)
   "Recursively build a Graphviz record label fragment from CHILDREN.
 
 Returns a plist:
@@ -526,10 +544,10 @@ port or edges of its own; its children are folded in recursively."
           (if (equal field-name "{}")
               ;; Layout-flip group: recurse, wrap fragment in { }
               (let ((inner (org--graph-record-label-fragment
-                            grandchildren node-id seen-nodes cluster-membership port-index)))
+                            grandchildren node-id seen-nodes port-index name-tables)))
                 (push (format "{%s}" (plist-get inner :label)) parts)
-                (setq edges           (append edges           (plist-get inner :edges)))
-                (setq grandchild-stmts (append grandchild-stmts (plist-get inner :grandchildren))))
+                (setq edges (append (reverse (plist-get inner :edges)) edges))
+                (push (plist-get inner :grandchildren) grandchild-stmts))
             ;; Ordinary field: <port> prefix only when an explicit | id | row exists
             (let* ((explicit-port (when id-row (org--graph-dot-port (cadr id-row))))
                    (implicit-port (org--graph-dot-port field-name))
@@ -544,35 +562,31 @@ port or edges of its own; its children are folded in recursively."
                 (let* ((raw-target (cadr to-row))
                        (target     (org--graph-resolve-port-target raw-target port-index))
                        (attr-str   (org--graph-parse-attrs (nth 2 to-row))))
-                  (push (if (s-blank-str-p attr-str)
-                            (format "%s:%s -> %s;" node-id port target)
-                          (format "%s:%s -> %s [ %s ];" node-id port target attr-str))
-                        edges)))
+                  (push (org--graph-edge (format "%s:%s" node-id port) target attr-str) edges)))
               ;; Grandchildren of real fields recurse as ordinary nodes
               (dolist (gc grandchildren)
-                (setq grandchild-stmts
-                      (append grandchild-stmts
-                              (org--graph-list->dot gc nil seen-nodes cluster-membership port-index)))))))))
+                (push (org--graph-list->dot gc nil seen-nodes port-index name-tables) grandchild-stmts)))))))
     (list :label        (s-join "|" (nreverse parts))
           :edges        (nreverse edges)
-          :grandchildren grandchild-stmts)))
+          :grandchildren (apply #'append (nreverse grandchild-stmts)))))
 
-(defun org--graph-record->dot (node-id shape other-attrs children seen-nodes cluster-membership port-index)
+(defun org--graph-record->dot (node-id shape other-attrs children seen-nodes port-index name-tables)
   "Emit dot statements for a record/Mrecord node and its field children.
 
-NODE-ID      — already-quoted dot id for the record node.
-SHAPE        — \"record\" or \"Mrecord\".
-OTHER-ATTRS  — node attr rows with the shape row removed.
-CHILDREN     — raw org-list-to-lisp children of the record item.
-SEEN-NODES, CLUSTER-MEMBERSHIP — forwarded hash-tables.
-PORT-INDEX   — hash-table of port-id → record-node-id for target resolution.
+NODE-ID      ---already-quoted dot id for the record node.
+SHAPE        ---\"record\" or \"Mrecord\".
+OTHER-ATTRS  ---node attr rows with the shape row removed.
+CHILDREN     ---raw org-list-to-lisp children of the record item.
+SEEN-NODES   ---forwarded hash-table of declared nodes.
+PORT-INDEX   ---hash-table of port-id → record-node-id for target resolution.
+NAME-TABLES  ---the block's style templates, for fields' nested items.
 
 Immediate children become record fields.  A child named \"{}\" is a
 layout-flip group — its children are wrapped in { } in the label string
 and no port or edge is emitted for the group node itself.  Deeper
 nesting flips orientation again, mirroring the Graphviz record DSL."
   (let* ((result   (org--graph-record-label-fragment
-                    children node-id seen-nodes cluster-membership port-index))
+                    children node-id seen-nodes port-index name-tables))
          (label    (concat "\"" (plist-get result :label) "\""))
          (all-attrs (append (list (list "shape" shape) (list "label" label))
                             other-attrs))
@@ -598,13 +612,13 @@ interior double-quotes escaped."
    ((s-matches-p "^-?[0-9]+\\.?[0-9]*$" name) name)
    (t (format "\"%s\"" (s-replace "\"" "\\\"" name)))))
 
-(defun org--graph-list->dot (lst parent-id seen-nodes cluster-membership port-index name-tables)
+(defun org--graph-list->dot (lst parent-id seen-nodes port-index name-tables)
   "Walk one org-list-to-lisp item LST and return a list of dot statement strings.
 
 PARENT-ID is the dot ID of the parent node (nil for root items).
 SEEN-NODES is a hash-table of node-id → t for already-declared nodes.
-CLUSTER-MEMBERSHIP is a hash-table we populate: node-id → cluster-id.
 PORT-INDEX is a hash-table of port-id → record-node-id (read-only here).
+NAME-TABLES is the block's style templates, for | eval | rows.
 
 Emission order per node:
   1. Incoming nesting-edge(s) from parent (one per EDGE row, or one plain arc)
@@ -613,7 +627,7 @@ Emission order per node:
   4. Recurse into children"
   (cond
    ((symbolp lst) nil)
-   ((symbolp (car lst)) (org--graph-list->dot (cadr lst) parent-id seen-nodes cluster-membership port-index name-tables))
+   ((symbolp (car lst)) (org--graph-list->dot (cadr lst) parent-id seen-nodes port-index name-tables))
    (t
     (-let* (((raw-text children) lst)
             ((name-part table-part) (s-split-up-to "\n" (s-trim raw-text) 1))
@@ -637,17 +651,9 @@ Emission order per node:
                  (other-attrs (--remove (equal (car it) "shape") node-attrs)))
             (append
              ;; Nesting-edge(s) from parent still apply
-             (when parent-id
-               (if edge-rows
-                   (--map (let ((attr-str (org--graph-parse-attrs
-                                           (org--graph-expand-eval-in-attr-str (cadr it) name-tables))))
-                            (if (s-blank-str-p attr-str)
-                                (format "%s -> %s;" parent-id node-id)
-                              (format "%s -> %s [ %s ];" parent-id node-id attr-str)))
-                          edge-rows)
-                 (list (format "%s -> %s;" parent-id node-id))))
+             (org--graph-nesting-edges parent-id node-id edge-rows name-tables)
              (org--graph-record->dot node-id shape other-attrs children
-                                     seen-nodes cluster-membership port-index)))
+                                     seen-nodes port-index name-tables)))
 
         (if (and first-time (org--graph-cluster-shape-p node-attrs))
             ;; Cluster node: becomes an inline cluster_ID { } block.
@@ -668,33 +674,10 @@ Emission order per node:
                                           all-rows))
                    (attr-str    (org--graph-attrs->dot other-attrs))
                    ;; Scoped directive statements inside the subgraph
-                   (scope-stmts (append
-                                 (when (plist-get item-pre :graph-rows)
-                                   (list (format "graph [ %s ]"
-                                                 (org--graph-attrs->dot (plist-get item-pre :graph-rows)))))
-                                 (when (plist-get item-pre :node-rows)
-                                   (list (format "node [ %s ]"
-                                                 (org--graph-attrs->dot (plist-get item-pre :node-rows)))))
-                                 (when (plist-get item-pre :edge-rows)
-                                   (list (format "edge [ %s ]"
-                                                 (org--graph-attrs->dot (plist-get item-pre :edge-rows)))))
-                                 (--map (format "{ rank=same; %s }"
-                                                (s-join "; " (s-split "[ \t]+" (s-trim it) t)))
-                                        (plist-get item-pre :ranks))))
-                   ;; Walk children as ordinary nodes, registering cluster membership
-                   (child-stmts (--mapcat
-                                 (progn
-                                   ;; Pre-register membership so child walk sees it
-                                   (when (and it (not (symbolp it)) (not (symbolp (car it))))
-                                     (-let* (((c-raw _) it)
-                                             ((c-name c-table) (s-split-up-to "\n" (s-trim c-raw) 1))
-                                             (c-item-pre (org--graph-extract-item-preamble c-table))
-                                             (c-rows     (plist-get c-item-pre :attr-rows))
-                                             (c-id-row   (--first (equal (car it) "id") c-rows))
-                                             (c-id       (org--graph-dot-id (or (cadr c-id-row) (s-trim c-name)))))
-                                       (puthash c-id cluster-id cluster-membership)))
-                                   (org--graph-list->dot it nil seen-nodes cluster-membership port-index name-tables))
-                                 children)))
+                   (scope-stmts (org--graph-scope-stmts item-pre))
+                   ;; Children are ordinary nodes, scoped inside the subgraph
+                   (child-stmts (--mapcat (org--graph-list->dot it nil seen-nodes port-index name-tables)
+                                          children)))
               (puthash node-id t seen-nodes)
               (list (format "subgraph cluster_%s {\n    label=%s\n    %s\n  }"
                             cluster-id
@@ -707,23 +690,12 @@ Emission order per node:
 
         (append
          ;; 1. Nesting-edge(s): parent → this node
-         (when parent-id
-           (if edge-rows
-               (--map (let ((attr-str (org--graph-parse-attrs
-                                       (org--graph-expand-eval-in-attr-str (cadr it) name-tables))))
-                        (if (s-blank-str-p attr-str)
-                            (format "%s -> %s;" parent-id node-id)
-                          (format "%s -> %s [ %s ];" parent-id node-id attr-str)))
-                      edge-rows)
-             (list (format "%s -> %s;" parent-id node-id))))
+         (org--graph-nesting-edges parent-id node-id edge-rows name-tables)
 
          ;; 2. Explicit `to` cross-edges; resolve bare port-ids to node:port form
-         (--map (let* ((target   (org--graph-resolve-port-target (cadr it) port-index))
-                       (attr-str (org--graph-parse-attrs
-                                  (org--graph-expand-eval-in-attr-str (nth 2 it) name-tables))))
-                  (if (s-blank-str-p attr-str)
-                      (format "%s -> %s;" node-id target)
-                    (format "%s -> %s [ %s ];" node-id target attr-str)))
+         (--map (org--graph-edge node-id
+                                 (org--graph-resolve-port-target (cadr it) port-index)
+                                 (org--graph-parse-attrs (org--graph-expand-eval-in-attr-str (nth 2 it) name-tables)))
                 to-rows)
 
          ;; 3. Node declaration (first occurrence only)
@@ -742,7 +714,7 @@ Emission order per node:
 
          ;; 4. Recurse into children
          (let ((child-stmts
-                (--mapcat (org--graph-list->dot it node-id seen-nodes cluster-membership port-index name-tables)
+                (--mapcat (org--graph-list->dot it node-id seen-nodes port-index name-tables)
                           children)))
            (if rank-row
                ;; Collect immediate child ids and emit a rank constraint block
@@ -768,30 +740,18 @@ Emission order per node:
   "Convert RAW-CONTENTS of a #+begin_graph block into a dot source string.
 MAIN-ARG is \"directed\" (default) or \"undirected\"."
   (let* ((preamble        (org--graph-extract-preamble raw-contents))
-         (graph-rows      (plist-get preamble :graph-rows))
-         (node-rows       (plist-get preamble :node-rows))
-         (edge-rows       (plist-get preamble :edge-rows))
-         (ranks           (plist-get preamble :ranks))
          (name-tables     (plist-get preamble :name-tables))
          (list-body       (plist-get preamble :list-body))
          (digraph?        (not (equal main-arg "undirected")))
          (graph-type      (if digraph? "digraph" "graph"))
          (seen            (make-hash-table :test #'equal))
-         (cluster-mem     (make-hash-table :test #'equal))
          ;; Parse the Org list
-         (parsed          (condition-case err
-                              (with-temp-buffer
-                                (insert (s-trim list-body))
-                                (goto-char (point-min))
-                                (org-list-to-lisp))
-                            (error
-                             (user-error "#+begin_graph: invalid Org list.\n%s"
-                                         (error-message-string err)))))
+         (parsed          (org--parse-plain-list (s-trim list-body) "graph"))
          ;; Pre-pass: build port-id → record-node-id index for field `to` resolution
          (port-index      (org--graph-build-port-index parsed))
          ;; Walk every top-level item
          (all-stmts       (--mapcat
-                           (org--graph-list->dot it nil seen cluster-mem port-index name-tables)
+                           (org--graph-list->dot it nil seen port-index name-tables)
                            (cdr parsed))))
 
     ;; Replace "->" with "--" for undirected graphs
@@ -799,43 +759,37 @@ MAIN-ARG is \"directed\" (default) or \"undirected\"."
       (setq all-stmts
             (--map (s-replace "->" "--" it) all-stmts)))
 
-    (let* ((rank-stmts
-            (--map (format "{ rank=same; %s }"
-                           (s-join "; " (s-split "[ \t]+" (s-trim it) t)))
-                   ranks))
-           (lines
-            (append
-             (when graph-rows
-               (list (format "graph [ %s ]" (org--graph-attrs->dot graph-rows))))
-             (when node-rows
-               (list (format "node [ %s ]" (org--graph-attrs->dot node-rows))))
-             (when edge-rows
-               (list (format "edge [ %s ]" (org--graph-attrs->dot edge-rows))))
-             rank-stmts
-             all-stmts)))
-      (format "%s {\n  %s\n}" graph-type (s-join "\n  " lines)))))
+    (format "%s {\n  %s\n}" graph-type (s-join "\n  " (append (org--graph-scope-stmts preamble) all-stmts)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; C-c C-c integration
 
-(defun org-graph--insert-results (end-point outfile)
-  "Insert or replace a #+RESULTS: block after END-POINT with a link to OUTFILE.
-If the line immediately after END-POINT is already a #+RESULTS: block,
-replace it; otherwise insert a new one."
+(defun org-graph--insert-results (end-point payload)
+  "Insert \"#+RESULTS:\\nPAYLOAD\" on the line after END-POINT, replacing a #+RESULTS: (header + one line) already there."
   (save-excursion
     (goto-char end-point)
     (forward-line 1)
-    (if (looking-at "[ \t]*#\\+RESULTS:")
-        ;; Replace existing #+RESULTS: block (one header line + one link line)
+    (when (looking-at "[ \t]*#\\+RESULTS:")
+      (delete-region (point) (progn (forward-line 2) (point))))
+    (insert (format "#+RESULTS:\n%s\n" payload))))
+
+(defun org-graph--run-dot (dot format outfile)
+  "(DOT, FORMAT, OUTFILE) ↦ (EXIT-CODE . STDERR) of running `dot -TFORMAT' on DOT source, writing OUTFILE."
+  (let ((dotfile  (make-temp-file "org-graph-" nil ".dot"))
+        (err-file (make-temp-file "org-graph-err-")))
+    (unwind-protect
         (progn
-          (delete-region (point)
-                         (progn (forward-line 2) (point)))
-          (insert (format "#+RESULTS:\n[[file:%s]]\n" outfile)))
-      (insert (format "#+RESULTS:\n[[file:%s]]\n" outfile)))))
+          (write-region dot nil dotfile)
+          (cons (call-process "dot" nil (list nil err-file) nil (concat "-T" format) dotfile "-o" outfile)
+                (with-temp-buffer
+                  (insert-file-contents err-file)
+                  (s-trim (buffer-string)))))
+      (delete-file dotfile)
+      (delete-file err-file))))
 
 (defun org-graph--annotate-dot-error (err-str dot)
   "Enrich ERR-STR from dot with offending lines from DOT and debug hints.
-Collects every 'line N' reference in ERR-STR, extracts those lines, and
+Collects every “line N” reference in ERR-STR, extracts those lines, and
 appends a structured debug footer."
   (let* ((src-lines  (split-string dot "\n"))
          (n-lines    (length src-lines))
@@ -883,7 +837,8 @@ With C-u prefix, or when the block carries :C-c_C-c dot:
 The two controls compose via XOR: if :C-c_C-c dot is set, C-u toggles
 back to PNG.  Returns t (claiming C-c C-c)."
   (save-excursion
-    (re-search-backward "^[ \t]*#\\+begin_graph\\b" nil t)
+    ;; The block dispatch chose ---the innermost around point--- not merely the nearest #+begin_graph above it.
+    (-some--> (org-special-block-at-point) (org-element-property :post-affiliated it) (goto-char it))
     (let* ((block      (org-special-block-after-point "graph"))
            (kwdargs    (org-special-block-kwdargs block))
            (raw        (org-special-block-contents block))
@@ -896,31 +851,16 @@ back to PNG.  Returns t (claiming C-c C-c)."
       (if show-dot?
           (progn
             (org-graph--show-dot dot)
-            (save-excursion
-              (goto-char end-pt)
-              (forward-line 1)
-              (if (looking-at "[ \t]*#\\+RESULTS:")
-                  (progn
-                    (delete-region (point) (progn (forward-line 2) (point)))
-                    (insert (format "#+RESULTS:\n#+begin_src dot\n%s\n#+end_src\n" dot)))
-                (insert (format "#+RESULTS:\n#+begin_src dot\n%s\n#+end_src\n" dot))))
+            (org-graph--insert-results end-pt (format "#+begin_src dot\n%s\n#+end_src" dot))
             (message "Graph dot source → *org-graph dot*"))
-        (let* ((outfile (or (plist-get kwdargs :file)
-                            (expand-file-name
-                             (format "graph-%s.png" (substring (md5 dot) 0 12))
-                             temporary-file-directory)))
-               (dotfile (make-temp-file "org-graph-" nil ".dot")))
-          (write-region dot nil dotfile)
-          (let* ((err-file (make-temp-file "org-graph-err-"))
-                 (exit     (call-process "dot" nil (list nil err-file) nil
-                                         "-v" "-Tpng" dotfile "-o" outfile))
-                 (err-str  (with-temp-buffer
-                             (insert-file-contents err-file)
-                             (s-trim (buffer-string)))))
-            (delete-file err-file)
+        (let ((outfile (or (plist-get kwdargs :file)
+                           (expand-file-name
+                            (format "graph-%s.png" (substring (md5 dot) 0 12))
+                            temporary-file-directory))))
+          (-let [(exit . err-str) (org-graph--run-dot dot "png" outfile)]
             (if (zerop exit)
                 (progn
-                  (org-graph--insert-results end-pt outfile)
+                  (org-graph--insert-results end-pt (format "[[file:%s]]" outfile))
                   (when (fboundp 'org-display-inline-images)
                     (org-display-inline-images))
                   (message "Graph rendered → %s" (expand-file-name outfile)))
@@ -1039,20 +979,11 @@ non-nil to suppress the normal `org-return' behaviour."
 (defun org-graph--render-to-png (dot outfile)
   "Render DOT source to OUTFILE (PNG) via the dot command.
 Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
-  (let* ((dotfile  (make-temp-file "org-graph-" nil ".dot"))
-         (err-file (make-temp-file "org-graph-err-")))
-    (write-region dot nil dotfile)
-    (let* ((exit    (call-process "dot" nil (list nil err-file) nil
-                                  "-Tpng" dotfile "-o" outfile))
-           (err-str (with-temp-buffer
-                      (insert-file-contents err-file)
-                      (s-trim (buffer-string)))))
-      (delete-file err-file)
-      (if (zerop exit)
-          outfile
-        (warn "org-graph: dot failed rendering PNG:\n%s"
-              (org-graph--annotate-dot-error err-str dot))
-        nil))))
+  (-let [(exit . err-str) (org-graph--run-dot dot "png" outfile)]
+    (if (zerop exit)
+        outfile
+      (warn "org-graph: dot failed rendering PNG:\n%s" (org-graph--annotate-dot-error err-str dot))
+      nil)))
 
 (defun org-graph--png-to-base64 (pngfile)
   "Return a base64 string of the binary contents of PNGFILE."
@@ -1066,20 +997,11 @@ Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
 (defun org-graph--render-to-svg (dot outfile)
   "Render DOT source to OUTFILE (SVG) via the dot command.
 Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
-  (let* ((dotfile  (make-temp-file "org-graph-" nil ".dot"))
-         (err-file (make-temp-file "org-graph-err-")))
-    (write-region dot nil dotfile)
-    (let* ((exit    (call-process "dot" nil (list nil err-file) nil
-                                  "-Tsvg" dotfile "-o" outfile))
-           (err-str (with-temp-buffer
-                      (insert-file-contents err-file)
-                      (s-trim (buffer-string)))))
-      (delete-file err-file)
-      (if (zerop exit)
-          outfile
-        (warn "org-graph: dot failed rendering SVG:\n%s"
-              (org-graph--annotate-dot-error err-str dot))
-        nil))))
+  (-let [(exit . err-str) (org-graph--run-dot dot "svg" outfile)]
+    (if (zerop exit)
+        outfile
+      (warn "org-graph: dot failed rendering SVG:\n%s" (org-graph--annotate-dot-error err-str dot))
+      nil)))
 
 (defun org-graph--svg-contents (svgfile)
   "Return the <svg>…</svg> string from SVGFILE, stripping the XML preamble."
@@ -1160,4 +1082,4 @@ Example:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'org-graph-block)
-;;; org-special-block-extras-graph.el ends here
+;;; org-graph-block.el ends here

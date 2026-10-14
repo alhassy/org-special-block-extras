@@ -23,7 +23,7 @@ is a major part of this article! So, let's make a block to mitigate such an
 error-prone tedium.
 </p>
 
-<div style=\"column-rule-style: none nil;column-count: 2;\">
+<div style=\"column-count: 2;\">
 <div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\"> <h3>Source</h3> 
 <div ><pre class=\"src src-org\">/italics/ and _underline_
 
@@ -51,12 +51,9 @@ is a major part of this article! So, let's make a block to mitigate such an
 error-prone tedium.
 
 \\par \\setlength{\\columnseprule}{0 pt}
-          \\begin{minipage}[t]{\\linewidth}
-          \\begin{multicols}{2}
-\\begin{tcolorbox}[title={Source},colback=\"cyan\"
-,colframe=red!75!black
-,colbacktitle=yellow!50!red
-,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\begin{minipage}[t]{\\linewidth}
+\\begin{multicols}{2}
+\\begin{tcolorbox}[title={Source},colback=cyan,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 
 \\begin{verbatim}
 /italics/ and _underline_
@@ -64,10 +61,7 @@ error-prone tedium.
 $e^{i \\times \\pi} + 1 = 0$
 \\end{verbatim}
 \\end{tcolorbox}
-\\begin{tcolorbox}[title={Result},colback=\"cyan\"
-,colframe=red!75!black
-,colbacktitle=yellow!50!red
-,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\begin{tcolorbox}[title={Result},colback=cyan,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 \\emph{italics} and \\uline{underline}
 
 \\(e^{i \\times \\pi} + 1 = 0\\)
