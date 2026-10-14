@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 26.10.6
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (seq "2.0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -56,8 +56,8 @@
 ;;
 ;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
 ;;
-;; This file has been tangled from a literate, org-mode, file; and so contains
-;; further examples demonstrating the special blocks it introduces.
+;; The .el files are the source of truth; org-special-block-extras.org is the
+;; manual, with further examples demonstrating these blocks.
 ;;
 ;; Full documentation can be found at
 ;; https://alhassy.github.io/org-special-block-extras
@@ -114,8 +114,9 @@
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
 ;; live in a file of their name.  The blocks and links built atop them live in
 ;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el,
-;; org-parallel-block.el, org-proof-block.el, org-graph-block.el, and
-;; org-defblock-misc.el; this file requires them all and defines the mode.
+;; org-parallel-block.el, org-proof-block.el, and org-defblock-misc.el; this file
+;; requires them all and defines the mode.  The graph block, org-graph-block.el,
+;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
 ;;
 ;; 🤔 Did you think “That was all straightforward, why even bother writing it down?”
@@ -342,22 +343,40 @@ To avoid such behaviour, set this variable to `nil'."
           "
   "Tooltipster CSS/JS for “.tooltip” elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
 
-;;;;; Glossary reset
-
-(defvar org--docs-reset-next nil
-  "Whether the next `org-export-dispatch' clears the glossary; it alternates, so every second export does.
-
-We erase the glossary not on the first export, but on the second export.
-The first export collects all citations, which are used in the second export.")
-
-(defun org--docs-maybe-reset (&rest _)
-  "Every second call, forget the glossary entries the current buffer used and defined."
-  (when (setq org--docs-reset-next (not org--docs-reset-next))
-    (setq org--docs-actually-used nil ;; The 𝒳 of each “doc:𝒳” that appears in the current buffer.
-          org--docs nil)))            ;; The “#+begin_documentation ⋯ :label 𝒳” of the current buffer.
+;;;;; Glossary libraries
 
 (defvar org--docs-libraries-loaded nil
   "Whether `org-special-block-extras-mode' has loaded `org-docs-libraries' this session.")
+
+;;;;; Eldoc: hover documentation for blocks and links
+
+(defun org-block-signature (name)
+  "NAME ↦ how its block is called, with defaults; e.g., #+begin_details TITLE=\"Details\" :title-color \"green\"; else nil."
+  (-when-let (args (get (intern-soft (format "org-block/%s" name)) 'org-defblock-args))
+    (-let [(main default . keys) args]
+      (concat (format "#+begin_%s" name)
+              ;; The anonymous main argument is omitted, unless it has a default to show.
+              (if (and (eq main 'main-arg) (null default)) "" (format " %s" (upcase (symbol-name main))))
+              (if default (format "=%S" default) "")
+              (mapconcat (-lambda ((key default)) (format " :%s%s" key (if default (format " %S" default) "")))
+                         (-partition 2 keys) "")))))
+
+(defun org--special-block-eldoc (callback &rest _)
+  "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point; else nil.
+On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, the NAME block, else its `org-deflink'."
+  (when (derived-mode-p 'org-mode)
+    (let* ((delimiter? (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+\\(begin\\|end\\)_")))
+           (name  (if delimiter? (org-special-block-name-at-point)
+                    (-some->> (org--link-at-point) (org-element-property :type))))
+           (block (and name (intern-soft (format "org-block/%s" name))))
+           (link  (and name (not delimiter?) (intern-soft (format "org-link/%s" name))))
+           (gist  (lambda (docstring) (car (split-string (or docstring "") "\n")))))
+      (cond ((get block 'org-defblock-args)
+             (funcall callback (funcall gist (get block 'variable-documentation))
+                      :thing (org-block-signature name) :face 'font-lock-function-name-face))
+            ((fboundp link)
+             (funcall callback (funcall gist (documentation link))
+                      :thing (format "%s:" name) :face 'font-lock-function-name-face))))))
 
 ;;;;; The mode
 
@@ -366,6 +385,10 @@ The first export collects all citations, which are used in the second export.")
   "Provide 30 new custom blocks & 34 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
+
+On a #+begin_NAME line, or a NAME: link, eldoc shows the block's arguments and gist;
+C-c ' edits a block declared with `:edit-indirect-mode', such as graph, in its own buffer;
+and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
 
 This minor mode uses “untrusted data from untrusted websites” when exporting
 to HTML, this is done for beautiful tooltips or styles.
@@ -377,11 +400,14 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
   (if org-special-block-extras-mode
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
-        (add-hook 'org-export-before-parsing-hook #'org--rewrite-special-blocks-by-handlers)
-        (add-hook 'org-export-before-processing-hook #'org--html-export-style-setup)
+        (add-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
+        ;; Before the rewrite, which then renders the details blocks this introduces.
+        (add-hook 'org-export-before-parsing-functions #'org--fold-src-blocks -10)
+        (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
-        (advice-add 'org-export-dispatch :after #'org--docs-maybe-reset)
-        (setq org-export-allow-bind-keywords t)
+        ;; Before the rewrite, which consumes the documentation blocks this reads.
+        (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
+        (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
         ;; Appended once: the head itself records whether a snippet is already there.
         (when org-special-block-add-html-extra
           (dolist (head (list org--kbd-html-head org--tooltip-html-head))
@@ -391,10 +417,12 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (unless org--docs-libraries-loaded
           (setq org--docs-libraries-loaded t)
           (org-docs-load-libraries)))
-    (remove-hook 'org-export-before-parsing-hook #'org--rewrite-special-blocks-by-handlers)
-    (remove-hook 'org-export-before-processing-hook #'org--html-export-style-setup)
+    (remove-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
+    (remove-hook 'org-export-before-parsing-functions #'org--fold-src-blocks)
+    (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
-    (advice-remove 'org-export-dispatch #'org--docs-maybe-reset)))
+    (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
+    (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)))
 
 (provide 'org-special-block-extras)
 

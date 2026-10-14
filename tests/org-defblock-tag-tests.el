@@ -124,10 +124,10 @@ Body text.
 (deftest "org-defblock with :tag t defines org-deftag/NAME, and org-undefblock removes it"
   (eval '(org-defblock note-lifecycle (&optional (title "Note") :tag t) "Show TITLE." title))
   (should (fboundp 'org-deftag/note-lifecycle))
-  (should (memq #'org-deftag/note-lifecycle org-export-before-parsing-hook))
+  (should (memq #'org-deftag/note-lifecycle org-export-before-parsing-functions))
   (eval '(org-undefblock note-lifecycle))
   (should-not (fboundp 'org-deftag/note-lifecycle))
-  (should-not (memq #'org-deftag/note-lifecycle org-export-before-parsing-hook)))
+  (should-not (memq #'org-deftag/note-lifecycle org-export-before-parsing-functions)))
 
 (deftest "tags run before special blocks are rewritten, whatever the order they were hooked in"
   (using (org-defblock note (&optional (title "Note") :tag t) "Show TITLE." (format "[%s: %s]" title contents))
@@ -140,15 +140,15 @@ Body text.
   (unwind-protect
       (progn
         (org-special-block-extras-mode -1)
-        (should-not (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-hook))
-        (should-not (memq #'org--html-export-style-setup org-export-before-processing-hook))
+        (should-not (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-functions))
+        (should-not (memq #'org--html-export-style-setup org-export-before-processing-functions))
         (should-not (advice-member-p #'osbe--fontify-blocks-as-org 'org-fontify-meta-lines-and-blocks))
-        (should-not (advice-member-p #'org--docs-maybe-reset 'org-export-dispatch))
+        (should-not (memq #'org--docs-prepare org-export-before-parsing-functions))
         (org-special-block-extras-mode 1)
-        (should (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-hook))
-        (should (memq #'org--html-export-style-setup org-export-before-processing-hook))
+        (should (memq #'org--rewrite-special-blocks-by-handlers org-export-before-parsing-functions))
+        (should (memq #'org--html-export-style-setup org-export-before-processing-functions))
         (should (advice-member-p #'osbe--fontify-blocks-as-org 'org-fontify-meta-lines-and-blocks))
-        (should (advice-member-p #'org--docs-maybe-reset 'org-export-dispatch)))
+        (should (memq #'org--docs-prepare org-export-before-parsing-functions)))
     (org-special-block-extras-mode 1)))
 
 (deftest "enabling the mode twice appends the HTML head extras once"

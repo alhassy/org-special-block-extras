@@ -72,3 +72,25 @@ content
 
 (provide 'org-details-block-tests)
 ;;; org-details-block-tests.el ends here
+
+;;; src blocks with :folded
+
+(deftest "a src block with :folded t exports inside a details block titled by its language"
+  (let ((html (org-export-string "#+begin_src emacs-lisp :folded t\n(+ 1 2)\n#+end_src")))
+    (should (string-match-p "<details.*\n<summary>.*>emacs-lisp</font>" html))
+    ;; The code itself is still exported by Org, exactly as an unfolded src block.
+    (should (string-match-p "<summary>\\(.\\|\n\\)*<pre class=\"src src-emacs-lisp\">\\(<code>\\)?(\\+ 1 2)\\(.\\|\n\\)*</details>" html))))
+
+(deftest "a src block with :folded \"TITLE\" is titled TITLE; with :folded nil, or no :folded, it is left alone"
+  (should (string-match-p ">See the code</font>"
+                          (org-export-string "#+begin_src emacs-lisp :folded \"See the code\" :exports code\n(+ 1 2)\n#+end_src")))
+  (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp :folded nil\n(+ 1 2)\n#+end_src")))
+  (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp\n(+ 1 2)\n#+end_src"))))
+
+(deftest "a folded src block within a list item stays in that item"
+  (with-temp-buffer
+    (org-mode)
+    (insert "- item\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n- next")
+    (org--fold-src-blocks 'html)
+    (should (equal (buffer-string)
+                   "- item\n  #+begin_details \"emacs-lisp\"\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n  #+end_details\n- next"))))

@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -78,16 +78,16 @@ rather than spread, with blur, around the box. The use of ‘inset’ swaps left
 The HTML export uses a padded div, whereas the LaTeX export
 requires the tcolorbox package."
               (pcase backend
+                ;; Colours are named first, since tcolorbox options cannot take hex codes such as #CCFFCC.
                 ('latex
-                 (format (concat "\\begin{tcolorbox}[title={%s},colback=%s,colframe=%s,colbacktitle=%s,"
-                                 "coltitle=red!25!black, fonttitle=\\bfseries,"
-                                 "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
-                                 "%s\\end{tcolorbox}")
-                         title
-                         (or background-color 'red!5!white)
-                         (or frame-color 'red!75!black)
-                         (or title-background-color 'yellow!50!red)
-                         contents))
+                 (concat (org--latex-define-color "osbe-box-back" (or background-color "red!5!white"))
+                         (org--latex-define-color "osbe-box-frame" (or frame-color "red!75!black"))
+                         (org--latex-define-color "osbe-box-title" (or title-background-color "yellow!50!red"))
+                         (format (concat "\\begin{tcolorbox}[title={%s},colback=osbe-box-back,colframe=osbe-box-frame,"
+                                         "colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,"
+                                         "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
+                                         "%s\\end{tcolorbox}")
+                                 title contents)))
                 (_ (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
                            (s-join ";" (list "padding: 1em"
                                              (format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))

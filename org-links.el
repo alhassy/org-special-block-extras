@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (seq "2.0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, links, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -435,27 +435,96 @@ this command gives a searchable way to insert doc links."
     (insert)))
 
 (defvar org-docs-libraries nil
-  "List of Org files that have ‘#+begin_documentation’ blocks that should be loaded
-   for use with the ‘doc:𝒳’ link type.")
+  "List of Org files whose glossary entries the ‘doc:𝒳’ link type may cite.
 
-(cl-defun org-docs-load-libraries
-    (&optional (libs org-docs-libraries))
-  "Load documentation-glossary libraries LIBS.
+An entry is either a block or, “Org file as data”, a heading:
 
-If no LIBS are provided, simply use those declared
-org-docs-libraries.
+  #+begin_documentation Category Theory :label (cat cats)
+  A theory of typed composition; e.g., typed monoids.
+  #+end_documentation
 
-See `org--docs-from-libraries'."
+  * Category Theory                                  :documentation:
+    :PROPERTIES:
+    :DOC_KEYS: cat cats
+    :END:
+    A theory of typed composition; e.g., typed monoids.
+
+See `org--docs-read-buffer'.")
+
+(cl-defun org-docs-load-libraries (&optional (libs org-docs-libraries))
+  "Load the glossary entries of the Org files LIBS, by default `org-docs-libraries', into `org--docs-from-libraries'.
+The files are read, not exported; so this is quick, and reloading replaces the previous entries."
   (interactive)
-  (cl-loop for lib in libs
-           do (with-temp-buffer
-          (insert-file-contents lib)
-                ;; doc only activates after an export
-                (-let [org-export-with-broken-links t] (org-html-export-as-html))
-                (kill-buffer)
-                (delete-window)
-                (setq org--docs-from-libraries (-concat org--docs org--docs-from-libraries))
-                (setq org--docs nil))))
+  (setq org--docs-from-libraries
+        (cl-loop for lib in libs
+                 append (with-temp-buffer
+                          (insert-file-contents lib)
+                          (delay-mode-hooks (org-mode))
+                          (org--docs-read-buffer)))))
+
+(defun org--docs-entries (name label description)
+  "(NAME, LABEL, DESCRIPTION) ↦ a (LABEL′ NAME DESCRIPTION) glossary entry for each LABEL′ among LABEL, and NAME in snake_case, as is and downcased.
+LABEL may be nil, a label, or a list ---possibly quoted--- of labels."
+  (when (eq (car-safe label) 'quote) (setq label (cadr label)))
+  (let ((snake (s-replace " " "_" (s-trim name))))
+    (--map (list it (s-trim name) (s-trim description))
+           (-uniq (--map (s-trim (format "%s" it))
+                         (-non-nil (append (list (downcase snake) snake) (if (listp label) label (list label)))))))))
+
+(defun org--docs-read-buffer (&optional tree)
+  "The (LABEL NAME DESCRIPTION) glossary entries of the current Org buffer, whose `org-element' parse is TREE.
+They come from its documentation blocks, and its headings tagged :documentation: ---whose title is the NAME,
+whose :DOC_KEYS: property holds space-separated labels, and whose own text is the DESCRIPTION.
+Later entries come first, so they win when labels clash; as when the blocks were run in order."
+  (let (entries)
+    (org-element-map (or tree (org-element-parse-buffer)) '(special-block headline)
+      (lambda (it)
+        (if (eq (org-element-type it) 'special-block)
+            (when (equal "documentation" (downcase (org-element-property :type it)))
+              (save-excursion
+                (goto-char (org-element-property :post-affiliated it))
+                (-let [(&org-special-block 'main-arg 'kwdargs 'contents) (org-special-block-after-point "documentation")]
+                  (unless (s-blank-p main-arg)
+                    (push (org--docs-entries main-arg (plist-get kwdargs :label) contents) entries)))))
+          (when (member "documentation" (org-element-property :tags it))
+            (push (org--docs-entries (org-element-property :raw-value it)
+                                     (split-string (or (org-element-property :DOC_KEYS it) ""))
+                                     (org--docs-heading-text it))
+                  entries)))))
+    (apply #'append entries)))
+
+(defun org--docs-heading-text (headline)
+  "HEADLINE ↦ its own text, sans planning line, property drawer, and subheadings."
+  (-if-let (section (--first (eq (org-element-type it) 'section) (org-element-contents headline)))
+      (let ((end (org-element-property :contents-end section)))
+        (buffer-substring-no-properties
+         (or (-some->> (org-element-contents section)
+               (--remove (memq (org-element-type it) '(planning property-drawer)))
+               car
+               (org-element-property :begin))
+             end)
+         end))
+    ""))
+
+(defun org--docs-prepare (&rest _)
+  "Before each export: reset the glossary to the buffer's own entries, and its citations to the buffer's doc: links.
+Citations are gathered up front, so show:GLOSSARY lists them all in one export, wherever it sits;
+nothing carries over from one export, or buffer, to the next.  Citations within documentation blocks
+are not counted, since those blocks do not export their contents."
+  (setq org--docs nil org--docs-actually-used nil)
+  ;; Parsing the whole buffer is dear, so we only do it when there may be entries or citations.
+  (when (save-excursion (goto-char (point-min)) (re-search-forward "doc:\\|documentation" nil t))
+    (let ((tree (org-element-parse-buffer)))
+      (setq org--docs (org--docs-read-buffer tree))
+      (org-element-map tree 'link
+        (lambda (link)
+          (let ((label (org-element-property :path link))
+                (block (org-element-lineage link '(special-block))))
+            (when (and (equal (org-element-property :type link) "doc")
+                       (not (and block (equal "documentation" (downcase (org-element-property :type block))))))
+              ;; An unknown label is reported by the export itself, so we skip it here.
+              (-when-let (entry (ignore-errors (org-docs-get label)))
+                (add-to-list 'org--docs-actually-used (cons label entry))))))))))
 
 (defvar org--docs-actually-used nil
   "Which words are actually cited in the current article.
@@ -525,10 +594,12 @@ newlines.
 
 (org-defblock documentation
               (name (error "Documentation block: Name must be provided")
-                    label nil show nil color "green")
-              "Register the dictionary entries in CONTENTS to the dictionary variable.
+                    label nil show nil color "green"
+                    ;; A heading tagged :documentation: is an entry in its own right; see `org--docs-read-buffer'.
+                    :tag nil)
+              "A glossary entry: CONTENTS defines NAME, cited as doc:LABEL; a heading tagged :documentation: is one too.
 
-The dictionary variable is ‘org--docs’.
+The entries live in ‘org--docs’.
 
 A documentation entry may have its LABEL, its primary identifier,
 be:
@@ -548,14 +619,20 @@ Documentation blocks are not shown upon export;
 unless SHOW is non-nil, in which case they are shown
 using the ‘box’ block, with the provided COLOR passed to it.
 
-In the futture, it may be nice to have an option to render tooltips.
-That'd require the ‘doc:𝒳’ link construction be refactored via a ‘defun’."
-              (unless (consp label) (setq label (list label)))
-              (push (s-replace " " "_" name) label)
-              (push (downcase (s-replace " " "_" name)) label)
-              (cl-loop for l in label
-                       do  (add-to-list 'org--docs
-                                        (mapcar #'s-trim (list (format "%s" l) name (substring-no-properties raw-contents)))))
+Alternatively, a heading tagged :documentation: is an entry, which
+exports as an ordinary section: its title is the NAME, its :DOC_KEYS:
+property holds the labels, and its own text is the entry.
+
+  * Category Theory                                  :documentation:
+    :PROPERTIES:
+    :DOC_KEYS: cat cats
+    :END:
+    A theory of typed composition; e.g., typed monoids.
+
+Entries are read afresh before each export, so they may be cited before
+they are defined; see `org--docs-prepare'."
+              (dolist (entry (org--docs-entries name label (substring-no-properties raw-contents)))
+                (add-to-list 'org--docs entry))
               ;; Should the special block show something upon export?
               (if show (org--blockcall box name :background-color color raw-contents) ""))
 
@@ -586,8 +663,7 @@ That is what we accomplish with this new `show' link type."
                                 (eval (car (read-from-string o-label)))))
         o-expr (if glossary?
                    (concat "GLOSSARY ---i.e., org--docs-actually-used"
-                           "\n\nWe erase the glossary not on the first export, but on the second export."
-                           "\nThe first export collects all citations, which are used in the second export.")
+                           "\n\nEach export gathers the citations afresh, from the doc: links of its buffer.")
                  o-label))
   :help-echo (format (concat "Upon export, the following will be placed literally"
                              "\n\t%s"

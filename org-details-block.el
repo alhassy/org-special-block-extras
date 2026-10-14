@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -25,12 +25,6 @@
 (require 'org-defblock)
 
 ;;;;;; details
-
-(defun org--latex-define-color (name colour)
-  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, else \\colorlet."
-  (if (string-prefix-p "#" colour)
-      (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
-    (format "\\colorlet{%s}{%s}" name colour)))
 
 (org-defblock details (title "Details" background-color "#e5f5e5" title-color "green")
               "Enclose contents in a folded up box, for HTML.
@@ -57,6 +51,38 @@ In HTML, we show folded, details, regions with a nice greenish colour."
                                    "%s\n"
                                    "</details>")
                            background-color title-color title contents))))
+
+;;;;;; Folded src blocks
+
+(defun org--fold-src-blocks (&rest _)
+  "Wrap each src block with header argument :folded TITLE in a details block titled TITLE; for :folded t, its language.
+
+  #+begin_src emacs-lisp :folded t        #+begin_details \"emacs-lisp\"
+  (+ 1 2)                          ↦      #+begin_src emacs-lisp :folded t
+  #+end_src                               (+ 1 2)
+                                          #+end_src
+                                          #+end_details
+
+The src block itself is left to Org, so it exports exactly as it otherwise would; :folded nil does nothing."
+  ;; Parsing the whole buffer is dear, so we only do it when some src block may be folded.
+  (let ((folds (and (save-excursion (goto-char (point-min)) (search-forward ":folded" nil t))
+                    (org-element-map (org-element-parse-buffer 'element) 'src-block
+                 (lambda (src)
+                   (let ((params (or (org-element-property :parameters src) "")))
+                     (when (string-match ":folded[ \t]+\\(\"[^\"]*\"\\|[^ \t]+\\)" params)
+                       (let ((title (string-trim (match-string 1 params) "\"" "\"")))
+                         (unless (equal title "nil")
+                           (list (org-element-property :begin src)
+                                 (org-element-property :end src)
+                                 (if (equal title "t") (or (org-element-property :language src) "Code") title)))))))))))
+    ;; Bottom-up, so the positions of the blocks yet to be wrapped stay put.
+    (pcase-dolist (`(,begin ,end ,title) (nreverse folds))
+      (let ((indent (make-string (save-excursion (goto-char begin) (current-indentation)) ?\s)))
+        (goto-char end)
+        (skip-chars-backward " \t\n\r")
+        (insert "\n" indent "#+end_details")
+        (goto-char begin)
+        (insert indent (format "#+begin_details %S\n" title))))))
 
 (provide 'org-details-block)
 ;;; org-details-block.el ends here

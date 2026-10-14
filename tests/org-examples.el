@@ -15,11 +15,16 @@
 (org-special-block-extras-mode 1)
 
 (defun org-example--export (input backend)
-  "(INPUT, BACKEND) ↦ body-only BACKEND export of Org INPUT, with `gensym' and machine-specific values pinned."
+  "(INPUT, BACKEND) ↦ body-only BACKEND export of Org INPUT, with `gensym', Org's ids, and machine-specific values pinned.
+Headings export sans table of contents and section numbers, which would only distract from the example."
   (let ((seed 0)
         (user-full-name "Musa Al-hassy")
-        (emacs-version "29.4"))
-    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (format "g%s" (cl-incf seed)))))
+        (emacs-version "29.4")
+        (org-export-with-toc nil)
+        (org-export-with-section-numbers nil))
+    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (format "g%s" (cl-incf seed))))
+              ;; Org draws each heading's id at random; we number them instead, so snapshots are stable.
+              ((symbol-function 'org-export-new-reference) (lambda (references) (1+ (length references)))))
       (s-trim (org-export-string-as (format "\n%s\n" input) backend t)))))
 
 (defun org-example--normalise (s)

@@ -19,7 +19,7 @@
 \\[\\frac{\\displaystyle a : A \\qquad f : A → B
 }{f(a) : B}[\\text{Function Application}]\\]\\[\\frac{\\displaystyle p \\qquad p ⇒ q}{q}[\\text{Modus Ponens}]\\]
 </div>"
-  :latex "\\begin{tcolorbox}[title={Programming ≈ Proving},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+  :latex "\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Programming ≈ Proving},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 \\[\\frac{\\displaystyle a : A \\qquad f : A → B
 }{f(a) : B}[\\text{Function Application}]\\]\\[\\frac{\\displaystyle p \\qquad p ⇒ q}{q}[\\text{Modus Ponens}]\\]
 \\end{tcolorbox}")

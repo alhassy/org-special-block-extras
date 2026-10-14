@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -233,8 +233,12 @@ In Emacs, as links, editor remarks are shown with a bold red; but
 the exported COLOR of a remark is black by default and it is not
 STRONG ---i.e., bold---. There is an optional SIGNOFF message
 that is appended to the remark.
+
+Remarks are hidden from the export when `org-hide-editor-comments' is
+non-nil.  For just one file, write “#+bind: org-hide-editor-comments t”
+in it; that needs `org-export-allow-bind-keywords' set to t, which we
+leave to you, since #+bind lets a document set any variable.
 "
-              (setq org-export-allow-bind-keywords t) ;; So users can use “#+bind” immediately
               (if org-hide-editor-comments
                   ""
                 (-let* (;; Are we in the html backend?

@@ -2,7 +2,9 @@
 #+title: org-special-block-extras
 #+subtitle:  A unified interface for special blocks and links: defblock
 #+author: Musa Al-hassy
-#+property: header-args:emacs-lisp :tangle org-special-block-extras.el :exports code
+# The .el files are the source of truth; this file is the manual.  Its Lisp blocks are
+# no longer tangled, lest they overwrite the .el files with stale code.
+#+property: header-args:emacs-lisp :tangle no :exports code
 #+property: header-args :eval never-export
 #+options: d:nil toc:nil
 #+export_file_name: index
@@ -56,39 +58,7 @@ html-export-style:solarized_light
 (load-file "./org-special-block-extras.el")
 (load-file "./org-graph-block.el")
 
-(defun osbe--example (name)
-  "NAME ↦ plist (:input … :html … :latex …) of its `define-org-example-test' in tests/examples/NAME.el."
-  (with-temp-buffer
-    (insert-file-contents (format "./tests/examples/%s.el" name))
-    (cl-loop for form = (ignore-errors (read (current-buffer))) while form
-             when (and (eq (car-safe form) 'define-org-example-test) (equal (cadr form) name))
-             return (cddr form))))
-
-(defun osbe--definition (name)
-  "NAME ↦ source of its `org-defblock' or `org-deflink' form, from this repo's *.el files; else \"\"."
-  (or (cl-loop for f in (directory-files "." t "\\.el\\'")
-               thereis (with-temp-buffer
-                         (insert-file-contents f)
-                         (emacs-lisp-mode)
-                         (when (re-search-forward (format "(org-def\\(block\\|link\\) %s\\_>" (regexp-quote name)) nil t)
-                           (goto-char (match-beginning 0))
-                           (thing-at-point 'sexp t))))
-      ""))
-
-(org-defblock osbe-example (name)
-  "Render example NAME, from tests/examples/NAME.el, as Org source beside its HTML export and implementation."
-  (let* ((example (osbe--example name))
-         (title (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
-         (panel (lambda (colour body) (format "<div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>" (org-subtle-colors colour) body))))
-    (format "<div>%s %s</div> <br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"
-            (funcall panel "lime" (format "%s <pre class=\"src src-org\">%s</pre>" (funcall title "What You Write") (s-trim (plist-get example :input))))
-            (funcall panel "peach" (format "%s %s" (funcall title "What You Get")
-                                           ;; `:live' examples are exported now, not snapshotted; see tests/org-examples.el.
-                                           (if (eq (plist-get example :html) :live)
-                                               (org-export-string-as (plist-get example :input) 'html t)
-                                             (plist-get example :html))))
-            (org-subtle-colors "custard")
-            (org-export-string-as (format "\n#+begin_src emacs-lisp\n%s\n#+end_src\n" (osbe--definition name)) 'html t))))
+(load-file "./tests/examples/README.el") ;; The osbe-example:NAME link
 
 (org-html-export-to-html)
 
@@ -3626,6 +3596,15 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   :END:
 
    osbe-example:details
+
+   Src blocks fold too: the header argument =:folded t= exports a src block, exactly as Org
+   otherwise would, inside a =details= block titled by its language; =:folded "TITLE"= picks
+   the title.
+   #+begin_example
+,#+begin_src emacs-lisp :folded "How is it done?"
+(org-defblock details …)
+,#+end_src
+   #+end_example
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 :PROPERTIES:
 :CREATED:  [2025-06-06 Fri 20:12]
@@ -4114,6 +4093,32 @@ from∘to m = {! try it! }
    #+end_margin
   exercise to show that ℕ is fixedpoint of ~Maybe~.
 
+** Glossaries ---Define a term once, cite it with =doc:𝒳=
+  :PROPERTIES:
+  :CUSTOM_ID: Glossaries
+  :END:
+
+  A =doc:𝒳= link shows the documentation of 𝒳 as a tooltip in HTML, and as a glossary
+  reference in LaTeX. Here 𝒳 is an Emacs Lisp function or variable, a word in the English
+  dictionary ---via [[https://wordnet.princeton.edu][WordNet]]'s =wn=, should we have it--- or, best of all, a term of our own.
+
+  osbe-example:doc
+
+  Our own terms are /data/ in an Org file: an entry is either a =documentation= block, which
+  exports nothing, or a heading tagged =:documentation:=, which exports as an ordinary
+  section. The heading's title is the term's name, its =:DOC_KEYS:= property lists the labels
+  by which we cite it, and its own text is the definition. Either way, the name with
+  underscores in lieu of spaces is a label too; e.g., =doc:Category_Theory=. Moreover,
+  =show:GLOSSARY= lists every term the page cites, wherever it sits.
+
+  osbe-example:documentation
+
+  Terms we cite across many files go in a library: a list of Org files in
+  ~org-docs-libraries~, whose entries ---blocks and headings alike--- every =doc:𝒳= link may
+  cite. The files are read, not exported, so loading them is quick; =M-x
+  org-docs-load-libraries= reloads them after an edit, and =M-x org-docs-insert= inserts a
+  =doc:𝒳= link by searching all the terms we have.
+
 ** Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
@@ -4229,15 +4234,17 @@ Mind the gap.
 Mind the gap.
   #+end_example
   Likewise, the package's own blocks are links and tags too; e.g., =:details_Hint:= folds a
-  section's text away under the title /Hint/.
+  section's text away under the title /Hint/. Try tagging a heading =:red:= ---or =:blue:=,
+  =:teal:=, … any of the 19 colours--- and its text exports in that colour.
 
   Should we not want all three, the options =:link nil= and =:tag nil= decline the link and
   the tag, whereas =:block nil= keeps only the link and tag ---e.g.,
   ~(org-defblock note (&optional (title "Note") :tag nil) …)~. The variable
   ~org-defblock-links-and-tags~ sets whether blocks come with links and tags by default; its
   documentation weighs the trade-off ---chiefly namespacing: every block claims the link type
-  =NAME:= and the tag =:NAME:=. For just a link, or just a tag, there are =org-deflink= and
-  =org-deftag=, below.
+  =NAME:= and the tag =:NAME:=. So, should =:red:= already mean something else in our
+  headings, we set ~org-defblock-links-and-tags~ to nil before loading this package. For just a
+  link, or just a tag, there are =org-deflink= and =org-deftag=, below.
 
   /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
   and its default, followed by key-value pairs. The block above is then
@@ -4367,6 +4374,40 @@ Mind the gap.
 
   The dispatcher itself ---a single function on ~org-ctrl-c-ctrl-c-hook~--- lives in
   [[https://github.com/alhassy/org-special-block-extras/blob/master/org-ctrl-c-ctrl-c-for-special-block.el][org-ctrl-c-ctrl-c-for-special-block.el]].
+
+** =C-c '= to edit a block in its own buffer
+  :PROPERTIES:
+  :CUSTOM_ID: C-c-quote-for-your-own-blocks
+  :END:
+
+  Just as =C-c '= edits a src block in a buffer of its language, so too our blocks may opt in:
+  the option =:edit-indirect-mode MODE= makes =C-c '= open the block's contents in a buffer in
+  =MODE=; =C-c '= again writes them back. By way of example, the [[doc:org-block/graph][graph]] block's contents are
+  an Org list, so it is declared with ~:edit-indirect-mode org-mode~.
+
+  #+begin_src emacs-lisp
+(org-defblock poem (&optional title :edit-indirect-mode text-mode)
+  "Set CONTENTS in italics, under TITLE."
+  (format "<h3>%s</h3><em>%s</em>" title contents))
+  #+end_src
+
+  For an action beyond an edit buffer, ~(org-defblock-add-edit-special-handler "poem" #'my-handler)~
+  registers any function of no arguments, just as =C-c C-c= handlers are registered ---see
+  [[https://github.com/alhassy/org-special-block-extras/blob/master/org-special-block-indirect-edit.el][org-special-block-indirect-edit.el]].
+
+** Hover for a block's arguments: =eldoc=
+  :PROPERTIES:
+  :CUSTOM_ID: eldoc-for-blocks-and-links
+  :END:
+
+  With point on a =#+begin_NAME= or =#+end_NAME= line, or on a =NAME:= link, the echo area
+  ---or [[https://github.com/casouri/eldoc-box][eldoc-box]], should we use it--- shows how the block is called, defaults and all, along
+  with the first line of its docstring:
+  #+begin_example
+#+begin_details TITLE="Details" :background-color "#e5f5e5" :title-color "green": Enclose contents in a folded up box, for HTML.
+  #+end_example
+  This needs no setup beyond =org-special-block-extras-mode=, and works for our own blocks too.
+  For the full story of a block, =C-h o org-block/NAME=.
 
 * COMMENT Colours
   :PROPERTIES:
@@ -6076,6 +6117,21 @@ may be useful to colour the =|=-separated fields of a badge link.
    person's home. )
       
    In this way, I can create a custom glossary.
+
+   An entry may also be a heading ---an Org file as data--- tagged =:documentation:=; its
+   title is the name, its =:DOC_KEYS:= property holds space-separated labels, and its own
+   text is the entry. Unlike the block, the heading exports as an ordinary section.
+   #+begin_example
+,* Category Theory                                            :documentation:
+:PROPERTIES:
+:DOC_KEYS: cat cats
+:END:
+A theory of typed composition; e.g., typed monoids.
+   #+end_example
+   Entries are read afresh before each export, so =show:GLOSSARY= lists every citation in a
+   single export, wherever it sits; and the files in ~org-docs-libraries~ are read, not
+   exported, so loading them is quick.
+
    My personal documentation library can be seen here:
    badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
    or

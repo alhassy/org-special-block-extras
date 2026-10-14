@@ -8,7 +8,7 @@
 (org-deftag test-shout (&optional color size)
   "Replace the heading with what the tag received."
   (insert (format "[%s | %s | %s | %s]" o-heading color size o-backend)))
-(remove-hook 'org-export-before-parsing-hook #'org-deftag/test-shout)
+(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-shout)
 
 (snap-define-relation org-deftag (input output)
   "Running `org-deftag/test-shout' over the Org INPUT yields OUTPUT, modulo trailing whitespace per line."
@@ -112,7 +112,7 @@
         (org-deftag/test-props 'html)
         (should (equal "blue" (plist-get (car (read-from-string (buffer-string))) :color)))
         (should (equal "x" (plist-get (car (read-from-string (buffer-string))) :custom_id))))
-    (remove-hook 'org-export-before-parsing-hook #'org-deftag/test-props)))
+    (remove-hook 'org-export-before-parsing-functions #'org-deftag/test-props)))
 
 (deftest "org-deftag runs during export, receiving the export backend as o-backend"
   (org-deftag test-backend ()
@@ -122,24 +122,24 @@
       (progn
         (should (s-contains-p "Exported to latex." (org-export-string "* Heading :test-backend:" 'latex)))
         (should (s-contains-p "Exported to html." (org-export-string "* Heading :test-backend:" 'html))))
-    (remove-hook 'org-export-before-parsing-hook #'org-deftag/test-backend)))
+    (remove-hook 'org-export-before-parsing-functions #'org-deftag/test-backend)))
 
 (deftest "org-deftag returns its function and hooks it into export"
-  (let ((org-export-before-parsing-hook nil))
+  (let ((org-export-before-parsing-functions nil))
     (should (eq #'org-deftag/test-hooked (org-deftag test-hooked () "Do nothing." nil)))
-    (should (memq #'org-deftag/test-hooked org-export-before-parsing-hook))))
+    (should (memq #'org-deftag/test-hooked org-export-before-parsing-functions))))
 
 ;;; Arglist styles: cl-defun-style with defaults and &key, and the flattened convenience
 
 (org-deftag test-cl (&optional (color "pink") size &key (note "none"))
   "Replace the heading with COLOR, SIZE, and NOTE."
   (insert (format "[%s | %s | %s]" color size note)))
-(remove-hook 'org-export-before-parsing-hook #'org-deftag/test-cl)
+(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-cl)
 
 (org-deftag test-flat (color "pink" size "M")
   "Replace the heading with COLOR and SIZE."
   (insert (format "[%s | %s]" color size)))
-(remove-hook 'org-export-before-parsing-hook #'org-deftag/test-flat)
+(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-flat)
 
 (defun org-test--run-tag (tag input)
   "(TAG, INPUT) ↦ the Org INPUT after running the tag function TAG over it, for HTML."
@@ -184,7 +184,7 @@
 (org-deftag test-special (&key file tags)
   "Replace the heading with FILE and TAGS, which only properties may give."
   (insert (format "[%s | %s]" file tags)))
-(remove-hook 'org-export-before-parsing-hook #'org-deftag/test-special)
+(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-special)
 
 (deftest "org-deftag removes a section's property drawer even beneath a planning line"
   (let ((result (org-test--run-tag #'org-deftag/test-shout "* Heading :test-shout_red:

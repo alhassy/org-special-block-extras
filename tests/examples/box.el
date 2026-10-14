@@ -27,7 +27,7 @@ emphasises core information.
   :latex "It can be useful to draw attention to some important text by
 enclosing it in a \\hyperref[o-glossary-org-block/box]{box}\\label{o-glossary-declaration-site-org-block/box}.
 
-\\begin{tcolorbox}[title={Uses of callout boxes},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Uses of callout boxes},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 Such boxes often callout tips, warnings, cautionary info or
 emphasises core information.
 \\end{tcolorbox}")

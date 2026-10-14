@@ -75,7 +75,7 @@ Hint: The father's name also starts with `y`.
 
 \\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{green}\\begin{quote}
 \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution},sharp corners,boxrule=0.4pt]
-\\begin{tcolorbox}[title={Did you actually try? Maybe see the ‘hints’ above!},colback=blue,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{blue}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Did you actually try? Maybe see the ‘hints’ above!},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 \\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{red}\\begin{quote}
 \\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution, for real},sharp corners,boxrule=0.4pt]
 Yacoub

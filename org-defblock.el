@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 4.1.1
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "26.10.1") (seq "2.0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -268,6 +268,16 @@ Note: This function mutates the current buffer."
         (org-list-to-lisp))
     (error (user-error "#+begin_%s block does not contain a valid Org plain list; each item must be a `-' or `+' bullet.\nParsing error: %s"
                        block (error-message-string err)))))
+
+;;;;; org--latex-define-color
+
+(defun org--latex-define-color (name colour)
+  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, else \\colorlet.
+COLOUR may be a symbol, as block arguments such as “:color red!5!white” are read as Lisp."
+  (setq colour (format "%s" colour))
+  (if (string-prefix-p "#" colour)
+      (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
+    (format "\\colorlet{%s}{%s}" name colour)))
 
 ;;;;; org-defblock
 
@@ -548,7 +558,8 @@ Features:
                (backend      ;; Symbol
                 raw-contents ;; String
                 &optional ,main-arg-name
-                &rest  _
+                ;; Named, not `_': `cl-defun' reads the keywords from it, so it is never unused.
+                &rest  org--handler-args
                 ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
                 ;; prefer any `org-set-block-header-args' value over the declared default.
                 &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
@@ -574,12 +585,11 @@ Features:
                                                 ,(intern (format ":%s" key)))
                                                ,default-value))))
 
-             (cl-letf (((symbol-function 'org-export)
-                        (lambda (x) "Wrap the given X in an export block for the current backend."
-                          (if contents-occur-as-link-description x (format "#+begin_export %s\n%s\n#+end_export" backend x))))
-                       ((symbol-function 'org-parse)
-                        (lambda (x) "This should ONLY be called within an ORG-EXPORT call."
-                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend)))))
+             ;; Lexical, since BODY is spliced right here; `cl-letf' would clobber any global `org-export'.
+             (cl-flet ((org-export (x) "Wrap the given X in an export block for the current backend."
+                         (if contents-occur-as-link-description x (format "#+begin_export %s\n%s\n#+end_export" backend x)))
+                       (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
+                         (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))))
                ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',
                ;; would silently export as the text “nil”.
                (let ((result (let ((contents (org-parse raw-contents))) ,@body)))
@@ -589,6 +599,8 @@ Features:
          ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks
          ;; such as the one used to make the docs for this package.
          (put ',defun-name 'variable-documentation ,docstring)
+         ;; The flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist, since the handler's own arglist hides it; see `org-block-signature'.
+         (put ',defun-name 'org-defblock-args '(,main-arg-name ,main-arg-default-value ,@keywords))
          ;; Now that the defun is created, let's modify its docstring to make it richer.
          (let ((user-docs
                 (org--replace-examples-in-string
@@ -693,7 +705,7 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
           (fmakunbound  ',(intern (format "org-link/%s" name)))
-          (remove-hook 'org-export-before-parsing-hook #',(intern (format "org-deftag/%s" name)))
+          (remove-hook 'org-export-before-parsing-functions #',(intern (format "org-deftag/%s" name)))
           (fmakunbound ',(intern (format "org-deftag/%s" name)))
           (-when-let (link-params (org-link-set-parameters ,(format "%s" name)))
             (--each '(:export :face :follow :display :keymap :help-echo)

@@ -36,7 +36,7 @@ text
 (define-org-call-test "box block uses tcolorbox for LaTeX."
   :call (org-block/box 'latex "content" nil)
   :returns "#+begin_export latex
-\\begin{tcolorbox}[title={},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 #+end_export
 content
 #+begin_export latex
@@ -46,12 +46,18 @@ content
 (define-org-call-test "box block passes the title to tcolorbox in LaTeX."
   :call (org-block/box 'latex "content" "Title")
   :returns "#+begin_export latex
-\\begin{tcolorbox}[title={Title},colback=red!5!white,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Title},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 #+end_export
 content
 #+begin_export latex
 \\end{tcolorbox}
 #+end_export")
+
+(deftest "box block names hex colours via \\definecolor in LaTeX, since tcolorbox options reject #RRGGBB."
+  (let ((latex (org-block/box 'latex "content" nil :background-color "#CCFFCC" :frame-color 'blue)))
+    (should (s-contains? "\\definecolor{osbe-box-back}{HTML}{CCFFCC}" latex))
+    (should (s-contains? "\\colorlet{osbe-box-frame}{blue}" latex))
+    (should-not (s-contains? "#CCFFCC" latex))))
 
 (deftest "org-subtle-colors maps known names to hex codes."
   (should (equal "#CCFFCC" (org-subtle-colors "green")))

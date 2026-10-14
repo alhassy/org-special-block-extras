@@ -53,7 +53,7 @@ error-prone tedium.
 \\par \\setlength{\\columnseprule}{0 pt}
 \\begin{minipage}[t]{\\linewidth}
 \\begin{multicols}{2}
-\\begin{tcolorbox}[title={Source},colback=cyan,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{cyan}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Source},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 
 \\begin{verbatim}
 /italics/ and _underline_
@@ -61,7 +61,7 @@ error-prone tedium.
 $e^{i \\times \\pi} + 1 = 0$
 \\end{verbatim}
 \\end{tcolorbox}
-\\begin{tcolorbox}[title={Result},colback=cyan,colframe=red!75!black,colbacktitle=yellow!50!red,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{cyan}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Result},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 \\emph{italics} and \\uline{underline}
 
 \\(e^{i \\times \\pi} + 1 = 0\\)
