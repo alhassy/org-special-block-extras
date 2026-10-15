@@ -122,16 +122,14 @@
   #+record:
   |   | a |" nil) :type 'user-error))
 
-(deftest "in a #+record: table, completion offers no keys: its rows are cells"
-  (with-temp-buffer
-    (org-graph-edit-mode)
-    (insert "
+(org-deftest "in a #+record: table, completion offers no keys: its rows are cells"
+  :mode #'org-graph-edit-mode
+  :text "
 + r
   #+record:
-  | sha |")
-    (search-backward "sha")
-    (forward-char 3)
-    (should-not (org-graph--completion-at-point))))
+  | sha |"
+  :at "sha"
+  (should-not (org-graph--completion-at-point)))
 
 ;;; Tags on a cell style its arcs
 

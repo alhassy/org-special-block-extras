@@ -8,8 +8,9 @@
 (require 's)
 (require 'dash)
 
-(load-file (expand-file-name "~/snap/snap.el"))
-(load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
+;; For `deftest', `org-deftest', and snap; it loads org-special-block-extras too.
+(unless (fboundp 'org-deftest)
+  (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 (load-file (expand-file-name "~/org-special-block-extras/org-graph-block.el"))
 
 ;; Tests stub primitives such as `call-process' via `cl-letf'; under native-comp, that compiles a
@@ -17,9 +18,6 @@
 (setq native-comp-enable-subr-trampolines nil)
 
 ;;; Test fixtures
-
-;; Identity fixture for readable ERT test names
-(snap-define-fixture deftest)
 
 ;; Relation: Org graph syntax → dot output
 ;; :input  is the raw block body (string)
@@ -30,17 +28,5 @@
   (let ((actual (org--graph-raw->dot input nil)))
     (should (equal output actual))
     (list :output actual)))
-
-(defun tests-graph--make-graph-buffer (content)
-  "Return a temp buffer containing CONTENT wrapped in a #+begin_graph block.
-Leaves point at the end of CONTENT so callers can position it as needed."
-  (let ((buf (generate-new-buffer " *test-graph-context*")))
-    (with-current-buffer buf
-      (org-mode)
-      (insert "#+begin_graph\n")
-      (insert content)
-      (unless (bolp) (insert "\n"))
-      (insert "#+end_graph\n"))
-    buf))
 
 (provide 'org-graph-test-utils)

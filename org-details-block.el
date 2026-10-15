@@ -52,6 +52,19 @@ In HTML, we show folded, details, regions with a nice greenish colour."
                                    "</details>")
                            background-color title-color title contents))))
 
+;;;;;; Toggle all details blocks
+
+(org-deflink toggle-details (_label &optional (description "Unfold all details"))
+  "A button, labelled DESCRIPTION, that unfolds every <details> on the page; pressed again, it folds them all.
+Only for HTML; elsewhere, nothing.
+
+  [[toggle-details:][Show me everything]]"
+  :face '(:box t)
+  :export (if (not (equal o-backend 'html)) ""
+            (format (concat "<button onclick=\"let all = [...document.querySelectorAll('details')], open = all.some(d => !d.open);"
+                            " all.forEach(d => d.open = open);\">%s</button>")
+                    description)))
+
 ;;;;;; Folded src blocks
 
 (defun org--fold-src-blocks (&rest _)

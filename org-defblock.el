@@ -168,12 +168,96 @@ Indentation is preserved via `org-replace-text-while-preserving-indentation'.
 This method is part of the Org export pipeline that processes supported
 blocks listed in `org--supported-blocks', typically triggered during export
 pre-processing steps."
-  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point 'anchor) block]
+  (-let* (((&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point 'anchor) block)
+          (handler (intern (format "org-block/%s" name)))
+          ;; A block's own keyword of a switch's name wins; e.g., a block declaring `folded' gets :folded itself.
+          (declared (--map (intern (format ":%s" it)) (-map #'car (-partition 2 (cddr (get handler 'org-defblock-args))))))
+          (switch? (lambda (key) (and (memq key org-block-switches) (not (memq key declared)))))
+          (switches (cl-loop for (key value) on kwdargs by #'cddr when (funcall switch? key) append (list key value)))
+          (kwdargs (cl-loop for (key value) on kwdargs by #'cddr unless (funcall switch? key) append (list key value))))
     (org-replace-text-while-preserving-indentation
      start-point
      end-point
-     (let ((org--handler-anchor anchor))
-       (apply (intern (format "org-block/%s" name)) backend contents main-arg kwdargs)))))
+     (org--block-with-switches
+      name switches backend contents
+      (lambda (contents)
+        (let ((org--handler-anchor anchor))
+          (apply handler backend contents main-arg kwdargs)))))))
+
+;;;;; Switches every block understands
+
+(defconst org-block-switches '(:ignore :noexport :when :let :boxed :folded :C-c_C-c)
+  "Header arguments that every `org-defblock' block understands, unless it declares a keyword of the same name.
+
+  #+begin_solution :when (eq backend \\='html) :folded \"Peek?\"   ;; Only in HTML, and folded away
+  #+begin_remark :noexport t                                  ;; Never exported
+  #+begin_box :ignore t                                       ;; Just the contents, as plain Org
+  #+begin_note :let (N 3) :boxed \"Exercise\"                    ;; Each whole-word N becomes 3; boxed
+
+See `org--block-with-switches' for each one's meaning, and `org--block-cc-switch' for :C-c_C-c.")
+
+(defcustom org-defblock-evaluate-switches 'query
+  "Whether the Lisp in a block's :when, :let, and :C-c_C-c switches may be evaluated.
+
++ t: evaluate freely.
++ `query': ask once for each distinct form, per Emacs session.
++ nil: never; a block using one of these switches is then an error.
+
+Lisp written in a document runs with your privileges; as with Babel's
+`org-confirm-babel-evaluate', we ask before running a stranger's Lisp."
+  :type '(choice (const :tag "Evaluate" t) (const :tag "Ask" query) (const :tag "Never" nil))
+  :group 'org-special-block-extras)
+
+(defvar org--block-approved-forms nil
+  "The switch forms approved this session, when `org-defblock-evaluate-switches' is `query'.")
+
+(defun org--block-eval (form backend)
+  "(FORM, BACKEND) ↦ FORM's value, with `backend' bound to BACKEND; as `org-defblock-evaluate-switches' permits."
+  (pcase org-defblock-evaluate-switches
+    ('nil (user-error "Block switches may not evaluate Lisp, such as %S; see `org-defblock-evaluate-switches'" form))
+    ('query (unless (member form org--block-approved-forms)
+              (if (yes-or-no-p (format "Evaluate this block switch's Lisp? %S " form))
+                  (push form org--block-approved-forms)
+                (user-error "Declined to evaluate %S" form)))))
+  (eval form `((backend . ,backend))))
+
+(defun org--block-let (bindings contents backend)
+  "(BINDINGS, CONTENTS, BACKEND) ↦ CONTENTS with each whole-word VAR replaced by its value, for BINDINGS (VAR VALUE …).
+  (N (+ 1 2) WHO \"Jasim\"), \"WHO scored N\"  ↦  \"Jasim scored 3\"
+Each VALUE may refer to the VARs before it, as with `let*'."
+  (let* ((pairs (-partition 2 bindings))
+         (values (org--block-eval `(let* ,pairs (list ,@(mapcar #'car pairs))) backend))
+         ;; Case matters: a variable SUM leaves the word “sum” be.
+         (case-fold-search nil))
+    (cl-loop for (var) in pairs
+             for value in values
+             do (setq contents (replace-regexp-in-string (format "\\_<%s\\_>" (regexp-quote (symbol-name var)))
+                                                         (format "%s" value) contents t t)))
+    contents))
+
+(defun org--block-with-switches (name switches backend contents render)
+  "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say:
+
++ :noexport t ↦ nothing at all; likewise :when FORM, when FORM is nil.  FORM may mention `backend'.
++ :let (VAR VALUE …) ↦ each whole-word VAR in CONTENTS becomes its VALUE, beforehand; see `org--block-let'.
++ :ignore t ↦ CONTENTS as plain Org, bypassing RENDER; i.e., the block's own behaviour.
++ :boxed TITLE ↦ the result within a `box' titled TITLE; for :boxed t, untitled.
++ :folded TITLE ↦ the result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised.
+  Hence :boxed and :folded together give a folded box.
+
+:C-c_C-c is for the block in Emacs, not upon export; see `org--block-cc-switch'."
+  (if (or (plist-get switches :noexport)
+          (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend))))
+      ""
+    (let* ((contents (-if-let (bindings (plist-get switches :let)) (org--block-let bindings contents backend) contents))
+           (result (if (plist-get switches :ignore) contents (funcall render contents)))
+           (title (lambda (switch default) (if (eq (plist-get switches switch) t) default (format "%s" (plist-get switches switch))))))
+      ;; The result is Org text, export blocks and all; so it serves as the raw contents of an enclosing block.
+      (when (plist-get switches :boxed)
+        (setq result (org-block/box backend result (funcall title :boxed ""))))
+      (when (plist-get switches :folded)
+        (setq result (org-block/details backend result (funcall title :folded (capitalize (format "%s" name))))))
+      result)))
 
 
 (defun org-replace-text-while-preserving-indentation (start-point end-point multi-line-text)

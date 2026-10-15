@@ -30,10 +30,22 @@ jobs:
             (require 'package)
             (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)
             (package-initialize) (package-refresh-contents)
-            (dolist (p '(dash s lf)) (package-install p)))"
+            (dolist (p '(dash s lf undercover)) (package-install p)))"
 
       - name: Run tests
         run: |
           emacs --batch --eval "(package-initialize)" -L . -L ~/snap -L ~/fancy-C-x-C-e \
             $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
             -f ert-run-tests-batch-and-exit
+
+      # Informational, not a gate: undercover re-runs the tests with every source file instrumented,
+      # then prints each file's percentage of lines run.  Edebug cannot instrument org-deftag.el, so it goes unmeasured.
+      - name: Report coverage
+        continue-on-error: true
+        env:
+          UNDERCOVER_FORCE: true
+        run: |
+          emacs --batch --eval "(package-initialize)" -L . -L ~/snap -L ~/fancy-C-x-C-e \
+            --eval "(progn (require 'undercover) (undercover \"*.el\" (:report-format 'text) (:send-report nil)))" \
+            $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
+            -f ert-run-tests-batch-and-exit 2>&1 | sed -n '/Code coverage text report/,$p'

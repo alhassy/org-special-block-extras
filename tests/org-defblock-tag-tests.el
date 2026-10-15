@@ -6,10 +6,10 @@
 ;;; Where the block's arguments come from
 
 (define-org-export-test "a tagged section exports as a block, the tag's underscore items forming the main argument"
-  :input "* Why bother? :note_Spoiler_alert:
+  :input "* Why bother? :memo_Spoiler_alert:
           Body text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Why bother?}
@@ -20,13 +20,13 @@ Body text.
 ")
 
 (define-org-export-test "a tagged section's properties supply the block's keyword arguments"
-  :input "* Why bother? :note_Heads_up:
+  :input "* Why bother? :memo_Heads_up:
           :PROPERTIES:
           :COLOR: pink
           :END:
           Body text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Why bother?}
@@ -37,15 +37,15 @@ Body text.
 ")
 
 (define-org-export-test "a bare tag reads the main argument from the property of the same name, else uses defaults"
-  :input "* With a property :note:
+  :input "* With a property :memo:
           :PROPERTIES:
           :TITLE: From the drawer
           :END:
           One.
-          * Without :note:
+          * Without :memo:
           Two."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{With a property}
@@ -55,14 +55,14 @@ One.
 ]
 \\section{Without}
 \\label{sec:org-id-2}
-[Note/teal: 
+[Memo/teal: 
 Two.
 ]
 ")
 
 ;; Concretely, a `:graph:' section's drawer reads `:RANKDIR: LR', with no `rankdir' argument declared anywhere.
 (define-org-export-test "a block that allows other keys receives every property of its section, bar Org's own"
-  :input "* Plot :note:
+  :input "* Plot :memo:
           :PROPERTIES:
           :RANKDIR: LR
           :NODE.SHAPE: box
@@ -70,7 +70,7 @@ Two.
           :END:
           Body."
   :to latex
-  :using (org-defblock note (&optional title &key &allow-other-keys :tag t)
+  :using (org-defblock memo (&optional title &key &allow-other-keys :tag t)
            "Show the header's keyword arguments."
            (format "%S" org--handler-args))
   :equals "\\section{Plot}
@@ -79,14 +79,14 @@ Two.
 ")
 
 (define-org-export-test "a block that refuses other keys receives only the properties it declares"
-  :input "* Plot :note:
+  :input "* Plot :memo:
           :PROPERTIES:
           :RANKDIR: LR
           :COLOR: red
           :END:
           Body."
   :to latex
-  :using (org-defblock note (&optional title &key color :tag t)
+  :using (org-defblock memo (&optional title &key color :tag t)
            "Show the header's keyword arguments."
            (format "%S" org--handler-args))
   :equals "\\section{Plot}
@@ -97,17 +97,17 @@ Two.
 ;;; Which text is wrapped, and which sections and tags are touched
 
 (define-org-export-test "a tagged section keeps its heading and other tags, and wraps only its own text"
-  :input "* Outer :draft:note:
+  :input "* Outer :draft:memo:
           Outer text.
           ** Inner
           Inner text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer\\hfill{}\\textsc{draft}}
 \\label{sec:org-id-1}
-[Note/teal: 
+[Memo/teal: 
 Outer text.
 ]
 \\subsection{Inner}
@@ -119,7 +119,7 @@ Inner text.
   :input "* Plain
           Plain text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Plain}
@@ -128,45 +128,45 @@ Plain text.
 ")
 
 (define-org-export-test "with :tag nil, a block leaves sections bearing its name alone"
-  :input "* Just a tag :note:
+  :input "* Just a tag :memo:
           Body text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag nil)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag nil)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
-  :equals "\\section{Just a tag\\hfill{}\\textsc{note}}
+  :equals "\\section{Just a tag\\hfill{}\\textsc{memo}}
 \\label{sec:org-id-1}
 Body text.
 ")
 
 (define-org-call-test "org--defblock-desugar-args passes :tag through, as any other option"
-  :call (org--defblock-desugar-args '(&optional (title "Note") &key (color "teal") :tag t))
-  :returns (title "Note" color "teal" :tag t :allow-other-keys nil))
+  :call (org--defblock-desugar-args '(&optional (title "Memo") &key (color "teal") :tag t))
+  :returns (title "Memo" color "teal" :tag t :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args accepts :tag right after &optional, without &key"
-  :call (org--defblock-desugar-args '(&optional (title "Note") :tag t))
-  :returns (title "Note" :tag t :allow-other-keys nil))
+  :call (org--defblock-desugar-args '(&optional (title "Memo") :tag t))
+  :returns (title "Memo" :tag t :allow-other-keys nil))
 
 (deftest "a tagged section keeps its property drawer, so properties such as CUSTOM_ID still apply"
-  (using (org-defblock note (&optional (title "Note")) "Show TITLE." (format "[%s: %s]" title contents))
-    (let ((html (org-export-string "* Heading :note:\n:PROPERTIES:\n:CUSTOM_ID: here\n:END:\nBody." 'html)))
+  (using (org-defblock memo (&optional (title "Memo")) "Show TITLE." (format "[%s: %s]" title contents))
+    (let ((html (org-export-string "* Heading :memo:\n:PROPERTIES:\n:CUSTOM_ID: here\n:END:\nBody." 'html)))
       (should (s-contains-p "id=\"here\"" html))
       (should-not (s-contains-p ":CUSTOM_ID:" html)))))
 
 ;;; What becomes of a tagged section's subsections: `:tag [:subsections MODE]'
 
 (define-org-export-test "with :subsections ignore, as with :tag t, subsections stay outside the block"
-  :input "* Outer :note:
+  :input "* Outer :memo:
           Outer text.
           ** Inner
           Inner text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections ignore])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections ignore])
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
 \\label{sec:org-id-1}
-[Note/teal:
+[Memo/teal:
 Outer text.
 ]
 \\subsection{Inner}
@@ -175,26 +175,26 @@ Inner text.
 ")
 
 (deftest "with :subsections error, a tagged section with a subsection is refused, naming both"
-  (using (org-defblock note (&optional (title "Note") :tag [:subsections error])
+  (using (org-defblock memo (&optional (title "Memo") :tag [:subsections error])
            "Show TITLE." (format "[%s: %s]" title contents))
-    (let ((err (should-error (org-export-string "* Outer :note:\nOuter text.\n** Inner\nInner text." 'latex)
+    (let ((err (should-error (org-export-string "* Outer :memo:\nOuter text.\n** Inner\nInner text." 'latex)
                              :type 'user-error)))
       (should (s-contains-p "“Outer”" (cadr err)))
       (should (s-contains-p "“Inner”" (cadr err)))
-      (should (s-contains-p "org-defblock note" (cadr err))))))
+      (should (s-contains-p "org-defblock memo" (cadr err))))))
 
 (define-org-export-test "with :subsections error, a tagged section without subsections exports as usual, siblings and all"
-  :input "* Lonely :note:
+  :input "* Lonely :memo:
           Text.
           * Sibling
           Sibling text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections error])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections error])
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Lonely}
 \\label{sec:org-id-1}
-[Note/teal:
+[Memo/teal:
 Text.
 ]
 \\section{Sibling}
@@ -203,7 +203,7 @@ Sibling text.
 ")
 
 (define-org-export-test "with :subsections recurse, each subsection's text, at any depth, gets a block with the same arguments"
-  :input "* Outer :note_Big:
+  :input "* Outer :memo_Big:
           Outer text.
           ** Inner
           Inner text.
@@ -215,7 +215,7 @@ Sibling text.
           * After
           After text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections recurse])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse])
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
@@ -239,14 +239,14 @@ After text.
 ")
 
 (define-org-export-test "with :subsections recurse, a subsection bearing the tag itself is wrapped once, with its own arguments"
-  :input "* Outer :note_Big:
+  :input "* Outer :memo_Big:
           Outer text.
-          ** Own :note_Small:
+          ** Own :memo_Small:
           Own text.
           ** Plain
           Plain text."
   :to latex
-  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections recurse])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse])
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
@@ -267,33 +267,33 @@ Plain text.
 ")
 
 (define-org-call-test "org--defblock-tag-subsections reads :tag t as ignore"
-  :call (org--defblock-tag-subsections 'note t)
+  :call (org--defblock-tag-subsections 'memo t)
   :returns ignore)
 
 (define-org-call-test "org--defblock-tag-subsections reads the mode from [:subsections MODE]"
-  :call (org--defblock-tag-subsections 'note [:subsections recurse])
+  :call (org--defblock-tag-subsections 'memo [:subsections recurse])
   :returns recurse)
 
 (deftest "org-defblock refuses, as it expands, an unknown :subsections mode or :tag key"
-  (should-error (macroexpand '(org-defblock note (&optional title :tag [:subsections sideways]) title)))
-  (should-error (macroexpand '(org-defblock note (&optional title :tag [:sections error]) title))))
+  (should-error (macroexpand '(org-defblock memo (&optional title :tag [:subsections sideways]) title)))
+  (should-error (macroexpand '(org-defblock memo (&optional title :tag [:sections error]) title))))
 
 ;;; Lifecycle
 
 (deftest "org-defblock with :tag t defines org-deftag/NAME, and org-undefblock removes it"
-  (eval '(org-defblock note-lifecycle (&optional (title "Note") :tag t) "Show TITLE." title))
-  (should (fboundp 'org-deftag/note-lifecycle))
-  (should (memq #'org-deftag/note-lifecycle org-export-before-parsing-functions))
-  (eval '(org-undefblock note-lifecycle))
-  (should-not (fboundp 'org-deftag/note-lifecycle))
-  (should-not (memq #'org-deftag/note-lifecycle org-export-before-parsing-functions)))
+  (eval '(org-defblock memo-lifecycle (&optional (title "Memo") :tag t) "Show TITLE." title))
+  (should (fboundp 'org-deftag/memo-lifecycle))
+  (should (memq #'org-deftag/memo-lifecycle org-export-before-parsing-functions))
+  (eval '(org-undefblock memo-lifecycle))
+  (should-not (fboundp 'org-deftag/memo-lifecycle))
+  (should-not (memq #'org-deftag/memo-lifecycle org-export-before-parsing-functions)))
 
 (deftest "tags run before special blocks are rewritten, whatever the order they were hooked in"
-  (using (org-defblock note (&optional (title "Note") :tag t) "Show TITLE." (format "[%s: %s]" title contents))
+  (using (org-defblock memo (&optional (title "Memo") :tag t) "Show TITLE." (format "[%s: %s]" title contents))
     ;; Re-enabling the mode re-adds the block rewriter after the tag was hooked.
     (org-special-block-extras-mode -1)
     (org-special-block-extras-mode 1)
-    (should (s-contains-p "[Note: " (org-export-string "* Heading :note:\nBody." 'latex)))))
+    (should (s-contains-p "[Memo: " (org-export-string "* Heading :memo:\nBody." 'latex)))))
 
 (deftest "disabling the mode removes every hook and advice that enabling it installs"
   (unwind-protect

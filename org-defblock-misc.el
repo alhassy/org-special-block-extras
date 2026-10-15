@@ -279,5 +279,15 @@ leave to you, since #+bind lets a document set any variable.
                                  (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
                                color edcomm-begin contents′ signoff edcomm-end))))
 
+;;;;;; Style ---CSS for the exported page
+
+(org-defblock style (main-arg nil :link nil :tag nil)
+  "Style the exported HTML page with the block's CSS, taken verbatim; elsewhere, nothing.
+
+  #+begin_style
+  h2 { color: teal; }
+  #+end_style"
+  (if (equal backend 'html) (format "<style>\n%s\n</style>" raw-contents) ""))
+
 (provide 'org-defblock-misc)
 ;;; org-defblock-misc.el ends here

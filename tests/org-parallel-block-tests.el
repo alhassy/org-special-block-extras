@@ -83,5 +83,15 @@ b
 (deftest "parallel block gives LaTeX the number of hard columns, never their widths"
   (should (s-contains-p "\\begin{multicols}{3}" (org-block/parallel 'latex "a" "25% 50% 25%"))))
 
+(deftest "parallel block exports to beamer as it does to LaTeX, since beamer derives from it"
+  (require 'ox-beamer)
+  (should (s-contains-p "\\begin{multicols}{2}"
+                        (org-export-string "
+#+begin_parallel 2 :bar t
+Left
+#+columnbreak:
+Right
+#+end_parallel" 'beamer))))
+
 (provide 'org-parallel-block-tests)
 ;;; org-parallel-block-tests.el ends here

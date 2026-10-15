@@ -5,75 +5,63 @@
 
 ;;; org-graph--table-context
 
-(deftest "`org-graph--table-context' returns `nodes' for a list-item table"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' returns `nodes' for a list-item table"
+  :text "
+#+begin_graph
 + mynode
-  | shape | ellipse |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| shape |")
-      (should (eq 'nodes (org-graph--table-context))))
-    (kill-buffer buf)))
+  | shape | ellipse |
+#+end_graph"
+  :at "| shape |"
+  (should (eq 'nodes (org-graph--table-context))))
 
-(deftest "`org-graph--table-context' returns `graphs' for a #+graph: table"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' returns `graphs' for a #+graph: table"
+  :text "
+#+begin_graph
 #+graph:
-| rankdir | TB |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| rankdir |")
-      (should (eq 'graphs (org-graph--table-context))))
-    (kill-buffer buf)))
+| rankdir | TB |
+#+end_graph"
+  :at "| rankdir |"
+  (should (eq 'graphs (org-graph--table-context))))
 
-(deftest "`org-graph--table-context' returns `nodes' for a #+node: table"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' returns `nodes' for a #+node: table"
+  :text "
+#+begin_graph
 #+node:
-| shape | box |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| shape |")
-      (should (eq 'nodes (org-graph--table-context))))
-    (kill-buffer buf)))
+| shape | box |
+#+end_graph"
+  :at "| shape |"
+  (should (eq 'nodes (org-graph--table-context))))
 
-(deftest "`org-graph--table-context' returns `edges' for a #+edge: table"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' returns `edges' for a #+edge: table"
+  :text "
+#+begin_graph
 #+edge:
-| color | red |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| color |")
-      (should (eq 'edges (org-graph--table-context))))
-    (kill-buffer buf)))
+| color | red |
+#+end_graph"
+  :at "| color |"
+  (should (eq 'edges (org-graph--table-context))))
 
-(deftest "`org-graph--table-context' skips separator rows correctly"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' skips separator rows correctly"
+  :text "
+#+begin_graph
 #+graph:
 |------+----|
-| rankdir | LR |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| rankdir |")
-      (should (eq 'graphs (org-graph--table-context))))
-    (kill-buffer buf)))
+| rankdir | LR |
+#+end_graph"
+  :at "| rankdir |"
+  (should (eq 'graphs (org-graph--table-context))))
 
-(deftest "`org-graph--table-context' reaches past earlier tables to the directive owning them all; a #+name: table is a node template"
-  (let ((buf (tests-graph--make-graph-buffer
-              "
+(org-deftest "`org-graph--table-context' reaches past earlier tables to the directive owning them all; a #+name: table is a node template"
+  :text "
+#+begin_graph
 #+edge:
 | color | red |
 
 | style | dotted |
 #+name: wife
-| shape | box |")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "| style |")
-      (should (eq 'edges (org-graph--table-context)))
-      (search-forward "| shape |")
-      (should (eq 'nodes (org-graph--table-context))))
-    (kill-buffer buf)))
+| shape | box |
+#+end_graph"
+  :at "| style |"
+  (should (eq 'edges (org-graph--table-context)))
+  (search-forward "| shape |")
+  (should (eq 'nodes (org-graph--table-context))))

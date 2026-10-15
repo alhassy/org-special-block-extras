@@ -41,6 +41,28 @@
 ;; snap.el no longer ships it directly; we define it here via snap-define-fixture.
 (snap-define-fixture deftest)
 
+(cl-defmacro with-org-test-buffer ((&key (text "") at (mode '#'org-mode)) &rest body)
+  "Run BODY in a fresh MODE buffer, Org by default, holding TEXT; point is just after the first AT, else at the start.
+For a whole test, `org-deftest' says this tersely; this is for a test needing many such buffers, say in a loop."
+  (declare (indent 1))
+  `(with-temp-buffer
+     (funcall ,mode)
+     (insert ,text)
+     (goto-char (point-min))
+     (-when-let (at ,at) (search-forward at))
+     ,@body))
+
+;; `org-deftest' is `deftest' in a fresh Org buffer: no more (with-temp-buffer (org-mode) (insert …) …) per test.
+(snap-define-fixture org-deftest
+  "Run the test in a fresh MODE buffer, Org by default, holding TEXT; point is just after the first AT, else at the start."
+  (&key (text "") at (mode #'org-mode))
+  (with-org-test-buffer (:text text :at at :mode mode)
+    &body))
+
+;; Tests run the Lisp of their own blocks' :when, :let, and :C-c_C-c switches without asking;
+;; tests of the asking itself bind `org-defblock-evaluate-switches' locally.
+(setq org-defblock-evaluate-switches t)
+
 
 ;;; Test utilities “using” and “exporting”
 
@@ -75,6 +97,7 @@ This is a poor-man's `cl-letf'."
          (undefs (mapcar (lambda (f) (cons 'org-undefblock (cdr f))) defs)))
     `(let ((__defs ',defs)
            (__undefs ',undefs))
+       (org-test--refuse-redefining ',defs)
        (unwind-protect
            (progn
              ;; Evaluate all definitions at runtime (not at macro-expansion).
@@ -84,6 +107,13 @@ This is a poor-man's `cl-letf'."
          (dolist (u __undefs)
            (ignore-errors (eval u)))))))
 
+
+(defun org-test--refuse-redefining (defs)
+  "Error when one of DEFS, (org-defblock NAME …) forms, names an existing block; e.g., the built-in `note'.
+A test's cleanup undefines its blocks, which would take the built-in with it, for every later test."
+  (dolist (def defs)
+    (when (fboundp (intern (format "org-block/%s" (cadr def))))
+      (error "A test's temporary block “%s” would clobber an existing one; pick another name" (cadr def)))))
 
 ;;; Org's random ids, sanitised
 
@@ -198,6 +228,7 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
          (undefs (mapcar (lambda (f) (cons 'org-undefblock (cdr f))) defs))
          (actual (unwind-protect
                      (progn
+                       (org-test--refuse-redefining defs)
                        (dolist (f defs) (eval f))
                        (org-test--sanitise-ids (org-export-string (lf-string input) (or to 'html))))
                    (dolist (u undefs)
@@ -213,6 +244,16 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
           (should (equal 0 (string-match-p pattern (funcall trim actual)))))
       (should (equal (funcall trim actual) (funcall trim equals))))
     (list :equals actual)))
+
+;;; define-org-block-parse-test — relational test fixture for parsing a block
+
+(snap-define-relation org-block-parse (input block parses-to)
+  "The first block of Org INPUT ---named BLOCK, if given--- PARSES-TO its (:name :main-arg :kwdargs :contents)."
+  (let ((actual (with-org-test-buffer (:text (lf-string input))
+                  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents) (org-special-block-after-point block)]
+                    (list :name name :main-arg main-arg :kwdargs kwdargs :contents contents)))))
+    (should (equal parses-to actual))
+    (list :parses-to actual)))
 
 ;;; define-org-call-test — relational test fixture for handler calls
 

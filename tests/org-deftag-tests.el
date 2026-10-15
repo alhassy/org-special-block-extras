@@ -12,9 +12,7 @@
 
 (snap-define-relation org-deftag (input output)
   "Running `org-deftag/test-shout' over the Org INPUT yields OUTPUT, modulo trailing whitespace per line."
-  (let ((actual (with-temp-buffer
-                  (insert (lf-string input))
-                  (org-mode)
+  (let ((actual (with-org-test-buffer (:text (lf-string input))
                   (org-deftag/test-shout 'html)
                   (buffer-string)))
         (trim (lambda (s) (replace-regexp-in-string "[ \t]+$" "" s))))
@@ -106,9 +104,13 @@
     "Replace the heading with its properties."
     (insert (format "%S" o-properties)))
   (unwind-protect
-      (with-temp-buffer
-        (insert "* Heading :test-props:\n:PROPERTIES:\n:COLOR: blue\n:Custom_Id: x\n:END:\n")
-        (org-mode)
+      (with-org-test-buffer (:text "
+* Heading :test-props:
+:PROPERTIES:
+:COLOR: blue
+:Custom_Id: x
+:END:
+")
         (org-deftag/test-props 'html)
         (should (equal "blue" (plist-get (car (read-from-string (buffer-string))) :color)))
         (should (equal "x" (plist-get (car (read-from-string (buffer-string))) :custom_id))))
@@ -143,9 +145,7 @@
 
 (defun org-test--run-tag (tag input)
   "(TAG, INPUT) ↦ the Org INPUT after running the tag function TAG over it, for HTML."
-  (with-temp-buffer
-    (insert (lf-string input))
-    (org-mode)
+  (with-org-test-buffer (:text (lf-string input))
     (funcall tag 'html)
     (s-trim (buffer-string))))
 

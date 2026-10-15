@@ -70,8 +70,6 @@ content
 \\end{quote}
 #+end_export")
 
-(provide 'org-details-block-tests)
-;;; org-details-block-tests.el ends here
 
 ;;; src blocks with :folded
 
@@ -87,10 +85,24 @@ content
   (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp :folded nil\n(+ 1 2)\n#+end_src")))
   (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp\n(+ 1 2)\n#+end_src"))))
 
-(deftest "a folded src block within a list item stays in that item"
-  (with-temp-buffer
-    (org-mode)
-    (insert "- item\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n- next")
-    (org--fold-src-blocks 'html)
-    (should (equal (buffer-string)
-                   "- item\n  #+begin_details \"emacs-lisp\"\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n  #+end_details\n- next"))))
+(org-deftest "a folded src block within a list item stays in that item"
+  :text "- item\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n- next"
+  (org--fold-src-blocks 'html)
+  (should (equal (buffer-string)
+                 "- item\n  #+begin_details \"emacs-lisp\"\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n  #+end_details\n- next")))
+
+;;; toggle-details links
+
+(define-org-export-test "a toggle-details link is a button that unfolds every details block, or folds them all" [toggle-details]
+  :input "
+          [[toggle-details:][Show me everything]]"
+  :equals "<p>
+           <button onclick=\"let all = [...document.querySelectorAll('details')], open = all.some(d => !d.open); all.forEach(d => d.open = open);\">Show me everything</button></p>
+           ")
+
+(deftest "a toggle-details link is labelled “Unfold all details” by default, and exports to nothing in LaTeX" [toggle-details]
+  (should (string-match-p ">Unfold all details</button>" (org-export-string "\n[[toggle-details:]]")))
+  (should (equal "" (org-export-string "\n[[toggle-details:]]" 'latex))))
+
+(provide 'org-details-block-tests)
+;;; org-details-block-tests.el ends here

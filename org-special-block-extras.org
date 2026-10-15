@@ -3404,6 +3404,8 @@ LaTeX!
   colourful ASCII cows with fortune cookies.
 - *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
 - *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
+- *🎛 Switch any block*: =:when (eq backend 'html)=, =:noexport t=, =:let (N 7)=, =:boxed "Title"=, =:folded t=, and
+  =:C-c_C-c ACTION= work on every block ---ours or our own; see [[#Switches-for-every-block][switches]].
 - badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
 - *🛠 Use =org-defblock=, =org-deflink= and =org-deftag=* ---Org, extended as one extends Lisp:
   each is declared like a ~cl-defun~, with =&optional= and =&key= arguments; or, for the
@@ -3426,39 +3428,46 @@ LaTeX!
    
  *🧱 Ready-to-Use Custom Blocks*
   
-  | Block             | Use Case                                                                              |
-  |-------------------+---------------------------------------------------------------------------------------|
-  | =details=           | Foldable sections --- perfect for hiding spoilers, proofs, or long explanations.      |
-  | =parallel=          | Display content in multiple columns --- great for comparisons or saving space.        |
-  | =margin=            | Add subtle explanatory tooltips or side remarks --- delightful for scholarly writing. |
-  | =box=               | Emphasize content with nicely styled borders --- great for callouts or side notes.    |
-  | =spoiler=           | Hide content visually until the reader chooses to see it --- useful in teaching.      |
-  | =tree=              | Display proof trees and logical derivations --- fantastic for formal logic.           |
-  | =rename=            | Automated text substitution --- great for translation or glossary effects.            |
-  | =stutter=           | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
-  | =solution=          | Reveal answers in stages --- perfect for educational content.                         |
-  | =org-demo=          | Show Org markup alongside its rendered result --- ideal for tutorials.                |
-  | =latex-definitions= | Hide LaTeX-only declarations from HTML --- keep your source clean.                    |
-  | =calc=              | Step-by-step equational reasoning --- beautiful for math walkthroughs.                |
-  | =graph=             | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
+  | Block                       | Use Case                                                                              |
+  |-----------------------------+---------------------------------------------------------------------------------------|
+  | =details=                   | Foldable sections --- perfect for hiding spoilers, proofs, or long explanations.      |
+  | =parallel=                  | Display content in multiple columns --- great for comparisons or saving space.        |
+  | =margin=                    | Add subtle explanatory tooltips or side remarks --- delightful for scholarly writing. |
+  | =box=                       | Emphasize content with nicely styled borders --- great for callouts or side notes.    |
+  | =spoiler=                   | Hide content visually until the reader chooses to see it --- useful in teaching.      |
+  | =tree=                      | Display proof trees and logical derivations --- fantastic for formal logic.           |
+  | =rename=                    | Automated text substitution --- great for translation or glossary effects.            |
+  | =stutter=                   | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
+  | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
+  | =org-demo=                  | Show Org markup alongside its rendered result --- ideal for tutorials.                |
+  | =latex-definitions=         | Hide LaTeX-only declarations from HTML --- keep your source clean.                    |
+  | =calc=                      | Step-by-step equational reasoning --- beautiful for math walkthroughs.                |
+  | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
+  | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
+  | =highlight=                 | Colour a paragraph's background, rather than its text.                                |
+  | =package-docs=              | A table of a package's public API, each name a =doc:= tooltip.                        |
+  | =style=                     | Page-wide CSS, verbatim; nothing outside HTML.                                        |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
   # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
 
 --------------------------------------------------------------------------------
   
 *Ready-to-Use Custom Links*
-    | Link               | Purpose                                                                                 |
-    |--------------------+-----------------------------------------------------------------------------------------|
-    | =doc:label=          | Glossary/dictionary tooltips ---link to local or global explanations; e.g., doc:cl-loop |
-    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=.                               |
-    | =color:= or =red:=     | Inline text colouring --- supports both names and hex codes.                            |
-    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                          |
-    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                   |
-    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                      |
-    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                              |
-    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                   |
-    | =show:=              | Show a variable value --- dynamically insert content like your name or version.         |
-    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                 |
+    | Link                 | Purpose                                                                                    |
+    |----------------------+--------------------------------------------------------------------------------------------|
+    | =doc:label=          | Glossary tooltips ---e.g., doc:cl-loop; our own terms, even =<<<radio targets>>>=, too     |
+    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=, shown as 〔C-x C-e〕 in Emacs. |
+    | =color:= or =red:=   | Inline text colouring --- supports both names and hex codes.                               |
+    | =highlight:=         | Colour the background instead ---so highlighted in Emacs too.                              |
+    | =palette:=           | A button for readers to pick the page's background colour.                                 |
+    | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                |
+    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                             |
+    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                      |
+    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                         |
+    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                 |
+    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                      |
+    | =show:=              | Show a variable value --- dynamically insert content like your name or version.            |
+    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                    |
     
 
 --------------------------------------------------------------------------------
@@ -3605,6 +3614,10 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
 (org-defblock details …)
 ,#+end_src
    #+end_example
+
+   A page with many folded blocks may offer a button to unfold them all at once:
+   =[[toggle-details:][Show me everything]]= is that button; pressed again, it folds them
+   all. Without a description, it reads “Unfold all details”.
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 :PROPERTIES:
 :CREATED:  [2025-06-06 Fri 20:12]
@@ -3679,6 +3692,10 @@ or the useful <kbd:M-s h .>.
   You can also supply explicit tooltip description: =[[kbd:key
   sequence][description]]= will show as [[kbd:key sequence][description]]; i.e.,
   the key sequence in nice key font along with a tooltip explaining it.
+
+- In Emacs itself, each of these displays as 〔C-x C-s〕: the =kbd:= markup becomes the
+  brackets and each =_= a space. Only the markup is displayed differently, so the keys
+  stay editable as ever.
 
 
 # To make a screenshot, add the following to the above :PROPERTIES: drawer.
@@ -4119,6 +4136,18 @@ from∘to m = {! try it! }
   org-docs-load-libraries= reloads them after an edit, and =M-x org-docs-insert= inserts a
   =doc:𝒳= link by searching all the terms we have.
 
+  A radio target is a term too: in =A <<<monoid>>> is a set with an associative operation
+  and a unit.=, the target names the term and its paragraph defines it; so =doc:monoid=
+  cites it, in the same file or, from a library, in any other.
+
+  Finally, a package's whole API makes a glossary of its own: the =package-docs= block
+  exports a table of the public functions, macros, and variables that a feature defines,
+  each name a =doc:𝒳= link whose tooltip is its documentation.
+  #+begin_example
+,#+begin_package-docs org-deflink
+,#+end_package-docs
+  #+end_example
+
 ** Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
   :CUSTOM_ID: Parallel
@@ -4184,6 +4213,82 @@ from∘to m = {! try it! }
   HTML export embeds a PNG ---or an inline SVG, with tooltips intact, via =:svg t=--- whereas
   other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
+
+** Switches for every block: =:when=, =:let=, =:folded=, …
+  :PROPERTIES:
+  :CUSTOM_ID: Switches-for-every-block
+  :END:
+
+  Just as every src block understands =:exports= and =:results=, every block made with
+  ~org-defblock~ ---ours and our own--- understands these header arguments:
+
+  | Switch           | Effect upon export                                                           |
+  |------------------+------------------------------------------------------------------------------|
+  | =:noexport t=    | Nothing at all; e.g., notes to self                                          |
+  | =:when FORM=     | Nothing at all, unless the Lisp =FORM= is non-nil; it may mention =backend= |
+  | =:let (VAR VAL …)= | Each whole-word =VAR= in the contents becomes its value, beforehand       |
+  | =:ignore t=      | The contents, as plain Org; i.e., the block's own behaviour is bypassed      |
+  | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
+  | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |
+
+  osbe-example:switches
+
+  Moreover, =:C-c_C-c ACTION= gives a block an action in Emacs: pressing =C-c C-c= within it
+  calls =ACTION= when it names a function, else evaluates it as a Lisp form; see [[#C-c-C-c-for-your-own-blocks][C-c C-c for
+  your own blocks]].
+
+  A block that declares a keyword of the same name keeps it for itself; e.g., a block with
+  its own =folded= argument receives =:folded= as usual. Since =:when=, =:let= and =:C-c_C-c=
+  run Lisp written in the document, Emacs asks once before running each distinct form;
+  ~org-defblock-evaluate-switches~ may instead allow them freely, or never.
+
+** Callouts ---Note, tip, important, warning, caution
+  :PROPERTIES:
+  :CUSTOM_ID: Callouts
+  :END:
+
+  Five blocks, after GitHub's alerts, call out a paragraph with a coloured rule down its
+  left under a titled heading; the title defaults to the block's name.
+
+  osbe-example:callout
+
+  The colours, icons, and intended uses live in ~org-callouts~. Since a heading tagged
+  =:note:= is common enough to mean something else entirely, callouts claim neither tags nor
+  link types.
+
+** Highlights ---Colour the background, not the text
+  :PROPERTIES:
+  :CUSTOM_ID: Highlights
+  :END:
+
+  Where =red:𝒳= colours text, =[[highlight:pink][𝒳]]= colours its background; the colour
+  defaults to yellow, and the link shows so highlighted in Emacs too.
+
+  osbe-example:highlight
+
+  For the reader who would rather pick the page's background colour themself,
+  =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colours,
+  ~org-palette-colors~; clicking one makes it the background.
+
+** Page-wide CSS with =style=
+  :PROPERTIES:
+  :CUSTOM_ID: style-block
+  :END:
+
+  A =style= block is the page's CSS, taken verbatim; it exports to nothing but HTML.
+  #+begin_example
+,#+begin_style
+h2 { color: teal; }
+,#+end_style
+  #+end_example
+
+* Make your own blocks and links ---A developer's guide
+  :PROPERTIES:
+  :CUSTOM_ID: Developers-guide
+  :END:
+
+  Every block and link above is made with the very tools below, so a new one of our own is a
+  ~defun~ away.
 
 ** Make your own blocks with =org-defblock=
   :PROPERTIES:
@@ -4353,6 +4458,10 @@ Mind the gap.
   Org's =C-c C-c= does the obvious thing at point: it runs a src block, ticks a checkbox,
   recalculates a table. Our special blocks may join in; one call gives every
   =#+begin_NAME= … =#+end_NAME= block a =C-c C-c= action.
+
+  For a single block, the =:C-c_C-c= switch suffices: =#+begin_quiz :C-c_C-c my/check-answers=
+  makes =C-c C-c= within that block call ~my/check-answers~; a Lisp form, rather than a
+  function name, is evaluated instead. For every block of a kind, we register a handler:
 
   #+begin_src emacs-lisp
 (org-defblock shout () "Upcase the contents." (upcase contents))
@@ -7890,13 +7999,13 @@ link-here:rational-root-equivales-perfect-power
   A rational number is the fraction of two integers.
   Let variables $a,\, b$ range over integer numbers.
 
-+ ∃\, a, b •\; k · a ^n = b ^n --
++ ∃\, a, b •\; k · b ^n = a ^n --
   Use arithmetic to eliminate the $n$-th root operator.
 
   $\def\exp#1#2{\mathsf{exp}_#1\,#2}$
   $\def\eq{\;=\;}$
 
-+ ∃\, a, b •\; ∀\, p •\; \exp{p}(k · a ^n) \eq \exp{p}(b ^n ) --
++ ∃\, a, b •\; ∀\, p •\; \exp{p}(k · b ^n) \eq \exp{p}(a ^n ) --
 
   Let $\exp{m} x$ be the number of times that $m$ divides $x$.
   For example, $\exp{2} 48 \eq 4$ and $\exp{2} 49 \eq 0$.
@@ -7911,19 +8020,19 @@ link-here:rational-root-equivales-perfect-power
   And so, any two numbers are the same precisely when they have the same primes:
   $\qquad x \eq y \;\;≡\;\; \big(∀ p \,•\, \exp{p} x \eq \exp{p} y\big)$.
 
-+ ∃\, a, b •\; ∀\, p •\; \exp{p} k + n · \exp{p} a \eq n · \exp{p} b --
++ ∃\, a, b •\; ∀\, p •\; \exp{p} k + n · \exp{p} b \eq n · \exp{p} a --
 
   When $p$ is prime, $\exp{p}(x · y) \eq \exp{p} x \,+\, \exp{p} y$.
   Aside: In general, $\exp{p}(Π \,i\, \,•\, x_i) \eq (Σ \,i\, \,•\, \exp{p} x_i)$.
 
-+ ∃\, a, b •\; ∀\, p •\; \exp{p} k \eq  n · \Big(\exp{p} b - \exp{p} a\Big) --
++ ∃\, a, b •\; ∀\, p •\; \exp{p} k \eq  n · \Big(\exp{p} a - \exp{p} b\Big) --
   Use arithmetic to collect similar terms.
 
 + ∀\, p •\; \exp{p} k \text{ is a multiple of } n  --
 
   (⇒) is the definition of multiplicity;
-  (⇐) take $a \,≔\, 1$ and define $b$ by its prime powers:
-  $\qquad ∀\, p \,•\, \exp{p} b \,≔\, {\exp{p} k \,/\, n}$
+  (⇐) take $b \,≔\, 1$ and define $a$ by its prime powers:
+  $\qquad ∀\, p \,•\, \exp{p} a \,≔\, {\exp{p} k \,/\, n}$
 
 + k \text{ is a perfect $n$-th power; i.e., of the shape } x^n  --
   Fundamental theorem of arithmetic and definition of ‘perfect’

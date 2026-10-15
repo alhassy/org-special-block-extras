@@ -13,6 +13,8 @@
 (load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
 (load-file (expand-file-name "~/org-special-block-extras/org-graph-block.el"))
 (org-special-block-extras-mode 1)
+;; Examples run the Lisp of their own blocks' :when and :let switches without asking.
+(setq org-defblock-evaluate-switches t)
 
 (defun org-example--export (input backend)
   "(INPUT, BACKEND) ↦ body-only BACKEND export of Org INPUT, with `gensym', Org's ids, and machine-specific values pinned.

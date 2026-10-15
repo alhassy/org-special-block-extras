@@ -33,10 +33,10 @@
 
 (define-org-export-test "`org-defblock' exports a custom block to HTML with content formatting"
   :input "Look:
-          #+begin_highlight Warning :style color:orange
+          #+begin_aside Warning :style color:orange
           Something **important** here.
-          #+end_highlight"
-  :using (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+          #+end_aside"
+  :using (org-defblock aside (label "Note" style "color:red") "Aside block"
            (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
   :equals "<p>
            Look:

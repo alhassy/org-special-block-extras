@@ -5,11 +5,7 @@
 
 (defun org-test--eldoc-at (text needle)
   "(TEXT, NEEDLE) ↦ (DOC . PLIST) that `org--special-block-eldoc' reports with point on NEEDLE in Org TEXT; else nil."
-  (with-temp-buffer
-    (org-mode)
-    (insert text)
-    (goto-char (point-min))
-    (search-forward needle)
+  (with-org-test-buffer (:text text :at needle)
     (goto-char (match-beginning 0))
     (let (report)
       (org--special-block-eldoc (lambda (doc &rest plist) (setq report (cons doc plist))))

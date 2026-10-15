@@ -58,5 +58,48 @@ text
                           magenta olive orange pink purple red teal violet white yellow))
     (should (fboundp (intern (format "org-block/%s" colour))))))
 
+;;; Highlight
+
+(define-org-export-test "a highlight link colours the background of its description in HTML" [highlight]
+  :input "
+          [[highlight:pink][Read this twice.]]"
+  :equals "<p>
+           <span style=\"background-color:pink;\">Read this twice.</span></p>
+           ")
+
+(define-org-export-test "a highlight link is an inline \\colorbox in LaTeX" [highlight]
+  :input "
+          [[highlight:pink][Read this twice.]]"
+  :to latex
+  :equals "\\colorlet{osbe-highlight}{pink}\\colorbox{osbe-highlight}{Read this twice.}
+           ")
+
+(define-org-export-test "a highlight block, of a hex colour, is a full-width paragraph box in LaTeX" [highlight]
+  :input "
+          #+begin_highlight #e5f5e5
+          A whole paragraph.
+          #+end_highlight"
+  :to latex
+  :equals "\\definecolor{osbe-highlight}{HTML}{e5f5e5}\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{
+           A whole paragraph.
+           }}
+           ")
+
+(org-deftest "a highlight link shows, in Emacs, with its colour as background" [highlight]
+  :text "
+Do [[highlight:pink][read this]] twice."
+  :at "read"
+  (font-lock-ensure)
+  (should (equal (get-text-property (point) 'face) '(:background "pink"))))
+
+;;; Palette
+
+(deftest "a palette link is a button unfolding one button per `org-palette-colors' in HTML; nothing elsewhere" [palette]
+  (let ((html (org-export-string "\n[[palette:][Pick a background]]")))
+    (should (string-match-p ">Pick a background</button><div style=\"display: none\">" html))
+    (should (equal (length org-palette-colors) (s-count-matches "document.body.style.background" html))))
+  (should (string-match-p ">🎨</button>" (org-export-string "\n[[palette:]]")))
+  (should (equal "" (org-export-string "\n[[palette:][Pick a background]]" 'latex))))
+
 (provide 'org-color-links-tests)
 ;;; org-color-links-tests.el ends here

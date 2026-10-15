@@ -31,115 +31,106 @@ KWDARGS is the plist for the block's keyword arguments."
              ((symbol-function 'org-graph--insert-results)       (lambda (&rest _) nil)))
      ,@body))
 
-(deftest "`org-graph--cc-handler' plain C-c C-c renders PNG (no dot buffer)"
-  (let ((buf (tests-graph--make-graph-buffer "
-+ A")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "+ A")
-      (tests-graph--with-cc-stubs "digraph { A; }" nil
-        (let ((current-prefix-arg nil)
-              (dot-shown nil))
-          (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (_) (setq dot-shown t))))
-            (org-graph--cc-handler)
-            (should-not dot-shown)))))
-    (kill-buffer buf)))
+(org-deftest "`org-graph--cc-handler' plain C-c C-c renders PNG (no dot buffer)"
+  :text "
+#+begin_graph
++ A
+#+end_graph"
+  :at "+ A"
+  (tests-graph--with-cc-stubs "digraph { A; }" nil
+    (let ((current-prefix-arg nil)
+          (dot-shown nil))
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (_) (setq dot-shown t))))
+        (org-graph--cc-handler)
+        (should-not dot-shown)))))
 
-(deftest "`org-graph--cc-handler' C-u C-c C-c shows dot source buffer"
-  (let ((buf (tests-graph--make-graph-buffer "
-+ A")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "+ A")
-      (tests-graph--with-cc-stubs "digraph { A; }" nil
-        (let ((current-prefix-arg '(4))
-              (dot-received nil))
-          (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d))))
-            (org-graph--cc-handler)
-            (should (equal "digraph { A; }" dot-received))))))
-    (kill-buffer buf)))
+(org-deftest "`org-graph--cc-handler' C-u C-c C-c shows dot source buffer"
+  :text "
+#+begin_graph
++ A
+#+end_graph"
+  :at "+ A"
+  (tests-graph--with-cc-stubs "digraph { A; }" nil
+    (let ((current-prefix-arg '(4))
+          (dot-received nil))
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d))))
+        (org-graph--cc-handler)
+        (should (equal "digraph { A; }" dot-received))))))
 
-(deftest "`org-graph--cc-handler' :C-c_C-c dot without prefix shows dot"
-  (let ((buf (tests-graph--make-graph-buffer "
-+ A")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "+ A")
-      (tests-graph--with-cc-stubs "digraph { A; }" '(:C-c_C-c "dot")
-        (let ((current-prefix-arg nil)
-              (dot-received nil))
-          (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d))))
-            (org-graph--cc-handler)
-            (should (equal "digraph { A; }" dot-received))))))
-    (kill-buffer buf)))
+(org-deftest "`org-graph--cc-handler' :C-c_C-c dot without prefix shows dot"
+  :text "
+#+begin_graph
++ A
+#+end_graph"
+  :at "+ A"
+  (tests-graph--with-cc-stubs "digraph { A; }" '(:C-c_C-c "dot")
+    (let ((current-prefix-arg nil)
+          (dot-received nil))
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d))))
+        (org-graph--cc-handler)
+        (should (equal "digraph { A; }" dot-received))))))
 
-(deftest "`org-graph--cc-handler' reads :C-c_C-c dot from a real header line, where it is the symbol `dot', not a string"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "`org-graph--cc-handler' reads :C-c_C-c dot from a real header line, where it is the symbol `dot', not a string"
+  :text "
 #+begin_graph :C-c_C-c dot
 + A
-#+end_graph")
-    (search-backward "+ A")
-    (let ((current-prefix-arg nil) (dot-received nil))
-      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d)))
-                ((symbol-function 'org-graph--run-dot) (lambda (&rest _) (error "Rendered a PNG, rather than showing dot"))))
-        (org-graph--cc-handler)
-        (should (s-starts-with-p "digraph" dot-received))))))
+#+end_graph"
+  :at "+ A"
+  (let ((current-prefix-arg nil) (dot-received nil))
+    (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d)))
+              ((symbol-function 'org-graph--run-dot) (lambda (&rest _) (error "Rendered a PNG, rather than showing dot"))))
+      (org-graph--cc-handler)
+      (should (s-starts-with-p "digraph" dot-received)))))
 
-(deftest "`org-graph--cc-handler' reads :file from a real header line, where it is a symbol, as the PNG's file name"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "`org-graph--cc-handler' reads :file from a real header line, where it is a symbol, as the PNG's file name"
+  :text "
 #+begin_graph :file my-diagram.png
 + A
-#+end_graph")
-    (search-backward "+ A")
-    (let ((current-prefix-arg nil) (outfile nil))
-      (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _format file) (setq outfile file) '(0 . "")))
-                ((symbol-function 'org-display-inline-images) #'ignore))
+#+end_graph"
+  :at "+ A"
+  (let ((current-prefix-arg nil) (outfile nil))
+    (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _format file) (setq outfile file) '(0 . "")))
+              ((symbol-function 'org-display-inline-images) #'ignore))
+      (org-graph--cc-handler)
+      (should (equal "my-diagram.png" outfile)))))
+
+(org-deftest "`org-graph--cc-handler' :C-c_C-c dot WITH prefix toggles back to PNG"
+  :text "
+#+begin_graph
++ A
+#+end_graph"
+  :at "+ A"
+  (tests-graph--with-cc-stubs "digraph { A; }" '(:C-c_C-c "dot")
+    (let ((current-prefix-arg '(4))
+          (dot-shown nil))
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (_) (setq dot-shown t))))
         (org-graph--cc-handler)
-        (should (equal "my-diagram.png" outfile))))))
+        (should-not dot-shown)))))
 
-(deftest "`org-graph--cc-handler' :C-c_C-c dot WITH prefix toggles back to PNG"
-  (let ((buf (tests-graph--make-graph-buffer "
-+ A")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "+ A")
-      (tests-graph--with-cc-stubs "digraph { A; }" '(:C-c_C-c "dot")
-        (let ((current-prefix-arg '(4))
-              (dot-shown nil))
-          (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (_) (setq dot-shown t))))
-            (org-graph--cc-handler)
-            (should-not dot-shown)))))
-    (kill-buffer buf)))
-
-(deftest "`org-graph--cc-handler' C-u inserts #+begin_src dot results block"
-  (let ((buf (tests-graph--make-graph-buffer "
-+ A")))
-    (with-current-buffer buf
-      (goto-char (point-min))
-      (search-forward "+ A")
-      ;; Override end-point to insert after current content (not point-max stub)
-      (cl-letf (((symbol-function 'org-special-block-after-point)
-                 (lambda (_)
-                   (make-org-special-block
-                    :kwdargs  nil
-                    :contents "
+(org-deftest "`org-graph--cc-handler' C-u inserts #+begin_src dot results block"
+  :text "
+#+begin_graph
++ A
+#+end_graph"
+  :at "+ A"
+  ;; Override end-point to insert after current content (not point-max stub)
+  (cl-letf (((symbol-function 'org-special-block-after-point)
+             (lambda (_)
+               (make-org-special-block
+                :kwdargs  nil
+                :contents "
 + A"
-                    :main-arg ""
-                    :end-point (save-excursion
-                                 (goto-char (point-max))
-                                 (search-backward "#+end_graph")
-                                 (1- (point))))))
-                ((symbol-function 'org--graph-raw->dot)             (lambda (&rest _) "digraph { A; }"))
-                ((symbol-function 'org-graph--show-dot)             (lambda (_) nil)))
-        (let ((current-prefix-arg '(4)))
-          (org-graph--cc-handler)))
-      (let ((contents (buffer-string)))
-        (should (s-contains-p "#+RESULTS:" contents))
-        (should (s-contains-p "#+begin_src dot" contents))
-        (should (s-contains-p "digraph { A; }" contents))
-        (should (s-contains-p "#+end_src" contents))))
-    (kill-buffer buf)))
+                :main-arg ""
+                :end-point (save-excursion
+                             (goto-char (point-max))
+                             (search-backward "#+end_graph")
+                             (1- (point))))))
+            ((symbol-function 'org--graph-raw->dot)             (lambda (&rest _) "digraph { A; }"))
+            ((symbol-function 'org-graph--show-dot)             (lambda (_) nil)))
+    (let ((current-prefix-arg '(4)))
+      (org-graph--cc-handler)))
+  (let ((contents (buffer-string)))
+    (should (s-contains-p "#+RESULTS:" contents))
+    (should (s-contains-p "#+begin_src dot" contents))
+    (should (s-contains-p "digraph { A; }" contents))
+    (should (s-contains-p "#+end_src" contents))))

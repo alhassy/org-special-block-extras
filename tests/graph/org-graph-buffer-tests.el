@@ -7,9 +7,7 @@
 
 (defun tests-graph--dot-in-buffer (buffer-text body)
   "The dot of graph BODY, rendered in an Org buffer holding BUFFER-TEXT."
-  (with-temp-buffer
-    (org-mode)
-    (insert buffer-text)
+  (with-org-test-buffer (:text buffer-text)
     (org--graph-raw->dot body nil)))
 
 (deftest "a #+name: table outside any graph is a template every graph in the buffer may use"
@@ -68,31 +66,34 @@
       (let ((org--handler-anchor "lineage")) (org-block/graph 'html "+ λ" nil :file "elsewhere.png"))
       (should (equal '("png" "elsewhere.png") rendered)))))
 
-(deftest "C-c C-c on a named graph renders to NAME.png, unless :file says otherwise"
+(org-deftest "C-c C-c on a named graph renders to NAME.png, unless :file says otherwise"
+  :text "
+#+name: lineage
+#+begin_graph
++ λ
+#+end_graph
+#+name: other
+#+begin_graph :file mine.png
++ λ
+#+end_graph"
+  :at "+ λ"
   (let (outfile)
     (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _kind file) (setq outfile file) '(0 . "")))
               ((symbol-function 'org-graph--insert-results) #'ignore)
               ((symbol-function 'org-display-inline-images) #'ignore))
-      (with-temp-buffer
-        (org-mode)
-        (insert "#+name: lineage\n#+begin_graph\n+ λ\n#+end_graph\n#+name: other\n#+begin_graph :file mine.png\n+ λ\n#+end_graph\n")
-        (goto-char (point-min))
-        (search-forward "+ λ")
-        (org-graph--cc-handler)
-        (should (equal "lineage.png" outfile))
-        (search-forward "+ λ")
-        (org-graph--cc-handler)
-        (should (equal "mine.png" outfile))))))
+      (org-graph--cc-handler)
+      (should (equal "lineage.png" outfile))
+      (search-forward "+ λ")
+      (org-graph--cc-handler)
+      (should (equal "mine.png" outfile)))))
 
 (provide 'org-graph-buffer-tests)
 ;;; org-graph-buffer-tests.el ends here
 
 ;;; #+RESULTS: below a graph
 
-(deftest "re-rendering replaces the whole previous #+RESULTS:, even a multi-line dot source block, keeping what follows"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "re-rendering replaces the whole previous #+RESULTS:, even a multi-line dot source block, keeping what follows"
+  :text "
 #+begin_graph
 + a
 #+end_graph
@@ -103,18 +104,17 @@ digraph {
 }
 #+end_src
 
-Prose after.")
-    (goto-char (point-min))
-    (search-forward "#+end_graph")
-    (org-graph--insert-results (line-beginning-position) "[[file:graph.png]]")
-    (should (equal (buffer-string) "
+Prose after."
+  :at "#+end_graph"
+  (org-graph--insert-results (line-beginning-position) "[[file:graph.png]]")
+  (should (equal (buffer-string) "
 #+begin_graph
 + a
 #+end_graph
 #+RESULTS:
 [[file:graph.png]]
 
-Prose after."))))
+Prose after.")))
 
 (deftest "a buffer template may carry a #+caption: beside its #+name:, as any Org table may"
   (should (equal "digraph {

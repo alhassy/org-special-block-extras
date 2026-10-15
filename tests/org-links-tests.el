@@ -43,18 +43,14 @@
 
 ;;; Within Emacs, and the LaTeX glossary
 
-(deftest "the badge link's tooltip names each part of its label"
-  (with-temp-buffer
-    (org-mode)
-    (insert "See badge:key|value|blue here.")
-    (let ((tooltip (funcall (org-link-get-parameter "badge" :help-echo) nil nil 7)))
-      (should (s-contains-p "Key    : key" tooltip))
-      (should (s-contains-p "Colour : blue" tooltip)))))
+(org-deftest "the badge link's tooltip names each part of its label"
+  :text "See badge:key|value|blue here."
+  (let ((tooltip (funcall (org-link-get-parameter "badge" :help-echo) nil nil 7)))
+    (should (s-contains-p "Key    : key" tooltip))
+    (should (s-contains-p "Colour : blue" tooltip))))
 
 (define-org-call-test "the link-here link's tooltip names its anchor"
-  :call (with-temp-buffer
-          (org-mode)
-          (insert "Go link-here:top now.")
+  :call (with-org-test-buffer (:text "Go link-here:top now.")
           (funcall (org-link-get-parameter "link-here" :help-echo) nil nil 6))
   :returns "This is a local anchor link named “top”")
 
@@ -68,6 +64,64 @@
       (should (s-contains-p "\\pageref{o-glossary-declaration-site-cat}" glossary))
       (should (s-contains-p "\\hyperref[o-glossary-cat]" citation))
       (should (s-contains-p "\\label{o-glossary-cat}" glossary)))))
+
+;;; kbd: links, as displayed in Emacs
+
+(defun org-links-tests--displayed ()
+  "The current buffer's text as Emacs displays it: each string-valued `display' property in place of the text it covers."
+  (let ((shown "") (pos (point-min)))
+    (while (< pos (point-max))
+      (let ((display (get-text-property pos 'display))
+            (next (next-single-property-change pos 'display nil (point-max))))
+        (setq shown (concat shown (if (stringp display) display (buffer-substring-no-properties pos next)))
+              pos next)))
+    shown))
+
+(org-deftest "kbd: links, in every format, display in Emacs as 〔KEYS〕, sans markup and underscores" [kbd]
+  :text "Save with kbd:C-x_C-s, visit with [[kbd:C-x C-f]], run with <kbd: C-c C-c>, learn with [[kbd:C-h t][the tutorial]]."
+  (font-lock-ensure)
+  (should (equal (org-links-tests--displayed)
+                 "Save with 〔C-x C-s〕, visit with 〔C-x C-f〕, run with 〔C-c C-c〕, learn with 〔C-h t〕.")))
+
+(org-deftest "a kbd: link edited into plain text loses its 〔KEYS〕 display" [kbd]
+  :text "
+Save with kbd:C-x_C-s, often."
+  (org-special-block-extras-mode 1)
+  (font-lock-ensure)
+  (search-forward "kbd:C-x_C-s")
+  (replace-match "the menu")
+  (font-lock-ensure)
+  (should (equal (org-links-tests--displayed) "
+Save with the menu, often.")))
+
+(deftest "unprettifying kbd: links leaves foreign display properties be, such as an aligned table's" [kbd]
+  (with-temp-buffer
+    (insert "| a | b |")
+    (put-text-property 1 2 'display '(space :relative-width 1))
+    (org--kbd-unprettify (point-min) (point-max))
+    (should (equal (get-text-property 1 'display) '(space :relative-width 1)))))
+
+;;; package-docs
+
+(deftest "`org--package-docs' lists a feature's public definitions, alphabetically, with their kinds and gists" [package-docs]
+  (should (equal (assoc 'org-callouts (org--package-docs 'org-callout-blocks))
+                 '(org-callouts "variable" "The callout blocks, as (NAME COLOUR ICON PURPOSE) entries; the colours and purposes are GitHub's.")))
+  (should (equal (assoc 'org-deflink (org--package-docs 'org-deflink))
+                 '(org-deflink "macro" "Make a new Org-link NAME that exports using form BODY.")))
+  (should (equal (assoc 'org-this-link-next (org--package-docs 'org-deflink))
+                 '(org-this-link-next "command" "Go to the next Org link that is similar to the link at point.")))
+  ;; Private names, those with “--”, are omitted.
+  (should-not (assoc 'org--callout (org--package-docs 'org-callout-blocks)))
+  (let ((names (mapcar #'car (org--package-docs 'org-deflink))))
+    (should (equal names (sort (copy-sequence names) #'string<)))))
+
+(deftest "a package-docs block exports a table whose names are doc: links to their documentation" [package-docs]
+  (let ((html (org-export-string "
+#+begin_package-docs org-callout-blocks
+#+end_package-docs")))
+    (should (s-contains? "<th scope=\"col\" class=\"org-left\">Name</th>" html))
+    (should (string-match-p "<td class=\"org-left\"><abbr class=\"tooltip\" title=\"The callout blocks,[^\"]*\"><code>org-callouts</code></abbr></td>
+<td class=\"org-left\">variable</td>" html))))
 
 (provide 'org-links-tests)
 ;;; org-links-tests.el ends here

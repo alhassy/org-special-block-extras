@@ -67,10 +67,10 @@ For example, upon LaTeX export, the Org special block
 (deftest "TODO `org-defblock-only' inconsistent with `org-defblock'" [BUG FIXME]
   ;; ⟨1⟩ `org-defblock' works as expected
   (exporting "Look:
-              #+begin_highlight Warning :style color:orange
+              #+begin_aside Warning :style color:orange
               Something **important** here.
-              #+end_highlight"
-    :using (org-defblock highlight (label "Note" style "color:red") "Highlight block"
+              #+end_aside"
+    :using (org-defblock aside (label "Note" style "color:red") "Aside block"
              (format "<div style='%s'><strong>%s:</strong>%s</div>" style label contents))
     :equals  "<p>
             Look:
@@ -83,16 +83,16 @@ For example, upon LaTeX export, the Org special block
             ")
   ;; 🤮 `org-defblock-only' deviates 😲
   (exporting "Look:
-              #+begin_highlight Warning :style color:orange
+              #+begin_aside Warning :style color:orange
               Something **important** here.
-              #+end_highlight"
-    :using (org-defblock-only highlight (label "Note" style "color:red") "Highlight block"
+              #+end_aside"
+    :using (org-defblock-only aside (label "Note" style "color:red") "Aside block"
              (format "<div style='%s'><strong>%s:</strong>%s</div>" style label contents))
     :equals ;; NOTE: The <div>s are different!
     "<p>
 Look:
 </p>
-<div class=\"highlight\" id=\"org-id-1\">
+<div class=\"aside\" id=\"org-id-1\">
 <p>
 Something <b><b>important</b></b> here.
 </p>

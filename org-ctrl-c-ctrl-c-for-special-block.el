@@ -41,9 +41,29 @@ HANDLER is called with no arguments when point is inside the named block
 and should return non-nil to claim the event."
   (setf (alist-get (downcase block-name) org--block-cc-handlers nil nil #'equal) handler))
 
+(declare-function org--read-header "org-defblock")
+(declare-function org--block-eval "org-defblock")
+
+(defun org--block-cc-switch ()
+  "Run the :C-c_C-c switch of the special block around point; nil when it has none.
+
+  #+begin_quiz :C-c_C-c (message \"Score: 3/4\")     ;; A form is evaluated
+  #+begin_quiz :C-c_C-c my/check-answers           ;; A function is called; interactively, if a command
+
+The Lisp runs as `org-defblock-evaluate-switches' permits."
+  (-when-let* ((blk (org-special-block-at-point))
+               (params (-some--> (org-element-property :parameters blk) (and (string-match-p ":C-c_C-c" it) it)))
+               (action (plist-get (-drop-while (-not #'keywordp) (org--read-header params)) :C-c_C-c)))
+    (if (and (symbolp action) (fboundp action))
+        (if (commandp action) (call-interactively action) (funcall action))
+      (org--block-eval action nil))
+    t))
+
 (defun org--block-cc-dispatcher ()
-  "Dispatch C-c C-c to the registered handler for the special block at point."
-  (org--special-block-dispatch org--block-cc-handlers))
+  "Dispatch C-c C-c to the registered handler for the special block at point; else to its :C-c_C-c switch."
+  (if (assoc (org-special-block-name-at-point) org--block-cc-handlers)
+      (org--special-block-dispatch org--block-cc-handlers)
+    (org--block-cc-switch)))
 
 (add-hook 'org-ctrl-c-ctrl-c-hook #'org--block-cc-dispatcher)
 

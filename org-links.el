@@ -135,6 +135,38 @@ Examples:
                            "border: none; text-decoration: none;"))
                 (t keystrokes)))
 
+(defun org--kbd-prettify (start end _path _bracket?)
+  "Show the kbd: link from START to END as 〔C-x C-s〕, in Emacs: its markup becomes the brackets, and each ‘_’ a space.
+  kbd:C-x_C-s   [[kbd:C-x C-s]]   <kbd: C-x C-s>   ↦   〔C-x C-s〕
+A description, as in [[kbd:C-x C-s][Save]], is hidden too; it is still the tooltip.
+Only the markup is displayed differently, so the keys themselves stay editable."
+  (save-excursion
+    (goto-char start)
+    (when (re-search-forward "kbd:[ \t]*" end t)
+      (let* ((keys-start (point))
+             (keys-end (if (re-search-forward "[]>]" end t) (match-beginning 0) end))
+             (show (lambda (from to string)
+                     (when (< from to)
+                       (put-text-property from to 'display (propertize string 'org-kbd-display t))))))
+        (funcall show start keys-start "〔")
+        (cl-loop for underscore from keys-start below keys-end
+                 when (eq (char-after underscore) ?_) do (funcall show underscore (1+ underscore) " "))
+        (if (< keys-end end)
+            (funcall show keys-end end "〕")
+          ;; A plain kbd:C-x_C-s has no closing markup, so its last key carries the closing bracket.
+          (funcall show (1- keys-end) keys-end (concat (buffer-substring-no-properties (1- keys-end) keys-end) "〕")))))))
+
+(org-link-set-parameters "kbd" :activate-func #'org--kbd-prettify)
+
+(defun org--kbd-unprettify (beg end)
+  "Remove, between BEG and END, the display strings of `org--kbd-prettify'; Org's unfontifying leaves foreign ones be."
+  (let ((pos beg))
+    (while (< pos end)
+      (let ((next (next-single-property-change pos 'display nil end)))
+        (when (-some--> (get-text-property pos 'display) (and (stringp it) (get-text-property 0 'org-kbd-display it)))
+          (put-text-property pos next 'display nil))
+        (setq pos next)))))
+
 ;;;;;; Octoicon
 
 (defvar
@@ -473,24 +505,37 @@ LABEL may be nil, a label, or a list ---possibly quoted--- of labels."
 
 (defun org--docs-read-buffer (&optional tree)
   "The (LABEL NAME DESCRIPTION) glossary entries of the current Org buffer, whose `org-element' parse is TREE.
-They come from its documentation blocks, and its headings tagged :documentation: ---whose title is the NAME,
-whose :DOC_KEYS: property holds space-separated labels, and whose own text is the DESCRIPTION.
+They come from its documentation blocks; its headings tagged :documentation: ---whose title is the NAME,
+whose :DOC_KEYS: property holds space-separated labels, and whose own text is the DESCRIPTION; and its
+radio targets, each NAMEd by its text and DESCRIBEd by its paragraph:
+
+  A <<<monoid>>> is a set with an associative operation and a unit.   ↦   doc:monoid
+
 Later entries come first, so they win when labels clash; as when the blocks were run in order."
   (let (entries)
-    (org-element-map (or tree (org-element-parse-buffer)) '(special-block headline)
+    (org-element-map (or tree (org-element-parse-buffer)) '(special-block headline radio-target)
       (lambda (it)
-        (if (eq (org-element-type it) 'special-block)
+        (pcase (org-element-type it)
+          ('radio-target
+           (-when-let (paragraph (org-element-lineage it '(paragraph)))
+             (push (org--docs-entries (org-element-property :value it) nil
+                                      (replace-regexp-in-string
+                                       "<<<\\(.*?\\)>>>" "\\1"
+                                       (buffer-substring-no-properties (org-element-property :contents-begin paragraph)
+                                                                       (org-element-property :contents-end paragraph))))
+                   entries)))
+          ('special-block
             (when (equal "documentation" (downcase (org-element-property :type it)))
               (save-excursion
                 (goto-char (org-element-property :post-affiliated it))
                 (-let [(&org-special-block 'main-arg 'kwdargs 'contents) (org-special-block-after-point "documentation")]
                   (unless (s-blank-p main-arg)
-                    (push (org--docs-entries main-arg (plist-get kwdargs :label) contents) entries)))))
-          (when (member "documentation" (org-element-property :tags it))
-            (push (org--docs-entries (org-element-property :raw-value it)
-                                     (split-string (or (org-element-property :DOC_KEYS it) ""))
-                                     (org--docs-heading-text it))
-                  entries)))))
+                    (push (org--docs-entries main-arg (plist-get kwdargs :label) contents) entries))))))
+          (_ (when (member "documentation" (org-element-property :tags it))
+               (push (org--docs-entries (org-element-property :raw-value it)
+                                        (split-string (or (org-element-property :DOC_KEYS it) ""))
+                                        (org--docs-heading-text it))
+                     entries))))))
     (apply #'append entries)))
 
 (defun org--docs-heading-text (headline)
@@ -635,6 +680,43 @@ they are defined; see `org--docs-prepare'."
                 (add-to-list 'org--docs entry))
               ;; Should the special block show something upon export?
               (if show (org--blockcall box name :background-color color raw-contents) ""))
+
+;;;;;; Package docs ---a table of what a package defines
+
+(defun org--package-docs (feature)
+  "FEATURE ↦ ((NAME KIND GIST) …) for its public definitions, alphabetically; public meaning no “--” in NAME.
+KIND is one of macro, command, function, user option, or variable; GIST is the docstring's first line, else nil.
+  \\='org-deflink  ↦  ((org-deflink \"macro\" \"Make a new Org-link NAME that exports using form BODY.\") …)"
+  (require feature)
+  (let ((entries (cdr (--first (member (cons 'provide feature) (cdr it)) load-history)))
+        (gist (lambda (docs) (-some--> docs (car (split-string it "\n")) (unless (string-empty-p it) it)))))
+    (thread-last
+      (cl-loop for entry in entries
+               for name = (if (symbolp entry) entry (and (eq (car-safe entry) 'defun) (cdr entry)))
+               when (and name (not (string-match-p "--" (symbol-name name))))
+               collect (if (symbolp entry)
+                           (list name (if (custom-variable-p name) "user option" "variable")
+                                 (funcall gist (documentation-property name 'variable-documentation t)))
+                         (list name (cond ((macrop name) "macro") ((commandp name) "command") (t "function"))
+                               (funcall gist (ignore-errors (documentation name t))))))
+      (-uniq)
+      (--sort (string< (car it) (car other))))))
+
+(org-defblock package-docs (feature nil :link nil :tag nil)
+  "A table of the public functions, macros, and variables that FEATURE defines; each documented name is a doc: link,
+so that its full documentation is a tooltip.
+
+  #+begin_package-docs org-deflink
+  #+end_package-docs"
+  (org-parse
+   (concat "| Name | Kind | Gist |\n|-\n"
+           (mapconcat (-lambda ((name kind gist))
+                        (format "| %s | %s | %s |"
+                                (if gist (format "[[doc:%s][~%s~]]" name name) (format "~%s~" name))
+                                kind
+                                ;; A ‘|’ would end the cell early.
+                                (replace-regexp-in-string "|" "\\\\vert{}" (or gist "") t t)))
+                      (org--package-docs (intern feature)) "\n"))))
 
 ;;;;;; Show
 

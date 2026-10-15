@@ -296,25 +296,23 @@
   (should-error (org--graph-raw->dot "
 + a :typo:" nil) :type 'user-error))
 
-(deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside clusters too, but not elsewhere"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside clusters too, but not elsewhere"
+  :text "
 + outside :wife:
 #+begin_graph
 + Emacs :wife:
   #+begin_cluster Packages
   + Org :a:b:
   #+end_cluster
-#+end_graph")
-    (font-lock-ensure)
-    (goto-char (point-min))
-    (search-forward "outside :")
-    (should-not (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
-    (search-forward "Emacs :")
-    (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
-    (search-forward "Org :")
-    (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))))
+#+end_graph"
+  (font-lock-ensure)
+  (goto-char (point-min))
+  (search-forward "outside :")
+  (should-not (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
+  (search-forward "Emacs :")
+  (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
+  (search-forward "Org :")
+  (should (memq 'org-tag (ensure-list (get-text-property (point) 'face)))))
 
 (define-graph-test "a reference's tags style its arc, as one arc rather than parallel ones; explicit `:edge.KEY' rows win"
   :input "
@@ -371,10 +369,8 @@
   Khadija [ label=Khadija ];
 }")
 
-(deftest "tags in a description term, on keyword lines, and after a record cell's link get the `org-tag' face too"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "tags in a description term, on keyword lines, and after a record cell's link get the `org-tag' face too"
+  :text "
 #+begin_graph
 #+name: wife :base:
 #+node: :wife:
@@ -383,12 +379,12 @@
 + s
   #+record:
   | <<p>> [[Muhammad]] :faint: |
-#+end_graph")
-    (font-lock-ensure)
-    (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :" "[[Muhammad]] :"))
-      (goto-char (point-min))
-      (search-forward at)
-      (should (memq 'org-tag (ensure-list (get-text-property (point) 'face)))))))
+#+end_graph"
+  (font-lock-ensure)
+  (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :" "[[Muhammad]] :"))
+    (goto-char (point-min))
+    (search-forward at)
+    (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))))
 
 ;;; Footnotes are tooltips
 
@@ -457,10 +453,8 @@
 #+begin_cluster P
 + a" nil) :type 'user-error))
 
-(deftest "inside a graph's #+begin_cluster, we are still in the graph; a lone #+begin_cluster is none of ours"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "inside a graph's #+begin_cluster, we are still in the graph; a lone #+begin_cluster is none of ours"
+  :text "
 #+begin_graph
 #+begin_cluster P
 + a
@@ -468,12 +462,11 @@
 #+end_graph
 #+begin_cluster Q
 + b
-#+end_cluster")
-    (goto-char (point-min))
-    (search-forward "+ a")
-    (should (org-graph--in-graph-p))
-    (search-forward "+ b")
-    (should-not (org-graph--in-graph-p))))
+#+end_cluster"
+  :at "+ a"
+  (should (org-graph--in-graph-p))
+  (search-forward "+ b")
+  (should-not (org-graph--in-graph-p)))
 
 ;;; \\ breaks a label's line
 
@@ -541,36 +534,32 @@
   typecheck [ label=typecheck ];
 }")
 
-(deftest "C-c C-c on a checkbox toggles it, as Org's would, then renders the graph"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "C-c C-c on a checkbox toggles it, as Org's would, then renders the graph"
+  :text "
 #+begin_graph :C-c_C-c dot
 + [ ] parse
-#+end_graph")
-    (search-backward "parse")
-    (let (dot)
-      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
-        (org-graph--cc-handler))
-      (should (s-contains-p "+ [X] parse" (buffer-string)))
-      (should (s-contains-p "parse [ color=forestgreen" dot)))))
+#+end_graph"
+  :at "parse"
+  (let (dot)
+    (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
+      (org-graph--cc-handler))
+    (should (s-contains-p "+ [X] parse" (buffer-string)))
+    (should (s-contains-p "parse [ color=forestgreen" dot))))
 
 ;;; Macros
 
-(deftest "{{{macros}}} expand by the buffer's #+macro: lines, so a palette is named once"
-  (with-temp-buffer
-    (org-mode)
-    (insert "
+(org-deftest "{{{macros}}} expand by the buffer's #+macro: lines, so a palette is named once"
+  :text "
 #+macro: gold \"#f9e2af\"
 #+begin_graph :C-c_C-c dot
 + a
   | color | {{{gold}}} |
-#+end_graph")
-    (search-backward "+ a")
-    (let (dot)
-      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
-        (org-graph--cc-handler))
-      (should (s-contains-p "a [ color=\"#f9e2af\" label=a ];" dot)))))
+#+end_graph"
+  :at "+ a"
+  (let (dot)
+    (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
+      (org-graph--cc-handler))
+    (should (s-contains-p "a [ color=\"#f9e2af\" label=a ];" dot))))
 
 ;;; One line break: `\\'
 

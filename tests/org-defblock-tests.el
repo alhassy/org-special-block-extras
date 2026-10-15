@@ -78,15 +78,12 @@ DEFAULT
     (let ((result (org-block/test-header-args-block 'html "" nil)))
       (should (string-match-p "purple" result)))))
 
-(deftest "Parser extracts name, main-arg, and contents from a temp buffer."
-  (with-temp-buffer
-    (org-mode)
-    (insert "#+begin_myblock hello\nsome content\n#+end_myblock\n")
-    (goto-char (point-min))
-    (let ((blk (org-special-block-after-point "myblock")))
-      (should (equal (org-special-block-name blk) "myblock"))
-      (should (equal (org-special-block-main-arg blk) "hello"))
-      (should (string-match-p "some content" (org-special-block-contents blk))))))
+(org-deftest "Parser extracts name, main-arg, and contents from a temp buffer."
+  :text "#+begin_myblock hello\nsome content\n#+end_myblock\n"
+  (let ((blk (org-special-block-after-point "myblock")))
+    (should (equal (org-special-block-name blk) "myblock"))
+    (should (equal (org-special-block-main-arg blk) "hello"))
+    (should (string-match-p "some content" (org-special-block-contents blk)))))
 
 (deftest "org-thread-blockcall with no forms returns the body unchanged."
   (should (equal "hello" (org-thread-blockcall "hello"))))
@@ -105,14 +102,11 @@ DEFAULT
 
 ;;; A block's #+name:
 
-(deftest "a block's #+name: is its anchor"
-  (with-temp-buffer
-    (org-mode)
-    (insert "#+name: fig\n#+begin_myblock\nbody\n#+end_myblock\n#+begin_myblock\nbody\n#+end_myblock")
-    (goto-char (point-min))
-    (should (equal "fig" (org-special-block-anchor (org-special-block-after-point "myblock"))))
-    (search-forward "body")
-    (should-not (org-special-block-anchor (org-special-block-after-point "myblock")))))
+(org-deftest "a block's #+name: is its anchor"
+  :text "#+name: fig\n#+begin_myblock\nbody\n#+end_myblock\n#+begin_myblock\nbody\n#+end_myblock"
+  (should (equal "fig" (org-special-block-anchor (org-special-block-after-point "myblock"))))
+  (search-forward "body")
+  (should-not (org-special-block-anchor (org-special-block-after-point "myblock"))))
 
 (define-org-export-test "a named block yielding Org is labelled by its #+name: and #+caption:, so [[NAME]] reaches it"
   :input "See [[fig]].

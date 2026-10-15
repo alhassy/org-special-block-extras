@@ -10,15 +10,23 @@
   ;; A label list may be quoted, as in the documentation block's docstring.
   (should (equal (mapcar #'car (org--docs-entries "Cat" ''(cat cats) "x")) '("cat" "Cat" "cats"))))
 
-(deftest "headings tagged :documentation: are glossary entries, as are documentation blocks"
-  (with-temp-buffer
-    (org-mode)
-    (insert "* Category Theory :documentation:\n:PROPERTIES:\n:DOC_KEYS: cat cats\n:END:\nTyped composition.\n** A subheading, not part of the entry\n"
-            "* Prose\n#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\n")
-    (let ((entries (org--docs-read-buffer)))
-      (should (equal (assoc "cats" entries) '("cats" "Category Theory" "Typed composition.")))
-      (should (equal (assoc "category_theory" entries) '("category_theory" "Category Theory" "Typed composition.")))
-      (should (equal (assoc "mon" entries) '("mon" "Monoid" "A unital semigroup."))))))
+(org-deftest "headings tagged :documentation: are glossary entries, as are documentation blocks"
+  :text "
+* Category Theory :documentation:
+:PROPERTIES:
+:DOC_KEYS: cat cats
+:END:
+Typed composition.
+** A subheading, not part of the entry
+* Prose
+#+begin_documentation Monoid :label mon
+A unital semigroup.
+#+end_documentation
+"
+  (let ((entries (org--docs-read-buffer)))
+    (should (equal (assoc "cats" entries) '("cats" "Category Theory" "Typed composition.")))
+    (should (equal (assoc "category_theory" entries) '("category_theory" "Category Theory" "Typed composition.")))
+    (should (equal (assoc "mon" entries) '("mon" "Monoid" "A unital semigroup.")))))
 
 (deftest "a doc: link cites a heading entry, which exports as an ordinary section"
   (let ((html (org-export-string "* Category Theory :documentation:\n:PROPERTIES:\n:DOC_KEYS: cat\n:END:\nTyped composition.\n* Use\nSee doc:cat.")))
@@ -47,3 +55,18 @@
           (org-docs-load-libraries (list lib))
           (should (= 1 (--count (equal (car it) "mon") org--docs-from-libraries))))
       (delete-file lib))))
+
+(org-deftest "a radio target is a glossary entry: named by its text, described by its paragraph" [radio-target]
+  :text "
+A <<<monoid>>> is a set with an /associative/ operation and a unit.
+
+Every monoid is a category with one object."
+  (should (equal (assoc "monoid" (org--docs-read-buffer))
+                 '("monoid" "monoid" "A monoid is a set with an /associative/ operation and a unit."))))
+
+(deftest "a doc: link cites a radio target, its paragraph being the tooltip" [radio-target]
+  (should (s-contains? "<abbr class=\"tooltip\" title=\"A monoid is a set with an <em>associative</em> operation and a unit.\">monoid</abbr>"
+                       (org-export-string "
+A <<<monoid>>> is a set with an /associative/ operation and a unit.
+
+Every doc:monoid is a category with one object."))))

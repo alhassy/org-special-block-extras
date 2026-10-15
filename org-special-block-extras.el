@@ -113,7 +113,7 @@
 ;;
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
 ;; live in a file of their name.  The blocks and links built atop them live in
-;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el,
+;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, and org-defblock-misc.el; this file
 ;; requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
@@ -238,6 +238,7 @@
 (require 'org-color-links)
 (require 'org-details-block)
 (require 'org-box-block)
+(require 'org-callout-blocks)
 (require 'org-parallel-block)
 (require 'org-defblock-misc)
 (require 'org-proof-block)
@@ -382,7 +383,7 @@ On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, t
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide 30 new custom blocks & 34 link types for Org-mode.
+  "Provide 44 new custom blocks & 55 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
@@ -405,6 +406,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (add-hook 'org-export-before-parsing-functions #'org--fold-src-blocks -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
+        (advice-add 'org-remove-font-lock-display-properties :after #'org--kbd-unprettify)
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
@@ -421,6 +423,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
     (remove-hook 'org-export-before-parsing-functions #'org--fold-src-blocks)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
+    (advice-remove 'org-remove-font-lock-display-properties #'org--kbd-unprettify)
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
     (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)))
 
