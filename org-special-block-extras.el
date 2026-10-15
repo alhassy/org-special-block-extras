@@ -115,7 +115,7 @@
 ;; live in a file of their name.  The blocks and links built atop them live in
 ;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, and org-defblock-misc.el; this file
-;; requires them all and defines the mode.  The graph block, org-graph-block.el,
+;; requires them all and defines the mode.  The graph block, org-graph/org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
 ;;

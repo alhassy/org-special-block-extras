@@ -11,7 +11,8 @@
 
 (load-file (expand-file-name "~/snap/snap.el"))
 (load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
-(load-file (expand-file-name "~/org-special-block-extras/org-graph-block.el"))
+(add-to-list 'load-path (expand-file-name "~/org-special-block-extras/org-graph"))
+(load-file (expand-file-name "~/org-special-block-extras/org-graph/org-graph-block.el"))
 (org-special-block-extras-mode 1)
 ;; Examples run the Lisp of their own blocks' :when and :let switches without asking.
 (setq org-defblock-evaluate-switches t)

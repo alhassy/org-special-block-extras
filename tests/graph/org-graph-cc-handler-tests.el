@@ -89,7 +89,7 @@ KWDARGS is the plist for the block's keyword arguments."
 #+end_graph"
   :at "+ A"
   (let ((current-prefix-arg nil) (outfile nil))
-    (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _format file) (setq outfile file) '(0 . "")))
+    (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _format file &rest _) (setq outfile file) '(0 . "")))
               ((symbol-function 'org-display-inline-images) #'ignore))
       (org-graph--cc-handler)
       (should (equal "my-diagram.png" outfile)))))

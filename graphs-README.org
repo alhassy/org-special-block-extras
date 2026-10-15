@@ -5,6 +5,7 @@
 # Load the package during export so #+begin_graph blocks are handled.
 #+begin_src emacs-lisp :results none :exports none
 (add-to-list 'load-path (file-name-directory (or load-file-name buffer-file-name)))
+(add-to-list 'load-path (expand-file-name "org-graph" (file-name-directory (or load-file-name buffer-file-name))))
 (require 'org-special-block-extras)
 (require 'org-defblock)
 (require 'org-graph-block)
@@ -21,6 +22,7 @@ No raw dot required.  Nesting encodes edges; inline tables encode attributes.
 ** Setup
 
 #+begin_src emacs-lisp
+(add-to-list 'load-path "~/org-special-block-extras/org-graph")
 (require 'org-special-block-extras)
 (require 'org-graph-block)
 #+end_src
@@ -230,6 +232,32 @@ Lisp [ tooltip="McCarthy, 1958" label=Lisp ];
 
 An explicit ~| tooltip | … |~ row wins.
 
+** Notes are longer tooltips
+
+A footnote is awkward for more than a line; a ~#+begin_note~ under an item, as a ~#+begin_cluster~ sits
+in one, holds paragraphs. It is the tooltip of whatever its item's line describes: a node, or ---under a
+reference--- an arc. ~#+begin_note :edge~ describes the arc into the item instead:
+#+begin_src org
++ Lisp [fn::1958]
+  ,#+begin_note
+  McCarthy's /list processor/:
+  code is data.
+  ,#+end_note
+  + Scheme
+    ,#+begin_note :edge
+    Steele and Sussman distilled it.
+    ,#+end_note
+#+end_src
+#+begin_src dot
+Lisp [ tooltip="1958\nMcCarthy's list processor: code is data." label=Lisp ];
+Lisp -> Scheme [ tooltip="Steele and Sussman distilled it." ];
+#+end_src
+
+- A paragraph's lines join, its markup goes, and each paragraph ---or ~\\~ break--- starts a new line.
+- A note follows the item's footnotes; an explicit ~tooltip~ or ~:edge.tooltip~ row wins.
+- A note outside every item is the graph's tooltip; one directly in a ~#+begin_cluster~, the box's.
+- Within a graph, ~#+begin_note~ is never the callout of the same name, and ~C-c C-c~ in it renders the graph.
+
 ** Markup makes rich labels
 
 ~*bold*~, ~/italic/~, ~_underline_~, ~+strike+~, ~=code=~, and =~pre~= in an item's text make its label an
@@ -296,6 +324,19 @@ emacs [ image="emacs.png" label=Emacs ];
 
 A node has one ~URL~, so an item with two web links is an error. Graphviz finds the image relative to
 the Org file, as Org does; an explicit ~URL~ or ~image~ row wins.
+
+A link to a section, ~[[*Heading]]~, is a URL too ---not an arc, since nodes are named without a star.
+In an ~:svg t~ HTML export it leads to that section's anchor, which only Org knows; and in Emacs, a click on
+the rendered node opens the section. So a graph may be a map of its own document:
+#+begin_src org
+,#+begin_graph Org's own syntax :svg t :rankdir LR
++ [[*Org's Own Syntax][Syntax]]
+  + [[*Footnotes are tooltips][Footnotes]]
+  + [[*Notes are longer tooltips][Notes]]
+,#+end_graph
+#+end_src
+A bare ~[[*Footnotes are tooltips]]~ labels its node with the heading's title; ~[[#custom-id]]~ and
+~[[id:…]]~ links work alike.
 
 ** Checkboxes are templates
 
@@ -392,13 +433,34 @@ edge [ color=grey ]
   undirected.
 - ~:KEY V~ is a graph attribute; ~:node.KEY V~ and ~:edge.KEY V~ are node and edge defaults ---the
   same ~KEY~, ~node.KEY~, ~edge.KEY~ spelling as table rows.
-- ~:file~, ~:svg~, ~:directed~, and ~:C-c_C-c~ belong to the block itself, never to Graphviz; so do the
+- ~:wrap N~ fills node and arc labels to lines of ~N~ characters, so long item text needs no ~\\~ breaks;
+  a label already broken by ~\\~ stays as written.
+- ~:file~, ~:svg~, ~:directed~, ~:wrap~, and ~:C-c_C-c~ belong to the block itself, never to Graphviz; so do the
   Babel habits ~:exports~ and ~:results~, which the block ignores.
 - The block's own ~#+graph:~, ~#+node:~, and ~#+edge:~ tables override the header.
 - As on Org's own ~#+attr_html:~ lines, values need no quotes: ~:bgcolor #6c7086~,
   ~:fontname Helvetica,Arial~. A value with spaces does: ~:fontname "Helvetica Neue"~.
 - When the preamble outgrows the line, a drawer of any name ---~:SETTINGS:~, ~:PALETTE:~--- folds
   its ~#+graph:~, ~#+node:~, ~#+edge:~, ~#+rank:~, and ~#+name:~ lines away with ~TAB~.
+
+** Mind maps: ~:layout twopi~
+
+Graphviz's ~layout~ attribute picks its engine, so the header line turns a tree into a mind map: ~twopi~
+places ~root~ in the middle and each generation on a ring around it. With ~:wrap~, long labels stay compact:
+#+begin_graph Org mode, radially :layout twopi :root "Org mode" :wrap 12 :directed nil :node.shape box :node.style rounded
++ Org mode
+  + Agenda
+    + TODO keywords
+    + Scheduling and deadlines
+  + Babel
+    + Tangling
+    + Evaluating source blocks
+  + Export
+    + HTML
+    + LaTeX
+#+end_graph
+
+Sans ~:root~, ~twopi~ picks a centre itself. ~neato~, ~fdp~, and ~circo~ suit graphs that are not trees.
 
 ** ~#+name:~ and ~#+caption:~ make a figure
 
@@ -810,7 +872,7 @@ Emacs -> Org [ lhead=cluster_Packages ];
    - Table on a list item → node attributes (same as above)
 
    The full attribute catalogue lives in the ~org-graph-attributes~ defcustom, in
-   ~org-graph-attributes.el~ (customise via ~M-x customize-variable RET org-graph-attributes~); each
+   ~org-graph/org-graph-attributes.el~ (customise via ~M-x customize-variable RET org-graph-attributes~); each
    entry has the form:
    #+begin_src emacs-lisp
    (:name "shape" :valid-on (nodes) :default "ellipse"
@@ -834,10 +896,19 @@ Emacs -> Org [ lhead=cluster_Packages ];
      arrowhead on the head node of an edge.  Default: normal.”
    - ~C-u RET~ works in the ~C-c '~ buffer too.
 
-   The descriptions come from ~org-graph-attributes~, which lives on its own in ~org-graph-attributes.el~:
+   The descriptions come from ~org-graph-attributes~, which lives on its own in ~org-graph/org-graph-attributes.el~:
    every Graphviz attribute, scraped from [[https://graphviz.org/doc/info/attrs.html][Graphviz's attribute table]]. To add or adjust an attribute,
    edit its entry there, or ~M-x customize-variable RET org-graph-attributes~. Reserved keys are
    described by ~org-graph--reserved-key-docs~, and the header's own keys by ~org-graph--header-key-docs~.
+
+4. The image ~C-c C-c~ renders is clickable. Hovering over a node or cluster shows its tooltip ---its
+   footnotes and notes--- and a click follows it: to its link's target, when its item has a web, file, or
+   ~[[*Heading]]~ link; else to the item itself, in the ~#+begin_graph~ block. Graphviz writes an image
+   map (~-Tcmapx~) beside the PNG, from the same layout, and its areas become the image's ~:map~; it is
+   scaled as the image is, say by ~org-image-actual-width~.
+
+   The map lives only as long as the image does: an image Org redisplays itself, say on reopening the file,
+   is clickable again after another ~C-c C-c~.
 
 * Fun Example
 

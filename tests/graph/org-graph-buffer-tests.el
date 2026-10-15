@@ -78,7 +78,7 @@
 #+end_graph"
   :at "+ λ"
   (let (outfile)
-    (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _kind file) (setq outfile file) '(0 . "")))
+    (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _kind file &rest _) (setq outfile file) '(0 . "")))
               ((symbol-function 'org-graph--insert-results) #'ignore)
               ((symbol-function 'org-display-inline-images) #'ignore))
       (org-graph--cc-handler)

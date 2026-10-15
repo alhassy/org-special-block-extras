@@ -235,6 +235,24 @@
       (should (s-contains-p "node [ shape=box ]" html))
       (should (s-contains-p "a [ label=a ];" html)))))
 
+(deftest "`:wrap N' fills node and arc labels to N characters a line; an HTML-like label breaks with <BR/>, a `\\\\' label stays"
+  (should (equal "digraph {
+  \"Structure and Interpretation of Computer Programs\" [ label=\"Structure and\\nInterpretation\\nof Computer\\nPrograms\" ];
+  \"Structure and Interpretation of Computer Programs\" -> \"Scheme, a small Lisp dialect\" [ label=\"written in\" ];
+  \"Scheme, a small Lisp dialect\" [ label=<<FONT FACE=\"monospace\">Scheme</FONT>, a<BR/><I>small</I> Lisp<BR/>dialect> ];
+  \"Structure and Interpretation of Computer Programs\" -> \"Lisp the language\";
+  \"Lisp the language\" [ label=<Lisp<BR/>the language> ];
+}"
+                 (org--graph-raw->dot "
++ Structure and Interpretation of Computer Programs
+  + written in :: =Scheme=, a /small/ Lisp dialect
+  + Lisp \\\\ the language" nil '(:wrap 14)))))
+
+(deftest "`:wrap' reads a string as a number, as a :graph: section's :WRAP: property gives it"
+  (should (s-contains-p "label=\"Structure\\nand\""
+                        (org--graph-raw->dot "
++ Structure and" nil '(:wrap "10")))))
+
 ;;; Description lists label arcs
 
 (define-graph-test "`+ TAG :: CHILD' labels the parent's arc TAG; a repeated child is a parallel arc, the tag may be marked up, and CHILD may be a [[link]]"
@@ -396,6 +414,118 @@
   :output "digraph {
   Lisp [ tooltip=\"McCarthy, 1958\" label=Lisp ];
   Org [ tooltip=Carsten label=Org ];
+}")
+
+;;; Notes are tooltips: #+begin_note
+
+(define-graph-test "a #+begin_note is its item's tooltip, a paragraph a line; with :edge, the arc's; under a reference, the arc's"
+  :input "
++ Lisp
+  #+begin_note
+  McCarthy's /list processor/,
+  of 1958.
+
+  Lists \\\\ all the way down.
+  #+end_note
+  + Scheme
+    #+begin_note :edge
+    Steele and Sussman /refined/ it.
+    #+end_note
+  + Clojure
+    + [[Scheme]]
+      #+begin_note
+      Rich Hickey cites it.
+      #+end_note"
+  :output "digraph {
+  Lisp [ tooltip=\"McCarthy's list processor, of 1958.\\nLists\\nall the way down.\" label=Lisp ];
+  Lisp -> Scheme [ tooltip=\"Steele and Sussman refined it.\" ];
+  Scheme [ label=Scheme ];
+  Lisp -> Clojure;
+  Clojure [ label=Clojure ];
+  Clojure -> Scheme [ tooltip=\"Rich Hickey cites it.\" ];
+}")
+
+(define-graph-test "a #+begin_note outside every item is the graph's tooltip; in a #+begin_cluster, the box's"
+  :input "
+#+begin_note
+Languages, by influence.
+#+end_note
+#+begin_cluster JVM
+#+begin_note
+Run on the Java virtual machine.
+#+end_note
++ Clojure
++ Scala
+#+end_cluster"
+  :output "digraph {
+  graph [ tooltip=\"Languages, by influence.\" ]
+  subgraph cluster_JVM {
+    label=JVM
+    tooltip=\"Run on the Java virtual machine.\"
+    Clojure [ label=Clojure ];
+    Scala [ label=Scala ];
+  }
+}")
+
+(deftest "a #+begin_note follows a footnote, line by line, in its node's tooltip"
+  (should (s-contains-p "Lisp [ tooltip=\"1958\\nBy McCarthy.\" label=Lisp ];"
+                        (org--graph-raw->dot "
++ Lisp [fn::1958]
+  #+begin_note
+  By McCarthy.
+  #+end_note" nil))))
+
+(deftest "a `#+begin_note :edge' with no arc to describe, or a note with other arguments, is a user error"
+  (should-error (org--graph-raw->dot "
++ Lisp
+  #+begin_note :edge
+  No parent.
+  #+end_note" nil) :type 'user-error)
+  (should-error (org--graph-raw->dot "
++ Lisp
+  #+begin_note Title
+  Callouts have titles; tooltips do not.
+  #+end_note" nil) :type 'user-error))
+
+(deftest "exporting a graph leaves its #+begin_note blocks to it, rather than rewriting them as callouts first"
+  ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
+  (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
+    (should (s-contains-p "Lisp [ tooltip=\"By McCarthy.\" label=Lisp ];"
+                          (org-export-string "#+begin_graph
++ Lisp
+  #+begin_note
+  By McCarthy.
+  #+end_note
+#+end_graph" 'html)))))
+
+(org-deftest "C-c C-c within a graph's #+begin_note renders the graph"
+  :text "
+#+begin_graph
++ Lisp
+  #+begin_note
+  By McCarthy.
+  #+end_note
+#+end_graph"
+  :at "By McCarthy"
+  (let (rendered)
+    (cl-letf (((symbol-function 'org-graph--cc-handler) (lambda () (setq rendered t))))
+      (org--block-cc-dispatcher)
+      (should rendered))))
+
+;;; Section links: [[*Heading]]
+
+(define-graph-test "a [[*Heading]] link is its node's URL, not an arc; bare, it shows the heading's title"
+  :input "
++ [[*Closures][Closure]]
+  + [[*Lexical scope]]
++ [[https://lisp-lang.org][Lisp]]
+  + [[Closure][captures]]"
+  :output "digraph {
+  Closure [ URL=\"*Closures\" label=Closure ];
+  Closure -> \"Lexical scope\";
+  \"Lexical scope\" [ URL=\"*Lexical scope\" label=\"Lexical scope\" ];
+  Lisp [ URL=\"https://lisp-lang.org\" label=Lisp ];
+  Lisp -> Closure [ label=captures ];
 }")
 
 ;;; #+rank: takes links
