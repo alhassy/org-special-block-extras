@@ -512,6 +512,109 @@ Run on the Java virtual machine.
       (org--block-cc-dispatcher)
       (should rendered))))
 
+;;; An item's later paragraphs are notes; `:notes inline' shows notes in labels
+
+(define-graph-test "an item's paragraphs past its first are notes, as #+begin_note blocks are; prose at the top, the graph's"
+  :input "
+Languages, by influence.
++ Lisp
+
+  McCarthy's list processor.
+
+  Code /is/ data \\\\ and data is code.
+  + [[Lisp]]
+
+    Eval calls apply calls eval."
+  :output "digraph {
+  graph [ tooltip=\"Languages, by influence.\" ]
+  Lisp [ tooltip=\"McCarthy's list processor.\\nCode is data\\nand data is code.\" label=Lisp ];
+  Lisp -> Lisp [ tooltip=\"Eval calls apply calls eval.\" ];
+}")
+
+(deftest "`:notes inline' shows notes beneath their labels, markup kept and filled to :wrap; the graph's, beneath its title"
+  (should (equal "digraph {
+  graph [ label=<Lisp's family<BR/><FONT POINT-SIZE=\"10\">Languages, by<BR ALIGN=\"LEFT\"/>influence.<BR ALIGN=\"LEFT\"/></FONT>> ]
+  Lisp [ tooltip=1958 label=<Lisp<BR/><FONT POINT-SIZE=\"10\">McCarthy's<BR ALIGN=\"LEFT\"/><I>list<BR ALIGN=\"LEFT\"/>processor</I>.<BR ALIGN=\"LEFT\"/></FONT>> ];
+  Lisp -> Scheme [ label=<distils<BR/><FONT POINT-SIZE=\"10\">Steele and<BR ALIGN=\"LEFT\"/>Sussman.<BR ALIGN=\"LEFT\"/></FONT>> ];
+  Scheme [ label=Scheme ];
+}"
+                 (org--graph-raw->dot "
+Languages, by influence.
++ Lisp [fn::1958]
+
+  McCarthy's /list processor/.
+  + distils :: Scheme
+    #+begin_note :edge
+    Steele and Sussman.
+    #+end_note" "Lisp's family" '(:notes inline :wrap 14)))))
+
+(deftest "`:notes' is tooltip or inline; anything else is a user error"
+  (should-error (org--graph-raw->dot "
++ a" nil '(:notes hover)) :type 'user-error))
+
+;;; #+node:, #+edge:, and #+rank: under an item reach its whole subtree
+
+(define-graph-test "an item's #+node:, #+edge:, and #+rank: lines style its descendants, inherited as Org's properties are"
+  :input "
++ Weather
+  #+node:
+  | shape | box |
+  #+edge:
+  | style | dotted |
+  #+rank: Rain Sun
+  + Rain
+    + Umbrella
+  + Sun
++ Climate"
+  :output "digraph {
+  Weather [ label=Weather ];
+  subgraph {
+    node [ shape=box ]
+    edge [ style=dotted ]
+    { rank=same; Rain; Sun }
+    Weather -> Rain;
+    Rain [ label=Rain ];
+    Rain -> Umbrella;
+    Umbrella [ label=Umbrella ];
+    Weather -> Sun;
+    Sun [ label=Sun ];
+  }
+  Climate [ label=Climate ];
+}")
+
+;;; `:unknown-tags random-templates': prototype now, name templates later
+
+(deftest "under `:unknown-tags random-templates', each unknown tag gets a made-up template, the same at every use, legends' too"
+  (should (equal "digraph {
+  legend_1 [ color=\"#d20f39\" fontcolor=\"#d20f39\" shape=box fontname=Helvetica label=\"a calculus\" ];
+  legend_2 [ color=\"#1e66f5\" fontcolor=\"#1e66f5\" shape=ellipse fontname=Times label=\"a language\" ];
+  \"λ-calculus\" [ color=\"#d20f39\" fontcolor=\"#d20f39\" shape=box fontname=Helvetica label=\"λ-calculus\" ];
+  \"λ-calculus\" -> Lisp;
+  Lisp [ color=\"#1e66f5\" fontcolor=\"#1e66f5\" shape=ellipse fontname=Times label=Lisp ];
+}"
+                 (org--graph-raw->dot "
+- :theory: :: a calculus
+- :language: :: a language
++ λ-calculus :theory:
+  + Lisp :language:" nil '(:unknown-tags random-templates)))))
+
+(deftest "by default an unknown tag is a user error, pointing at `:unknown-tags random-templates'"
+  (should (string-match-p "random-templates"
+                          (cadr (should-error (org--graph-raw->dot "
++ Lisp :language:" nil) :type 'user-error)))))
+
+;;; `:unflatten N' staggers a wide row of leaves
+
+(deftest "`:unflatten N' pipes the dot through Graphviz's unflatten, so a node's leaves stagger over N ranks"
+  (skip-unless (executable-find "unflatten"))
+  (let ((dot (org--graph-raw->dot "
++ Lisp
+  + Scheme
+  + Clojure
+  + Emacs Lisp" nil '(:unflatten 2))))
+    (should (s-contains-p "Lisp -> Scheme\t[minlen=1]" dot))
+    (should (s-contains-p "Lisp -> Clojure\t[minlen=2]" dot))))
+
 ;;; Section links: [[*Heading]]
 
 (define-graph-test "a [[*Heading]] link is its node's URL, not an arc; bare, it shows the heading's title"

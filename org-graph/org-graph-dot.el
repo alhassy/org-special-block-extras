@@ -40,7 +40,10 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
 
 (defun org--graph-all-stmts (stmts)
   "STMTS, each cluster followed by its own statements, recursively."
-  (--mapcat (cons it (when (eq (car it) :cluster) (org--graph-all-stmts (plist-get (cddr it) :stmts)))) stmts))
+  (--mapcat (cons it (pcase it
+                       (`(:cluster ,_ . ,props) (org--graph-all-stmts (plist-get props :stmts)))
+                       (`(:scope ,_ ,stmts)     (org--graph-all-stmts stmts))))
+            stmts))
 
 (defun org--graph-cluster-id (id)
   "A cluster's node ID ↦ its subgraph's dot id, e.g. \"My Group\" ↦ cluster_My_Group and \"my-box\" ↦ \"cluster_my-box\"."
@@ -102,6 +105,10 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
          (list (format "%s%s;" id attrs)))))
     (`(:rank ,kind ,ids)
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
+    (`(:scope ,scope ,stmts)
+     (list (format "subgraph {\n    %s\n  }"
+                   (s-join "\n    " (append (org--graph-scope->dot scope)
+                                            (--mapcat (org--graph-stmt->dot it op ctx) stmts))))))
     (`(:cluster ,id . ,props)
      (list (format "subgraph %s {\n    %s\n  }" (org--graph-cluster-id id)
                    (s-join "\n    "
@@ -118,21 +125,22 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
                         (--mapcat (pcase it
                                     (`(:rank ,_ ,ids) (list ids))
                                     (`(:cluster ,_ . ,props)
-                                     (-map #'org--graph-rank-ids (plist-get (plist-get props :scope) :ranks))))
+                                     (-map #'org--graph-rank-ids (plist-get (plist-get props :scope) :ranks)))
+                                    (`(:scope ,scope ,_) (-map #'org--graph-rank-ids (plist-get scope :ranks))))
                                   (org--graph-all-stmts stmts)))))
     (--each-indexed groups (dolist (id it) (puthash id it-index (org--graph-ctx-ranks ctx))))))
 
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
   "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
 
-It is a digraph, unless KWDARGS has `:directed nil'; with `:wrap N', labels fill to N characters a line.
+It is a digraph, unless KWDARGS has `:directed nil'; `:wrap', `:notes', and `:unknown-tags' are as
+`org--graph-parse' reads them; and `:unflatten N' staggers leaves, see `org-graph--unflatten'.
 MAIN-ARG is the graph's title, its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
 Header attributes come before the block's own #+graph:, #+node:, and #+edge: tables, so those tables win."
-  (-let* (((preamble stmts ctx) (org--graph-parse raw-contents
-                                                  (-some--> (plist-get kwdargs :wrap)
-                                                    (if (numberp it) it (string-to-number (format "%s" it))))))
+  (-let* (((preamble stmts ctx) (org--graph-parse raw-contents kwdargs))
           (directed (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed)))
-          (title    (unless (s-blank-str-p main-arg) main-arg))
+          ;; Under `:notes inline', the graph's own notes sit beneath its title.
+          (title    (org--graph-with-body (unless (s-blank-str-p main-arg) main-arg) (plist-get preamble :body)))
           (header   (org--graph-header-rows kwdargs)))
     (setq header (plist-put header :graph-rows (append (when title `(("label" ,title))) (plist-get header :graph-rows))))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
@@ -142,8 +150,24 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
     (let ((body (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)))
       (when (org--graph-ctx-compound ctx)
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("compound" "true"))))))
-      (format "%s {\n  %s\n}" (if directed "digraph" "graph")
-              (s-join "\n  " (append (org--graph-scope->dot preamble) body))))))
+      (org-graph--unflatten (format "%s {\n  %s\n}" (if directed "digraph" "graph")
+                                    (s-join "\n  " (append (org--graph-scope->dot preamble) body)))
+                            (plist-get kwdargs :unflatten)))))
+
+(defun org-graph--unflatten (dot n)
+  "(DOT, N) ↦ DOT as Graphviz's `unflatten -l N' rewrites it: a node's leaves, otherwise one wide row, staggered over
+N ranks; DOT itself sans N.  A tree whose root has a dozen children is then a block rather than a ribbon."
+  (if (not n)
+      dot
+    (with-temp-buffer
+      (insert dot)
+      (let ((exit (condition-case nil
+                      (call-process-region (point-min) (point-max) "unflatten" t '(t nil) nil "-l" (format "%s" n))
+                    (file-missing nil))))
+        (unless (eql exit 0)
+          (user-error "graph: `:unflatten %s' needs Graphviz's unflatten; is Graphviz installed? (M-x shell-command: \
+unflatten -?)" n)))
+      (buffer-string))))
 
 (provide 'org-graph-dot)
 ;;; org-graph-dot.el ends here

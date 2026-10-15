@@ -3,8 +3,8 @@
 ;; Copyright (c) 2024 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 1.0.0
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (org-special-block-extras "4.1.1"))
+;; Version: 26.10.15
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (org-special-block-extras "26.10.15"))
 ;; Keywords: org, blocks, graphviz, dot, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -23,6 +23,8 @@
 ;;   #+macro: gold "#f9e2af"       ; Org's own macros: | color | {{{gold}}} |
 ;;   #+begin_graph Title :rankdir LR :node.shape box :bgcolor #1e1e2e :wrap 20
 ;;                                 ; title = graph label; :KEY graph attrs; :directed nil ⇒ undirected; labels fill to 20
+;;                                 ; :notes inline ⇒ notes beneath labels; :unflatten 3 ⇒ leaves stagger over 3 ranks;
+;;                                 ; :unknown-tags random-templates ⇒ an unknown :tag: gets a made-up template
 ;;   #+graph:                      ; global graph[ ] attrs
 ;;   | rankdir | TB      |
 ;;   | bgcolor | #1e1e2e |
@@ -48,9 +50,10 @@
 ;;     + lisp [[church][cross]]     ; [[TARGET]] or [[TARGET][LABEL]]: an extra arc
 ;;     + calls :: eval :faint:      ; arc lambda→eval labelled calls; :faint: splices that template
 ;;     + apply [fn::of a closure]   ; an inline footnote is the node's tooltip
-;;       #+begin_note               ; so is a note, paragraphs and all; `#+begin_note :edge' is the arc's tooltip
-;;       Applies a /closure/ to its arguments.
-;;       #+end_note
+;;
+;;       Applies a /closure/.       ; so is a note: a later paragraph; `#+begin_note :edge' … #+end_note, the arc's
+;;       #+node:                    ; an item's #+node:, #+edge:, and #+rank: reach its whole subtree
+;;       | shape | box |
 ;;       | :edge[church].style | dotted |  ; attrs of this item's arc to church
 ;;       + [[combinatory]]          ; a lone link is a reference: an arc to a node declared elsewhere
 ;;       + [[combinatory]] :faint:  ; a reference's tags style its arc; "rec::port" reaches a record's port
@@ -351,7 +354,9 @@ Returns t (claiming C-c C-c)."
 
 MAIN-ARG is the graph's title, its label.
 The header's other keys are graph attributes, such as :rankdir LR; :node.KEY and :edge.KEY set node and edge defaults;
-:directed nil makes an undirected graph; and :wrap N fills labels to N characters a line.  Pass :file foo.png on the
+:directed nil makes an undirected graph; :wrap N fills labels to N characters a line; :unflatten N staggers
+wide rows of leaves over N ranks; and :unknown-tags random-templates gives an unknown tag a made-up template,
+rather than erring.  Pass :file foo.png on the
 #+begin_graph line to fix the output filename; else a #+name: foo line above the block makes it foo.png, and the graph
 a figure that [[foo]] reaches and #+caption: captions; otherwise the name is graph-HASH.png, HASH being that of the
 dot source, so re-exporting an unchanged graph rewrites one file rather than adding another.
@@ -367,6 +372,7 @@ Within the block body:
   #+node:  table  ↦ default node[ ] attributes
   #+edge:  table  ↦ default edge[ ] attributes
   #+rank:  n1 n2  ↦ { rank=same; n1; n2 } for nodes without a common parent; ids may be [[links]]
+  Under an item, #+graph:, #+node:, #+edge:, and #+rank: reach its whole subtree, as Org's inherited properties do.
   #+begin_cluster TITLE :KEY V … #+end_cluster  ↦ subgraph cluster_TITLE { … }; nests, and may sit in an item
   :NAME: … :END:  ↦ a drawer of any name, folding such directives away
   - :T: :: MEANING  ↦ at the top, a legend entry: a sample of template T, captioned MEANING
@@ -378,8 +384,9 @@ Each list item declares a node.  Nesting encodes edges (parent → child); order
 in the order written.  An item's text may hold a <<target>>, its id; [[TARGET]] or [[TARGET][LABEL]] links, extra arcs;
 and *bold*, /italic/, _underline_, +strike+, =code=, or ~pre~, which make its label an HTML-like one.
 A description tag, `+ L :: CHILD', labels the arc into CHILD; trailing `:T:' tags splice #+name: templates;
-an inline footnote, [fn::NOTE], is the node's tooltip, as is a #+begin_note block under the item ---or, with
-`#+begin_note :edge', the arc's---; a web, file, or [[*Section]] link, its URL; an [[file:IMAGE.png]], its image;
+an inline footnote, [fn::NOTE], is the node's tooltip, as is a note: a paragraph past the item's first, or a
+#+begin_note block ---with `#+begin_note :edge', the arc's---, shown beneath the label instead under :notes inline;
+a web, file, or [[*Section]] link, its URL; an [[file:IMAGE.png]], its image;
 a checkbox, [X], [-], or [ ], applies the template checked, partial, or unchecked, when one exists; and a `\\\\'
 breaks the label's line ---in a table value or #+record: cell, too.
 Org's {{{macros}}} expand, by the buffer's #+macro: lines.

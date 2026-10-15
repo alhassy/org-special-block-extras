@@ -125,10 +125,18 @@ non-nil to suppress the normal `org-return' behaviour."
     (":svg"      . "With t, HTML export embeds an inline <svg>, keeping tooltips; else a base64 PNG.")
     (":directed" . "With nil, an undirected graph, whose arcs are --; else a digraph.")
     (":wrap"     . "With N, node and arc labels fill to lines of N characters; one broken by \\\\ stays as written.")
+    (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
+    (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
+    (":unknown-tags" . "With random-templates, a tag naming no #+name: template gets a made-up one; else an error.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
     (":node."    . "A default attribute of every node; e.g., :node.shape box.")
     (":edge."    . "A default attribute of every edge; e.g., :edge.color grey."))
   "The #+begin_graph keys that are not graph attributes ↦ what they do; shown by completion and eldoc.")
+
+(defconst org-graph--header-key-values
+  '((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
+    (":notes" "tooltip" "inline") (":unknown-tags" "error" "random-templates"))
+  "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
 
 (defun org-graph--block-at-point ()
   "The innermost #+begin_graph block element around point, looking past the #+begin_cluster and #+begin_note blocks
@@ -202,7 +210,8 @@ An attribute's description ends with its default, when Graphviz states one."
             :annotation-function (lambda (candidate) (-some->> (org-graph--header-key-doc candidate) (concat "  ")))
             :exclusive 'no))
      ((s-starts-with-p ":" previous)
-      (-some--> (plist-get (org-graph--attribute (org-graph--header->table-key previous)) :values)
+      (-some--> (or (cdr (assoc previous org-graph--header-key-values))
+                    (plist-get (org-graph--attribute (org-graph--header->table-key previous)) :values))
         (list beg end it :exclusive 'no))))))
 
 (defun org-graph--cell-at-point ()

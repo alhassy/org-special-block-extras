@@ -35,6 +35,7 @@ A graph's own #+name: template of the same name wins; a checkbox whose template 
 ;;   (:edge SRC DST ATTRS)         ---SRC and DST are raw ids, or "record::port"
 ;;   (:rank KIND IDS)
 ;;   (:cluster ID :label L :attrs ROWS :scope PREAMBLE :stmts STATEMENTS)
+;;   (:scope PREAMBLE STATEMENTS)  ---an anonymous subgraph: an item's defaults, reaching its descendants
 ;;   (:legend ID ROWS LABEL TEMPLATES)  ---a sample of TEMPLATES' ROWS, captioned LABEL
 
 (cl-defstruct (org--graph-ctx (:constructor org--graph-ctx-create))
@@ -48,7 +49,35 @@ A graph's own #+name: template of the same name wins; a checkbox whose template 
   (ranks (make-hash-table :test #'equal))    ; node id ↦ its rank group, under splines=curved; see `org--graph-raw->dot'
   (lines (make-hash-table :test #'equal))    ; node or cluster id ↦ the body line of the item declaring it
   wrap                                       ; the width labels fill to, from `#+begin_graph :wrap N'; else nil
+  inline                                     ; non-nil under `:notes inline': notes show in labels, not tooltips
   compound)                                  ; non-nil once an arc is clipped at a cluster
+
+(defvar org--graph-random-templates nil
+  "While a graph reads `:unknown-tags random-templates', how many templates it has made up so far; else nil.")
+
+(defconst org-graph-random-template-colours
+  '("#d20f39" "#1e66f5" "#40a02b" "#df8e1d" "#8839ef" "#179299" "#fe640b" "#ea76cb")
+  "The colours `:unknown-tags random-templates' gives made-up templates, in turn: Catppuccin Latte's accents.")
+
+(defconst org-graph-random-template-shapes
+  '("box" "ellipse" "hexagon" "diamond" "octagon" "parallelogram" "house" "cylinder")
+  "The shapes `:unknown-tags random-templates' gives made-up templates, in turn; an arc ignores its template's shape.")
+
+(defconst org-graph-random-template-fonts '("Helvetica" "Times" "Courier")
+  "The fonts `:unknown-tags random-templates' gives made-up templates, in turn.")
+
+(defun org--graph-random-template (name name-tables)
+  "Under `:unknown-tags random-templates', NAME ↦ the rows of a made-up template, kept in NAME-TABLES so that every use
+of NAME ---a legend entry's too--- looks alike; else nil.  The Nth unknown name takes the Nth colour, shape, and font.
+  \"lazy\", the first  ↦  ((\"color\" \"#d20f39\") (\"fontcolor\" \"#d20f39\") (\"shape\" \"box\") (\"fontname\" \"Helvetica\"))"
+  (when org--graph-random-templates
+    (let* ((n (1- (cl-incf org--graph-random-templates)))
+           (pick (lambda (xs) (nth (mod n (length xs)) xs)))
+           (colour (funcall pick org-graph-random-template-colours)))
+      (puthash name `(("color" ,colour) ("fontcolor" ,colour)
+                      ("shape" ,(funcall pick org-graph-random-template-shapes))
+                      ("fontname" ,(funcall pick org-graph-random-template-fonts)))
+               name-tables))))
 
 (defun org--graph-expand-inherit (rows name-tables &optional seen)
   "ROWS with each | :inherit N₁ … Nₖ | row replaced by templates N₁ … Nₖ's rows, sans keys ROWS sets explicitly ---wherever
@@ -60,8 +89,9 @@ silently contributing nothing."
       (unless (member name seen)
         (dolist (row (org--graph-expand-inherit
                       (or (gethash name name-tables)
+                          (org--graph-random-template name name-tables)
                           (user-error "graph: `%s' names no #+name: template; for literal text ending in \
-`:%s:', write =:%s:= or a | label | row" name name name))
+`:%s:', write =:%s:= or a | label | row; to prototype, `#+begin_graph :unknown-tags random-templates'" name name name))
                       name-tables (cons name seen)))
           (unless (or (assoc (car row) explicit) (assoc (car row) inherited))
             (push row inherited)))))
@@ -379,29 +409,55 @@ A repeat occurrence contributes the ATTRS keys not yet set, and warns about thos
   "The id of the first node STMTS declare, looking inside clusters; nil when there is none."
   (-some (lambda (s) (pcase (car s)
                        (:node (cadr s))
-                       (:cluster (org--graph-first-node (plist-get (cddr s) :stmts)))))
+                       (:cluster (org--graph-first-node (plist-get (cddr s) :stmts)))
+                       (:scope (org--graph-first-node (caddr s)))))
          stmts))
 
-(defun org--graph-note-text (raw)
-  "A #+begin_note's RAW body ↦ its tooltip text: each paragraph's lines joined, sans markup; paragraphs, and `\\\\'
-line breaks, start new lines, as dot's \\n.
-  \"Called *by\\nname*.\\n\\nNever \\\\\\\\ twice.\"  ↦  \"Called by name.\\\\nNever\\\\ntwice.\""
-  (s-join "\\n" (--map (s-trim (s-collapse-whitespace
-                                (org--graph-item-render nil (org-element-parse-secondary-string
-                                                             it '(bold italic underline strike-through code verbatim link)))))
-                       (--mapcat (s-split "[ \t]*\\\\\\\\[ \t]*" (s-join " " (s-lines it)) t)
-                                 (--remove (s-blank-str-p it) (s-split "\n[ \t]*\n" (or raw "")))))))
+(defun org--graph-note-lines (raw)
+  "A note's RAW body ↦ its lines: each paragraph's lines joined, then split at its `\\\\' line breaks.
+  \"Called *by*\\nname.\\n\\nNever \\\\\\\\ twice.\"  ↦  (\"Called *by* name.\" \"Never\" \"twice.\")"
+  (--mapcat (s-split "[ \t]*\\\\\\\\[ \t]*" (s-join " " (-map #'s-trim (s-lines it))) t)
+            (--remove (s-blank-str-p it) (s-split "\n[ \t]*\n" (or raw "")))))
+
+(defun org--graph-note-render (html? line)
+  "A note's LINE ↦ its text sans markup; or, when HTML?, its HTML-like label body, markup as tags."
+  (s-trim (s-collapse-whitespace (org--graph-item-render html? (org-element-parse-secondary-string
+                                                                line '(bold italic underline strike-through
+                                                                       code verbatim link))))))
 
 (defun org--graph-join-tips (tips)
   "TIPS, tooltip texts or nils, ↦ one tooltip, a line each; nil sans any.  (\"a\" nil \"b\")  ↦  \"a\\\\nb\""
   (-some->> (-non-nil tips) (s-join "\\n")))
 
-(defun org--graph-note-tooltips (scope)
-  "SCOPE's #+begin_note blocks ↦ (TIP . EDGE-TIP): the tooltip of what the scope describes, and of the arc into it, from
-`#+begin_note :edge' blocks; either is nil sans such notes."
-  (-let [(edge plain) (-separate (lambda (n) (plist-get n :edge)) (plist-get scope :notes))]
-    (cons (org--graph-join-tips (--map (org--graph-note-text (plist-get it :text)) plain))
-          (org--graph-join-tips (--map (org--graph-note-text (plist-get it :text)) edge)))))
+(defun org--graph-notes-tooltip (raws)
+  "Notes' RAWS bodies ↦ one tooltip, sans markup, a line per paragraph or `\\\\' break; nil sans RAWS."
+  (org--graph-join-tips (--map (org--graph-note-render nil it) (-mapcat #'org--graph-note-lines raws))))
+
+(defun org--graph-notes-body (raws width)
+  "Notes' RAWS bodies ↦ an HTML-like label body: their lines, markup kept, filled to WIDTH and left-aligned;
+nil sans RAWS.
+  (\"Code /is/ data.\"), 40  ↦  \"Code <I>is</I> data.<BR ALIGN=\\\"LEFT\\\"/>\""
+  (-some->> (--mapcat (org--graph-fill (org--graph-note-render t it) width) (-mapcat #'org--graph-note-lines raws))
+    (--map (concat it "<BR ALIGN=\"LEFT\"/>"))
+    (s-join "")))
+
+(defun org--graph-with-body (label body)
+  "(LABEL, BODY) ↦ an HTML-like label: LABEL's lines, then BODY in a smaller font; LABEL itself sans BODY.
+  (\"Lisp\", \"Code is data.<BR ALIGN=\\\"LEFT\\\"/>\")  ↦  \"<Lisp<BR/><FONT POINT-SIZE=\\\"10\\\">Code is data.<BR ALIGN=\\\"LEFT\\\"/></FONT>>\""
+  (if (not body)
+      label
+    (format "<%s<FONT POINT-SIZE=\"10\">%s</FONT>>"
+            (cond ((member label '(nil "" "\"\"")) "")
+                  ((string-match "\\`<\\(.*\\)>\\'" label) (concat (match-string 1 label) "<BR/>"))
+                  (t (concat (s-replace "\\n" "<BR/>" (org--graph-html-escape label)) "<BR/>")))
+            body)))
+
+(defun org--graph-item-notes (pre reference)
+  "An item's PREAMBLE ↦ (NODE-NOTES . ARC-NOTES), its notes' raw bodies.  A note describes what its item's line does
+---a node, else, for a REFERENCE, an arc---; a `#+begin_note :edge', the arc into the item."
+  (-let [(edge plain) (-separate (lambda (n) (plist-get n :edge)) (plist-get pre :notes))]
+    (cons (unless reference (--map (plist-get it :text) plain))
+          (--map (plist-get it :text) (append (when reference plain) edge)))))
 
 (defun org--graph-label-words (body)
   "An HTML-like or plain label BODY ↦ its words, split at the spaces outside <tags>; a tag's own spaces stay put.
@@ -414,24 +470,41 @@ line breaks, start new lines, as dot's \\n.
         (?\s (when (zerop depth) (push (substring body start i) words) (setq start (1+ i))))))
     (-remove #'s-blank-str-p (nreverse (cons (substring body start) words)))))
 
+(defun org--graph-fill (body width)
+  "(BODY, WIDTH) ↦ BODY's words, HTML-like or plain, filled into lines of at most WIDTH visible characters; a tag shows
+nothing, an entity one character, and a word longer than WIDTH gets a line of its own.
+  (\"Structure and Interpretation\", 14)  ↦  (\"Structure and\" \"Interpretation\")"
+  (let ((visible (lambda (s) (length (replace-regexp-in-string "&[#[:alnum:]]+;" "x"
+                                                               (replace-regexp-in-string "<[^>]*>" "" s)))))
+        lines)
+    (dolist (word (org--graph-label-words body) (nreverse lines))
+      (if (and lines (<= (+ (funcall visible (car lines)) 1 (funcall visible word)) width))
+          (setcar lines (concat (car lines) " " word))
+        (push word lines)))))
+
 (defun org--graph-wrap (label width)
-  "(LABEL, WIDTH) ↦ LABEL with its words filled into lines of at most WIDTH visible characters; LABEL itself sans WIDTH,
-or when a `\\\\' already breaks it.  A word longer than WIDTH gets a line of its own.
+  "(LABEL, WIDTH) ↦ LABEL filled into lines of at most WIDTH visible characters; LABEL itself sans WIDTH, or when a
+`\\\\' already breaks it.
   (\"Structure and Interpretation\", 14)  ↦  \"Structure and\\\\nInterpretation\"   ---<BR/> in an HTML-like <label>"
   (let* ((html (string-match "\\`<\\(.*\\)>\\'" label))
-         (body (if html (match-string 1 label) label))
-         ;; A tag shows nothing; an entity, one character.
-         (visible (lambda (s) (length (replace-regexp-in-string "&[#[:alnum:]]+;" "x"
-                                                                (replace-regexp-in-string "<[^>]*>" "" s)))))
-         lines)
+         (body (if html (match-string 1 label) label)))
     (if (or (not width) (s-contains-p "<BR/>" body) (s-contains-p "\\n" body))
         label
-      (dolist (word (org--graph-label-words body))
-        (if (and lines (<= (+ (funcall visible (car lines)) 1 (funcall visible word)) width))
-            (setcar lines (concat (car lines) " " word))
-          (push word lines)))
-      (let ((filled (s-join (if html "<BR/>" "\\n") (nreverse lines))))
+      (let ((filled (s-join (if html "<BR/>" "\\n") (org--graph-fill body width))))
         (if html (format "<%s>" filled) filled)))))
+
+(defun org--graph-subtree (pre name-tables stmts)
+  "An item's PREAMBLE and its children's STMTS ↦ STMTS, inside an anonymous subgraph holding the item's #+graph:,
+#+node:, #+edge:, and #+rank: lines when it has any; so its defaults reach every descendant, as Org's inherited
+properties do, yet no box is drawn.
+  + Weather              subgraph {
+    #+node:          ↦      node [ shape=box ]
+    | shape | box |         Weather -> Rain; Rain [ label=Rain ]; …
+    + Rain …              }"
+  (let ((scope (org--graph-expand-scope pre name-tables)))
+    (if (and stmts (--some (plist-get scope it) '(:graph-rows :node-rows :edge-rows :ranks)))
+        (list (list :scope scope stmts))
+      stmts)))
 
 (defun org--graph-parse-item (item parent ctx)
   "A read ITEM under PARENT (an id, or nil at the top) ↦ its statements; its nodes accrue in CTX.
@@ -445,12 +518,15 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (rows     (org--graph-item-table text pre tables))
           (id       (or (plist-get rows :id) (plist-get text :target) name))
           (reference (plist-get text :reference))
-          ((tip . edge-tip) (org--graph-note-tooltips pre))
-          ;; A note describes what its item's line does: a node, else ---for a reference--- an arc.
-          (arc-tip  (org--graph-join-tips (list (when reference tip) edge-tip)))
+          ((node-notes . arc-notes) (org--graph-item-notes pre reference))
           (wrap     (org--graph-ctx-wrap ctx))
-          (attrs    (org--graph-override (append (-some--> (org--graph-join-tips (list (plist-get text :tooltip)
-                                                                                      (unless reference tip)))
+          ;; Under `:notes inline', notes are label bodies; else, tooltips.
+          (inline   (org--graph-ctx-inline ctx))
+          (node-body (and inline (org--graph-notes-body node-notes (or wrap 40))))
+          (arc-body (and inline (org--graph-notes-body arc-notes (or wrap 40))))
+          (attrs    (org--graph-override (append (-some--> (org--graph-join-tips
+                                                            (list (plist-get text :tooltip)
+                                                                  (unless inline (org--graph-notes-tooltip node-notes))))
                                                    `(("tooltip" ,it)))
                                                  (-some--> (plist-get text :url) `(("URL" ,it)))
                                                  (-some--> (plist-get text :image) `(("image" ,it))))
@@ -471,8 +547,11 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (arcs     (append (when parent
                               (list (list :edge parent id
                                           (org--graph-override
-                                           (append (-some--> arc-label `(("label" ,(org--graph-wrap it wrap))))
-                                                   (-some--> arc-tip `(("tooltip" ,it))))
+                                           (append (-some--> (org--graph-with-body
+                                                              (-some--> arc-label (org--graph-wrap it wrap)) arc-body)
+                                                     `(("label" ,it)))
+                                                   (-some--> (unless inline (org--graph-notes-tooltip arc-notes))
+                                                     `(("tooltip" ,it))))
                                            (plist-get rows :edge)))))
                             (--map (funcall to-arc (car it) (-some--> (cdr it) `(("label" ,it))))
                                    (plist-get text :links))
@@ -485,8 +564,8 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
                                             (when tags (org--graph-template-rows tags tables)))
                                            (alist-get target targeted nil nil #'equal))))
                                   (cdr table)))))
-    (when (and (not parent) arc-tip)
-      (user-error "graph: a `#+begin_note :edge' describes the arc from a parent, but `%s' has none" id))
+    (when (and (not parent) arc-notes)
+      (user-error "graph: a note on `%s' describes the arc from a parent, but there is none" id))
     (when (and (not parent) (plist-get text :arc-label))
       (user-error "graph: a `TERM ::' describes the arc from a parent, but `%s' has none; for a legend entry, the TERM is \
 just tags: `- :T: :: %s'" id id))
@@ -508,14 +587,15 @@ just tags: `- :T: :: %s'" id id))
                   (org--graph-template-rows (plist-get text :arc-tags) tables)
                   label (plist-get text :arc-tags))))
      (reference
-      (append arcs (--mapcat (org--graph-parse-item it id ctx) children) rank-stmts))
+      (append arcs (org--graph-subtree pre tables (append (--mapcat (org--graph-parse-item it id ctx) children)
+                                                          rank-stmts))))
      ((and fresh (equal shape "cluster"))
       (org--graph-declare ctx id name nil)
       (let ((stmts (append (--mapcat (org--graph-parse-item it nil ctx) children) ranked)))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
         (cons (list :cluster id
-                    :label (or (cadr (assoc "label" attrs)) label)
+                    :label (or (cadr (assoc "label" attrs)) (org--graph-with-body label node-body))
                     :attrs (--remove (member (car it) '("shape" "label")) attrs)
                     :scope (org--graph-expand-scope pre tables)
                     :stmts stmts)
@@ -523,11 +603,12 @@ just tags: `- :T: :: %s'" id id))
      (t
       ;; An ordered list keeps its order: `ordering=out' stops Graphviz from reshuffling the arcs to it.
       (append arcs
-              (org--graph-declare ctx id (org--graph-wrap label wrap) (if (and ranked (not (assoc "ordering" attrs)))
-                                                   (append attrs '(("ordering" "out")))
-                                                 attrs))
-              (--mapcat (org--graph-parse-item it id ctx) children)
-              rank-stmts)))))
+              (org--graph-declare ctx id (org--graph-with-body (org--graph-wrap label wrap) node-body)
+                                  (if (and ranked (not (assoc "ordering" attrs)))
+                                      (append attrs '(("ordering" "out")))
+                                    attrs))
+              (org--graph-subtree pre tables (append (--mapcat (org--graph-parse-item it id ctx) children)
+                                                     rank-stmts)))))))
 
 (defun org--graph-note-arc-templates (ctx tags rows)
   "Record in CTX the templates that style arcs: the arc TAGS, and those of ROWS' :edge.:inherit and :edge[T].:inherit.
@@ -555,11 +636,25 @@ named tables, a house style is named once per file rather than once per graph.
                                            (org--graph-table-rows table)))))))))
     templates))
 
-(defun org--graph-parse (raw-contents &optional wrap)
-  "RAW-CONTENTS of a #+begin_graph block ↦ (PREAMBLE STATEMENTS CTX); labels fill to WRAP characters, when given.
+(defun org--graph-option (kwdargs key default choices)
+  "KWDARGS' KEY, as a string, else DEFAULT; one of CHOICES, else a user error.
+  ((:notes inline), :notes, \"tooltip\", (\"tooltip\" \"inline\"))  ↦  \"inline\"   ---a :graph: section's property is a string"
+  (let ((value (format "%s" (or (plist-get kwdargs key) default))))
+    (if (member value choices) value
+      (user-error "graph: `%s %s' should be one of %s" key value (s-join ", " choices)))))
+
+(defun org--graph-parse (raw-contents &optional kwdargs)
+  "RAW-CONTENTS of a #+begin_graph block ↦ (PREAMBLE STATEMENTS CTX), as the header's KWDARGS say:
+`:wrap N' fills labels to N characters; `:notes inline' shows notes in labels, rather than as tooltips; and
+`:unknown-tags random-templates' makes up a template for each tag that names none, rather than erring.
 A template is the graph's own #+name: table, else the buffer's, else one of `org-graph-checkbox-templates'.
-A #+begin_note outside every item is the graph's own tooltip."
-  (let* ((buffer   (org--graph-buffer-templates))
+A note outside every item is the graph's own; PREAMBLE's :body holds it under `:notes inline'."
+  (let* ((wrap     (-some--> (plist-get kwdargs :wrap) (if (numberp it) it (string-to-number (format "%s" it)))))
+         (inline   (equal "inline" (org--graph-option kwdargs :notes "tooltip" '("tooltip" "inline"))))
+         (org--graph-random-templates (and (equal "random-templates" (org--graph-option kwdargs :unknown-tags "error"
+                                                                                        '("error" "random-templates")))
+                                           0))
+         (buffer   (org--graph-buffer-templates))
          (raw      (org--graph-read raw-contents))
          (tables   (plist-get raw :name-tables))
          ;; Before `org--graph-expand-scope' expands them away, `#+edge: :faint:' style arcs.
@@ -568,12 +663,15 @@ A #+begin_note outside every item is the graph's own tooltip."
          (_        (pcase-dolist (`(,name . ,rows) org-graph-checkbox-templates)
                      (unless (gethash name tables) (puthash name rows tables))))
          (preamble (org--graph-expand-scope raw tables))
-         (preamble (-let [(tip . edge-tip) (org--graph-note-tooltips preamble)]
-                     (when edge-tip
+         (preamble (-let [(notes . edge-notes) (org--graph-item-notes preamble nil)]
+                     (when edge-notes
                        (user-error "graph: a `#+begin_note :edge' outside every item has no arc to describe"))
-                     (plist-put preamble :graph-rows (org--graph-override (-some--> tip `(("tooltip" ,it)))
-                                                                          (plist-get preamble :graph-rows)))))
-         (ctx      (org--graph-ctx-create :name-tables tables :wrap wrap))
+                     (if inline
+                         (plist-put preamble :body (org--graph-notes-body notes (or wrap 40)))
+                       (plist-put preamble :graph-rows (org--graph-override
+                                                        (-some--> (org--graph-notes-tooltip notes) `(("tooltip" ,it)))
+                                                        (plist-get preamble :graph-rows))))))
+         (ctx      (org--graph-ctx-create :name-tables tables :wrap wrap :inline inline))
          (_        (org--graph-note-arc-templates ctx nil edge-uses))
          (items    (plist-get preamble :items))
          (stmts    (append (--mapcat (org--graph-parse-item it nil ctx) items)

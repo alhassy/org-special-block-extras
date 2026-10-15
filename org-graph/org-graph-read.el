@@ -142,6 +142,12 @@ A table belongs to the directive above it, past any tables between: #+graph:, #+
          (pcase (downcase (org-element-property :type el))
            ((pred (string-match-p "\\`cluster\\(?:-[0-9]+\\)?\\'")) (push (org--graph-read-cluster el templates) items))
            ("note" (push (org--graph-read-note el) notes))))
+        ;; Prose past an item's first paragraph ---its text--- is a note, as a #+begin_note block's body is.
+        ('paragraph
+         (setq owner nil)
+         (push (list :edge nil :text (buffer-substring-no-properties (org-element-property :contents-begin el)
+                                                                     (org-element-property :contents-end el)))
+               notes))
         (_ (setq owner nil))))
     (list :graph-rows (nreverse (alist-get 'graph rows))
           :node-rows  (nreverse (alist-get 'node rows))
@@ -242,8 +248,8 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                         (user-error "graph: `#+begin_cluster %s' has no #+end_cluster" (match-string 1 text))))))
       (cons :name-tables (cons templates (org--graph-read-scope (org-element-contents tree) templates))))))
 
-(defconst org--graph-header-keys '(:file :svg :directed :wrap :C-c_C-c :contents-occur-as-link-description
-                                         :exports :results)
+(defconst org--graph-header-keys '(:file :svg :directed :wrap :notes :unflatten :unknown-tags :C-c_C-c
+                                         :contents-occur-as-link-description :exports :results)
   "Header keywords the `graph' block consumes itself, or Babel habits such as :exports, rather than handing to Graphviz.")
 
 (defun org--graph-header-rows (kwdargs)

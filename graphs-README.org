@@ -181,7 +181,62 @@ a node label that needs a trailing ~:word:~ of its own puts it in ~=verbatim=~, 
 "Vim's :wq:" [ label=<Vim's <FONT FACE="monospace">:wq:</FONT>> ];
 #+end_src
 
-A tag naming no template is an error, rather than a typo silently becoming part of the label.
+A tag naming no template is an error, rather than a typo silently becoming part of the label. While
+prototyping, though, we want shapes before names: ~#+begin_graph :unknown-tags random-templates~ makes
+up a template for each unknown tag ---a colour, a shape, a font--- the same at every use, so the tags
+read at a glance. A legend entry gives each its meaning; when the design settles, ~#+name:~ tables
+replace the made-up templates, one tag at a time:
+#+begin_graph Prototype first, name later :unknown-tags random-templates
+#+begin_cluster Legend
+- :theory: :: a calculus
+- :language: :: a programming language
+- :editor: :: an editor
+#+end_cluster
++ λ-calculus :theory:
+  + Combinatory logic :theory:
+  + Lisp :language:
+    + Scheme :language:
+    + Emacs Lisp :language:
+      + Emacs :editor:
+#+end_graph
+
+The Nth unknown tag takes the Nth of ~org-graph-random-template-colours~, ~-shapes~, and ~-fonts~, so
+renders are stable, and the first eight tags differ in every way.
+
+** Subtrees inherit ~#+node:~, ~#+edge:~, and ~#+rank:~
+
+Org's properties are inherited: a ~:PROPERTIES:~ drawer on a heading reaches its subheadings. So it is
+with an item's ~#+node:~ and ~#+edge:~ tables: they style every node and arc beneath the item, while the
+item itself keeps its own ~| key | value |~ rows; its ~#+rank:~ lines apply there too. Graphviz scopes
+such defaults by an anonymous ~subgraph~, which draws no box:
+#+begin_src org
++ Weather
+  ,#+node:
+  | shape | box |
+  ,#+edge:
+  | style | dotted |
+  + Rain
+    + Umbrella
+  + Sun
++ Climate
+#+end_src
+#+begin_src dot
+Weather [ label=Weather ];
+subgraph {
+  node [ shape=box ]
+  edge [ style=dotted ]
+  Weather -> Rain;
+  Rain [ label=Rain ];
+  Rain -> Umbrella;
+  Umbrella [ label=Umbrella ];
+  Weather -> Sun;
+  Sun [ label=Sun ];
+}
+Climate [ label=Climate ];
+#+end_src
+
+A deeper item's tables override a shallower one's, as nested ~:PROPERTIES:~ do; a node first declared
+elsewhere keeps the defaults of where it was declared.
 
 ** Legends are description lists
 
@@ -232,17 +287,17 @@ Lisp [ tooltip="McCarthy, 1958" label=Lisp ];
 
 An explicit ~| tooltip | … |~ row wins.
 
-** Notes are longer tooltips
+** Notes are longer tooltips, or shown in the node
 
-A footnote is awkward for more than a line; a ~#+begin_note~ under an item, as a ~#+begin_cluster~ sits
-in one, holds paragraphs. It is the tooltip of whatever its item's line describes: a node, or ---under a
-reference--- an arc. ~#+begin_note :edge~ describes the arc into the item instead:
+A footnote is awkward for more than a line. An item's text is its first paragraph, as in Org; every
+paragraph after it is a note, the tooltip of whatever its item's line describes: a node, or ---under a
+reference--- an arc. ~#+begin_note :edge~, sitting in an item as a ~#+begin_cluster~ may, describes the
+arc into the item instead; it is the one place we need the block:
 #+begin_src org
 + Lisp [fn::1958]
-  ,#+begin_note
+
   McCarthy's /list processor/:
   code is data.
-  ,#+end_note
   + Scheme
     ,#+begin_note :edge
     Steele and Sussman distilled it.
@@ -253,9 +308,28 @@ Lisp [ tooltip="1958\nMcCarthy's list processor: code is data." label=Lisp ];
 Lisp -> Scheme [ tooltip="Steele and Sussman distilled it." ];
 #+end_src
 
-- A paragraph's lines join, its markup goes, and each paragraph ---or ~\\~ break--- starts a new line.
-- A note follows the item's footnotes; an explicit ~tooltip~ or ~:edge.tooltip~ row wins.
-- A note outside every item is the graph's tooltip; one directly in a ~#+begin_cluster~, the box's.
+The blank line matters: without it, ~McCarthy's list processor:~ continues the first paragraph, and so
+the label. Likewise ~+ <<lisp>> Lisp, the list processor~ names its node ~lisp~ and labels it with the
+whole line; a ~<<target>>~ names, but only a new paragraph begins a note.
+
+Tooltips need a hover, and an exported PNG has none. ~#+begin_graph :notes inline~ shows every note
+beneath its label instead, in a smaller font, its markup kept and its lines filled to ~:wrap~ ---else 40---
+characters:
+#+begin_graph Lisp's family :notes inline :wrap 24 :rankdir LR
++ Lisp [fn::1958]
+
+  McCarthy's /list processor/: code is data.
+  + distils :: Scheme
+    #+begin_note :edge
+    Steele and Sussman.
+    #+end_note
+#+end_graph
+
+- A note's lines join, and each paragraph ---or ~\\~ break--- starts a new line.
+- A note follows the item's footnotes, which stay tooltips; an explicit ~tooltip~, ~:edge.tooltip~,
+  or ~label~ row wins.
+- A note outside every item is the graph's: its tooltip, or ---inline--- the text beneath its title. One
+  directly in a ~#+begin_cluster~ is the box's.
 - Within a graph, ~#+begin_note~ is never the callout of the same name, and ~C-c C-c~ in it renders the graph.
 
 ** Markup makes rich labels
@@ -325,6 +399,15 @@ emacs [ image="emacs.png" label=Emacs ];
 A node has one ~URL~, so an item with two web links is an error. Graphviz finds the image relative to
 the Org file, as Org does; an explicit ~URL~ or ~image~ row wins.
 
+So a graph of screenshots is a tour. A lone image is its own node, drawn sans text, so the arc into it
+carries the words; ~imagescale~ fits each picture to its node's fixed size:
+#+begin_graph This package, at a glance :rankdir LR :node.shape box :node.fixedsize true :node.width 2.4 :node.height 1.6 :node.imagescale true
++ org-special-block-extras
+  + folds :: [[file:images/details.png]]
+  + sets side by side :: [[file:images/parallel.png]]
+  + explains on hover :: [[file:images/tooltips_emacs.png]]
+#+end_graph
+
 A link to a section, ~[[*Heading]]~, is a URL too ---not an arc, since nodes are named without a star.
 In an ~:svg t~ HTML export it leads to that section's anchor, which only Org knows; and in Emacs, a click on
 the rendered node opens the section. So a graph may be a map of its own document:
@@ -332,7 +415,7 @@ the rendered node opens the section. So a graph may be a map of its own document
 ,#+begin_graph Org's own syntax :svg t :rankdir LR
 + [[*Org's Own Syntax][Syntax]]
   + [[*Footnotes are tooltips][Footnotes]]
-  + [[*Notes are longer tooltips][Notes]]
+  + [[*Notes are longer tooltips, or shown in the node][Notes]]
 ,#+end_graph
 #+end_src
 A bare ~[[*Footnotes are tooltips]]~ labels its node with the heading's title; ~[[#custom-id]]~ and
@@ -435,7 +518,10 @@ edge [ color=grey ]
   same ~KEY~, ~node.KEY~, ~edge.KEY~ spelling as table rows.
 - ~:wrap N~ fills node and arc labels to lines of ~N~ characters, so long item text needs no ~\\~ breaks;
   a label already broken by ~\\~ stays as written.
-- ~:file~, ~:svg~, ~:directed~, ~:wrap~, and ~:C-c_C-c~ belong to the block itself, never to Graphviz; so do the
+- ~:notes inline~ shows notes beneath labels rather than as tooltips; ~:unknown-tags random-templates~
+  makes up templates for unknown tags; ~:unflatten N~ staggers wide rows of leaves.
+- ~:file~, ~:svg~, ~:directed~, ~:wrap~, ~:notes~, ~:unflatten~, ~:unknown-tags~, and ~:C-c_C-c~ belong to
+  the block itself, never to Graphviz; so do the
   Babel habits ~:exports~ and ~:results~, which the block ignores.
 - The block's own ~#+graph:~, ~#+node:~, and ~#+edge:~ tables override the header.
 - As on Org's own ~#+attr_html:~ lines, values need no quotes: ~:bgcolor #6c7086~,
@@ -461,6 +547,48 @@ places ~root~ in the middle and each generation on a ring around it. With ~:wrap
 #+end_graph
 
 Sans ~:root~, ~twopi~ picks a centre itself. ~neato~, ~fdp~, and ~circo~ suit graphs that are not trees.
+
+** Wide trees: ~:unflatten N~
+
+A node with many children lays them out in one wide row. ~:unflatten N~ passes the dot through Graphviz's
+own ~unflatten -l N~, which staggers those leaves over ~N~ ranks, so the graph is a block rather than a ribbon:
+#+begin_graph Lisp's children :unflatten 3
++ Lisp
+  + Scheme
+  + Common Lisp
+  + Clojure
+  + Racket
+  + Emacs Lisp
+  + Fennel
+  + Janet
+  + Hy
+#+end_graph
+
+** Decision trees
+
+A decision tree is a tree whose nodes come in kinds: decisions we make (boxes), chances we take
+(circles), and outcomes (bare text), with each chance's arcs labelled by how likely it is. Templates name
+the kinds, description terms label the arcs, and an item's ~#+edge:~ dashes every arc of chance beneath it:
+#+begin_graph Should our package go lexical? :rankdir LR
+#+name: decision
+| shape | box |
+#+name: chance
+| shape | circle |
+| label | ""     |
+| width | 0.3    |
+#+name: outcome
+| shape | plaintext |
+
++ Enable =lexical-binding=? :decision:
+  + yes :: <<specials>> :chance:
+    #+edge:
+    | style | dashed |
+    + 80% :: Closures capture \\ their environment :outcome:
+    + 20% :: An undeclared special \\ breaks; we =defvar= it :outcome:
+  + no :: Dynamic scope; \\ the byte-compiler warns :outcome:
+#+end_graph
+
+The chance node is all target: ~<<specials>>~ names it, and its template's empty ~label~ leaves a dot.
 
 ** ~#+name:~ and ~#+caption:~ make a figure
 
