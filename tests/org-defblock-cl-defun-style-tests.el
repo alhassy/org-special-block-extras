@@ -15,23 +15,27 @@
 
 (define-org-call-test "org--defblock-desugar-args reads a bare &optional as the main argument without default"
   :call (org--defblock-desugar-args '(&optional title))
-  :returns (title nil))
+  :returns (title nil :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args reads an &optional (name default) pair"
   :call (org--defblock-desugar-args '(&optional (title "Details")))
-  :returns (title "Details"))
+  :returns (title "Details" :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args names the main argument main-arg when only &key is given"
   :call (org--defblock-desugar-args '(&key (style "color:red") class))
-  :returns (main-arg nil style "color:red" class nil))
+  :returns (main-arg nil style "color:red" class nil :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args reads &optional and &key together"
   :call (org--defblock-desugar-args '(&optional (title "Details") &key (color "green") style))
-  :returns (title "Details" color "green" style nil))
+  :returns (title "Details" color "green" style nil :allow-other-keys nil))
+
+(define-org-call-test "org--defblock-desugar-args reads &allow-other-keys as the option :allow-other-keys t"
+  :call (org--defblock-desugar-args '(&optional title &key color &allow-other-keys))
+  :returns (title nil color nil :allow-other-keys t))
 
 (define-org-call-test "org--defblock-desugar-args passes options such as :edit-indirect-mode through"
   :call (org--defblock-desugar-args '(&optional (kind "directed") &key file :edit-indirect-mode org-mode))
-  :returns (kind "directed" file nil :edit-indirect-mode org-mode))
+  :returns (kind "directed" file nil :edit-indirect-mode org-mode :allow-other-keys nil))
 
 (deftest "org--defblock-desugar-args rejects arguments before &optional or &key"
   (should-error (org--defblock-desugar-args '(backend &optional title))))
@@ -114,6 +118,21 @@ body
 #+begin_export html
 
 #+end_export")
+
+(deftest "cl-defun-style org-defblock refuses unknown header-line keywords, as cl-defun would"
+  (using (org-defblock folded (&optional (title "More") &key (color "green"))
+           (format "%s/%s: %s" title color contents))
+    (should-error (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex))))
+
+(deftest "cl-defun-style org-defblock with &allow-other-keys ignores unknown header-line keywords"
+  (using (org-defblock folded (&optional (title "More") &key (color "green") &allow-other-keys)
+           (format "%s/%s: %s" title color contents))
+    (should (s-contains-p "More/green" (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex)))))
+
+(deftest "flattened org-defblock ignores unknown header-line keywords"
+  (using (org-defblock folded (title "More" color "green")
+           (format "%s/%s: %s" title color contents))
+    (should (s-contains-p "More/green" (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex)))))
 
 (provide 'org-defblock-cl-defun-style-tests)
 ;;; org-defblock-cl-defun-style-tests.el ends here

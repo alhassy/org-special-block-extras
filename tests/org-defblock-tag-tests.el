@@ -107,11 +107,11 @@ Body text.
 
 (define-org-call-test "org--defblock-desugar-args passes :tag through, as any other option"
   :call (org--defblock-desugar-args '(&optional (title "Note") &key (color "teal") :tag t))
-  :returns (title "Note" color "teal" :tag t))
+  :returns (title "Note" color "teal" :tag t :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args accepts :tag right after &optional, without &key"
   :call (org--defblock-desugar-args '(&optional (title "Note") :tag t))
-  :returns (title "Note" :tag t))
+  :returns (title "Note" :tag t :allow-other-keys nil))
 
 (deftest "a tagged section keeps its property drawer, so properties such as CUSTOM_ID still apply"
   (using (org-defblock note (&optional (title "Note")) "Show TITLE." (format "[%s: %s]" title contents))

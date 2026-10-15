@@ -285,17 +285,19 @@ COLOUR may be a symbol, as block arguments such as “:color red!5!white” are 
 (defun org--defblock-desugar-args (args)
   "ARGS ↦ the flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist, when ARGS is `cl-defun'-style; otherwise ARGS.
 
-  (&optional (title \"Details\") &key (color \"green\") style)  ↦  (title \"Details\" color \"green\" style nil)
-  (&key style)                                                 ↦  (main-arg nil style nil)
+  (&optional (title \"Details\") &key (color \"green\") style)  ↦  (title \"Details\" color \"green\" style nil :allow-other-keys nil)
+  (&key style &allow-other-keys)                               ↦  (main-arg nil style nil :allow-other-keys t)
 
 A block takes at most one positional argument ---its main argument--- so `&optional' binds at most one
 variable, and nothing may precede `&optional' or `&key'.  Options such as `:tag t' may appear anywhere
----argument names are never keywords--- and pass through untouched, at the end."
+---argument names are never keywords--- and pass through untouched, at the end.  As with `cl-defun',
+unknown keywords are refused unless `&allow-other-keys' is written; the flattened form always allows them."
   (if (not (or (memq '&optional args) (memq '&key args)))
       args
-    (let* ((options  (cl-loop for (option value) on args
-                              when (keywordp option) append (list option value)))
-           (args     (let ((rest args) kept)
+    (let* ((options  (append (cl-loop for (option value) on args
+                                      when (keywordp option) append (list option value))
+                             (list :allow-other-keys (and (memq '&allow-other-keys args) t))))
+           (args     (let ((rest (remq '&allow-other-keys args)) kept)
                        (while rest
                          (if (keywordp (car rest)) (setq rest (cddr rest)) (push (pop rest) kept)))
                        (nreverse kept)))
@@ -434,6 +436,9 @@ declares main argument TITLE, defaulting to \"Details\", and
 keyword arguments COLOR and STYLE.  As a convenience, KWDS may
 instead be flattened into (main default key₀ value₀ … keyₙ valueₙ);
 the above is then (title \"Details\" color \"green\" style nil).
+As with `cl-defun', a header line's unknown keywords are an export-time
+error unless KWDS writes `&allow-other-keys'; the flattened form always
+allows them.
 
 KWDS may also carry options, which are not arguments:
 + `:block nil' declines block support: #+begin_NAME is left to Org, yet the
@@ -566,7 +571,7 @@ Three example uses:
                          ,(format "Export each section tagged :%s: as a %s block around its text; see `org-defblock'." name name)
                          (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
                                                          ',(or (car kwds) 'main-arg)
-                                                         ',(mapcar #'car (-partition 2 (cddr kwds)))
+                                                         ',(mapcar #'car (-partition 2 (cddr (org-plist-delete kwds :allow-other-keys))))
                                                          o-backend ',subsections)))))))
 
 
@@ -597,6 +602,9 @@ Features:
   (declare (indent defun))
 
   (setq args (org--defblock-desugar-args args))
+  ;; Unknown header-line keywords are welcome unless a `cl-defun'-style ARGS omitted `&allow-other-keys'.
+  (let ((allow-other-keys? (or (not (plist-member args :allow-other-keys)) (plist-get args :allow-other-keys))))
+    (setq args (org-plist-delete args :allow-other-keys))
 
   ;; Account for possibly omitted docstring
   (cond
@@ -620,7 +628,7 @@ Features:
                 ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
                 ;; prefer any `org-set-block-header-args' value over the declared default.
                 &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
-                &allow-other-keys)
+                ,@(when allow-other-keys? '(&allow-other-keys)))
              ;; Assertions are expanded here, once: the handler runs interpreted, which would re-expand them on every call.
              ,(macroexpand-all `(lf-assert ',name        t
                                            backend      (and it (symbolp it))
@@ -686,7 +694,7 @@ Features:
                   (format "\n     (org-block/%s `latex \"Hello, world\")" name))))
            (put ',defun-name 'function-documentation
                 (format "%s%s%s" user-docs (if (s-ends-with? "\n" user-docs) "" "\n") lisp-docs)))
-         ))))
+         )))))
 
 
 (cl-defun org-export-string (string &optional (backend 'html))
