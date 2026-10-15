@@ -119,6 +119,131 @@ Body text.
       (should (s-contains-p "id=\"here\"" html))
       (should-not (s-contains-p ":CUSTOM_ID:" html)))))
 
+;;; What becomes of a tagged section's subsections: `:tag [:subsections MODE]'
+
+(define-org-export-test "with :subsections ignore, as with :tag t, subsections stay outside the block"
+  :input "* Outer :note:
+          Outer text.
+          ** Inner
+          Inner text."
+  :to latex
+  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections ignore])
+           "Show TITLE and COLOR around CONTENTS."
+           (format "[%s/%s: %s]" title color contents))
+  :equals "\\section{Outer}
+\\label{sec:org-id-1}
+[Note/teal:
+Outer text.
+]
+\\subsection{Inner}
+\\label{sec:org-id-2}
+Inner text.
+")
+
+(deftest "with :subsections error, a tagged section with a subsection is refused, naming both"
+  (using (org-defblock note (&optional (title "Note") :tag [:subsections error])
+           "Show TITLE." (format "[%s: %s]" title contents))
+    (let ((err (should-error (org-export-string "* Outer :note:\nOuter text.\n** Inner\nInner text." 'latex)
+                             :type 'user-error)))
+      (should (s-contains-p "“Outer”" (cadr err)))
+      (should (s-contains-p "“Inner”" (cadr err)))
+      (should (s-contains-p "org-defblock note" (cadr err))))))
+
+(define-org-export-test "with :subsections error, a tagged section without subsections exports as usual, siblings and all"
+  :input "* Lonely :note:
+          Text.
+          * Sibling
+          Sibling text."
+  :to latex
+  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections error])
+           "Show TITLE and COLOR around CONTENTS."
+           (format "[%s/%s: %s]" title color contents))
+  :equals "\\section{Lonely}
+\\label{sec:org-id-1}
+[Note/teal:
+Text.
+]
+\\section{Sibling}
+\\label{sec:org-id-2}
+Sibling text.
+")
+
+(define-org-export-test "with :subsections recurse, each subsection's text, at any depth, gets a block with the same arguments"
+  :input "* Outer :note_Big:
+          Outer text.
+          ** Inner
+          Inner text.
+          *** Innermost
+          :PROPERTIES:
+          :CUSTOM_ID: deep
+          :END:
+          Deep text.
+          * After
+          After text."
+  :to latex
+  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections recurse])
+           "Show TITLE and COLOR around CONTENTS."
+           (format "[%s/%s: %s]" title color contents))
+  :equals "\\section{Outer}
+\\label{sec:org-id-1}
+[Big/teal:
+Outer text.
+]
+\\subsection{Inner}
+\\label{sec:org-id-2}
+[Big/teal:
+Inner text.
+]
+\\subsubsection{Innermost}
+\\label{sec:org-id-3}
+[Big/teal:
+Deep text.
+]
+\\section{After}
+\\label{sec:org-id-4}
+After text.
+")
+
+(define-org-export-test "with :subsections recurse, a subsection bearing the tag itself is wrapped once, with its own arguments"
+  :input "* Outer :note_Big:
+          Outer text.
+          ** Own :note_Small:
+          Own text.
+          ** Plain
+          Plain text."
+  :to latex
+  :using (org-defblock note (&optional (title "Note") &key (color "teal") :tag [:subsections recurse])
+           "Show TITLE and COLOR around CONTENTS."
+           (format "[%s/%s: %s]" title color contents))
+  :equals "\\section{Outer}
+\\label{sec:org-id-1}
+[Big/teal:
+Outer text.
+]
+\\subsection{Own}
+\\label{sec:org-id-2}
+[Small/teal:
+Own text.
+]
+\\subsection{Plain}
+\\label{sec:org-id-3}
+[Big/teal:
+Plain text.
+]
+")
+
+(define-org-call-test "org--defblock-tag-subsections reads :tag t as ignore"
+  :call (org--defblock-tag-subsections 'note t)
+  :returns ignore)
+
+(define-org-call-test "org--defblock-tag-subsections reads the mode from [:subsections MODE]"
+  :call (org--defblock-tag-subsections 'note [:subsections recurse])
+  :returns recurse)
+
+(deftest "org-defblock refuses, as it expands, an unknown :subsections mode or :tag key"
+  (should-error (macroexpand '(org-defblock note (&optional title :tag [:subsections sideways]) title)))
+  (should-error (macroexpand '(org-defblock note (&optional title :tag [:sections error]) title))))
+
 ;;; Lifecycle
 
 (deftest "org-defblock with :tag t defines org-deftag/NAME, and org-undefblock removes it"

@@ -308,7 +308,25 @@ variable, and nothing may precede `&optional' or `&key'.  Options such as `:tag 
               (--mapcat (-take 2 it) (--remove (nth 2 it) parsed))
               options)))))
 
-(defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend)
+(eval-and-compile ;; `org-defblock' calls this as it expands.
+(defun org--defblock-tag-subsections (name tag)
+  "(NAME, TAG option) ↦ what NAME's tag does with a section's subsections: `ignore', `error', or `recurse'.
+
+  t                        ↦  ignore
+  [:subsections recurse]   ↦  recurse
+  [:subsections sideways]  ↦  an error, at once, naming NAME
+
+See `org--defblock-section-to-block' for what each mode does."
+  (let* ((spec (if (vectorp tag) (append tag nil) nil))
+         (mode (or (plist-get spec :subsections) 'ignore)))
+    (unless (and (cl-evenp (length spec)) (cl-loop for key in spec by #'cddr always (eq key :subsections)))
+      (error "‘org-defblock %s’: :tag takes t, nil, or [:subsections MODE], but saw %S" name tag))
+    (unless (memq mode '(ignore error recurse))
+      (error "‘org-defblock %s’: :subsections takes ignore, error, or recurse, but saw %S" name mode))
+    mode)))
+
+(defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend
+                                            &optional subsections)
   "Rewrite the section at point ---its heading line and DRAWER erased by `org-deftag'--- as HEADING atop a NAME block.
 
   * Why bother? :details_Spoiler_alert:        * Why bother?
@@ -320,33 +338,67 @@ variable, and nothing may precede `&optional' or `&key'.  Options such as `:tag 
                                                #+end_details
 
 TAG-ARGS, joined by spaces, form the main argument, else the section's MAIN property; each of the
-KEYWORDS found among the section's PROPERTIES becomes a keyword argument.  Only the section's own text
-is wrapped, up to the next heading of any depth.
+KEYWORDS found among the section's PROPERTIES becomes a keyword argument.  The section's own text is
+wrapped, up to the next heading of any depth; a block cannot hold a heading, so SUBSECTIONS says what
+becomes of the section's subsections:
++ `ignore' (the default): they stay outside the block, exported as usual.
++ `error': a section with a subsection is an error, naming both; e.g., for a block whose
+  content would be silently cut short.
++ `recurse': each subsection's own text, at any depth, is wrapped likewise ---same arguments---
+  in a NAME block of its own; a subsection tagged :NAME: itself is left to its own tag.
 
 The block is then at once replaced by the result of `org-block/NAME' for BACKEND; so a tag works even
-when NAME is not registered as a block, via `:block nil'.  Point ends after that result."
+when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
   (let* ((property (lambda (key) (plist-get properties (intern (format ":%s" (downcase (symbol-name key)))))))
          (main-arg (if tag-args (string-join tag-args " ") (funcall property main)))
          (header (concat (if main-arg (format " %S" main-arg) "")
                          (mapconcat (lambda (key) (-if-let (value (funcall property key)) (format " :%s %S" key value) ""))
-                                    keywords ""))))
+                                    keywords "")))
+         (level (progn (string-match "\\`\\*+" heading) (match-end 0)))
+         ;; Point at a heading line ↦ its subheading's level, or nil when it's not deeper than LEVEL.
+         (subheading-level (lambda () (let ((depth (- (save-excursion (skip-chars-forward "*") (point)) (point))))
+                                        (and (> depth level) depth))))
+         (wrap-own-text
+          (lambda ()
+            "From the start of a section's text, wrap it up to the next heading, and render that block."
+            (let ((start (point)) (end (make-marker)))
+              (insert (format "#+begin_%s%s\n" name header))
+              (goto-char (if (re-search-forward org-outline-regexp-bol nil t) (match-beginning 0) (point-max)))
+              (unless (bolp) (insert "\n"))
+              (insert (format "#+end_%s" name))
+              (set-marker end (point))
+              (set-marker-insertion-type end t)
+              ;; Keep #+end_NAME on a line of its own, apart from any following heading.
+              (save-excursion (insert "\n"))
+              (goto-char start)
+              ;; As in `org--rewrite-special-blocks-by-handlers': blocks render for backends derived from html or latex.
+              (org-eval-replace-block (org-special-block-after-point name) (org--base-backend backend))
+              (goto-char end)
+              (set-marker end nil)))))
     ;; Restore the heading, and its property drawer, so the section keeps its properties; e.g., CUSTOM_ID.
     (insert heading "\n" (or drawer ""))
     (unless (bolp) (insert "\n"))
-    (let ((start (point)) (end (make-marker)))
-      (insert (format "#+begin_%s%s\n" name header))
-      (goto-char (if (re-search-forward org-outline-regexp-bol nil t) (match-beginning 0) (point-max)))
-      (unless (bolp) (insert "\n"))
-      (insert (format "#+end_%s" name))
-      (set-marker end (point))
-      (set-marker-insertion-type end t)
-      ;; Keep #+end_NAME on a line of its own, apart from any following heading.
-      (save-excursion (insert "\n"))
-      (goto-char start)
-      ;; As in `org--rewrite-special-blocks-by-handlers': blocks render for backends derived from html or latex.
-      (org-eval-replace-block (org-special-block-after-point name) (org--base-backend backend))
-      (goto-char end)
-      (set-marker end nil))))
+    (when (eq subsections 'error)
+      (save-excursion
+        (when (and (re-search-forward org-outline-regexp-bol nil t)
+                   (progn (beginning-of-line) (funcall subheading-level)))
+          (user-error "Section “%s” is tagged :%s:, whose block cannot hold its subsection “%s”; move the subsection out, or declare `:tag [:subsections ignore]' or `[:subsections recurse]' in ‘org-defblock %s’"
+                      (string-trim (substring heading level)) name
+                      (string-trim (buffer-substring (+ (point) (funcall subheading-level)) (line-end-position)))
+                      name))))
+    (funcall wrap-own-text)
+    (when (eq subsections 'recurse)
+      (let ((own-tag (org--deftag-regexp name)))
+        (while (and (re-search-forward org-outline-regexp-bol nil t)
+                    (progn (beginning-of-line) (funcall subheading-level)))
+          (let ((case-fold-search t))
+            (if (looking-at (concat ".*" own-tag))
+                (forward-line 1)
+              (forward-line 1)
+              (when (looking-at org-property-drawer-re)
+                (goto-char (match-end 0))
+                (forward-line 1))
+              (funcall wrap-own-text))))))))
 
 (cl-defmacro org-defblock
     (name kwds &optional docstring &rest body)
@@ -394,6 +446,10 @@ KWDS may also carry options, which are not arguments:
   main argument, and the section's properties supply keyword arguments by
   name.  E.g., \"* Stuck? :details_Hint:\" folds its text away under the
   title Hint.  See `org--defblock-section-to-block'.
+  A block cannot hold a heading, so `:tag [:subsections MODE]' says what becomes
+  of a tagged section's subsections: `ignore' leaves them outside the block, as
+  `:tag t' does; `error' refuses a section that has any; and `recurse' wraps
+  each subsection's text in a block of its own.
   The link and tag default to `org-defblock-links-and-tags'; for just one of
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
@@ -483,7 +539,8 @@ Three example uses:
                                            (t org-defblock-links-and-tags))))
          (block?    (funcall enabled? :block))
          (link      (funcall enabled? :link)) ;; nil, t, or a display vector
-         (tag?      (funcall enabled? :tag))
+         (tag?      (funcall enabled? :tag)) ;; nil, t, or [:subsections MODE]
+         (subsections (when tag? (org--defblock-tag-subsections name tag?)))
          (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode) :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
@@ -510,7 +567,7 @@ Three example uses:
                          (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
                                                          ',(or (car kwds) 'main-arg)
                                                          ',(mapcar #'car (-partition 2 (cddr kwds)))
-                                                         o-backend)))))))
+                                                         o-backend ',subsections)))))))
 
 
 ;; WHERE ...

@@ -54,6 +54,15 @@ lists NAME DEFAULT pairs, all positional; a missing final DEFAULT is nil."
           (push (list (if (consp it) (car it) it) (when (consp it) (cadr it)) (eq section '&optional))
                 result))))))
 
+(eval-and-compile ;; `org-deftag' calls this as it expands.
+(defun org--deftag-regexp (name)
+  "NAME ↦ a regexp for the tag :NAME: or :NAME_item…: among a heading line's trailing tags.
+
+Group 1 is the tag sans its closing colon ---so axing it leaves its neighbours' colons intact--- and
+group 2 its items; e.g., for :fold_pink_big:, group 2 is \"_pink_big\".  Org tags cannot hold hyphens,
+whereas block names often do ---e.g., latex-definitions--- so we match the line ourselves."
+  (format "\\(:%s\\(_[^: \t]*\\)?\\):\\(?:[^ \t\n]*:\\)?[ \t]*$" (regexp-quote (format "%s" name)))))
+
 (defmacro org-deftag (name args docstring &rest body)
   "Re-render each Org section tagged :NAME: by running BODY at export time.
 
@@ -101,10 +110,7 @@ The result is the function `org-deftag/NAME', added to
 special blocks are rewritten; a tag may thereby produce special blocks."
   (declare (indent defun) (doc-string 3))
   (let ((func-name (intern (format "org-deftag/%s" name)))
-        ;; The tag, such as :fold: or :fold_pink_big:, among the heading's trailing tags: group 1 is the tag
-        ;; sans its closing colon ---so axing it leaves its neighbours' colons intact--- and group 2 its items.  Org tags cannot hold hyphens,
-        ;; whereas block names often do ---e.g., latex-definitions--- so we match the line ourselves.
-        (tag-re (format "\\(:%s\\(_[^: \t]*\\)?\\):\\(?:[^ \t\n]*:\\)?[ \t]*$" (regexp-quote (symbol-name name)))))
+        (tag-re (org--deftag-regexp name)))
     `(progn
        (defun ,func-name (o-backend)
          ,docstring

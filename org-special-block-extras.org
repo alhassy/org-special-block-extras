@@ -4246,6 +4246,14 @@ Mind the gap.
   headings, we set ~org-defblock-links-and-tags~ to nil before loading this package. For just a
   link, or just a tag, there are =org-deflink= and =org-deftag=, below.
 
+  A tag wraps only its section's own text, since a block cannot hold a heading. By way of
+  example, in =* Abstract :abstract:= with a =** Aside= beneath it, the aside stays outside
+  the box. Declaring =:tag [:subsections MODE]= picks what becomes of subsections:
+  - =ignore= ---the default, as with =:tag t=--- leaves them outside the block;
+  - =error= refuses a tagged section that has any, naming both headings; and
+  - =recurse= wraps each subsection's own text in a block of its own, with the same
+    arguments, unless the subsection carries the tag itself.
+
   /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
   and its default, followed by key-value pairs. The block above is then
   #+begin_src emacs-lisp
