@@ -9,7 +9,8 @@
   ;; This tests the full dispatch chain: org--block-cc-dispatcher →
   ;; org-special-block-at-point-p → org-graph--cc-handler.
   ;; We stub org-graph--cc-handler to record that it was called.
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -24,7 +25,8 @@
   ;; This tests the full dispatch chain: org--block-edit-special-dispatcher →
   ;; org-special-block-at-point-p → org-graph--do-edit-special.
   ;; We stub org-graph--do-edit-special to record that it was called.
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")

@@ -7,7 +7,9 @@
 
 (deftest "`org-graph--table-context' returns `nodes' for a list-item table"
   (let ((buf (tests-graph--make-graph-buffer
-              "+ mynode\n  | shape | ellipse |\n")))
+              "
++ mynode
+  | shape | ellipse |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")
@@ -16,7 +18,9 @@
 
 (deftest "`org-graph--table-context' returns `graphs' for a #+graph: table"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+graph:\n| rankdir | TB |\n")))
+              "
+#+graph:
+| rankdir | TB |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| rankdir |")
@@ -25,7 +29,9 @@
 
 (deftest "`org-graph--table-context' returns `nodes' for a #+node: table"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+node:\n| shape | box |\n")))
+              "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")
@@ -34,7 +40,9 @@
 
 (deftest "`org-graph--table-context' returns `edges' for a #+edge: table"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+edge:\n| color | red |\n")))
+              "
+#+edge:
+| color | red |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| color |")
@@ -43,7 +51,10 @@
 
 (deftest "`org-graph--table-context' skips separator rows correctly"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+graph:\n|------+----|\n| rankdir | LR |\n")))
+              "
+#+graph:
+|------+----|
+| rankdir | LR |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| rankdir |")

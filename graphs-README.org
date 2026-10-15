@@ -38,10 +38,20 @@ immediately.  The output filename is auto-generated unless you supply ~:file~:
 #+end_graph
 #+end_example
 
+** Pressing =C-c '=, or =C-M-i=
+
+~C-c '~ edits the block's body in its own ~org-graph-edit-mode~ buffer. There, and in any Org buffer's
+graph blocks, ~C-M-i~ completes table keys and values, and eldoc explains the key at point; on the
+~#+begin_graph~ line itself, they do the same for ~:rankdir~, ~:node.shape~, and friends. See item 3 of
+[[*Quality of Life][Quality of Life]].
+
 * Syntax Reference
 
 | Construct                            | Dot equivalent                                                             |
 |--------------------------------------+----------------------------------------------------------------------------|
+| ~#+begin_graph TITLE~                | ~graph [ label=TITLE ]~                                                    |
+| ~#+begin_graph :KEY V~               | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~                    |
+| ~#+begin_graph :directed nil~        | ~graph { … }~, with ~--~ arcs                                              |
 | ~#+graph:~ table                     | ~graph [ … ]~                                                              |
 | ~#+node:~ table                      | ~node [ … ]~                                                               |
 | ~#+edge:~ table                      | ~edge [ … ]~                                                               |
@@ -49,15 +59,112 @@ immediately.  The output filename is auto-generated unless you supply ~:file~:
 | ~#+name: T~ + table                  | style template ~T~, used via ~:eval~                                       |
 | ~+ NAME~ list item                   | node ~NAME~ declaration                                                    |
 | indent ~+ CHILD~ under ~+ PARENT~    | edge PARENT → CHILD                                                        |
+| ~1. A~, ~2. B~ under ~+ PARENT~      | edges PARENT → A, B; ~{ rank=same; A; B }~, in that order                  |
+| ~+ <<ID>> NAME~                      | node ~ID~, labelled ~NAME~                                                 |
+| ~+ NAME [[T]]~, ~+ NAME [[T][L]]~    | edge NAME → T, labelled ~L~                                                |
+| ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=    | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                  |
 | ~∣ key ∣ value ∣~                    | node attribute; values are quoted for you                                  |
 | ~∣ :id ∣ alias ∣~                    | cross-reference name for this node                                         |
 | ~∣ :edge.KEY ∣ value ∣~              | attribute of the arc from the parent; a repeated KEY starts a parallel arc |
 | ~∣ :to ∣ target ∣~                   | explicit outgoing edge; ~record.field~ targets a field                     |
 | ~∣ :to.KEY ∣ value ∣~                | attribute of the ~:to~ edge just above                                     |
+| ~∣ :edge[T].KEY ∣ value ∣~           | attribute of this item's arc to ~T~, from a ~:to~ row or a ~[[T]]~ link    |
 | ~∣ :eval ∣ T ∣~, ~∣ :to.:eval ∣ T ∣~ | splice template ~T~; explicit rows win                                     |
 | ~∣ :children-rank ∣ same ∣~          | ~{ rank=same; <immediate children> }~                                      |
 | ~∣ shape ∣ cluster ∣~                | ~subgraph cluster_ID { … }~ around the children                            |
 | ~∣ shape ∣ record ∣~                 | children become fields; ~{}~ children flip the layout                      |
+
+* Org's Own Syntax
+
+We want a graph block to read like the Org it is. So wherever Org already has a construct whose
+meaning /is/ the graph meaning, we use it; tables remain for everything else. Each construct below is
+an alternative to a table row, never a replacement: ~<<lam>>~ and ~| :id | lam |~ both stay.
+
+** ~<<targets>>~ name nodes, ~[[links]]~ draw arcs
+
+In Org, ~<<lam>>~ is a place we can link to, and ~[[lam]]~ points there. In a graph, the target is the
+node's id and the link is an arc to it. Moreover, ~C-c C-o~ on the link jumps to its node:
+#+begin_src org
++ <<lam>> λ-calculus
+  + church
++ lisp [[lam][inspired by]] [[church]]
+#+end_src
+#+begin_src dot
+lam [ label="λ-calculus" ];
+lam -> church;
+lisp -> lam [ label="inspired by" ];
+lisp -> church;
+#+end_src
+
+- Inside a graph block, Org shows links in full: we see ~[[lam][inspired by]]~, not just ~inspired by~,
+  since both parts matter here. Links elsewhere in the buffer keep Org's usual display.
+- The target and links vanish from the label; ~lisp~ above is labelled just ~lisp~.
+- ~[[T][L]]~ labels the arc ~L~; an item may have any number of links.
+- An item that is nothing but a link, ~+ [[church][encodes]]~, /is/ the node ~church~: its parent's
+  arc to it is labelled ~encodes~.
+- Only links to nodes are arcs; ~[[https://orgmode.org][Org]]~ stays text, shown as ~Org~.
+- In a record, a field's ~<<target>>~ is its port, and its ~[[links]]~ are arcs from that port.
+
+** Markup makes rich labels
+
+~*bold*~, ~/italic/~, ~_underline_~, ~+strike+~, ~=code=~, and =~pre~= in an item's text make its label an
+HTML-like one, while its id stays the plain text:
+#+begin_src org
++ *Church* encodes =Bool=
+#+end_src
+#+begin_src dot
+"Church encodes Bool" [ label=<<B>Church</B> encodes <FONT FACE="monospace">Bool</FONT>> ];
+#+end_src
+
+We escape ~&~, ~<~, ~>~, and ~"~ for you. Graphviz has no way to tell ~=code=~ from =~pre~=, so both are
+monospace. Record labels are plain text, so a record's fields simply drop their markup. Names such as
+~a_b~, ~C++~, and ~org-graph.el~ are not mistaken for markup.
+
+** Ordered lists keep their order
+
+~+ - *~ say “these things”; ~1. 2. 3.~ say “first, second, third”. So ordered children sit side by side,
+on one rank, in the order written ---Graphviz no longer reshuffles them to save a crossing:
+#+begin_src org
++ λ-calculus
+  1. Church
+  2. Turing
+  3. Kleene
+#+end_src
+#+begin_src dot
+"λ-calculus" [ ordering=out label="λ-calculus" ];
+"λ-calculus" -> Church;
+"λ-calculus" -> Turing;
+"λ-calculus" -> Kleene;
+{ rank=same; Church; Turing; Kleene }
+#+end_src
+
+An ordered top-level list, or one inside a cluster, shares a rank too. An explicit
+~| :children-rank | min |~ wins over the ~rank=same~; a lone ordered child gets no rank at all. For
+same rank /without/ the fixed order, use ~| :children-rank | same |~ with ~+~ bullets.
+
+** The ~#+begin_graph~ line
+
+The header line takes the graph's title and any graph attribute, so small graphs need no preamble:
+#+begin_src org
+,#+begin_graph Lambda calculus :rankdir LR :node.shape box :edge.color grey
++ λ
+  + Lisp
+,#+end_graph
+#+end_src
+#+begin_src dot
+graph [ label="Lambda calculus" rankdir=LR ]
+node [ shape=box ]
+edge [ color=grey ]
+#+end_src
+
+- The title, the words before the first ~:key~, is the graph's ~label~; ~directed~ and ~undirected~
+  remain the old way to pick a kind, and ~:directed nil~ the new one.
+- ~:KEY V~ is a graph attribute; ~:node.KEY V~ and ~:edge.KEY V~ are node and edge defaults ---the
+  same ~KEY~, ~node.KEY~, ~edge.KEY~ spelling as table rows.
+- ~:file~, ~:svg~, ~:directed~, and ~:C-c_C-c~ belong to the block itself, never to Graphviz; so do the
+  Babel habits ~:exports~ and ~:results~, which the block ignores.
+- The block's own ~#+graph:~, ~#+node:~, and ~#+edge:~ tables override the header.
+- The header is read as Lisp, so a value such as ~#6c7086~ needs quotes: ~:bgcolor "#6c7086"~.
 
 * Keys, Edges, Records, and Ports
 
@@ -83,8 +190,9 @@ keys are listed in ~org-graph-reserved-keys~:
 
 | Key              | Meaning                                                   |
 |------------------+-----------------------------------------------------------|
-| ~:id~            | the node's name for cross-references; else its text       |
+| ~:id~            | the node's name for cross-references; else its ~<<target>>~, else its text |
 | ~:edge.KEY~      | attribute ~KEY~ of the arc from the parent                |
+| ~:edge[T].KEY~   | attribute ~KEY~ of this item's arc to ~T~                 |
 | ~:to~            | an extra arc, to the node, record field, or cluster named |
 | ~:to.KEY~        | attribute ~KEY~ of the ~:to~ arc just above               |
 | ~:eval~          | splice the rows of a ~#+name:~ template                   |
@@ -125,7 +233,21 @@ Lisp -> "λ-calculus" [ label=borrows style=dotted ];
 Lisp -> Fortran;
 #+end_src
 
-A ~:to.KEY~ row with no ~:to~ row above it is an error. Mind that an item's table must come
+Alternatively, ~:edge[TARGET].KEY~ names the arc by where it goes, rather than by where its row sits;
+this is how we style an arc drawn by a ~[[TARGET]]~ link, which has no row of its own:
+#+begin_src org
++ Lisp [[λ-calculus][borrows]]
+  | :to                    | Fortran |
+  | :edge[λ-calculus].style | dotted  |
+  | :edge[Fortran].color    | grey    |
+#+end_src
+#+begin_src dot
+Lisp -> Fortran [ color=grey ];
+Lisp -> "λ-calculus" [ label=borrows style=dotted ];
+#+end_src
+
+Explicit rows win over a link's label. A ~:to.KEY~ row with no ~:to~ row above it is an error, as is an
+~:edge[TARGET].KEY~ row with no arc to ~TARGET~. Mind that an item's table must come
 /before/ its sub-items: a table after them belongs to no item, and is dropped.
 
 ** Templates: ~#+name:~ and ~:eval~
@@ -259,16 +381,35 @@ Emacs -> Org [ lhead=cluster_Packages ];
    - Table under ~#+cluster:~ → cluster attributes (~bgcolor~, ~labelloc~, …)
    - Table on a list item → node attributes (same as above)
 
-   The full attribute catalogue lives in the ~org-graph-attributes~ defcustom (customise via
-   ~M-x customize-variable RET org-graph-attributes~); each entry has the form:
+   The full attribute catalogue lives in the ~org-graph-attributes~ defcustom, in
+   ~org-graph-attributes.el~ (customise via ~M-x customize-variable RET org-graph-attributes~); each
+   entry has the form:
    #+begin_src emacs-lisp
-   (:name "shape"
-    :description "Shape of the node."
-    :values ("box" "ellipse" "circle" …)  ;; nil → free-text prompt
-    :valid-on (nodes))
+   (:name "shape" :valid-on (nodes) :default "ellipse"
+    :values ("box" "polygon" "ellipse" …)  ;; nil → free-text prompt
+    :description "Sets the shape of a node.")
    #+end_src
 
    Plain ~RET~ is unaffected — only the prefixed ~C-u RET~ triggers the completion.
+
+3. ~C-M-i~ (~completion-at-point~) and eldoc know about graph keys ---in any Org buffer's graph blocks,
+   and in the ~org-graph-edit-mode~ buffer that ~C-c '~ opens on one:
+   - In a key cell, completion offers the attributes valid there, plus the reserved keys; after
+     ~:edge.~, ~:edge[T].~, or ~:to.~, it offers only edge attributes, prefix and all. In a value cell, it
+     offers the values of that row's attribute, such as ~vee~ for ~:edge.arrowhead~. Each candidate is
+     annotated with its description.
+   - On the ~#+begin_graph~ line, ~:r C-M-i~ offers ~:rankdir~ and the other graph attributes, every
+     ~:node.KEY~ and ~:edge.KEY~, and the block's own ~:file~, ~:svg~, ~:directed~, and ~:C-c_C-c~;
+     ~:rankdir L C-M-i~ then offers ~LR~.
+   - Eldoc shows the description of the key on the current row, or at point on the ~#+begin_graph~
+     line, ending with Graphviz's default; e.g., ~| :edge[x].arrowhead | vee |~ shows “Style of
+     arrowhead on the head node of an edge.  Default: normal.”
+   - ~C-u RET~ works in the ~C-c '~ buffer too.
+
+   The descriptions come from ~org-graph-attributes~, which lives on its own in ~org-graph-attributes.el~:
+   every Graphviz attribute, scraped from [[https://graphviz.org/doc/info/attrs.html][Graphviz's attribute table]]. To add or adjust an attribute,
+   edit its entry there, or ~M-x customize-variable RET org-graph-attributes~. Reserved keys are
+   described by ~org-graph--reserved-key-docs~, and the header's own keys by ~org-graph--header-key-docs~.
 
 * ERRORS TO FIX!
 #+begin_graph
@@ -831,7 +972,7 @@ Showcases: `:SETTINGS:` drawers, cluster items with scoped `#+node:` overrides,
 bidirectional pink marriage edges, and red martyrdom arrows — all without a
 single line of raw dot.
 
-#+begin_graph directed :file "~/Downloads/karbala.png" :exports "svg"
+#+begin_graph directed :file "~/Downloads/karbala.png" :svg t
 :SETTINGS:
 #+graph:
 | label    | "The Karbala Tragedy" |

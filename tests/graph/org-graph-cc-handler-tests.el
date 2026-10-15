@@ -16,10 +16,11 @@ KWDARGS is the plist for the block's keyword arguments."
               (lambda (_)
                 (make-org-special-block
                  :kwdargs  ,kwdargs
-                 :contents "+ A\n"
+                 :contents "
++ A"
                  :main-arg "directed"
                  :end-point (point-max))))
-             ((symbol-function 'org--graph-raw->dot)             (lambda (_ _2) ,dot-source))
+             ((symbol-function 'org--graph-raw->dot)             (lambda (&rest _) ,dot-source))
              ((symbol-function 'call-process)                    (lambda (&rest _) 0))
              ((symbol-function 'write-region)                    (lambda (&rest _) nil))
              ((symbol-function 'make-temp-file)                  (lambda (&rest _) "/tmp/fake.dot"))
@@ -31,7 +32,8 @@ KWDARGS is the plist for the block's keyword arguments."
      ,@body))
 
 (deftest "`org-graph--cc-handler' plain C-c C-c renders PNG (no dot buffer)"
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -44,7 +46,8 @@ KWDARGS is the plist for the block's keyword arguments."
     (kill-buffer buf)))
 
 (deftest "`org-graph--cc-handler' C-u C-c C-c shows dot source buffer"
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -57,7 +60,8 @@ KWDARGS is the plist for the block's keyword arguments."
     (kill-buffer buf)))
 
 (deftest "`org-graph--cc-handler' :C-c_C-c dot without prefix shows dot"
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -70,7 +74,8 @@ KWDARGS is the plist for the block's keyword arguments."
     (kill-buffer buf)))
 
 (deftest "`org-graph--cc-handler' :C-c_C-c dot WITH prefix toggles back to PNG"
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -83,7 +88,8 @@ KWDARGS is the plist for the block's keyword arguments."
     (kill-buffer buf)))
 
 (deftest "`org-graph--cc-handler' C-u inserts #+begin_src dot results block"
-  (let ((buf (tests-graph--make-graph-buffer "+ A\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
++ A")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "+ A")
@@ -92,13 +98,14 @@ KWDARGS is the plist for the block's keyword arguments."
                  (lambda (_)
                    (make-org-special-block
                     :kwdargs  nil
-                    :contents "+ A\n"
+                    :contents "
++ A"
                     :main-arg "directed"
                     :end-point (save-excursion
                                  (goto-char (point-max))
                                  (search-backward "#+end_graph")
                                  (1- (point))))))
-                ((symbol-function 'org--graph-raw->dot)             (lambda (_ _2) "digraph { A; }"))
+                ((symbol-function 'org--graph-raw->dot)             (lambda (&rest _) "digraph { A; }"))
                 ((symbol-function 'org-graph--show-dot)             (lambda (_) nil)))
         (let ((current-prefix-arg '(4)))
           (org-graph--cc-handler)))

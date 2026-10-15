@@ -7,7 +7,9 @@
 
 (deftest "`org-graph--insert-attribute-row' inserts a new row and aligns"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+node:\n| shape | box |\n")))
+              "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       ;; Position point on the existing table row
       (goto-char (point-min))
@@ -34,7 +36,9 @@
 
 (deftest "`org-graph--insert-attribute-row' is a no-op without prefix arg"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+node:\n| shape | box |\n")))
+              "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")
@@ -45,7 +49,9 @@
 
 (deftest "`org-graph--insert-attribute-row' filters by context — no shape in graphs"
   (let ((buf (tests-graph--make-graph-buffer
-              "#+graph:\n| rankdir | TB |\n"))
+              "
+#+graph:
+| rankdir | TB |"))
         (offered nil))
     (with-current-buffer buf
       (goto-char (point-min))
@@ -66,7 +72,9 @@
 
 (deftest "`org-graph--insert-attribute-row' falls back to read-string when org-graph--pick-color returns nil"
   ;; Simulates helm being absent or the user aborting without selecting a color.
-  (let ((buf (tests-graph--make-graph-buffer "#+node:\n| shape | box |\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")
@@ -86,7 +94,9 @@
     (kill-buffer buf)))
 
 (deftest "plain RET inside a graph block table runs org-return, not attribute insertion"
-  (let ((buf (tests-graph--make-graph-buffer "#+node:\n| shape | box |\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")
@@ -101,7 +111,9 @@
     (kill-buffer buf)))
 
 (deftest "C-u RET on a graph table triggers attribute insertion and suppresses org-return"
-  (let ((buf (tests-graph--make-graph-buffer "#+node:\n| shape | box |\n")))
+  (let ((buf (tests-graph--make-graph-buffer "
+#+node:
+| shape | box |")))
     (with-current-buffer buf
       (goto-char (point-min))
       (search-forward "| shape |")

@@ -10,26 +10,42 @@
                    (:edge "A" "B" (("label" "calls")))
                    (:edge "B" "A" (("style" "dotted")))
                    (:node "B"))
-                 (cadr (org--graph-parse "+ A\n  + B\n    | :edge.label | calls |\n    | :to | A |\n    | :to.style | dotted |\n")))))
+                 (cadr (org--graph-parse "
++ A
+  + B
+    | :edge.label | calls |
+    | :to | A |
+    | :to.style | dotted |")))))
 
 (deftest "`org--graph-item-rows' routes reserved keys away from node attributes"
   (should (equal '(:id "x" :attrs (("shape" "box")) :children-rank "same"
                    :edges ((("label" "a") ("color" "red")) (("label" "b")))
-                   :tos (("y" ("style" "dotted")) ("z")))
+                   :tos (("y" ("style" "dotted")) ("z"))
+                   :targeted (("z" ("color" "red") ("label" "zed"))))
                  (org--graph-item-rows '((":id" "x") ("shape" "box") (":children-rank" "same")
                                          (":edge.label" "a") (":edge.color" "red") (":edge.label" "b")
-                                         (":to" "y") (":to.style" "dotted") (":to" "z"))
+                                         (":to" "y") (":to.style" "dotted") (":to" "z")
+                                         (":edge[z].color" "red") (":edge[z].label" "zed"))
                                        (make-hash-table :test #'equal)))))
 
 ;;; Reserved keys
 
 (deftest "an unknown reserved key, or a row in the old spelling, is a user error rather than a silent attribute"
-  (should-error (org--graph-raw->dot "+ A\n  | :colour | red |\n" "directed") :type 'user-error)
-  (should-error (org--graph-raw->dot "+ A\n  + B\n    | EDGE | label=x |\n" "directed") :type 'user-error)
-  (should-error (org--graph-raw->dot "+ A\n  | to | B |\n" "directed") :type 'user-error))
+  (should-error (org--graph-raw->dot "
++ A
+  | :colour | red |" "directed") :type 'user-error)
+  (should-error (org--graph-raw->dot "
++ A
+  + B
+    | EDGE | label=x |" "directed") :type 'user-error)
+  (should-error (org--graph-raw->dot "
++ A
+  | to | B |" "directed") :type 'user-error))
 
 (deftest "a `:to.KEY' row with no `:to' row above it is a user error"
-  (should-error (org--graph-raw->dot "+ A\n  | :to.label | x |\n" "directed") :type 'user-error))
+  (should-error (org--graph-raw->dot "
++ A
+  | :to.label | x |" "directed") :type 'user-error))
 
 ;;; Printing quotes values, and picks the edge operator
 
@@ -44,8 +60,15 @@
 }")
 
 (deftest "an undirected graph uses --, without touching any -> inside a label"
-  (should (equal "graph {\n  a [ label=\"x -> y\" ];\n  a -- b;\n  b [ label=b ];\n}"
-                 (org--graph-raw->dot "+ a\n  | label | x -> y |\n  + b\n" "undirected"))))
+  (should (equal "graph {
+  a [ label=\"x -> y\" ];
+  a -- b;
+  b [ label=b ];
+}"
+                 (org--graph-raw->dot "
++ a
+  | label | x -> y |
+  + b" "undirected"))))
 
 (define-graph-test "\"Org mode\" and Org mode name the same node"
   :input "
@@ -63,8 +86,15 @@
 (deftest "a node's repeat occurrence adds new attributes, and warns about, while ignoring, contradicting ones"
   (let (warnings)
     (cl-letf (((symbol-function 'display-warning) (lambda (_type msg &rest _) (push msg warnings))))
-      (should (equal "digraph {\n  a [ color=red shape=box label=a ];\n}"
-                     (org--graph-raw->dot "+ a\n  | color | red |\n+ a\n  | color | blue |\n  | shape | box |\n" "directed"))))
+      (should (equal "digraph {
+  a [ color=red shape=box label=a ];
+}"
+                     (org--graph-raw->dot "
++ a
+  | color | red |
++ a
+  | color | blue |
+  | shape | box |" "directed"))))
     (should (equal '("Node `a' is given color=blue again, keeping its first color=red") warnings))))
 
 ;;; Clusters as arc endpoints
@@ -110,7 +140,9 @@
 ;;; Export file names
 
 (deftest "exporting to a non-HTML backend names the image after the dot source, so re-exports reuse one file"
-  (let ((dot (org--graph-raw->dot "+ A\n" "directed"))
-        (export (lambda () (org-block/graph 'latex "+ A\n" "directed" nil))))
+  (let ((dot (org--graph-raw->dot "
++ A" "directed"))
+        (export (lambda () (org-block/graph 'latex "
++ A" "directed" nil))))
     (should (equal (funcall export) (funcall export)))
     (should (s-contains-p (format ":file graph-%s.png" (substring (md5 dot) 0 12)) (funcall export)))))

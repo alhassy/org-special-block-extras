@@ -5,8 +5,9 @@
 
 ;;; org-graph-attributes defcustom
 
-(deftest "`org-graph-attributes' contains at least 20 entries"
-  (should (>= (length org-graph-attributes) 20)))
+(deftest "`org-graph-attributes' holds every Graphviz attribute, each named once"
+  (should (>= (length org-graph-attributes) 170))
+  (should (equal (length org-graph-attributes) (length (-uniq (--map (plist-get it :name) org-graph-attributes))))))
 
 (deftest "`org-graph-attributes' every entry has required plist keys"
   (dolist (entry org-graph-attributes)

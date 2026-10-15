@@ -7,7 +7,13 @@
 
 (deftest "`org--graph-extract-preamble' buckets #+graph: table rows"
   (let* ((p (org--graph-extract-preamble
-             "#+graph:\n| rankdir | TB |\n| bgcolor | #000 |\n\n+ A\n  + B\n")))
+             "
+#+graph:
+| rankdir | TB |
+| bgcolor | #000 |
+
++ A
+  + B")))
     (should (equal '(("rankdir" "TB") ("bgcolor" "#000"))
                    (plist-get p :graph-rows)))
     (should (null (plist-get p :node-rows)))
@@ -15,17 +21,30 @@
 
 (deftest "`org--graph-extract-preamble' buckets #+node: and #+edge: rows"
   (let* ((p (org--graph-extract-preamble
-             "#+node:\n| shape | box |\n#+edge:\n| color | red |\n+ X\n")))
+             "
+#+node:
+| shape | box |
+#+edge:
+| color | red |
++ X")))
     (should (equal '(("shape" "box")) (plist-get p :node-rows)))
     (should (equal '(("color" "red")) (plist-get p :edge-rows)))))
 
 (deftest "`org--graph-extract-preamble' collects #+rank: lines"
-  (let* ((p (org--graph-extract-preamble "#+rank: A B\n#+rank: C D\n+ A\n")))
+  (let* ((p (org--graph-extract-preamble "
+#+rank: A B
+#+rank: C D
++ A")))
     (should (equal '("A B" "C D") (plist-get p :ranks)))))
 
 (deftest "`org--graph-extract-preamble' parses #+name: tables into name-tables"
   (let* ((p (org--graph-extract-preamble
-             "#+name: wife\n| fillcolor | \"#f8d7e8\" |\n| color | \"#aa3366\" |\n\n+ A\n")))
+             "
+#+name: wife
+| fillcolor | \"#f8d7e8\" |
+| color | \"#aa3366\" |
+
++ A")))
     (let ((nt (plist-get p :name-tables)))
       (should (hash-table-p nt))
       (should (equal '(("fillcolor" "\"#f8d7e8\"") ("color" "\"#aa3366\""))
@@ -33,7 +52,12 @@
 
 (deftest "`org--graph-extract-preamble' strips #+name: lines from list-body"
   (let* ((p (org--graph-extract-preamble
-             "#+name: married\n| color | red |\n\n+ A\n  + B\n")))
+             "
+#+name: married
+| color | red |
+
++ A
+  + B")))
     (should (not (s-contains-p "#+name:" (plist-get p :list-body))))
     (should (not (s-contains-p "| color | red |" (plist-get p :list-body))))
     (should (s-contains-p "+ A" (plist-get p :list-body)))))
@@ -54,11 +78,23 @@
 
 (deftest "#+name: template expands inside #+node: tables too"
   (should (s-contains-p "node [ shape=box ]"
-                        (org--graph-raw->dot "#+name: t\n| shape | box |\n\n#+node:\n| :eval | t |\n+ A\n" "directed"))))
+                        (org--graph-raw->dot "
+#+name: t
+| shape | box |
+
+#+node:
+| :eval | t |
++ A" "directed"))))
 
 (deftest "#+name: template expands into node attrs via | :eval |"
   (let* ((dot (org--graph-raw->dot
-               "#+name: wife\n| fillcolor | \"#f8d7e8\" |\n| color | \"#aa3366\" |\n\n+ Khadija\n  | :eval | wife |\n"
+               "
+#+name: wife
+| fillcolor | \"#f8d7e8\" |
+| color | \"#aa3366\" |
+
++ Khadija
+  | :eval | wife |"
                "directed")))
     (should (s-contains-p "fillcolor=\"#f8d7e8\"" dot))
     (should (s-contains-p "color=\"#aa3366\"" dot))))
@@ -82,7 +118,14 @@
 
 (deftest "#+name: explicit node attr overrides template via | :eval |"
   (let* ((dot (org--graph-raw->dot
-               "#+name: base\n| color | blue |\n| shape | box |\n\n+ A\n  | :eval  | base  |\n  | color | red   |\n"
+               "
+#+name: base
+| color | blue |
+| shape | box |
+
++ A
+  | :eval  | base  |
+  | color | red   |"
                "directed")))
     ;; explicit color=red wins over template color=blue
     (should (s-contains-p "color=red" dot))
@@ -92,7 +135,12 @@
 
 (deftest "#+name: unknown template name silently produces empty expansion"
   (let* ((dot (org--graph-raw->dot
-               "#+name: real\n| color | blue |\n\n+ A\n  | :eval | typo |\n"
+               "
+#+name: real
+| color | blue |
+
++ A
+  | :eval | typo |"
                "directed")))
     ;; node still renders, just without template attrs
     (should (s-contains-p "A [ label=A ];" dot))))

@@ -53,6 +53,18 @@
 }")
 
 (deftest "bare preamble and :SETTINGS: drawer produce identical output"
-  (let ((bare   (org--graph-raw->dot "#+graph:\n| rankdir | LR |\n#+node:\n| color | red |\n+ A\n" "directed"))
-        (drawer (org--graph-raw->dot ":SETTINGS:\n#+graph:\n| rankdir | LR |\n#+node:\n| color | red |\n:END:\n+ A\n" "directed")))
+  (let ((bare   (org--graph-raw->dot "
+#+graph:
+| rankdir | LR |
+#+node:
+| color | red |
++ A" "directed"))
+        (drawer (org--graph-raw->dot "
+:SETTINGS:
+#+graph:
+| rankdir | LR |
+#+node:
+| color | red |
+:END:
++ A" "directed")))
     (should (equal bare drawer))))

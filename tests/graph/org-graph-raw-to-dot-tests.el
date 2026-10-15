@@ -13,8 +13,14 @@
 }")
 
 (deftest "`org--graph-raw->dot' undirected graph uses -- arrows and graph keyword"
-  (should (equal "graph {\n  A [ label=A ];\n  A -- B;\n  B [ label=B ];\n}"
-                 (org--graph-raw->dot "+ A\n  + B\n" "undirected"))))
+  (should (equal "graph {
+  A [ label=A ];
+  A -- B;
+  B [ label=B ];
+}"
+                 (org--graph-raw->dot "
++ A
+  + B" "undirected"))))
 
 (define-graph-test "simple nesting A→B"
   :input "
@@ -91,10 +97,18 @@
 }")
 
 (deftest "`org--graph-raw->dot' explicit to row produces cross-edge"
-  (should (equal "digraph {\n  a [ label=A ];\n  B -> a [ label=back ];\n  B [ label=B ];\n}"
+  (should (equal "digraph {
+  a [ label=A ];
+  B -> a [ label=back ];
+  B [ label=B ];
+}"
                  (org--graph-raw->dot
-                  (concat "+ A\n  | :id | a |\n"
-                          "+ B\n  | :to | a |\n  | :to.label | back |\n")
+                  "
++ A
+  | :id | a |
++ B
+  | :to | a |
+  | :to.label | back |"
                   "directed"))))
 
 (define-graph-test "#+rank: emits rank=same block for nodes without a common parent"

@@ -39,6 +39,7 @@ Leaves point at the end of CONTENT so callers can position it as needed."
       (org-mode)
       (insert "#+begin_graph\n")
       (insert content)
+      (unless (bolp) (insert "\n"))
       (insert "#+end_graph\n"))
     buf))
 

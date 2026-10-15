@@ -14,9 +14,14 @@
                ;; Write a minimal 1×1 white PNG so base64 encoding succeeds.
                (with-temp-file pngfile
                  (set-buffer-multibyte nil)
-                 (insert "\x89PNG\r\n\x1a\n"))
+                 (insert "
+\x89PNG\r
+\x1a"))
                t)))
-    (let ((html (org-block/graph 'html "+ A\n  + B\n    | :edge.label | calls |\n"
+    (let ((html (org-block/graph 'html "
++ A
+  + B
+    | :edge.label | calls |"
                                  "directed" nil)))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html)))))
@@ -25,7 +30,10 @@
   ;; Verify the dot source that gets embedded is structurally correct
   ;; by checking the raw->dot output directly.
   (let ((dot (org--graph-raw->dot
-              "+ A\n  + B\n    | :edge.label | calls |\n"
+              "
++ A
+  + B
+    | :edge.label | calls |"
               "directed")))
     (should (s-contains-p "A -> B [ label=calls ];" dot))
     (should (s-contains-p "digraph" dot))))
@@ -36,9 +44,13 @@
   (cl-letf (((symbol-function 'org-graph--render-to-svg)
              (lambda (_dot svgfile)
                (with-temp-file svgfile
-                 (insert "<?xml version=\"1.0\"?>\n<!DOCTYPE svg>\n<svg xmlns=\"http://www.w3.org/2000/svg\"><g><title>A</title></g></svg>\n"))
+                 (insert "
+<?xml version=\"1.0\"?>
+<!DOCTYPE svg>
+<svg xmlns=\"http://www.w3.org/2000/svg\"><g><title>A</title></g></svg>"))
                svgfile)))
-    (let ((html (org-block/graph 'html "+ A\n" "directed" :svg t)))
+    (let ((html (org-block/graph 'html "
++ A" "directed" :svg t)))
       (should (s-contains-p "<svg" html))
       (should (s-contains-p "<title>A</title>" html))
       (should-not (s-contains-p "<img" html))
@@ -50,9 +62,13 @@
   (cl-letf (((symbol-function 'org-graph--render-to-svg)
              (lambda (_dot svgfile)
                (with-temp-file svgfile
-                 (insert "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"\">\n<svg xmlns=\"http://www.w3.org/2000/svg\"><g/></svg>\n"))
+                 (insert "
+<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"\">
+<svg xmlns=\"http://www.w3.org/2000/svg\"><g/></svg>"))
                svgfile)))
-    (let ((html (org-block/graph 'html "+ A\n" "directed" :svg t)))
+    (let ((html (org-block/graph 'html "
++ A" "directed" :svg t)))
       (should-not (s-contains-p "<?xml" html))
       (should-not (s-contains-p "<!DOCTYPE" html))
       (should (s-contains-p "<svg" html)))))
@@ -62,7 +78,9 @@
   ;; handler must fall back to a <pre> block with escaped dot source.
   (cl-letf (((symbol-function 'org-graph--render-to-svg)
              (lambda (_dot _svgfile) nil)))
-    (let ((html (org-block/graph 'html "+ A\n  + B\n" "directed" :svg t)))
+    (let ((html (org-block/graph 'html "
++ A
+  + B" "directed" :svg t)))
       (should (s-contains-p "<pre>" html))
       (should-not (s-contains-p "<svg" html)))))
 
@@ -72,9 +90,12 @@
              (lambda (_dot pngfile)
                (with-temp-file pngfile
                  (set-buffer-multibyte nil)
-                 (insert "\x89PNG\r\n\x1a\n"))
+                 (insert "
+\x89PNG\r
+\x1a"))
                t)))
-    (let ((html (org-block/graph 'html "+ A\n" "directed")))
+    (let ((html (org-block/graph 'html "
++ A" "directed")))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html))
       (should-not (s-contains-p "<svg" html)))))
