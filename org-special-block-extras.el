@@ -406,7 +406,9 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
         (add-hook 'org-export-before-parsing-functions #'org--fold-src-blocks -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
-        (advice-add 'org-remove-font-lock-display-properties :after #'org--kbd-unprettify)
+        (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
+        ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
+        (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
@@ -423,7 +425,8 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
     (remove-hook 'org-export-before-parsing-functions #'org--fold-src-blocks)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
-    (advice-remove 'org-remove-font-lock-display-properties #'org--kbd-unprettify)
+    (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
+    (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
     (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)))
 

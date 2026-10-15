@@ -128,5 +128,61 @@ DEFAULT
 \\end{figure}
 ")
 
+;;; How a block looks in Org buffers: :fontify
+
+(defun org-defblock-tests--displayed ()
+  "The current buffer's text as Emacs displays it: each string-valued `display' property in place of the text it covers."
+  (let ((shown "") (pos (point-min)))
+    (while (< pos (point-max))
+      (let ((display (get-text-property pos 'display))
+            (next (next-single-property-change pos 'display nil (point-max))))
+        (setq shown (concat shown (if (stringp display) display (buffer-substring-no-properties pos next)))
+              pos next)))
+    shown))
+
+(org-deftest "a block's :fontify shows its delimiters as given, and its contents in its face; other blocks are left be" [fontify]
+  :text "
+#+begin_proof By induction
+Trivially so.
+#+end_proof
+#+begin_proofs
+Not a proof block.
+#+end_proofs"
+  (using (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic])
+           "A proof, titled TITLE." (format "%s: %s" title contents))
+    (font-lock-ensure)
+    (should (equal (org-defblock-tests--displayed) "
+Proof. By induction
+Trivially so.
+⏹
+#+begin_proofs
+Not a proof block.
+#+end_proofs"))
+    (search-forward "Trivially")
+    (should (memq 'italic (ensure-list (get-text-property (point) 'face))))
+    (search-forward "Not a proof")
+    (should-not (memq 'italic (ensure-list (get-text-property (point) 'face))))))
+
+(deftest "undefining a block forgets its :fontify look" [fontify]
+  (using (org-defblock proof (:fontify [:end "⏹"]) "A proof." contents)
+    (should (assoc "proof" org--block-fontifications)))
+  (should-not (assoc "proof" org--block-fontifications)))
+
+(deftest "a :fontify display edited away is cleared as Org refontifies" [fontify]
+  (using (org-defblock proof (:fontify [:end "⏹"]) "A proof." contents)
+    (with-org-test-buffer (:text "
+#+begin_proof
+Done.
+#+end_proof")
+      (font-lock-ensure)
+      (search-forward "#+end_proof")
+      (replace-match "#+end_story")
+      (font-lock-ensure)
+      (should (equal (org-defblock-tests--displayed) "
+#+begin_proof
+Done.
+#+end_story")))))
+
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

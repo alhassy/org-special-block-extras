@@ -321,6 +321,9 @@ Such blocks are read using `org-special-block-after-point'.
 This is a list of strings.")
 
 
+(defvar org--block-fontifications nil
+  "Alist of (NAME . PLIST): how each block NAME, declared with `:fontify', looks in Org buffers; see `org--fontify-blocks'.")
+
 (defvar org--current-backend nil
   "A message-passing channel updated by `org--rewrite-special-blocks-by-handlers'
 and used by `org-defblock'.
@@ -572,6 +575,10 @@ KWDS may also carry options, which are not arguments:
   The link and tag default to `org-defblock-links-and-tags'; for just one of
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
++ `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
+  e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
+  “#+end_proof” as “⏹”, and the contents in italics too.  Each part is optional; see
+  `org--fontify-blocks'.
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -648,9 +655,10 @@ Three example uses:
   (when (vectorp docstring)
     (error "‘org-defblock %s’: the link display vector now goes among the options, as `:link %S'" name docstring))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  ;; The options :block, :link, :tag and :edit-indirect-mode configure the macro; they are not block arguments.
+  ;; The options :block, :link, :tag, :edit-indirect-mode and :fontify configure the macro; they are not block arguments.
   (let* ((kwds      (org--defblock-desugar-args kwds))
          (edit-mode (plist-get kwds :edit-indirect-mode))
+         (fontify   (plist-get kwds :fontify))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
          ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
          (enabled?  (lambda (option) (cond ((plist-member kwds option) (plist-get kwds option))
@@ -662,7 +670,7 @@ Three example uses:
          (subsections (when tag? (org--defblock-tag-subsections name tag?)))
          ;; As in `org-defblock-only': other keywords are welcome unless `cl-defun'-style KWDS omit `&allow-other-keys'.
          (other-keys? (or (not (plist-member kwds :allow-other-keys)) (plist-get kwds :allow-other-keys)))
-         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode) :initial-value kwds)))
+         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify) :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
        ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
@@ -681,6 +689,9 @@ Three example uses:
                                              :contents-occur-as-link-description t)))))
        ;; ⇨ Auto-generate C-c ' handler when :edit-indirect-mode is specified.
        (org-defblock-setup-indirect-edit ,name ,edit-mode)
+       ;; ⇨ How the block looks in Org buffers; a redefinition sans :fontify forgets any earlier look.
+       (setf (alist-get ,(downcase (format "%s" name)) org--block-fontifications nil 'remove #'equal)
+             ,(when fontify `(list ,@(append fontify nil))))
        ;; ⇨ The tag, unless declined via `:tag nil': a section tagged :NAME: exports as a NAME block around its text.
        ,@(when tag?
            `((org-deftag ,name ()
@@ -900,6 +911,7 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 "
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
+          (setf (alist-get ,(downcase (format "%s" name)) org--block-fontifications nil 'remove #'equal) nil)
           (fmakunbound  ',(intern (format "org-link/%s" name)))
           (remove-hook 'org-export-before-parsing-functions #',(intern (format "org-deftag/%s" name)))
           (fmakunbound ',(intern (format "org-deftag/%s" name)))
@@ -1006,6 +1018,42 @@ A full example:
                                                          )))) result)))
 
 ;;;;; fontification
+
+(defun org--display-as (from to string)
+  "Display the text from FROM to TO as STRING; marked as ours, so `org--undisplay' clears it as Org refontifies."
+  (when (< from to)
+    (put-text-property from to 'display (propertize string 'org-special-block-extras-display t))))
+
+(defun org--undisplay (beg end)
+  "Remove, between BEG and END, the display strings of `org--display-as'; Org's unfontifying leaves foreign ones be."
+  (let ((pos beg))
+    (while (< pos end)
+      (let ((next (next-single-property-change pos 'display nil end)))
+        (when (-some--> (get-text-property pos 'display) (and (stringp it) (get-text-property 0 'org-special-block-extras-display it)))
+          (put-text-property pos next 'display nil))
+        (setq pos next)))))
+
+(defun org--fontify-blocks (limit)
+  "Font-lock matcher: up to LIMIT, show each block in `org--block-fontifications' as its PLIST says; then nil.
+  :begin STRING  ↦  “#+begin_NAME” shows as STRING; the header's arguments stay as they are
+  :end STRING    ↦  “#+end_NAME” shows as STRING
+  :face FACE     ↦  the contents show in FACE too, atop their Org fontification"
+  (when org--block-fontifications
+    (let ((case-fold-search t)
+          (delimiter (format "^[ \t]*\\(#\\+\\(begin\\|end\\)_\\(%s\\)\\)\\(?:[ \t]\\|$\\)"
+                             (regexp-opt (mapcar #'car org--block-fontifications)))))
+      (while (re-search-forward delimiter limit t)
+        (let* ((name (downcase (match-string 3)))
+               (spec (cdr (assoc name org--block-fontifications)))
+               (begin? (equal (downcase (match-string 2)) "begin")))
+          (-when-let (shown (plist-get spec (if begin? :begin :end)))
+            (org--display-as (match-beginning 1) (match-end 1) shown))
+          (when (and begin? (plist-get spec :face))
+            (let ((contents-start (min (1+ (line-end-position)) (point-max))))
+              (save-excursion
+                (when (re-search-forward (format "^[ \t]*#\\+end_%s[ \t]*$" (regexp-quote name)) nil t)
+                  (font-lock-append-text-property contents-start (line-beginning-position) 'face (plist-get spec :face))))))))))
+  nil)
 
 (defun osbe--block-fontifications ()
   "The block names whose contents are fontified as Org: tiny, center, quote, and every supported block."

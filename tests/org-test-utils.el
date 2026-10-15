@@ -63,6 +63,9 @@ For a whole test, `org-deftest' says this tersely; this is for a test needing ma
 ;; tests of the asking itself bind `org-defblock-evaluate-switches' locally.
 (setq org-defblock-evaluate-switches t)
 
+;; As in real use, the mode is on; so Org buffers, as they are made, see how `:fontify' blocks look.
+(org-special-block-extras-mode 1)
+
 
 ;;; Test utilities “using” and “exporting”
 

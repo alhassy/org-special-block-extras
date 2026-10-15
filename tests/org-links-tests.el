@@ -94,11 +94,24 @@ Save with kbd:C-x_C-s, often."
   (should (equal (org-links-tests--displayed) "
 Save with the menu, often.")))
 
-(deftest "unprettifying kbd: links leaves foreign display properties be, such as an aligned table's" [kbd]
+(deftest "clicking a kbd: link runs its keys, once confirmed" [kbd]
+  (let (ran asked)
+    (cl-letf (((symbol-function 'execute-kbd-macro) (lambda (keys) (setq ran keys))))
+      (let ((org-link-elisp-confirm-function (lambda (prompt) (setq asked prompt) t)))
+        (funcall (org-link-get-parameter "kbd" :follow) "C-x_3" nil))
+      (should (equal asked "Run the keys “C-x 3”? "))
+      (should (equal ran (read-kbd-macro "C-x 3")))
+      ;; Declined, nothing runs.
+      (setq ran nil)
+      (let ((org-link-elisp-confirm-function (lambda (_) nil)))
+        (funcall (org-link-get-parameter "kbd" :follow) "C-x_3" nil))
+      (should-not ran))))
+
+(deftest "undoing our display strings leaves foreign display properties be, such as an aligned table's" [kbd]
   (with-temp-buffer
     (insert "| a | b |")
     (put-text-property 1 2 'display '(space :relative-width 1))
-    (org--kbd-unprettify (point-min) (point-max))
+    (org--undisplay (point-min) (point-max))
     (should (equal (get-text-property 1 'display) '(space :relative-width 1)))))
 
 ;;; package-docs

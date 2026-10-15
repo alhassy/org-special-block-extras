@@ -3413,7 +3413,7 @@ LaTeX!
   + Create powerful custom blocks with ~org-defblock~: Define a block once and export to
     LaTeX /and/ HTML effortlessly. With /header-args/ support like
     =:color red :signoff "Thanks!"= for locally customised exports. Each block is also a
-    link and a tag, for free.
+    link and a tag, for free; and =:fontify= says how it looks in the buffer.
   + Use ~org-deflink~ to create custom links, as functions of their label and description.
   + Use ~org-deftag~ to create custom tags, as functions of the Org sections they tag.
     
@@ -3453,21 +3453,21 @@ LaTeX!
 --------------------------------------------------------------------------------
   
 *Ready-to-Use Custom Links*
-    | Link                 | Purpose                                                                                    |
-    |----------------------+--------------------------------------------------------------------------------------------|
-    | =doc:label=          | Glossary tooltips ---e.g., doc:cl-loop; our own terms, even =<<<radio targets>>>=, too     |
-    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=, shown as 〔C-x C-e〕 in Emacs. |
-    | =color:= or =red:=   | Inline text colouring --- supports both names and hex codes.                               |
-    | =highlight:=         | Colour the background instead ---so highlighted in Emacs too.                              |
-    | =palette:=           | A button for readers to pick the page's background colour.                                 |
-    | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                |
-    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                             |
-    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                      |
-    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                         |
-    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                 |
-    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                      |
-    | =show:=              | Show a variable value --- dynamically insert content like your name or version.            |
-    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                    |
+    | Link                 | Purpose                                                                                         |
+    |----------------------+-------------------------------------------------------------------------------------------------|
+    | =doc:label=          | Glossary tooltips ---e.g., doc:cl-loop; our own terms, even =<<<radio targets>>>=, too          |
+    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=; in Emacs, 〔C-x C-e〕, click to run |
+    | =color:= or =red:=   | Inline text colouring --- supports both names and hex codes.                                    |
+    | =highlight:=         | Colour the background instead ---so highlighted in Emacs too.                                   |
+    | =palette:=           | A button for readers to pick the page's background colour.                                      |
+    | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                     |
+    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                                  |
+    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
+    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
+    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                      |
+    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                           |
+    | =show:=              | Show a variable value --- dynamically insert content like your name or version.                 |
+    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                         |
     
 
 --------------------------------------------------------------------------------
@@ -3695,7 +3695,8 @@ or the useful <kbd:M-s h .>.
 
 - In Emacs itself, each of these displays as 〔C-x C-s〕: the =kbd:= markup becomes the
   brackets and each =_= a space. Only the markup is displayed differently, so the keys
-  stay editable as ever.
+  stay editable as ever. Moreover, clicking one runs its keys ---after asking, as =elisp:=
+  links do--- so readers may try them on the spot.
 
 
 # To make a screenshot, add the following to the above :PROPERTIES: drawer.
@@ -4358,6 +4359,13 @@ Mind the gap.
   - =error= refuses a tagged section that has any, naming both headings; and
   - =recurse= wraps each subsection's own text in a block of its own, with the same
     arguments, unless the subsection carries the tag itself.
+
+  A block may also say how it looks in our Org buffers, via the option =:fontify=: below,
+  =#+begin_proof= shows as /Proof./, =#+end_proof= as ⏹, and the contents in italics too.
+  Each part is optional; the text itself is untouched, only displayed differently.
+  #+begin_src emacs-lisp
+(org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic]) …)
+  #+end_src
 
   /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
   and its default, followed by key-value pairs. The block above is then

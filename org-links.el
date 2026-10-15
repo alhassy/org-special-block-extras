@@ -109,7 +109,9 @@ buffer's choice never leaks into another's export."
 (org-deflink kbd
   "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
 
-Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs.
+Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs; clicking one
+runs its keys, so readers may try them out.  Keys may run any command, so we first ask, as `elisp' links
+do, via `org-link-elisp-confirm-function'.
 
 Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
 
@@ -126,7 +128,8 @@ Examples:
         keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
   ;; o-description is always nil when it comes to deciding the :face.
   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
-  :help-echo (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip)
+  :help-echo (format "%s ∷ %s\n%s\n\nClick to run these keys." the-label (or lisp-func "") tooltip)
+  :follow (org--kbd-run the-label)
   :export (cond ((equal o-backend 'latex) (format "\\texttt{%s}" the-label))
                 ;; The style is to remove the underlining caused by <abbr>.
                 (tooltip? (org--html-tooltip
@@ -134,6 +137,12 @@ Examples:
                            keystrokes
                            "border: none; text-decoration: none;"))
                 (t keystrokes)))
+
+(defun org--kbd-run (keys)
+  "Run the key sequence KEYS, such as \"C-x 3 C-x o\", once `org-link-elisp-confirm-function' agrees; else nothing."
+  (when (or (not org-link-elisp-confirm-function)
+            (funcall org-link-elisp-confirm-function (format "Run the keys “%s”? " keys)))
+    (execute-kbd-macro (read-kbd-macro keys))))
 
 (defun org--kbd-prettify (start end _path _bracket?)
   "Show the kbd: link from START to END as 〔C-x C-s〕, in Emacs: its markup becomes the brackets, and each ‘_’ a space.
@@ -144,28 +153,16 @@ Only the markup is displayed differently, so the keys themselves stay editable."
     (goto-char start)
     (when (re-search-forward "kbd:[ \t]*" end t)
       (let* ((keys-start (point))
-             (keys-end (if (re-search-forward "[]>]" end t) (match-beginning 0) end))
-             (show (lambda (from to string)
-                     (when (< from to)
-                       (put-text-property from to 'display (propertize string 'org-kbd-display t))))))
-        (funcall show start keys-start "〔")
+             (keys-end (if (re-search-forward "[]>]" end t) (match-beginning 0) end)))
+        (org--display-as start keys-start "〔")
         (cl-loop for underscore from keys-start below keys-end
-                 when (eq (char-after underscore) ?_) do (funcall show underscore (1+ underscore) " "))
+                 when (eq (char-after underscore) ?_) do (org--display-as underscore (1+ underscore) " "))
         (if (< keys-end end)
-            (funcall show keys-end end "〕")
+            (org--display-as keys-end end "〕")
           ;; A plain kbd:C-x_C-s has no closing markup, so its last key carries the closing bracket.
-          (funcall show (1- keys-end) keys-end (concat (buffer-substring-no-properties (1- keys-end) keys-end) "〕")))))))
+          (org--display-as (1- keys-end) keys-end (concat (buffer-substring-no-properties (1- keys-end) keys-end) "〕")))))))
 
 (org-link-set-parameters "kbd" :activate-func #'org--kbd-prettify)
-
-(defun org--kbd-unprettify (beg end)
-  "Remove, between BEG and END, the display strings of `org--kbd-prettify'; Org's unfontifying leaves foreign ones be."
-  (let ((pos beg))
-    (while (< pos end)
-      (let ((next (next-single-property-change pos 'display nil end)))
-        (when (-some--> (get-text-property pos 'display) (and (stringp it) (get-text-property 0 'org-kbd-display it)))
-          (put-text-property pos next 'display nil))
-        (setq pos next)))))
 
 ;;;;;; Octoicon
 
