@@ -47,39 +47,43 @@ graph blocks, ~C-M-i~ completes table keys and values, and eldoc explains the ke
 
 * Syntax Reference
 
-| Construct                                    | Dot equivalent                                                               |
-|----------------------------------------------+------------------------------------------------------------------------------|
-| ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                      |
-| ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes |
-| ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                |
-| ~#+graph:~ table                             | ~graph [ … ]~                                                                |
-| ~#+node:~ table                              | ~node [ … ]~                                                                 |
-| ~#+edge:~ table                              | ~edge [ … ]~                                                                 |
-| ~#+rank: n1 [[n 2]]~                         | ~{ rank=same; n1; "n 2" }~                                                   |
-| ~#+name: T~ + table                          | style template ~T~, used via ~:T:~ tags or ~:inherit~ rows                   |
-| ~#+begin_cluster TITLE :KEY V~               | ~subgraph cluster_TITLE { label=TITLE KEY=V … }~                             |
-| ~+ NAME~ list item                           | node ~NAME~ declaration                                                      |
-| indent ~+ CHILD~ under ~+ PARENT~            | edge PARENT → CHILD                                                          |
-| ~+ L :: CHILD~ under ~+ PARENT~              | edge PARENT → CHILD, labelled ~L~                                            |
-| ~1. A~, ~2. B~ under ~+ PARENT~              | edges PARENT → A, B; ~{ rank=same; A; B }~, in that order                    |
-| ~+ <<ID>> NAME~                              | node ~ID~, labelled ~NAME~                                                   |
-| ~+ NAME [[T]]~, ~+ NAME [[T][L]]~            | edge NAME → T, labelled ~L~                                                  |
-| ~+ NAME :T₁:T₂:~                             | node NAME, with templates ~T₁~ and ~T₂~ spliced in                           |
-| ~+ NAME [fn::NOTE]~                          | node NAME, with ~tooltip=NOTE~                                               |
-| ~+ NAME \\ MORE~                             | node ~NAME MORE~, its label broken over two lines                            |
-| ~+ NAME [[https://…]]~, ~[[file:x.png]]~     | node NAME, with ~URL="https://…"~, or ~image="x.png"~                        |
-| ~+ [X] NAME~, ~[-]~, ~[ ]~                   | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined    |
-| ~{{{M}}}~, after ~#+macro: M V~              | ~V~, anywhere in the block                                                   |
-| ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=          | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                    |
-| ~∣ key ∣ value ∣~                            | node attribute; values are quoted for you                                    |
-| ~∣ :id ∣ alias ∣~                            | cross-reference name for this node                                           |
-| ~∣ :edge.KEY ∣ value ∣~                      | attribute of the arc from the parent; each KEY at most once                  |
-| ~+ [[T]]~ under ~+ PARENT~                   | edge PARENT → T, a node declared elsewhere; ~record::port~ targets a port    |
-| ~∣ :edge[T].KEY ∣ value ∣~                   | attribute of this item's arc to ~T~, from a ~[[T]]~ link in its text         |
-| ~∣ :inherit ∣ T ∣~, ~∣ :edge.:inherit ∣ T ∣~ | inherit template ~T~'s rows; explicit rows win                               |
-| ~∣ :children-rank ∣ same ∣~                  | ~{ rank=same; <immediate children> }~                                        |
-| ~∣ shape ∣ cluster ∣~                        | ~subgraph cluster_ID { … }~ around the children                              |
-| ~#+record:~ table under ~+ NAME~             | node NAME, labelled by that table; ~<<P>>~ in a cell is port ~P~             |
+| Construct                                    | Dot equivalent                                                                  |
+|----------------------------------------------+---------------------------------------------------------------------------------|
+| ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                         |
+| ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes    |
+| ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                   |
+| ~#+name: N~ above ~#+begin_graph~            | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions    |
+| ~* HEADING :graph:~, with ~:PROPERTIES:~     | the section's text is a graph; ~:RANKDIR: LR~ is ~:rankdir LR~, and so on       |
+| ~:NAME:~ … ~:END:~ drawer                    | the directives inside, folded away                                              |
+| ~#+graph:~ table                             | ~graph [ … ]~                                                                   |
+| ~#+node:~ table                              | ~node [ … ]~                                                                    |
+| ~#+edge:~ table                              | ~edge [ … ]~                                                                    |
+| ~#+rank: n1 [[n 2]]~                         | ~{ rank=same; n1; "n 2" }~                                                      |
+| ~#+name: T~ + table                          | style template ~T~, used via ~:T:~ tags or ~:inherit~ rows; in or out of graphs |
+| top-level ~- :T: :: MEANING~                 | a legend entry: a sample of template ~T~, captioned ~MEANING~                   |
+| ~#+begin_cluster TITLE :KEY V~               | ~subgraph cluster_TITLE { label=TITLE KEY=V … }~                                |
+| ~+ NAME~ list item                           | node ~NAME~ declaration                                                         |
+| indent ~+ CHILD~ under ~+ PARENT~            | edge PARENT → CHILD                                                             |
+| ~+ L :: CHILD~ under ~+ PARENT~              | edge PARENT → CHILD, labelled ~L~                                               |
+| ~1. A~, ~2. B~ under ~+ PARENT~              | edges PARENT → A, B; ~{ rank=same; A; B }~, in that order                       |
+| ~+ <<ID>> NAME~                              | node ~ID~, labelled ~NAME~                                                      |
+| ~+ NAME [[T]]~, ~+ NAME [[T][L]]~            | edge NAME → T, labelled ~L~                                                     |
+| ~+ NAME :T₁:T₂:~                             | node NAME, with templates ~T₁~ and ~T₂~ spliced in                              |
+| ~+ NAME [fn::NOTE]~                          | node NAME, with ~tooltip=NOTE~                                                  |
+| ~+ NAME \\ MORE~                             | node ~NAME MORE~, its label broken over two lines; likewise in table cells      |
+| ~+ NAME [[https://…]]~, ~[[file:x.png]]~     | node NAME, with ~URL="https://…"~, or ~image="x.png"~                           |
+| ~+ [X] NAME~, ~[-]~, ~[ ]~                   | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined       |
+| ~{{{M}}}~, after ~#+macro: M V~              | ~V~, anywhere in the block                                                      |
+| ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=          | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                       |
+| ~∣ key ∣ value ∣~                            | node attribute; values are quoted for you                                       |
+| ~∣ :id ∣ alias ∣~                            | cross-reference name for this node                                              |
+| ~∣ :edge.KEY ∣ value ∣~                      | attribute of the arc from the parent; each KEY at most once                     |
+| ~+ [[T]]~ under ~+ PARENT~                   | edge PARENT → T, a node declared elsewhere; ~record::port~ targets a port       |
+| ~∣ :edge[T].KEY ∣ value ∣~                   | attribute of this item's arc to ~T~, from a ~[[T]]~ link; see Strictly tables   |
+| ~∣ :inherit ∣ T ∣~, ~∣ :edge.:inherit ∣ T ∣~ | inherit template ~T~'s rows; explicit rows win                                  |
+| ~∣ :children-rank ∣ same ∣~                  | ~{ rank=same; <immediate children> }~                                           |
+| ~∣ shape ∣ cluster ∣~                        | ~subgraph cluster_ID { … }~ around the children; see Strictly tables            |
+| ~#+record:~ table under ~+ NAME~             | node NAME, labelled by that table; ~<<P>>~ in a cell is port ~P~                |
 
 * Org's Own Syntax
 
@@ -177,6 +181,42 @@ a node label that needs a trailing ~:word:~ of its own puts it in ~=verbatim=~, 
 
 A tag naming no template is an error, rather than a typo silently becoming part of the label.
 
+** Legends are description lists
+
+A legend says what each style means: a glossary of templates. Org's glossary is the description list,
+so a top-level ~- :T: :: MEANING~ ---which has no parent to arc from--- is a legend entry: a sample
+styled by template ~T~, captioned ~MEANING~. Wrap the entries in a ~#+begin_cluster~ to box them:
+#+begin_src org
+,#+name: married
+| color | pink |
+| dir   | both |
+,#+name: wife
+| shape | box |
+
++ Muhammad
++ Khadija :wife:
+  + [[Muhammad]] :married:
+,#+begin_cluster Legend
+- :married: :: marriage
+- :wife: :: /wife/
+,#+end_cluster
+#+end_src
+#+begin_src dot
+subgraph cluster_Legend {
+  label=Legend
+  legend_1 [ shape=point style=invis ];
+  legend_1_end [ shape=point style=invis ];
+  legend_1 -> legend_1_end [ color=pink dir=both label=marriage ];
+  legend_2 [ shape=box label=<<I>wife</I>> ];
+}
+#+end_src
+
+- A template that styles some arc in the graph ---by a reference's or a term's tags, an
+  ~:edge.:inherit~ row, or an ~#+edge:~ line--- is sampled as an arc; any other, as a node.
+- Several tags, ~- :married:faint: :: …~, sample their templates together.
+- The sample drops ~constraint~, which shapes the layout rather than the arc.
+- The legend can never drift from the graph: change ~married~, and its sample changes too.
+
 ** Footnotes are tooltips
 
 A footnote is an aside we read when we want it; so is a tooltip. An inline footnote leaves the label and
@@ -224,6 +264,19 @@ Emacs -> "Lisp McCarthy, 1958";
 
 The label becomes an HTML-like one, as with markup; the id joins the lines with a space, so a node
 reached by a link usually wants a ~<<target>>~, as ~closures~ above.
+
+It is the one line break wherever a label is written: a description term, a table value, a ~#+record:~
+cell. So an arc's label breaks just as its node's does:
+#+begin_src org
++ Monad
+  + every monad \\ is an adjunction :: Adjunction
+  + Turing
+    | :edge.label | Church– \\ Turing thesis |
+#+end_src
+#+begin_src dot
+Monad -> Adjunction [ label=<every monad<BR/>is an adjunction> ];
+Monad -> Turing [ label="Church–\nTuring thesis" ];
+#+end_src
 
 ** Web links are URLs, image links are images
 
@@ -317,6 +370,9 @@ multi-word id its quotes:
 { rank=same; "λ calculus"; Lisp }
 #+end_src
 
+Under ~splines=curved~, Graphviz drops the label of an arc between two nodes on one rank; so there, such
+an arc's label becomes an ~xlabel~, which it still draws.
+
 ** The ~#+begin_graph~ line
 
 The header line takes the graph's title and any graph attribute, so small graphs need no preamble:
@@ -341,6 +397,51 @@ edge [ color=grey ]
 - The block's own ~#+graph:~, ~#+node:~, and ~#+edge:~ tables override the header.
 - As on Org's own ~#+attr_html:~ lines, values need no quotes: ~:bgcolor #6c7086~,
   ~:fontname Helvetica,Arial~. A value with spaces does: ~:fontname "Helvetica Neue"~.
+- When the preamble outgrows the line, a drawer of any name ---~:SETTINGS:~, ~:PALETTE:~--- folds
+  its ~#+graph:~, ~#+node:~, ~#+edge:~, ~#+rank:~, and ~#+name:~ lines away with ~TAB~.
+
+** ~#+name:~ and ~#+caption:~ make a figure
+
+In Org, ~#+name:~ is what ~[[links]]~ reach, and ~#+caption:~ captions a table or an image. A graph
+is an image, so both mean what they always do:
+#+begin_src org
+As [[lineage]] shows, Emacs is a Lisp.
+
+,#+name: lineage
+,#+caption: How Emacs came to be
+,#+begin_graph
++ λ-calculus
+  + Lisp
+    + Emacs Lisp
+,#+end_graph
+#+end_src
+
+- The graph renders to ~lineage.png~ ---both on ~C-c C-c~ and on export--- and exports as that image,
+  numbered and captioned: ~[[lineage]]~ reads “Figure 1” in HTML, and ~\ref~ in LaTeX.
+- An explicit ~:file~ still wins: ~#+begin_graph :file elsewhere.png~ renders there, and the
+  ~#+name:~ still labels it. With ~:svg t~, the figure is ~lineage.svg~.
+- An unnamed graph exports as before: inlined into HTML, or as dot source elsewhere.
+
+** Sections are graphs: the ~:graph:~ tag
+
+A ~#+begin_graph~ block is a function on a region; a ~:graph:~ tag is the same function on a section.
+The section's text is the graph, and its ~:PROPERTIES:~ drawer ---Org's own home for key-value
+settings--- is the ~#+begin_graph~ line: ~:RANKDIR: LR~ is ~:rankdir LR~, ~:NODE.SHAPE: box~ is
+~:node.shape box~, and ~:FILE:~ is ~:file~. See [[*Fun Examples #4: A Section Is a Graph][the live example]]:
+#+begin_src org
+,* Emacs's lineage :graph:
+:PROPERTIES:
+:RANKDIR: LR
+:NODE.SHAPE: box
+:END:
++ λ-calculus
+  + inspired :: Lisp
+    + Emacs Lisp
+#+end_src
+
+- The heading stays a heading; only its text becomes the graph, on export.
+- ~:graph_Some_Title:~ titles the graph ~Some Title~, as the words before the first ~:key~ would.
+- Org's own properties, such as ~:CUSTOM_ID:~ and ~:CATEGORY:~, stay Org's; they never reach Graphviz.
 
 * Keys, Edges, Records, and Ports
 
@@ -451,23 +552,19 @@ Lisp -> Fortran;
 - Two references to one target are two parallel arcs, each styled on its own.
 - A reference may name a record's port, ~[[struct1::mid]]~, or a cluster.
 
-For a quick arc, a link may also sit in the item's own text. It has no row of its own, so
-~:edge[TARGET].KEY~ names its arc by where it goes. This inline form is the one clusters use, since
-their children are their members:
+For a quick arc, a link may also sit in the item's own text; once the arc wants styling, it graduates
+to a reference child:
 #+begin_src org
 + <<lam>> λ-calculus
 + Fortran
 + Lisp [[lam][borrows]] [[Fortran]]
-  | :edge[lam].style     | dotted |
-  | :edge[Fortran].color | grey   |
 #+end_src
 #+begin_src dot
-Lisp -> lam [ label=borrows style=dotted ];
-Lisp -> Fortran [ color=grey ];
+Lisp -> lam [ label=borrows ];
+Lisp -> Fortran;
 #+end_src
 
-Explicit rows win over a link's label. An ~:edge[TARGET].KEY~ row with no ~[[TARGET]]~ link is an
-error. As in Org, an item's tables and directives may also follow its sub-items; they still belong to it.
+As in Org, an item's tables and directives may also follow its sub-items; they still belong to it.
 
 ** Templates: ~#+name:~, ~:tags:~, and ~:inherit~
 
@@ -506,11 +603,16 @@ Explicit rows win over a template's, so the marriage above is red. A line may ca
 
 Each tag is terse sugar for an ~:inherit~ row, which names one or more templates and is often the
 clearer choice in a long-lived graph: ~| :inherit | wife |~ in an item's table or under ~#+node:~,
-~| :edge.:inherit | married |~ for the arc into an item, ~| :edge[T].:inherit | married |~ for an inline
-link's arc. Wherever it sits, the item's explicit rows still win.
+~| :edge.:inherit | married |~ for the arc into an item. Wherever it sits, the item's explicit rows
+still win.
 
 A template may inherit others; one that, directly or not, inherits itself contributes nothing the
 second time. A name that no ~#+name:~ defines is an error, rather than a silent nothing.
+
+As with Babel's named tables, a ~#+name:~ table anywhere in the buffer, outside any graph, is a
+template every graph in the buffer may use; so a house style ---~wife~, ~married~--- is named once per
+file rather than once per graph. A graph's own template of the same name wins, and a template inside
+one graph stays that graph's own.
 
 ** Records: a ~#+record:~ table
 
@@ -543,11 +645,11 @@ above. Together they draw any layout that Graphviz's old ~{ }~ nesting could:
 #+begin_src org
 + struct3
   ,#+record:
-  | hello\nworld | b |            |   | g | h |
-  | ^            | c | <<here>> d | e | ^ | ^ |
-  | ^            | f |            |   | ^ | ^ |
+  | hello \\ world | b |            |   | g | h |
+  | ^              | c | <<here>> d | e | ^ | ^ |
+  | ^              | f |            |   | ^ | ^ |
 #+end_src
-Here ~b~ and ~f~ span three columns, ~hello~, ~g~, and ~h~ three rows; a literal ~\n~ breaks a line.
+Here ~b~ and ~f~ span three columns, ~hello~, ~g~, and ~h~ three rows; a ~\\~ breaks a line, as in an item.
 
 Hlines and column cookies mean what they mean to Org. An hline draws a rule between rows, and a table
 with any hline draws one outer border rather than a box around every cell ---so a UML class is just
@@ -575,6 +677,9 @@ Person [ shape=plain label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0"><TR
 - A cell with a link but no target is ported by its text, spaces as underscores; ~<<x marks the
   spot>>~ is likewise reached as ~[[struct3::x marks the spot]]~.
 - Ports belong to their record, so two records may both have a ~head~ port: ~r1::head~ and ~r2::head~.
+- A cell's trailing tags style its arcs, as a reference's style its arc:
+  ~| <<mid>> middle [[struct2::one]] :dashed: |~ draws a dashed arc. A cell with tags but no link is an
+  error; write ~=:x:=~ for literal text.
 - ~a::b~ names a port only when ~a~ names a record; otherwise it is an ordinary node, such as
   ~std::vector~. Record and port names may contain dots: ~[[org.el::v1.2]]~.
 - Graphviz spells ports ~record:port~; that is the spelling in the generated dot.
@@ -625,8 +730,26 @@ Emacs -> Org [ lhead=cluster_Packages ];
 - The title runs up to the first ~:KEY~; ~#+begin_cluster Time 12:30~ is titled ~Time 12:30~.
 - ~C-c C-c~, ~C-M-i~, and eldoc work inside a cluster block just as anywhere else in the graph.
 
-The block abbreviates an item with a ~| shape | cluster |~ row, which remains available. An arc to or from a
-cluster lands on the cluster's first node, clipped at its border:
+An arc to or from a cluster lands on the cluster's first node, clipped at its border, as ~lhead~ shows above.
+
+** Strictly tables: ~:edge[T].KEY~ and ~| shape | cluster |~
+
+Some of us prefer every attribute in a key-value table, never in the list's shape. Two spellings
+serve that taste; the examples above avoid them, but they are fully supported.
+
+An inline link's arc is styled by ~:edge[T].KEY~, naming the arc by where it goes; ~:edge[T].:inherit~
+applies a template to it. A row with no ~[[T]]~ link in the item's text is an error:
+#+begin_src org
++ <<lam>> λ-calculus
++ Lisp [[lam][borrows]]
+  | :edge[lam].style | dotted |
+#+end_src
+#+begin_src dot
+Lisp -> lam [ label=borrows style=dotted ];
+#+end_src
+
+A ~| shape | cluster |~ row makes an item a cluster, as ~#+begin_cluster~ does. Its children are then
+its members rather than arc targets, so arcs out of them are inline links, styled as above:
 #+begin_src org
 + Emacs
   + Packages
@@ -707,7 +830,7 @@ Emacs -> Org [ lhead=cluster_Packages ];
      ~:node.KEY~ and ~:edge.KEY~, and the block's own ~:file~, ~:svg~, ~:directed~, and ~:C-c_C-c~;
      ~:rankdir L C-M-i~ then offers ~LR~.
    - Eldoc shows the description of the key on the current row, or at point on the ~#+begin_graph~
-     line, ending with Graphviz's default; e.g., ~| :edge[x].arrowhead | vee |~ shows “Style of
+     line, ending with Graphviz's default; e.g., ~| :edge.arrowhead | vee |~ shows “Style of
      arrowhead on the head node of an edge.  Default: normal.”
    - ~C-u RET~ works in the ~C-c '~ buffer too.
 
@@ -745,7 +868,7 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 | fillcolor | #313244        |
 | shape     | box            |
 
-#+edge:
+#+edge: :lineage:
 | fontname  | Helvetica |
 | fontsize  | 10        |
 | fontcolor | #a6e3a1   |
@@ -757,9 +880,13 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 #+rank: lisp haskell
 #+rank: emacs ghc
 
-#+name: legend
-| shape     | plaintext |
-| fontcolor | #6c7086   |
+#+name: lineage
+| style | solid |
+#+name: inspiration
+| style | dashed |
+#+name: equivalence
+| style      | dotted |
+| constraint | false  |
 
 + <<lambda>> λ-Calculus \\ (Church, 1930s)
   | shape     | ellipse       |
@@ -768,18 +895,14 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
   | fontcolor | #f38ba8       |
   | penwidth  | 2             |
   + encodes :: <<church>> Church Encoding \\ ℕ, Bool, Pairs
-    + <<turing>> Turing Machines \\ (equivalent power)
-      | :edge.label      | Church–\nTuring thesis |
-      | :edge.style      | dotted                 |
-      | :edge.color      | {{{yellow}}}           |
-      | :edge.fontcolor  | {{{yellow}}}           |
-      | :edge.constraint | false                  |
-  + inspired :: <<lisp>> Lisp \\ (McCarthy, 1958) \\ car · cdr · cons
-    | :edge.style | dashed    |
-    | fillcolor   | #1e3a5f   |
-    | color       | {{{sky}}} |
-    | fontcolor   | {{{sky}}} |
-    | penwidth    | 2         |
+    + Church– \\ Turing thesis :equivalence: :: <<turing>> Turing Machines \\ (equivalent power)
+      | :edge.color     | {{{yellow}}} |
+      | :edge.fontcolor | {{{yellow}}} |
+  + inspired :inspiration: :: <<lisp>> Lisp \\ (McCarthy, 1958) \\ car · cdr · cons
+    | fillcolor | #1e3a5f   |
+    | color     | {{{sky}}} |
+    | fontcolor | {{{sky}}} |
+    | penwidth  | 2         |
     + subset of :: <<emacs>> Emacs Lisp \\ buffers · modes · hooks
       | :edge.penwidth | 2             |
       | :edge.color    | {{{sky}}}     |
@@ -792,17 +915,15 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
       + implements :: [[advice]]
     + enables :: [[macros]]
     + provides :: [[closures]]
-  + formalises :: <<haskell>> Haskell \\ pure · lazy · typed
-    | :edge.style | dashed      |
-    | fillcolor   | #2a1e3f     |
-    | color       | {{{mauve}}} |
-    | fontcolor   | {{{mauve}}} |
+  + formalises :inspiration: :: <<haskell>> Haskell \\ pure · lazy · typed
+    | fillcolor | #2a1e3f     |
+    | color     | {{{mauve}}} |
+    | fontcolor | {{{mauve}}} |
     + <<ghc>> GHC \\ Core → STG → Cmm
       | fillcolor | #2a1e3f     |
       | color     | {{{mauve}}} |
       | fontcolor | {{{mauve}}} |
-    + uses :: [[monad]]
-      | :edge.style | dashed |
+    + uses :inspiration: :: [[monad]]
 
 + <<combinatory>> Combinatory Logic \\ (Schönfinkel/Curry)
   | shape     | ellipse       |
@@ -823,22 +944,20 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 + <<monad>> Monad \\ η · μ · associativity
   | shape | parallelogram |
   + <<adjoint>> Adjunction \\ F ⊣ G
-    | :edge.label     | every monad\nis an adjunction |
-    | :edge.color     | {{{yellow}}}                  |
-    | :edge.fontcolor | {{{yellow}}}                  |
-    | shape           | parallelogram                 |
-  + models :: [[closures]]
-    | :edge.style      | dotted |
-    | :edge.constraint | false  |
+    | :edge.label     | every monad \\ is an adjunction |
+    | :edge.color     | {{{yellow}}}                    |
+    | :edge.fontcolor | {{{yellow}}}                    |
+    | shape           | parallelogram                   |
+  + models :equivalence: :: [[closures]]
 + <<functor>> Functor \\ F : C → D
   | shape | parallelogram |
   + F∘F with η,μ :: [[monad]]
 #+end_cluster
 
 #+begin_cluster Legend :fontcolor #cdd6f4 :color {{{surface}}} :style filled :fillcolor #181825 :fontsize 11
-+ solid = direct lineage :legend:
-+ dashed = inspiration :legend:
-+ dotted = equivalence :legend:
+- :lineage: :: direct lineage
+- :inspiration: :: inspiration
+- :equivalence: :: equivalence
 #+end_cluster
 #+end_graph
 #+RESULTS:
@@ -897,11 +1016,11 @@ then to insert the hex-code at point 😲
   | :children-rank | same    |
   + encodes :: <<church>> Church Encoding \\ ℕ, Bool, Pairs
     + <<turing>> Turing Machines \\ (equivalent power)
-      | :edge.label      | Church–\nTuring thesis |
-      | :edge.style      | dotted                 |
-      | :edge.color      | #f9e2af                |
-      | :edge.fontcolor  | #f9e2af                |
-      | :edge.constraint | false                  |
+      | :edge.label      | Church– \\ Turing thesis |
+      | :edge.style      | dotted                   |
+      | :edge.color      | #f9e2af                  |
+      | :edge.fontcolor  | #f9e2af                  |
+      | :edge.constraint | false                    |
   + formalises :: <<haskell>> Haskell \\ pure · lazy · typed
     | :edge.style | dashed  |
     | fillcolor   | #2a1e3f |
@@ -955,9 +1074,9 @@ then to insert the hex-code at point 😲
 + <<monad>> Monad \\ η · μ · associativity
   | shape | parallelogram |
   + [[adjoint]]
-    | :edge.label     | every monad\nis an adjunction |
-    | :edge.color     | #f9e2af                       |
-    | :edge.fontcolor | #f9e2af                       |
+    | :edge.label     | every monad \\ is an adjunction |
+    | :edge.color     | #f9e2af                         |
+    | :edge.fontcolor | #f9e2af                         |
   + [[closures]]
 
 + <<adjoint>> Adjunction \\ F ⊣ G
@@ -1054,9 +1173,9 @@ Spans replace ~{ }~ nesting: ~^~ continues the cell above, and an empty cell the
 #+begin_graph
 + struct3
   #+record:
-  | hello\nworld | b |                        |   | g | h |
-  | ^            | c | <<x marks the spot>> d | e | ^ | ^ |
-  | ^            | f |                        |   | ^ | ^ |
+  | hello \\ world | b |                        |   | g | h |
+  | ^              | c | <<x marks the spot>> d | e | ^ | ^ |
+  | ^              | f |                        |   | ^ | ^ |
 
 + where am i looking?
   + 👀 :: [[struct3::x marks the spot]]
@@ -1067,6 +1186,17 @@ Spans replace ~{ }~ nesting: ~^~ continues the cell above, and an empty cell the
 #+end_graph
 #+RESULTS:
 [[file:graph-20260520-195608.png]]
+
+* Fun Examples #4: A Section Is a Graph :graph_Lineage:
+:PROPERTIES:
+:RANKDIR: LR
+:NODE.SHAPE: box
+:EDGE.COLOR: grey
+:END:
++ λ-calculus
+  + inspired :: Lisp
+    + subset of :: Emacs Lisp
+    + dialect :: Scheme
 
 * Karbala — Family of the Prophet
 :PROPERTIES:

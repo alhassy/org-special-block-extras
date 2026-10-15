@@ -52,6 +52,18 @@
   X [ label=X ];
 }")
 
+(define-graph-test "any drawer wraps preamble directives, whatever its name"
+  :input "
+:PALETTE:
+#+node:
+| shape | box |
+:END:
++ A"
+  :output "digraph {
+  node [ shape=box ]
+  A [ label=A ];
+}")
+
 (deftest "bare preamble and :SETTINGS: drawer produce identical output"
   (let ((bare   (org--graph-raw->dot "
 #+graph:

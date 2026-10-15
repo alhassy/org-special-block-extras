@@ -103,5 +103,36 @@ DEFAULT
   (using (org-defblock test-backend-check () "Echo." contents)
     (should-error (org-block/test-backend-check "html" "body"))))
 
+;;; A block's #+name:
+
+(deftest "a block's #+name: is its anchor"
+  (with-temp-buffer
+    (org-mode)
+    (insert "#+name: fig\n#+begin_myblock\nbody\n#+end_myblock\n#+begin_myblock\nbody\n#+end_myblock")
+    (goto-char (point-min))
+    (should (equal "fig" (org-special-block-anchor (org-special-block-after-point "myblock"))))
+    (search-forward "body")
+    (should-not (org-special-block-anchor (org-special-block-after-point "myblock")))))
+
+(define-org-export-test "a named block yielding Org is labelled by its #+name: and #+caption:, so [[NAME]] reaches it"
+  :input "See [[fig]].
+
+          #+name: fig
+          #+caption: A figure
+          #+begin_pic
+          #+end_pic"
+  :to latex
+  :using (org-defblock pic ()
+           "An image, as Org."
+           (org-parse "[[file:x.png]]"))
+  :equals "See \\ref{fig:org-id-1}.
+
+\\begin{figure}[htbp]
+\\centering
+\\includegraphics[width=.9\\linewidth]{x.png}
+\\caption{\\label{fig:org-id-1}A figure}
+\\end{figure}
+")
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

@@ -371,7 +371,7 @@
   Khadija [ label=Khadija ];
 }")
 
-(deftest "tags in a description term, and on keyword lines, get the `org-tag' face too"
+(deftest "tags in a description term, on keyword lines, and after a record cell's link get the `org-tag' face too"
   (with-temp-buffer
     (org-mode)
     (insert "
@@ -380,9 +380,12 @@
 #+node: :wife:
 + Muhammad
   + wed :married: :: Khadija :wife:
++ s
+  #+record:
+  | <<p>> [[Muhammad]] :faint: |
 #+end_graph")
     (font-lock-ensure)
-    (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :"))
+    (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :" "[[Muhammad]] :"))
       (goto-char (point-min))
       (search-forward at)
       (should (memq 'org-tag (ensure-list (get-text-property (point) 'face)))))))
@@ -568,5 +571,116 @@
       (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
         (org-graph--cc-handler))
       (should (s-contains-p "a [ color=\"#f9e2af\" label=a ];" dot)))))
+
+;;; One line break: `\\'
+
+(define-graph-test "`\\\\' breaks a line everywhere a label is written: a description term, a table value, a record cell"
+  :input "
++ Monad
+  + every monad \\\\ is an adjunction :: Adjunction
+  + Turing
+    | :edge.label | Church– \\\\ Turing thesis |
+    | :edge.color | <<B>red</B>> |
++ s
+  #+record:
+  | hello \\\\ world | <<p>> b |"
+  :output "digraph {
+  Monad [ label=Monad ];
+  Monad -> Adjunction [ label=<every monad<BR/>is an adjunction> ];
+  Adjunction [ label=Adjunction ];
+  Monad -> Turing [ label=\"Church–\\nTuring thesis\" color=<<B>red</B>> ];
+  Turing [ label=Turing ];
+  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>> ];
+}")
+
+;;; Legends: a top-level `- :T: :: MEANING'
+
+(define-graph-test "a legend entry samples its templates: as an arc when they style arcs in the graph, else as a node"
+  :input "
+#+name: married
+| color | pink |
+| dir   | both |
+#+name: wife
+| shape | box |
++ Muhammad
++ Khadija :wife:
+  + [[Muhammad]] :married:
+#+begin_cluster Legend
+- :married: :: marriage
+- :wife: :: /wife/
+#+end_cluster"
+  :output "digraph {
+  Muhammad [ label=Muhammad ];
+  Khadija [ shape=box label=Khadija ];
+  Khadija -> Muhammad [ color=pink dir=both ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ shape=point style=invis ];
+    legend_1_end [ shape=point style=invis ];
+    legend_1 -> legend_1_end [ color=pink dir=both label=marriage ];
+    legend_2 [ shape=box label=<<I>wife</I>> ];
+  }
+}")
+
+(define-graph-test "a template styles arcs when an #+edge: line's tags name it, too; its sample sans `constraint', which is layout"
+  :input "
+#+name: faint
+| style      | dotted |
+| constraint | false  |
+#+edge: :faint:
+- :faint: :: inferred
++ A
+  + B"
+  :output "digraph {
+  edge [ style=dotted constraint=false ]
+  legend_1 [ shape=point style=invis ];
+  legend_1_end [ shape=point style=invis ];
+  legend_1 -> legend_1_end [ style=dotted label=inferred ];
+  A [ label=A ];
+  A -> B;
+  B [ label=B ];
+}")
+
+(deftest "a top-level `TERM ::' that is not just tags is an error pointing at the legend spelling"
+  (should (s-contains-p "- :T: :: Khadija"
+                        (cadr (should-error (org--graph-raw->dot "\n- wed :: Khadija" nil) :type 'user-error)))))
+
+;;; Same-rank arcs under splines=curved
+
+(define-graph-test "under splines=curved, a same-rank arc's label is an xlabel, which Graphviz still draws; others keep theirs"
+  :input "
+#+graph:
+| splines | curved |
+#+rank: church turing
++ λ
+  + church
+  + turing
+    + Church \\\\ Turing thesis :: [[church]]
+  + plain :: other"
+  :output "digraph {
+  graph [ splines=curved ]
+  { rank=same; church; turing }
+  \"λ\" [ label=\"λ\" ];
+  \"λ\" -> church;
+  church [ label=church ];
+  \"λ\" -> turing;
+  turing [ label=turing ];
+  turing -> church [ xlabel=<Church<BR/>Turing thesis> ];
+  \"λ\" -> other [ label=plain ];
+  other [ label=other ];
+}")
+
+(define-graph-test "without splines=curved, a same-rank arc keeps its label"
+  :input "
+#+rank: church turing
++ church
++ turing
+  + thesis :: [[church]]"
+  :output "digraph {
+  { rank=same; church; turing }
+  church [ label=church ];
+  turing [ label=turing ];
+  turing -> church [ label=thesis ];
+}")
 
 (provide 'org-graph-org-syntax-tests)

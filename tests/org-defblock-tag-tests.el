@@ -60,6 +60,40 @@ Two.
 ]
 ")
 
+;; Concretely, a `:graph:' section's drawer reads `:RANKDIR: LR', with no `rankdir' argument declared anywhere.
+(define-org-export-test "a block that allows other keys receives every property of its section, bar Org's own"
+  :input "* Plot :note:
+          :PROPERTIES:
+          :RANKDIR: LR
+          :NODE.SHAPE: box
+          :CUSTOM_ID: plot
+          :END:
+          Body."
+  :to latex
+  :using (org-defblock note (&optional title &key &allow-other-keys :tag t)
+           "Show the header's keyword arguments."
+           (format "%S" org--handler-args))
+  :equals "\\section{Plot}
+\\label{sec:org-id-1}
+(:node.shape \"box\" :rankdir \"LR\")
+")
+
+(define-org-export-test "a block that refuses other keys receives only the properties it declares"
+  :input "* Plot :note:
+          :PROPERTIES:
+          :RANKDIR: LR
+          :COLOR: red
+          :END:
+          Body."
+  :to latex
+  :using (org-defblock note (&optional title &key color :tag t)
+           "Show the header's keyword arguments."
+           (format "%S" org--handler-args))
+  :equals "\\section{Plot}
+\\label{sec:org-id-1}
+(:color \"red\")
+")
+
 ;;; Which text is wrapped, and which sections and tags are touched
 
 (define-org-export-test "a tagged section keeps its heading and other tags, and wraps only its own text"

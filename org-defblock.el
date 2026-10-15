@@ -61,7 +61,12 @@
   (end-point        nil :type integer :documentation "Point at end of clause “#+end_⟨name⟩”.")
   (main-arg         nil :type string  :documentation "First non-keyword argument")
   (kwdargs          nil :type plist   :documentation "The key-value arguments for the header.")
-  (contents         nil :type string  :documentation "Body text contents"))
+  (contents         nil :type string  :documentation "Body text contents")
+  (anchor           nil :type string  :documentation "The block's #+name:, which [[links]] reach; else nil."))
+
+(defvar org--handler-anchor nil
+  "The #+name: of the block whose handler is running; else nil.
+E.g., a graph named `lineage' is a figure that [[lineage]] reaches.")
 
 
 ;; At compile time too, since `-let' patterns are expanded then.
@@ -118,6 +123,7 @@ one it reads as a paragraph, since its “#+end_NAME” is missing, is an error.
          :name (downcase (org-element-property :type elem))
          :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
          :kwdargs kwdargs
+         :anchor (org-element-property :name elem)
          :contents (if contents-begin
                        (s-trim (buffer-substring-no-properties contents-begin (org-element-property :contents-end elem)))
                      "")
@@ -162,11 +168,12 @@ Indentation is preserved via `org-replace-text-while-preserving-indentation'.
 This method is part of the Org export pipeline that processes supported
 blocks listed in `org--supported-blocks', typically triggered during export
 pre-processing steps."
-  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point) block]
+  (-let [(&org-special-block 'name 'main-arg 'kwdargs 'contents 'start-point 'end-point 'anchor) block]
     (org-replace-text-while-preserving-indentation
      start-point
      end-point
-     (apply (intern (format "org-block/%s" name)) backend contents main-arg kwdargs))))
+     (let ((org--handler-anchor anchor))
+       (apply (intern (format "org-block/%s" name)) backend contents main-arg kwdargs)))))
 
 
 (defun org-replace-text-while-preserving-indentation (start-point end-point multi-line-text)
@@ -343,7 +350,7 @@ See `org--defblock-section-to-block' for what each mode does."
     mode)))
 
 (defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend
-                                            &optional subsections)
+                                            &optional subsections other-keys?)
   "Rewrite the section at point ---its heading line and DRAWER erased by `org-deftag'--- as HEADING atop a NAME block.
 
   * Why bother? :details_Spoiler_alert:        * Why bother?
@@ -355,7 +362,9 @@ See `org--defblock-section-to-block' for what each mode does."
                                                #+end_details
 
 TAG-ARGS, joined by spaces, form the main argument, else the section's MAIN property; each of the
-KEYWORDS found among the section's PROPERTIES becomes a keyword argument.  The section's own text is
+KEYWORDS found among the section's PROPERTIES becomes a keyword argument ---and, when OTHER-KEYS? since
+the block allows other keys, so does every other property bar Org's own, such as CATEGORY and CUSTOM_ID.
+The section's own text is
 wrapped, up to the next heading of any depth; a block cannot hold a heading, so SUBSECTIONS says what
 becomes of the section's subsections:
 + `ignore' (the default): they stay outside the block, exported as usual.
@@ -368,6 +377,11 @@ The block is then at once replaced by the result of `org-block/NAME' for BACKEND
 when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
   (let* ((property (lambda (key) (plist-get properties (intern (format ":%s" (downcase (symbol-name key)))))))
          (main-arg (if tag-args (string-join tag-args " ") (funcall property main)))
+         (keywords (if (not other-keys?) keywords
+                     (let ((orgs (--map (intern (downcase it)) (append org-special-properties org-default-properties))))
+                       (-union keywords (cl-loop for key in properties by #'cddr
+                                                 for name = (intern (substring (symbol-name key) 1))
+                                                 unless (or (memq name orgs) (eq name main)) collect name)))))
          (header (concat (if main-arg (format " %S" main-arg) "")
                          (mapconcat (lambda (key) (-if-let (value (funcall property key)) (format " :%s %S" key value) ""))
                                     keywords "")))
@@ -464,7 +478,8 @@ KWDS may also carry options, which are not arguments:
 + `:tag nil' declines the tag: otherwise a section tagged :NAME: exports as a
   NAME block around its text; the tag's underscore-separated items form the
   main argument, and the section's properties supply keyword arguments by
-  name.  E.g., \"* Stuck? :details_Hint:\" folds its text away under the
+  name ---every property bar Org's own, when the block allows other keys.
+  E.g., \"* Stuck? :details_Hint:\" folds its text away under the
   title Hint.  See `org--defblock-section-to-block'.
   A block cannot hold a heading, so `:tag [:subsections MODE]' says what becomes
   of a tagged section's subsections: `ignore' leaves them outside the block, as
@@ -561,6 +576,8 @@ Three example uses:
          (link      (funcall enabled? :link)) ;; nil, t, or a display vector
          (tag?      (funcall enabled? :tag)) ;; nil, t, or [:subsections MODE]
          (subsections (when tag? (org--defblock-tag-subsections name tag?)))
+         ;; As in `org-defblock-only': other keywords are welcome unless `cl-defun'-style KWDS omit `&allow-other-keys'.
+         (other-keys? (or (not (plist-member kwds :allow-other-keys)) (plist-get kwds :allow-other-keys)))
          (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode) :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
@@ -587,7 +604,7 @@ Three example uses:
                          (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
                                                          ',(or (car kwds) 'main-arg)
                                                          ',(mapcar #'car (-partition 2 (cddr (org-plist-delete kwds :allow-other-keys))))
-                                                         o-backend ',subsections)))))))
+                                                         o-backend ',subsections ,other-keys?)))))))
 
 
 ;; WHERE ...
@@ -675,8 +692,14 @@ Features:
                                                ,default-value))))
 
              ;; Lexical, since BODY is spliced right here; `cl-letf' would clobber any global `org-export'.
-             (cl-flet ((org-export (x) "Wrap the given X in an export block for the current backend."
-                         (if contents-occur-as-link-description x (format "#+begin_export %s\n%s\n#+end_export" backend x)))
+             (cl-flet ((org-export (x) "Wrap the given X in an export block for the current backend.
+A named block's result opens sans an empty export block, so its #+name: and #+caption: label what it begins with."
+                         (if contents-occur-as-link-description x
+                           (let ((wrapped (format "#+begin_export %s\n%s\n#+end_export" backend x))
+                                 (empty (format "#+begin_export %s\n\n#+end_export\n" backend)))
+                             (if (and org--handler-anchor (string-prefix-p empty wrapped))
+                                 (substring wrapped (length empty))
+                               wrapped))))
                        (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))))
                ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',

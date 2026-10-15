@@ -325,8 +325,8 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
 (cl-loop for (social url name)
          in '(("reddit/subreddit-subscribers" "https://www.reddit.com/r/%s" "reddit")
               ("github" "https://www.github.com/%s")
-              ("github/stars" "https://www.github.com/%s/stars")
-              ("github/watchers" "https://www.github.com/%s/watchers")
+              ("github/stars" "https://github.com/%s")      ; Its Star button; /stars is no page
+              ("github/watchers" "https://github.com/%s")   ; Its Watch button; /watchers needs a login
               ("github/followers" "https://www.github.com/%s?tab=followers")
               ("github/forks" "https://www.github.com/%s/fork")
               ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))

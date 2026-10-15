@@ -27,9 +27,9 @@
   :input "
 + struct3
   #+record:
-  | hello\\nworld | b |            |   | g | h |
-  | ^            | c | <<here>> d | e | ^ | ^ |
-  |              | f |            |   | ^ | ^ |
+  | hello \\\\ world | b |            |   | g | h |
+  | ^              | c | <<here>> d | e | ^ | ^ |
+  |                | f |            |   | ^ | ^ |
 + reader
   + [[struct3::here]]"
   :output "digraph {
@@ -132,5 +132,56 @@
     (search-backward "sha")
     (forward-char 3)
     (should-not (org-graph--completion-at-point))))
+
+;;; Tags on a cell style its arcs
+
+(define-graph-test "a cell's trailing tags style its arcs, as a reference's style its arc; legends see them as arc templates"
+  :input "
+#+name: dashed
+| style | dashed |
++ struct1
+  #+record:
+  | left | <<mid>> middle [[struct2::one][calls]] :dashed: | right |
++ struct2
+  #+record:
+  | <<one>> one | two |
+#+begin_cluster Legend
+- :dashed: :: borrows
+#+end_cluster"
+  :output "digraph {
+  struct1:mid -> struct2:one [ label=calls style=dashed ];
+  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
+  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ shape=point style=invis ];
+    legend_1_end [ shape=point style=invis ];
+    legend_1 -> legend_1_end [ style=dashed label=borrows ];
+  }
+}")
+
+(define-graph-test "a cell's `:edge[T].KEY' rows still win over its tags"
+  :input "
+#+name: dashed
+| style | dashed |
++ s
+  | :edge[t].style | bold |
+  #+record:
+  | <<p>> [[t]] :dashed: |
++ t"
+  :output "digraph {
+  s:p -> t [ style=bold ];
+  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"p\"></TD></TR></TABLE>> ];
+  t [ label=t ];
+}")
+
+(deftest "a cell with tags but no link is an error, rather than its tags silently vanishing"
+  (should-error (org--graph-raw->dot "
+#+name: x
+| a | b |
++ s
+  #+record:
+  | Vim's :x: |" nil)
+                :type 'user-error))
 
 (provide 'org-graph-record-nodes-tests)
