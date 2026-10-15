@@ -638,16 +638,25 @@ Features:
                (backend      ;; Symbol
                 raw-contents ;; String
                 &optional ,main-arg-name
-                ;; Named, not `_': `cl-defun' reads the keywords from it, so it is never unused.
                 &rest  org--handler-args
                 ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
                 ;; prefer any `org-set-block-header-args' value over the declared default.
                 &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
-                ,@(when allow-other-keys? '(&allow-other-keys)))
+                ;; Always allowed here: we refuse unknown keywords ourselves, below, naming only the user's own.
+                &allow-other-keys)
              ;; Assertions are expanded here, once: the handler runs interpreted, which would re-expand them on every call.
              ,(macroexpand-all `(lf-assert ',name        t
                                            backend      (and it (symbolp it))
                                            raw-contents (stringp it)))
+
+             ,@(unless allow-other-keys?
+                 (let ((known (--map (intern (format ":%s" it)) (mapcar #'car (-partition 2 keywords)))))
+                   `((-when-let (unknown (cl-loop for key in org--handler-args by #'cddr
+                                                  unless (memq key '(:contents-occur-as-link-description ,@known))
+                                                  collect key))
+                       (error "‘%s’ block: unknown header argument%s %s; it takes %s" ',name
+                              (if (cdr unknown) "s" "") (mapconcat #'symbol-name unknown " ")
+                              ,(if known (mapconcat #'symbol-name known " ") "no header arguments"))))))
 
              ;; Use default value for blank main argument
              (when (or (null ,main-arg-name) (equal ,main-arg-name ""))
