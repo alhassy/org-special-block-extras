@@ -1,267 +1,135 @@
-;;; org-graph-record-nodes-tests.el --- Record nodes  -*- lexical-binding: t; -*-
+;;; org-graph-record-nodes-tests.el --- Records: a #+record: table is a node's <TABLE> label  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-graph-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/graph/org-graph-test-utils.el")))
 
-;;; Record nodes
+;;; Records
 
-(define-graph-test "record node: three fields with port ids"
+(define-graph-test "a #+record: table is the node's <TABLE> label: a cell's <<target>> is its port, and its [[link]] an arc from there"
   :input "
 + struct1
-  | shape | record |
-  + left
-    | :id | f0 |
-  + mid dle
-    | :id | f1 |
-  + right
-    | :id | f2 |"
-  :output "digraph {
-  struct1 [ shape=record label=\"<f0> left|<f1> mid\\ dle|<f2> right\" ];
-}")
-
-(define-graph-test "record node: two records with cross-port edge"
-  :input "
-+ struct1
-  | shape | record |
-  + left
-    | :id | f0 |
-  + mid dle
-    | :id | f1         |
-    | :to | struct2.g0 |
-  + right
-    | :id | f2 |
+  #+record:
+  | left | <<mid>> middle [[struct2.one]] | right |
 + struct2
-  | shape | record |
-  + one
-    | :id | g0 |
-  + two
-    | :id | g1 |"
+  #+record:
+  | <<one>> one | two |
++ reader
+  + [[struct1.mid]]"
   :output "digraph {
-  struct1 [ shape=record label=\"<f0> left|<f1> mid\\ dle|<f2> right\" ];
-  struct1:f1 -> struct2:g0;
-  struct2 [ shape=record label=\"<g0> one|<g1> two\" ];
+  struct1:mid -> struct2:one;
+  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
+  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
+  reader [ label=reader ];
+  reader -> struct1:mid;
 }")
 
-(define-graph-test "record node: no id row — field name used as display label only, no port prefix"
-  :input "
-+ box
-  | shape | record |
-  + alpha
-  + beta"
-  :output "digraph {
-  box [ shape=record label=\"alpha|beta\" ];
-}")
-
-(define-graph-test "Mrecord shape works identically to record"
-  :input "
-+ rounded
-  | shape | Mrecord |
-  + x
-    | :id | p0 |
-  + y
-    | :id | p1 |"
-  :output "digraph {
-  rounded [ shape=Mrecord label=\"<p0> x|<p1> y\" ];
-}")
-
-(define-graph-test "record node preserves other node attrs beside shape"
-  :input "
-+ s
-  | shape | record |
-  | color | red    |
-  + a
-  + b"
-  :output "digraph {
-  s [ shape=record label=\"a|b\" color=red ];
-}")
-
-(define-graph-test "regression: field name with space normalises port to underscore form"
-  ;; Without normalisation, `mid dle` as a port produces `struct1:mid dle` in the
-  ;; edge statement, which Graphviz parses as node `struct1:mid` + stray node `dle`.
-  ;; The field has no :id row, yet an arc ends there, so its label declares the port.
-  :input "
-+ s
-  | shape | record |
-  + mid dle
-    | :to | s.mid dle |"
-  :output "digraph {
-  s [ shape=record label=\"<mid_dle> mid\\ dle\" ];
-  s:mid_dle -> s:mid_dle;
-}")
-
-(define-graph-test "{} child wraps fields in a layout-flip group"
-  :input "
-+ s
-  | shape | record |
-  + a
-  + {}
-    + b
-    + c
-  + d"
-  :output "digraph {
-  s [ shape=record label=\"a|{b|c}|d\" ];
-}")
-
-(define-graph-test "nested {} groups flip orientation twice"
-  :input "
-+ s
-  | shape | record |
-  + a
-  + {}
-    + b
-    + {}
-      + c
-      + d
-    + e
-  + f"
-  :output "digraph {
-  s [ shape=record label=\"a|{b|{c|d}|e}|f\" ];
-}")
-
-(define-graph-test "struct3: full Graphviz example with {} and port"
+(define-graph-test "`^' continues the cell above; an empty cell continues the one to its left, or, in the first column, the one above"
   :input "
 + struct3
-  | shape | record |
-  + hello\\nworld
-  + {}
-    + b
-    + {}
-      + c
-      + d
-        | :id | here |
-      + e
-    + f
-  + g
-  + h"
+  #+record:
+  | hello\\nworld | b |            |   | g | h |
+  | ^            | c | <<here>> d | e | ^ | ^ |
+  |              | f |            |   | ^ | ^ |
++ reader
+  + [[struct3.here]]"
   :output "digraph {
-  struct3 [ shape=record label=\"hello\\nworld|{b|{c|<here> d|e}|f}|g|h\" ];
+  struct3 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD ROWSPAN=\"3\">hello<BR/>world</TD><TD COLSPAN=\"3\">b</TD><TD ROWSPAN=\"3\">g</TD><TD ROWSPAN=\"3\">h</TD></TR><TR><TD>c</TD><TD PORT=\"here\">d</TD><TD>e</TD></TR><TR><TD COLSPAN=\"3\">f</TD></TR></TABLE>> ];
+  reader [ label=reader ];
+  reader -> struct3:here;
 }")
 
-(define-graph-test "an ordinary node's `:to' row reaches a port nested inside {} groups"
+(define-graph-test "hlines draw rules, the table then having one outer border; a <l> cookie row aligns its column; cells keep markup"
   :input "
-+ struct3
-  | shape | record |
-  + {}
-    + {}
-      + d
-        | :id | x |
-+ look
-  | :to | struct3.x |"
++ Person
+  #+record:
+  | <l>            |
+  | *Person*       |
+  |----------------|
+  | name: =String= |
+  | age: =Int=     |
+  |----------------|
+  | greet()        |"
   :output "digraph {
-  struct3 [ shape=record label=\"{{<x> d}}\" ];
-  look -> struct3:x;
-  look [ label=look ];
+  Person [ shape=plain label=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\"><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\"><B>Person</B></TD></TR><HR/><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">name: <FONT FACE=\"monospace\">String</FONT></TD></TR><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">age: <FONT FACE=\"monospace\">Int</FONT></TD></TR><HR/><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">greet()</TD></TR></TABLE>> ];
 }")
 
-(define-graph-test "a field's `:to' row reaches a port of another record"
+(define-graph-test "a record's own attributes, and a template's, sit beside its table; a user's shape beats `plain'"
   :input "
-+ rec1
-  | shape | record |
-  + a
-    | :id | f1      |
-    | :to | rec2.g0 |
-+ rec2
-  | shape | record |
-  + b
-    | :id | g0 |"
+#+name: faint
+| color | grey |
+
++ Point :faint:
+  | shape | box |
+  #+record:
+  | x | y |"
   :output "digraph {
-  rec1 [ shape=record label=\"<f1> a\" ];
-  rec1:f1 -> rec2:g0;
-  rec2 [ shape=record label=\"<g0> b\" ];
+  Point [ label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>x</TD><TD>y</TD></TR></TABLE>> color=grey shape=box ];
 }")
 
-(define-graph-test "record node connected from a plain parent"
+(define-graph-test "a cell's link label and `:edge[T].KEY' rows style its arc; a ported-by-text cell has spaces as underscores"
   :input "
-+ root
-  + rec
-    | shape | record |
-    + p
-    + q"
++ <<lam>> λ-calculus
++ Lisp
+  | :edge[lam].style | dotted |
+  #+record:
+  | car | cdr | eval apply [[lam][inspired by]] |"
   :output "digraph {
-  root [ label=root ];
-  root -> rec;
-  rec [ shape=record label=\"p|q\" ];
+  lam [ label=\"λ-calculus\" ];
+  Lisp:eval_apply -> lam [ label=\"inspired by\" style=dotted ];
+  Lisp [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>car</TD><TD>cdr</TD><TD PORT=\"eval_apply\">eval apply</TD></TR></TABLE>> ];
 }")
 
-(define-graph-test "record node: a field's nested item is an ordinary node of its own"
-  :input "
-+ R
-  | shape | record |
-  + f
-    + g"
-  :output "digraph {
-  R [ shape=record label=\"f\" ];
-  g [ label=g ];
-}")
-
-(define-graph-test "ports are scoped per record, so two records may share a field name"
+(define-graph-test "ports are scoped per record, and record names may contain dots"
   :input "
 + r1
-  | shape | record |
-  + head
-+ r2
-  | shape | record |
-  + head
-+ z
-  | :to | r1.head |"
-  :output "digraph {
-  r1 [ shape=record label=\"<head> head\" ];
-  r2 [ shape=record label=\"head\" ];
-  z -> r1:head;
-  z [ label=z ];
-}")
-
-(define-graph-test "a record whose shape comes from a template still has fields"
-  :input "
-#+name: rec
-| shape | record |
-
-+ r
-  | :eval | rec |
-  + f1
-+ z
-  | :to | r.f1 |"
-  :output "digraph {
-  r [ shape=record label=\"<f1> f1\" ];
-  z -> r:f1;
-  z [ label=z ];
-}")
-
-(define-graph-test "a `:to' target names a plain node, even when some record has a field of that name"
-  :input "
-+ r
-  | shape | record |
-  + church
-+ church
-+ z
-  | :to | church |"
-  :output "digraph {
-  r [ shape=record label=\"church\" ];
-  church [ label=church ];
-  z -> church;
-  z [ label=z ];
-}")
-
-(define-graph-test "a dotted `:to' target is a plain node unless the part before a dot names a record"
-  :input "
-+ v1.2
-+ z
-  | :to | v1.2 |"
-  :output "digraph {
-  \"v1.2\" [ label=\"v1.2\" ];
-  z -> \"v1.2\";
-  z [ label=z ];
-}")
-
-(define-graph-test "record and field names may themselves contain dots"
-  :input "
+  #+record:
+  | <<head>> head | tail |
 + org.el
-  | shape | record |
-  + v1.2
-+ z
-  | :to | org.el.v1.2 |"
+  #+record:
+  | <<head>> head | <<v1.2>> v1.2 |
++ z [[r1.head]] [[org.el.v1.2]]"
   :output "digraph {
-  \"org.el\" [ shape=record label=\"<v1.2> v1.2\" ];
+  r1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD>tail</TD></TR></TABLE>> ];
+  \"org.el\" [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD PORT=\"v1.2\">v1.2</TD></TR></TABLE>> ];
+  z -> r1:head;
   z -> \"org.el\":\"v1.2\";
   z [ label=z ];
 }")
+
+(define-graph-test "a record's children are ordinary nodes, its arcs leaving the record as a whole"
+  :input "
++ Stack
+  #+record:
+  | <<top>> 3 | 2 | 1 |
+  + push
+  + pop"
+  :output "digraph {
+  Stack [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
+  Stack -> push;
+  push [ label=push ];
+  Stack -> pop;
+  pop [ label=pop ];
+}")
+
+(deftest "a `^' in the first row, or an empty first cell, continues nothing: a user error"
+  (should-error (org--graph-raw->dot "
++ r
+  #+record:
+  | ^ | a |" "directed") :type 'user-error)
+  (should-error (org--graph-raw->dot "
++ r
+  #+record:
+  |   | a |" "directed") :type 'user-error))
+
+(deftest "in a #+record: table, completion offers no keys: its rows are cells"
+  (with-temp-buffer
+    (org-graph-edit-mode)
+    (insert "
++ r
+  #+record:
+  | sha |")
+    (search-backward "sha")
+    (forward-char 3)
+    (should-not (org-graph--completion-at-point))))
+
+(provide 'org-graph-record-nodes-tests)

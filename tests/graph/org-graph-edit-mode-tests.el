@@ -35,8 +35,8 @@
 
 ;;; Completion
 
-(deftest "after `:edge.', `:edge[T].', or `:to.', completion offers only edge attributes, keeping the prefix"
-  (dolist (prefix '(":edge." ":edge[church]." ":to."))
+(deftest "after `:edge.' or `:edge[T].', completion offers only edge attributes, keeping the prefix"
+  (dolist (prefix '(":edge." ":edge[church]."))
     (tests-graph--in-edit-buffer (format "
 + A
   | %s |" prefix) prefix

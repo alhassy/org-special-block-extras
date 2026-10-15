@@ -62,19 +62,19 @@
     (should (not (s-contains-p "| color | red |" (plist-get p :list-body))))
     (should (s-contains-p "+ A" (plist-get p :list-body)))))
 
-(deftest "`org--graph-expand-eval' splices template rows, explicit rows win"
+(deftest "`org--graph-expand-inherit' splices template rows, explicit rows win"
   (let* ((nt (make-hash-table :test #'equal)))
     (puthash "wife" '(("fillcolor" "\"#f8d7e8\"") ("color" "\"#aa3366\"")) nt)
     (should (equal '(("fillcolor" "\"#f8d7e8\"") (":id" "x") ("color" "\"#ff0000\""))
-                   (org--graph-expand-eval '((":id" "x") (":eval" "wife") ("color" "\"#ff0000\"")) nt)))))
+                   (org--graph-expand-inherit '((":id" "x") (":inherit" "wife") ("color" "\"#ff0000\"")) nt)))))
 
-(deftest "`org--graph-expand-eval' expands templates within templates, but a template including itself adds nothing"
+(deftest "`org--graph-expand-inherit' expands templates within templates, but a template including itself adds nothing"
   (let* ((nt (make-hash-table :test #'equal)))
     (puthash "base" '(("shape" "box")) nt)
-    (puthash "wife" '((":eval" "base") ("color" "pink")) nt)
-    (puthash "loop" '((":eval" "loop") ("color" "red")) nt)
-    (should (equal '(("shape" "box") ("color" "pink")) (org--graph-expand-eval '((":eval" "wife")) nt)))
-    (should (equal '(("color" "red")) (org--graph-expand-eval '((":eval" "loop")) nt)))))
+    (puthash "wife" '((":inherit" "base") ("color" "pink")) nt)
+    (puthash "loop" '((":inherit" "loop") ("color" "red")) nt)
+    (should (equal '(("shape" "box") ("color" "pink")) (org--graph-expand-inherit '((":inherit" "wife")) nt)))
+    (should (equal '(("color" "red")) (org--graph-expand-inherit '((":inherit" "loop")) nt)))))
 
 (deftest "#+name: template expands inside #+node: tables too"
   (should (s-contains-p "node [ shape=box ]"
@@ -83,10 +83,10 @@
 | shape | box |
 
 #+node:
-| :eval | t |
+| :inherit | t |
 + A" "directed"))))
 
-(deftest "#+name: template expands into node attrs via | :eval |"
+(deftest "#+name: template expands into node attrs via | :inherit |"
   (let* ((dot (org--graph-raw->dot
                "
 #+name: wife
@@ -94,29 +94,29 @@
 | color | \"#aa3366\" |
 
 + Khadija
-  | :eval | wife |"
+  | :inherit | wife |"
                "directed")))
     (should (s-contains-p "fillcolor=\"#f8d7e8\"" dot))
     (should (s-contains-p "color=\"#aa3366\"" dot))))
 
-(define-graph-test "#+name: template expands into to-edge attrs via | :to.:eval |, and explicit :to. rows win"
+(define-graph-test "#+name: template expands into a lone-link child's arc via | :edge.:inherit |, and explicit :edge. rows win"
   :input "
 #+name: married
 | color | \"#cc3399\" |
 | dir   | both        |
 
 + A
-  | :to       | B       |
-  | :to.:eval | married |
-  | :to.dir   | back    |
+  + [[B]]
+    | :edge.:inherit | married |
+    | :edge.dir   | back    |
 + B"
   :output "digraph {
-  A -> B [ color=\"#cc3399\" dir=back ];
   A [ label=A ];
+  A -> B [ color=\"#cc3399\" dir=back ];
   B [ label=B ];
 }")
 
-(deftest "#+name: explicit node attr overrides template via | :eval |"
+(deftest "#+name: explicit node attr overrides template via | :inherit |"
   (let* ((dot (org--graph-raw->dot
                "
 #+name: base
@@ -124,7 +124,7 @@
 | shape | box |
 
 + A
-  | :eval  | base  |
+  | :inherit  | base  |
   | color | red   |"
                "directed")))
     ;; explicit color=red wins over template color=blue
@@ -133,14 +133,10 @@
     ;; template shape=box is preserved
     (should (s-contains-p "shape=box" dot))))
 
-(deftest "#+name: unknown template name silently produces empty expansion"
-  (let* ((dot (org--graph-raw->dot
-               "
+(deftest "an `:inherit' row naming no #+name: template is a user error, rather than silently contributing nothing"
+  (should-error (org--graph-raw->dot "
 #+name: real
 | color | blue |
 
 + A
-  | :eval | typo |"
-               "directed")))
-    ;; node still renders, just without template attrs
-    (should (s-contains-p "A [ label=A ];" dot))))
+  | :inherit | typo |" "directed") :type 'user-error))

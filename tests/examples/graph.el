@@ -19,15 +19,12 @@ nesting makes an edge, and a two-column table styles the item above it.
 
 + λ-calculus
   | shape | ellipse |
-  + Church encodings
-    | :edge.label | encodes |
-  + Combinators
-    | :id | combinators |
+  + encodes :: Church encodings
+  + <<combinators>> Combinators
     + S K I
 + Lisp
-  | :to       | combinators |
-  | :to.label | borrows     |
-  | :to.style | dotted      |
+  + borrows :: [[combinators]]
+    | :edge.style | dotted |
 #+end_graph
 
 Press =C-c C-c= inside the block to render it to a PNG; =C-u C-c C-c= shows the dot source instead."
@@ -47,8 +44,8 @@ digraph {
   combinators [ label=Combinators ];
   combinators -> \"S K I\";
   \"S K I\" [ label=\"S K I\" ];
-  Lisp -> combinators [ label=borrows style=dotted ];
   Lisp [ label=Lisp ];
+  Lisp -> combinators [ label=borrows style=dotted ];
 }
 \\end{verbatim}
 

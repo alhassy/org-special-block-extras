@@ -96,19 +96,18 @@
   C -> B [ label=again ];
 }")
 
-(deftest "`org--graph-raw->dot' explicit to row produces cross-edge"
+(deftest "`org--graph-raw->dot' a lone-link child draws a cross-edge to a node declared elsewhere"
   (should (equal "digraph {
   a [ label=A ];
-  B -> a [ label=back ];
   B [ label=B ];
+  B -> a [ label=back ];
 }"
                  (org--graph-raw->dot
                   "
 + A
   | :id | a |
 + B
-  | :to | a |
-  | :to.label | back |"
+  + back :: [[a]]"
                   "directed"))))
 
 (define-graph-test "#+rank: emits rank=same block for nodes without a common parent"

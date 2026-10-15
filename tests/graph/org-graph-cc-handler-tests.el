@@ -73,6 +73,34 @@ KWDARGS is the plist for the block's keyword arguments."
             (should (equal "digraph { A; }" dot-received))))))
     (kill-buffer buf)))
 
+(deftest "`org-graph--cc-handler' reads :C-c_C-c dot from a real header line, where it is the symbol `dot', not a string"
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+#+begin_graph directed :C-c_C-c dot
++ A
+#+end_graph")
+    (search-backward "+ A")
+    (let ((current-prefix-arg nil) (dot-received nil))
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot-received d)))
+                ((symbol-function 'org-graph--run-dot) (lambda (&rest _) (error "Rendered a PNG, rather than showing dot"))))
+        (org-graph--cc-handler)
+        (should (s-starts-with-p "digraph" dot-received))))))
+
+(deftest "`org-graph--cc-handler' reads :file from a real header line, where it is a symbol, as the PNG's file name"
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+#+begin_graph directed :file my-diagram.png
++ A
+#+end_graph")
+    (search-backward "+ A")
+    (let ((current-prefix-arg nil) (outfile nil))
+      (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot _format file) (setq outfile file) '(0 . "")))
+                ((symbol-function 'org-display-inline-images) #'ignore))
+        (org-graph--cc-handler)
+        (should (equal "my-diagram.png" outfile))))))
+
 (deftest "`org-graph--cc-handler' :C-c_C-c dot WITH prefix toggles back to PNG"
   (let ((buf (tests-graph--make-graph-buffer "
 + A")))

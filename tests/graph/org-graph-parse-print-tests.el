@@ -12,40 +12,46 @@
                    (:node "B"))
                  (cadr (org--graph-parse "
 + A
-  + B
-    | :edge.label | calls |
-    | :to | A |
-    | :to.style | dotted |")))))
+  + B [[A]]
+    | :edge.label    | calls  |
+    | :edge[A].style | dotted |")))))
 
 (deftest "`org--graph-item-rows' routes reserved keys away from node attributes"
   (should (equal '(:id "x" :attrs (("shape" "box")) :children-rank "same"
                    :edges ((("label" "a") ("color" "red")) (("label" "b")))
-                   :tos (("y" ("style" "dotted")) ("z"))
                    :targeted (("z" ("color" "red") ("label" "zed"))))
                  (org--graph-item-rows '((":id" "x") ("shape" "box") (":children-rank" "same")
                                          (":edge.label" "a") (":edge.color" "red") (":edge.label" "b")
-                                         (":to" "y") (":to.style" "dotted") (":to" "z")
                                          (":edge[z].color" "red") (":edge[z].label" "zed"))
                                        (make-hash-table :test #'equal)))))
 
 ;;; Reserved keys
 
-(deftest "an unknown reserved key, or a row in the old spelling, is a user error rather than a silent attribute"
+(deftest "an unknown reserved key is a user error rather than a silent attribute"
   (should-error (org--graph-raw->dot "
 + A
-  | :colour | red |" "directed") :type 'user-error)
-  (should-error (org--graph-raw->dot "
-+ A
-  + B
-    | EDGE | label=x |" "directed") :type 'user-error)
-  (should-error (org--graph-raw->dot "
-+ A
-  | to | B |" "directed") :type 'user-error))
+  | :colour | red |" "directed") :type 'user-error))
 
-(deftest "a `:to.KEY' row with no `:to' row above it is a user error"
+(deftest "a lone-link item is a reference: node attributes on it are a user error"
   (should-error (org--graph-raw->dot "
++ <<b>> B
 + A
-  | :to.label | x |" "directed") :type 'user-error))
+  + [[b]]
+    | color | red |" "directed") :type 'user-error))
+
+(define-graph-test "a lone-link child may refer forward; the target's own item still names and labels it"
+  :input "
++ Lisp
+  + inspired by :: [[lam]]
+    | :edge.:inherit | faint |
++ <<lam>> λ-calculus
+#+name: faint
+| style | dotted |"
+  :output "digraph {
+  Lisp [ label=Lisp ];
+  Lisp -> lam [ label=\"inspired by\" style=dotted ];
+  lam [ label=\"λ-calculus\" ];
+}")
 
 ;;; Printing quotes values, and picks the edge operator
 
@@ -73,12 +79,26 @@
 (define-graph-test "\"Org mode\" and Org mode name the same node"
   :input "
 + \"Org mode\"
-+ A
-  | :to | Org mode |"
++ A [[Org mode]]"
   :output "digraph {
   \"Org mode\" [ label=\"Org mode\" ];
   A -> \"Org mode\";
   A [ label=A ];
+}")
+
+;;; Ids and labels
+
+(define-graph-test "`+ L', `+ <<L>> L', and `+ L' with `:id L' and `label L' rows all declare one and the same node"
+  :input "
++ Lisp
+
++ <<Lisp>> Lisp
+
++ Lisp
+  | :id   | Lisp |
+  | label | Lisp |"
+  :output "digraph {
+  Lisp [ label=Lisp ];
 }")
 
 ;;; Repeat occurrences merge
@@ -115,11 +135,10 @@
   top -> inner [ lhead=\"cluster_my-box\" ];
 }")
 
-(define-graph-test "a `:to' arc may start at a cluster, and end at another"
+(define-graph-test "a [[link]] arc may start at a cluster, and end at another"
   :input "
-+ G
++ G [[H]]
   | shape | cluster |
-  | :to   | H       |
   + a
 + H
   | shape | cluster |
