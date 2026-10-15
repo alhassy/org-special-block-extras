@@ -2,6 +2,7 @@
 
 (unless (fboundp 'define-org-export-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
+(require 'ox-md)
 
 (define-org-export-test "a warning callout, given a title, shows it beside its icon above a coloured rule, in HTML" [callout]
   :input "
@@ -27,6 +28,38 @@
            Use \\texttt{C-h k} to learn what a key does.
 
            \\end{tcolorbox}
+           ")
+
+(define-org-export-test "a tip callout is GitHub's untitled “> [!TIP]” alert in Markdown" [callout]
+  :input "
+          #+options: toc:nil
+          #+begin_tip
+          Use =C-h k= to learn what a key does.
+          #+end_tip"
+  :to md
+  :equals "
+           
+           > [!TIP]
+           >
+           > Use `C-h k` to learn what a key does.
+           
+           ")
+
+(define-org-export-test "a warning callout, given a title, keeps it as a bold first paragraph of its Markdown alert" [callout]
+  :input "
+          #+options: toc:nil
+          #+begin_warning Mind the gap
+          Trains do *not* wait.
+          #+end_warning"
+  :to md
+  :equals "
+           
+           > [!WARNING]
+           >
+           > **Mind the gap**
+           >
+           > Trains do **not** wait.
+           
            ")
 
 (deftest "each callout is a block titled by its own name, without a link type or tag" [callout]

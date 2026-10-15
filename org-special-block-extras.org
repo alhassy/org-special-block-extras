@@ -4258,6 +4258,9 @@ from∘to m = {! try it! }
   =:note:= is common enough to mean something else entirely, callouts claim neither tags nor
   link types.
 
+  Exported to Markdown (=ox-md= or =ox-gfm=), a callout becomes GitHub's own alert,
+  => [!WARNING]=; since alerts are untitled, a custom title becomes its bold first paragraph.
+
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:
   :CUSTOM_ID: Highlights
