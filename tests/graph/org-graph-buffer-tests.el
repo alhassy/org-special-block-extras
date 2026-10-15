@@ -86,3 +86,43 @@
 
 (provide 'org-graph-buffer-tests)
 ;;; org-graph-buffer-tests.el ends here
+
+;;; #+RESULTS: below a graph
+
+(deftest "re-rendering replaces the whole previous #+RESULTS:, even a multi-line dot source block, keeping what follows"
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+#+begin_graph
++ a
+#+end_graph
+#+RESULTS:
+#+begin_src dot
+digraph {
+  a;
+}
+#+end_src
+
+Prose after.")
+    (goto-char (point-min))
+    (search-forward "#+end_graph")
+    (org-graph--insert-results (line-beginning-position) "[[file:graph.png]]")
+    (should (equal (buffer-string) "
+#+begin_graph
++ a
+#+end_graph
+#+RESULTS:
+[[file:graph.png]]
+
+Prose after."))))
+
+(deftest "a buffer template may carry a #+caption: beside its #+name:, as any Org table may"
+  (should (equal "digraph {
+  Khadija [ shape=box label=Khadija ];
+}"
+                 (tests-graph--dot-in-buffer "
+#+name: wife
+#+caption: How a wife is drawn
+| shape | box |
+" "
++ Khadija :wife:"))))

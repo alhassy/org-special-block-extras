@@ -219,7 +219,7 @@
 
 (deftest "the header line reads as #+attr_html: does: a hex colour, or a word Lisp cannot read, needs no quotes"
   ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
-  (cl-letf (((symbol-function 'org-graph--render-to-png) (lambda (&rest _) nil)))
+  (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
     (should (s-contains-p "graph [ bgcolor=\"#6c7086\" fontname=\"Helvetica,Arial\" ]"
                           (org-export-string "#+begin_graph :bgcolor #6c7086 :fontname Helvetica,Arial
 + a
@@ -227,7 +227,7 @@
 
 (deftest "exporting reads the header line: a title and attributes reach the dot source"
   ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
-  (cl-letf (((symbol-function 'org-graph--render-to-png) (lambda (&rest _) nil)))
+  (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
     (let ((html (org-export-string "#+begin_graph Lambda calculus :rankdir LR :node.shape box
 + a
 #+end_graph" 'html)))

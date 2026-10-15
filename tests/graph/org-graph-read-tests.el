@@ -1,12 +1,12 @@
-;;; org-graph-extract-preamble-tests.el --- org--graph-extract-preamble  -*- lexical-binding: t; -*-
+;;; org-graph-read-tests.el --- org--graph-read: a graph's directives, templates, and items  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-graph-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/graph/org-graph-test-utils.el")))
 
-;;; org--graph-extract-preamble
+;;; org--graph-read
 
-(deftest "`org--graph-extract-preamble' buckets #+graph: table rows"
-  (let* ((p (org--graph-extract-preamble
+(deftest "`org--graph-read' buckets #+graph: table rows, a blank line after them leaving the items be"
+  (let* ((p (org--graph-read
              "
 #+graph:
 | rankdir | TB |
@@ -17,10 +17,10 @@
     (should (equal '(("rankdir" "TB") ("bgcolor" "#000"))
                    (plist-get p :graph-rows)))
     (should (null (plist-get p :node-rows)))
-    (should (s-contains-p "+ A" (plist-get p :list-body)))))
+    (should (equal '("A") (--map (s-trim (plist-get it :text)) (plist-get p :items))))))
 
-(deftest "`org--graph-extract-preamble' buckets #+node: and #+edge: rows"
-  (let* ((p (org--graph-extract-preamble
+(deftest "`org--graph-read' buckets #+node: and #+edge: rows"
+  (let* ((p (org--graph-read
              "
 #+node:
 | shape | box |
@@ -30,17 +30,18 @@
     (should (equal '(("shape" "box")) (plist-get p :node-rows)))
     (should (equal '(("color" "red")) (plist-get p :edge-rows)))))
 
-(deftest "`org--graph-extract-preamble' collects #+rank: lines"
-  (let* ((p (org--graph-extract-preamble "
+(deftest "`org--graph-read' collects #+rank: lines"
+  (let* ((p (org--graph-read "
 #+rank: A B
 #+rank: C D
 + A")))
     (should (equal '("A B" "C D") (plist-get p :ranks)))))
 
-(deftest "`org--graph-extract-preamble' parses #+name: tables into name-tables"
-  (let* ((p (org--graph-extract-preamble
+(deftest "`org--graph-read' parses #+name: tables into name-tables, a #+caption: by the #+name: notwithstanding"
+  (let* ((p (org--graph-read
              "
 #+name: wife
+#+caption: How a wife looks
 | fillcolor | \"#f8d7e8\" |
 | color | \"#aa3366\" |
 
@@ -50,17 +51,24 @@
       (should (equal '(("fillcolor" "\"#f8d7e8\"") ("color" "\"#aa3366\""))
                      (gethash "wife" nt))))))
 
-(deftest "`org--graph-extract-preamble' strips #+name: lines from list-body"
-  (let* ((p (org--graph-extract-preamble
+(deftest "`org--graph-read' keeps #+name: tables out of the items, wherever they sit: atop the graph, in a drawer, or in an item"
+  (let* ((p (org--graph-read
              "
 #+name: married
 | color | red |
 
+:PALETTE:
+#+name: faint
+| style | dotted |
+:END:
+
 + A
+  #+name: bold
+  | penwidth | 2 |
   + B")))
-    (should (not (s-contains-p "#+name:" (plist-get p :list-body))))
-    (should (not (s-contains-p "| color | red |" (plist-get p :list-body))))
-    (should (s-contains-p "+ A" (plist-get p :list-body)))))
+    (should (equal '("bold" "faint" "married") (sort (hash-table-keys (plist-get p :name-tables)) #'string<)))
+    (should (equal '("A") (--map (s-trim (plist-get it :text)) (plist-get p :items))))
+    (should (null (plist-get (plist-get (car (plist-get p :items)) :pre) :attr-rows)))))
 
 (deftest "`org--graph-expand-inherit' splices template rows, explicit rows win"
   (let* ((nt (make-hash-table :test #'equal)))

@@ -133,151 +133,163 @@ The same string is then safe both inside a record label's <port> and in an edge'
   (if rows (format " [ %s ]" (org--graph-attr-pairs rows)) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Preamble extraction
+;;; Reading: a graph's body ⟶ plain data, via `org-element'
+;;
+;; Org parses the body once; we read its elements into plain data, so nothing after this section needs a buffer:
+;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :ranks :attr-rows :record :items :kind)
+;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND)
+;; An item's TEXT is its raw first paragraph, bullet aside; its SCOPE, its directives and tables; its ITEMS, its
+;; sub-items and #+begin_cluster blocks; and its KIND, its sub-list's type: `ordered', `unordered', or `descriptive'.
 
-(defun org--graph-extract-preamble (raw)
-  "Scan RAW block body and separate preamble directives from the Org list body.
+(defvar org--graph-anonymous-clusters 0
+  "How many untitled #+begin_cluster blocks the graph being read has had so far; each is named by its count.")
 
-Preamble directives may appear either bare at the top level or wrapped
-in a drawer, such as :SETTINGS: … :END: or :PALETTE: … :END:, which Org's
-native folding can collapse.  Both forms are equivalent; the drawer, whatever
-its name, is purely for visual organisation.
+(defun org--graph-keyword-tags (value)
+  "A #+graph:, #+node:, #+edge:, or #+name: keyword's VALUE ↦ its tags, as an :inherit row; else nil.
+  \":wife:base:\"  ↦  (\":inherit\" \"wife base\")"
+  (when (string-match (concat "\\`[ \t]*" org--graph-tag-group-re "[ \t]*\\'") value)
+    (list ":inherit" (s-join " " (s-split ":" (match-string 1 value) t)))))
 
-Returns a plist:
-  :graph-rows  ↦ list of table row-lists for #+graph:
-  :node-rows   ↦ list of table row-lists for #+node:
-  :edge-rows   ↦ list of table row-lists for #+edge:
-  :ranks       ↦ list of strings, each a space-sep group of node IDs
-  :name-tables — hash-table of name → list-of-row-lists (style templates)
-  :list-body   — string: the lines that form the Org plain list"
-  (let (graph-rows node-rows edge-rows ranks list-lines
-        ;; name-table-rows accumulates rows per template in reverse; finalised below.
-        (mode nil)
-        (in-drawer nil)
-        (name-tables (make-hash-table :test #'equal))
-        (name-table-rows (make-hash-table :test #'equal))
-        (current-name nil))
-    (dolist (line (s-split "\n" raw))
-      (let ((trimmed (s-trim line)))
-        (cond
-         ;; Drawer boundaries
-         ((s-matches-p "\\`:END:\\'" trimmed) (setq in-drawer nil))
-         ((s-matches-p "\\`:[[:alnum:]_-]+:\\'" trimmed) (setq in-drawer t))
-         ;; #+graph: / #+node: / #+edge: switch table-collection mode.
-         ;; Outside a drawer, only unindented lines qualify (indented ones
-         ;; live inside list items and belong to org--graph-extract-item-preamble).
-         ;; A keyword's own tags, `#+node: :wife:', inherit their templates.
-         ((s-matches-p "^#\\+graph:" (if in-drawer trimmed line))
-          (setq mode 'graph current-name nil)
-          (-some--> (org--graph-keyword-tags "graph" trimmed) (push it graph-rows)))
-         ((s-matches-p "^#\\+node:"  (if in-drawer trimmed line))
-          (setq mode 'node current-name nil)
-          (-some--> (org--graph-keyword-tags "node" trimmed) (push it node-rows)))
-         ((s-matches-p "^#\\+edge:"  (if in-drawer trimmed line))
-          (setq mode 'edge current-name nil)
-          (-some--> (org--graph-keyword-tags "edge" trimmed) (push it edge-rows)))
-         ;; #+name: id — begin collecting rows into a named style template.
-         ;; These lines and their table rows are stripped from :list-body.
-         ;; `#+name: wife :base:' is template wife, inheriting template base.
-         ((s-matches-p "^#\\+name:" (if in-drawer trimmed line))
-          (let ((inherit (org--graph-keyword-tags "name" (replace-regexp-in-string "\\`#\\+name:[ \t]*[^ \t]+" "#+name:" trimmed))))
-            (setq mode nil
-                  current-name (car (s-split "[ \t]+" (s-trim (substring trimmed (length "#+name:"))))))
-            (when inherit (puthash current-name (list inherit) name-table-rows))))
-         ;; #+rank: id1 id2 … — space-sep id list, no table
-         ((s-matches-p "^#\\+rank:" (if in-drawer trimmed line))
-          (setq mode nil current-name nil)
-          (let ((ids (s-trim (substring trimmed (length "#+rank:")))))
-            (unless (s-blank-str-p ids)
-              (push ids ranks))))
-         ;; Table rows dispatched to current mode or current named template.
-         ;; Inside a drawer all table rows qualify; outside, only unindented ones.
-         ((s-matches-p "^|" (if in-drawer trimmed line))
-          (let ((cols (org--graph-parse-row trimmed)))
-            (when cols
-              (cond
-               (current-name
-                ;; Accumulate in reverse via push; nreversed into name-tables below.
-                (puthash current-name
-                         (cons cols (gethash current-name name-table-rows))
-                         name-table-rows))
-               (mode
-                (pcase mode
-                  ('graph (push cols graph-rows))
-                  ('node  (push cols node-rows))
-                  ('edge  (push cols edge-rows))))
-               (t (push line list-lines))))))
-         ;; Everything else: non-blank lines reset mode; outside a drawer they
-         ;; feed :list-body, skipping bare # comments and #+name: directives.
-         (t
-          (unless (s-blank-str-p trimmed) (setq mode nil current-name nil))
-          (unless in-drawer
-            (unless (and (s-matches-p "^#" trimmed)
-                         (or (not (s-matches-p "^#\\+" trimmed))
-                             (s-matches-p "^#\\+name:" trimmed)))
-              (push line list-lines)))))))
-    ;; Finalise name-tables: nreverse each template's accumulated rows.
-    (maphash (lambda (name rev-rows)
-               (puthash name (nreverse rev-rows) name-tables))
-             name-table-rows)
-    (list :graph-rows  (nreverse graph-rows)
-          :node-rows   (nreverse node-rows)
-          :edge-rows   (nreverse edge-rows)
-          :ranks       (nreverse ranks)
-          :name-tables name-tables
-          :list-body   (s-join "\n" (nreverse list-lines)))))
+(defun org--graph-add-template (templates name rows)
+  "(TEMPLATES, NAME, ROWS) ↦ (template . ID), having appended ROWS to template ID in TEMPLATES; from a `#+name: NAME'.
+  \"wife :base:\"  ↦  (template . \"wife\"), template wife now inheriting template base"
+  (-let [(_ id tags) (s-match "\\`[ \t]*\\([^ \t]*\\)\\(.*\\)\\'" name)]
+    (puthash id (append (gethash id templates) (-some--> (org--graph-keyword-tags tags) (list it)) rows) templates)
+    (cons 'template id)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Item-level preamble
+(defun org--graph-table-lines (table)
+  "A TABLE element, in the current buffer, ↦ its rows' lines, trimmed; hlines included, e.g. (\"| a | b |\" \"|---|\")."
+  (--filter (s-starts-with-p "|" it)
+            (-map #'s-trim (s-lines (buffer-substring-no-properties (org-element-property :post-affiliated table)
+                                                                    (org-element-property :end table))))))
 
-(defun org--graph-extract-item-preamble (table-part)
-  "Parse TABLE-PART (the text after a list item's first line) for both
-node-attribute rows and embedded preamble directives.
+(defun org--graph-table-rows (table)
+  "A TABLE element, in the current buffer, ↦ its rows as `org--graph-parse-row' reads them, sans hlines."
+  (-keep #'org--graph-parse-row (org--graph-table-lines table)))
 
-Unlike the top-level `org--graph-extract-preamble', this operates on
-the raw string that `org-list-to-lisp' preserves inside a list item —
-which may contain #+node:, #+edge:, #+graph:, and #+rank: directives
-interleaved with ordinary | key | value | attribute rows.
+(defun org--graph-elements (elements)
+  "ELEMENTS with each section or drawer replaced by its contents, recursively; so a drawer, whatever its name, folds."
+  (--mapcat (if (memq (org-element-type it) '(section drawer))
+                (org--graph-elements (org-element-contents it))
+              (list it))
+            elements))
 
-Returns a plist:
-  :attr-rows   ↦ the item's own | rows: attributes and reserved keys (:id, shape, …)
-  :node-rows   ↦ rows collected under #+node:
-  :edge-rows   ↦ rows collected under #+edge:
-  :graph-rows  ↦ rows collected under #+graph:
-  :ranks       ↦ list of space-sep id-group strings from #+rank: lines
-  :record      ↦ the raw lines of the table under #+record:, hlines and empty cells included"
-  (let (attr-rows node-rows edge-rows graph-rows ranks record
-        (mode 'attr))
-    (dolist (line (s-split "\n" (or table-part "")))
-      (let ((trimmed (s-trim line)))
-        (cond
-         ((s-matches-p "^#\\+node:"  trimmed) (setq mode 'node)
-          (-some--> (org--graph-keyword-tags "node" trimmed) (push it node-rows)))
-         ((s-matches-p "^#\\+edge:"  trimmed) (setq mode 'edge)
-          (-some--> (org--graph-keyword-tags "edge" trimmed) (push it edge-rows)))
-         ((s-matches-p "^#\\+graph:" trimmed) (setq mode 'graph)
-          (-some--> (org--graph-keyword-tags "graph" trimmed) (push it graph-rows)))
-         ((s-matches-p "^#\\+record:" trimmed) (setq mode 'record))
-         ((and (eq mode 'record) (s-matches-p "^|" trimmed)) (push trimmed record))
-         ((s-matches-p "^#\\+rank:"  trimmed)
-          (setq mode 'attr)
-          (let ((ids (s-trim (substring trimmed (length "#+rank:")))))
-            (unless (s-blank-str-p ids) (push ids ranks))))
-         ((s-matches-p "^|" trimmed)
-          (let ((cols (org--graph-parse-row trimmed)))
-            (when cols
-              (pcase mode
-                ('attr  (push cols attr-rows))
-                ('node  (push cols node-rows))
-                ('edge  (push cols edge-rows))
-                ('graph (push cols graph-rows))))))
-         (t (unless (s-blank-str-p trimmed) (setq mode 'attr))))))
-    (list :attr-rows  (nreverse attr-rows)
-          :node-rows  (nreverse node-rows)
-          :edge-rows  (nreverse edge-rows)
-          :graph-rows (nreverse graph-rows)
+(defun org--graph-read-scope (elements templates)
+  "Sibling ELEMENTS ↦ their SCOPE; #+name: tables, wherever they sit, go to TEMPLATES rather than to the scope.
+
+A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, #+record:, or #+name:
+---Org's own affiliated keyword---; else, it holds the item's own | key | value | rows.  #+rank: lines are id groups."
+  (let (rows ranks items kind owner)
+    (dolist (el (org--graph-elements elements))
+      (pcase (org-element-type el)
+        ('keyword
+         (let ((key (intern (downcase (org-element-property :key el)))) (value (org-element-property :value el)))
+           (setq owner nil)
+           (pcase key
+             ((or 'graph 'node 'edge)
+              (setq owner key)
+              (-some--> (org--graph-keyword-tags value) (push it (alist-get key rows))))
+             ('record (setq owner 'record))
+             ('rank (unless (s-blank-str-p value) (push (s-trim value) ranks)))
+             ('name (setq owner (org--graph-add-template templates value nil))))))
+        ('table
+         (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil)))
+         (pcase owner
+           (`(template . ,id) (puthash id (append (gethash id templates) (org--graph-table-rows el)) templates))
+           ('record (dolist (line (org--graph-table-lines el)) (push line (alist-get 'record rows))))
+           (_ (dolist (row (org--graph-table-rows el)) (push row (alist-get (or owner 'attr) rows))))))
+        ('plain-list
+         (setq owner nil kind (or kind (org-element-property :type el)))
+         (dolist (item (org-element-contents el)) (push (org--graph-read-item item templates) items)))
+        ('special-block
+         (setq owner nil)
+         (when (string-match-p "\\`cluster\\(?:-[0-9]+\\)?\\'" (downcase (org-element-property :type el)))
+           (push (org--graph-read-cluster el templates) items)))
+        (_ (setq owner nil))))
+    (list :graph-rows (nreverse (alist-get 'graph rows))
+          :node-rows  (nreverse (alist-get 'node rows))
+          :edge-rows  (nreverse (alist-get 'edge rows))
           :ranks      (nreverse ranks)
-          :record     (nreverse record))))
+          :attr-rows  (nreverse (alist-get 'attr rows))
+          :record     (nreverse (alist-get 'record rows))
+          :items      (nreverse items)
+          :kind       kind)))
+
+(defun org--graph-read-item (item templates)
+  "An ITEM element ↦ its ITEM data; its TEXT runs from its bullet to its first paragraph's end, any description term
+included.  #+name: tables within it go to TEMPLATES."
+  (let* ((contents (org-element-contents item))
+         (begin    (org-element-property :contents-begin item))
+         (para     (and (eq (org-element-type (car contents)) 'paragraph)
+                        (eql (org-element-property :begin (car contents)) begin)
+                        (car contents)))
+         (start    (save-excursion (goto-char (org-element-property :begin item))
+                                   (skip-chars-forward " \t")
+                                   (+ (point) (length (s-trim-right (org-element-property :bullet item))))))
+         (scope    (org--graph-read-scope (if para (cdr contents) contents) templates)))
+    (list :text (buffer-substring-no-properties start (cond (para (org-element-property :contents-end para))
+                                                            (begin)
+                                                            (t (org-element-property :end item))))
+          :pre scope :children (plist-get scope :items) :kind (plist-get scope :kind))))
+
+(defun org--graph-read-cluster (block templates)
+  "A #+begin_cluster BLOCK ↦ the ITEM it abbreviates: one styled | shape | cluster |, whose sub-items are the block's.
+
+  #+begin_cluster Packages :bgcolor grey :node.shape box      + Packages
+  + Org                                                  ≈     | shape   | cluster |
+  #+end_cluster                                                | bgcolor | grey    |
+                                                               #+node:
+                                                               | shape | box |
+                                                               + Org
+
+The header reads as the #+begin_graph one does: a title, then :KEY graph attributes, :node.KEY and :edge.KEY defaults;
+a table opening the block styles the box, as an item's table styles its node.  An untitled cluster is an anonymous box:
+it has no label, and no name to draw arcs to.  #+name: tables within it go to TEMPLATES."
+  (-let* (;; The title runs up to the first whitespace-then-colon; `Time 12:30' stays whole.
+          ((_ title kwds) (s-match "\\`\\(.*?\\)\\(?:\\(?:\\`\\|[ \t]+\\)\\(:.*\\)\\)?\\'"
+                                   (s-trim (or (org-element-property :parameters block) ""))))
+          ((&plist :graph-rows graph :node-rows node :edge-rows edge) (org--graph-header-rows (org--read-header kwds)))
+          (scope (org--graph-read-scope (org-element-contents block) templates)))
+    (when (s-blank-str-p title)
+      (setq title (format "anonymous %d" (cl-incf org--graph-anonymous-clusters))
+            graph (cons '("label" "\"\"") graph)))
+    (list :text title
+          :pre (org-combine-plists scope (list :attr-rows (append '(("shape" "cluster")) graph
+                                                                  (plist-get scope :attr-rows))
+                                               :node-rows (append node (plist-get scope :node-rows))
+                                               :edge-rows (append edge (plist-get scope :edge-rows))))
+          :children (plist-get scope :items) :kind (plist-get scope :kind))))
+
+(defun org--graph-number-clusters (raw)
+  "RAW with each #+begin_cluster … #+end_cluster pair nested at depth d > 1 renamed cluster-d; since Org pairs a block
+with the first end of its name, only then do nested clusters parse as nested blocks.
+  \"#+begin_cluster A\\n#+begin_cluster B\\n#+end_cluster\\n#+end_cluster\"
+    ↦  \"#+begin_cluster A\\n#+begin_cluster-2 B\\n#+end_cluster-2\\n#+end_cluster\""
+  (let ((depth 0) (case-fold-search t))
+    (s-join "\n" (--map (cond ((string-match "\\`[ \t]*#\\+begin_cluster\\_>" it)
+                               (if (> (cl-incf depth) 1) (replace-match (format "\\&-%d" depth) t nil it) it))
+                              ((string-match "\\`[ \t]*#\\+end_cluster\\_>" it)
+                               (prog1 (if (> depth 1) (replace-match (format "\\&-%d" depth) t nil it) it)
+                                 (setq depth (max 0 (1- depth)))))
+                              (t it))
+                        (s-lines raw)))))
+
+(defun org--graph-read (raw)
+  "A graph's RAW body ↦ its top-level SCOPE, plus :name-tables, its #+name: templates wherever they sit.
+  \"#+node:\\n| shape | box |\\n+ A\"  ↦  (:name-tables #s(…) :node-rows ((\"shape\" \"box\")) :items ((:text \"A\" …)) …)
+Org parses RAW in a buffer of its own, so the elements' positions are those of RAW."
+  (with-temp-buffer
+    (delay-mode-hooks (org-mode))
+    (insert (org--graph-number-clusters raw))
+    (let ((tree (org-element-parse-buffer))
+          (templates (make-hash-table :test #'equal))
+          (org--graph-anonymous-clusters 0))
+      ;; Org reads an unclosed block as mere text.
+      (org-element-map tree 'paragraph
+        (lambda (p) (let ((text (buffer-substring (org-element-property :begin p) (org-element-property :end p))))
+                      (when (string-match "^[ \t]*#\\+begin_cluster\\(?:-[0-9]+\\)?\\_>[ \t]*\\(.*\\)" text)
+                        (user-error "graph: `#+begin_cluster %s' has no #+end_cluster" (match-string 1 text))))))
+      (cons :name-tables (cons templates (org--graph-read-scope (org-element-contents tree) templates))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing: Org list ⟶ graph statements
@@ -316,13 +328,6 @@ silently contributing nothing."
           (unless (or (assoc (car row) explicit) (assoc (car row) inherited))
             (push row inherited)))))
     (append (nreverse inherited) explicit)))
-
-(defun org--graph-keyword-tags (keyword line)
-  "A #+KEYWORD: LINE ↦ its value's trailing `:t₁:t₂:' tags, as an (\":inherit\" \"t₁ t₂\") row; else nil.
-  \"#+node: :wife:base:\"  ↦  (\":inherit\" \"wife base\")"
-  (let ((value (substring line (length (format "#+%s:" keyword)))))
-    (when (string-match (concat "\\`[ \t]*" org--graph-tag-group-re "[ \t]*\\'") value)
-      (list ":inherit" (s-join " " (s-split ":" (match-string 1 value) t))))))
 
 (defun org--graph-expand-scope (scope name-tables)
   "SCOPE, a preamble plist, with :inherit rows expanded in its #+graph:, #+node:, and #+edge: tables."
@@ -387,21 +392,33 @@ The name is TEXT sans tag, targets, links, footnotes, and markup; the label is a
 else the name.  A TEXT that is a lone [[PATH][D]] names the node PATH, with D labelling the arc from its parent; so does
 a description-list term, `A ::', whose own tags name the arc's templates.  Trailing tags name templates, and inline
 footnotes become the node's tooltip."
-  (let* ((checkbox (when (string-match "\\`\\[\\([ X-]\\)\\][ \t]+" text)
-                     (prog1 (pcase (match-string 1 text) ("X" "checked") ("-" "partial") (_ "unchecked"))
-                       (setq text (substring text (match-end 0))))))
-         ;; As Org's, greedy; yet `[^\0]', since a `\\\\' may have broken the term's line.
-         (term (when (string-match "\\`\\([^\0]*\\)[ \t]+::\\(?:[ \t]+\\|\\'\\)" text)
-                 (prog1 (match-string 1 text) (setq text (substring text (match-end 0))))))
-         ;; A term's own tags, `+ wed :married: :: Khadija', style the arc it labels.
-         (arc-tags (when (and term (string-match (concat "\\(?:\\`\\|[ \t]+\\)" org--graph-tag-group-re "[ \t]*\\'") term))
-                     (prog1 (s-split ":" (match-string 1 term) t) (setq term (substring term 0 (match-beginning 0))))))
-         (arc-label (unless (s-blank-str-p term) (plist-get (org--graph-item-text-sans-tags term) :label)))
-         (tags (when (string-match org--graph-tags-re text)
-                 (prog1 (s-split ":" (match-string 1 text) t)
-                   (setq text (substring text 0 (match-beginning 0))))))
-         (parts (org--graph-item-text-sans-tags text)))
+  (-let* ((checkbox (when (string-match "\\`\\[\\([ X-]\\)\\][ \t]+" text)
+                      (prog1 (pcase (match-string 1 text) ("X" "checked") ("-" "partial") (_ "unchecked"))
+                        (setq text (substring text (match-end 0))))))
+          ;; As Org's, greedy; yet `[^\0]', since a `\\\\' may have broken the term's line.
+          (term (when (string-match "\\`\\([^\0]*\\)[ \t]+::\\(?:[ \t]+\\|\\'\\)" text)
+                  (prog1 (match-string 1 text) (setq text (substring text (match-end 0))))))
+          ;; A term's own tags, `+ wed :married: :: Khadija', style the arc it labels.
+          (arc-tags (when (and term (string-match (concat "\\(?:\\`\\|[ \t]+\\)" org--graph-tag-group-re "[ \t]*\\'") term))
+                      (prog1 (s-split ":" (match-string 1 term) t) (setq term (substring term 0 (match-beginning 0))))))
+          (arc-label (unless (s-blank-str-p term) (plist-get (org--graph-item-text-sans-tags term) :label)))
+          ((text . tags) (org--graph-split-tags text))
+          (parts (org--graph-item-text-sans-tags text)))
     (append parts (list :arc-label arc-label :arc-tags arc-tags :tags tags :checkbox checkbox))))
+
+(defun org--graph-split-tags (text)
+  "TEXT ↦ (TEXT′ . TAGS), its trailing `:t₁:t₂:' tags split off: \"a :x:y:\" ↦ (\"a\" \"x\" \"y\"); TAGS is nil sans tags."
+  (if (string-match org--graph-tags-re text)
+      (cons (substring text 0 (match-beginning 0)) (s-split ":" (match-string 1 text) t))
+    (list text)))
+
+(defun org--graph-template-rows (tags name-tables)
+  "TAGS ↦ the rows of their #+name: templates, from NAME-TABLES; as `org--graph-expand-inherit' reads | :inherit TAGS |."
+  (org--graph-expand-inherit `((":inherit" ,(s-join " " tags))) name-tables))
+
+(defun org--graph-arc-tags (text)
+  "An item's parsed TEXT ↦ the tags styling its arc: its term's, and also its trailing ones when it is a reference."
+  (append (plist-get text :arc-tags) (when (plist-get text :reference) (plist-get text :tags))))
 
 (defun org--graph-external-link-p (o)
   "Non-nil when O is a link object to anything but a node: a web page, a file, and so on."
@@ -537,21 +554,16 @@ aligns its columns.  Hlines draw rules between rows; a table with them has one o
                             "<TR>"
                             (s-join "" (-keep (lambda (c)
                                                 (when (equal (gethash (cons r c) owner) (cons r c))
-                                                  (let* ((text (funcall cell r c))
-                                                         (tags (when (string-match org--graph-tags-re text)
-                                                                 (let ((start (match-beginning 0))
-                                                                       (group (match-string 1 text)))
-                                                                   (setq text (substring text 0 start))
-                                                                   (s-split ":" group t))))
-                                                         (parts (org--graph-item-text-sans-tags text))
-                                                         (port (-some-> (or (plist-get parts :target)
-                                                                            (and (plist-get parts :links) (plist-get parts :name)))
-                                                                 org--graph-dot-port))
-                                                         (mine (--filter (equal (gethash it owner) (cons r c))
-                                                                         (hash-table-keys owner)))
-                                                         (rowspan (1+ (- (-max (-map #'car mine)) r)))
-                                                         (colspan (1+ (- (-max (-map #'cdr mine)) c)))
-                                                         (align (nth c aligns)))
+                                                  (-let* (((text . tags) (org--graph-split-tags (funcall cell r c)))
+                                                          (parts (org--graph-item-text-sans-tags text))
+                                                          (port (-some-> (or (plist-get parts :target)
+                                                                             (and (plist-get parts :links) (plist-get parts :name)))
+                                                                  org--graph-dot-port))
+                                                          (mine (--filter (equal (gethash it owner) (cons r c))
+                                                                          (hash-table-keys owner)))
+                                                          (rowspan (1+ (- (-max (-map #'car mine)) r)))
+                                                          (colspan (1+ (- (-max (-map #'cdr mine)) c)))
+                                                          (align (nth c aligns)))
                                                     (when (and tags (not (plist-get parts :links)))
                                                       (user-error "graph: a #+record: cell's tags style its arcs, but `%s' \
 has no [[link]]; for literal text ending in `:%s:', write =:%s:=" text (car tags) (car tags)))
@@ -572,20 +584,14 @@ has no [[link]]; for literal text ending in `:%s:', write =:%s:=" text (car tags
               (nreverse links))))))
 
 (defun org--graph-item-parts (item)
-  "An `org-list-to-lisp' ITEM ↦ (TEXT PREAMBLE CHILDREN KIND): its parsed text, its table and directives,
-its sub-items, and whether they are `ordered' or `unordered'.
-As in Org, an item's text is its first paragraph: lines up to a blank one, a table, or a directive; so a long
-line of [[links]] may wrap.  A `\\\\' breaks the label's line, even mid-line.  Tables and directives after the
-sub-items belong to the item too, as in Org."
-  (-let* ((lines (s-lines (s-trim (car item))))
-          ((text body) (--split-with (not (or (s-blank-str-p it) (s-matches-p "\\`[ \t]*[|#]" it))) lines))
-          (after (-filter #'stringp (cddr item))))
-    (list (org--graph-item-text (org--graph-break-lines (s-join " " (-map #'s-trim text))))
-          (org--graph-extract-item-preamble (s-join "\n" (append body after)))
-          (-filter #'consp (cdr (cadr item))) (car-safe (cadr item)))))
+  "A read ITEM ↦ (TEXT PREAMBLE CHILDREN KIND): its parsed text, its tables and directives, its sub-items, and their KIND.
+As in Org, an item's text is its first paragraph, so a long line of [[links]] may wrap; its lines join, and only then
+does a `\\\\' break the label's line, even mid-line."
+  (list (->> (plist-get item :text) s-trim s-lines (-map #'s-trim) (s-join " ") org--graph-break-lines org--graph-item-text)
+        (plist-get item :pre) (plist-get item :children) (plist-get item :kind)))
 
 (defun org--graph-item-id (item)
-  "An `org-list-to-lisp' ITEM ↦ its node id: its | :id | row, else its <<target>>, else its text."
+  "A read ITEM ↦ its node id: its | :id | row, else its <<target>>, else its text."
   (-let [(text pre) (org--graph-item-parts item)]
     (or (-some-> (assoc ":id" (plist-get pre :attr-rows)) cadr org--graph-unquote)
         (plist-get text :target)
@@ -595,7 +601,7 @@ sub-items belong to the item too, as in Org."
   "An item's parsed TEXT and PREAMBLE ↦ its `org--graph-item-rows', its tags inheriting their #+name: templates.
 A tag applies a template to whatever its line describes: after an item, its node; after a reference, or in a
 description term, its arc.  Explicit rows still win."
-  (let ((arc-tags (append (plist-get text :arc-tags) (when (plist-get text :reference) (plist-get text :tags))))
+  (let ((arc-tags (org--graph-arc-tags text))
         (node-tags (unless (plist-get text :reference)
                      (append (plist-get text :tags)
                              (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it)))))))
@@ -633,14 +639,15 @@ A repeat occurrence contributes the ATTRS keys not yet set, and warns about thos
          stmts))
 
 (defun org--graph-parse-item (item parent ctx)
-  "ITEM, an `org-list-to-lisp' item under PARENT (an id, or nil at the top), ↦ its statements; its nodes accrue in CTX.
+  "A read ITEM under PARENT (an id, or nil at the top) ↦ its statements; its nodes accrue in CTX.
 
 The order is: arcs PARENT → ITEM, ITEM's [[link]] arcs, ITEM's declaration, then its children's statements.
 An item that is a lone [[link]] is a reference: it draws arcs to its target, but leaves declaring it to the target's own item."
   (-let* (((text pre children kind) (org--graph-item-parts item))
           (name     (org--graph-unquote (plist-get text :name)))
           (label    (org--graph-unquote (plist-get text :label)))
-          (rows     (org--graph-item-table text pre (org--graph-ctx-name-tables ctx)))
+          (tables   (org--graph-ctx-name-tables ctx))
+          (rows     (org--graph-item-table text pre tables))
           (id       (or (plist-get rows :id) (plist-get text :target) name))
           (attrs    (org--graph-override (append (-some--> (plist-get text :tooltip) `(("tooltip" ,it)))
                                                  (-some--> (plist-get text :url) `(("URL" ,it)))
@@ -652,6 +659,11 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (targeted (plist-get rows :targeted))
           (to-arc   (lambda (target attrs)
                       (list :edge id target (org--graph-override attrs (alist-get target targeted nil nil #'equal)))))
+          (legend?  (and (not parent) (plist-get text :arc-tags)))
+          (ranked   (org--graph-ordered-rank kind children))
+          (rank-stmts (-if-let (rank (plist-get rows :children-rank))
+                          (list (list :rank rank (-map #'org--graph-item-id children)))
+                        ranked))
           (table    (org--graph-table-label (plist-get pre :record)))
           (attrs    (if table (org--graph-override `(("shape" "plain") ("label" ,(car table))) attrs) attrs))
           (arcs     (append (when parent
@@ -665,18 +677,15 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
                                           (org--graph-override
                                            (org--graph-override
                                             (-some--> desc `(("label" ,it)))
-                                            (when tags (org--graph-expand-inherit `((":inherit" ,(s-join " " tags)))
-                                                                                  (org--graph-ctx-name-tables ctx))))
+                                            (when tags (org--graph-template-rows tags tables)))
                                            (alist-get target targeted nil nil #'equal))))
                                   (cdr table)))))
     (when (and (not parent) (plist-get text :arc-label))
       (user-error "graph: a `TERM ::' describes the arc from a parent, but `%s' has none; for a legend entry, the TERM is \
 just tags: `- :T: :: %s'" id id))
     ;; A legend entry's tags style its sample, not the graph's arcs.
-    (unless (and (not parent) (plist-get text :arc-tags))
-      (org--graph-note-arc-templates ctx (append (plist-get text :arc-tags)
-                                                 (when (plist-get text :reference) (plist-get text :tags))
-                                                 (-mapcat #'cadddr (cdr table)))
+    (unless legend?
+      (org--graph-note-arc-templates ctx (append (org--graph-arc-tags text) (-mapcat #'cadddr (cdr table)))
                                      (plist-get pre :attr-rows)))
     (-when-let (stray (--remove (or (assoc it (plist-get text :links)) (assoc it (mapcar #'cdr (cdr table))))
                                 (-map #'car targeted)))
@@ -686,39 +695,31 @@ just tags: `- :T: :: %s'" id id))
       (user-error "graph: `[[%s]]' refers to a node declared elsewhere; give it node attributes there, not here" id))
     (cond
      ;; `- :married: :: marriage', with no parent to arc from, is a legend entry.
-     ((and (not parent) (plist-get text :arc-tags))
+     (legend?
       (list (list :legend (format "legend_%d" (cl-incf (org--graph-ctx-legends ctx)))
-                  (org--graph-expand-inherit `((":inherit" ,(s-join " " (plist-get text :arc-tags))))
-                                             (org--graph-ctx-name-tables ctx))
+                  (org--graph-template-rows (plist-get text :arc-tags) tables)
                   label (plist-get text :arc-tags))))
      ((plist-get text :reference)
-      (append arcs (--mapcat (org--graph-parse-item it id ctx) children)
-              (-if-let (rank (plist-get rows :children-rank))
-                  (list (list :rank rank (-map #'org--graph-item-id children)))
-                (org--graph-ordered-rank kind children))))
+      (append arcs (--mapcat (org--graph-parse-item it id ctx) children) rank-stmts))
      ((and fresh (equal shape "cluster"))
       (org--graph-declare ctx id name nil)
-      (let ((stmts (append (--mapcat (org--graph-parse-item it nil ctx) children)
-                           (org--graph-ordered-rank kind children))))
+      (let ((stmts (append (--mapcat (org--graph-parse-item it nil ctx) children) ranked)))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
         (cons (list :cluster id
                     :label (or (cadr (assoc "label" attrs)) label)
                     :attrs (--remove (member (car it) '("shape" "label")) attrs)
-                    :scope (org--graph-expand-scope pre (org--graph-ctx-name-tables ctx))
+                    :scope (org--graph-expand-scope pre tables)
                     :stmts stmts)
               arcs)))
      (t
       ;; An ordered list keeps its order: `ordering=out' stops Graphviz from reshuffling the arcs to it.
-      (let ((ranked (org--graph-ordered-rank kind children)))
-        (append arcs
-                (org--graph-declare ctx id label (if (and ranked (not (assoc "ordering" attrs)))
-                                                     (append attrs '(("ordering" "out")))
-                                                   attrs))
-                (--mapcat (org--graph-parse-item it id ctx) children)
-                (-if-let (rank (plist-get rows :children-rank))
-                    (list (list :rank rank (-map #'org--graph-item-id children)))
-                  ranked)))))))
+      (append arcs
+              (org--graph-declare ctx id label (if (and ranked (not (assoc "ordering" attrs)))
+                                                   (append attrs '(("ordering" "out")))
+                                                 attrs))
+              (--mapcat (org--graph-parse-item it id ctx) children)
+              rank-stmts)))))
 
 (defun org--graph-note-arc-templates (ctx tags rows)
   "Record in CTX the templates that style arcs: the arc TAGS, and those of ROWS' :edge.:inherit and :edge[T].:inherit.
@@ -727,89 +728,42 @@ So a legend draws such a template as an arc, rather than as a node."
                                        (--filter (string-match-p "\\`:edge\\(?:\\[.+\\]\\)?\\.:inherit\\'" (car it)) rows))))
     (puthash name t (org--graph-ctx-arc-templates ctx))))
 
-(defun org--graph-desugar-clusters (raw)
-  "RAW with each #+begin_cluster block ↦ the `| shape | cluster |' item it abbreviates; outermost first, so nesting works.
-
-  #+begin_cluster Packages :bgcolor grey :node.shape box      + Packages
-  + Org                                                  ↦     | shape   | cluster |
-  #+end_cluster                                                | bgcolor | grey    |
-                                                               #+node:
-                                                               | shape | box |
-                                                               + Org
-
-The header reads as the #+begin_graph one does: a title, then :KEY graph attributes, :node.KEY and :edge.KEY defaults.
-An untitled cluster is an anonymous box: it has no label, and no name to draw arcs to."
-  (let ((lines (s-split "\n" raw)) (anonymous 0) out)
-    (while lines
-      (let ((line (pop lines)))
-        (if (not (string-match "\\`\\([ \t]*\\)#\\+begin_cluster\\(?:[ \t]+\\(.*\\)\\)?\\'" line))
-            (push line out)
-          (-let* ((indent (match-string 1 line))
-                  ;; The title runs up to the first whitespace-then-colon; `Time 12:30' stays whole.
-                  ((_ title kwds) (s-match "\\`\\(.*?\\)\\(?:\\(?:\\`\\|[ \t]+\\)\\(:.*\\)\\)?\\'"
-                                           (s-trim (or (match-string 2 line) ""))))
-                  ((&plist :graph-rows graph :node-rows node :edge-rows edge)
-                   (org--graph-header-rows (org--read-header kwds)))
-                  (depth 1) body)
-            (while (and lines (> depth 0))
-              (let ((l (pop lines)))
-                (cond ((s-matches-p "\\`[ \t]*#\\+begin_cluster\\_>" l) (cl-incf depth))
-                      ((s-matches-p "\\`[ \t]*#\\+end_cluster[ \t]*\\'" l) (cl-decf depth)))
-                (when (> depth 0) (push (concat "  " l) body))))
-            (when (> depth 0) (user-error "graph: `#+begin_cluster %s' has no #+end_cluster" title))
-            (when (s-blank-str-p title)
-              (setq title (format "anonymous %d" (cl-incf anonymous))
-                    graph (cons '("label" "\"\"") graph)))
-            (-let* ((row (lambda (r) (format "%s  | %s | %s |" indent (car r) (cadr r))))
-                    ;; A table opening the block styles the box, as an item's table styles its node.
-                    ((table rest) (--split-with (s-matches-p "\\`[ \t]*|" it) (nreverse body))))
-              ;; Back onto the input, so that clusters nested within this one are desugared in turn.
-              (setq lines (append (list (concat indent "+ " title) (funcall row '("shape" "cluster")))
-                                  (-map row graph)
-                                  table
-                                  (when node (cons (concat indent "  #+node:") (-map row node)))
-                                  (when edge (cons (concat indent "  #+edge:") (-map row edge)))
-                                  rest
-                                  lines)))))))
-    (s-join "\n" (nreverse out))))
-
 (defun org--graph-buffer-templates ()
   "The current buffer's #+name: tables, outside graph blocks, ↦ templates, name ↦ rows; so, as with Babel's
 named tables, a house style is named once per file rather than once per graph.
-`#+name: wife :base:' inherits, as in a graph."
-  (save-excursion
-    (goto-char (point-min))
-    (let ((case-fold-search t) tables)
-      (while (re-search-forward
-              "^[ \t]*#\\+\\(?:\\(begin_graph\\_>\\)\\|name:.*\n\\(?:[ \t]*|.*\\(?:\n\\|\\'\\)\\)+\\)" nil t)
-        (if (match-beginning 1)
-            ;; A graph's own templates are its own.
-            (re-search-forward "^[ \t]*#\\+end_graph" nil 'move)
-          (push (replace-regexp-in-string
-                 "\\`#\\+name:" "#+name:"
-                 (s-join "\n" (-map #'s-trim (s-lines (s-trim (match-string-no-properties 0))))) t t)
-                tables)))
-      (plist-get (org--graph-extract-preamble (s-join "\n" (nreverse tables))) :name-tables))))
+`#+name: wife :base:' inherits, as in a graph; and, as #+name: is Org's affiliated keyword, a #+caption: may sit by it."
+  (let ((templates (make-hash-table :test #'equal)))
+    (when (derived-mode-p 'org-mode)
+      (save-excursion
+        (goto-char (point-min))
+        (let ((case-fold-search t))
+          (while (re-search-forward "^[ \t]*#\\+\\(?:\\(begin_graph\\_>\\)\\|name:\\)" nil t)
+            (if (match-beginning 1)
+                ;; A graph's own templates are its own.
+                (re-search-forward "^[ \t]*#\\+end_graph" nil 'move)
+              (let ((table (save-match-data (org-element-at-point))))
+                (when (eq (org-element-type table) 'table)
+                  (org--graph-add-template templates (org-element-property :name table)
+                                           (org--graph-table-rows table)))))))))
+    templates))
 
 (defun org--graph-parse (raw-contents)
   "RAW-CONTENTS of a #+begin_graph block ↦ (PREAMBLE STATEMENTS CTX).
 A template is the graph's own #+name: table, else the buffer's, else one of `org-graph-checkbox-templates'."
-  (let* ((raw      (org--graph-extract-preamble (org--graph-desugar-clusters raw-contents)))
+  (let* ((buffer   (org--graph-buffer-templates))
+         (raw      (org--graph-read raw-contents))
+         (tables   (plist-get raw :name-tables))
          ;; Before `org--graph-expand-scope' expands them away, `#+edge: :faint:' style arcs.
          (edge-uses (--map (cons (concat ":edge." (car it)) (cdr it)) (plist-get raw :edge-rows)))
-         (fallback (org--graph-buffer-templates))
+         (_        (maphash (lambda (name rows) (unless (gethash name tables) (puthash name rows tables))) buffer))
          (_        (pcase-dolist (`(,name . ,rows) org-graph-checkbox-templates)
-                     (unless (gethash name fallback) (puthash name rows fallback))))
-         (_        (maphash (lambda (name rows) (unless (gethash name (plist-get raw :name-tables))
-                                                  (puthash name rows (plist-get raw :name-tables))))
-                            fallback))
-         (preamble (org--graph-expand-scope raw (plist-get raw :name-tables)))
-         (ctx      (org--graph-ctx-create :name-tables (plist-get preamble :name-tables)))
+                     (unless (gethash name tables) (puthash name rows tables))))
+         (preamble (org--graph-expand-scope raw tables))
+         (ctx      (org--graph-ctx-create :name-tables tables))
          (_        (org--graph-note-arc-templates ctx nil edge-uses))
-         (list     (org--parse-plain-list (s-trim (plist-get preamble :list-body)) "graph"))
-         (items    (-filter #'consp (cdr list)))
+         (items    (plist-get preamble :items))
          (stmts    (append (--mapcat (org--graph-parse-item it nil ctx) items)
-                           (org--graph-ordered-rank (car list) items))))
+                           (org--graph-ordered-rank (plist-get preamble :kind) items))))
     (list preamble stmts ctx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -945,12 +899,17 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
 ;;; C-c C-c integration
 
 (defun org-graph--insert-results (end-point payload)
-  "Insert \"#+RESULTS:\\nPAYLOAD\" on the line after END-POINT, replacing a #+RESULTS: (header + one line) already there."
+  "Insert \"#+RESULTS:\\nPAYLOAD\" on the line after END-POINT, replacing the whole #+RESULTS: element already there.
+#+RESULTS: is an affiliated keyword, so its element spans the result proper ---say, a multi-line src block--- too."
   (save-excursion
     (goto-char end-point)
     (forward-line 1)
-    (when (looking-at "[ \t]*#\\+RESULTS:")
-      (delete-region (point) (progn (forward-line 2) (point))))
+    (when (looking-at-p "[ \t]*#\\+RESULTS:")
+      ;; Its blank lines after belong to what follows, so they stay.
+      (delete-region (point) (save-excursion (goto-char (org-element-property :end (org-element-at-point)))
+                                             (skip-chars-backward " \t\n")
+                                             (forward-line 1)
+                                             (point))))
     (insert (format "#+RESULTS:\n%s\n" payload))))
 
 (defun org-graph--run-dot (dot format outfile)
@@ -974,14 +933,9 @@ appends a structured debug footer."
   (let* ((src-lines  (split-string dot "\n"))
          (n-lines    (length src-lines))
          (offenders
-          (let (hits (pos 0))
-            (while (string-match "line \\([0-9]+\\)" err-str pos)
-              (let ((n (string-to-number (match-string 1 err-str))))
-                (when (and (> n 0) (<= n n-lines))
-                  (push (format "  line %d: %s" n (s-trim (nth (1- n) src-lines)))
-                        hits)))
-              (setq pos (match-end 0)))
-            (nreverse hits)))
+          (--keep (let ((n (string-to-number (cadr it))))
+                    (when (<= 1 n n-lines) (format "  line %d: %s" n (s-trim (nth (1- n) src-lines)))))
+                  (s-match-strings-all "line \\([0-9]+\\)" err-str)))
          (debug-footer
           (string-join
            '("\nTo debug further:"
@@ -1050,8 +1004,7 @@ Returns t (claiming C-c C-c)."
            (main-arg   (org-special-block-main-arg block))
            (end-pt     (org-special-block-end-point block))
            (block-mode (plist-get kwdargs :C-c_C-c))
-           (prefix?    (and current-prefix-arg t))
-           (show-dot?  (if (equal (format "%s" block-mode) "dot") (not prefix?) prefix?))
+           (show-dot?  (xor (equal (format "%s" block-mode) "dot") current-prefix-arg))
            (dot        (org--graph-raw->dot raw main-arg kwdargs)))
       (if show-dot?
           (progn
@@ -1084,30 +1037,19 @@ Returns t (claiming C-c C-c)."
 ;;; Interactive attribute insertion
 
 (defun org-graph--table-context ()
-  "Return a symbol for the table context at point within a graph block.
-
-Scans backward past blank lines and table rows to find the closest
-preceding structural anchor line, then returns:
-  `graphs'   — table follows a #+graph: directive
-  `edges'    — table follows a #+edge: directive
-  `record'   — table follows a #+record: directive: cells, not keys
-  `nodes'    — table follows a #+node: directive, a list item, or anything else"
+  "The table at point ↦ what its rows describe, by the directive above it, past any tables between, as
+`org--graph-read-scope' reads it: `graphs' under #+graph:, `edges' under #+edge:, `record' under #+record: ---cells,
+not keys---, else `nodes': under #+node:, an item, or a #+name: template."
   (save-excursion
-    (beginning-of-line)
-    (let ((found nil))
-      (while (and (not found) (not (bobp)))
-        (forward-line -1)
-        (let ((trimmed (s-trim (or (thing-at-point 'line t) ""))))
-          (cond
-           ((or (s-blank-str-p trimmed)
-                (s-matches-p "^|" trimmed))
-            nil)
-           ((s-matches-p "^#\\+graph:" trimmed)  (setq found 'graphs))
-           ((s-matches-p "^#\\+node:"  trimmed)  (setq found 'nodes))
-           ((s-matches-p "^#\\+edge:"  trimmed)  (setq found 'edges))
-           ((s-matches-p "^#\\+record:" trimmed) (setq found 'record))
-           (t (setq found 'nodes)))))
-      (or found 'nodes))))
+    ;; At a row, Org's element at point is that row; we want its table.
+    (let ((el (org-element-lineage (org-element-at-point) '(table) t)))
+      (while (and (eq (org-element-type el) 'table) (not (org-element-property :name el))
+                  (progn (goto-char (org-element-property :begin el))
+                         (skip-chars-backward " \t\n")
+                         (not (bobp))))
+        (setq el (let ((at (org-element-at-point))) (or (org-element-lineage at '(table) t) at))))
+      (pcase (and (eq (org-element-type el) 'keyword) (downcase (org-element-property :key el)))
+        ("graph" 'graphs) ("edge" 'edges) ("record" 'record) (_ 'nodes)))))
 
 (defun org-graph--pick-color ()
   "Launch a helm color picker; RET selects the color immediately.
@@ -1144,7 +1086,7 @@ the hex code and name are inserted automatically.  Falls back to
 `read-string' when helm is unavailable or the user aborts.
 The new row is inserted below the current line and the table is aligned."
   (interactive "P")
-  (when (and arg (org-at-table-p) (org-graph--in-graph-p) (not (eq (org-graph--table-context) 'record)))
+  (when (and arg (org-graph--at-key-table-p))
     (let* ((context (org-graph--table-context))
            (valid   (org-graph--attributes-on context))
            (choices (--map (format "%s — %s"
@@ -1176,7 +1118,7 @@ The new row is inserted below the current line and the table is aligned."
 When ARG is non-nil and point is on an Org table row inside a
 #+begin_graph block, run `org-graph--insert-attribute-row' and return
 non-nil to suppress the normal `org-return' behaviour."
-  (when (and arg (org-at-table-p) (org-graph--in-graph-p) (not (eq (org-graph--table-context) 'record)))
+  (when (and arg (org-graph--at-key-table-p))
     (org-graph--insert-attribute-row arg)
     t))
 
@@ -1226,15 +1168,16 @@ non-nil to suppress the normal `org-return' behaviour."
   (--filter (memq context (plist-get it :valid-on)) org-graph-attributes))
 
 (defun org-graph--key-attribute (key)
-  "A table or header KEY ↦ (CONTEXT . ATTRIBUTE), e.g. \":edge[x].color\" ↦ (edges . \"color\"),
-\":node.shape\" ↦ (nodes . \"shape\"), and \"shape\" ↦ (nil . \"shape\")."
-  (cond ((string-match "\\`:edge\\(?:\\[[^]]*\\]\\)?\\.\\(.*\\)\\'" key) (cons 'edges (match-string 1 key)))
-        ((string-match "\\`:node\\.\\(.*\\)\\'" key) (cons 'nodes (match-string 1 key)))
-        (t (cons nil key))))
+  "A table KEY ↦ the attribute it sets: \":edge[x].color\" ↦ \"color\", \":node.shape\" ↦ \"shape\", and \"shape\" ↦ \"shape\"."
+  (if (string-match "\\`:\\(?:edge\\(?:\\[[^]]*\\]\\)?\\|node\\)\\.\\(.*\\)\\'" key) (match-string 1 key) key))
+
+(defun org-graph--header->table-key (key)
+  "A #+begin_graph KEY ↦ the table key setting the same attribute: \":rankdir\" ↦ \"rankdir\", \":node.shape\" unchanged."
+  (if (string-match-p "\\`:\\(?:node\\|edge\\)\\." key) key (substring key 1)))
 
 (defun org-graph--attribute (key)
-  "A table or header KEY ↦ the `org-graph-attributes' entry of the attribute it sets; else nil."
-  (let ((name (cdr (org-graph--key-attribute key))))
+  "A table KEY ↦ the `org-graph-attributes' entry of the attribute it sets; else nil."
+  (let ((name (org-graph--key-attribute key)))
     (--first (equal (plist-get it :name) name) org-graph-attributes)))
 
 (defun org-graph--key-doc (key)
@@ -1248,7 +1191,7 @@ An attribute's description ends with its default, when Graphviz states one."
 (defun org-graph--header-key-doc (key)
   "A #+begin_graph KEY, such as \":rankdir\" or \":node.shape\", ↦ its one-line description; else nil."
   (or (cdr (assoc key org-graph--header-key-docs))
-      (org-graph--key-doc (if (string-match-p "\\`:\\(?:node\\|edge\\)\\." key) key (substring key 1)))))
+      (org-graph--key-doc (org-graph--header->table-key key))))
 
 (defun org-graph--header-token-at-point ()
   "On a #+begin_graph line ↦ (BEG END PREVIOUS): the bounds of the word at point, and the word before it; else nil."
@@ -1272,10 +1215,7 @@ An attribute's description ends with its default, when Graphviz states one."
             :annotation-function (lambda (candidate) (-some->> (org-graph--header-key-doc candidate) (concat "  ")))
             :exclusive 'no))
      ((s-starts-with-p ":" previous)
-      (-some--> (plist-get (org-graph--attribute (if (string-match-p "\\`:\\(?:node\\|edge\\)\\." previous)
-                                                     previous
-                                                   (substring previous 1)))
-                           :values)
+      (-some--> (plist-get (org-graph--attribute (org-graph--header->table-key previous)) :values)
         (list beg end it :exclusive 'no))))))
 
 (defun org-graph--cell-at-point ()
@@ -1351,11 +1291,9 @@ A buffer with no graph block pays only one search per fontification, rather than
 Org gives tags their `org-tag' face only on headlines; in a graph, tags name templates, so they look the part."
   (let (found)
     (while (and (not found) (re-search-forward re limit t))
-      ;; Bounds first, as with links: asking whether we are in a graph clobbers the match data.
-      (let ((data (match-data)))
-        (when (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p))
-          (set-match-data data)
-          (setq found t))))
+      ;; Asking whether we are in a graph clobbers the match data, which font-lock reads.
+      (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p)))
+        (setq found t)))
     found))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1375,13 +1313,12 @@ Org gives tags their `org-tag' face only on headlines; in a graph, tags name tem
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; org-defblock registration
 
-(defun org-graph--render-to-png (dot outfile)
-  "Render DOT source to OUTFILE (PNG) via the dot command.
-Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
-  (-let [(exit . err-str) (org-graph--run-dot dot "png" outfile)]
+(defun org-graph--render (dot kind outfile)
+  "(DOT, KIND, OUTFILE) ↦ OUTFILE, once `dot -TKIND' writes it; else nil, the error logged to *Warnings*."
+  (-let [(exit . err-str) (org-graph--run-dot dot kind outfile)]
     (if (zerop exit)
         outfile
-      (warn "org-graph: dot failed rendering PNG:\n%s" (org-graph--annotate-dot-error err-str dot))
+      (warn "org-graph: dot failed rendering %s:\n%s" outfile (org-graph--annotate-dot-error err-str dot))
       nil)))
 
 (defun org-graph--png-to-base64 (pngfile)
@@ -1392,15 +1329,6 @@ Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
      (insert-file-contents-literally pngfile)
      (buffer-string))
    t))
-
-(defun org-graph--render-to-svg (dot outfile)
-  "Render DOT source to OUTFILE (SVG) via the dot command.
-Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
-  (-let [(exit . err-str) (org-graph--run-dot dot "svg" outfile)]
-    (if (zerop exit)
-        outfile
-      (warn "org-graph: dot failed rendering SVG:\n%s" (org-graph--annotate-dot-error err-str dot))
-      nil)))
 
 (defun org-graph--svg-contents (svgfile)
   "Return the <svg>…</svg> string from SVGFILE, stripping the XML preamble."
@@ -1475,26 +1403,18 @@ Example:
     (pcase backend
       ;; A named graph is a figure: an image link, which the block's #+name: and #+caption: label, as with Babel's results.
       ((guard org--handler-anchor)
-       (let ((kind (if (s-ends-with-p ".svg" outfile) "svg" "png")))
-         (-let [(exit . err) (org-graph--run-dot dot kind outfile)]
-           (unless (zerop exit)
-             (warn "org-graph: dot failed rendering %s:\n%s" outfile (org-graph--annotate-dot-error err dot))))
-         (org-parse (format "[[file:%s]]" outfile))))
+       (org-graph--render dot (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
+       (org-parse (format "[[file:%s]]" outfile)))
       (`html
-       (if svg
-           ;; SVG path: inline <svg> so tooltip <title> elements are preserved
-           (let ((svgfile (make-temp-file "org-graph-" nil ".svg")))
-             (if (org-graph--render-to-svg dot svgfile)
-                 (or (org-graph--svg-contents svgfile)
-                     (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot)))
-               (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot))))
-         ;; PNG path (default)
-         (let ((pngfile (make-temp-file "org-graph-" nil ".png")))
-           (if (org-graph--render-to-png dot pngfile)
-               (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />"
-                       (org-graph--png-to-base64 pngfile))
-             ;; dot unavailable — emit the raw dot source in a <pre>
-             (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot))))))
+       (let ((tmp (make-temp-file "org-graph-" nil (if svg ".svg" ".png"))))
+         (unwind-protect
+             ;; An inline <svg> keeps the tooltips' <title> elements; else, an inline base64 PNG.
+             (or (when (org-graph--render dot (if svg "svg" "png") tmp)
+                   (if svg (org-graph--svg-contents tmp)
+                     (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />" (org-graph--png-to-base64 tmp))))
+                 ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>
+                 (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot)))
+           (delete-file tmp))))
       (_
        ;; `org-parse' lets Org export the src block, rather than emit its raw syntax into the output.
        (org-parse (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot))))))

@@ -9,8 +9,8 @@
   ;; Call the graph block handler directly: simulate what org-export-string
   ;; does for a #+begin_graph block, bypassing the full export pipeline
   ;; (which triggers org-defblock docstring enrichment and breaks in batch).
-  (cl-letf (((symbol-function 'org-graph--render-to-png)
-             (lambda (_dot pngfile)
+  (cl-letf (((symbol-function 'org-graph--render)
+             (lambda (_dot _kind pngfile)
                ;; Write a minimal 1×1 white PNG so base64 encoding succeeds.
                (with-temp-file pngfile
                  (set-buffer-multibyte nil)
@@ -39,10 +39,10 @@
     (should (s-contains-p "digraph" dot))))
 
 (deftest "`#+begin_graph' :svg t — HTML export embeds inline <svg>"
-  ;; With :svg t the handler calls org-graph--render-to-svg and returns
+  ;; With :svg t the handler calls org-graph--render and returns
   ;; the raw <svg>…</svg> string for inline embedding (no base64, no <img>).
-  (cl-letf (((symbol-function 'org-graph--render-to-svg)
-             (lambda (_dot svgfile)
+  (cl-letf (((symbol-function 'org-graph--render)
+             (lambda (_dot _kind svgfile)
                (with-temp-file svgfile
                  (insert "
 <?xml version=\"1.0\"?>
@@ -59,8 +59,8 @@
 (deftest "`#+begin_graph' :svg t — XML preamble is stripped"
   ;; org-graph--svg-contents must strip the <?xml …?> and <!DOCTYPE> lines
   ;; so only the <svg>…</svg> element is embedded in the HTML.
-  (cl-letf (((symbol-function 'org-graph--render-to-svg)
-             (lambda (_dot svgfile)
+  (cl-letf (((symbol-function 'org-graph--render)
+             (lambda (_dot _kind svgfile)
                (with-temp-file svgfile
                  (insert "
 <?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -74,10 +74,10 @@
       (should (s-contains-p "<svg" html)))))
 
 (deftest "`#+begin_graph' :svg t — falls back to <pre> when dot unavailable"
-  ;; If org-graph--render-to-svg returns nil (dot not installed), the
+  ;; If org-graph--render returns nil (dot not installed), the
   ;; handler must fall back to a <pre> block with escaped dot source.
-  (cl-letf (((symbol-function 'org-graph--render-to-svg)
-             (lambda (_dot _svgfile) nil)))
+  (cl-letf (((symbol-function 'org-graph--render)
+             (lambda (_dot _kind _svgfile) nil)))
     (let ((html (org-block/graph 'html "
 + A
   + B" nil :svg t)))
@@ -86,8 +86,8 @@
 
 (deftest "`#+begin_graph' no :svg — HTML export still produces base64 PNG"
   ;; Omitting :svg (svg=nil) must leave the existing PNG path untouched.
-  (cl-letf (((symbol-function 'org-graph--render-to-png)
-             (lambda (_dot pngfile)
+  (cl-letf (((symbol-function 'org-graph--render)
+             (lambda (_dot _kind pngfile)
                (with-temp-file pngfile
                  (set-buffer-multibyte nil)
                  (insert "

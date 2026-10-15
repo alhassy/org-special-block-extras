@@ -60,3 +60,20 @@
       (search-forward "| rankdir |")
       (should (eq 'graphs (org-graph--table-context))))
     (kill-buffer buf)))
+
+(deftest "`org-graph--table-context' reaches past earlier tables to the directive owning them all; a #+name: table is a node template"
+  (let ((buf (tests-graph--make-graph-buffer
+              "
+#+edge:
+| color | red |
+
+| style | dotted |
+#+name: wife
+| shape | box |")))
+    (with-current-buffer buf
+      (goto-char (point-min))
+      (search-forward "| style |")
+      (should (eq 'edges (org-graph--table-context)))
+      (search-forward "| shape |")
+      (should (eq 'nodes (org-graph--table-context))))
+    (kill-buffer buf)))

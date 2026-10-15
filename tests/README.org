@@ -28,7 +28,7 @@ In this Emacs session:
 
 Exactly as CI does it ---see =.github/workflows/main.yml=:
 #+begin_src shell :dir .. :results output
-emacs --batch --eval "(package-initialize)" -L . -L ~/snap -L ~/fancy-C-x-C-e \
+emacs --batch --eval "(package-initialize)" -L ~/lf -L . -L ~/snap -L ~/fancy-C-x-C-e \
   $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
   -f ert-run-tests-batch-and-exit 2>&1 | grep -E "^Ran|FAILED"
 #+end_src
