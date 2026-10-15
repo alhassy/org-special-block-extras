@@ -18,7 +18,7 @@ KWDARGS is the plist for the block's keyword arguments."
                  :kwdargs  ,kwdargs
                  :contents "
 + A"
-                 :main-arg "directed"
+                 :main-arg ""
                  :end-point (point-max))))
              ((symbol-function 'org--graph-raw->dot)             (lambda (&rest _) ,dot-source))
              ((symbol-function 'call-process)                    (lambda (&rest _) 0))
@@ -77,7 +77,7 @@ KWDARGS is the plist for the block's keyword arguments."
   (with-temp-buffer
     (org-mode)
     (insert "
-#+begin_graph directed :C-c_C-c dot
+#+begin_graph :C-c_C-c dot
 + A
 #+end_graph")
     (search-backward "+ A")
@@ -91,7 +91,7 @@ KWDARGS is the plist for the block's keyword arguments."
   (with-temp-buffer
     (org-mode)
     (insert "
-#+begin_graph directed :file my-diagram.png
+#+begin_graph :file my-diagram.png
 + A
 #+end_graph")
     (search-backward "+ A")
@@ -128,7 +128,7 @@ KWDARGS is the plist for the block's keyword arguments."
                     :kwdargs  nil
                     :contents "
 + A"
-                    :main-arg "directed"
+                    :main-arg ""
                     :end-point (save-excursion
                                  (goto-char (point-max))
                                  (search-backward "#+end_graph")

@@ -7,13 +7,13 @@
 
 (deftest "`org--graph-raw->dot' auto-quotes multi-word node names"
   (let ((dot (org--graph-raw->dot "
-+ Org mode" "directed")))
++ Org mode" nil)))
     (should (s-contains-p "\"Org mode\"" dot))))
 
 (deftest "`org--graph-raw->dot' auto-quotes on both ends of an edge"
   (let ((dot (org--graph-raw->dot "
 + Org mode
-  + Org agenda" "directed")))
+  + Org agenda" nil)))
     (should (s-contains-p "\"Org mode\" -> \"Org agenda\"" dot))))
 
 (deftest "`org--graph-raw->dot' ignores bare Org comment lines"
@@ -22,7 +22,7 @@
 + A
   # this is a comment
   + B"
-              "directed")))
+              nil)))
     (should (s-contains-p "A -> B" dot))))
 
 (deftest "`org--graph-raw->dot' comment before table row does not drop the table"
@@ -33,7 +33,7 @@
   + B
     # a comment
     | :edge.label | calls |"
-              "directed")))
+              nil)))
     (should (s-contains-p "label=calls" dot))))
 
 (deftest "`org--graph-raw->dot' mixed comments and nodes produce correct graph"
@@ -45,6 +45,6 @@
     + \"Org agenda\"
       # another comment
       | :edge.label | \"hola\" |"
-              "directed")))
+              nil)))
     (should (s-contains-p "\"Org mode\" -> \"Org agenda\"" dot))
     (should (s-contains-p "label=\"hola\"" dot))))

@@ -22,7 +22,7 @@
 + A
   + B
     | :edge.label | calls |"
-                                 "directed" nil)))
+                                 nil nil)))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html)))))
 
@@ -34,7 +34,7 @@
 + A
   + B
     | :edge.label | calls |"
-              "directed")))
+              nil)))
     (should (s-contains-p "A -> B [ label=calls ];" dot))
     (should (s-contains-p "digraph" dot))))
 
@@ -50,7 +50,7 @@
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g><title>A</title></g></svg>"))
                svgfile)))
     (let ((html (org-block/graph 'html "
-+ A" "directed" :svg t)))
++ A" nil :svg t)))
       (should (s-contains-p "<svg" html))
       (should (s-contains-p "<title>A</title>" html))
       (should-not (s-contains-p "<img" html))
@@ -68,7 +68,7 @@
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g/></svg>"))
                svgfile)))
     (let ((html (org-block/graph 'html "
-+ A" "directed" :svg t)))
++ A" nil :svg t)))
       (should-not (s-contains-p "<?xml" html))
       (should-not (s-contains-p "<!DOCTYPE" html))
       (should (s-contains-p "<svg" html)))))
@@ -80,7 +80,7 @@
              (lambda (_dot _svgfile) nil)))
     (let ((html (org-block/graph 'html "
 + A
-  + B" "directed" :svg t)))
+  + B" nil :svg t)))
       (should (s-contains-p "<pre>" html))
       (should-not (s-contains-p "<svg" html)))))
 
@@ -95,7 +95,7 @@
 \x1a"))
                t)))
     (let ((html (org-block/graph 'html "
-+ A" "directed")))
++ A" nil)))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html))
       (should-not (s-contains-p "<svg" html)))))

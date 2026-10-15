@@ -20,7 +20,7 @@
 }"
                  (org--graph-raw->dot "
 + A
-  + B" "undirected"))))
+  + B" nil (quote (:directed nil))))))
 
 (define-graph-test "simple nesting A→B"
   :input "
@@ -56,18 +56,21 @@
   B [ label=B ];
 }")
 
-(define-graph-test "repeating an :edge. key starts a second, parallel, arc"
-  :input "
+(deftest "repeating an :edge. key is a user error, since a parallel arc is a second child item"
+  (should-error (org--graph-raw->dot "
 + A
   + B
     | :edge.label | first  |
-    | :edge.label | second |"
-  :output "digraph {
-  A [ label=A ];
-  A -> B [ label=first ];
-  A -> B [ label=second ];
-  B [ label=B ];
-}")
+    | :edge.label | second |" nil) :type 'user-error))
+
+(deftest "two templates setting one :edge. key are no repeat: the earlier template wins, as with Emacs faces"
+  (should (s-contains-p "A -> B [ color=red ];" (org--graph-raw->dot "
+#+name: hot
+| :edge.color | red |
+#+name: cold
+| :edge.color | blue |
++ A
+  + B :hot:cold:" nil))))
 
 (define-graph-test "id row makes cross-reference alias"
   :input "
@@ -108,7 +111,7 @@
   | :id | a |
 + B
   + back :: [[a]]"
-                  "directed"))))
+                  nil))))
 
 (define-graph-test "#+rank: emits rank=same block for nodes without a common parent"
   :input "

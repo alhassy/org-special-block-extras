@@ -27,7 +27,7 @@
 ;; C-u C-x C-e on any `define-graph-test' call auto-fills :output from actual.
 (snap-define-relation graph (input output)
   "Verify that INPUT (a #+begin_graph block body) produces OUTPUT (dot source)."
-  (let ((actual (org--graph-raw->dot input "directed")))
+  (let ((actual (org--graph-raw->dot input nil)))
     (should (equal output actual))
     (list :output actual)))
 

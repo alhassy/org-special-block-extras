@@ -18,10 +18,10 @@
 
 (deftest "`org--graph-item-rows' routes reserved keys away from node attributes"
   (should (equal '(:id "x" :attrs (("shape" "box")) :children-rank "same"
-                   :edges ((("label" "a") ("color" "red")) (("label" "b")))
+                   :edge (("label" "a") ("color" "red"))
                    :targeted (("z" ("color" "red") ("label" "zed"))))
                  (org--graph-item-rows '((":id" "x") ("shape" "box") (":children-rank" "same")
-                                         (":edge.label" "a") (":edge.color" "red") (":edge.label" "b")
+                                         (":edge.label" "a") (":edge.color" "red")
                                          (":edge[z].color" "red") (":edge[z].label" "zed"))
                                        (make-hash-table :test #'equal)))))
 
@@ -30,14 +30,14 @@
 (deftest "an unknown reserved key is a user error rather than a silent attribute"
   (should-error (org--graph-raw->dot "
 + A
-  | :colour | red |" "directed") :type 'user-error))
+  | :colour | red |" nil) :type 'user-error))
 
 (deftest "a lone-link item is a reference: node attributes on it are a user error"
   (should-error (org--graph-raw->dot "
 + <<b>> B
 + A
   + [[b]]
-    | color | red |" "directed") :type 'user-error))
+    | color | red |" nil) :type 'user-error))
 
 (define-graph-test "a lone-link child may refer forward; the target's own item still names and labels it"
   :input "
@@ -74,7 +74,7 @@
                  (org--graph-raw->dot "
 + a
   | label | x -> y |
-  + b" "undirected"))))
+  + b" nil (quote (:directed nil))))))
 
 (define-graph-test "\"Org mode\" and Org mode name the same node"
   :input "
@@ -114,7 +114,7 @@
   | color | red |
 + a
   | color | blue |
-  | shape | box |" "directed"))))
+  | shape | box |" nil))))
     (should (equal '("Node `a' is given color=blue again, keeping its first color=red") warnings))))
 
 ;;; Clusters as arc endpoints
@@ -160,8 +160,8 @@
 
 (deftest "exporting to a non-HTML backend names the image after the dot source, so re-exports reuse one file"
   (let ((dot (org--graph-raw->dot "
-+ A" "directed"))
++ A" nil))
         (export (lambda () (org-block/graph 'latex "
-+ A" "directed" nil))))
++ A" nil nil))))
     (should (equal (funcall export) (funcall export)))
     (should (s-contains-p (format ":file graph-%s.png" (substring (md5 dot) 0 12)) (funcall export)))))

@@ -112,7 +112,7 @@ one it reads as a paragraph, since its “#+end_NAME” is missing, is an error.
               (contents-begin (org-element-property :contents-begin elem))
               ;; The header line, after the name, as a Lisp list: positional arguments, then keyword ones.
               ((positional kwdargs) (--split-with (not (keywordp it))
-                                                  (read (format "(%s)" (or (org-element-property :parameters elem) ""))))))
+                                                  (org--read-header (org-element-property :parameters elem)))))
         (make-org-special-block
          ;; Block keywords ignore case, as Org's do; e.g., #+BEGIN_SHOUT is a shout block.
          :name (downcase (org-element-property :type elem))
@@ -255,6 +255,21 @@ Note: This function mutates the current buffer."
              (if (memq (org-element-type (org-element-at-point)) '(special-block paragraph))
                  (org-eval-replace-block (org-special-block-after-point blk) backend)
                (forward-line 1)))))
+
+;;;;; org--read-header
+
+(defun org--read-header (header)
+  "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole staying a string.
+  \"Title :n 2 :color #6c7086 :font Helvetica,Arial\"  ↦  (Title :n 2 :color \"#6c7086\" :font \"Helvetica,Arial\")
+So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp."
+  (let ((header (or header "")) (pos 0) values)
+    (while (string-match "[^ \t\n]+" header pos)
+      (let* ((beg (match-beginning 0)) (word-end (match-end 0))
+             (read (condition-case nil (read-from-string header beg) (error nil))))
+        (if (and read (>= (cdr read) word-end))
+            (setq values (cons (car read) values) pos (cdr read))
+          (setq values (cons (substring header beg word-end) values) pos word-end))))
+    (nreverse values)))
 
 ;;;;; org--parse-plain-list
 

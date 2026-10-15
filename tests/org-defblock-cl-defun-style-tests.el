@@ -122,7 +122,8 @@ body
 (deftest "cl-defun-style org-defblock refuses unknown header-line keywords, as cl-defun would"
   (using (org-defblock folded (&optional (title "More") &key (color "green"))
            (format "%s/%s: %s" title color contents))
-    (should-error (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex))))
+    (should (equal (cadr (should-error (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex)))
+                   "‘folded’ block: unknown header argument :colour; it takes :color"))))
 
 (deftest "cl-defun-style org-defblock with &allow-other-keys ignores unknown header-line keywords"
   (using (org-defblock folded (&optional (title "More") &key (color "green") &allow-other-keys)

@@ -10,7 +10,7 @@
   :input "Org lists are already trees, so the ~graph~ block draws them with Graphviz:
 nesting makes an edge, and a two-column table styles the item above it.
 
-#+begin_graph directed :file lambda-calculus.png
+#+begin_graph :file lambda-calculus.png
 #+graph:
 | rankdir | LR |
 

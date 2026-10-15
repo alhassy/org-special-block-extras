@@ -9,12 +9,12 @@
   :input "
 + struct1
   #+record:
-  | left | <<mid>> middle [[struct2.one]] | right |
+  | left | <<mid>> middle [[struct2::one]] | right |
 + struct2
   #+record:
   | <<one>> one | two |
 + reader
-  + [[struct1.mid]]"
+  + [[struct1::mid]]"
   :output "digraph {
   struct1:mid -> struct2:one;
   struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
@@ -31,7 +31,7 @@
   | ^            | c | <<here>> d | e | ^ | ^ |
   |              | f |            |   | ^ | ^ |
 + reader
-  + [[struct3.here]]"
+  + [[struct3::here]]"
   :output "digraph {
   struct3 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD ROWSPAN=\"3\">hello<BR/>world</TD><TD COLSPAN=\"3\">b</TD><TD ROWSPAN=\"3\">g</TD><TD ROWSPAN=\"3\">h</TD></TR><TR><TD>c</TD><TD PORT=\"here\">d</TD><TD>e</TD></TR><TR><TD COLSPAN=\"3\">f</TD></TR></TABLE>> ];
   reader [ label=reader ];
@@ -79,7 +79,7 @@
   Lisp [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>car</TD><TD>cdr</TD><TD PORT=\"eval_apply\">eval apply</TD></TR></TABLE>> ];
 }")
 
-(define-graph-test "ports are scoped per record, and record names may contain dots"
+(define-graph-test "ports are scoped per record, record and port names may contain dots, and `::' after a non-record is text"
   :input "
 + r1
   #+record:
@@ -87,12 +87,13 @@
 + org.el
   #+record:
   | <<head>> head | <<v1.2>> v1.2 |
-+ z [[r1.head]] [[org.el.v1.2]]"
++ z [[r1::head]] [[org.el::v1.2]] [[std::vector]]"
   :output "digraph {
   r1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD>tail</TD></TR></TABLE>> ];
   \"org.el\" [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD PORT=\"v1.2\">v1.2</TD></TR></TABLE>> ];
   z -> r1:head;
   z -> \"org.el\":\"v1.2\";
+  z -> \"std::vector\";
   z [ label=z ];
 }")
 
@@ -115,11 +116,11 @@
   (should-error (org--graph-raw->dot "
 + r
   #+record:
-  | ^ | a |" "directed") :type 'user-error)
+  | ^ | a |" nil) :type 'user-error)
   (should-error (org--graph-raw->dot "
 + r
   #+record:
-  |   | a |" "directed") :type 'user-error))
+  |   | a |" nil) :type 'user-error))
 
 (deftest "in a #+record: table, completion offers no keys: its rows are cells"
   (with-temp-buffer

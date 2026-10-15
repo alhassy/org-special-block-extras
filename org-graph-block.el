@@ -20,7 +20,8 @@
 ;;
 ;; Syntax overview:
 ;;
-;;   #+begin_graph Title :rankdir LR :node.shape box :edge.color red
+;;   #+macro: gold "#f9e2af"       ; Org's own macros: | color | {{{gold}}} |
+;;   #+begin_graph Title :rankdir LR :node.shape box :bgcolor #1e1e2e
 ;;                                 ; title = graph label; :KEY graph attrs; :directed nil ⇒ undirected
 ;;   #+graph:                      ; global graph[ ] attrs
 ;;   | rankdir | TB      |
@@ -40,15 +41,15 @@
 ;;   + <<lam>> *lambda*             ; <<id>>; *bold* /italic/ _u_ +s+ =code= ~pre~ ⇒ HTML label
 ;;     | shape          | ellipse |  ; node attrs; values are quoted for you; | :id | lam | ≡ <<lam>>
 ;;     | :children-rank | same    |  ; { rank=same; <immediate children> }
-;;     + church                     ; nesting = edge lambda→church
-;;       | :edge.label | encodes |   ; arc attrs; a repeated key starts a parallel arc
-;;       | label | "Church Encoding\nℕ, Bool, Pairs" |
+;;     + church \\ ℕ, Bool, Pairs    ; nesting = edge lambda→church; \\ breaks the label's line
+;;       | :edge.style | dotted |    ; arc attrs; a parallel arc is a second child item
 ;;     + lisp [[church][cross]]     ; [[TARGET]] or [[TARGET][LABEL]]: an extra arc
 ;;     + calls :: eval :faint:      ; arc lambda→eval labelled calls; :faint: splices that template
 ;;     + apply [fn::of a closure]   ; an inline footnote is the node's tooltip
 ;;       | :edge[church].style | dotted |  ; attrs of this item's arc to church
 ;;       + [[combinatory]]          ; a lone link is a reference: an arc to a node declared elsewhere
-;;       + [[combinatory]] :faint:  ; a reference's tags style its arc; "rec.port" reaches a record's port
+;;       + [[combinatory]] :faint:  ; a reference's tags style its arc; "rec::port" reaches a record's port
+;;     + [X] Org [[https://orgmode.org]]  ; a web link is the node's URL; [[file:x.png]] its image; [X] applies :checked:
 ;;   + combinatory
 ;;     1. S                         ; ordered children: one rank, in the order written
 ;;     2. K
@@ -60,7 +61,7 @@
 ;; Pressing C-c C-c anywhere inside the block renders a PNG immediately.
 ;; C-M-i completes, and eldoc explains, table keys and #+begin_graph keys; in any Org buffer's graph
 ;; blocks, and in the `org-graph-edit-mode' buffer C-c ' opens.  The attributes live in org-graph-attributes.el.
-;; Use #+begin_graph directed :file foo.png to fix the output filename.
+;; Use #+begin_graph :file foo.png to fix the output filename.
 
 ;;; Code:
 
@@ -76,6 +77,14 @@
 
 (defconst org-graph-reserved-keys '(":id" ":inherit" ":children-rank")
   "Table keys meaningful to the `graph' block itself, rather than to Graphviz; alongside the prefixes `:edge.' and `:edge[TARGET].'.")
+
+(defcustom org-graph-checkbox-templates
+  '(("checked" ("color" "forestgreen") ("fontcolor" "forestgreen"))
+    ("partial" ("color" "darkorange") ("fontcolor" "darkorange")))
+  "The default #+name: templates that an item's checkbox applies: [X] ↦ checked, [-] ↦ partial, [ ] ↦ unchecked.
+A graph's own #+name: template of the same name wins; a checkbox whose template exists nowhere styles nothing."
+  :type '(alist :key-type string :value-type (repeat (list string string)))
+  :group 'org-special-block-extras)
 
 (defconst org--graph-tag-group-re "\\(:\\(?:[[:alnum:]_@#%-]+:\\)+\\)"
   "`:t₁:t₂:' tags, as Org spells them on a headline ---and, as template names, kebab-case too: `:killed-by:'--- as group 1.")
@@ -269,7 +278,7 @@ Returns a plist:
 ;;
 ;; A parse yields plain data, which `org--graph-stmt->dot' then prints:
 ;;   (:node ID)                    ---ID's name and attributes live in the context
-;;   (:edge SRC DST ATTRS)         ---SRC and DST are raw ids, or "record.port"
+;;   (:edge SRC DST ATTRS)         ---SRC and DST are raw ids, or "record::port"
 ;;   (:rank KIND IDS)
 ;;   (:cluster ID :label L :attrs ROWS :scope PREAMBLE :stmts STATEMENTS)
 
@@ -283,18 +292,20 @@ Returns a plist:
 
 (defun org--graph-expand-inherit (rows name-tables &optional seen)
   "ROWS with each | :inherit N₁ … Nₖ | row replaced by templates N₁ … Nₖ's rows, sans keys ROWS sets explicitly ---wherever
-:inherit sits.  Templates may themselves inherit; one already being expanded, as listed in SEEN, contributes nothing; one
-that no #+name: defines is an error, rather than silently contributing nothing."
-  (let ((explicit (--remove (equal (car it) ":inherit") rows)))
-    (append (--mapcat (unless (member it seen)
-                        (--remove (assoc (car it) explicit)
-                                  (org--graph-expand-inherit
-                                   (or (gethash it name-tables)
-                                       (user-error "graph: `%s' names no #+name: template; for literal text ending in \
-`:%s:', write =:%s:= or a | label | row" it it it))
-                                   name-tables (cons it seen))))
-                      (--mapcat (s-split "[ \t]+" (cadr it) t) (--filter (equal (car it) ":inherit") rows)))
-            explicit)))
+:inherit sits.  As with Emacs faces, an earlier template's key wins over a later one's.  Templates may themselves inherit;
+one already being expanded, as listed in SEEN, contributes nothing; one that no #+name: defines is an error, rather than
+silently contributing nothing."
+  (let ((explicit (--remove (equal (car it) ":inherit") rows)) inherited)
+    (dolist (name (--mapcat (s-split "[ \t]+" (cadr it) t) (--filter (equal (car it) ":inherit") rows)))
+      (unless (member name seen)
+        (dolist (row (org--graph-expand-inherit
+                      (or (gethash name name-tables)
+                          (user-error "graph: `%s' names no #+name: template; for literal text ending in \
+`:%s:', write =:%s:= or a | label | row" name name name))
+                      name-tables (cons name seen)))
+          (unless (or (assoc (car row) explicit) (assoc (car row) inherited))
+            (push row inherited)))))
+    (append (nreverse inherited) explicit)))
 
 (defun org--graph-keyword-tags (keyword line)
   "A #+KEYWORD: LINE ↦ its value's trailing `:t₁:t₂:' tags, as an (\":inherit\" \"t₁ t₂\") row; else nil.
@@ -309,13 +320,13 @@ that no #+name: defines is an error, rather than silently contributing nothing."
     (setq scope (plist-put scope key (org--graph-expand-inherit (plist-get scope key) name-tables)))))
 
 (defun org--graph-item-rows (rows name-tables)
-  "An item's table ROWS ↦ (:id :attrs :edges :targeted :children-rank), routing reserved keys away from node attributes.
+  "An item's table ROWS ↦ (:id :attrs :edge :targeted :children-rank), routing reserved keys away from node attributes.
 
   ((\":edge[b].style\" \"dotted\") (\"shape\" \"box\"))  ↦  (:attrs ((\"shape\" \"box\")) :targeted ((\"b\" (\"style\" \"dotted\"))) …)
 
-`:edge.ATTR' rows describe the arc from the parent; repeating an ATTR starts another, parallel, arc.
+`:edge.ATTR' rows describe the arc from the parent; an ATTR given twice is an error, since a parallel arc is a second item.
 `:edge[TARGET].ATTR' rows describe this item's arc to TARGET, from a [[TARGET]] link in its text."
-  (let (id attrs edges targeted rank)
+  (let (id attrs edge targeted rank)
     (dolist (row (org--graph-expand-inherit (--filter (cadr it) rows) name-tables))
       (-let [(key val) row]
         (cond
@@ -327,14 +338,15 @@ that no #+name: defines is an error, rather than silently contributing nothing."
                   (append (alist-get target targeted nil nil #'equal) (list (list attr val))))))
          ((s-starts-with-p ":edge." key)
           (let ((attr (substring key 6)))
-            (when (or (null edges) (assoc attr (car edges))) (push nil edges))
-            (setcar edges (append (car edges) (list (list attr val))))))
+            (when (and (assoc attr edge) (not (equal attr ":inherit")))
+              (user-error "graph: `%s' is given twice; for a parallel arc, write its child item twice" key))
+            (setq edge (append edge (list (list attr val))))))
          ((s-starts-with-p ":" key)
           (user-error "graph: unknown key `%s'; expected one of %s, or :edge.ATTR, :edge[TARGET].ATTR"
                       key org-graph-reserved-keys))
          (t (push row attrs)))))
     (list :id id :attrs (nreverse attrs) :children-rank rank
-          :edges (--map (org--graph-expand-inherit it name-tables) (nreverse edges))
+          :edge (org--graph-expand-inherit edge name-tables)
           :targeted (--map (cons (car it) (org--graph-expand-inherit (cdr it) name-tables)) (nreverse targeted)))))
 
 (defun org--graph-override (rows over)
@@ -365,7 +377,10 @@ The name is TEXT sans tag, targets, links, footnotes, and markup; the label is a
 else the name.  A TEXT that is a lone [[PATH][D]] names the node PATH, with D labelling the arc from its parent; so does
 a description-list term, `A ::', whose own tags name the arc's templates.  Trailing tags name templates, and inline
 footnotes become the node's tooltip."
-  (let* ((term (when (string-match "\\`\\(.*\\)[ \t]+::\\(?:[ \t]+\\|\\'\\)" text)
+  (let* ((checkbox (when (string-match "\\`\\[\\([ X-]\\)\\][ \t]+" text)
+                     (prog1 (pcase (match-string 1 text) ("X" "checked") ("-" "partial") (_ "unchecked"))
+                       (setq text (substring text (match-end 0))))))
+         (term (when (string-match "\\`\\(.*\\)[ \t]+::\\(?:[ \t]+\\|\\'\\)" text)
                  (prog1 (match-string 1 text) (setq text (substring text (match-end 0))))))
          ;; A term's own tags, `+ wed :married: :: Khadija', style the arc it labels.
          (arc-tags (when (and term (string-match (concat "\\(?:\\`\\|[ \t]+\\)" org--graph-tag-group-re "[ \t]*\\'") term))
@@ -375,12 +390,31 @@ footnotes become the node's tooltip."
                  (prog1 (s-split ":" (match-string 1 text) t)
                    (setq text (substring text 0 (match-beginning 0))))))
          (parts (org--graph-item-text-sans-tags text)))
-    (append parts (list :arc-label arc-label :arc-tags arc-tags :tags tags))))
+    (append parts (list :arc-label arc-label :arc-tags arc-tags :tags tags :checkbox checkbox))))
+
+(defun org--graph-external-link-p (o)
+  "Non-nil when O is a link object to anything but a node: a web page, a file, and so on."
+  (and (eq (org-element-type o) 'link) (not (equal (org-element-property :type o) "fuzzy"))))
+
+(defun org--graph-image-link-p (o)
+  "Non-nil when O is a description-less [[file:PATH]] link to an image, such as [[file:emacs.png]]."
+  (and (org--graph-external-link-p o) (equal (org-element-property :type o) "file") (not (org-element-contents o))
+       (string-match-p (image-file-name-regexp) (org-element-property :path o))))
+
+(defun org--graph-link-url (o)
+  "A link object O ↦ where it points: [[file:a.org]] ↦ \"a.org\", [[https://o.org][O]] ↦ \"https://o.org\"."
+  (if (equal (org-element-property :type o) "file") (org-element-property :path o) (org-element-property :raw-link o)))
 
 (defun org--graph-item-text-sans-tags (text)
-  "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags."
+  "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags.
+A web or file link becomes the node's URL, its description staying in the label; an image link, its image."
   (let* ((objs (org-element-parse-secondary-string
-                text '(bold italic underline strike-through code verbatim link target footnote-reference)))
+                text '(bold italic underline strike-through code verbatim link target footnote-reference line-break)))
+         (image  (-some--> (org-element-map objs 'link (lambda (o) (and (org--graph-image-link-p o) o)) nil t)
+                   (org-element-property :path it)))
+         (urls   (org-element-map objs 'link (lambda (o) (and (org--graph-external-link-p o) (not (org--graph-image-link-p o))
+                                                              (org--graph-link-url o)))))
+         (_      (when (cdr urls) (user-error "graph: a node has one URL, but `%s' links to %s" text (s-join " and " urls))))
          (tooltip (-some--> (org-element-map objs 'footnote-reference
                               (lambda (o) (-some->> (org-element-contents o) (org--graph-item-render nil))))
                     (s-join " " it)))
@@ -395,12 +429,15 @@ footnotes become the node's tooltip."
       ((-all? #'stringp objs) (list :name text :label text))
       ((and (s-blank-str-p name) (not target) (= 1 (length links)))
        (list :name (caar links) :label (caar links) :bare-label (cdar links) :reference t))
-      (t (list :name (if (s-blank-str-p name) target name)
-               :label (if (org-element-map objs (mapcar #'car org--graph-markup-tags) #'identity nil t)
-                          (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs))))
-                        (if (s-blank-str-p name) target name))
+      ;; A lone image is its own name, drawn sans text.
+      (t (list :name (if (s-blank-str-p name) (or target image) name)
+               :label (cond ((org-element-map objs (cons 'line-break (mapcar #'car org--graph-markup-tags)) #'identity nil t)
+                             (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs)))))
+                            ((not (s-blank-str-p name)) name)
+                            (target)
+                            (t "\"\""))
                :target target :links links)))
-     (list :tooltip tooltip))))
+     (list :tooltip tooltip :url (car urls) :image image))))
 
 (defun org--graph-item-render (html? objs)
   "OBJS, a parsed item text, ↦ its plain text; or, when HTML?, its HTML-like label body. Edge links and targets vanish."
@@ -414,8 +451,9 @@ footnotes become the node's tooltip."
         (cond
          ((stringp o) (if html? (org--graph-html-escape o) o))
          ((memq type '(target footnote-reference)) "")
-         ((eq type 'link) (if (equal (org-element-property :type o) "fuzzy") ""
-                            (org--graph-item-render html? (or (org-element-contents o) (list (org-element-property :raw-link o))))))
+         ((eq type 'line-break) (if html? "<BR/>" " "))
+         ((eq type 'link) (if (or (not (org--graph-external-link-p o)) (org--graph-image-link-p o)) ""
+                            (org--graph-item-render html? (or (org-element-contents o) (list (org--graph-link-url o))))))
          (t (-let [(open close) (and html? (alist-get type org--graph-markup-tags))]
               (concat open
                       (if (memq type '(code verbatim))
@@ -511,10 +549,13 @@ aligns its columns.  Hlines draw rules between rows; a table with them has one o
   "An `org-list-to-lisp' ITEM ↦ (TEXT PREAMBLE CHILDREN KIND): its parsed text, its table and directives,
 its sub-items, and whether they are `ordered' or `unordered'.
 As in Org, an item's text is its first paragraph: lines up to a blank one, a table, or a directive; so a long
-line of [[links]] may wrap."
+line of [[links]] may wrap.  A `\\\\' breaks the label's line, even mid-line.  Tables and directives after the
+sub-items belong to the item too, as in Org."
   (-let* ((lines (s-lines (s-trim (car item))))
-          ((text body) (--split-with (not (or (s-blank-str-p it) (s-matches-p "\\`[ \t]*[|#]" it))) lines)))
-    (list (org--graph-item-text (s-join " " (-map #'s-trim text))) (org--graph-extract-item-preamble (s-join "\n" body))
+          ((text body) (--split-with (not (or (s-blank-str-p it) (s-matches-p "\\`[ \t]*[|#]" it))) lines))
+          (after (-filter #'stringp (cddr item))))
+    (list (org--graph-item-text (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t]*" "\\\\\\\\\n" (s-join " " (-map #'s-trim text))))
+          (org--graph-extract-item-preamble (s-join "\n" (append body after)))
           (-filter #'consp (cdr (cadr item))) (car-safe (cadr item)))))
 
 (defun org--graph-item-id (item)
@@ -529,7 +570,9 @@ line of [[links]] may wrap."
 A tag applies a template to whatever its line describes: after an item, its node; after a reference, or in a
 description term, its arc.  Explicit rows still win."
   (let ((arc-tags (append (plist-get text :arc-tags) (when (plist-get text :reference) (plist-get text :tags))))
-        (node-tags (unless (plist-get text :reference) (plist-get text :tags))))
+        (node-tags (unless (plist-get text :reference)
+                     (append (plist-get text :tags)
+                             (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it)))))))
     (org--graph-item-rows (append (when node-tags (list (list ":inherit" (s-join " " node-tags))))
                                   (when arc-tags (list (list ":edge.:inherit" (s-join " " arc-tags))))
                                   (plist-get pre :attr-rows))
@@ -573,7 +616,10 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (label    (org--graph-unquote (plist-get text :label)))
           (rows     (org--graph-item-table text pre (org--graph-ctx-name-tables ctx)))
           (id       (or (plist-get rows :id) (plist-get text :target) name))
-          (attrs    (org--graph-override (-some--> (plist-get text :tooltip) `(("tooltip" ,it))) (plist-get rows :attrs)))
+          (attrs    (org--graph-override (append (-some--> (plist-get text :tooltip) `(("tooltip" ,it)))
+                                                 (-some--> (plist-get text :url) `(("URL" ,it)))
+                                                 (-some--> (plist-get text :image) `(("image" ,it))))
+                                         (plist-get rows :attrs)))
           (arc-label (or (plist-get text :arc-label) (plist-get text :bare-label)))
           (shape    (cadr (assoc "shape" attrs)))
           (fresh    (not (gethash id (org--graph-ctx-nodes ctx))))
@@ -583,14 +629,13 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (table    (org--graph-table-label (plist-get pre :record)))
           (attrs    (if table (org--graph-override `(("shape" "plain") ("label" ,(car table))) attrs) attrs))
           (arcs     (append (when parent
-                              (--map (list :edge parent id
-                                           (org--graph-override (-some--> arc-label `(("label" ,it))) it))
-                                     (or (plist-get rows :edges) '(nil))))
+                              (list (list :edge parent id
+                                          (org--graph-override (-some--> arc-label `(("label" ,it))) (plist-get rows :edge)))))
                             (--map (funcall to-arc (car it) (-some--> (cdr it) `(("label" ,it))))
                                    (plist-get text :links))
                             ;; A cell's [[link]] is an arc from its port.
                             (-map (-lambda ((port target . desc))
-                                    (list :edge (format "%s.%s" id port) target
+                                    (list :edge (format "%s::%s" id port) target
                                           (org--graph-override (-some--> desc `(("label" ,it)))
                                                                (alist-get target targeted nil nil #'equal))))
                                   (cdr table)))))
@@ -599,9 +644,9 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
     (-when-let (stray (--remove (or (assoc it (plist-get text :links)) (assoc it (mapcar #'cdr (cdr table))))
                                 (-map #'car targeted)))
       (user-error "graph: `%s' has `:edge[%s].…' rows, but no [[link]] to %s" id (car stray) (car stray)))
+    (when table (puthash id t (org--graph-ctx-records ctx)))
     (when (and (plist-get text :reference) (or attrs (plist-get rows :id)))
       (user-error "graph: `[[%s]]' refers to a node declared elsewhere; give it node attributes there, not here" id))
-    (when table (puthash id t (org--graph-ctx-records ctx)))
     (cond
      ((plist-get text :reference)
       (append arcs (--mapcat (org--graph-parse-item it id ctx) children)
@@ -654,7 +699,7 @@ An untitled cluster is an anonymous box: it has no label, and no name to draw ar
                   ((_ title kwds) (s-match "\\`\\(.*?\\)\\(?:\\(?:\\`\\|[ \t]+\\)\\(:.*\\)\\)?\\'"
                                            (s-trim (or (match-string 2 line) ""))))
                   ((&plist :graph-rows graph :node-rows node :edge-rows edge)
-                   (org--graph-header-rows (read (format "(%s)" (or kwds "")))))
+                   (org--graph-header-rows (org--read-header kwds)))
                   (depth 1) body)
             (while (and lines (> depth 0))
               (let ((l (pop lines)))
@@ -665,13 +710,16 @@ An untitled cluster is an anonymous box: it has no label, and no name to draw ar
             (when (s-blank-str-p title)
               (setq title (format "anonymous %d" (cl-incf anonymous))
                     graph (cons '("label" "\"\"") graph)))
-            (let ((row (lambda (r) (format "%s  | %s | %s |" indent (car r) (cadr r)))))
+            (-let* ((row (lambda (r) (format "%s  | %s | %s |" indent (car r) (cadr r))))
+                    ;; A table opening the block styles the box, as an item's table styles its node.
+                    ((table rest) (--split-with (s-matches-p "\\`[ \t]*|" it) (nreverse body))))
               ;; Back onto the input, so that clusters nested within this one are desugared in turn.
               (setq lines (append (list (concat indent "+ " title) (funcall row '("shape" "cluster")))
                                   (-map row graph)
+                                  table
                                   (when node (cons (concat indent "  #+node:") (-map row node)))
                                   (when edge (cons (concat indent "  #+edge:") (-map row edge)))
-                                  (nreverse body)
+                                  rest
                                   lines)))))))
     (s-join "\n" (nreverse out))))
 
@@ -680,6 +728,8 @@ An untitled cluster is an anonymous box: it has no label, and no name to draw ar
   (let* ((raw      (org--graph-extract-preamble (org--graph-desugar-clusters raw-contents)))
          (preamble (org--graph-expand-scope raw (plist-get raw :name-tables)))
          (ctx      (org--graph-ctx-create :name-tables (plist-get preamble :name-tables)))
+         (_        (pcase-dolist (`(,name . ,rows) org-graph-checkbox-templates)
+                     (unless (gethash name (org--graph-ctx-name-tables ctx)) (puthash name rows (org--graph-ctx-name-tables ctx)))))
          (list     (org--parse-plain-list (s-trim (plist-get preamble :list-body)) "graph"))
          (items    (-filter #'consp (cdr list)))
          (stmts    (append (--mapcat (org--graph-parse-item it nil ctx) items)
@@ -690,13 +740,11 @@ An untitled cluster is an anonymous box: it has no label, and no name to draw ar
 ;;; Printing: graph statements ⟶ dot
 
 (defun org--graph-endpoint (raw ctx)
-  "RAW ↦ (NODE . PORT): \"rec.p q\" ↦ (\"rec\" . \"p_q\") when rec is a record in CTX; otherwise RAW names a node, sans PORT.
-The record is the first prefix, ending just before a dot, that names a record; so a record may itself be named \"org.el\"."
-  (let* ((raw (org--graph-unquote raw))
-         (dot (--first (gethash (substring raw 0 it) (org--graph-ctx-records ctx))
-                       (-map #'car (s-matched-positions-all "\\." raw)))))
-    (if dot
-        (cons (substring raw 0 dot) (org--graph-dot-port (substring raw (1+ dot))))
+  "RAW ↦ (NODE . PORT): \"rec::p q\" ↦ (\"rec\" . \"p_q\") when rec is a record in CTX, as Org's [[file::search]] reaches
+into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
+  (let ((raw (org--graph-unquote raw)))
+    (if (and (string-match "\\`\\(.+?\\)::\\(.+\\)\\'" raw) (gethash (match-string 1 raw) (org--graph-ctx-records ctx)))
+        (cons (match-string 1 raw) (org--graph-dot-port (match-string 2 raw)))
       (list raw))))
 
 (defun org--graph-all-stmts (stmts)
@@ -774,12 +822,11 @@ The record is the first prefix, ending just before a dot, that names a record; s
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
   "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
 
-It is a digraph, unless MAIN-ARG is \"undirected\" or KWDARGS has `:directed nil'.  Any other MAIN-ARG is the graph's title,
-its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
+It is a digraph, unless KWDARGS has `:directed nil'.  MAIN-ARG is the graph's title, its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
 Header attributes come before the block's own #+graph:, #+node:, and #+edge: tables, so those tables win."
   (-let* (((preamble stmts ctx) (org--graph-parse raw-contents))
-          (directed (if (plist-member kwdargs :directed) (plist-get kwdargs :directed) (not (equal main-arg "undirected"))))
-          (title    (unless (member main-arg '(nil "" "directed" "undirected")) main-arg))
+          (directed (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed)))
+          (title    (unless (s-blank-str-p main-arg) main-arg))
           (header   (org--graph-header-rows kwdargs)))
     (setq header (plist-put header :graph-rows (append (when title `(("label" ,title))) (plist-get header :graph-rows))))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
@@ -853,6 +900,25 @@ appends a structured debug footer."
       (goto-char (point-min)))
     (display-buffer buf)))
 
+(defun org--graph-expand-macros (raw)
+  "RAW with each {{{NAME(ARGS)}}} ↦ its expansion by this buffer's #+macro: lines; e.g. {{{gold}}} ↦ \"#f9e2af\".
+Textually, so that #+begin_cluster lines, which Org parses no objects in, expand too."
+  (if (not (s-contains-p "{{{" raw))
+      raw
+    (require 'org-macro)
+    (org-macro-initialize-templates)
+    (let ((templates org-macro-templates))
+      (replace-regexp-in-string
+       "{{{\\([[:alpha:]][-[:alnum:]_]*\\)\\(?:(\\([^\0]*?\\))\\)?}}}"
+       (lambda (macro)
+         (let ((key (downcase (match-string 1 macro))) (args (match-string 2 macro)))
+           ;; Expanding matches regexps of its own; the replacement needs ours.
+           (save-match-data
+             (or (org-macro-expand (list 'macro (list :key key :args (and args (org-macro-extract-arguments args))))
+                                   templates)
+                 (user-error "graph: {{{%s}}} names no #+macro:" key)))))
+       raw t t))))
+
 (defun org-graph--cc-handler ()
   "Render the #+begin_graph block at point, or show its dot source.
 
@@ -864,14 +930,16 @@ With C-u prefix, or when the block carries :C-c_C-c dot:
   #+RESULTS: #+begin_src dot … #+end_src block.
 
 The two controls compose via XOR: if :C-c_C-c dot is set, C-u toggles
-back to PNG.  Returns t (claiming C-c C-c)."
+back to PNG.  On a checkbox, it first toggles it, as Org's C-c C-c would.
+Returns t (claiming C-c C-c)."
+  (when (org-at-item-checkbox-p) (org-toggle-checkbox))
   (save-excursion
     ;; The graph around point ---past any #+begin_cluster within it--- not merely the nearest #+begin_graph above it.
     (-some--> (org-graph--block-at-point) (org-element-property :post-affiliated it) (goto-char it))
     (let* ((block      (org-special-block-after-point "graph"))
            (kwdargs    (org-special-block-kwdargs block))
-           (raw        (org-special-block-contents block))
-           (main-arg   (or (org-special-block-main-arg block) "directed"))
+           (raw        (org--graph-expand-macros (org-special-block-contents block)))
+           (main-arg   (org-special-block-main-arg block))
            (end-pt     (org-special-block-end-point block))
            (block-mode (plist-get kwdargs :C-c_C-c))
            (prefix?    (and current-prefix-arg t))
@@ -1233,10 +1301,10 @@ Returns OUTFILE on success, nil on failure (error logged to *Warnings*)."
       (goto-char (match-beginning 0))
       (buffer-substring (point) (point-max)))))
 
-(org-defblock graph (main-arg "directed" file nil svg nil :edit-indirect-mode org-graph-edit-mode)
+(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode)
   "Render an Org list + tables as a Graphviz dot graph.
 
-MAIN-ARG is \"directed\" (default, produces digraph), \"undirected\" (graph), or the graph's title, its label.
+MAIN-ARG is the graph's title, its label.
 The header's other keys are graph attributes, such as :rankdir LR; :node.KEY and :edge.KEY set node and edge defaults;
 and :directed nil makes an undirected graph.  Pass :file foo.png on the #+begin_graph line to fix the output filename;
 otherwise the name is graph-HASH.png, HASH being that of the dot source,
@@ -1259,13 +1327,15 @@ Each list item declares a node.  Nesting encodes edges (parent → child); order
 in the order written.  An item's text may hold a <<target>>, its id; [[TARGET]] or [[TARGET][LABEL]] links, extra arcs;
 and *bold*, /italic/, _underline_, +strike+, =code=, or ~pre~, which make its label an HTML-like one.
 A description tag, `+ L :: CHILD', labels the arc into CHILD; trailing `:T:' tags splice #+name: templates;
-and an inline footnote, [fn::NOTE], is the node's tooltip.
+an inline footnote, [fn::NOTE], is the node's tooltip; a web or file link, its URL; an [[file:IMAGE.png]], its image;
+a checkbox, [X], [-], or [ ], applies the template checked, partial, or unchecked, when one exists; and a `\\\\'
+breaks the label's line.  Org's {{{macros}}} expand, by the buffer's #+macro: lines.
 A two-column inline table on a list item supplies node attributes.
 
   | key        | val    |  ↦ a Graphviz attribute of the node; values are quoted for you.
   | :id        | alias  |  ↦ cross-reference name for this node.
-  | :edge.KEY  | val    |  ↦ attribute of the arc from the parent; repeating a KEY starts a parallel arc.
-  | :edge[T].KEY | val  |  ↦ attribute of this item's arc to T, from a [[T]] link; \"rec.port\" reaches a record's port.
+  | :edge.KEY  | val    |  ↦ attribute of the arc from the parent; a parallel arc is a second child item.
+  | :edge[T].KEY | val  |  ↦ attribute of this item's arc to T, from a [[T]] link; \"rec::port\" reaches a record's port.
   | :inherit   | T₁ T₂  |  ↦ inherit the #+name: templates' rows; explicit rows win.  Also :edge.:inherit, and :T₁:T₂: tags:
                             after an item, its node's; after a reference, or a description term, its arc's.
   A child item that is a lone [[T]] link is a reference to T: an arc to it, styled by the child's :edge.KEY rows.
@@ -1277,17 +1347,12 @@ A two-column inline table on a list item supplies node attributes.
 
 Example:
 
-  #+begin_graph directed
-  #+graph:
-  | rankdir | LR |
-
+  #+begin_graph :rankdir LR
   + A
-    + B
-      | :edge.label | calls |
-      + C
-        | :edge.label | returns |
+    + calls :: B
+      + returns :: C
   #+end_graph"
-  (let* ((dot     (org--graph-raw->dot raw-contents main-arg org--handler-args))
+  (let* ((dot     (org--graph-raw->dot (org--graph-expand-macros raw-contents) main-arg org--handler-args))
          (outfile (or file
                       (format "graph-%s.png" (substring (md5 dot) 0 12)))))
     (pcase backend

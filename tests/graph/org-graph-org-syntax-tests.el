@@ -87,14 +87,24 @@
 (deftest "an `:edge[TARGET].KEY' row with no arc to TARGET is a user error"
   (should-error (org--graph-raw->dot "
 + a [[b]]
-  | :edge[c].style | dotted |" "directed") :type 'user-error))
+  | :edge[c].style | dotted |" nil) :type 'user-error))
 
-(deftest "a link that is not to a node, such as a URL, is text rather than an arc"
-  (should (equal "digraph {
-  \"see site\" [ label=\"see site\" ];
-}"
-                 (org--graph-raw->dot "
-+ see [[https://example.org][site]]" "directed"))))
+(define-graph-test "a web or file link is the node's URL, its text staying in the label; an image link is its image"
+  :input "
++ see [[https://example.org][site]]
++ notes [[file:notes.org]]
++ <<emacs>> Emacs [[file:emacs.png]]
++ [[file:gnu.png]]"
+  :output "digraph {
+  \"see site\" [ URL=\"https://example.org\" label=\"see site\" ];
+  \"notes notes.org\" [ URL=\"notes.org\" label=\"notes notes.org\" ];
+  emacs [ image=\"emacs.png\" label=Emacs ];
+  \"gnu.png\" [ image=\"gnu.png\" label=\"\" ];
+}")
+
+(deftest "a node has one URL, so an item with two web links is a user error"
+  (should-error (org--graph-raw->dot "
++ [[https://a.org][a]] [[https://b.org][b]]" nil) :type 'user-error))
 
 ;;; Markup becomes an HTML-like label
 
@@ -204,13 +214,16 @@
 | rankdir | TB |
 #+node:
 | shape | ellipse |
-+ a" "directed"
++ a" nil
                                       '(:rankdir LR :node.shape box)))))
 
-(deftest "`:directed t' beats an \"undirected\" main argument"
-  (should (s-starts-with-p "digraph" (org--graph-raw->dot "
+(deftest "the header line reads as #+attr_html: does: a hex colour, or a word Lisp cannot read, needs no quotes"
+  ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
+  (cl-letf (((symbol-function 'org-graph--render-to-png) (lambda (&rest _) nil)))
+    (should (s-contains-p "graph [ bgcolor=\"#6c7086\" fontname=\"Helvetica,Arial\" ]"
+                          (org-export-string "#+begin_graph :bgcolor #6c7086 :fontname Helvetica,Arial
 + a
-  + b" "undirected" '(:directed t)))))
+#+end_graph" 'html)))))
 
 (deftest "exporting reads the header line: a title and attributes reach the dot source"
   ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
@@ -255,7 +268,7 @@
 
 (deftest "a description tag on a parentless item is a user error"
   (should-error (org--graph-raw->dot "
-+ x :: a" "directed") :type 'user-error))
++ x :: a" nil) :type 'user-error))
 
 ;;; :tags: splice templates
 
@@ -281,7 +294,7 @@
 
 (deftest "a tag naming no #+name: template is a user error, rather than silently vanishing"
   (should-error (org--graph-raw->dot "
-+ a :typo:" "directed") :type 'user-error))
++ a :typo:" nil) :type 'user-error))
 
 (deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside clusters too, but not elsewhere"
   (with-temp-buffer
@@ -439,7 +452,7 @@
 (deftest "a `#+begin_cluster' with no `#+end_cluster' is a user error"
   (should-error (org--graph-raw->dot "
 #+begin_cluster P
-+ a" "directed") :type 'user-error))
++ a" nil) :type 'user-error))
 
 (deftest "inside a graph's #+begin_cluster, we are still in the graph; a lone #+begin_cluster is none of ours"
   (with-temp-buffer
@@ -458,5 +471,102 @@
     (should (org-graph--in-graph-p))
     (search-forward "+ b")
     (should-not (org-graph--in-graph-p))))
+
+;;; \\ breaks a label's line
+
+(define-graph-test "`\\\\' breaks the label's line, at a line's end as in Org, or mid-line; the id joins the lines with a space"
+  :input "
++ Emacs
+  + provides :: <<closures>> Closures \\\\ (lexical scope)
+  + *Lisp* \\\\
+    McCarthy, 1958"
+  :output "digraph {
+  Emacs [ label=Emacs ];
+  Emacs -> closures [ label=provides ];
+  closures [ label=<Closures<BR/>(lexical scope)> ];
+  Emacs -> \"Lisp McCarthy, 1958\";
+  \"Lisp McCarthy, 1958\" [ label=<<B>Lisp</B><BR/>McCarthy, 1958> ];
+}")
+
+;;; Tables and directives after an item's sub-items
+
+(define-graph-test "tables and directives after an item's sub-items still belong to it, as in Org"
+  :input "
++ Prophets
+  | shape | cluster |
+  + Hud
+  + Salih
+  # Both were sent to Arabian tribes.
+  #+rank: Hud Salih
+  | style | dashed |"
+  :output "digraph {
+  subgraph cluster_Prophets {
+    label=Prophets
+    style=dashed
+    { rank=same; Hud; Salih }
+    Hud [ label=Hud ];
+    Salih [ label=Salih ];
+  }
+}")
+
+;;; Checkboxes
+
+(define-graph-test "a checkbox applies its template: [X] ↦ checked, [-] ↦ partial, [ ] ↦ unchecked; one the graph defines wins"
+  :input "
+#+name: unchecked
+| style | dashed |
+#+name: partial
+| color | gold |
++ [-] compile
+  + [X] parse
+  + [ ] typecheck
+  + plain"
+  :output "digraph {
+  compile [ color=gold label=compile ];
+  compile -> parse;
+  parse [ color=forestgreen fontcolor=forestgreen label=parse ];
+  compile -> typecheck;
+  typecheck [ style=dashed label=typecheck ];
+  compile -> plain;
+  plain [ label=plain ];
+}")
+
+(define-graph-test "a checkbox whose template exists nowhere styles nothing, rather than being an error"
+  :input "
++ [ ] typecheck"
+  :output "digraph {
+  typecheck [ label=typecheck ];
+}")
+
+(deftest "C-c C-c on a checkbox toggles it, as Org's would, then renders the graph"
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+#+begin_graph :C-c_C-c dot
++ [ ] parse
+#+end_graph")
+    (search-backward "parse")
+    (let (dot)
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
+        (org-graph--cc-handler))
+      (should (s-contains-p "+ [X] parse" (buffer-string)))
+      (should (s-contains-p "parse [ color=forestgreen" dot)))))
+
+;;; Macros
+
+(deftest "{{{macros}}} expand by the buffer's #+macro: lines, so a palette is named once"
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+#+macro: gold \"#f9e2af\"
+#+begin_graph :C-c_C-c dot
++ a
+  | color | {{{gold}}} |
+#+end_graph")
+    (search-backward "+ a")
+    (let (dot)
+      (cl-letf (((symbol-function 'org-graph--show-dot) (lambda (d) (setq dot d))))
+        (org-graph--cc-handler))
+      (should (s-contains-p "a [ color=\"#f9e2af\" label=a ];" dot)))))
 
 (provide 'org-graph-org-syntax-tests)

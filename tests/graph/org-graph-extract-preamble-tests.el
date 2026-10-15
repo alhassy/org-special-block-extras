@@ -84,7 +84,7 @@
 
 #+node:
 | :inherit | t |
-+ A" "directed"))))
++ A" nil))))
 
 (deftest "#+name: template expands into node attrs via | :inherit |"
   (let* ((dot (org--graph-raw->dot
@@ -95,7 +95,7 @@
 
 + Khadija
   | :inherit | wife |"
-               "directed")))
+               nil)))
     (should (s-contains-p "fillcolor=\"#f8d7e8\"" dot))
     (should (s-contains-p "color=\"#aa3366\"" dot))))
 
@@ -126,7 +126,7 @@
 + A
   | :inherit  | base  |
   | color | red   |"
-               "directed")))
+               nil)))
     ;; explicit color=red wins over template color=blue
     (should (s-contains-p "color=red" dot))
     (should (not (s-contains-p "color=blue" dot)))
@@ -139,4 +139,4 @@
 | color | blue |
 
 + A
-  | :inherit | typo |" "directed") :type 'user-error))
+  | :inherit | typo |" nil) :type 'user-error))

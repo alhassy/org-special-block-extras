@@ -58,7 +58,7 @@
 | rankdir | LR |
 #+node:
 | color | red |
-+ A" "directed"))
++ A" nil))
         (drawer (org--graph-raw->dot "
 :SETTINGS:
 #+graph:
@@ -66,5 +66,5 @@
 #+node:
 | color | red |
 :END:
-+ A" "directed")))
++ A" nil)))
     (should (equal bare drawer))))
