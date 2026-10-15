@@ -6,7 +6,8 @@
 ;;; org--graph-raw->dot — snapshot relation tests
 
 (define-graph-test "single node"
-  :input "+ A\n"
+  :input "
++ A"
   :output "digraph {
   A [ label=A ];
 }")
@@ -16,7 +17,9 @@
                  (org--graph-raw->dot "+ A\n  + B\n" "undirected"))))
 
 (define-graph-test "simple nesting A→B"
-  :input "+ A\n  + B\n"
+  :input "
++ A
+  + B"
   :output "digraph {
   A [ label=A ];
   A -> B;
@@ -24,7 +27,10 @@
 }")
 
 (define-graph-test "A→B→C chain"
-  :input "+ A\n  + B\n    + C\n"
+  :input "
++ A
+  + B
+    + C"
   :output "digraph {
   A [ label=A ];
   A -> B;
@@ -33,16 +39,23 @@
   C [ label=C ];
 }")
 
-(define-graph-test "EDGE row attaches label"
-  :input "+ A\n  + B\n    | EDGE | label=calls |\n"
+(define-graph-test ":edge. row attaches label"
+  :input "
++ A
+  + B
+    | :edge.label | calls |"
   :output "digraph {
   A [ label=A ];
   A -> B [ label=calls ];
   B [ label=B ];
 }")
 
-(define-graph-test "two EDGE rows produce two parallel arcs"
-  :input "+ A\n  + B\n    | EDGE | label=first |\n    | EDGE | label=second |\n"
+(define-graph-test "repeating an :edge. key starts a second, parallel, arc"
+  :input "
++ A
+  + B
+    | :edge.label | first  |
+    | :edge.label | second |"
   :output "digraph {
   A [ label=A ];
   A -> B [ label=first ];
@@ -51,7 +64,11 @@
 }")
 
 (define-graph-test "id row makes cross-reference alias"
-  :input "+ lambda\n  | id | lam |\n  + church\n    | EDGE | label=encodes |\n"
+  :input "
++ lambda
+  | :id | lam |
+  + church
+    | :edge.label | encodes |"
   :output "digraph {
   lam [ label=lambda ];
   lam -> church [ label=encodes ];
@@ -59,7 +76,12 @@
 }")
 
 (define-graph-test "second occurrence emits edge only, not a second node decl"
-  :input "+ A\n  + B\n+ C\n  + B\n    | EDGE | label=again |\n"
+  :input "
++ A
+  + B
++ C
+  + B
+    | :edge.label | again |"
   :output "digraph {
   A [ label=A ];
   A -> B;
@@ -71,12 +93,15 @@
 (deftest "`org--graph-raw->dot' explicit to row produces cross-edge"
   (should (equal "digraph {\n  a [ label=A ];\n  B -> a [ label=back ];\n  B [ label=B ];\n}"
                  (org--graph-raw->dot
-                  (concat "+ A\n  | id | a |\n"
-                          "+ B\n  | to | a | label=back |\n")
+                  (concat "+ A\n  | :id | a |\n"
+                          "+ B\n  | :to | a |\n  | :to.label | back |\n")
                   "directed"))))
 
 (define-graph-test "#+rank: emits rank=same block for nodes without a common parent"
-  :input "#+rank: A B\n+ A\n+ B\n"
+  :input "
+#+rank: A B
++ A
++ B"
   :output "digraph {
   { rank=same; A; B }
   A [ label=A ];
@@ -84,7 +109,12 @@
 }")
 
 (define-graph-test "rank=same on a node constrains its immediate children"
-  :input "+ root\n  | rank | same |\n  + A\n  + B\n  + C\n"
+  :input "
++ root
+  | :children-rank | same |
+  + A
+  + B
+  + C"
   :output "digraph {
   root [ label=root ];
   root -> A;
@@ -97,7 +127,11 @@
 }")
 
 (define-graph-test "rank=source on a node constrains its immediate children"
-  :input "+ entry\n  | rank | source |\n  + X\n  + Y\n"
+  :input "
++ entry
+  | :children-rank | source |
+  + X
+  + Y"
   :output "digraph {
   entry [ label=entry ];
   entry -> X;
@@ -108,7 +142,13 @@
 }")
 
 (define-graph-test "rank row respects child id aliases"
-  :input "+ root\n  | rank | same |\n  + alpha\n    | id | a |\n  + beta\n    | id | b |\n"
+  :input "
++ root
+  | :children-rank | same |
+  + alpha
+    | :id | a |
+  + beta
+    | :id | b |"
   :output "digraph {
   root [ label=root ];
   root -> a;
@@ -119,21 +159,30 @@
 }")
 
 (define-graph-test "#+graph: table sets graph-level attrs"
-  :input "#+graph:\n| rankdir | TB |\n+ A\n"
+  :input "
+#+graph:
+| rankdir | TB |
++ A"
   :output "digraph {
   graph [ rankdir=TB ]
   A [ label=A ];
 }")
 
 (define-graph-test "#+node: table sets default node attrs"
-  :input "#+node:\n| shape | box |\n+ A\n"
+  :input "
+#+node:
+| shape | box |
++ A"
   :output "digraph {
   node [ shape=box ]
   A [ label=A ];
 }")
 
 (define-graph-test "node attrs styled inline"
-  :input "+ A\n  | shape | ellipse |\n  | color | red |\n"
+  :input "
++ A
+  | shape | ellipse |
+  | color | red     |"
   :output "digraph {
   A [ shape=ellipse color=red label=A ];
 }")

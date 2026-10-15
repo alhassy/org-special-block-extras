@@ -9,7 +9,15 @@
   ;; A blank line between a preamble directive and the first list item caused
   ;; org-list-to-lisp to be called on a buffer starting with a newline,
   ;; crashing with (max) / 0 arguments.  s-trim in org--graph-raw->dot fixes this.
-  :input "#+graph:\n| rankdir | TB |\n\n+ G\n  | shape | cluster |\n  | label | \"G\" |\n  | color | red |\n  + A\n"
+  :input "
+#+graph:
+| rankdir | TB |
+
++ G
+  | shape | cluster |
+  | label | \"G\"   |
+  | color | red     |
+  + A"
   :output "digraph {
   graph [ rankdir=TB ]
   subgraph cluster_G {

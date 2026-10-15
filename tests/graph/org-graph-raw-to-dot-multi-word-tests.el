@@ -22,7 +22,7 @@
 (deftest "`org--graph-raw->dot' comment before table row does not drop the table"
   ;; A # comment between a list item and its inline table must not lose the table
   (let ((dot (org--graph-raw->dot
-              "+ A\n  + B\n    # a comment\n    | EDGE | label=calls |\n"
+              "+ A\n  + B\n    # a comment\n    | :edge.label | calls |\n"
               "directed")))
     (should (s-contains-p "label=calls" dot))))
 
@@ -33,7 +33,7 @@
                       "    # comment\n"
                       "    + \"Org agenda\"\n"
                       "      # another comment\n"
-                      "      | EDGE | label=\"hola\" |\n")
+                      "      | :edge.label | \"hola\" |\n")
               "directed")))
     (should (s-contains-p "\"Org mode\" -> \"Org agenda\"" dot))
     (should (s-contains-p "label=\"hola\"" dot))))

@@ -38,64 +38,51 @@
     (should (not (s-contains-p "| color | red |" (plist-get p :list-body))))
     (should (s-contains-p "+ A" (plist-get p :list-body)))))
 
-(deftest "`org--graph-expand-eval-rows' splices template rows, explicit rows win"
+(deftest "`org--graph-expand-eval' splices template rows, explicit rows win"
   (let* ((nt (make-hash-table :test #'equal)))
     (puthash "wife" '(("fillcolor" "\"#f8d7e8\"") ("color" "\"#aa3366\"")) nt)
-    (let* ((rows '(("id" "x") ("eval" "wife") ("color" "\"#ff0000\"")))
-           (expanded (org--graph-expand-eval-rows rows nt)))
-      ;; fillcolor comes from template (not overridden)
-      (should (member '("fillcolor" "\"#f8d7e8\"") expanded))
-      ;; explicit color beats template color
-      (should (member '("color" "\"#ff0000\"") expanded))
-      (should (not (member '("color" "\"#aa3366\"") expanded)))
-      ;; id row is preserved
-      (should (member '("id" "x") expanded))
-      ;; eval row itself is gone
-      (should (not (--any? (equal (car it) "eval") expanded))))))
+    (should (equal '(("fillcolor" "\"#f8d7e8\"") (":id" "x") ("color" "\"#ff0000\""))
+                   (org--graph-expand-eval '((":id" "x") (":eval" "wife") ("color" "\"#ff0000\"")) nt)))))
 
-(deftest "`org--graph-expand-eval-in-attr-str' expands (eval NAME) in edge attr strings"
+(deftest "`org--graph-expand-eval' expands templates within templates, but a template including itself adds nothing"
   (let* ((nt (make-hash-table :test #'equal)))
-    (puthash "married" '(("color" "\"#cc3399\"") ("dir" "both") ("style" "solid")) nt)
-    (let ((expanded (org--graph-expand-eval-in-attr-str "(eval married)" nt)))
-      (should (s-contains-p "color=\"#cc3399\"" expanded))
-      (should (s-contains-p "dir=both" expanded))
-      (should (s-contains-p "style=solid" expanded)))))
+    (puthash "base" '(("shape" "box")) nt)
+    (puthash "wife" '((":eval" "base") ("color" "pink")) nt)
+    (puthash "loop" '((":eval" "loop") ("color" "red")) nt)
+    (should (equal '(("shape" "box") ("color" "pink")) (org--graph-expand-eval '((":eval" "wife")) nt)))
+    (should (equal '(("color" "red")) (org--graph-expand-eval '((":eval" "loop")) nt)))))
 
-(deftest "`org--graph-expand-eval-in-attr-str' explicit tokens override template"
-  (let* ((nt (make-hash-table :test #'equal)))
-    (puthash "married" '(("color" "\"#cc3399\"") ("dir" "both") ("style" "solid")) nt)
-    (let ((expanded (org--graph-expand-eval-in-attr-str "(eval married) color=red" nt)))
-      ;; explicit color=red overrides template color="#cc3399"
-      (should (s-contains-p "color=red" expanded))
-      (should (not (s-contains-p "color=\"#cc3399\"" expanded)))
-      ;; non-overridden template keys still present
-      (should (s-contains-p "dir=both" expanded))
-      (should (s-contains-p "style=solid" expanded)))))
+(deftest "#+name: template expands inside #+node: tables too"
+  (should (s-contains-p "node [ shape=box ]"
+                        (org--graph-raw->dot "#+name: t\n| shape | box |\n\n#+node:\n| :eval | t |\n+ A\n" "directed"))))
 
-(deftest "`org--graph-expand-eval-in-attr-str' returns original string unchanged when no (eval …)"
-  (let* ((nt (make-hash-table :test #'equal)))
-    (should (equal "color=red style=dashed"
-                   (org--graph-expand-eval-in-attr-str "color=red style=dashed" nt)))
-    (should (null (org--graph-expand-eval-in-attr-str nil nt)))))
-
-(deftest "#+name: template expands into node attrs via | eval |"
+(deftest "#+name: template expands into node attrs via | :eval |"
   (let* ((dot (org--graph-raw->dot
-               "#+name: wife\n| fillcolor | \"#f8d7e8\" |\n| color | \"#aa3366\" |\n\n+ Khadija\n  | eval | wife |\n"
+               "#+name: wife\n| fillcolor | \"#f8d7e8\" |\n| color | \"#aa3366\" |\n\n+ Khadija\n  | :eval | wife |\n"
                "directed")))
     (should (s-contains-p "fillcolor=\"#f8d7e8\"" dot))
     (should (s-contains-p "color=\"#aa3366\"" dot))))
 
-(deftest "#+name: template expands into to-edge attrs via (eval NAME)"
-  (let* ((dot (org--graph-raw->dot
-               "#+name: married\n| color | \"#cc3399\" |\n| dir | both |\n| style | solid |\n\n+ A\n  | to | B | (eval married) |\n+ B\n"
-               "directed")))
-    (should (s-contains-p "color=\"#cc3399\"" dot))
-    (should (s-contains-p "dir=both" dot))
-    (should (s-contains-p "style=solid" dot))))
+(define-graph-test "#+name: template expands into to-edge attrs via | :to.:eval |, and explicit :to. rows win"
+  :input "
+#+name: married
+| color | \"#cc3399\" |
+| dir   | both        |
 
-(deftest "#+name: explicit node attr overrides template via | eval |"
++ A
+  | :to       | B       |
+  | :to.:eval | married |
+  | :to.dir   | back    |
++ B"
+  :output "digraph {
+  A -> B [ color=\"#cc3399\" dir=back ];
+  A [ label=A ];
+  B [ label=B ];
+}")
+
+(deftest "#+name: explicit node attr overrides template via | :eval |"
   (let* ((dot (org--graph-raw->dot
-               "#+name: base\n| color | blue |\n| shape | box |\n\n+ A\n  | eval  | base  |\n  | color | red   |\n"
+               "#+name: base\n| color | blue |\n| shape | box |\n\n+ A\n  | :eval  | base  |\n  | color | red   |\n"
                "directed")))
     ;; explicit color=red wins over template color=blue
     (should (s-contains-p "color=red" dot))
@@ -105,7 +92,7 @@
 
 (deftest "#+name: unknown template name silently produces empty expansion"
   (let* ((dot (org--graph-raw->dot
-               "#+name: real\n| color | blue |\n\n+ A\n  | eval | typo |\n"
+               "#+name: real\n| color | blue |\n\n+ A\n  | :eval | typo |\n"
                "directed")))
     ;; node still renders, just without template attrs
     (should (s-contains-p "A [ label=A ];" dot))))

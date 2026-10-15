@@ -20,12 +20,14 @@ nesting makes an edge, and a two-column table styles the item above it.
 + λ-calculus
   | shape | ellipse |
   + Church encodings
-    | EDGE | label=encodes |
+    | :edge.label | encodes |
   + Combinators
-    | id | combinators |
+    | :id | combinators |
     + S K I
 + Lisp
-  | to | combinators | label=borrows style=dotted |
+  | :to       | combinators |
+  | :to.label | borrows     |
+  | :to.style | dotted      |
 #+end_graph
 
 Press =C-c C-c= inside the block to render it to a PNG; =C-u C-c C-c= shows the dot source instead."

@@ -16,7 +16,7 @@
                  (set-buffer-multibyte nil)
                  (insert "\x89PNG\r\n\x1a\n"))
                t)))
-    (let ((html (org-block/graph 'html "+ A\n  + B\n    | EDGE | label=calls |\n"
+    (let ((html (org-block/graph 'html "+ A\n  + B\n    | :edge.label | calls |\n"
                                  "directed" nil)))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html)))))
@@ -25,7 +25,7 @@
   ;; Verify the dot source that gets embedded is structurally correct
   ;; by checking the raw->dot output directly.
   (let ((dot (org--graph-raw->dot
-              "+ A\n  + B\n    | EDGE | label=calls |\n"
+              "+ A\n  + B\n    | :edge.label | calls |\n"
               "directed")))
     (should (s-contains-p "A -> B [ label=calls ];" dot))
     (should (s-contains-p "digraph" dot))))

@@ -6,7 +6,14 @@
 ;;; :SETTINGS: drawer folding
 
 (define-graph-test ":SETTINGS: drawer wraps preamble directives"
-  :input ":SETTINGS:\n#+graph:\n| rankdir | LR |\n#+node:\n| shape | box |\n:END:\n+ A\n"
+  :input "
+:SETTINGS:
+#+graph:
+| rankdir | LR |
+#+node:
+| shape | box |
+:END:
++ A"
   :output "digraph {
   graph [ rankdir=LR ]
   node [ shape=box ]
@@ -14,7 +21,14 @@
 }")
 
 (define-graph-test ":SETTINGS: drawer with #+rank: and #+edge:"
-  :input ":SETTINGS:\n#+edge:\n| color | red |\n#+rank: A B\n:END:\n+ A\n+ B\n"
+  :input "
+:SETTINGS:
+#+edge:
+| color | red |
+#+rank: A B
+:END:
++ A
++ B"
   :output "digraph {
   edge [ color=red ]
   { rank=same; A; B }
@@ -23,7 +37,15 @@
 }")
 
 (define-graph-test ":SETTINGS: drawer with blank lines between directives"
-  :input ":SETTINGS:\n#+graph:\n| rankdir | TB |\n\n#+node:\n| shape | ellipse |\n:END:\n+ X\n"
+  :input "
+:SETTINGS:
+#+graph:
+| rankdir | TB |
+
+#+node:
+| shape | ellipse |
+:END:
++ X"
   :output "digraph {
   graph [ rankdir=TB ]
   node [ shape=ellipse ]
