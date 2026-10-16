@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-10-16 Fri 09:23 -->
+<!-- 2026-10-16 Fri 13:56 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -379,13 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#HTML-LaTeX-Setup">1. HTML &amp; LaTeX Setup&nbsp;&nbsp;&nbsp<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#org26aa364">2. 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></a>
+<li><a href="#org2640d25">2. 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></a>
 <ul>
-<li><a href="#orgf4ebca5">2.1. 🎁  What Does It Do?</a></li>
+<li><a href="#org7c20e3d">2.1. 🎁  What Does It Do?</a></li>
 <li><a href="#at-a-glance">2.2. 🗺 The package at a glance</a></li>
 </ul>
 </li>
-<li><a href="#orgf7e3286">3. Block and link types provided by this package</a>
+<li><a href="#orgb6d8650">3. Block and link types provided by this package</a>
 <ul>
 <li><a href="#Boxed-Text">3.1. Boxed Text —Calling out super duper info</a></li>
 <li><a href="#Folded-Details">3.2. Folded Details &mdash;Let the user see stuff only if they're interested</a></li>
@@ -397,9 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <li><a href="#Graphs">3.8. Graphs ---<i>Org lists, drawn by Graphviz</i></a></li>
 <li><a href="#Switches-for-every-block">3.9. Switches for every block: <code>:when</code>, <code>:let</code>, <code>:folded</code>, …</a></li>
 <li><a href="#Callouts">3.10. Callouts &mdash;Note, tip, important, warning, caution</a></li>
-<li><a href="#Highlights">3.11. Highlights &mdash;Colour the background, not the text</a></li>
-<li><a href="#style-block">3.12. Page-wide CSS with <code>style</code></a></li>
-<li><a href="#Markdown-export">3.13. Markdown export &mdash;What survives GitHub, and how to change it</a></li>
+<li><a href="#Colours-links">3.11. Colours ---<code>red:𝒳</code>, <code>[[color:#ff0066][𝒳]]</code>, and <code>#+begin_red</code></a></li>
+<li><a href="#Highlights">3.12. Highlights &mdash;Colour the background, not the text</a></li>
+<li><a href="#style-block">3.13. Page-wide CSS with <code>style</code></a></li>
+<li><a href="#Markdown-export">3.14. Markdown export &mdash;What survives GitHub, and how to change it</a></li>
+<li><a href="#latex-packages">3.15. PDF export &mdash;The LaTeX packages our blocks need</a></li>
 </ul>
 </li>
 <li><a href="#Developers-guide">4. Make your own blocks and links &mdash;A developer's guide</a>
@@ -426,8 +428,8 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 </style>
 </div>
 </div>
-<div id="outline-container-org26aa364" class="outline-2">
-<h2 id="org26aa364"><span class="section-number-2">2.</span> 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></h2>
+<div id="outline-container-org2640d25" class="outline-2">
+<h2 id="org2640d25"><span class="section-number-2">2.</span> 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></h2>
 <div class="outline-text-2" id="text-2">
 <p>
 <b>Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
@@ -437,8 +439,8 @@ across backends &mdash;without diving into the dark arts of raw HTML or
 LaTeX!
 </p>
 </div>
-<div id="outline-container-orgf4ebca5" class="outline-3">
-<h3 id="orgf4ebca5"><span class="section-number-3">2.1.</span> 🎁  What Does It Do?</h3>
+<div id="outline-container-org7c20e3d" class="outline-3">
+<h3 id="org7c20e3d"><span class="section-number-3">2.1.</span> 🎁  What Does It Do?</h3>
 <div class="outline-text-3" id="text-2-1">
 <ul class="org-ul">
 <li><b>🎨 Style with ease</b> &mdash; add colors, badges, tooltips (from a dictionary, Emacs
@@ -1196,8 +1198,8 @@ block &mdash;an Org list, coloured by <code>#+name:</code> tables folded in its 
 </div>
 </div>
 </div>
-<div id="outline-container-orgf7e3286" class="outline-2">
-<h2 id="orgf7e3286"><span class="section-number-2">3.</span> Block and link types provided by this package</h2>
+<div id="outline-container-orgb6d8650" class="outline-2">
+<h2 id="orgb6d8650"><span class="section-number-2">3.</span> Block and link types provided by this package</h2>
 <div class="outline-text-2" id="text-3">
 </div>
 <div id="outline-container-Boxed-Text" class="outline-3">
@@ -1416,7 +1418,7 @@ Src blocks fold too: the header argument <code>:folded t</code> exports a src bl
 otherwise would, inside a <code>details</code> block titled by its language; <code>:folded "TITLE"</code> picks
 the title.
 </p>
-<pre class="example" id="orgfd5c715">
+<pre class="example" id="org1d83558">
 #+begin_src emacs-lisp :folded "How is it done?"
 (org-defblock details …)
 #+end_src
@@ -1488,7 +1490,7 @@ links do&mdash; so readers may try them on the spot.</li>
 
 
 
-<div id="orga878054" class="figure">
+<div id="org47d256a" class="figure">
 <p><img src="./images/kbd.png" alt="kbd.png" width="80%" height="80%s" />
 </p>
 </div>
@@ -1517,6 +1519,7 @@ Or, without specifying an explicit label:
 It can be annoying to make readers jump to the bottom of the page to
 read a footnote.  Instead, I prefer to write an <i>inline <abbr class="tooltip"
 tabindex="0">remark<template><pre>Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block’s are.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
@@ -1552,8 +1555,12 @@ The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; d
     burden a soul beyond what it can bear.</i> &mdash; Quran 2:286
 </p> </div></div> <br> <details style="background-color: #FFFFCC"><summary style="text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;">﴾How It’s Implemented﴿</summary> <div class="org-src-container">
 <pre class="src src-emacs-lisp"><code>(<span style="color: #98971a; font-weight: bold;">org-defblock</span> tooltip (marker <span style="color: #689d6a; font-style: italic;">"&#176;"</span>)
-              <span style="color: #689d6a; font-style: italic;">"Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone."</span>
-              (concat (org--html-tooltip raw-contents marker) <span style="color: #689d6a; font-style: italic;">"&amp;emsp13;"</span>))
+              <span style="color: #689d6a; font-style: italic;">"Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are."</span>
+              (<span style="color: #98971a; font-weight: bold;">if</span> (equal backend 'latex)
+                  (concat marker (org--latex-margin-note <span style="color: #689d6a; font-style: italic;">"{\\thefootnote}"</span> <span style="color: #689d6a; font-style: italic;">"\\marginparwidth"</span> <span style="color: #689d6a; font-style: italic;">"gray!80"</span> contents
+                                                         <span style="color: #689d6a; font-style: italic;">"\\refstepcounter{footnote}"</span>))
+                (concat (org--html-tooltip raw-contents marker) <span style="color: #689d6a; font-style: italic;">"&amp;emsp13;"</span>)))
 </code></pre>
 </div>
  </details>
@@ -1955,7 +1962,7 @@ Finally, a package's whole API makes a glossary of its own: the <code>package-do
 exports a table of the public functions, macros, and variables that a feature defines,
 each name a <code>doc:𝒳</code> link whose tooltip is its documentation.
 </p>
-<pre class="example" id="org1dd7f8e">
+<pre class="example" id="orgc760e32">
 #+begin_package-docs org-deflink
 #+end_package-docs
 </pre>
@@ -2775,8 +2782,70 @@ See <a href="#Markdown-export">Markdown export</a> for what the other blocks bec
 </p>
 </div>
 </div>
+<div id="outline-container-Colours-links" class="outline-3">
+<h3 id="Colours-links"><span class="section-number-3">3.11.</span> Colours ---<code>red:𝒳</code>, <code>[[color:#ff0066][𝒳]]</code>, and <code>#+begin_red</code></h3>
+<div class="outline-text-3" id="text-Colours-links">
+<p>
+Each of the 19 colours that HTML and LaTeX's <code>xcolor</code> share &mdash;black, blue, brown, cyan, darkgray, gray,
+green, lightgray, lime, magenta, olive, orange, pink, purple, red, teal, violet, white, and yellow&mdash; is a
+block, a link, and a tag; <code>color</code> takes any other, by name or hex code. In Emacs, too, each such link
+shows its text in its colour, as soon as <code>org-special-block-extras-mode</code> is on.
+</p>
+
+<p>
+<div><div style="padding: 1em;background-color: #CCFF99;border-radius: 15px;font-size: 0.9em;"> <h6 style="text-align:center; font-family: Lorna; padding: 0; margin: 0;"> ﴾What You Write﴿ </h6> <pre class="src src-org">#+begin_red
+Look at my text, it's red!
+#+end_red
+
+#+begin_pink
+Look at my text, it's pink!
+#+end_pink
+
+#+begin_color cyan
+Look at my text, it's cyan!
+#+end_color
+
+green:Look
+blue:Here
+orange:Buddo!
+
+[[color:#ff0066][Any hex colour]], [[color:navy][any colour's name]], and [[red:][a described red link]].</pre> </div> <div style="padding: 1em;background-color: #FFCCCC;border-radius: 15px;font-size: 0.9em;"> <h6 style="text-align:center; font-family: Lorna; padding: 0; margin: 0;"> ﴾What You Get﴿ </h6> <span style="color:red;">
+<p>
+Look at my text, it's red!
+</p>
+</span>
+
+<span style="color:pink;">
+<p>
+Look at my text, it's pink!
+</p>
+</span>
+
+<span style="color:cyan;">
+<p>
+Look at my text, it's cyan!
+</p>
+</span>
+
+<p>
+<span style="color:green;">Look</span>
+<span style="color:blue;">Here</span>
+<span style="color:orange;">Buddo</span>!
+</p>
+
+<p>
+<span style="color:#ff0066;">Any hex colour</span>, <span style="color:navy;">any colour's
+name</span>, and <span style="color:red;">a described red link</span>.
+</p> </div></div> <br> <details style="background-color: #FFFFCC"><summary style="text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;">﴾How It’s Implemented﴿</summary> <div class="org-src-container">
+<pre class="src src-emacs-lisp"><code>
+</code></pre>
+</div>
+ </details>
+</p>
+</div>
+</div>
 <div id="outline-container-Highlights" class="outline-3">
-<h3 id="Highlights"><span class="section-number-3">3.11.</span> Highlights &mdash;Colour the background, not the text</h3>
+<h3 id="Highlights"><span class="section-number-3">3.12.</span> Highlights &mdash;Colour the background, not the text</h3>
 <div class="outline-text-3" id="text-Highlights">
 <p>
 Where <code>red:𝒳</code> colours text, <code>[[highlight:pink][𝒳]]</code> colours its background; the colour
@@ -2833,12 +2902,12 @@ For the reader who would rather pick the page's background colour themself,
 </div>
 </div>
 <div id="outline-container-style-block" class="outline-3">
-<h3 id="style-block"><span class="section-number-3">3.12.</span> Page-wide CSS with <code>style</code></h3>
+<h3 id="style-block"><span class="section-number-3">3.13.</span> Page-wide CSS with <code>style</code></h3>
 <div class="outline-text-3" id="text-style-block">
 <p>
 A <code>style</code> block is the page's CSS, taken verbatim; it exports to nothing but HTML.
 </p>
-<pre class="example" id="orgf66a35e">
+<pre class="example" id="org8946b0f">
 #+begin_style
 h2 { color: teal; }
 #+end_style
@@ -2846,7 +2915,7 @@ h2 { color: teal; }
 </div>
 </div>
 <div id="outline-container-Markdown-export" class="outline-3">
-<h3 id="Markdown-export"><span class="section-number-3">3.13.</span> Markdown export &mdash;What survives GitHub, and how to change it</h3>
+<h3 id="Markdown-export"><span class="section-number-3">3.14.</span> Markdown export &mdash;What survives GitHub, and how to change it</h3>
 <div class="outline-text-3" id="text-Markdown-export">
 <p>
 Exporting to Markdown, with <code>ox-md</code> or <code>ox-gfm</code>, our blocks see <code>backend</code> as <code>html</code>, since <code>md</code>
@@ -2952,6 +3021,27 @@ boxes between horizontal rules:
 </div>
 </div>
 </div>
+<div id="outline-container-latex-packages" class="outline-3">
+<h3 id="latex-packages"><span class="section-number-3">3.15.</span> PDF export &mdash;The LaTeX packages our blocks need</h3>
+<div class="outline-text-3" id="text-latex-packages">
+<p>
+Org's default LaTeX header already loads <code>amsmath</code>, <code>amssymb</code>, <code>ulem</code>, <code>hyperref</code>, and <code>graphicx</code>; beside
+them, our blocks need just these, which we may copy into a document &mdash;or into <code>org-latex-packages-alist</code>:
+</p>
+<div class="org-src-container">
+<pre class="src src-org"><code><span style="color: #a89984; font-weight: bold; font-style: italic;">#+latex_header: \usepackage{xcolor}     % Colours: red:&#119987;, highlight, margin, callouts; mixes like red!5!white</span>
+<span style="color: #a89984; font-weight: bold; font-style: italic;">#+latex_header: \usepackage{tcolorbox}  % box, details, solution, the callouts, and the :boxed and :folded switches</span>
+<span style="color: #a89984; font-weight: bold; font-style: italic;">#+latex_header: \usepackage{multicol}   % parallel</span>
+<span style="color: #a89984; font-weight: bold; font-style: italic;">#+latex_header: \usepackage{adjustbox}  % Only a margin block's #+resize:</span>
+</code></pre>
+</div>
+<p>
+A test, <a href="https://github.com/alhassy/org-special-block-extras/blob/master/tests/org-pdf-export-tests.el">tests/org-pdf-export-tests.el</a>, keeps this list honest: it compiles every example of this manual
+to a PDF, with these lines and no others. It uses LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is;
+pdflatex instead needs a <code>\newunicodechar</code> for each such character.
+</p>
+</div>
+</div>
 </div>
 <div id="outline-container-Developers-guide" class="outline-2">
 <h2 id="Developers-guide"><span class="section-number-2">4.</span> Make your own blocks and links &mdash;A developer's guide</h2>
@@ -2985,7 +3075,7 @@ export backend and <code>contents</code> the block's Org-parsed contents.
 Now the following binds <code>title</code> to <code>"Heads up"</code> and <code>color</code> to <code>red</code>; omit either, and
 its default is used.
 </p>
-<pre class="example" id="org54fa646">
+<pre class="example" id="org3e6039a">
 #+begin_note "Heads up" :color red
 Mind the gap.
 #+end_note
@@ -3003,7 +3093,7 @@ exports as a <code>note</code> block around its own text, up to the next heading
 underscore-separated items form the main argument &mdash;tags cannot hold spaces&mdash; and the
 section's properties supply keyword arguments by name. So all three of these agree:
 </p>
-<pre class="example" id="orgcf2d12a">
+<pre class="example" id="org545c884">
 #+begin_note "Heads up" :color red
 Mind the gap.
 #+end_note
@@ -3136,7 +3226,7 @@ items after the tag's name bind them in order. Any the tag omits are read from t
 section's property of the same name, and then default. The <code>&amp;key</code> arguments are read from
 properties only &mdash;handy for lots of named info.
 </p>
-<pre class="example" id="org5a72b9b">
+<pre class="example" id="org70c1389">
 * Tags are functions of Org sections        :quote_blue:
 * Tags are functions of Org sections        :quote:
 :PROPERTIES:
@@ -3431,7 +3521,7 @@ Just as <code>C-c C-v C-d</code> splits a src block at point, so too it splits a
 <a href="https://scripter.co/splitting-an-org-block-into-two/">Kaushal Modi's trick</a>; each piece keeps the block's whole <code>#+begin_</code> line, header arguments
 and all. By way of example, with point at the start of <code>Two.</code>,
 </p>
-<pre class="example" id="org1190d2c">
+<pre class="example" id="orgfceaf24">
 #+begin_tip Mind
 One.
 Two.
@@ -3440,7 +3530,7 @@ Two.
 <p>
 becomes
 </p>
-<pre class="example" id="orgce17eb0">
+<pre class="example" id="org29e6ba0">
 #+begin_tip Mind
 One.
 #+end_tip
@@ -3466,7 +3556,7 @@ With point on a <code>#+begin_NAME</code> or <code>#+end_NAME</code> line, or on
 &mdash;or <a href="https://github.com/casouri/eldoc-box">eldoc-box</a>, should we use it&mdash; shows how the block is called, defaults and all, along
 with the first line of its docstring:
 </p>
-<pre class="example" id="orgb125744">
+<pre class="example" id="orga13a9f4">
 #+begin_details TITLE="Details" :background-color "#e5f5e5" :title-color "green": Enclose contents in a folded up box, for HTML.
 </pre>
 <p>
@@ -3485,7 +3575,7 @@ documentation pane shows the block's whole docstring.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2026-10-16 Fri 09:23</p>
+<p class="date">Created: 2026-10-16 Fri 13:56</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
