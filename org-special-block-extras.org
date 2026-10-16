@@ -4360,9 +4360,9 @@ Set theory is that branch of mathematics whose task is to investigate
 the fundamental notions of number, order, and function.
 ,#+end_quote
   #+end_example
-  In LaTeX, and so in beamer, this is csquotes' =\blockcquote[20-22]{zermelo1908}{…}=, whose
-  citation biblatex typesets from our bibliography; so it needs ~\usepackage{csquotes}~,
-  ~\usepackage{biblatex}~, and an ~\addbibresource~. In HTML, it is a =<blockquote>= closed by
+  In LaTeX, and so in beamer, this is csquotes' =\blockcquote[20-22]{zermelo1908}{…}=, cited by
+  our bibliography ---biblatex's ~\addbibresource~, BibTeX's ~\bibliography~, or org-cite---
+  which is ours to give; csquotes itself is loaded for us, unless we load it ourselves. In HTML, it is a =<blockquote>= closed by
   “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise. A quote sans arguments is
   Org's own, as ever.
 

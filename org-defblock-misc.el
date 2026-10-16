@@ -187,8 +187,9 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
   Set theory is that branch of mathematics whose task is …
   #+end_quote
 
-In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, which needs csquotes and biblatex;
-elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
+In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, citing by the document's own bibliography ---biblatex,
+BibTeX, or org-cite--- whose \\addbibresource or \\bibliography is ours to give; csquotes itself is loaded for us,
+by `org--load-csquotes'.  Elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
 As a link, an inline quotation: [[quote:zermelo1908][…]] is \\textcquote{zermelo1908}{…}, and
 [[quote:][to be]] is “to be”.  A section tagged :quote: is a quote block of its text."
   ;; The header reads 20-22 as a symbol, and a key may be one too; we want their names.
@@ -209,6 +210,17 @@ As a link, an inline quotation: [[quote:zermelo1908][…]] is \\textcquote{zerme
      ((org-export-markdown-p) (org-parse (org-builtin-block "quote" (format "%s\n\n--- /%s/%s" raw-contents key at))))
      ((equal backend 'latex) (format "\\blockcquote%s{%s}{%s}" latex-pages key contents))
      (t (format "<blockquote>%s<footer>&mdash; <cite>%s</cite>%s</footer></blockquote>" contents key at)))))
+
+(defun org--load-csquotes (output backend _info)
+  "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT that loads csquotes, when it quotes by \\blockcquote or \\textcquote yet does not.
+So a cited quote, or quote: link, needs no #+latex_header: of ours; a csquotes of the document's own, options and
+all, is left be.  A body-only export, sans preamble, is left be too."
+  (if (and (org-export-derived-backend-p backend 'latex)
+           (string-match-p "\\\\\\(?:block\\|text\\)cquote" output)
+           (not (string-match-p "\\\\usepackage\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?csquotes[,}]" output))
+           (string-match "^\\\\begin{document}" output))
+      (replace-match "\\\\usepackage{csquotes}\n\\\\begin{document}" t nil output)
+    output))
 
 ;;;;; Blocks
 ;;;;;; solution

@@ -181,5 +181,13 @@ Less is more." 'latex)))
     (should (s-contains-p "Hamlet says ``to be''; Zermelo writes \\textcquote{zermelo1908}{set theory is …}." latex))
     (should (string-match-p "\\\\begin{quote}\nLess is more\\.\n\\\\end{quote}" latex))))
 
+(deftest "a cited quote, or quote: link, loads csquotes in LaTeX, unless the document already does" [quote]
+  (cl-flet ((csquotes (input) (s-count-matches "{csquotes}" (org-export-string-as input 'latex))))
+    (should (= 1 (csquotes "#+begin_quote zermelo1908 :pages 20-22\nQuoted.\n#+end_quote")))
+    (should (= 1 (csquotes "As Zermelo has it, [[quote:zermelo1908][set theory]] is foundational.")))
+    ;; The document's own, options and all, is left be; and a document sans cited quotes gets nothing.
+    (should (= 1 (csquotes "#+latex_header: \\usepackage[autostyle]{csquotes}\n#+begin_quote zermelo1908\nQuoted.\n#+end_quote")))
+    (should (= 0 (csquotes "#+begin_quote\nPlain.\n#+end_quote")))))
+
 (provide 'org-defblock-misc-tests)
 ;;; org-defblock-misc-tests.el ends here
