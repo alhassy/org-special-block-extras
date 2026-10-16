@@ -29,3 +29,11 @@
     :using ((org-defblock shout (wat) "docs" (upcase wat))
             (org-defblock quiet (wat) "docs" (downcase wat)))
     :equals "HELLO world\n"))
+
+(deftest "`org-test--fill' breaks a long line at a space, never inside a tag nor a <pre>" [fill]
+  (let* ((org-test--width 30)
+         (filled (org-test--fill "<p>Some words, enough to go past thirty.</p><pre>keep   these   spaces   as   they are</pre> and after")))
+    (should (s-contains-p "<pre>keep   these   spaces   as   they are</pre>" filled))
+    (should-not (string-match-p "<\n" filled))
+    (should (equal (replace-regexp-in-string "\n" " " filled)
+                   "<p>Some words, enough to go past thirty.</p><pre>keep   these   spaces   as   they are</pre> and after"))))

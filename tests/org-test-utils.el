@@ -51,9 +51,11 @@
 
 (defun org-test--in-pre-p ()
   "↦ non-nil when point is within a <pre>…</pre>, where whitespace is content."
-  (save-excursion
-    (let ((case-fold-search t))
-      (and (re-search-backward "<\\(/?\\)pre[ >]" nil t) (equal (match-string 1) "")))))
+  ;; Its caller's match data is the break it weighs, so we search sans clobbering it.
+  (save-match-data
+    (save-excursion
+      (let ((case-fold-search t))
+        (and (re-search-backward "<\\(/?\\)pre[ >]" nil t) (equal (match-string 1) ""))))))
 
 (defun org-test--fill (s &optional latex?)
   "(S, LATEX?) ↦ S with each line past `org-test--width' broken at its last space, or after its last <br>, there.

@@ -88,11 +88,14 @@ content
   (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp :folded nil\n(+ 1 2)\n#+end_src")))
   (should-not (string-match-p "<details" (org-export-string "#+begin_src emacs-lisp\n(+ 1 2)\n#+end_src"))))
 
-(org-deftest "a folded src block within a list item stays in that item"
-  :text "- item\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n- next"
-  (org--fold-src-blocks 'html)
-  (should (equal (buffer-string)
-                 "- item\n  #+begin_details \"emacs-lisp\"\n  #+begin_src emacs-lisp :folded t\n  (+ 1 2)\n  #+end_src\n  #+end_details\n- next")))
+(deftest "a folded src block within a list item stays in that item, its switch gone from what Org sees"
+  (let ((html (org-export-string "
+- item
+  #+begin_src emacs-lisp :folded t
+  (+ 1 2)
+  #+end_src
+- next")))
+    (should (string-match-p "<li>\\(.\\|\n\\)*item\\(.\\|\n\\)*<details\\(.\\|\n\\)*(\\+ 1 2)\\(.\\|\n\\)*</details>\\(.\\|\n\\)*</li>\n<li>next</li>" html))))
 
 ;;; toggle-details links
 

@@ -4221,8 +4221,9 @@ from∘to m = {! try it! }
   :CUSTOM_ID: Switches-for-every-block
   :END:
 
-  Just as every src block understands =:exports= and =:results=, every block made with
-  ~org-defblock~ ---ours and our own--- understands these header arguments:
+  Just as every src block understands =:exports= and =:results=, every block understands these
+  header arguments ---ours, those made with ~org-defblock~, Org's own src, example, quote, verse,
+  and center blocks, and any =#+begin_𝒳= at all, no declaration needed:
 
   | Switch           | Effect upon export                                                           |
   |------------------+------------------------------------------------------------------------------|
@@ -4232,8 +4233,15 @@ from∘to m = {! try it! }
   | =:ignore t=      | The contents, as plain Org; i.e., the block's own behaviour is bypassed      |
   | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |
+  | =:verbatim t=    | The block as written, sans its switches, shown as Org source                  |
+  | =:verbatim demo= | That source beside what it exports to, as with [[#Longer_Example_Demonstrating_Org-markup_with_org-demo][org-demo]]           |
 
   osbe-example:switches
+
+  A src block's =:folded t= is titled by its language, and its code is still exported by Org,
+  as ever; since Babel runs before switches apply, its =:let= changes only the code shown, not its
+  results. Other switches then apply to a =:verbatim= showing; e.g., =:verbatim demo :folded t=
+  folds away a block's source and result alike.
 
   Moreover, =:C-c_C-c ACTION= gives a block an action in Emacs: pressing =C-c C-c= within it
   calls =ACTION= when it names a function, else evaluates it as a Lisp form; see [[#C-c-C-c-for-your-own-blocks][C-c C-c for

@@ -28,10 +28,10 @@ error-prone tedium.
 <h3>Source</h3> 
 <div ><pre class=\"src src-org\">/italics/ and _underline_
 
-$e^{i \\times \\pi} + 1 = 0$<
-/pre></div>
+$e^{i \\times \\pi} + 1 = 0$</pre></div>
 </div>
-<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\"> <h3>Result</h3> 
+<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\">
+<h3>Result</h3> 
 <p>
 <i>italics</i> and <span class=\"underline\">underline</span>
 </p>

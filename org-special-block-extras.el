@@ -402,8 +402,8 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
-        ;; Before the rewrite, which then renders the details blocks this introduces.
-        (add-hook 'org-export-before-parsing-functions #'org--fold-src-blocks -10)
+        ;; Switches on any block not of ours ---src, quote, any #+begin_𝒳---, before our own blocks are rewritten.
+        (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
@@ -422,7 +422,7 @@ Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
           (setq org--docs-libraries-loaded t)
           (org-docs-load-libraries)))
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
-    (remove-hook 'org-export-before-parsing-functions #'org--fold-src-blocks)
+    (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)

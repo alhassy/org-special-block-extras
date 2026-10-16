@@ -175,7 +175,12 @@ pre-processing steps."
           (declared (--map (intern (format ":%s" it)) (-map #'car (-partition 2 (cddr (get handler 'org-defblock-args))))))
           (switch? (lambda (key) (and (memq key org-block-switches) (not (memq key declared)))))
           (switches (cl-loop for (key value) on kwdargs by #'cddr when (funcall switch? key) append (list key value)))
-          (kwdargs (cl-loop for (key value) on kwdargs by #'cddr unless (funcall switch? key) append (list key value))))
+          (kwdargs (cl-loop for (key value) on kwdargs by #'cddr unless (funcall switch? key) append (list key value)))
+          ;; The #+begin_ line's header, sans switches, for :verbatim to show the block as it is otherwise written.
+          (header (save-excursion
+                    (goto-char start-point)
+                    (when (looking-at "#\\+begin_\\S-+[ \t]*\\(.*\\)$")
+                      (cdr (org--header-sans-switches (match-string 1) switch?))))))
     (org-replace-text-while-preserving-indentation
      start-point
      end-point
@@ -183,19 +188,47 @@ pre-processing steps."
       name switches backend contents
       (lambda (contents)
         (let ((org--handler-anchor anchor))
-          (apply handler backend contents main-arg kwdargs)))))))
+          (apply handler backend contents main-arg kwdargs)))
+      header))))
 
 ;;;;; Switches every block understands
 
-(defconst org-block-switches '(:ignore :noexport :when :let :boxed :folded :C-c_C-c)
-  "Header arguments that every `org-defblock' block understands, unless it declares a keyword of the same name.
+(defconst org-block-switches '(:ignore :noexport :when :let :boxed :folded :verbatim :C-c_C-c)
+  "Header arguments that every block understands ---an `org-defblock' one, unless it declares a keyword of the same
+name; a src, example, quote, or any other #+begin_𝒳 block, too; see `org--rewrite-any-block-switches'.
 
   #+begin_solution :when (eq backend \\='html) :folded \"Peek?\"   ;; Only in HTML, and folded away
   #+begin_remark :noexport t                                  ;; Never exported
   #+begin_box :ignore t                                       ;; Just the contents, as plain Org
   #+begin_note :let (N 3) :boxed \"Exercise\"                    ;; Each whole-word N becomes 3; boxed
+  #+begin_src emacs-lisp :folded t                            ;; Folded away, titled by its language
+  #+begin_tip :verbatim demo                                  ;; Its source, beside what it exports to
 
 See `org--block-with-switches' for each one's meaning, and `org--block-cc-switch' for :C-c_C-c.")
+
+(defun org--header-sans-switches (header switch?)
+  "(HEADER, SWITCH?) ↦ (SWITCHES . REST): the plist of HEADER's :KEY VALUE pairs whose KEY satisfies SWITCH?, and HEADER sans them.
+  \"emacs-lisp :folded \\\"See it\\\" :exports code\"  ↦  ((:folded \"See it\") . \"emacs-lisp :exports code\")
+A VALUE reads as Lisp, as `org--read-header' reads it; a KEY followed by another :KEY, or by nothing, is t."
+  (let ((pos 0) switches spans)
+    (while (string-match "[^ \t\n]+" header pos)
+      (let* ((beg (match-beginning 0)) (end (match-end 0))
+             (key (intern (match-string 0 header))))
+        (if (not (and (keywordp key) (funcall switch? key)))
+            (setq pos end)
+          (let* ((vbeg (and (string-match "[^ \t\n]+" header end) (not (eq ?: (aref header (match-beginning 0))))
+                            (match-beginning 0)))
+                 (vend (and vbeg (match-end 0)))
+                 (read (and vbeg (condition-case nil (read-from-string header vbeg) (error nil))))
+                 (whole? (and read (>= (cdr read) vend)))
+                 (stop (cond ((null vbeg) end) (whole? (cdr read)) (t vend))))
+            (setq switches (append switches (list key (cond ((null vbeg) t) (whole? (car read)) (t (substring header vbeg vend)))))
+                  spans (cons (cons beg stop) spans)
+                  pos stop)))))
+    ;; Last span first, so the earlier ones' positions stay put.
+    (dolist (span spans)
+      (setq header (concat (substring header 0 (car span)) (substring header (cdr span)))))
+    (cons switches (string-trim (replace-regexp-in-string "[ \t]+" " " header)))))
 
 (defcustom org-defblock-evaluate-switches 'query
   "Whether the Lisp in a block's :when, :let, and :C-c_C-c switches may be evaluated.
@@ -236,8 +269,8 @@ Each VALUE may refer to the VARs before it, as with `let*'."
                                                          (format "%s" value) contents t t)))
     contents))
 
-(defun org--block-with-switches (name switches backend contents render)
-  "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say:
+(defun org--block-with-switches (name switches backend contents render &optional header)
+  "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER, HEADER) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say:
 
 + :noexport t ↦ nothing at all; likewise :when FORM, when FORM is nil.  FORM may mention `backend'.
 + :let (VAR VALUE …) ↦ each whole-word VAR in CONTENTS becomes its VALUE, beforehand; see `org--block-let'.
@@ -245,13 +278,21 @@ Each VALUE may refer to the VARs before it, as with `let*'."
 + :boxed TITLE ↦ the result within a `box' titled TITLE; for :boxed t, untitled.
 + :folded TITLE ↦ the result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised.
   Hence :boxed and :folded together give a folded box.
++ :verbatim t ↦ the block as written, its #+begin_ line's HEADER sans switches, shown as Org source, not rendered;
+  :verbatim demo ↦ that source beside what it renders to, via `org-block/org-demo'.  Other switches then apply to
+  this showing; e.g., :verbatim t :folded t folds away the block's source.
 
 :C-c_C-c is for the block in Emacs, not upon export; see `org--block-cc-switch'."
   (if (or (plist-get switches :noexport)
           (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend))))
       ""
     (let* ((contents (-if-let (bindings (plist-get switches :let)) (org--block-let bindings contents backend) contents))
-           (result (if (plist-get switches :ignore) contents (funcall render contents)))
+           (source (lambda () (format "#+begin_%s%s\n%s\n#+end_%s" name (if (org-string-nw-p header) (concat " " header) "")
+                                      (string-trim-right contents) name)))
+           (result (pcase (plist-get switches :verbatim)
+                     ('nil (if (plist-get switches :ignore) contents (funcall render contents)))
+                     ((or 'demo "demo") (org-block/org-demo backend (funcall source)))
+                     (_ (format "#+begin_src org\n%s\n#+end_src" (org-escape-code-in-string (funcall source))))))
            (title (lambda (switch default) (if (eq (plist-get switches switch) t) default (format "%s" (plist-get switches switch))))))
       ;; The result is Org text, export blocks and all; so it serves as the raw contents of an enclosing block.
       (when (plist-get switches :boxed)
@@ -350,6 +391,64 @@ Note: This function mutates the current buffer."
              (if (memq (org-element-type (org-element-at-point)) '(special-block paragraph))
                  (org-eval-replace-block (org-special-block-after-point blk) backend)
                (forward-line 1)))))
+
+;;;;; org--rewrite-any-block-switches
+
+(defun org--rewrite-any-block-switches (backend)
+  "Apply `org-block-switches' to each block that no `org-defblock' declares, as BACKEND exports it; e.g.,
+
+  #+begin_src emacs-lisp :folded t        #+begin_details \"emacs-lisp\"
+  (+ 1 2)                          ↦      #+begin_src emacs-lisp
+  #+end_src                               (+ 1 2)
+                                          #+end_src
+                                          #+end_details
+
+Src, example, quote, verse, center, comment, and export blocks, and special blocks of any name, are left to Org,
+sans their switches; a src block's :folded t is titled by its language.  Note: Babel has evaluated src blocks
+by now, so :let changes only the code shown, not its results."
+  (setq backend (org--base-backend backend))
+  ;; Parsing the whole buffer is dear, so we only do it when some block may have a switch.
+  (when (save-excursion (goto-char (point-min))
+                        (re-search-forward (regexp-opt (mapcar #'symbol-name org-block-switches)) nil t))
+    (let ((switch? (lambda (key) (memq key org-block-switches)))
+          (case-fold-search t)
+          blocks)
+      (org-element-map (org-element-parse-buffer 'element)
+          '(src-block example-block export-block comment-block quote-block center-block verse-block special-block)
+        (lambda (block)
+          (unless (and (eq (org-element-type block) 'special-block)
+                       (member (downcase (org-element-property :type block)) (mapcar (lambda (b) (downcase (format "%s" b))) org--supported-blocks)))
+            (save-excursion
+              (goto-char (org-element-property :post-affiliated block))
+              (when (looking-at "^\\([ \t]*\\)\\(#\\+begin_\\(\\S-+\\)\\)[ \t]*\\(.*\\)$")
+                (-let* ((indent (length (match-string 1)))
+                        (hash (match-beginning 2))
+                        (name (match-string 3))
+                        ((switches . header) (org--header-sans-switches (match-string 4) switch?)))
+                  (when switches
+                    (when (and (eq (org-element-type block) 'src-block) (eq (plist-get switches :folded) t))
+                      (setq switches (plist-put switches :folded (or (org-element-property :language block) "Code"))))
+                    (push (list (copy-marker hash)
+                                (copy-marker (save-excursion (goto-char (org-element-property :end block))
+                                                             (skip-chars-backward " \t\n\r")
+                                                             (line-end-position))
+                                             t)
+                                indent name header switches)
+                          blocks))))))))
+      ;; `blocks' lists the last block first; inner blocks, beginning later, are so rewritten before outer ones.
+      (pcase-dolist (`(,begin ,end ,indent ,name ,header ,switches) blocks)
+        (let* ((start (marker-position begin))
+               (lines (split-string (buffer-substring start end) "\n"))
+               ;; The contents sans the block's own indentation, which the rewrite puts back.
+               (contents (mapconcat (lambda (line) (if (string-prefix-p (make-string indent ?\s) line) (substring line indent) line))
+                                    (butlast (cdr lines)) "\n")))
+          (org-replace-text-while-preserving-indentation
+           start end
+           (org--block-with-switches
+            name switches backend contents
+            (lambda (contents) (format "#+begin_%s%s\n%s\n#+end_%s" name (if (org-string-nw-p header) (concat " " header) "")
+                                       contents name))
+            header)))))))
 
 ;;;;; org--read-header
 

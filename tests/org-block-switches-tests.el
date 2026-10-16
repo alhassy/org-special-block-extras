@@ -186,5 +186,108 @@ What is 6 × 7?
   :at "What"
   (should-not (org--block-cc-dispatcher)))
 
+;;; Switches on any block, of ours or not
+
+(define-org-export-test "switches work on a special block no org-defblock declares: :let, then :boxed" [switches any-block]
+  :input "
+          #+begin_aside Mind :let (N 3) :boxed \"Exercise\"
+          Pick N.
+          #+end_aside"
+  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3>Exercise</h3>
+<div class=\"aside\" id=\"org-id-1\">
+<p>
+Pick 3.
+</p>
+
+</div>
+</div>
+")
+
+(define-org-export-test "switches work on Org's own blocks: a quote :folded under a title" [switches any-block]
+  :input "
+          #+begin_quote :folded \"Wisdom\"
+          Less is more.
+          #+end_quote"
+  :equals "<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Wisdom</font></strong></summary>
+<blockquote>
+<p>
+Less is more.
+</p>
+</blockquote>
+
+</details>
+")
+
+(define-org-export-test "switches work on src blocks: :boxed, the code still exported by Org" [switches any-block]
+  :input "
+          #+begin_src emacs-lisp :boxed t :exports code
+          (+ 1 2)
+          #+end_src"
+  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3></h3>
+<div class=\"org-src-container\">
+<pre class=\"src src-emacs-lisp\"><code>(+ 1 2)
+</code></pre>
+</div>
+</div>
+")
+
+(define-org-export-test "a special block no org-defblock declares exports to nothing when its :when form is nil" [switches any-block]
+  :input "
+          #+begin_aside :when (eq backend 'latex)
+          Print only.
+          #+end_aside"
+  :equals "")
+
+(deftest "`org--header-sans-switches' splits a header into its switches and the rest, values read as Lisp" [switches]
+  (should (equal (org--header-sans-switches "emacs-lisp :folded \"See it\" :exports code" (lambda (k) (memq k org-block-switches)))
+                 '((:folded "See it") . "emacs-lisp :exports code")))
+  (should (equal (org--header-sans-switches "Title :when (eq backend 'html) :boxed :n 2" (lambda (k) (memq k org-block-switches)))
+                 '((:when (eq backend 'html) :boxed t) . "Title :n 2"))))
+
+;;; :verbatim
+
+(deftest "a block marked :verbatim t is shown as the Org source it is, sans its switches" [switches verbatim]
+  ;; Sans htmlize, whose colours vary by machine.
+  (let ((org-html-htmlize-output-type nil))
+    (should (equal (org-export-string "
+#+begin_tip Mind :verbatim t :folded nil
+Hi *there*.
+#+end_tip")
+                   "<div class=\"org-src-container\">
+<pre class=\"src src-org\"><code>#+begin_tip Mind
+Hi *there*.
+#+end_tip
+</code></pre>
+</div>
+"))))
+
+(define-org-export-test "a block marked :verbatim demo is its source beside what it exports to, as with org-demo" [switches verbatim]
+  :input "
+          #+begin_aside :verbatim demo
+          Hi *there*.
+          #+end_aside"
+  :equals "<div style=\"column-count: 2;\">
+<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\">
+<h3>Source</h3>
+<div ><pre class=\"src src-org\">#+begin_aside
+Hi *there*.
+#+end_aside</pre></div>
+</div>
+<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\">
+<h3>Result</h3>
+<div class=\"aside\" id=\"org-id-1\">
+<p>
+Hi <b>there</b>.
+</p>
+
+</div>
+</div>
+</div>
+")
+
 (provide 'org-block-switches-tests)
 ;;; org-block-switches-tests.el ends here
