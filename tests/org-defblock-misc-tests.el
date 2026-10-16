@@ -18,38 +18,29 @@ tip text</p></template></abbr>&emsp13;
 
 (define-org-call-test "latex-definitions block sends its content to the LaTeX preamble, as #+latex_header: lines."
   :call (org-block/latex-definitions 'latex "\\newcommand{\\foo}{bar}" nil)
-  :returns "#+begin_export latex
-
-#+end_export
-#+latex_header: \\newcommand{\\foo}{bar}
+  :returns "#+latex_header: \\newcommand{\\foo}{bar}
 #+begin_export latex
 
 #+end_export")
 
 (define-org-call-test "stutter block repeats the content the given number of times."
   :call (org-block/stutter 'html "ha " "3")
-  :returns "#+begin_export html
-
-#+end_export
-ha 
+  :returns "ha
 #+begin_export html
 
 #+end_export
-ha 
+ha
 #+begin_export html
 
 #+end_export
-ha 
+ha
 #+begin_export html
 
 #+end_export")
 
 (define-org-call-test "rename block performs comma-separated 'to' substitutions."
   :call (org-block/rename 'html "Hello World" "Hello to Hi, World to Earth")
-  :returns "#+begin_export html
-
-#+end_export
-Hi Earth
+  :returns "Hi Earth
 #+begin_export html
 
 #+end_export")
@@ -61,10 +52,7 @@ Hi Earth
 
 (define-org-call-test "spoiler block produces \\fbox{\\phantom{…}} for LaTeX."
   :call (org-block/spoiler 'latex "Answer: ((x = 5))." nil)
-  :returns "#+begin_export latex
-
-#+end_export
-Answer: @@latex:\\fbox{\\phantom{x = 5}}\\footnote{x = 5}@@.
+  :returns "Answer: @@latex:\\fbox{\\phantom{x = 5}}\\footnote{x = 5}@@.
 #+begin_export latex
 
 #+end_export")
@@ -147,23 +135,51 @@ A remark[fn::An /aside/ with a [[https://x.y][link]].] and another[fn:two].
   (require 'ox-md)
   (should (s-contains-p "<a id=\"fnr.1\" class=\"footref\" href=\"#fn.1\"" (org-export-string "Md[fn::plain]." 'md))))
 
-;;; blockcquote
+;;; quote, given a citation
 
-(deftest "a blockcquote is csquotes' \\blockcquote in LaTeX, as the issue spells it, :key and all; issue #24" [blockcquote]
+(deftest "a quote given a key is csquotes' \\blockcquote in LaTeX, as the issue spells it, :key and all; issue #24" [quote]
   (dolist (header '(":key zermelo1908 :pages 20-22" "zermelo1908 :pages 20-22"))
     (should (s-contains-p "\\blockcquote[20-22]{zermelo1908}{\nThis is a \\emph{blockquote}.\n}"
-                          (org-export-string (format "#+begin_blockcquote %s\n\n    This is a /blockquote/.\n\n#+end_blockcquote" header)
+                          (org-export-string (format "#+begin_quote %s\n\n    This is a /blockquote/.\n\n#+end_quote" header)
                                              'latex))))
   ;; Sans pages, sans the optional argument.
   (should (s-contains-p "\\blockcquote{zermelo1908}{"
-                        (org-export-string "#+begin_blockcquote zermelo1908\nQuoted.\n#+end_blockcquote" 'latex))))
+                        (org-export-string "#+begin_quote zermelo1908\nQuoted.\n#+end_quote" 'latex))))
 
-(deftest "a blockcquote is a blockquote attributed to its key, at its pages, in HTML and Markdown" [blockcquote]
+(deftest "a quote given a key is a blockquote attributed to its key, at its pages, in HTML and Markdown" [quote]
   (require 'ox-md)
-  (let ((input "#+begin_blockcquote zermelo1908 :pages 20-22\nQuoted.\n#+end_blockcquote"))
+  (let ((input "#+begin_quote zermelo1908 :pages 20-22\nQuoted.\n#+end_quote"))
     (should (s-contains-p "<footer>&mdash; <cite>zermelo1908</cite>, 20-22</footer></blockquote>"
                           (org-export-string input 'html)))
     (should (s-contains-p "> Quoted.\n> \n> &mdash; *zermelo1908*, 20-22" (org-export-string input 'md)))))
+
+(deftest "a plain quote, sans arguments, stays Org's own, in every backend, and warns of nothing" [quote]
+  (require 'ox-md)
+  (let ((input "
+- item
+  #+begin_quote
+  To be, or not to be.
+  #+end_quote
+- next")
+        warnings)
+    (dolist (backend '(latex html md))
+      (let ((ours (org-export-string input backend))
+            (orgs (unwind-protect
+                      (cl-letf (((symbol-function 'display-warning) (lambda (&rest args) (push args warnings))))
+                        (org-special-block-extras-mode -1)
+                        (org-export-string-as input backend t))
+                    (org-special-block-extras-mode 1))))
+        (should (equal ours orgs))))
+    (should-not warnings)))
+
+(deftest "a quote: link is an inline quotation, cited when keyed; a section tagged :quote: is Org's own quote of its text" [quote]
+  (let ((latex (org-export-string "
+Hamlet says [[quote:][to be]]; Zermelo writes [[quote:zermelo1908][set theory is …]].
+
+* Credo :quote:
+Less is more." 'latex)))
+    (should (s-contains-p "Hamlet says ``to be''; Zermelo writes \\textcquote{zermelo1908}{set theory is …}." latex))
+    (should (string-match-p "\\\\begin{quote}\nLess is more\\.\n\\\\end{quote}" latex))))
 
 (provide 'org-defblock-misc-tests)
 ;;; org-defblock-misc-tests.el ends here

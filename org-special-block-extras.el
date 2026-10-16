@@ -354,7 +354,8 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
   (let ((case-fold-search t))
     (when (looking-back "^[ \t]*#\\+begin_\\([^ \t\n]*\\)" (line-beginning-position))
       (list (match-beginning 1) (match-end 1)
-            (append (mapcar (lambda (b) (format "%s" b)) org--supported-blocks) org--org-block-names)
+            ;; Once each: quote is both Org's and, given a citation, ours.
+            (delete-dups (append (mapcar (lambda (b) (format "%s" b)) org--supported-blocks) org--org-block-names))
             :exclusive 'no
             :annotation-function (lambda (name) (concat "  " (or (org--block-gist name) "Org's own")))
             :company-kind (lambda (_) 'keyword)
@@ -444,12 +445,14 @@ otherwise export, silently, as Org's own \\begin{rremark}, while rremark:foo is 
     (let ((case-fold-search t))
       (save-excursion
         (goto-char (point-min))
-        (when (re-search-forward (format "^[ \t]*#\\+begin_%s\\_>"
-                                         (regexp-opt (--map (format "%s" it) org--supported-blocks) t))
+        ;; A plain #+begin_quote is Org's own, as only a quote with arguments is ours; see `org-block/quote'.
+        (when (re-search-forward (format "^[ \t]*#\\+begin_\\(%s\\_>\\|quote[ \t]+[^ \t\n]\\)"
+                                         (regexp-opt (--remove (equal it "quote") (--map (format "%s" it) org--supported-blocks))))
                                  nil t)
           (display-warning 'org-special-block-extras
                            (format "#+begin_%s exports as Org's own special block, since `org-special-block-extras-mode' \
-is off; turn it on, say by (add-hook 'org-mode-hook #'org-special-block-extras-mode)" (match-string 1))))))))
+is off; turn it on, say by (add-hook 'org-mode-hook #'org-special-block-extras-mode)"
+                                   (car (split-string (match-string 1))))))))))
 
 ;; Hooked once the package is loaded, as our links are, rather than by the mode it warns about.
 (add-hook 'org-export-before-parsing-functions #'org--warn-when-mode-off)

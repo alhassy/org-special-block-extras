@@ -230,5 +230,26 @@ Tighten this sentence.
       (should (s-contains-p "\\tag{myname}\\label{mylabel}"
                             (org-export-string (format "#+begin_satz %s\nExample Sentence.\n#+end_satz" header) 'latex))))))
 
+(deftest "org-defblock may override one of Org's own blocks, saying so, and hand some of them back to Org" [builtin]
+  (let (messages)
+    (cl-letf (((symbol-function 'message) (lambda (fmt &rest args) (push (apply #'format fmt args) messages))))
+      (using (org-defblock verse (&optional poet)
+               "A verse, signed by POET; sans one, Org's own verse."
+               (if (org-string-nw-p poet)
+                   (format "\\begin{verse}\n%s\n\\end{verse}\n--- %s" contents poet)
+                 (org-parse (org-builtin-block "verse" raw-contents))))
+        (should (string-match-p "verse overrides Org's own #\\+begin_verse" (car messages)))
+        (let ((latex (org-export-string "
+#+begin_verse Rumi
+Out beyond ideas of wrongdoing,
+#+end_verse
+
+#+begin_verse
+Plain verse.
+#+end_verse" 'latex)))
+          ;; Ours, signed; and Org's own, handed back once, rather than rewritten forever.
+          (should (s-contains-p "\\end{verse}\n--- Rumi" latex))
+          (should (s-contains-p "\\begin{verse}\nPlain verse.\\\\\n\\end{verse}" latex)))))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

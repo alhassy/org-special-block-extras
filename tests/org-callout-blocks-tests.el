@@ -39,13 +39,11 @@ Use \\texttt{C-h k} to learn what a key does.
           Use =C-h k= to learn what a key does.
           #+end_tip"
   :to md
-  :equals "
-           
-           > [!TIP]
-           >
-           > Use `C-h k` to learn what a key does.
-           
-           ")
+  :equals "> [!TIP]
+>
+> Use `C-h k` to learn what a key does.
+
+")
 
 (define-org-export-test "a warning callout, given a title, keeps it as a bold first paragraph of its Markdown alert" [callout]
   :input "
@@ -54,15 +52,13 @@ Use \\texttt{C-h k} to learn what a key does.
           Trains do *not* wait.
           #+end_warning"
   :to md
-  :equals "
-           
-           > [!WARNING]
-           >
-           > **Mind the gap**
-           >
-           > Trains do **not** wait.
-           
-           ")
+  :equals "> [!WARNING]
+>
+> **Mind the gap**
+>
+> Trains do **not** wait.
+
+")
 
 (deftest "each callout is a block titled by its own name, without a link type or tag" [callout]
   (pcase-dolist (`(,name . ,_) org-callouts)

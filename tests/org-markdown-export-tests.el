@@ -16,14 +16,12 @@
           #+end_highlight"
   :to md
   :equals "See <mark>this</mark>.
-           
-           
-           
-           <mark>One.</mark>
-           
-           <mark>Two.</mark>
-           
-           ")
+
+<mark>One.</mark>
+
+<mark>Two.</mark>
+
+")
 
 (define-org-export-test "a box is a quote in Markdown, opening with its title in bold" [markdown]
   :input "
@@ -32,13 +30,11 @@
           What is 2 + 2?
           #+end_box"
   :to md
-  :equals "
+  :equals "> **Exercise**
+>
+> What is 2 + 2?
 
-           > **Exercise**
-           >
-           > What is 2 + 2?
-
-           ")
+")
 
 (define-org-export-test "a remark block is a note alert in Markdown, titled by its editor, its replacement spelled out" [markdown]
   :input "
@@ -49,17 +45,15 @@
           The cat.
           #+end_remark"
   :to md
-  :equals "
+  :equals "> [!NOTE]
+>
+> **Musa**
+>
+> **Replace:** Teh cat.
+>
+> **With:** The cat.
 
-           > [!NOTE]
-           >
-           > **Musa**
-           >
-           > **Replace:** Teh cat.
-           >
-           > **With:** The cat.
-
-           ")
+")
 
 (define-org-export-test "a proof tree is a $$ display in Markdown, since GitHub's maths knows no \\[" [markdown]
   :input "
@@ -81,17 +75,15 @@
           *bold*
           #+end_org-demo"
   :to md
-  :equals "
+  :equals "**Source**
 
-           **Source**
+    *bold*
 
-               *bold*
+**Result**
 
-           **Result**
+**bold**
 
-           **bold**
-
-           ")
+")
 
 (define-org-export-test "a glossary tooltip's title is escaped plain text in Markdown, which has no tooltipster" [markdown]
   :input "
@@ -117,18 +109,16 @@
           ((Yusuf)) met ((Yacoub)).
           #+end_spoiler"
   :to md
-  :equals "
+  :equals "<ins>&emsp;1&emsp;</ins> met <ins>&emsp;2&emsp;</ins>.
 
-           <ins>&emsp;1&emsp;</ins> met <ins>&emsp;2&emsp;</ins>.
+<details><summary>Answers</summary>
 
-           <details><summary>Answers</summary>
+1.  Yusuf
+2.  Yacoub
 
-           1.  Yusuf
-           2.  Yacoub
+</details>
 
-           </details>
-
-           ")
+")
 
 (define-org-export-test "latex-definitions export nothing in Markdown, whose renderers would show them" [markdown]
   :input "

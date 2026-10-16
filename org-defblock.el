@@ -86,13 +86,43 @@ For example,
           (,(intern (s-replace "'" "" (format "org-special-block-%s" key))) ,source))))
 
 
+(defconst org--builtin-block-types '(quote-block verse-block center-block example-block comment-block export-block src-block)
+  "Org's own block types, which an `org-defblock' of their name ---say, quote--- overrides; see `org-builtin-block'.")
+
+(defun org--block-name (elem)
+  "A special block, or one of Org's own, ELEM ↦ its name; e.g., \"tip\" for #+begin_tip, \"quote\" for #+begin_quote."
+  (if (eq (org-element-type elem) 'special-block)
+      (org-element-property :type elem)
+    (save-excursion
+      (goto-char (org-element-property :post-affiliated elem))
+      (and (looking-at "[ \t]*#\\+begin_\\([^ \t\n]+\\)") (match-string-no-properties 1)))))
+
+(defun org--block-parameters (elem)
+  "A special block, or one of Org's own, ELEM ↦ its #+begin_ line's text after the name; e.g., \"Mind :color red\".
+Org records it for a special block, yet not as such for its own, whose arguments mean things of their own."
+  (if (eq (org-element-type elem) 'special-block)
+      (org-element-property :parameters elem)
+    (save-excursion
+      (goto-char (org-element-property :post-affiliated elem))
+      (and (looking-at "[ \t]*#\\+begin_[^ \t\n]+[ \t]+\\(.*[^ \t\n]\\)") (match-string-no-properties 1)))))
+
+(defun org-builtin-block (name contents &optional header)
+  "(NAME, CONTENTS, HEADER) ↦ Org's own #+begin_NAME HEADER block of CONTENTS, which `org-defblock' leaves to Org.
+So a block overriding one of Org's own may hand some of them back; e.g., our quote, sans a citation:
+  (org-parse (org-builtin-block \"quote\" raw-contents))
+Its #+begin_ line carries a text property that `org--rewrite-special-blocks-by-handlers' steps past."
+  (concat (propertize (format "#+begin_%s%s" name (if (org-string-nw-p header) (concat " " header) ""))
+                      'org-builtin-block t)
+          "\n" contents "\n#+end_" name))
+
 (defun org--special-block-element-at-line (&optional name)
   "The `org-element' special block whose #+begin_ line point is on, named NAME if given; else nil.
-Hence nil for a “#+begin_NAME” that Org reads as mere text; e.g., inside a src or example block."
+Hence nil for a “#+begin_NAME” that Org reads as mere text; e.g., inside a src or example block.
+One of Org's own blocks counts too, as `org-defblock' may override it; see `org--builtin-block-types'."
   (let ((elem (org-element-at-point)))
-    (and (eq (org-element-type elem) 'special-block)
+    (and (memq (org-element-type elem) (cons 'special-block org--builtin-block-types))
          (= (org-element-property :post-affiliated elem) (line-beginning-position))
-         (or (null name) (equal (downcase (format "%s" name)) (downcase (org-element-property :type elem))))
+         (or (null name) (equal (downcase (format "%s" name)) (downcase (org--block-name elem))))
          elem)))
 
 (cl-defun org-special-block-after-point (&optional name)
@@ -115,24 +145,31 @@ one it reads as a paragraph, since its “#+end_NAME” is missing, is an error.
       (when (memq elem '(nil malformed))
         (error "‘org-special-block-after-point’: I had trouble parsing “#+begin_%s ⟨args⟩?\n⟨content⟩?\n#+end_%s”. Are the required pieces there? 🤔" name name))
       (-let* ((post-affiliated (org-element-property :post-affiliated elem))
-              (contents-begin (org-element-property :contents-begin elem))
+              ;; Org's own blocks such as src record no contents region; theirs are the lines between the delimiters.
+              (contents-begin (or (org-element-property :contents-begin elem)
+                                  (and (not (eq (org-element-type elem) 'special-block))
+                                       (save-excursion (goto-char (org-element-property :post-affiliated elem))
+                                                       (forward-line 1) (point)))))
+              (contents-end (or (org-element-property :contents-end elem)
+                                (save-excursion (goto-char (org-element-property :end elem))
+                                                (skip-chars-backward " \t\n\r") (line-beginning-position))))
               ;; The header line, after the name, as a Lisp list: positional arguments, then keyword ones.
               ((positional kwdargs) (--split-with (not (keywordp it))
-                                                  (org--read-header (org-element-property :parameters elem)))))
+                                                  (org--read-header (org--block-parameters elem)))))
         (make-org-special-block
          ;; Block keywords ignore case, as Org's do; e.g., #+BEGIN_SHOUT is a shout block.
-         :name (downcase (org-element-property :type elem))
+         :name (downcase (org--block-name elem))
          :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
          :kwdargs kwdargs
          :anchor (org-element-property :name elem)
-         :contents (if contents-begin
+         :contents (if (and contents-begin (< contents-begin contents-end))
                        ;; Sans the least indentation of its lines, and the blank lines around them; so lines keep
                        ;; their indentation relative to one another, as an item nested in a list must (issue #8).
                        (string-trim-right
                         (replace-regexp-in-string
                          "\\`\\(?:[ \t]*\n\\)+" ""
                          (org-remove-indentation
-                          (buffer-substring-no-properties contents-begin (org-element-property :contents-end elem)))))
+                          (buffer-substring-no-properties contents-begin contents-end))))
                      "")
          ;; From the “#” of “#+begin_”, so the block's indentation stays put when it is replaced …
          :start-point (progn (goto-char post-affiliated) (skip-chars-forward " \t") (point))
@@ -393,8 +430,12 @@ Note: This function mutates the current buffer."
            (while (re-search-forward (format "^\\s-*\\#\\+begin_%s\\b" blk) nil t)
              (beginning-of-line)
              ;; A replaced block's output is rescanned, as it may hold blocks too; literal text, such as
-             ;; in a src block, is stepped past; a malformed block reaches the parser, to report it.
-             (if (memq (org-element-type (org-element-at-point)) '(special-block paragraph))
+             ;; in a src block, is stepped past; a malformed block reaches the parser, to report it.  One of
+             ;; Org's own blocks, once overridden, is ours too ---save one a handler hands back by `org-builtin-block'.
+             (if (let ((elem (org-element-at-point)))
+                   (or (memq (org-element-type elem) '(special-block paragraph))
+                       (and (memq (org-element-type elem) org--builtin-block-types)
+                            (not (get-text-property (save-excursion (skip-chars-forward " \t") (point)) 'org-builtin-block)))))
                  (org-eval-replace-block (org-special-block-after-point blk) backend)
                (forward-line 1)))))
 
@@ -790,6 +831,10 @@ Three example uses:
        ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
        ;; that are around this `org-defblock' call.
        ,@(when block? `((add-to-list 'org--supported-blocks ',name)))
+       ;; Overriding one of Org's own blocks is fair game, yet worth a word.
+       ,@(when (and block? (memq (intern (format "%s-block" name)) org--builtin-block-types))
+           `((message "org-defblock: %s overrides Org's own #+begin_%s; a handler may hand some back by `org-builtin-block'"
+                      ',name ',name)))
        (org-defblock-only ,name ,kwds ,docstring ,@body)
        ;; ⇨ The link type support, unless declined via `:link nil'
        ,@(when link
@@ -904,13 +949,23 @@ Features:
 
              ;; Lexical, since BODY is spliced right here; `cl-letf' would clobber any global `org-export'.
              (cl-flet ((org-export (x) "Wrap the given X in an export block for the current backend.
-A named block's result opens sans an empty export block, so its #+name: and #+caption: label what it begins with."
+A result opening in Org opens sans an empty export block; so, say, a named block's #+name: and #+caption: label what
+it begins with."
                          (if contents-occur-as-link-description x
-                           (let ((wrapped (format "#+begin_export %s\n%s\n#+end_export" backend x))
-                                 (empty (format "#+begin_export %s\n\n#+end_export\n" backend)))
-                             (if (and org--handler-anchor (string-prefix-p empty wrapped))
-                                 (substring wrapped (length empty))
-                               wrapped))))
+                           ;; A result that opens in Org, as by `org-parse', does so sans an empty export block, which
+                           ;; would be a stray blank line; likewise one closing in Org with a block's #+end_ line; e.g.,
+                           ;; Org's own quote, handed back by `org-builtin-block', is just as Org would have it.
+                           (let* ((wrapped (format "#+begin_export %s\n%s\n#+end_export" backend x))
+                                  (empty-open (format "#+begin_export %s\n\n#+end_export\n" backend))
+                                  (empty-close (format "\n#+begin_export %s\n\n#+end_export" backend)))
+                             (when (string-prefix-p empty-open wrapped) (setq wrapped (substring wrapped (length empty-open))))
+                             ;; Closing, only after a block's #+end_ line: after a paragraph, the empty export block
+                             ;; is what keeps the text following our block from joining that paragraph.
+                             (when (and (string-suffix-p empty-close wrapped)
+                                        (string-match-p "^[ \t]*#\\+end_[^ \t\n]+[ \t]*\\'"
+                                                        (substring wrapped 0 (- (length wrapped) (length empty-close)))))
+                               (setq wrapped (substring wrapped 0 (- (length wrapped) (length empty-close)))))
+                             wrapped)))
                        (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))))
                ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',

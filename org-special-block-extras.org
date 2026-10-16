@@ -4347,23 +4347,28 @@ from∘to m = {! try it! }
 
   osbe-example:colors
 
-** Quotations, cited ---=blockcquote=
+** Quotations, cited ---=#+begin_quote KEY=
   :PROPERTIES:
-  :CUSTOM_ID: blockcquote
+  :CUSTOM_ID: quote-citations
   :END:
 
-  A =blockcquote= quotes its contents, cited by a bibliography key, at its pages ---which may be
-  given as =:key=, or as the main argument:
+  Org's own quote block, given a bibliography key, cites it, at its pages ---the key given as the
+  main argument, or as =:key=:
   #+begin_example
-,#+begin_blockcquote zermelo1908 :pages 20-22
+,#+begin_quote zermelo1908 :pages 20-22
 Set theory is that branch of mathematics whose task is to investigate
 the fundamental notions of number, order, and function.
-,#+end_blockcquote
+,#+end_quote
   #+end_example
   In LaTeX, and so in beamer, this is csquotes' =\blockcquote[20-22]{zermelo1908}{…}=, whose
   citation biblatex typesets from our bibliography; so it needs ~\usepackage{csquotes}~,
   ~\usepackage{biblatex}~, and an ~\addbibresource~. In HTML, it is a =<blockquote>= closed by
-  “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise.
+  “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise. A quote sans arguments is
+  Org's own, as ever.
+
+  As a link, a quote is inline: =[[quote:zermelo1908][set theory is …]]= is csquotes'
+  =\textcquote{zermelo1908}{…}=, and =[[quote:][to be]]= is just “to be”. A section tagged
+  =:quote:= is a quote of its text.
 
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:
@@ -4507,7 +4512,20 @@ Mind the gap.
   beamer.
 
   Every block is also a link, with the label as main argument and the description as
-  contents: =[[note:Heads up][Mind the gap.]]=. Moreover, defaults may change long after the
+  contents: =[[note:Heads up][Mind the gap.]]=.
+
+  Even Org's own blocks ---=quote=, =verse=, =center=, =example=, =src=, =export=, and =comment=---
+  are fair game: an ~(org-defblock verse …)~ overrides every =#+begin_verse=, saying so in
+  =*Messages*=. To leave some to Org, a handler hands them back; by way of example, a verse
+  signed by its poet, else Org's own:
+  #+begin_src emacs-lisp
+(org-defblock verse (&optional poet)
+  "A verse, signed by POET; sans one, Org's own verse."
+  (if (org-string-nw-p poet)
+      (format "\\begin{verse}\n%s\n\\end{verse}\n--- %s" contents poet)
+    (org-parse (org-builtin-block "verse" raw-contents))))
+  #+end_src
+  Our own =quote= does just this: given a citation, it is ours; else, Org's own. Moreover, defaults may change long after the
   block is defined; e.g., ~(org-set-block-header-args note :color "orange")~.
 
   One definition gives three uses: a block, a link, and a tag. A section tagged =:note:=
