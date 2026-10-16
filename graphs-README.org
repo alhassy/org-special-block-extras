@@ -285,7 +285,8 @@ becomes the node's ~tooltip~ ---shown on hover in an ~:svg t~ HTML export:
 Lisp [ tooltip="McCarthy, 1958" label=Lisp ];
 #+end_src
 
-An explicit ~| tooltip | … |~ row wins.
+A named footnote serves too: ~[fn:NAME: NOTE]~ inline, or a bare ~[fn:NAME]~ whose ~[fn:NAME] NOTE~ definition
+sits elsewhere in the buffer ---say, below the graph. An explicit ~| tooltip | … |~ row wins.
 
 ** Notes are longer tooltips, or shown in the node
 
@@ -547,6 +548,55 @@ places ~root~ in the middle and each generation on a ring around it. With ~:wrap
 #+end_graph
 
 Sans ~:root~, ~twopi~ picks a centre itself. ~neato~, ~fdp~, and ~circo~ suit graphs that are not trees.
+
+** A mind map from a book: /How to Take Smart Notes/
+
+A chapter of Sönke Ahrens' /How to Take Smart Notes/. Each connective, such as “is an aid for”, sits on its
+arc, as a description term; ordered steps are numbered arcs; ~:smart_kind:~ marks the three kinds of note;
+and ~[[fleeting]]~ arcs back to a note met earlier:
+#+name: smart_kind
+| shape     | note      |
+| fillcolor | "#fff5cc" |
+
+#+begin_graph How to Take Smart Notes ---Sönke Ahrens :rankdir LR :wrap 24 :directed nil :fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :node.fontname Helvetica :edge.fontname Helvetica :edge.fontsize 10 :edge.fontcolor gray30 :edge.color gray60
++ <<notes>> *Smart notes*
+  + Writing
+    + is an aid for :: thinking
+    + is an aid for :: studying
+    + is an aid for :: generating ideas
+    + is an aid for :: reading
+    + is an aid for :: understanding
+  + Thinking
+    + happens :: on paper
+  + Rule
+    + keep a pen at hand
+  + Process
+    + 1 :: collect notes
+      + <<fleeting>> Fleeting :smart_kind:
+        + reminders of thoughts
+          + put in one place
+          + process later
+      + <<literature>> Literature :smart_kind:
+        + taken :: when reading
+        + taken :: briefly
+        + taken :: selectively, for your own topics
+        + taken :: in your own words
+        + taken :: with bibliographic data
+        + kept :: in the reference system
+      + Permanent :smart_kind:
+        + review :: [[fleeting]]
+        + review :: [[literature]]
+        + review :: once a day
+        + think :: how they relate to your research, reflections, interests
+        + one note for each idea
+        + written as if for another person \\ in full sentences, with sources, links; precisely, clearly, briefly
+        + discard :: the fleeting notes
+        + add :: behind the note it relates to directly
+        + add :: links
+        + make sure :: you can find it \\ from the index, or an entry point
+    + 2 :: turn into a draft
+    + 3 :: edit
+#+end_graph
 
 ** Wide trees: ~:unflatten N~
 
@@ -1167,11 +1217,6 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 This is the complete graph from the design conversation: λ-calculus,
 Combinatory Logic, Church Encodings, Lisp, Haskell, Emacs, GHC, and Category
 Theory — all in one diagram.
-
-NOTE: To get colour codes, I use `M-x helm-colors` then ~C-z~ (for additional
-actions) then ~C-c r~ to insert the hex-code at point.
-TODO: Make this part of ~C-u RET~ for bgcolor and fillcolor and fontcolor, to open helm-colors
-then to insert the hex-code at point 😲
 
 #+begin_graph :file lambda-to-emacs.png
 :SETTINGS:

@@ -3406,7 +3406,8 @@ LaTeX!
 - *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
 - *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
 - *🎛 Switch any block*: =:when (eq backend 'html)=, =:noexport t=, =:let (N 7)=, =:boxed "Title"=, =:folded t=, and
-  =:C-c_C-c ACTION= work on every block ---ours or our own; see [[#Switches-for-every-block][switches]].
+  =:verbatim t=, and =:C-c_C-c ACTION= work on every block ---ours, yours, or Org's own src and quote blocks; see
+  [[#Switches-for-every-block][switches]].
 - badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
 - *🛠 Use =org-defblock=, =org-deflink= and =org-deftag=* ---Org, extended as one extends Lisp:
   each is declared like a ~cl-defun~, with =&optional= and =&key= arguments; or, for the
@@ -3497,6 +3498,59 @@ The =org-special-block-extras= package empowers you to define and use
 to both *HTML and LaTeX*, /without ever writing raw HTML or LaTeX
 again/.
 
+
+** 🗺 The package at a glance
+  :PROPERTIES:
+  :CUSTOM_ID: at-a-glance
+  :END:
+
+Every node below leads to its section; hover, or tap, one for its gist. The map is itself a [[#Graphs][graph]]
+block ---an Org list, coloured by the ~#+name:~ tables above it, and laid out radially by ~:layout twopi~.
+
+#+name: glance_write
+| fillcolor | "#e5f5e5" |
+#+name: glance_read
+| fillcolor | "#ffe8cc" |
+#+name: glance_act
+| fillcolor | "#e0ecff" |
+#+name: glance_make
+| fillcolor | "#f3e0ff" |
+
+#+begin_graph :svg t :layout twopi :root osbe :ranksep 1.6 :wrap 16 :directed nil :node.fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :edge.color gray50 :overlap false
++ <<osbe>> [[#Abstract][*org-special-block-extras*]]
+  + Blocks to write :glance_write:
+    + [[#Callouts][Callouts]] \\ note · tip · important · warning · caution [fn::GitHub's alerts: a coloured rule and a titled heading; Markdown gets the alerts themselves.] :glance_write:
+    + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
+    + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
+    + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
+    + [[#Equational-Proofs][Maths & proofs]] \\ calc · tree · latex-definitions [fn::Equational proofs and inference-rule proof trees, written as Org lists.] :glance_write:
+    + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
+    + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
+  + Links to cite :glance_read:
+    + [[#Glossaries][=doc:𝒳=]] \\ =show:𝒳= [fn::A term's definition as a tooltip; or a Lisp expression's value, inline.] :glance_read:
+    + [[#nice-keystroke-renditions][=kbd:C-x_C-s=]] [fn::Keys as keycaps, their command's documentation as a tooltip; click one in Emacs to run it.] :glance_read:
+    + [[#Badge-Links][Badges]] \\ badge · melpa · github-* [fn::Shields.io badges, for a project's README.] :glance_read:
+    + Every block, as a link [fn::=red:𝒳=, =[[box:Title][…]]=, and the like: a block's one-line form.] :glance_read:
+  + Switches on any block :glance_act:
+    + [[#Switches-for-every-block][:when · :noexport]] [fn::Export a block only for some backends, or never.] :glance_act:
+    + [[#Switches-for-every-block][:let · :ignore]] [fn::Substitute variables beforehand; or drop the block's behaviour, keeping its text.] :glance_act:
+    + [[#Switches-for-every-block][:boxed · :folded]] [fn::Box the result, or fold it away; on src and quote blocks too.] :glance_act:
+    + [[#Switches-for-every-block][:verbatim]] [fn::Show the block's source; with demo, beside its result.] :glance_act:
+  + Keys in Emacs :glance_act:
+    + [[#C-c-C-c-for-your-own-blocks][C-c C-c]] [fn::A block's action: render a graph, run a :C-c_C-c form.] :glance_act:
+    + [[#C-c-quote-for-your-own-blocks][C-c ']] [fn::Edit any special block's contents in a buffer of their own.] :glance_act:
+    + [[#C-c-C-v-C-d-to-split-a-block][C-c C-v C-d]] [fn::Split any special block in two at point.] :glance_act:
+    + [[#eldoc-for-blocks-and-links][eldoc]] [fn::Hover a #+begin_ line, or a link, for its arguments and gist.] :glance_act:
+  + Make your own :glance_make:
+    + [[#Make-your-own-blocks][org-defblock]] [fn::A block, its link, and its tag, from one cl-defun-style definition.] :glance_make:
+    + [[#Make-your-own-links][org-deflink]] [fn::A link type: how it looks in Emacs and how it exports.] :glance_make:
+    + [[#tags-are-functions-of-org-sections][org-deftag]] [fn::A heading tag as a function of its section.] :glance_make:
+    + [[#modularity_with_thread-blockcall][org-thread-blockcall]] [fn::Compose blocks: solution is details of a box of details.] :glance_make:
+  + Options :glance_make:
+    + org-defblock-evaluate-switches [fn::May a document's :when, :let, and :C-c_C-c run Lisp? Ask, by default.] :glance_make:
+    + org-special-block-add-html-extra [fn::Inline the tooltips' CSS and JS in HTML exports; on, by default.] :glance_make:
+    + org-docs-libraries [fn::Org files whose glossary entries every document may cite.] :glance_make:
+#+end_graph
 
 * Block and link types provided by this package
 ** Boxed Text —Calling out super duper info
@@ -3868,7 +3922,9 @@ attention, and so a tooltip via [[org-block/remark][remark]] suffices.
 
    Org's own footnotes are such remarks too: in HTML, each footnote's number is a tooltip of its
    definition, the footnotes section staying below, for print; in LaTeX, each is a margin note, as
-   the [[doc:org-block/margin][margin]] block's are, numbered as footnotes are.
+   the [[doc:org-block/margin][margin]] block's are, numbered as footnotes are. All three of Org's spellings serve: an
+   anonymous =[fn::…]=, a named =[fn:NAME]= defined elsewhere, and a named inline =[fn:NAME: …]=, which
+   later =[fn:NAME]= references share.
 
    osbe-example:footnote
 
