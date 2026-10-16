@@ -441,6 +441,29 @@ Note: This function mutates the current buffer."
                  (org-eval-replace-block (org-special-block-after-point blk) backend)
                (forward-line 1)))))
 
+;;;;; LaTeX packages, loaded as needed
+
+(defvar-local org--latex-packages-used nil
+  "The LaTeX packages of the blocks this export has rendered, by their `:latex-pkgs'; see `org--load-latex-packages'.
+Local to the buffer an export works in: each export, nested ones included, works in a copy of its own.")
+
+(defun org--load-latex-packages (output backend _info)
+  "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT that loads each package its blocks need, `org--latex-packages-used', yet it does not.
+E.g., a document using a box gains \\usepackage{tcolorbox}, just before \\begin{document}; so after the document's own
+packages, whose options win.  A body-only export, sans preamble, is left be."
+  (if (not (and (org-export-derived-backend-p backend 'latex) org--latex-packages-used
+                (string-match "^\\\\begin{document}" output)))
+      output
+    (let* ((preamble (substring output 0 (match-beginning 0)))
+           (loaded? (lambda (package)
+                      (string-match-p (format "\\\\\\(?:usepackage\\|RequirePackage\\)\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?[ \t]*%s[ \t]*[,}]"
+                                              (regexp-quote package))
+                                      preamble)))
+           (missing (-remove loaded? (reverse org--latex-packages-used))))
+      (if (not missing) output
+        (concat preamble (mapconcat (lambda (package) (format "\\usepackage{%s}\n" package)) missing "")
+                (substring output (length preamble)))))))
+
 ;;;;; org--rewrite-any-block-switches
 
 (defun org--rewrite-any-block-switches (backend)
@@ -732,6 +755,8 @@ KWDS may also carry options, which are not arguments:
   The link and tag default to `org-defblock-links-and-tags'; for just one of
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
++ `:latex-pkgs (PACKAGE …)' names the LaTeX packages the block needs; e.g., (\"xcolor\" \"tcolorbox\").  A LaTeX
+  export that uses the block, or its link, loads each one its preamble does not; see `org--load-latex-packages'.
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
   “#+end_proof” as “⏹”, and the contents in italics too.  Each part is optional; see
@@ -812,9 +837,11 @@ Three example uses:
   (when (vectorp docstring)
     (error "‘org-defblock %s’: the link display vector now goes among the options, as `:link %S'" name docstring))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  ;; The options :block, :link, :tag, :edit-indirect-mode and :fontify configure the macro; they are not block arguments.
+  ;; The options :block, :link, :tag, :edit-indirect-mode, :fontify, and :latex-pkgs configure the macro; they are not
+  ;; block arguments.
   (let* ((kwds      (org--defblock-desugar-args kwds))
          (edit-mode (plist-get kwds :edit-indirect-mode))
+         (latex-pkgs (plist-get kwds :latex-pkgs))
          (fontify   (plist-get kwds :fontify))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
          ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
@@ -827,7 +854,8 @@ Three example uses:
          (subsections (when tag? (org--defblock-tag-subsections name tag?)))
          ;; As in `org-defblock-only': other keywords are welcome unless `cl-defun'-style KWDS omit `&allow-other-keys'.
          (other-keys? (or (not (plist-member kwds :allow-other-keys)) (plist-get kwds :allow-other-keys)))
-         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify) :initial-value kwds)))
+         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify :latex-pkgs)
+                               :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
        ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
@@ -838,6 +866,8 @@ Three example uses:
            `((message "org-defblock: %s overrides Org's own #+begin_%s; a handler may hand some back by `org-builtin-block'"
                       ',name ',name)))
        (org-defblock-only ,name ,kwds ,docstring ,@body)
+       ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-pkgs needs none.
+       (put ',(intern (format "org-block/%s" name)) 'org-latex-packages ',latex-pkgs)
        ;; ⇨ The link type support, unless declined via `:link nil'
        ,@(when link
            `((org-deflink ,name
@@ -975,6 +1005,10 @@ it begins with."
                (let ((result (let ((contents (org-parse raw-contents))) ,@body)))
                  ,(macroexpand-all `(lf-assert ',name  t
                                                result (stringp it)))
+                 ;; The LaTeX packages it needs, for `org--load-latex-packages'; sans any, when handed back to Org.
+                 (when (and (equal backend 'latex) (not (text-property-any 0 (length result) 'org-builtin-block t result)))
+                   (dolist (package (get ',defun-name 'org-latex-packages))
+                     (cl-pushnew package org--latex-packages-used :test #'equal)))
                  (org-export result))))
          ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks
          ;; such as the one used to make the docs for this package.
@@ -1123,7 +1157,8 @@ A full, working, example can be seen by “C-h o org-defblock”.
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-              (editor "Editor Remark" color "red" signoff "" :link [:face '(:foreground "red" :weight bold)])
+              (editor "Editor Remark" color "red" signoff "" :latex-pkgs ("xcolor")
+                      :link [:face '(:foreground "red" :weight bold)])
                                         ; :please-preserve-new-lines
               "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
               (format (if (equal backend 'html)

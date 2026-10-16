@@ -262,5 +262,20 @@ Inner.
       (should (s-contains-p "#+begin_tip" latex))
       (should-not (s-contains-p "tcolorbox" latex)))))
 
+(deftest "a block's :latex-pkgs load in a LaTeX export that uses it, unless the document loads them already" [latex-pkgs]
+  (using (org-defblock thm (&optional title :latex-pkgs ("amsthm"))
+           "A theorem."
+           (if (org-string-nw-p title)
+               (format "\\begin{theorem}[%s]%s\\end{theorem}" title contents)
+             (org-parse (org-builtin-block "center" raw-contents))))
+    (cl-flet ((amsthm (input) (s-count-matches "usepackage\\(?:\\[[^]]*\\]\\)?{amsthm}" (org-export-string-as input 'latex))))
+      (should (= 1 (amsthm "#+begin_thm Pythagoras\nIt holds.\n#+end_thm")))
+      ;; As a link, too; and the document's own, options and all, is left be.
+      (should (= 1 (amsthm "See [[thm:Euclid][infinitely many primes]].")))
+      (should (= 1 (amsthm "#+latex_header: \\usepackage[thmmarks]{amsthm}\n#+begin_thm Pythagoras\nIt holds.\n#+end_thm")))
+      ;; Sans the block, or handed back to Org, nothing is loaded.
+      (should (= 0 (amsthm "No theorems here.")))
+      (should (= 0 (amsthm "#+begin_thm\nHanded back.\n#+end_thm"))))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

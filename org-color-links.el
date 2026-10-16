@@ -42,19 +42,19 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
     (_ (format "<span style=\"color:%s;\">%s</span>" colour text))))
 
 (dolist (colour org--named-colors)
-  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))])
+  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-pkgs ("xcolor"))
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents))))
 
 (org-defblock color
-              (color "black" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
+              (color "black" :latex-pkgs ("xcolor") :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
               "Format text according to a given COLOR, which is black by default."
               (org--color-text backend color contents))
 
 ;;;;;; Highlight ---colour the background, rather than the text
 
 (org-defblock highlight
-              (color "yellow" :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))])
+              (color "yellow" :latex-pkgs ("xcolor") :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))])
               "Highlight text with a background of COLOR, which is yellow by default; as a link, it is so highlighted in Emacs too.
 
   [[highlight:pink][Read this twice.]]

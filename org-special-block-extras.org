@@ -4441,25 +4441,21 @@ h2 { color: teal; }
                 (apply box backend raw-contents args))))
   #+end_src
 
-** PDF export ---The LaTeX packages our blocks need
+** PDF export ---The LaTeX packages our blocks need, loaded for us
   :PROPERTIES:
   :CUSTOM_ID: latex-packages
   :END:
 
-Org's default LaTeX header already loads ~amsmath~, ~amssymb~, ~ulem~, ~hyperref~, and ~graphicx~; beside
-them, our blocks need just these, which we may copy into a document ---or into ~org-latex-packages-alist~:
-#+begin_src org
-,#+latex_header: \usepackage{xcolor}     % Colours: red:𝒳, highlight, margin, callouts; mixes like red!5!white
-,#+latex_header: \usepackage{tcolorbox}  % box, details, solution, the callouts, and the :boxed and :folded switches
-,#+latex_header: \usepackage{multicol}   % parallel
-,#+latex_header: \usepackage{adjustbox}  % Only a margin block's #+resize:
-#+end_src
-A test, [[https://github.com/alhassy/org-special-block-extras/blob/master/tests/org-pdf-export-tests.el][tests/org-pdf-export-tests.el]], keeps this list honest: it compiles every example of this manual
-to a PDF, with these lines and no others. It uses LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is;
-pdflatex instead needs a ~\newunicodechar~ for each such character.
+Each block names the LaTeX packages it needs ---a box, ~xcolor~ and ~tcolorbox~; a cited quote,
+~csquotes~--- and a LaTeX export that uses the block, or its link, loads them just before
+=\begin{document}=. So we declare none ourselves; a package we do load, options and all, is left be.
+To see what a block needs, read the ~:latex-pkgs~ of its definition, or evaluate
+~(get 'org-block/box 'org-latex-packages)~ ⇒ ~("xcolor" "tcolorbox")~.
 
-Beamer slides need just the same packages, and the test compiles every example as slides too. Slides have
-no margins, so there our margin notes, tooltips, and Org's footnotes are beamer's own footnotes.
+A test, [[https://github.com/alhassy/org-special-block-extras/blob/master/tests/org-pdf-export-tests.el][tests/org-pdf-export-tests.el]], keeps this honest: it compiles every example of this manual to a
+PDF, and to beamer slides, declaring no packages at all. It uses LuaLaTeX, which reads Unicode such
+as 𝒳 and ⇒ as is; pdflatex instead needs a ~\newunicodechar~ for each such character. Slides have no
+margins, so there our margin notes, tooltips, and Org's footnotes are beamer's own footnotes.
 
 * Make your own blocks and links ---A developer's guide
   :PROPERTIES:
@@ -4513,6 +4509,9 @@ Mind the gap.
 
   Every block is also a link, with the label as main argument and the description as
   contents: =[[note:Heads up][Mind the gap.]]=.
+
+  A block names the LaTeX packages it needs by ~:latex-pkgs~, say ~(org-defblock thm (&optional title
+  :latex-pkgs ("amsthm")) …)~; a LaTeX export that uses it loads them, unless the document already does.
 
   Even Org's own blocks ---=quote=, =verse=, =center=, =example=, =src=, =export=, and =comment=---
   are fair game: an ~(org-defblock verse …)~ overrides every =#+begin_verse=, saying so in

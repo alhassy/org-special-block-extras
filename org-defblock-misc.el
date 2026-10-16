@@ -53,6 +53,7 @@ as an argument of \\marginpar."
                       counter "footnote"
                       ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
                       width "\\marginparwidth"
+                      :latex-pkgs ("xcolor")
                       :link [:display 'full
                              :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
               "Produce an HTML tooltip or a LaTeX margin note.
@@ -119,7 +120,7 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                              "&emsp13;")))))
 
 ;;;;;; Tooltip (HTML)
-(org-defblock tooltip (marker "°")
+(org-defblock tooltip (marker "°" :latex-pkgs ("xcolor"))
               "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
 In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are;
 in beamer, whose slides have no margins, as a footnote."
@@ -163,7 +164,10 @@ is typeset with “An aside.” in the margin, numbered as footnotes are.  A foo
              (equal (plist-get info :latex-default-footnote-command) "\\footnote{%s%s}"))
     ;; Org fills the two %s with the definition and its \label; stepping with \refstepcounter lets that \label name it.
     (plist-put info :latex-default-footnote-command
-               (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" "%s%s" "\\refstepcounter{footnote}")))
+               (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" "%s%s" "\\refstepcounter{footnote}"))
+    ;; A margin note is coloured; so, when there are footnotes, xcolor is loaded, as a block's :latex-pkgs are.
+    (when (save-excursion (goto-char (point-min)) (re-search-forward "\\[fn:" nil t))
+      (cl-pushnew "xcolor" org--latex-packages-used :test #'equal)))
   info)
 
 (org-defblock latex-definitions nil
@@ -180,7 +184,7 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
 ;;;;;; Quotations, cited
 
 ;; Org's own quote, given a citation; a plain #+begin_quote is handed back to Org, by `org-builtin-block'.
-(org-defblock quote (&optional (key "") &key (pages ""))
+(org-defblock quote (&optional (key "") &key (pages "") :latex-pkgs ("csquotes"))
   "Quote CONTENTS, cited as the bibliography's KEY, at PAGES; e.g.,
 
   #+begin_quote zermelo1908 :pages 20-22
@@ -189,7 +193,7 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
 
 In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, citing by the document's own bibliography ---biblatex,
 BibTeX, or org-cite--- whose \\addbibresource or \\bibliography is ours to give; csquotes itself is loaded for us,
-by `org--load-csquotes'.  Elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
+by its :latex-pkgs.  Elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
 As a link, an inline quotation: [[quote:zermelo1908][…]] is \\textcquote{zermelo1908}{…}, and
 [[quote:][to be]] is “to be”.  A section tagged :quote: is a quote block of its text."
   ;; The header reads 20-22 as a symbol, and a key may be one too; we want their names.
@@ -210,17 +214,6 @@ As a link, an inline quotation: [[quote:zermelo1908][…]] is \\textcquote{zerme
      ((org-export-markdown-p) (org-parse (org-builtin-block "quote" (format "%s\n\n--- /%s/%s" raw-contents key at))))
      ((equal backend 'latex) (format "\\blockcquote%s{%s}{%s}" latex-pages key contents))
      (t (format "<blockquote>%s<footer>&mdash; <cite>%s</cite>%s</footer></blockquote>" contents key at)))))
-
-(defun org--load-csquotes (output backend _info)
-  "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT that loads csquotes, when it quotes by \\blockcquote or \\textcquote yet does not.
-So a cited quote, or quote: link, needs no #+latex_header: of ours; a csquotes of the document's own, options and
-all, is left be.  A body-only export, sans preamble, is left be too."
-  (if (and (org-export-derived-backend-p backend 'latex)
-           (string-match-p "\\\\\\(?:block\\|text\\)cquote" output)
-           (not (string-match-p "\\\\usepackage\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?csquotes[,}]" output))
-           (string-match "^\\\\begin{document}" output))
-      (replace-match "\\\\usepackage{csquotes}\n\\\\begin{document}" t nil output)
-    output))
 
 ;;;;; Blocks
 ;;;;;; solution
@@ -334,7 +327,7 @@ blanks with the answers folded away beneath them."
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-              (editor "Editor Remark" color "black" signoff "" strong nil
+              (editor "Editor Remark" color "black" signoff "" strong nil :latex-pkgs ("xcolor")
                       :link [:face '(:foreground "red" :weight bold)])
               "Format CONTENTS as a first-class editor comment according to BACKEND.
 

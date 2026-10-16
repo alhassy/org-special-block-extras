@@ -51,7 +51,8 @@ has each SPEC of the shape “[inset] x_offset y_offset [blur [spread]] color”
                                             (and deep-right (format "48px 36px 71px 28px %s" deep-right))
                                             (and deep-left  (format "-48px -20px 71px 28px %s" deep-left)))))))))))
 
-(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil)
+(org-defblock box (title "" background-color nil shadow nil frame-color nil title-background-color nil
+                       :latex-pkgs ("xcolor" "tcolorbox"))
               "Enclose text in a box, possibly with a TITLE.
 
 By default, the box's BACKGROUND-COLOR is green for HTML and red for LaTeX;
