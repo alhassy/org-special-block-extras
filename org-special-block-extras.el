@@ -253,7 +253,7 @@
   (message org-special-block-extras-version))
 
 (defcustom org-special-block-add-html-extra t
-  "Whether `org-special-block-extras-mode' adds its CSS and JS to the `ox-html' head: <kbd> styling and tooltips.
+  "Whether an HTML page using <kbd> or tooltips gets our CSS and JS for them in its head; see `org--load-html-head'.
 They are inlined ---see tooltips.css and tooltips.js--- so an exported page loads nothing from elsewhere;
 set this to nil for pages sans them, whose tooltips then never open."
   :type 'boolean
@@ -290,7 +290,7 @@ set this to nil for pages sans them, whose tooltips then never open."
             box-shadow: 2px 2px 2px #222; /* MA: An extra I've added. */
           }
           </style>"
-  "Styling for <kbd> elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
+  "Styling for <kbd> elements, added to a page that uses <kbd>, by `org--load-html-head'.")
 
 (defconst org--tooltip-html-head
   (let ((here (file-name-directory (or load-file-name buffer-file-name))))
@@ -301,7 +301,7 @@ set this to nil for pages sans them, whose tooltips then never open."
                   (display-warning 'org-special-block-extras (format "%s is missing, so tooltips will not open" file))
                   "")))
       (format "\n<style>\n%s</style>\n<script>\n%s</script>\n" (slurp "tooltips.css") (slurp "tooltips.js"))))
-  "tooltips.css and tooltips.js, inlined, for “.tooltip” elements; appended to `org-html-head-extra' by `org-special-block-extras-mode'.
+  "tooltips.css and tooltips.js, inlined, for “.tooltip” elements; added to a page that has tooltips, by `org--load-html-head'.
 Inlined, so an exported page makes no request for them; see https://github.com/alhassy/org-special-block-extras/issues/53.")
 
 ;;;;; Glossary libraries
@@ -402,6 +402,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
         (add-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
         (add-hook 'org-export-filter-final-output-functions #'org--load-latex-packages)
+        (add-hook 'org-export-filter-final-output-functions #'org--load-html-head)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
@@ -412,11 +413,6 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-mode-hook #'org--special-block-capf-setup)
         (dolist (buffer (buffer-list))
           (with-current-buffer buffer (when (derived-mode-p 'org-mode) (org--special-block-capf-setup))))
-        ;; Appended once: the head itself records whether a snippet is already there.
-        (when org-special-block-add-html-extra
-          (dolist (head (list org--kbd-html-head org--tooltip-html-head))
-            (unless (s-contains? head org-html-head-extra)
-              (setq org-html-head-extra (concat org-html-head-extra head)))))
         ;; Ensure user's documentation libraries have loaded
         (unless org--docs-libraries-loaded
           (setq org--docs-libraries-loaded t)
@@ -427,6 +423,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
     (remove-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-latex-packages)
+    (remove-hook 'org-export-filter-final-output-functions #'org--load-html-head)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)

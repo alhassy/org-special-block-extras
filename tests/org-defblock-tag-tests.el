@@ -310,14 +310,6 @@ Plain text.
         (should (memq #'org--docs-prepare org-export-before-parsing-functions)))
     (org-special-block-extras-mode 1)))
 
-(deftest "enabling the mode twice appends the HTML head extras once"
-  (let ((org-html-head-extra ""))
-    (org-special-block-extras-mode 1)
-    (org-special-block-extras-mode 1)
-    (should (= 1 (s-count-matches (regexp-quote org--kbd-html-head) org-html-head-extra)))))
-
-;;; The package's own blocks that opt in
-
 (deftest "details, box, spoiler, solution, and parallel are also tags"
   (dolist (name '(details box spoiler solution parallel))
     (should (fboundp (intern (format "org-deftag/%s" name))))))

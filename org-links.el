@@ -115,6 +115,7 @@ TEXT is Org, exported as such; or PLAIN? text, such as a docstring, shown as is.
 (defun org--tooltip-abbr (body html &optional attributes)
   "(BODY, HTML, ATTRIBUTES) ↦ BODY, showing HTML on hover or tap; tooltips.js shows the <template>.
   \"°\", \"<p>Hi</p>\", \"id=\\\"x\\\"\"  ↦  <abbr class=\"tooltip\" tabindex=\"0\" id=\"x\">°<template><p>Hi</p></template></abbr>"
+  (org-html-head-require 'org--tooltip-html-head)
   (format "<abbr class=\"tooltip\" tabindex=\"0\"%s>%s<template>%s</template></abbr>"
           (if attributes (concat " " attributes) "") body html))
 
@@ -145,7 +146,8 @@ Examples:
         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
         tooltip?   (not (equal tooltip ""))
         style      (if tooltip? "border-color: red" "")
-        keystrokes (format "<kbd style=\"%s\">%s</kbd>" style the-label))
+        keystrokes (progn (org-html-head-require 'org--kbd-html-head)
+                          (format "<kbd style=\"%s\">%s</kbd>" style the-label)))
   ;; o-description is always nil when it comes to deciding the :face.
   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
   :help-echo (format "%s ∷ %s\n%s\n\nClick to run these keys." the-label (or lisp-func "") tooltip)

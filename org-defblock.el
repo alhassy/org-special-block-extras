@@ -464,6 +464,38 @@ packages, whose options win.  A body-only export, sans preamble, is left be."
         (concat preamble (mapconcat (lambda (package) (format "\\usepackage{%s}\n" package)) missing "")
                 (substring output (length preamble)))))))
 
+(defvar-local org--html-head-used nil
+  "What the blocks, and links, this export has rendered need in an HTML page's <head>; see `org--load-html-head'.
+Local to the buffer an export works in, as `org--latex-packages-used' is.")
+
+(defun org-html-head-require (item)
+  "Note that this HTML export's page needs ITEM in its <head>: HTML, a symbol whose value is HTML, or `mathjax'.
+E.g., our tooltips ask for (org-html-head-require \='org--tooltip-html-head); a block asks by its `:html-head'."
+  (cl-pushnew item org--html-head-used :test #'equal))
+
+(defun org--html-mathjax (info)
+  "INFO ↦ Org's own MathJax setup, by the user's MathJax options, as for a page whose maths is Org's own.
+Org sets MathJax up only for maths it parsed itself; ours, such as a calc block's, is raw HTML to it."
+  (org-html--build-mathjax-config
+   (plist-put (copy-sequence info) :parse-tree '(org-data nil (latex-fragment (:value "\\(x\\)"))))))
+
+(defun org--load-html-head (output backend info)
+  "(OUTPUT, BACKEND, INFO) ↦ HTML OUTPUT whose <head> holds each item its blocks need, `org--html-head-used', once.
+Our own CSS and JS only if `org-special-block-add-html-extra'; MathJax always, else our maths would not render."
+  (if (not (and (org-export-derived-backend-p backend 'html) org--html-head-used
+                (string-match "</head>" output)))
+      output
+    (let* ((at (match-beginning 0))
+           (heads (-non-nil
+                   (--map (cond ((eq it 'mathjax) (unless (string-match-p "MathJax" output) (org--html-mathjax info)))
+                                ((not org-special-block-add-html-extra) nil)
+                                ((symbolp it) (symbol-value it))
+                                (t it))
+                          (reverse org--html-head-used))))
+           (missing (--remove (s-contains? it output) (-uniq heads))))
+      (if (not missing) output
+        (concat (substring output 0 at) (apply #'concat missing) (substring output at))))))
+
 ;;;;; org--rewrite-any-block-switches
 
 (defun org--rewrite-any-block-switches (backend)
@@ -757,6 +789,8 @@ KWDS may also carry options, which are not arguments:
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
 + `:latex-pkgs (PACKAGE …)' names the LaTeX packages the block needs; e.g., (\"xcolor\" \"tcolorbox\").  A LaTeX
   export that uses the block, or its link, loads each one its preamble does not; see `org--load-latex-packages'.
++ `:html-head (ITEM …)' is what an HTML page using the block needs in its <head>: a string of HTML, a symbol whose
+  value is one, or `mathjax' for Org's own MathJax setup; see `org--load-html-head'.
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
   “#+end_proof” as “⏹”, and the contents in italics too.  Each part is optional; see
@@ -837,11 +871,12 @@ Three example uses:
   (when (vectorp docstring)
     (error "‘org-defblock %s’: the link display vector now goes among the options, as `:link %S'" name docstring))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  ;; The options :block, :link, :tag, :edit-indirect-mode, :fontify, and :latex-pkgs configure the macro; they are not
-  ;; block arguments.
+  ;; The options :block, :link, :tag, :edit-indirect-mode, :fontify, :latex-pkgs, and :html-head configure the macro;
+  ;; they are not block arguments.
   (let* ((kwds      (org--defblock-desugar-args kwds))
          (edit-mode (plist-get kwds :edit-indirect-mode))
          (latex-pkgs (plist-get kwds :latex-pkgs))
+         (html-head (plist-get kwds :html-head))
          (fontify   (plist-get kwds :fontify))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
          ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
@@ -854,7 +889,7 @@ Three example uses:
          (subsections (when tag? (org--defblock-tag-subsections name tag?)))
          ;; As in `org-defblock-only': other keywords are welcome unless `cl-defun'-style KWDS omit `&allow-other-keys'.
          (other-keys? (or (not (plist-member kwds :allow-other-keys)) (plist-get kwds :allow-other-keys)))
-         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify :latex-pkgs)
+         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify :latex-pkgs :html-head)
                                :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
@@ -868,6 +903,8 @@ Three example uses:
        (org-defblock-only ,name ,kwds ,docstring ,@body)
        ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-pkgs needs none.
        (put ',(intern (format "org-block/%s" name)) 'org-latex-packages ',latex-pkgs)
+       ;; ⇨ Likewise, the HTML its pages need in their <head>.
+       (put ',(intern (format "org-block/%s" name)) 'org-html-head ',html-head)
        ;; ⇨ The link type support, unless declined via `:link nil'
        ,@(when link
            `((org-deflink ,name
@@ -1006,9 +1043,11 @@ it begins with."
                  ,(macroexpand-all `(lf-assert ',name  t
                                                result (stringp it)))
                  ;; The LaTeX packages it needs, for `org--load-latex-packages'; sans any, when handed back to Org.
-                 (when (and (equal backend 'latex) (not (text-property-any 0 (length result) 'org-builtin-block t result)))
-                   (dolist (package (get ',defun-name 'org-latex-packages))
-                     (cl-pushnew package org--latex-packages-used :test #'equal)))
+                 (unless (text-property-any 0 (length result) 'org-builtin-block t result)
+                   (pcase backend
+                     ('latex (dolist (package (get ',defun-name 'org-latex-packages))
+                               (cl-pushnew package org--latex-packages-used :test #'equal)))
+                     ('html (mapc #'org-html-head-require (get ',defun-name 'org-html-head)))))
                  (org-export result))))
          ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks
          ;; such as the one used to make the docs for this package.
