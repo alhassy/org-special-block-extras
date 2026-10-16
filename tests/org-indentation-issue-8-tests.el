@@ -202,3 +202,47 @@ content 3
    ⟩
    \\end{enumerate}
    ")
+
+(org-deftest "a block's contents lose only their least indentation, so their lines keep their relative indentation" [issue♯8]
+  :text "
+- item
+  #+begin_stutter 1
+  line one
+    indented two
+  #+end_stutter"
+  :at "#+begin"
+  (beginning-of-line)
+  (should (equal (org-special-block-contents (org-special-block-after-point "stutter"))
+                 "line one\n  indented two")))
+
+(deftest "a list within a block within a list keeps its items siblings, and the outer list carries on" [issue♯8]
+  (let ((latex (org-export-string "
+1. outer one
+   #+begin_box Inner
+   - inner a
+   - inner b
+     #+begin_remark
+     deep remark
+     #+end_remark
+   #+end_box
+   text continuing item one
+2. outer two" 'latex)))
+    ;; inner a and inner b in one itemize, rather than b nested within a; and outer two in the same enumerate.
+    (should (string-match-p "\\\\item inner a\n\\\\item inner b" latex))
+    (should (= 1 (s-count-matches "begin{itemize}" latex)))
+    (should (string-match-p "text continuing item one\n\\\\item outer two\n\\\\end{enumerate}" latex))))
+
+(deftest "a list of propositions, each item's proof a block of paragraphs, stays one list" [issue♯8]
+  (using (org-defblock prf () "A proof." (format "\\begin{proof}\n%s\n\\end{proof}" contents))
+    (let ((latex (org-export-string "
+- first
+- second
+  #+begin_prf
+  Call f.
+
+  Minimise f.
+  #+end_prf
+- third" 'latex)))
+      (should (= 1 (s-count-matches "begin{itemize}" latex)))
+      (should (string-match-p "\\\\item second\n\\\\begin{proof}\nCall f\\.\n\nMinimise f\\." latex))
+      (should (string-match-p "end{proof}\n\\\\item third" latex)))))

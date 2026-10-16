@@ -126,7 +126,13 @@ one it reads as a paragraph, since its “#+end_NAME” is missing, is an error.
          :kwdargs kwdargs
          :anchor (org-element-property :name elem)
          :contents (if contents-begin
-                       (s-trim (buffer-substring-no-properties contents-begin (org-element-property :contents-end elem)))
+                       ;; Sans the least indentation of its lines, and the blank lines around them; so lines keep
+                       ;; their indentation relative to one another, as an item nested in a list must (issue #8).
+                       (string-trim-right
+                        (replace-regexp-in-string
+                         "\\`\\(?:[ \t]*\n\\)+" ""
+                         (org-remove-indentation
+                          (buffer-substring-no-properties contents-begin (org-element-property :contents-end elem)))))
                      "")
          ;; From the “#” of “#+begin_”, so the block's indentation stays put when it is replaced …
          :start-point (progn (goto-char post-affiliated) (skip-chars-forward " \t") (point))
@@ -930,7 +936,7 @@ A named block's result opens sans an empty export block, so its #+name: and #+ca
                 ,(concat
                   "\nRegarding the Lisp function:"
                   "\n+ BACKEND refers to the current export backend."
-                  "\n+ RAW-CONTENTS refers to the text as the user wrote it verbatim."
+                  "\n+ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation."
                   "\n  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
                   "\n  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
                   "\n\nFor example, upon LaTeX export, the Org special block"

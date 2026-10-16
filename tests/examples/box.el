@@ -44,7 +44,7 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
