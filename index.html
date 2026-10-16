@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-10-16 Fri 14:11 -->
+<!-- 2026-10-16 Fri 14:49 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>org-special-block-extras</title>
@@ -379,13 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#HTML-LaTeX-Setup">1. HTML &amp; LaTeX Setup&nbsp;&nbsp;&nbsp<span class="tag"><span class="ignore">ignore</span></span></a></li>
-<li><a href="#org241b072">2. 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></a>
+<li><a href="#org899fd15">2. 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></a>
 <ul>
-<li><a href="#org833ce17">2.1. 🎁  What Does It Do?</a></li>
+<li><a href="#org4ad9223">2.1. 🎁  What Does It Do?</a></li>
 <li><a href="#at-a-glance">2.2. 🗺 The package at a glance</a></li>
 </ul>
 </li>
-<li><a href="#orgd3001a2">3. Block and link types provided by this package</a>
+<li><a href="#org06aa828">3. Block and link types provided by this package</a>
 <ul>
 <li><a href="#Boxed-Text">3.1. Boxed Text —Calling out super duper info</a></li>
 <li><a href="#Folded-Details">3.2. Folded Details &mdash;Let the user see stuff only if they're interested</a></li>
@@ -398,10 +398,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <li><a href="#Switches-for-every-block">3.9. Switches for every block: <code>:when</code>, <code>:let</code>, <code>:folded</code>, …</a></li>
 <li><a href="#Callouts">3.10. Callouts &mdash;Note, tip, important, warning, caution</a></li>
 <li><a href="#Colours-links">3.11. Colours ---<code>red:𝒳</code>, <code>[[color:#ff0066][𝒳]]</code>, and <code>#+begin_red</code></a></li>
-<li><a href="#Highlights">3.12. Highlights &mdash;Colour the background, not the text</a></li>
-<li><a href="#style-block">3.13. Page-wide CSS with <code>style</code></a></li>
-<li><a href="#Markdown-export">3.14. Markdown export &mdash;What survives GitHub, and how to change it</a></li>
-<li><a href="#latex-packages">3.15. PDF export &mdash;The LaTeX packages our blocks need</a></li>
+<li><a href="#quote-citations">3.12. Quotations, cited ---<code>#+begin_quote KEY</code></a></li>
+<li><a href="#Highlights">3.13. Highlights &mdash;Colour the background, not the text</a></li>
+<li><a href="#style-block">3.14. Page-wide CSS with <code>style</code></a></li>
+<li><a href="#Markdown-export">3.15. Markdown export &mdash;What survives GitHub, and how to change it</a></li>
+<li><a href="#latex-packages">3.16. PDF export &mdash;The LaTeX packages our blocks need</a></li>
 </ul>
 </li>
 <li><a href="#Developers-guide">4. Make your own blocks and links &mdash;A developer's guide</a>
@@ -428,8 +429,8 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 </style>
 </div>
 </div>
-<div id="outline-container-org241b072" class="outline-2">
-<h2 id="org241b072"><span class="section-number-2">2.</span> 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></h2>
+<div id="outline-container-org899fd15" class="outline-2">
+<h2 id="org899fd15"><span class="section-number-2">2.</span> 🧙‍♂️ <i>Write Once, Export Everywhere</i>: Say Hello to <code>org-special-block-extras</code></h2>
 <div class="outline-text-2" id="text-2">
 <p>
 <b>Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
@@ -439,8 +440,8 @@ across backends &mdash;without diving into the dark arts of raw HTML or
 LaTeX!
 </p>
 </div>
-<div id="outline-container-org833ce17" class="outline-3">
-<h3 id="org833ce17"><span class="section-number-3">2.1.</span> 🎁  What Does It Do?</h3>
+<div id="outline-container-org4ad9223" class="outline-3">
+<h3 id="org4ad9223"><span class="section-number-3">2.1.</span> 🎁  What Does It Do?</h3>
 <div class="outline-text-3" id="text-2-1">
 <ul class="org-ul">
 <li><b>🎨 Style with ease</b> &mdash; add colors, badges, tooltips (from a dictionary, Emacs
@@ -1198,8 +1199,8 @@ block &mdash;an Org list, coloured by <code>#+name:</code> tables folded in its 
 </div>
 </div>
 </div>
-<div id="outline-container-orgd3001a2" class="outline-2">
-<h2 id="orgd3001a2"><span class="section-number-2">3.</span> Block and link types provided by this package</h2>
+<div id="outline-container-org06aa828" class="outline-2">
+<h2 id="org06aa828"><span class="section-number-2">3.</span> Block and link types provided by this package</h2>
 <div class="outline-text-2" id="text-3">
 </div>
 <div id="outline-container-Boxed-Text" class="outline-3">
@@ -1243,7 +1244,7 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -1350,7 +1351,7 @@ In HTML, we show folded, details, regions with a nice greenish colour.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -1418,7 +1419,7 @@ Src blocks fold too: the header argument <code>:folded t</code> exports a src bl
 otherwise would, inside a <code>details</code> block titled by its language; <code>:folded "TITLE"</code> picks
 the title.
 </p>
-<pre class="example" id="orgba5c5f9">
+<pre class="example" id="orgca646fb">
 #+begin_src emacs-lisp :folded "How is it done?"
 (org-defblock details …)
 #+end_src
@@ -1490,7 +1491,7 @@ links do&mdash; so readers may try them on the spot.</li>
 
 
 
-<div id="org625460a" class="figure">
+<div id="orgb32aff5" class="figure">
 <p><img src="./images/kbd.png" alt="kbd.png" width="80%" height="80%s" />
 </p>
 </div>
@@ -1524,7 +1525,7 @@ in beamer, whose slides have no margins, as a footnote.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -1628,7 +1629,7 @@ In LaTeX, it may be useful to invoke ‘\dotfill’.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -1966,7 +1967,7 @@ Finally, a package's whole API makes a glossary of its own: the <code>package-do
 exports a table of the public functions, macros, and variables that a feature defines,
 each name a <code>doc:𝒳</code> link whose tooltip is its documentation.
 </p>
-<pre class="example" id="orgf5ed642">
+<pre class="example" id="orgf9308ef">
 #+begin_package-docs org-deflink
 #+end_package-docs
 </pre>
@@ -2059,7 +2060,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2158,7 +2159,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2272,25 +2273,25 @@ in the <code>Result</code> side below.
 <div style="column-count: 2;">
 <div style="padding: 1em;background-color: #FFFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Source</h3> 
 <div ><pre class="src src-org">Hello, in this blog post I'd like to talk about quantifiers.
- # First, I'll define some helpers that I use multiple times...
-   $$
-  \def\Plus{\color{teal}\bigoplus}
-  \def\plus{\;\color{teal}\oplus\;}
-  \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
-  \def\xstart{\color{red} a}
-  \def\xend{\color{cyan} b}
+# First, I'll define some helpers that I use multiple times...
   $$
-  
-  Anyhow, let's talk about quantifiers...
-  $$
-  \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
-  \; = \;
-  \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
-  $$
+ \def\Plus{\color{teal}\bigoplus}
+ \def\plus{\;\color{teal}\oplus\;}
+ \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
+ \def\xstart{\color{red} a}
+ \def\xend{\color{cyan} b}
+ $$
+ 
+ Anyhow, let's talk about quantifiers...
+ $$
+ \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
+ \; = \;
+ \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
+ $$
 
-  The above “quantification” means [[teal:Loop sequentially with]]
-  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
-  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].</pre></div>
+ The above “quantification” means [[teal:Loop sequentially with]]
+ [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
+ name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].</pre></div>
 </div>
 <div style="padding: 1em;background-color: #FFFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Result</h3> 
 <p>
@@ -2299,21 +2300,21 @@ Hello, in this blog post I'd like to talk about quantifiers.
 
 <p>
 \[
-     \def\Plus{\color{teal}\bigoplus}
-     \def\plus{\;\color{teal}\oplus\;}
-     \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
-     \def\xstart{\color{red} a}
-     \def\xend{\color{cyan} b}
-     \]
+    \def\Plus{\color{teal}\bigoplus}
+    \def\plus{\;\color{teal}\oplus\;}
+    \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
+    \def\xstart{\color{red} a}
+    \def\xend{\color{cyan} b}
+    \]
 </p>
 
 <p>
 Anyhow, let's talk about quantifiers&hellip;
 \[
-     \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
-     \; = \;
-     \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
-     \]
+    \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
+    \; = \;
+    \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
+    \]
 </p>
 
 <p>
@@ -2329,7 +2330,7 @@ is read into a definition of its own, a macro’s #1 would otherwise be an error
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2514,7 +2515,7 @@ Example:
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2608,7 +2609,7 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2636,7 +2637,7 @@ In HTML, we show folded, details, regions with a nice greenish colour.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -2852,8 +2853,36 @@ name</span>, and <span style="color:red;">a described red link</span>.
 </p>
 </div>
 </div>
+<div id="outline-container-quote-citations" class="outline-3">
+<h3 id="quote-citations"><span class="section-number-3">3.12.</span> Quotations, cited ---<code>#+begin_quote KEY</code></h3>
+<div class="outline-text-3" id="text-quote-citations">
+<p>
+Org's own quote block, given a bibliography key, cites it, at its pages &mdash;the key given as the
+main argument, or as <code>:key</code>:
+</p>
+<pre class="example" id="org2e80e04">
+#+begin_quote zermelo1908 :pages 20-22
+Set theory is that branch of mathematics whose task is to investigate
+the fundamental notions of number, order, and function.
+#+end_quote
+</pre>
+<p>
+In LaTeX, and so in beamer, this is csquotes' <code>\blockcquote[20-22]{zermelo1908}{…}</code>, whose
+citation biblatex typesets from our bibliography; so it needs <code>\usepackage{csquotes}</code>,
+<code>\usepackage{biblatex}</code>, and an <code>\addbibresource</code>. In HTML, it is a <code>&lt;blockquote&gt;</code> closed by
+“&mdash; <i>zermelo1908</i>, 20-22”; in Markdown, a quote closed likewise. A quote sans arguments is
+Org's own, as ever.
+</p>
+
+<p>
+As a link, a quote is inline: <code>[[quote:zermelo1908][set theory is …]]</code> is csquotes'
+<code>\textcquote{zermelo1908}{…}</code>, and <code>[[quote:][to be]]</code> is just “to be”. A section tagged
+<code>:quote:</code> is a quote of its text.
+</p>
+</div>
+</div>
 <div id="outline-container-Highlights" class="outline-3">
-<h3 id="Highlights"><span class="section-number-3">3.12.</span> Highlights &mdash;Colour the background, not the text</h3>
+<h3 id="Highlights"><span class="section-number-3">3.13.</span> Highlights &mdash;Colour the background, not the text</h3>
 <div class="outline-text-3" id="text-Highlights">
 <p>
 Where <code>red:𝒳</code> colours text, <code>[[highlight:pink][𝒳]]</code> colours its background; the colour
@@ -2910,12 +2939,12 @@ For the reader who would rather pick the page's background colour themself,
 </div>
 </div>
 <div id="outline-container-style-block" class="outline-3">
-<h3 id="style-block"><span class="section-number-3">3.13.</span> Page-wide CSS with <code>style</code></h3>
+<h3 id="style-block"><span class="section-number-3">3.14.</span> Page-wide CSS with <code>style</code></h3>
 <div class="outline-text-3" id="text-style-block">
 <p>
 A <code>style</code> block is the page's CSS, taken verbatim; it exports to nothing but HTML.
 </p>
-<pre class="example" id="orga2f2060">
+<pre class="example" id="org81fab5c">
 #+begin_style
 h2 { color: teal; }
 #+end_style
@@ -2923,7 +2952,7 @@ h2 { color: teal; }
 </div>
 </div>
 <div id="outline-container-Markdown-export" class="outline-3">
-<h3 id="Markdown-export"><span class="section-number-3">3.14.</span> Markdown export &mdash;What survives GitHub, and how to change it</h3>
+<h3 id="Markdown-export"><span class="section-number-3">3.15.</span> Markdown export &mdash;What survives GitHub, and how to change it</h3>
 <div class="outline-text-3" id="text-Markdown-export">
 <p>
 Exporting to Markdown, with <code>ox-md</code> or <code>ox-gfm</code>, our blocks see <code>backend</code> as <code>html</code>, since <code>md</code>
@@ -3030,7 +3059,7 @@ boxes between horizontal rules:
 </div>
 </div>
 <div id="outline-container-latex-packages" class="outline-3">
-<h3 id="latex-packages"><span class="section-number-3">3.15.</span> PDF export &mdash;The LaTeX packages our blocks need</h3>
+<h3 id="latex-packages"><span class="section-number-3">3.16.</span> PDF export &mdash;The LaTeX packages our blocks need</h3>
 <div class="outline-text-3" id="text-latex-packages">
 <p>
 Org's default LaTeX header already loads <code>amsmath</code>, <code>amssymb</code>, <code>ulem</code>, <code>hyperref</code>, and <code>graphicx</code>; beside
@@ -3086,9 +3115,10 @@ export backend and <code>contents</code> the block's Org-parsed contents.
 
 <p>
 Now the following binds <code>title</code> to <code>"Heads up"</code> and <code>color</code> to <code>red</code>; omit either, and
-its default is used.
+its default is used. The main argument may also be given by its name, as a keyword:
+<code>#+begin_note :title "Heads up"</code> is the same block.
 </p>
-<pre class="example" id="org1eb2ef0">
+<pre class="example" id="orga784137">
 #+begin_note "Heads up" :color red
 Mind the gap.
 #+end_note
@@ -3115,7 +3145,25 @@ beamer.
 
 <p>
 Every block is also a link, with the label as main argument and the description as
-contents: <code>[[note:Heads up][Mind the gap.]]</code>. Moreover, defaults may change long after the
+contents: <code>[[note:Heads up][Mind the gap.]]</code>.
+</p>
+
+<p>
+Even Org's own blocks ---<code>quote</code>, <code>verse</code>, <code>center</code>, <code>example</code>, <code>src</code>, <code>export</code>, and <code>comment</code>&mdash;
+are fair game: an <code>(org-defblock verse …)</code> overrides every <code>#+begin_verse</code>, saying so in
+<code>*Messages*</code>. To leave some to Org, a handler hands them back; by way of example, a verse
+signed by its poet, else Org's own:
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><code>(<span style="color: #98971a; font-weight: bold;">org-defblock</span> verse (<span style="color: #b57614; font-weight: bold; text-decoration: underline;">&amp;optional</span> poet)
+  <span style="color: #689d6a; font-style: italic;">"A verse, signed by POET; sans one, Org's own verse."</span>
+  (<span style="color: #98971a; font-weight: bold;">if</span> (org-string-nw-p poet)
+      (format <span style="color: #689d6a; font-style: italic;">"\\begin{verse}\n%s\n\\end{verse}\n--- %s"</span> contents poet)
+    (org-parse (org-builtin-block <span style="color: #689d6a; font-style: italic;">"verse"</span> raw-contents))))
+</code></pre>
+</div>
+<p>
+Our own <code>quote</code> does just this: given a citation, it is ours; else, Org's own. Moreover, defaults may change long after the
 block is defined; e.g., <code>(org-set-block-header-args note :color "orange")</code>.
 </p>
 
@@ -3125,7 +3173,7 @@ exports as a <code>note</code> block around its own text, up to the next heading
 underscore-separated items form the main argument &mdash;tags cannot hold spaces&mdash; and the
 section's properties supply keyword arguments by name. So all three of these agree:
 </p>
-<pre class="example" id="orga9dcdd8">
+<pre class="example" id="orgae26b8c">
 #+begin_note "Heads up" :color red
 Mind the gap.
 #+end_note
@@ -3258,7 +3306,7 @@ items after the tag's name bind them in order. Any the tag omits are read from t
 section's property of the same name, and then default. The <code>&amp;key</code> arguments are read from
 properties only &mdash;handy for lots of named info.
 </p>
-<pre class="example" id="org4244c06">
+<pre class="example" id="orgf0eb82f">
 * Tags are functions of Org sections        :quote_blue:
 * Tags are functions of Org sections        :quote:
 :PROPERTIES:
@@ -3399,7 +3447,7 @@ Example:
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -3514,7 +3562,7 @@ Example:
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
-+ RAW-CONTENTS refers to the text as the user wrote it verbatim.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
   ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
   ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
 
@@ -3553,7 +3601,7 @@ Just as <code>C-c C-v C-d</code> splits a src block at point, so too it splits a
 <a href="https://scripter.co/splitting-an-org-block-into-two/">Kaushal Modi's trick</a>; each piece keeps the block's whole <code>#+begin_</code> line, header arguments
 and all. By way of example, with point at the start of <code>Two.</code>,
 </p>
-<pre class="example" id="orgb0d3436">
+<pre class="example" id="org25849f3">
 #+begin_tip Mind
 One.
 Two.
@@ -3562,7 +3610,7 @@ Two.
 <p>
 becomes
 </p>
-<pre class="example" id="org55da211">
+<pre class="example" id="org3f0c9e5">
 #+begin_tip Mind
 One.
 #+end_tip
@@ -3588,7 +3636,7 @@ With point on a <code>#+begin_NAME</code> or <code>#+end_NAME</code> line, or on
 &mdash;or <a href="https://github.com/casouri/eldoc-box">eldoc-box</a>, should we use it&mdash; shows how the block is called, defaults and all, along
 with the first line of its docstring:
 </p>
-<pre class="example" id="org6cfb0a8">
+<pre class="example" id="orgfc23d17">
 #+begin_details TITLE="Details" :background-color "#e5f5e5" :title-color "green": Enclose contents in a folded up box, for HTML.
 </pre>
 <p>
@@ -3607,7 +3655,7 @@ documentation pane shows the block's whole docstring.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Musa Al-hassy</p>
-<p class="date">Created: 2026-10-16 Fri 14:11</p>
+<p class="date">Created: 2026-10-16 Fri 14:49</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
