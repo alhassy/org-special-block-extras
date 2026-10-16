@@ -16,10 +16,14 @@ tip text</p></template></abbr>&emsp13;
 <p style=\"display:none\">\\[\\newcommand{\\foo}{bar}\\]</p>
 #+end_export")
 
-(define-org-call-test "latex-definitions block passes content through in LaTeX."
+(define-org-call-test "latex-definitions block sends its content to the LaTeX preamble, as #+latex_header: lines."
   :call (org-block/latex-definitions 'latex "\\newcommand{\\foo}{bar}" nil)
   :returns "#+begin_export latex
-\\newcommand{\\foo}{bar}
+
+#+end_export
+#+latex_header: \\newcommand{\\foo}{bar}
+#+begin_export latex
+
 #+end_export")
 
 (define-org-call-test "stutter block repeats the content the given number of times."

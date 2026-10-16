@@ -54,6 +54,11 @@ lets a derived backend (say, a blog's `org-export-define-derived-backend' of
 Since `md' derives from `html', block and link bodies see `backend' as `html' then; see `org--base-backend'."
   (and org-export-current-backend (org-export-derived-backend-p org-export-current-backend 'md)))
 
+(defun org-export-beamer-p ()
+  "↦ non-nil while exporting to slides; i.e., the export's backend is, or derives from, `beamer'.
+Slides have no margins, so our margin notes are beamer's own \\footnote there; see `org--latex-margin-note'."
+  (and org-export-current-backend (org-export-derived-backend-p org-export-current-backend 'beamer)))
+
 (defun org--markdown-alert (type title body)
   "(TYPE, TITLE, BODY) ↦ Org quote that ox-md renders as GitHub's alert “> [!TYPE]”, opening with TITLE in bold, if any.
 The marker is a paragraph of its own, lest ox-gfm, which unfills paragraphs, join it to the next line."

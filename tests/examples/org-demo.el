@@ -59,7 +59,6 @@ error-prone tedium.
 \\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Source},colback=osbe-box-back,
 colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,
 subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
-
 \\begin{verbatim}
 /italics/ and _underline_
 

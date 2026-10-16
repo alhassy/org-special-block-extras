@@ -19,7 +19,8 @@ Or, without specifying an explicit label:
 It can be annoying to make readers jump to the bottom of the page to
 read a footnote.  Instead, I prefer to write an <i>inline <abbr class=\"tooltip\"
 tabindex=\"0\">remark<template><pre>Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
-In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block’s are.
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block’s are;
+in beamer, whose slides have no margins, as a footnote.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.

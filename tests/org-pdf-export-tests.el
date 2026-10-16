@@ -32,29 +32,38 @@
                              when (eq (car-safe form) 'define-org-example-test)
                              collect (cons (cadr form) (plist-get (cddr form) :input))))))
 
-(deftest "every example exports to a PDF that compiles, given just the LaTeX packages listed here; issue #49" [pdf]
-  (skip-unless (and (executable-find "latexmk") (executable-find "lualatex")))
+(defun org-pdf-test--compile (name export &optional heading-depth)
+  "(NAME, EXPORT, HEADING-DEPTH) ↦ the first LaTeX error, else nil, of compiling every example to NAME.pdf via EXPORT,
+such as `org-latex-export-to-latex'; with HEADING-DEPTH stars before each example's heading, and one more on its own."
   (let* ((org-defblock-evaluate-switches t)
          (dir (make-temp-file "osbe-pdf-" t))
-         (org (expand-file-name "every-example.org" dir)))
+         (org (expand-file-name (concat name ".org") dir))
+         (stars (make-string (or heading-depth 1) ?*)))
     (with-temp-file org
-      (insert "#+title: Every example\n#+latex_compiler: lualatex\n")
+      (insert "#+title: Every example\n#+latex_compiler: lualatex\n#+options: H:1\n")
       (dolist (header org-pdf-test--latex-headers) (insert "#+latex_header: " header "\n"))
-      (pcase-dolist (`(,name . ,input) (org-pdf-test--examples))
-        (insert (format "\n* %s\n%s\n" name input))))
+      (pcase-dolist (`(,example . ,input) (org-pdf-test--examples))
+        (insert (format "\n%s %s\n%s\n" stars example (replace-regexp-in-string "^\\*" (concat stars "*") input)))))
     (with-current-buffer (find-file-noselect org)
-      (org-latex-export-to-latex)
+      (funcall export)
       (kill-buffer))
-    (let* ((default-directory dir)
-           (status (call-process "latexmk" nil nil nil
-                                 "-lualatex" "-interaction=nonstopmode" "-halt-on-error" "every-example.tex"))
-           (log (expand-file-name "every-example.log" dir)))
-      ;; The LaTeX error itself, with the line after it, first; a bare non-zero status says little.
-      (should-not (with-temp-buffer
-                    (insert-file-contents log)
-                    (when (re-search-forward "^! .*\n.*" nil t) (match-string 0))))
-      (should (equal (list status (file-exists-p (expand-file-name "every-example.pdf" dir)))
-                     (list 0 t))))))
+    (let ((default-directory dir))
+      (call-process "latexmk" nil nil nil "-lualatex" "-interaction=nonstopmode" "-halt-on-error" (concat name ".tex"))
+      (or (with-temp-buffer
+            (insert-file-contents (concat name ".log"))
+            ;; The LaTeX error itself, with the line after it; a bare non-zero status says little.
+            (when (re-search-forward "^! .*\n.*" nil t) (match-string 0)))
+          (unless (file-exists-p (concat name ".pdf")) "No PDF, though no LaTeX error either")))))
+
+(deftest "every example exports to a PDF that compiles, given just the LaTeX packages listed here; issue #49" [pdf]
+  (skip-unless (and (executable-find "latexmk") (executable-find "lualatex")))
+  (should-not (org-pdf-test--compile "every-example" #'org-latex-export-to-latex)))
+
+(deftest "every example exports to beamer slides that compile, given the same LaTeX packages; issue #35" [pdf]
+  (skip-unless (and (executable-find "latexmk") (executable-find "lualatex")))
+  (require 'ox-beamer)
+  ;; Each example is a frame, its own headings within it.
+  (should-not (org-pdf-test--compile "every-example-slides" #'org-beamer-export-to-latex)))
 
 (provide 'org-pdf-export-tests)
 ;;; org-pdf-export-tests.el ends here

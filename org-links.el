@@ -618,11 +618,23 @@ We use this listing to actually print a glossary using
 
 (defun org--latex-glossary-text (text &optional plain?)
   "(TEXT, PLAIN?) ↦ LaTeX of a glossary entry's TEXT: its body-only export as Org; or, when PLAIN?, such as a docstring,
-TEXT in a verbatim environment, as written ---so its #, $, %, and the like need no escaping."
-  (if plain?
-      (format "\n\\begin{verbatim}\n%s\n\\end{verbatim}\n" (string-trim text))
+TEXT in a verbatim environment, as written ---so its #, $, %, and the like need no escaping; on beamer's slides, whose
+frames break on verbatim text, TEXT with those characters escaped."
+  (cond
+   ;; A beamer frame breaks on verbatim text, which Org marks it fragile for only when it sees a src block or the like.
+   ((and plain? (org-export-beamer-p))
+    (-->
+     (s-replace-all '(("\\" . "\\textbackslash{}") ("{" . "\\{") ("}" . "\\}") ("#" . "\\#") ("$" . "\\$")
+                      ("%" . "\\%") ("&" . "\\&") ("_" . "\\_") ("^" . "\\^{}") ("~" . "\\~{}"))
+                    (string-trim text))
+     ;; A blank line ends a paragraph; any other newline breaks the line.
+     (replace-regexp-in-string "\n[ \t]*\n\\(?:[ \t]*\n\\)*" "\\par " it t t)
+     (replace-regexp-in-string "\n" "\\newline " it t t)))
+   (plain?
+      (format "\n\\begin{verbatim}\n%s\n\\end{verbatim}\n" (string-trim text)))
+   (t
     (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
-      (string-trim (org-export-string-as text 'latex t)))))
+      (string-trim (org-export-string-as text 'latex t))))))
 
 (defun org--docs-plain-p (label)
   "LABEL ↦ non-nil when its glossary entry is plain text ---an Elisp docstring, or a WordNet definition--- not Org.

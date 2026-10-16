@@ -52,11 +52,8 @@ style=\"color:red;\">starting at a</span> and <span style=\"color:cyan;\">ending
 </p>"
   :latex "Hello, in this blog post I'd like to talk about quantifiers.
 
-\\def\\Plus{\\color{teal}\\bigoplus}
-\\def\\plus{\\;\\color{teal}\\oplus\\;}
-\\def\\f#1{{\\color{brown}f}{\\color{violet}(#1)}}
-\\def\\xstart{\\color{red} a}
-\\def\\xend{\\color{cyan} b}
+
+
 
 Anyhow, let's talk about quantifiers\\ldots{}
 $$

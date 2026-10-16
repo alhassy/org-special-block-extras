@@ -100,6 +100,7 @@ crashes if one wants to also use verbatim environments.)
 In LaTeX, it may be useful to invoke ‘\\dotfill’."
               (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
                 (pcase backend
+                  ((guard (org-export-beamer-p)) (format "\\footnote{%s}" (s-trim contents)))
                   (`latex
                    ;; A block follows the newline, a space, after the word it remarks on; we swallow it.
                    (concat
@@ -120,10 +121,13 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
 ;;;;;; Tooltip (HTML)
 (org-defblock tooltip (marker "°")
               "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
-In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are."
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are;
+in beamer, whose slides have no margins, as a footnote."
               (if (equal backend 'latex)
-                  (concat marker (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" contents
-                                                         "\\refstepcounter{footnote}"))
+                  (concat marker (if (org-export-beamer-p)
+                                     (format "\\footnote{%s}" contents)
+                                   (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" contents
+                                                           "\\refstepcounter{footnote}")))
                 (concat (org--html-tooltip raw-contents marker) "&emsp13;")))
 
 ;;;;;; Footnotes, as tooltips
@@ -155,6 +159,7 @@ which runs no script, keeps Org's own footnotes."
 is typeset with “An aside.” in the margin, numbered as footnotes are.  A footnote command of the user's own, such as a
 #+LATEX_FOOTNOTE_COMMAND: line, wins; as do Org's \\footnotemark, for footnotes in tables, and its references back."
   (when (and (org-export-derived-backend-p backend 'latex)
+             (not (org-export-derived-backend-p backend 'beamer)) ; Slides have no margins.
              (equal (plist-get info :latex-default-footnote-command) "\\footnote{%s%s}"))
     ;; Org fills the two %s with the definition and its \label; stepping with \refstepcounter lets that \label name it.
     (plist-put info :latex-default-footnote-command
@@ -162,13 +167,15 @@ is typeset with “An aside.” in the margin, numbered as footnotes are.  A foo
   info)
 
 (org-defblock latex-definitions nil
-              "Declare but do not display the CONTENTS according to the BACKEND."
-              ;; Markdown renderers strip the HTML's display:none, which would leave the definitions on show.
-              (if (org-export-markdown-p) ""
-                (format (pcase backend
-                          ('html "<p style=\"display:none\">\\[%s\\]</p>")
-                          (_ "%s"))
-                        raw-contents)))
+              "Declare but do not display the CONTENTS according to the BACKEND.
+In LaTeX, they are declarations, so they go to the preamble, as #+latex_header: lines; within a beamer frame, which
+is read into a definition of its own, a macro's #1 would otherwise be an error."
+              (cond
+               ;; Markdown renderers strip the HTML's display:none, which would leave the definitions on show.
+               ((org-export-markdown-p) "")
+               ((equal backend 'latex)
+                (org-parse (mapconcat (lambda (line) (concat "#+latex_header: " line)) (split-string raw-contents "\n" t) "\n")))
+               (t (format "<p style=\"display:none\">\\[%s\\]</p>" raw-contents))))
 
 ;;;;; Blocks
 ;;;;;; solution
@@ -201,12 +208,13 @@ In Markdown, the source is a fenced org block above its result, each under its l
                   (org-parse (format "*%s*\n#+begin_src org\n%s\n#+end_src\n\n*%s*\n\n%s"
                                      source (org-escape-code-in-string raw-contents) result raw-contents))
                   (-let [text (concat
-                               ;; Source
-                               (thread-last raw-contents
-                                            (format (if (equal backend 'html)
-                                                        "<div ><pre class=\"src src-org\">%s</pre></div>"
-                                                      "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
-                                            org-export
+                               ;; Source; in LaTeX an Org example block, which Org typesets, and for which beamer's
+                               ;; frame is marked fragile, as raw verbatim text would not be.
+                               (thread-last (if (equal backend 'html)
+                                                (org-export (format "<div ><pre class=\"src src-org\">%s</pre></div>"
+                                                                    raw-contents))
+                                              (format "#+begin_example\n%s\n#+end_example"
+                                                      (org-escape-code-in-string raw-contents)))
                                             (org--blockcall box source :background-color source-color)
                                             org-export)
                                ;; Separator

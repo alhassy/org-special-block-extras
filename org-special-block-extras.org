@@ -4435,6 +4435,9 @@ A test, [[https://github.com/alhassy/org-special-block-extras/blob/master/tests/
 to a PDF, with these lines and no others. It uses LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is;
 pdflatex instead needs a ~\newunicodechar~ for each such character.
 
+Beamer slides need just the same packages, and the test compiles every example as slides too. Slides have
+no margins, so there our margin notes, tooltips, and Org's footnotes are beamer's own footnotes.
+
 * Make your own blocks and links ---A developer's guide
   :PROPERTIES:
   :CUSTOM_ID: Developers-guide
