@@ -374,7 +374,7 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide 45 new custom blocks & 56 link types for Org-mode.
+  "Provide 46 new custom blocks & 57 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 

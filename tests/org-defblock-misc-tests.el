@@ -147,5 +147,23 @@ A remark[fn::An /aside/ with a [[https://x.y][link]].] and another[fn:two].
   (require 'ox-md)
   (should (s-contains-p "<a id=\"fnr.1\" class=\"footref\" href=\"#fn.1\"" (org-export-string "Md[fn::plain]." 'md))))
 
+;;; blockcquote
+
+(deftest "a blockcquote is csquotes' \\blockcquote in LaTeX, as the issue spells it, :key and all; issue #24" [blockcquote]
+  (dolist (header '(":key zermelo1908 :pages 20-22" "zermelo1908 :pages 20-22"))
+    (should (s-contains-p "\\blockcquote[20-22]{zermelo1908}{\nThis is a \\emph{blockquote}.\n}"
+                          (org-export-string (format "#+begin_blockcquote %s\n\n    This is a /blockquote/.\n\n#+end_blockcquote" header)
+                                             'latex))))
+  ;; Sans pages, sans the optional argument.
+  (should (s-contains-p "\\blockcquote{zermelo1908}{"
+                        (org-export-string "#+begin_blockcquote zermelo1908\nQuoted.\n#+end_blockcquote" 'latex))))
+
+(deftest "a blockcquote is a blockquote attributed to its key, at its pages, in HTML and Markdown" [blockcquote]
+  (require 'ox-md)
+  (let ((input "#+begin_blockcquote zermelo1908 :pages 20-22\nQuoted.\n#+end_blockcquote"))
+    (should (s-contains-p "<footer>&mdash; <cite>zermelo1908</cite>, 20-22</footer></blockquote>"
+                          (org-export-string input 'html)))
+    (should (s-contains-p "> Quoted.\n> \n> &mdash; *zermelo1908*, 20-22" (org-export-string input 'md)))))
+
 (provide 'org-defblock-misc-tests)
 ;;; org-defblock-misc-tests.el ends here

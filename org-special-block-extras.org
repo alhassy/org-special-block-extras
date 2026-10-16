@@ -8,7 +8,7 @@
 #+property: header-args :eval never-export
 #+options: d:nil toc:nil
 #+export_file_name: index
-#+macro: blurb Forty-five custom blocks and fifty-six link types for Emacs' Org-mode ^_^
+#+macro: blurb Forty-six custom blocks and fifty-seven link types for Emacs' Org-mode ^_^
 #+toc: headlines 2
 
 # Render diagram: (progn (use-package ob-latex-as-png :ensure t)
@@ -4346,6 +4346,24 @@ from∘to m = {! try it! }
   shows its text in its colour, as soon as =org-special-block-extras-mode= is on.
 
   osbe-example:colors
+
+** Quotations, cited ---=blockcquote=
+  :PROPERTIES:
+  :CUSTOM_ID: blockcquote
+  :END:
+
+  A =blockcquote= quotes its contents, cited by a bibliography key, at its pages ---which may be
+  given as =:key=, or as the main argument:
+  #+begin_example
+,#+begin_blockcquote zermelo1908 :pages 20-22
+Set theory is that branch of mathematics whose task is to investigate
+the fundamental notions of number, order, and function.
+,#+end_blockcquote
+  #+end_example
+  In LaTeX, and so in beamer, this is csquotes' =\blockcquote[20-22]{zermelo1908}{…}=, whose
+  citation biblatex typesets from our bibliography; so it needs ~\usepackage{csquotes}~,
+  ~\usepackage{biblatex}~, and an ~\addbibresource~. In HTML, it is a =<blockquote>= closed by
+  “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise.
 
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:

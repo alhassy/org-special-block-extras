@@ -177,6 +177,27 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
                 (org-parse (mapconcat (lambda (line) (concat "#+latex_header: " line)) (split-string raw-contents "\n" t) "\n")))
                (t (format "<p style=\"display:none\">\\[%s\\]</p>" raw-contents))))
 
+;;;;;; Quotations, cited
+
+(org-defblock blockcquote (&optional (key "") &key (pages ""))
+  "Quote CONTENTS, cited as the bibliography's KEY, at PAGES; e.g.,
+
+  #+begin_blockcquote zermelo1908 :pages 20-22
+  Set theory is that branch of mathematics whose task is …
+  #+end_blockcquote
+
+In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, which needs csquotes and biblatex;
+elsewhere, a quotation attributed to KEY, at PAGES."
+  ;; The header reads 20-22 as a symbol, and a key may be one too; we want their names.
+  (let* ((key (format "%s" key))
+         (pages (format "%s" pages))
+         (at (if (org-string-nw-p pages) (format ", %s" pages) "")))
+    (cond
+     ((org-export-markdown-p) (org-parse (format "#+begin_quote\n%s\n\n--- /%s/%s\n#+end_quote" raw-contents key at)))
+     ((equal backend 'latex)
+      (format "\\blockcquote%s{%s}{%s}" (if (org-string-nw-p pages) (format "[%s]" pages) "") key contents))
+     (t (format "<blockquote>%s<footer>&mdash; <cite>%s</cite>%s</footer></blockquote>" contents key at)))))
+
 ;;;;; Blocks
 ;;;;;; solution
 (org-defblock solution
