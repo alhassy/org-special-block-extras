@@ -251,5 +251,16 @@ Plain verse.
           (should (s-contains-p "\\end{verse}\n--- Rumi" latex))
           (should (s-contains-p "\\begin{verse}\nPlain verse.\\\\\n\\end{verse}" latex)))))))
 
+(deftest "a block's #+begin_ line written within a src or example block is its text, not a block to rewrite" [builtin]
+  (dolist (outer '("src org" "example"))
+    (let ((latex (org-export-string (format "
+#+begin_%s
+#+begin_tip
+Inner.
+#+end_tip
+#+end_%s" outer (car (split-string outer))) 'latex)))
+      (should (s-contains-p "#+begin_tip" latex))
+      (should-not (s-contains-p "tcolorbox" latex)))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

@@ -434,7 +434,9 @@ Note: This function mutates the current buffer."
              ;; Org's own blocks, once overridden, is ours too ---save one a handler hands back by `org-builtin-block'.
              (if (let ((elem (org-element-at-point)))
                    (or (memq (org-element-type elem) '(special-block paragraph))
+                       ;; Its own #+begin_ line, that is: a #+begin_note written within a src block is its text.
                        (and (memq (org-element-type elem) org--builtin-block-types)
+                            (= (org-element-property :post-affiliated elem) (line-beginning-position))
                             (not (get-text-property (save-excursion (skip-chars-forward " \t") (point)) 'org-builtin-block)))))
                  (org-eval-replace-block (org-special-block-after-point blk) backend)
                (forward-line 1)))))
