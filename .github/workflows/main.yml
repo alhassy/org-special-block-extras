@@ -24,11 +24,12 @@ jobs:
           git clone --depth 1 https://github.com/alhassy/fancy-C-x-C-e ~/fancy-C-x-C-e
           ln -s "$GITHUB_WORKSPACE" ~/org-special-block-extras
 
-      # WordNet's wn, for doc:𝒳 links to English words; LuaLaTeX and our LaTeX packages, for the PDF test.
+      # WordNet's wn, for doc:𝒳 links to English words; LuaLaTeX, our LaTeX packages, and ulem (of plain-generic),
+      # which Org's own default LaTeX header loads, for the PDF test.
       - name: Install WordNet and LaTeX
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends wordnet latexmk texlive-luatex texlive-latex-recommended texlive-latex-extra
+          sudo apt-get install -y --no-install-recommends wordnet latexmk texlive-luatex texlive-latex-recommended texlive-latex-extra texlive-plain-generic
 
       # Org 9.8 from GNU ELPA, as the package requires; Emacs 30.1 bundles an older Org, which it will not upgrade unasked.
       - name: Install Org and MELPA dependencies
