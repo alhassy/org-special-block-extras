@@ -222,5 +222,13 @@ Tighten this sentence.
                    "\\my-latex-command\nsome content\n\\my-latex-command\n"))
     (should (s-contains-p "{{% alert %}}some content" (org-export-string "#+begin_myblock\nsome content\n#+end_myblock" 'osbe-test-myhugo)))))
 
+(deftest "a block's main argument may also be given by its own name, as a keyword; issue #47" [main-arg]
+  (using (org-defblock satz (name "" label "")
+           "A labelled sentence, named NAME."
+           (format "\\tag{%s}\\label{%s} %s" name label contents))
+    (dolist (header '("myname :label mylabel" ":name myname :label mylabel"))
+      (should (s-contains-p "\\tag{myname}\\label{mylabel}"
+                            (org-export-string (format "#+begin_satz %s\nExample Sentence.\n#+end_satz" header) 'latex))))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

@@ -4466,7 +4466,8 @@ no margins, so there our margin notes, tooltips, and Org's footnotes are beamer'
   #+end_src
 
   Now the following binds ~title~ to ="Heads up"= and ~color~ to =red=; omit either, and
-  its default is used.
+  its default is used. The main argument may also be given by its name, as a keyword:
+  =#+begin_note :title "Heads up"= is the same block.
   #+begin_example
 #+begin_note "Heads up" :color red
 Mind the gap.

@@ -84,17 +84,18 @@ Answer: @@latex:\\fbox{\\phantom{x = 5}}\\footnote{x = 5}@@.
 (define-org-call-test "margin block produces an <abbr> tooltip for HTML."
   :call (org-block/margin 'html "note text" nil :marker "†" :counter "footnote")
   :returns "#+begin_export html
-<abbr class=\"tooltip\" tabindex=\"0\">∘<template><p>
+<abbr class=\"tooltip\" tabindex=\"0\">†<template><p>
 note text</p></template></abbr>&emsp13;
 #+end_export")
 
 (define-org-call-test "margin block produces a \\marginpar for LaTeX."
   :call (org-block/margin 'latex "note" nil :marker "†" :counter "footnote")
   :returns "#+begin_export latex
-\\!\\!\\stepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+\\!\\!${}^{\\textnormal{†}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
+\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
 \\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
 \\fi\\color{gray!80}
-{\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
+{\\color{black}${}^{\\textnormal{†}}$}
 \\normalfont
 #+end_export
 note

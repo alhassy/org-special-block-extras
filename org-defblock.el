@@ -876,7 +876,7 @@ Features:
                                            raw-contents (stringp it)))
 
              ,@(unless allow-other-keys?
-                 (let ((known (--map (intern (format ":%s" it)) (mapcar #'car (-partition 2 keywords)))))
+                 (let ((known (--map (intern (format ":%s" it)) (cons main-arg-name (mapcar #'car (-partition 2 keywords))))))
                    `((-when-let (unknown (cl-loop for key in org--handler-args by #'cddr
                                                   unless (memq key '(:contents-occur-as-link-description ,@known))
                                                   collect key))
@@ -884,10 +884,12 @@ Features:
                               (if (cdr unknown) "s" "") (mapconcat #'symbol-name unknown " ")
                               ,(if known (mapconcat #'symbol-name known " ") "no header arguments"))))))
 
-             ;; Use default value for blank main argument
+             ;; A blank main argument may be given by its own name, as #+begin_satz :name N is #+begin_satz N
+             ;; (issue #47); else it is the block's header-args default, else its declared default.
              (when (or (null ,main-arg-name) (equal ,main-arg-name ""))
                (setq ,main-arg-name
                      (or
+                      (plist-get org--handler-args ,(intern (format ":%s" main-arg-name)))
                       (org--header-arg-of ',name :main-arg)
                       ,main-arg-default-value)))
 
