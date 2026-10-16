@@ -130,33 +130,33 @@
   :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
   :equals
   "<ol class=\"org-ol\">
-   <li><p>
-   builtin source block
-   </p>
-   <div class=\"org-src-container\">
-   <pre class=\"src src-latex\"><code>   <span style=\"color: #98971a; font-weight: bold;\">\\uline</span>{content 1}
-   </code></pre>
-   </div></li>
-   <li><p>
-   custom (unregistered) block
-   </p>
-   <div class=\"proposition\" id=\"org-id-1\">
-   <p>
-   content 2
-   </p>
+<li><p>
+builtin source block
+</p>
+<div class=\"org-src-container\">
+<pre class=\"src src-latex\"><code>   \\uline{content 1}
+</code></pre>
+</div></li>
+<li><p>
+custom (unregistered) block
+</p>
+<div class=\"proposition\" id=\"org-id-1\">
+<p>
+content 2
+</p>
 
-   </div></li>
-   <li><p>
-   custom (registered) block
-   </p>
-   HANDLED:
-   <p>
-   content 3
-   </p></li>
-   <li>prose
-   \\n content 4</li>
-   </ol>
-   "
+</div></li>
+<li><p>
+custom (registered) block
+</p>
+HANDLED:
+<p>
+content 3
+</p></li>
+<li>prose
+\\n content 4</li>
+</ol>
+"
   :modulo ("style=\"color: #98971a; font-weight: bold;\"" ;; Style is theme-dependent
            ))
 

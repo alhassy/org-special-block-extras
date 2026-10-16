@@ -265,6 +265,9 @@ both sides are filled by `org-test--fill', so EQUALS is stored, and read, at the
          (fill (lambda (s) (funcall trim (org-test--fill s (eq to 'latex)))))
          ;; The expectations were recorded with this setting; batch Emacs defaults it to nil.
          (org-src-preserve-indentation t)
+         ;; A src block is exported sans htmlize's colours, which vary by machine, theme, and whether htmlize is
+         ;; installed at all ---as on CI.
+         (org-html-htmlize-output-type nil)
          (defs (cond
                 ((null using) nil)
                 ;; Single (org-defblock ...) form → wrap in list.

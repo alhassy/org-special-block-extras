@@ -22,6 +22,7 @@
   "(INPUT, BACKEND) ↦ body-only BACKEND export of Org INPUT, with `gensym', Org's ids, and machine-specific values pinned.
 Headings export sans table of contents and section numbers, which would only distract from the example."
   (let ((seed 0)
+        (org-html-htmlize-output-type nil)   ; htmlize's colours vary by machine, and CI has no htmlize.
         (user-full-name "Musa Al-hassy")
         (emacs-version "29.4")
         (org-export-with-toc nil)
