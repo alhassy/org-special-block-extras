@@ -32,11 +32,14 @@
   "The colours that are each a block and a link; e.g., #+begin_red and red:𝒳.  Each is named alike in HTML and LaTeX.")
 
 (defun org--color-text (backend colour text)
-  "(BACKEND, COLOUR, TEXT) ↦ TEXT shown in COLOUR; LaTeX via \\color, and HTML (the default) via a styled span."
-  (format (pcase backend
-            ('latex "\\begingroup\\color{%s}%s\\endgroup\\,")
-            (_      "<span style=\"color:%s;\">%s</span>"))
-          colour text))
+  "(BACKEND, COLOUR, TEXT) ↦ TEXT shown in COLOUR; LaTeX via \\color, and HTML (the default) via a styled span.
+In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or navy, is named first."
+  (pcase backend
+    ('latex (if (memq (intern (format "%s" colour)) org--named-colors)
+                (format "\\begingroup\\color{%s}%s\\endgroup\\," colour text)
+              (format "%s\\begingroup\\color{osbe-color}%s\\endgroup\\,"
+                      (org--latex-define-color "osbe-color" colour) text)))
+    (_ (format "<span style=\"color:%s;\">%s</span>" colour text))))
 
 (dolist (colour org--named-colors)
   (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))])

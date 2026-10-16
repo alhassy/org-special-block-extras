@@ -19,7 +19,9 @@ Look at my text, it's cyan!
 
 green:Look
 blue:Here
-orange:Buddo!"
+orange:Buddo!
+
+[[color:#ff0066][Any hex colour]], [[color:navy][any colour's name]], and [[red:][a described red link]]."
   :html "<span style=\"color:red;\">
 <p>
 Look at my text, it's red!
@@ -42,6 +44,11 @@ Look at my text, it's cyan!
 <span style=\"color:green;\">Look</span>
 <span style=\"color:blue;\">Here</span>
 <span style=\"color:orange;\">Buddo</span>!
+</p>
+
+<p>
+<span style=\"color:#ff0066;\">Any hex colour</span>, <span style=\"color:navy;\">any colour's
+name</span>, and <span style=\"color:red;\">a described red link</span>.
 </p>"
   :latex "\\begingroup\\color{red}
 Look at my text, it's red!
@@ -57,4 +64,8 @@ Look at my text, it's cyan!
 
 \\begingroup\\color{green}Look\\endgroup\\,
 \\begingroup\\color{blue}Here\\endgroup\\,
-\\begingroup\\color{orange}Buddo\\endgroup\\,!")
+\\begingroup\\color{orange}Buddo\\endgroup\\,!
+
+\\definecolor{osbe-color}{HTML}{ff0066}\\begingroup\\color{osbe-color}Any hex colour\\endgroup\\,,
+\\definecolor{osbe-color}{rgb}{0.000,0.000,0.502}\\begingroup\\color{osbe-color}any colour's
+name\\endgroup\\,, and \\begingroup\\color{red}a described red link\\endgroup\\,.")

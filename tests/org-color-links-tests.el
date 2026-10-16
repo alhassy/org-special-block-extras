@@ -102,5 +102,17 @@ Do [[highlight:pink][read this]] twice."
   (should (string-match-p ">🎨</button>" (org-export-string "\n[[palette:]]")))
   (should (equal "" (org-export-string "\n[[palette:][Pick a background]]" 'latex))))
 
+(org-deftest "in Emacs, a colour link shows its text in its colour: a named one, color: by name or hex; issue #58" [color]
+  :text "
+[[color:red][this is red text]]
+[[color:#ff0066][pinkish text]]
+[[red:][hey]]
+[[red:This will appear red]]"
+  (font-lock-ensure)
+  (pcase-dolist (`(,text ,colour) '(("this is red" "red") ("pinkish" "#ff0066") ("hey" "red") ("This will" "red")))
+    (goto-char (point-min))
+    (search-forward text)
+    (should (equal (plist-get (get-text-property (1- (point)) 'face) :foreground) colour))))
+
 (provide 'org-color-links-tests)
 ;;; org-color-links-tests.el ends here

@@ -4335,6 +4335,18 @@ from∘to m = {! try it! }
   => [!WARNING]=; since alerts are untitled, a custom title becomes its bold first paragraph.
   See [[#Markdown-export][Markdown export]] for what the other blocks become.
 
+** Colours ---=red:𝒳=, =[[color:#ff0066][𝒳]]=, and =#+begin_red=
+  :PROPERTIES:
+  :CUSTOM_ID: Colours-links
+  :END:
+
+  Each of the 19 colours that HTML and LaTeX's =xcolor= share ---black, blue, brown, cyan, darkgray, gray,
+  green, lightgray, lime, magenta, olive, orange, pink, purple, red, teal, violet, white, and yellow--- is a
+  block, a link, and a tag; =color= takes any other, by name or hex code. In Emacs, too, each such link
+  shows its text in its colour, as soon as =org-special-block-extras-mode= is on.
+
+  osbe-example:colors
+
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:
   :CUSTOM_ID: Highlights
