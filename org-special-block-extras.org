@@ -4570,6 +4570,36 @@ Mind the gap.
   registers any function of no arguments, just as =C-c C-c= handlers are registered ---see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/org-special-block-indirect-edit.el][org-special-block-indirect-edit.el]].
 
+** =C-c C-v C-d= to split a block in two
+  :PROPERTIES:
+  :CUSTOM_ID: C-c-C-v-C-d-to-split-a-block
+  :END:
+
+  Just as =C-c C-v C-d= splits a src block at point, so too it splits any special block, after
+  [[https://scripter.co/splitting-an-org-block-into-two/][Kaushal Modi's trick]]; each piece keeps the block's whole =#+begin_= line, header arguments
+  and all. By way of example, with point at the start of =Two.=,
+  #+begin_example
+,#+begin_tip Mind
+One.
+Two.
+,#+end_tip
+  #+end_example
+  becomes
+  #+begin_example
+,#+begin_tip Mind
+One.
+,#+end_tip
+
+,#+begin_tip Mind
+Two.
+,#+end_tip
+  #+end_example
+
+  At a line's end, the split falls after that line; an active region is split off as a piece of
+  its own; and =C-u C-c C-v C-d= puts a heading between the pieces. In a src block within a
+  special block, it is the src block that is split, as ever. The command is
+  ~org-special-block-split~, should you want it on a key of its own.
+
 ** Hover for a block's arguments: =eldoc=
   :PROPERTIES:
   :CUSTOM_ID: eldoc-for-blocks-and-links

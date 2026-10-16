@@ -44,6 +44,7 @@
 (require 'seq)
 (require 'lf)
 (require 'org-special-block-indirect-edit)
+(require 'org-special-block-split)
 (require 'org-deftag)
 
 ;;;; Core
