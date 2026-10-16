@@ -434,6 +434,26 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (dolist (buffer (buffer-list))
       (with-current-buffer buffer (remove-hook 'completion-at-point-functions #'org--special-block-capf t)))))
 
+;;;;; Exporting sans the mode
+
+(defun org--warn-when-mode-off (&rest _)
+  "Before an export with `org-special-block-extras-mode' off, warn of the first of our blocks in the buffer, if any.
+Our links are live once the package is loaded, yet our blocks only while the mode is on; so a #+begin_rremark would
+otherwise export, silently, as Org's own \\begin{rremark}, while rremark:foo is red.  See issue #59."
+  (unless org-special-block-extras-mode
+    (let ((case-fold-search t))
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward (format "^[ \t]*#\\+begin_%s\\_>"
+                                         (regexp-opt (--map (format "%s" it) org--supported-blocks) t))
+                                 nil t)
+          (display-warning 'org-special-block-extras
+                           (format "#+begin_%s exports as Org's own special block, since `org-special-block-extras-mode' \
+is off; turn it on, say by (add-hook 'org-mode-hook #'org-special-block-extras-mode)" (match-string 1))))))))
+
+;; Hooked once the package is loaded, as our links are, rather than by the mode it warns about.
+(add-hook 'org-export-before-parsing-functions #'org--warn-when-mode-off)
+
 (provide 'org-special-block-extras)
 
 ;;; org-special-block-extras.el ends here

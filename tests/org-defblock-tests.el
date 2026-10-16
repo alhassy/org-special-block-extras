@@ -184,5 +184,28 @@ Done.
 #+end_story")))))
 
 
+
+(deftest "with the mode off, exporting one of our blocks warns that it exports as Org's own; issue #59" [mode]
+  (let (warnings)
+    (cl-letf (((symbol-function 'display-warning) (lambda (_type message &rest _) (push message warnings))))
+      (unwind-protect
+          (progn
+            (org-special-block-extras-mode -1)
+            ;; As reported: the link is ours, the block Org's own.  Org's exporter, since `org-export-string' would
+            ;; turn the mode on again.
+            (should (s-contains-p "\\begin{rremark}" (org-export-string-as "
+#+begin_rremark Jasim
+Tighten this sentence.
+#+end_rremark" 'latex t)))
+            (should (string-match-p "#\\+begin_rremark exports as Org's own special block" (car warnings))))
+        (org-special-block-extras-mode 1))
+      ;; With the mode on, the block is ours, and nothing is said.
+      (setq warnings nil)
+      (should (s-contains-p "\\color{red}" (org-export-string "
+#+begin_rremark Jasim
+Tighten this sentence.
+#+end_rremark" 'latex)))
+      (should-not warnings))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

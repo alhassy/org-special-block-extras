@@ -8378,6 +8378,9 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
 ;; ⟨1′⟩ Or use: “M-x org-special-block-extras-mode” to turn it on/off
 #+END_SRC
 
+Our links work as soon as the package is loaded, yet our blocks need the mode on: sans it, a
+=#+begin_rremark= exports as Org's own special block ---so Emacs warns, naming the block.
+
 *Or* with [[https://github.com/alhassy/emacs.d#use-package-the-start-of-initel][use-package]]:
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package org-special-block-extras
