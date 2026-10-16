@@ -4555,10 +4555,15 @@ Mind the gap.
   :CUSTOM_ID: C-c-quote-for-your-own-blocks
   :END:
 
-  Just as =C-c '= edits a src block in a buffer of its language, so too our blocks may opt in:
-  the option =:edit-indirect-mode MODE= makes =C-c '= open the block's contents in a buffer in
-  =MODE=; =C-c '= again writes them back. By way of example, the [[doc:org-block/graph][graph]] block's contents are
-  an Org list, so it is declared with ~:edit-indirect-mode org-mode~.
+  Just as =C-c '= edits a src block in a buffer of its language, so too it edits every special
+  block ---ours, or any =#+begin_𝒳= at all--- in an Org buffer; =C-c '= again writes the contents
+  back. Org keeps all it already does: a table, a link, or a src block within a special block is
+  edited as ever.
+
+  A block may instead choose its buffer's mode: the option =:edit-indirect-mode MODE= makes
+  =C-c '= open the block's contents in a buffer in =MODE=. By way of example, the [[doc:org-block/graph][graph]] block
+  is declared with ~:edit-indirect-mode org-graph-edit-mode~, an Org mode that completes Graphviz
+  attributes.
 
   #+begin_src emacs-lisp
 (org-defblock poem (&optional title :edit-indirect-mode text-mode)

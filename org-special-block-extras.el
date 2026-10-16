@@ -388,8 +388,8 @@ On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, t
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
 On a #+begin_NAME line, or a NAME: link, eldoc shows the block's arguments and gist;
-C-c ' edits a block declared with `:edit-indirect-mode', such as graph, in its own buffer;
-and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
+C-c ' edits any special block's contents in an Org buffer, or one of its `:edit-indirect-mode';
+C-c C-v C-d splits any special block in two at point; and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
 
 This minor mode uses “untrusted data from untrusted websites” when exporting
 to HTML, this is done for beautiful tooltips or styles.
