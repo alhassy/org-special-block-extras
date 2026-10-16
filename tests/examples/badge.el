@@ -70,7 +70,7 @@ asterisks are passed unaltered into the first argument
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-nil?logo=nil\">
+<img src=\"https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-green\">
 </p></li>
 
 <li><p>
@@ -86,7 +86,7 @@ We can use spaces, commas, dashes, and percentage symbols in the first argument
 </p>
 
 <p>
-<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a>
+<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange\"></a>
 </p></li>
 
 <li><p>
@@ -94,7 +94,7 @@ It works when only first 2 arguments are given: Default colour &amp; logo are gr
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\">
+<img src=\"https://img.shields.io/badge/key-value-green\">
 </p></li>
 
 <li><p>
@@ -102,7 +102,7 @@ When only a key is provided, the value slot is shown as an empty green stub
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/key--nil?logo=nil\">
+<img src=\"https://img.shields.io/badge/key--green\">
 </p></li>
 
 <li><p>
@@ -111,7 +111,7 @@ When only a value is provided, only the value is shown in a default green
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/-value-nil?logo=nil\">
+<img src=\"https://img.shields.io/badge/-value-green\">
 </p></li>
 
 <li><p>
@@ -119,7 +119,7 @@ It's only a green stub when provided with an empty key and empty value
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/--green?logo=nil\">
+<img src=\"https://img.shields.io/badge/--green\">
 </p></li>
 
 <li><p>
@@ -127,7 +127,7 @@ It's only a green stub when we use no options at all
 </p>
 
 <p>
-<img src=\"https://img.shields.io/badge/--nil?logo=nil\">
+<img src=\"https://img.shields.io/badge/--green\">
 </p></li>
 </ol>"
   :latex "\\begin{enumerate}

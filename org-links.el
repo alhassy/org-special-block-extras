@@ -133,7 +133,7 @@ Examples:
   :export (cond ((equal o-backend 'latex) (format "\\texttt{%s}" the-label))
                 ;; The style is to remove the underlining caused by <abbr>.
                 (tooltip? (org--html-tooltip
-                           (format "%s ∷ %s<br>%s" the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip))
+                           (org-ospe-html-export-preserving-whitespace (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip))
                            keystrokes
                            "border: none; text-decoration: none;"))
                 (t keystrokes)))
@@ -322,11 +322,12 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                        (if social-shields-url
                            `(format ,social-shields-url o-label)
                          `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">" ,social-shields-name o-label))
-                     '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s?logo=%s\">"
+                     ;; An omitted, or blank, colour is green; an omitted logo is no logo at all.
+                     '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s%s\">"
                               (url-hexify-string (s-replace "-" "--" key))
                               (url-hexify-string (s-replace "-" "--" (or value "")))
-                              color
-                              logo)))
+                              (or (org-string-nw-p color) "green")
+                              (if (org-string-nw-p logo) (format "?logo=%s" logo) ""))))
              (target ,(if social-shields-name `(format ,social-url o-label) 'url)))
          (pcase target
            ("here" (format "<a id=\"%s\" href=\"#%s\">%s</a>" key key img))
@@ -597,6 +598,19 @@ We use this listing to actually print a glossary using
 
 ;; WHERE ...
 
+(defun org--tooltip-emphasis (marker tag s)
+  "(MARKER, TAG, S) ↦ S with each Org emphasis MARKER…MARKER as <TAG>…</TAG>; e.g., (\"*\" \"strong\" \"a *b* c\") ↦ \"a <strong>b</strong> c\".
+As in Org, a MARKER opens after a line's start, a space, or an opening bracket, and before a non-space; it closes
+after a non-space, and before a line's end, a space, or punctuation; emphasis never spans lines."
+  (let ((m (regexp-quote marker)))
+    ;; Twice, since one match's closing border may be the next one's opening border; e.g., “*a* *b*”.
+    (dotimes (_ 2)
+      (setq s (replace-regexp-in-string
+               (format "\\(^\\|[[:space:]('\"{]\\)%s\\([^[:space:]%s]\\|[^[:space:]%s][^\n]*?[^[:space:]]\\)%s\\($\\|[][[:space:].,:;!?'\")}-]\\)"
+                       m marker marker m)
+               (format "\\1<%s>\\2</%s>\\3" tag tag) s t)))
+    s))
+
 (defun org-ospe-html-export-preserving-whitespace (s)
   "Make Org-markup'd string S ready for HTML presentation, preserving whitespace.
 
@@ -604,33 +618,36 @@ This is orthogonal to the  `org-export-string-as' command; i.e.,
 (org-export-string-as s 'html :body-only-please) does something
 else!  In particular, what this yields is an HTML rendition that
 does not account for whitespace, such as indentation and
-newlines.
+newlines.  In Markdown, which has no tooltipster, S is instead escaped as a plain-text title attribute.
 "
-  ;; Make it look pretty!
-  (thread-last s
-               (s-replace-regexp "\\#\\+begin_src [^\n]*\n" "<pre class='tooltip'>")
-               (s-replace-regexp "\\( \\)*\\#\\+end_src\n" "</pre>")
-               (s-replace-regexp "\\#\\+begin_export [^\n]*\n" "")
-               (s-replace-regexp "\\( \\)*\\#\\+end_export" "")
-               (s-replace "  " "&emsp;") ; Preserve whitespace
-               (s-replace "\n" "<br>")   ; Preserve newlines
-               (s-replace-regexp "\\#\\+begin_example<br>" "")
-               (s-replace-regexp "\\#\\+end_example<br>" "")
-               ;; Translate Org markup
-               ;; Only replace /.*/ by <em>.*<em> when it does not have an alphanum,:,/,< before it.
-               (s-replace-regexp "\\([^a-z0-9A-Z:/<]\\)/\\(.+?\\)/" "\\1<em>\\2</em>")
-               (s-replace-regexp "\\*\\(.+?\\)\\*" "<strong>\\1</strong>")
-               (s-replace-regexp "\\~\\([^ ].*?\\)\\~" "<code>\\1</code>")
-               (s-replace-regexp "\\$\\(.+?\\)\\$" "<em>\\1</em>")
-               (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
-               ;; 5+ dashes result in a horizontal line
-               (s-replace-regexp "-----+" "<hr>")
-               ;; Spacing in math mode
-               (s-replace-regexp "\\\\quad" "&#x2000;")
-               (s-replace-regexp "\\\\," "&#8194;") ;; en space
-               (s-replace-regexp "\\\\;" "&#8195;") ;; em space
-               ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
-               (s-replace-regexp "\\\"" "''")))
+  ;; Markdown has no tooltipster to render HTML in a tooltip, so its title attribute is plain text.
+  (if (org-export-markdown-p)
+      (s-replace-all '(("&" . "&amp;") ("\"" . "&quot;") ("<" . "&lt;") (">" . "&gt;") ("\n" . "&#10;")) s)
+    ;; Make it look pretty!
+    (thread-last s
+                 (s-replace-regexp "\\#\\+begin_src [^\n]*\n" "<pre class='tooltip'>")
+                 (s-replace-regexp "\\( \\)*\\#\\+end_src\n" "</pre>")
+                 (s-replace-regexp "\\#\\+begin_export [^\n]*\n" "")
+                 (s-replace-regexp "\\( \\)*\\#\\+end_export" "")
+                 ;; Translate Org markup, by Org's own borders, before newlines become <br>; so “(* 25)” and
+                 ;; “/etc/passwd” are Lisp and paths, not emphasis.
+                 (org--tooltip-emphasis "/" "em")
+                 (org--tooltip-emphasis "*" "strong")
+                 (org--tooltip-emphasis "~" "code")
+                 (org--tooltip-emphasis "$" "em")
+                 (s-replace "  " "&emsp;") ; Preserve whitespace
+                 (s-replace "\n" "<br>")   ; Preserve newlines
+                 (s-replace-regexp "\\#\\+begin_example<br>" "")
+                 (s-replace-regexp "\\#\\+end_example<br>" "")
+                 (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
+                 ;; 5+ dashes result in a horizontal line
+                 (s-replace-regexp "-----+" "<hr>")
+                 ;; Spacing in math mode
+                 (s-replace-regexp "\\\\quad" "&#x2000;")
+                 (s-replace-regexp "\\\\," "&#8194;") ;; en space
+                 (s-replace-regexp "\\\\;" "&#8195;") ;; em space
+                 ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
+                 (s-replace-regexp "\\\"" "''"))))
 
 ;;;;;;; Documentation
 

@@ -99,3 +99,16 @@
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html))
       (should-not (s-contains-p "<svg" html)))))
+
+;;; Markdown export
+
+(deftest "`#+begin_graph' Markdown export writes the :file image and links it, as its renderers strip base64 <img>s"
+  (require 'ox-md)
+  (let (written)
+    (cl-letf (((symbol-function 'org-graph--render) (lambda (_dot _kind file) (setq written file) t)))
+      ;; The header reads :file foo.png as the symbol foo.png.
+      (let* ((org-export-current-backend 'md)
+             (md (org-block/graph 'html "
++ A" nil :file 'foo.png)))
+        (should (equal written "foo.png"))
+        (should (s-contains-p "[[file:foo.png]]" md))))))

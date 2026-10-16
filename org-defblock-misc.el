@@ -122,10 +122,12 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
 
 (org-defblock latex-definitions nil
               "Declare but do not display the CONTENTS according to the BACKEND."
-              (format (pcase backend
-                        ('html "<p style=\"display:none\">\\[%s\\]</p>")
-                        (_ "%s"))
-                      raw-contents))
+              ;; Markdown renderers strip the HTML's display:none, which would leave the definitions on show.
+              (if (org-export-markdown-p) ""
+                (format (pcase backend
+                          ('html "<p style=\"display:none\">\\[%s\\]</p>")
+                          (_ "%s"))
+                        raw-contents)))
 
 ;;;;; Blocks
 ;;;;;; solution
@@ -151,26 +153,31 @@ finally, the source-result fragments can be shown in a STYLE
 that is either “parallel” (default) or “sequential”.
 
 SEP is the separator; e.g., a rule ‘<hr>'.
-"
-              (-let [text (concat
-                           ;; Source
-                           (thread-last raw-contents
-                                        (format (if (equal backend 'html)
-                                                    "<div ><pre class=\"src src-org\">%s</pre></div>"
-                                                  "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
-                                        org-export
-                                        (org--blockcall box source :background-color source-color)
-                                        org-export)
-                           ;; Separator
-                           sep
-                           ;; Result
-                           (thread-last raw-contents
-                                        (org--blockcall box result :background-color result-color)
-                                        org-export))]
 
-                (if (equal style "parallel")
-                    (org--blockcall parallel "2" :bar nil text)
-                  (concat "#+end_export\n" text "\n#+begin_export"))))
+In Markdown, the source is a fenced org block above its result, each under its label in bold.
+"
+              (if (org-export-markdown-p)
+                  (org-parse (format "*%s*\n#+begin_src org\n%s\n#+end_src\n\n*%s*\n\n%s"
+                                     source (org-escape-code-in-string raw-contents) result raw-contents))
+                  (-let [text (concat
+                               ;; Source
+                               (thread-last raw-contents
+                                            (format (if (equal backend 'html)
+                                                        "<div ><pre class=\"src src-org\">%s</pre></div>"
+                                                      "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
+                                            org-export
+                                            (org--blockcall box source :background-color source-color)
+                                            org-export)
+                               ;; Separator
+                               sep
+                               ;; Result
+                               (thread-last raw-contents
+                                            (org--blockcall box result :background-color result-color)
+                                            org-export))]
+
+                    (if (equal style "parallel")
+                        (org--blockcall parallel "2" :bar nil text)
+                      (concat "#+end_export\n" text "\n#+begin_export")))))
 
 ;;;;;; stutter
 (org-defblock stutter (reps 2)
@@ -196,12 +203,26 @@ In a link, no quotes are needed."
    The main argument, COLOR, indicates which color to use.
 
 For LaTeX, this becomes “fill in the blanks”, with the answers
-in the footnotes."
-              (if (equal backend 'latex)
-                  (s-replace-regexp
-                   (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
-                   "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
-                   contents)
+in the footnotes; for Markdown, whose renderers strip <style>, numbered
+blanks with the answers folded away beneath them."
+              (cond
+               ((org-export-markdown-p)
+                (let* ((answers nil)
+                       (blanked (replace-regexp-in-string
+                                 (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+                                 (lambda (it)
+                                   (push (match-string 1 it) answers)
+                                   (format "@@html:<ins>&emsp;%s&emsp;</ins>@@" (length answers)))
+                                 raw-contents t t)))
+                  (org-parse (format "%s\n\n#+html: <details><summary>Answers</summary>\n\n%s\n\n#+html: </details>"
+                                     blanked
+                                     (s-join "\n" (--map-indexed (format "%s. %s" (1+ it-index) it) (reverse answers)))))))
+               ((equal backend 'latex)
+                (s-replace-regexp
+                 (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
+                 "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
+                 contents))
+               (t
                 ;; The styling depends only on COLOR, so a class per colour serves every spoiler of that colour.
                 (-let [class (format "spoiler-%s" color)]
                   (concat
@@ -211,7 +232,7 @@ in the footnotes."
                    (s-replace-regexp
                     (concat (regexp-quote left) "\\(.*?\\)" (regexp-quote right))
                     (format "@@html:<span class=\"%s\"> \\1 </span>@@" class)
-                    contents)))))
+                    contents))))))
 
 ;;;;;; Remark
 
@@ -238,9 +259,16 @@ Remarks are hidden from the export when `org-hide-editor-comments' is
 non-nil.  For just one file, write “#+bind: org-hide-editor-comments t”
 in it; that needs `org-export-allow-bind-keywords' set to t, which we
 leave to you, since #+bind lets a document set any variable.
-"
-              (if org-hide-editor-comments
-                  ""
+
+In Markdown, a remark block is GitHub's “> [!NOTE]” alert, titled EDITOR; as a link, it stays HTML."
+              (cond
+               (org-hide-editor-comments "")
+               ((and (org-export-markdown-p) (not contents-occur-as-link-description))
+                (-let [(this that) (s-split "\\#\\+replacewith:" raw-contents)]
+                  (org-parse (org--markdown-alert "note" editor
+                                                  (concat (if that (format "*Replace:* %s\n\n*With:* %s" (s-trim this) (s-trim that)) raw-contents)
+                                                          (if (org-string-nw-p signoff) (format "\n\n%s" signoff) ""))))))
+               (t
                 (-let* (;; Are we in the html backend?
                         (tex? (equal backend 'latex))
 
@@ -277,7 +305,7 @@ leave to you, since #+bind lets a document set any variable.
                        (format (pcase backend
                                  ('latex (format "{\\color{%%s}%s %%s %%s %%s %%s}" (if strong "\\bfseries" "")))
                                  (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
-                               color edcomm-begin contents′ signoff edcomm-end))))
+                               color edcomm-begin contents′ signoff edcomm-end)))))
 
 ;;;;;; Style ---CSS for the exported page
 

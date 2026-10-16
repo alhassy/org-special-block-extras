@@ -49,6 +49,16 @@ lets a derived backend (say, a blog's `org-export-define-derived-backend' of
         ((org-export-derived-backend-p backend 'latex) 'latex)
         (t backend)))
 
+(defun org-export-markdown-p ()
+  "↦ non-nil while exporting to Markdown; i.e., the export's backend is, or derives from, `md' ---so `gfm' too.
+Since `md' derives from `html', block and link bodies see `backend' as `html' then; see `org--base-backend'."
+  (and org-export-current-backend (org-export-derived-backend-p org-export-current-backend 'md)))
+
+(defun org--markdown-alert (type title body)
+  "(TYPE, TITLE, BODY) ↦ Org quote that ox-md renders as GitHub's alert “> [!TYPE]”, opening with TITLE in bold, if any.
+The marker is a paragraph of its own, lest ox-gfm, which unfills paragraphs, join it to the next line."
+  (format "#+begin_quote\n[!%s]\n\n%s%s\n#+end_quote" (upcase type) (if title (format "*%s*\n\n" title) "") body))
+
 ;;;;; org-deflink
 
 ;; We define a parent keymap that org-deflink keymaps inherit from.

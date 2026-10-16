@@ -4260,6 +4260,7 @@ from∘to m = {! try it! }
 
   Exported to Markdown (=ox-md= or =ox-gfm=), a callout becomes GitHub's own alert,
   => [!WARNING]=; since alerts are untitled, a custom title becomes its bold first paragraph.
+  See [[#Markdown-export][Markdown export]] for what the other blocks become.
 
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:
@@ -4286,6 +4287,51 @@ from∘to m = {! try it! }
 h2 { color: teal; }
 ,#+end_style
   #+end_example
+
+** Markdown export ---What survives GitHub, and how to change it
+  :PROPERTIES:
+  :CUSTOM_ID: Markdown-export
+  :END:
+
+  Exporting to Markdown, with =ox-md= or =ox-gfm=, our blocks see =backend= as =html=, since =md=
+  derives from it; ~(org-export-markdown-p)~ tells the two apart. A Markdown renderer, such as
+  GitHub's, keeps only some HTML: it strips every =style=, =class=, =<style>=, and =<font>=, yet
+  keeps =<details>=, =<kbd>=, =<mark>=, =<ins>=, =<abbr title>=, =<img>=, and =$$= maths.
+
+  + Work as-is :: =badge=, =melpa=, =kbd=, =details=, =solution=, =rename=, and =show= export
+    just as they do to HTML, and so render on GitHub ---sans colours.
+
+  + Markdown of their own :: these blocks export to Markdown idioms, rather than HTML.
+    | Block                   | Markdown export                                                 |
+    |-------------------------+-----------------------------------------------------------------|
+    | =note=, =tip=, …        | GitHub's own alert, => [!TIP]=; a custom title is a bold line    |
+    | =box=                   | a quote, opening with its title in bold                         |
+    | =remark=                | a => [!NOTE]= alert, titled by its editor                        |
+    | =highlight=             | =<mark>=, which GitHub shows yellow, whatever the colour        |
+    | =spoiler=               | numbered blanks, with the answers folded away beneath           |
+    | =tree=                  | =$$…$$= displays, as GitHub's maths knows no =\[…\]=           |
+    | =org-demo=              | the source as a code block, then its result                     |
+    | =doc=, =tooltip=, =kbd= | =<abbr>= with a plain-text =title=, as there is no tooltipster  |
+    | =latex-definitions=     | nothing, lest its definitions show                              |
+    | =graph=                 | its image, written to its =:file= (else =graph-HASH.png=), linked |
+
+  + Plain HTML :: every other block emits the HTML it always does, which a given Markdown
+    renderer may not honour; e.g., on GitHub, colours ---=red:𝒳=, =#+begin_color=--- and
+    =parallel='s columns are stripped, leaving plain, stacked text. Then there are =style=,
+    =palette=, =html-export-style=, and =toggle-details=, which are HTML-only by design: they
+    dress the page itself, and Markdown has no say over the page.
+
+  Dislike how a block B exports to Markdown? Advise ~org-block/B~ on your own machine; its
+  result is Org, so the export makes of it whatever it does of any Org. By way of example,
+  boxes between horizontal rules:
+  #+begin_src emacs-lisp
+(advice-add 'org-block/box :around
+            (lambda (box backend raw-contents &rest args)
+              "In Markdown, a box is its bold title and text, between rules; elsewhere, as before."
+              (if (org-export-markdown-p)
+                  (format "-----\n*%s*\n\n%s\n-----" (car args) raw-contents)
+                (apply box backend raw-contents args))))
+  #+end_src
 
 * Make your own blocks and links ---A developer's guide
   :PROPERTIES:

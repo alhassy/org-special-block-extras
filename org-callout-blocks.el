@@ -57,23 +57,14 @@ HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, a
                        "<p style=\"color: %s; font-weight: bold; margin: 0;\">%s %s</p>\n%s\n</div>")
                colour colour icon title contents))))
 
-(defun org--callout-gfm (name title default-title raw-contents)
-  "(NAME, TITLE, DEFAULT-TITLE, RAW-CONTENTS) ↦ Org quote that ox-md renders as GitHub's alert “> [!NAME]”.
-GitHub alerts are untitled, so a TITLE other than DEFAULT-TITLE becomes a bold first paragraph.
-The marker is a paragraph of its own, lest ox-gfm, which unfills paragraphs, join it to the next line."
-  (format "#+begin_quote\n[!%s]\n\n%s%s\n#+end_quote"
-          (upcase (symbol-name name))
-          (if (equal title default-title) "" (format "*%s*\n\n" title))
-          raw-contents))
-
 ;; No links or tags: a callout is a whole paragraph, and a section tagged :note: is too common to claim.
-;; Markdown derives from HTML, so `backend' reads `html' there; `org-export-current-backend' tells them apart.
+;; In Markdown, a callout is GitHub's own alert; being untitled, it shows only a TITLE other than its default.
 (pcase-dolist (`(,name ,colour ,icon ,purpose) org-callouts)
   (let ((default-title (capitalize (symbol-name name))))
     (eval `(org-defblock ,name (&optional (title ,default-title) :link nil :tag nil)
              ,(format "%s\nA callout, titled TITLE, with a %s rule down its left; see `org-callouts'." purpose colour)
-             (if (and org-export-current-backend (org-export-derived-backend-p org-export-current-backend 'md))
-                 (org-parse (org--callout-gfm ',name title ,default-title raw-contents))
+             (if (org-export-markdown-p)
+                 (org-parse (org--markdown-alert ,(symbol-name name) (unless (equal title ,default-title) title) raw-contents))
                (org--callout backend ,colour ,icon title contents)))
           t)))
 

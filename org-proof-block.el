@@ -154,10 +154,13 @@ the following proves P = R.
       + Sym :: Q(Y) = R
         - R = Q(Y)
           - ✓
-  #+end_tree"
-              (mapconcat (lambda (it) (format "\\[%s\\]" (org--list-to-math it)))
-                         (cdr (org--parse-plain-list raw-contents "tree"))
-                         ""))
+  #+end_tree
+
+In Markdown, each tree is a $$…$$ display, since GitHub's maths knows no \\[…\\]."
+              (-let [md? (org-export-markdown-p)]
+                (mapconcat (lambda (it) (format (if md? "$$%s$$" "\\[%s\\]") (org--list-to-math it)))
+                           (cdr (org--parse-plain-list raw-contents "tree"))
+                           (if md? "\n\n" ""))))
 
 (provide 'org-proof-block)
 ;;; org-proof-block.el ends here

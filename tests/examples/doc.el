@@ -41,7 +41,7 @@ The <code>doc</code> link type can be used to show tooltips for Emacs Lisp comma
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"Thread FORMS elements as the last argument of their successor.<br>Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>&emsp;&emsp;&emsp;(<em> 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent to:<br>&emsp;&emsp;(+ 40 (- (</em> 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list before<br>threading.<br><br>(fn &rest FORMS)\">thread-last</abbr>
+<abbr class=\"tooltip\" title=\"Thread FORMS elements as the last argument of their successor.<br>Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>&emsp;&emsp;&emsp;(/ 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent to:<br>&emsp;&emsp;(+ 40 (- (/ 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list before<br>threading.<br><br>(fn &rest FORMS)\">thread-last</abbr>
 </p>
 
 <p>

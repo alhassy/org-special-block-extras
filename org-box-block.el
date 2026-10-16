@@ -76,8 +76,11 @@ Notice that prefixing colours with ‘inset’ causes the colour to be within th
 rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
 
 The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox package."
-              (pcase backend
+requires the tcolorbox package; Markdown, sans colours, gets a quote opening with TITLE in bold."
+              (pcase (if (org-export-markdown-p) 'md backend)
+                ('md (org-parse (format "#+begin_quote\n%s%s\n#+end_quote"
+                                        (if (org-string-nw-p (format "%s" title)) (format "*%s*\n\n" title) "")
+                                        raw-contents)))
                 ;; Colours are named first, since tcolorbox options cannot take hex codes such as #CCFFCC.
                 ('latex
                  (concat (org--latex-define-color "osbe-box-back" (or background-color "red!5!white"))

@@ -56,8 +56,13 @@
 
   [[highlight:pink][Read this twice.]]
 
-For LaTeX, a hex COLOR such as #e5f5e5 needs no quotes; a block's text is a full-width paragraph box."
-              (pcase backend
+For LaTeX, a hex COLOR such as #e5f5e5 needs no quotes; a block's text is a full-width paragraph box.
+In Markdown, the text is <mark>ed, paragraph by paragraph, which GitHub shows yellow whatever COLOR is."
+              (pcase (if (org-export-markdown-p) 'md backend)
+                ('md (if contents-occur-as-link-description
+                         (format "<mark>%s</mark>" contents)
+                       (org-parse (format "@@html:<mark>@@%s@@html:</mark>@@"
+                                          (s-replace-regexp "\n\n+" "@@html:</mark>@@\n\n@@html:<mark>@@" (s-trim raw-contents))))))
                 ('latex (concat (org--latex-define-color "osbe-highlight" color)
                                 (if contents-occur-as-link-description
                                     (format "\\colorbox{osbe-highlight}{%s}" contents)

@@ -364,6 +364,7 @@ dot source, so re-exporting an unchanged graph rewrites one file rather than add
 For HTML export: if :svg t is set, embeds an inline <svg> element (tooltips
 are preserved as <title> attributes and appear on hover in browsers).
 Otherwise, renders to an inline base64 PNG.
+For Markdown, it writes the image file and links it, as for a named graph.
 For other backends it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
 
 Within the block body:
@@ -413,11 +414,13 @@ Example:
       + returns :: C
   #+end_graph"
   (let* ((dot     (org--graph-raw->dot (org--graph-expand-macros raw-contents) main-arg org--handler-args))
-         (outfile (or file (org-graph--named-file org--handler-anchor svg)
+         ;; The header reads :file foo.png as the symbol foo.png; we want its name.
+         (outfile (or (and file (format "%s" file)) (org-graph--named-file org--handler-anchor svg)
                       (format "graph-%s.png" (substring (md5 dot) 0 12)))))
     (pcase backend
       ;; A named graph is a figure: an image link, which the block's #+name: and #+caption: label, as with Babel's results.
-      ((guard org--handler-anchor)
+      ;; Markdown gets one too, since its renderers strip the inline base64 <img> that HTML gets.
+      ((guard (or org--handler-anchor (org-export-markdown-p)))
        (org-graph--render dot (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
        (org-parse (format "[[file:%s]]" outfile)))
       (`html
