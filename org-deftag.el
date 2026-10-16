@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 26.10.16
-;; Package-Requires: ((dash "2.18.1") (emacs "27.1") (org "9.6"))
+;; Package-Requires: ((dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, tags, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 

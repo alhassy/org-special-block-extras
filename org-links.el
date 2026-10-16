@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 26.10.16
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, links, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 

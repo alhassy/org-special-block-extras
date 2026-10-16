@@ -87,24 +87,15 @@ note text</p></template></abbr>&emsp13;
 (define-org-call-test "margin block produces a \\marginpar for LaTeX."
   :call (org-block/margin 'latex "note" nil :marker "†" :counter "footnote")
   :returns "#+begin_export latex
-\\!\\!${}^{\\textnormal{{\\thefootnote}}}$
-               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{minipage}{\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex}
-               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
-               \\footnotesize
-               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
-               \\color{gray!80}
-               {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
+\\!\\!\\stepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{gray!80}
+{\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
- #+end_export
+#+end_export
 note
 #+begin_export latex
-               \\end{minipage}
-               \\end{lrbox}
-               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}\\stepcounter{footnote}}
-               \\hspace{-1.9ex}
-               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax
+\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
+\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}
 #+end_export")
 
 ;;; style

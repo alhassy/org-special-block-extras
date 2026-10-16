@@ -4,7 +4,7 @@
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 26.10.16
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -30,12 +30,29 @@
 
 ;;;;;; Margin (LaTeX)
 
+(defun org--latex-margin-note (marker width color contents &optional step)
+  "(MARKER, WIDTH, COLOR, CONTENTS, STEP) ↦ LaTeX for MARKER in the text, and CONTENTS in the margin under MARKER, WIDTH
+wide and COLOR coloured; STEP, such as \\stepcounter{footnote}, runs first, so a MARKER of \\thefootnote is the new number.
+CONTENTS is saved in a minipage, then unfolded in the margin, since verbatim environments, such as src blocks', fail
+as an argument of \\marginpar."
+  ;; Outside the minipage, a newline is a space in the running text; so the commands there abut.  Within it, the
+  ;; contents are \\raggedright, not fully justified, and minted is shrunk to fit ---Hack!
+  (format (concat "%s${}^{\\textnormal{%s}}$"
+                  "\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}"
+                  "\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{%s}\n"
+                  "\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{%s}\n"
+                  "{\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n%s\n"
+                  "\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}"
+                  ;; The {} keeps the space after us, which TeX would otherwise skip as it follows a command.
+                  "\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}")
+          (or step "") marker width color marker contents))
+
 (org-defblock margin
               (marker nil
                       color "gray!80"
                       counter "footnote"
-                      ;; Width: https://tex.stackexchange.com/a/101861/69371
-                      width "\\paperwidth - \\textwidth - \\oddsidemargin - 1in - 3ex"
+                      ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
+                      width "\\marginparwidth"
                       :link [:display 'full
                              :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
               "Produce an HTML tooltip or a LaTeX margin note.
@@ -84,33 +101,18 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
               (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
                 (pcase backend
                   (`latex
-                   (setq marker (or marker (format "{\\the%s}" counter))) ;; "\\circ"
-                   (format "\\!\\!${}^{\\textnormal{%s}}$
-               \\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}
-               \\begin{minipage}{%s}
-               \\raggedright \\iffalse Otherwise default alignment is fully justified. \\fi
-               \\footnotesize
-               \\setminted{fontsize=\\footnotesize, breaklines} \\iffalse HACK! \\fi
-               \\color{%s}
-               {\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n %s
-               \\end{minipage}
-               \\end{lrbox}
-               \\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}%s}
-               \\hspace{-1.9ex}
-               \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax"
-                           marker
-                           width
-                           color
-                           marker
-                           (if (s-contains? "#+resize:" contents)
-                               (s-concat
-                                (s-replace "#+resize:"
-                                           "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
-                                           (s-trim contents))
-                                "\n\\end{tabular}}")
-                             (s-trim contents))
-                           stepcounter))
+                   ;; A block follows the newline, a space, after the word it remarks on; we swallow it.
+                   (concat
+                    "\\!\\!"
+                    (org--latex-margin-note (or marker (format "{\\the%s}" counter)) width color
+                                           (if (s-contains? "#+resize:" contents)
+                                               (s-concat
+                                                (s-replace "#+resize:"
+                                                           "#+latex: \\maxsizebox{1.3\\textwidth}{\\textheight}{\\begin{tabular}{l}\n"
+                                                           (s-trim contents))
+                                                "\n\\end{tabular}}")
+                                             (s-trim contents))
+                                           stepcounter)))
                   ;; HTML has no margin per se, so the note is a tooltip on its marker.
                   (_ (concat (org--html-tooltip raw-contents (or marker "∘"))
                              "&emsp13;")))))
@@ -143,6 +145,17 @@ which runs no script, keeps Org's own footnotes."
                                                 info))
                                      (format "id=\"%s\"" id))
                   after))))))
+
+(defun org--footnotes-in-margin (info backend)
+  "(INFO, BACKEND) ↦ INFO whose LaTeX footnotes are margin notes, as the margin block's are; e.g., A remark[fn::An aside.]
+is typeset with “An aside.” in the margin, numbered as footnotes are.  A footnote command of the user's own, such as a
+#+LATEX_FOOTNOTE_COMMAND: line, wins; as do Org's \\footnotemark, for footnotes in tables, and its references back."
+  (when (and (org-export-derived-backend-p backend 'latex)
+             (equal (plist-get info :latex-default-footnote-command) "\\footnote{%s%s}"))
+    ;; Org fills the two %s with the definition and its \label; stepping with \refstepcounter lets that \label name it.
+    (plist-put info :latex-default-footnote-command
+               (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" "%s%s" "\\refstepcounter{footnote}")))
+  info)
 
 (org-defblock latex-definitions nil
               "Declare but do not display the CONTENTS according to the BACKEND."

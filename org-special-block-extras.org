@@ -262,7 +262,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
 ;; Version: 26.10.16
-;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.1") (lf "1.0") (dad-joke "1.4") (seq "2.0") (lolcat "0"))
+;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
 
@@ -3866,8 +3866,11 @@ attention, and so a tooltip via [[org-block/remark][remark]] suffices.
    lines with no dependencies, in the look of [[https://github.com/alhassy/org-special-block-extras/blob/master/tooltips.css][tooltips.css]]; both are inlined into each exported
    page, which so fetches nothing for them.
 
-   Org's own footnotes are such tooltips too: in HTML, the number of =A remark[fn::An aside.]=
-   shows its definition when hovered or tapped, and the footnotes section stays below, for print.
+   Org's own footnotes are such remarks too: in HTML, each footnote's number is a tooltip of its
+   definition, the footnotes section staying below, for print; in LaTeX, each is a margin note, as
+   the [[doc:org-block/margin][margin]] block's are, numbered as footnotes are.
+
+   osbe-example:footnote
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 
