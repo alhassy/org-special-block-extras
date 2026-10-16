@@ -25,11 +25,11 @@
 
 ;;;;;; Color  ---Load support for 19 named colour blocks and links, and a generic one
 
-(defvar org--ospe-colors
+(defvar org--named-colors
   '(black blue brown cyan darkgray gray green lightgray lime
      magenta olive orange pink purple red teal violet white
           yellow)
-  "Colours that should be available on all systems.")
+  "The colours that are each a block and a link; e.g., #+begin_red and red:𝒳.  Each is named alike in HTML and LaTeX.")
 
 (defun org--color-text (backend colour text)
   "(BACKEND, COLOUR, TEXT) ↦ TEXT shown in COLOUR; LaTeX via \\color, and HTML (the default) via a styled span."
@@ -38,7 +38,7 @@
             (_      "<span style=\"color:%s;\">%s</span>"))
           colour text))
 
-(dolist (colour org--ospe-colors)
+(dolist (colour org--named-colors)
   (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))])
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents))))

@@ -356,7 +356,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
 "
   :global t
   :group 'org-special-block-extras
-  :lighter " OSPE"
+  :lighter " OSBE"
   (if org-special-block-extras-mode
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html

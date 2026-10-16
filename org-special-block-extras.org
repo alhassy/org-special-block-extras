@@ -84,7 +84,7 @@ html-export-style:solarized_light
 # org-defblock registers blocks (in org-supported-blocks),
 # then, just before export we replace blocks with the (verbatim) result of their definitions.
 
-# TODO: Write unit tests against org-ospe-html-export-preserving-whitespace,
+# TODO: Write unit tests against org-osbe-html-export-preserving-whitespace,
 # rename it to `org-export-string-as-html-preserving-whitespace`
 # so that the new name looks similar to the built-in `org-export-string-as`
 # thereby increasing discoverability. Unit tests can mimic ‘margin’ block usage.
@@ -381,7 +381,7 @@ This minor mode uses “untrusted data from untrusted websites” when exporting
 to HTML, this is done for beautiful tooltips or styles.
 Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
 "
-  :lighter " OSPE"
+  :lighter " OSBE"
   (if org-special-block-extras-mode
       (progn
         <<enable-mode>>
@@ -1173,7 +1173,7 @@ consistent with doc:defun--- and so let's take a look at it first.
   #+end_src
 
   #+RESULTS: startup-code
-  : org-ospe-html-export-preserving-whitespace
+  : org-osbe-html-export-preserving-whitespace
 
 
 
@@ -1467,7 +1467,7 @@ definition is obtained from the command line tool ‘wn’.
       (s-replace-regexp \"\\n\" \"<br>\" it)
       (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it o-label)))
 
-For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
+For HTML tooltips, see `org-osbe-html-export-preserving-whitespace'.
 
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp
@@ -3053,17 +3053,17 @@ Enjoy ;-)
  =org--𝒳= whenever it encounters a special block named =𝒳=.
  #+BEGIN_SRC emacs-lisp :noweb-ref enable-mode :tangle no
 (advice-add #'org-html-special-block
-   :before-until (apply-partially #'org--ospe-advice 'html))
+   :before-until (apply-partially #'org--osbe-advice 'html))
 
 (advice-add #'org-latex-special-block
-   :before-until (apply-partially #'org--ospe-advice 'latex))
+   :before-until (apply-partially #'org--osbe-advice 'latex))
  #+END_SRC
 
  #+RESULTS:
 
  Here is the actual advice:
  #+BEGIN_SRC emacs-lisp
-(defun org--ospe-advice (backend blk contents _)
+(defun org--osbe-advice (backend blk contents _)
   "Invoke the appropriate custom block handler, if any.
 
 A given custom block BLK has a TYPE extracted from it, then we
@@ -3105,10 +3105,10 @@ contents at all, not even an empty new line."
  Of-course, when the user disables our mode, then we remove such advice.
  #+BEGIN_SRC emacs-lisp :noweb-ref disable-mode :tangle no
 (advice-remove #'org-html-special-block
-               (apply-partially #'org--ospe-advice 'html))
+               (apply-partially #'org--osbe-advice 'html))
 
 (advice-remove #'org-latex-special-block
-               (apply-partially #'org--ospe-advice 'latex))
+               (apply-partially #'org--osbe-advice 'latex))
  #+END_SRC
 
  #+RESULTS:
@@ -3737,18 +3737,18 @@ Examples:
     (if tooltip?
         ;; The style=⋯ is to remove the underlining caused by <abbr>.
         (format "<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"%s ∷ %s<br>%s\">%s</abbr>"
-                the-label (or lisp-func "") (org-ospe-html-export-preserving-whitespace tooltip)
+                the-label (or lisp-func "") (org-osbe-html-export-preserving-whitespace tooltip)
                 keystrokes)
       keystrokes)))
 #+end_src
 
 The following styling rule is used to make the keystrokes displayed nicely.
 #+begin_src emacs-lisp :noweb-ref enable-mode :tangle no
-  (defvar org--ospe-kbd-html-setup nil
+  (defvar org--osbe-kbd-html-setup nil
     "Has the necessary keyboard styling HTML beeen added?")
 
-  (unless org--ospe-kbd-html-setup
-    (setq org--ospe-kbd-html-setup t))
+  (unless org--osbe-kbd-html-setup
+    (setq org--osbe-kbd-html-setup t))
   (when org-special-block-add-html-extra
    (setq org-html-head-extra
     (concat org-html-head-extra
@@ -4757,7 +4757,7 @@ e.g., [[doc:org-block/color][color]] and [[doc:org-block/teal][teal]].
   functions that format special blocks.
 
   # - To add support for a colour =𝒞=, simply
-  #   ~(push '𝒞 org--ospe-colors)~.
+  #   ~(push '𝒞 org--named-colors)~.
   # #
 
   By default, Org uses the ~graphicx~ LaTeX package which let's us colour text
@@ -4770,13 +4770,13 @@ e.g., [[doc:org-block/color][color]] and [[doc:org-block/teal][teal]].
   # this.
 
   #+BEGIN_SRC emacs-lisp
-(defvar org--ospe-colors
+(defvar org--named-colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(cl-loop for colour in org--ospe-colors
+(cl-loop for colour in org--named-colors
          do (eval `(org-defblock ,colour
                      (the-color "black")
                      (vector :face `(:foreground ,(format "%s" (quote ,colour))))
@@ -4818,13 +4818,13 @@ Let's have some sanity tests...
 
   :Old:
   #+BEGIN_SRC emacs-lisp :tangle no
-(defvar org--ospe-colors
+(defvar org--named-colors
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
   "Colours that should be available on all systems.")
 
-(cl-loop for colour in org--ospe-colors
+(cl-loop for colour in org--named-colors
       do (eval (read (format
                       "(defun org--%s (backend contents)
                      (format (pcase backend
@@ -4857,7 +4857,7 @@ Let's have some sanity tests...
 [Posterity] Old version which did /not/ allow ~wombo~ colour:
     #+begin_src emacs-lisp :tangle no
 (org-defblock color (color black    :face (lambda (colour)
-           (if (member (intern colour) org--ospe-colors)
+           (if (member (intern colour) org--named-colors)
                `(:foreground ,(format "%s" colour))
              `(:height 300
                :underline (:color "red" :style wave)
@@ -4879,7 +4879,7 @@ Let's have some sanity tests...
            (org--extract-arguments contents 'color))
          (block-coloring
           (intern (format "org--%s" (s-trim color)))))
-    (if (member (intern (s-trim color)) org--ospe-colors)
+    (if (member (intern (s-trim color)) org--named-colors)
         (funcall block-coloring backend contents′)
       (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
   #+end_src
@@ -4895,7 +4895,7 @@ Let's have some sanity tests...
    #+begin_src emacs-lisp :tangle no
 ;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
 ;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
-(cl-loop for colour in org--ospe-colors
+(cl-loop for colour in org--named-colors
          do (org-link-set-parameters
              (format "%s" colour)
               :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
@@ -4911,7 +4911,7 @@ Let's have some sanity tests...
 (org-link-set-parameters "color"
    :follow (lambda (_))
    :face (lambda (colour)
-           (if (member (intern colour) org--ospe-colors)
+           (if (member (intern colour) org--named-colors)
                `(:foreground ,(format "%s" colour))
              `(:height 300
                :underline (:color "red" :style wave)
@@ -4920,13 +4920,13 @@ Let's have some sanity tests...
               (save-excursion
                 (goto-char position)
                 (-let* (((&plist :path) (cadr (org-element-context))))
-                  (if (member (intern path) org--ospe-colors)
+                  (if (member (intern path) org--named-colors)
                       "Colour links just colour the descriptive text"
                     (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
    :export (lambda (colour description backend)
              (-let [block-colouring
                     (intern (format "org-block/%s" colour))]
-               (if (member (intern colour) org--ospe-colors)
+               (if (member (intern colour) org--named-colors)
                    (funcall block-colouring backend description)
                  (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
    #+end_src
@@ -7093,7 +7093,7 @@ They just happen to be referring to the same /named/ entry.
 (deftest "The osbe--docs entry of the documentation block appears within a tooltip"
     [doc documentation o--name&doc]
     (⇝ angst " <p> We now use this as <abbr class=\"tooltip\" title=\""
-             (literal (org-ospe-html-export-preserving-whitespace
+             (literal (org-osbe-html-export-preserving-whitespace
                        (cl-second (org-docs-get "ex-angst"))))
                     "\">Existential Angst</abbr>.</p> "))
 #+end_src
@@ -7327,7 +7327,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
    (add-to-list 'org--docs-actually-used (list o-label name docs))
    (pcase o-backend
      (`html  (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                     (org-ospe-html-export-preserving-whitespace docs)
+                     (org-osbe-html-export-preserving-whitespace docs)
                      display-name))
      ;; Make the current word refer to its glosary entry;
      ;; also declare the location that the glossary should refer back to.
@@ -7339,7 +7339,7 @@ time. E.g., upon export =doc:wombo= will produce a no-entry error.
 
 ;; WHERE ...
 
-(defun org-ospe-html-export-preserving-whitespace (s)
+(defun org-osbe-html-export-preserving-whitespace (s)
   "Make Org-markup'd string S ready for HTML presentation, preserving whitespace.
 
 This is orthogonal to the  `org-export-string-as' command; i.e.,
@@ -7590,7 +7590,7 @@ That is what we accomplish with this new `show' link type."
           (s-join " "
                   (--map
                    (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                           (org-ospe-html-export-preserving-whitespace (cl-third it))
+                           (org-osbe-html-export-preserving-whitespace (cl-third it))
                            (cl-second it))
                    ;; Ignore duplicates; i.e., entries with the same name/title.
                    (cl-remove-duplicates org--docs-actually-used
