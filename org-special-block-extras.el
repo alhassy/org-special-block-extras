@@ -339,11 +339,42 @@ On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, t
              (funcall callback (funcall gist (documentation link))
                       :thing (format "%s:" name) :face 'font-lock-function-name-face))))))
 
+;;;;; Completing #+begin_ lines
+
+(defconst org--org-block-names '("src" "example" "export" "quote" "verse" "center" "comment")
+  "Org's own block names, offered beside ours so completing #+begin_s still reaches src.")
+
+(defun org--block-gist (name)
+  "NAME ↦ the first line of the docstring of our block NAME; e.g., \"tip\" ↦ \"Helpful advice for doing things better…\"."
+  (-some--> (intern-soft (format "org-block/%s" name)) (get it 'variable-documentation) (car (split-string it "\n"))))
+
+(defun org--special-block-capf ()
+  "On a #+begin_ line, complete the block's name, each of ours annotated by its gist; e.g., #+begin_ti ↦ tip, tooltip.
+A doc buffer, for a completion popup's documentation pane, holds the block's signature and whole docstring."
+  (let ((case-fold-search t))
+    (when (looking-back "^[ \t]*#\\+begin_\\([^ \t\n]*\\)" (line-beginning-position))
+      (list (match-beginning 1) (match-end 1)
+            (append (mapcar (lambda (b) (format "%s" b)) org--supported-blocks) org--org-block-names)
+            :exclusive 'no
+            :annotation-function (lambda (name) (concat "  " (or (org--block-gist name) "Org's own")))
+            :company-kind (lambda (_) 'keyword)
+            :company-doc-buffer
+            (lambda (name)
+              (-when-let (doc (-some--> (intern-soft (format "org-block/%s" name)) (get it 'variable-documentation)))
+                (with-current-buffer (get-buffer-create " *org-block-doc*")
+                  (erase-buffer)
+                  (insert (org-block-signature name) "\n\n" doc)
+                  (current-buffer))))))))
+
+(defun org--special-block-capf-setup ()
+  "In this Org buffer, complete #+begin_ lines before Org's own pcomplete does."
+  (add-hook 'completion-at-point-functions #'org--special-block-capf -50 t))
+
 ;;;;; The mode
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide 44 new custom blocks & 55 link types for Org-mode.
+  "Provide 45 new custom blocks & 56 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
@@ -376,6 +407,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
+        (add-hook 'org-mode-hook #'org--special-block-capf-setup)
+        (dolist (buffer (buffer-list))
+          (with-current-buffer buffer (when (derived-mode-p 'org-mode) (org--special-block-capf-setup))))
         ;; Appended once: the head itself records whether a snippet is already there.
         (when org-special-block-add-html-extra
           (dolist (head (list org--kbd-html-head org--tooltip-html-head))
@@ -395,7 +429,10 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
-    (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)))
+    (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
+    (remove-hook 'org-mode-hook #'org--special-block-capf-setup)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer (remove-hook 'completion-at-point-functions #'org--special-block-capf t)))))
 
 (provide 'org-special-block-extras)
 

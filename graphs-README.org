@@ -1058,6 +1058,9 @@ Emacs -> Org [ lhead=cluster_Packages ];
     :description "Sets the shape of a node.")
    #+end_src
 
+   For a colour ---~bgcolor~, ~fillcolor~, ~fontcolor~, or ~color~--- the value is picked from Helm's colour
+   list, when Helm is installed; ~RET~ inserts the colour's hex code, and its name as a comment.
+
    Plain ~RET~ is unaffected — only the prefixed ~C-u RET~ triggers the completion.
 
 3. ~C-M-i~ (~completion-at-point~) and eldoc know about graph keys ---in any Org buffer's graph blocks,
@@ -1217,6 +1220,11 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 This is the complete graph from the design conversation: λ-calculus,
 Combinatory Logic, Church Encodings, Lisp, Haskell, Emacs, GHC, and Category
 Theory — all in one diagram.
+
+NOTE: To get colour codes, I use `M-x helm-colors` then ~C-z~ (for additional
+actions) then ~C-c r~ to insert the hex-code at point. Within a graph's table, ~C-u RET~ does this for us:
+on a ~bgcolor~, ~fillcolor~, ~fontcolor~, or ~color~ row, it opens that same picker, and ~RET~ inserts
+the colour's hex code, and its name as a comment.
 
 #+begin_graph :file lambda-to-emacs.png
 :SETTINGS:

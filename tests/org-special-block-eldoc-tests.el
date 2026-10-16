@@ -46,3 +46,19 @@
         (org-special-block-extras-mode 1)
         (should (memq #'org--special-block-eldoc eldoc-documentation-functions)))
     (org-special-block-extras-mode 1)))
+
+(org-deftest "on a #+begin_ line, completion offers our blocks, each with its gist, and Org's own beside them" [completion]
+  :text "#+begin_ti"
+  :at "ti"
+  (-let (((beg end table . props) (org--special-block-capf)))
+    (should (equal (buffer-substring beg end) "ti"))
+    (should (member "tip" (all-completions "ti" table)))
+    (should (member "src" (all-completions "s" table)))
+    (should (equal (funcall (plist-get props :annotation-function) "tip")
+                   "  Helpful advice for doing things better or more easily."))
+    (should (equal (funcall (plist-get props :annotation-function) "src") "  Org's own"))))
+
+(org-deftest "elsewhere, completion of block names stays out of the way" [completion]
+  :text "Some prose."
+  :at "prose"
+  (should-not (org--special-block-capf)))

@@ -8,7 +8,7 @@
 #+property: header-args :eval never-export
 #+options: d:nil toc:nil
 #+export_file_name: index
-#+macro: blurb Thirty new custom block and 34 link types for Emacs' Org-mode ^_^
+#+macro: blurb Forty-five custom blocks and fifty-six link types for Emacs' Org-mode ^_^
 #+toc: headlines 2
 
 # Render diagram: (progn (use-package ob-latex-as-png :ensure t)
@@ -3505,8 +3505,10 @@ again/.
   :END:
 
 Every node below leads to its section; hover, or tap, one for its gist. The map is itself a [[#Graphs][graph]]
-block ---an Org list, coloured by the ~#+name:~ tables above it, and laid out radially by ~:layout twopi~.
+block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ drawer, and laid out radially by ~:layout twopi~.
 
+#+begin_graph :svg t :size "10,10" :layout twopi :root osbe :ranksep 1.6 :wrap 16 :directed nil :node.fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :edge.color gray50 :overlap false
+:TEMPLATES:
 #+name: glance_write
 | fillcolor | "#e5f5e5" |
 #+name: glance_read
@@ -3515,9 +3517,8 @@ block ---an Org list, coloured by the ~#+name:~ tables above it, and laid out ra
 | fillcolor | "#e0ecff" |
 #+name: glance_make
 | fillcolor | "#f3e0ff" |
-
-#+begin_graph :svg t :layout twopi :root osbe :ranksep 1.6 :wrap 16 :directed nil :node.fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :edge.color gray50 :overlap false
-+ <<osbe>> [[#Abstract][*org-special-block-extras*]]
+:END:
++ <<osbe>> [[#Abstract][*org-special-block-extras*]] [fn::Blocks, links, and switches for Org, exported alike to HTML, LaTeX, and Markdown.]
   + Blocks to write :glance_write:
     + [[#Callouts][Callouts]] \\ note · tip · important · warning · caution [fn::GitHub's alerts: a coloured rule and a titled heading; Markdown gets the alerts themselves.] :glance_write:
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
@@ -4690,6 +4691,10 @@ Two.
   #+end_example
   This needs no setup beyond =org-special-block-extras-mode=, and works for our own blocks too.
   For the full story of a block, =C-h o org-block/NAME=.
+
+  Likewise, completing on a =#+begin_= line ---=M-TAB=, or any completion popup--- offers every
+  block's name beside the first line of its docstring, and Org's own blocks beside them; a popup's
+  documentation pane shows the block's whole docstring.
 
 * COMMENT Colours
   :PROPERTIES:
