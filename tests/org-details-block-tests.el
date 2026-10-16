@@ -6,7 +6,8 @@
 (define-org-call-test "details block uses \"Details\" as the default title in HTML."
   :call (org-block/details 'html "body text" nil)
   :returns "#+begin_export html
-<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
 <summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Details</font></strong></summary>
 
 #+end_export
@@ -19,7 +20,8 @@ body text
 (define-org-call-test "details block renders a custom title in HTML."
   :call (org-block/details 'html "content" "Spoiler")
   :returns "#+begin_export html
-<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
 <summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Spoiler</font></strong></summary>
 
 #+end_export
@@ -32,7 +34,8 @@ content
 (define-org-call-test "details block passes background-color through to HTML."
   :call (org-block/details 'html "content" nil :background-color "#ff0000")
   :returns "#+begin_export html
-<details class=\"code-details\" style=\"padding: 1em; background-color: #ff0000; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<details class=\"code-details\" style=\"padding: 1em; background-color: #ff0000; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
 <summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Details</font></strong></summary>
 
 #+end_export
@@ -97,8 +100,9 @@ content
   :input "
           [[toggle-details:][Show me everything]]"
   :equals "<p>
-           <button onclick=\"let all = [...document.querySelectorAll('details')], open = all.some(d => !d.open); all.forEach(d => d.open = open);\">Show me everything</button></p>
-           ")
+<button onclick=\"let all = [...document.querySelectorAll('details')], open = all.some(d =>
+!d.open); all.forEach(d => d.open = open);\">Show me everything</button></p>
+")
 
 (deftest "a toggle-details link is labelled “Unfold all details” by default, and exports to nothing in LaTeX" [toggle-details]
   (should (string-match-p ">Unfold all details</button>" (org-export-string "\n[[toggle-details:]]")))

@@ -25,9 +25,9 @@
 ;; :output is the expected dot source (string)
 ;; C-u C-x C-e on any `define-graph-test' call auto-fills :output from actual.
 (snap-define-relation graph (input output)
-  "Verify that INPUT (a #+begin_graph block body) produces OUTPUT (dot source)."
-  (let ((actual (org--graph-raw->dot input nil)))
-    (should (equal output actual))
+  "Verify that INPUT (a #+begin_graph block body) produces OUTPUT (dot source), both filled by `org-test--fill'."
+  (let ((actual (org-test--fill (org--graph-raw->dot input nil))))
+    (should (equal (org-test--fill output) actual))
     (list :output actual)))
 
 (provide 'org-graph-test-utils)

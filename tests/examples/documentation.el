@@ -28,10 +28,13 @@ Our glossary, listing every term this page cites &mdash;even those cited further
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A set with an associative binary operation that has a unit.\">Monoid</abbr> <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category Theory</abbr>
+<abbr class=\"tooltip\" title=\"A set with an associative binary operation that has a
+unit.\">Monoid</abbr> <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed
+monoids.\">Category Theory</abbr>
 </p>
 <div id=\"outline-container-org0000001\" class=\"outline-2\">
-<h2 id=\"org0000001\">Category Theory&nbsp;&nbsp;&nbsp<span class=\"tag\"><span class=\"documentation\">documentation</span></span></h2>
+<h2 id=\"org0000001\">Category Theory&nbsp;&nbsp;&nbsp<span class=\"tag\"><span
+class=\"documentation\">documentation</span></span></h2>
 <div class=\"outline-text-2\" id=\"text-org0000001\">
 <p>
 A theory of typed composition; e.g., typed monoids.
@@ -48,14 +51,18 @@ A glossary entry may instead be a block, which exports nothing:
 
 
 <p>
-Then, <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category Theory</abbr> studies <abbr class=\"tooltip\" title=\"A set with an associative binary operation that has a unit.\">monoids</abbr> and their kin.
+Then, <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
+Theory</abbr> studies <abbr class=\"tooltip\" title=\"A set with an associative binary operation that
+has a unit.\">monoids</abbr> and their kin.
 </p>
 </div>
 </div>"
   :latex "Our glossary, listing every term this page cites ---even those cited further below:
 
-\\vspace{1em}\\phantomsection\\textbf{Monoid}\\quad\\label{o-glossary-mon}A set with an associative binary operation that has a unit. See page \\pageref{o-glossary-declaration-site-mon}
-\\vspace{1em}\\phantomsection\\textbf{Category Theory}\\quad\\label{o-glossary-cat}A theory of typed composition; e.g., typed monoids. See page \\pageref{o-glossary-declaration-site-cat}
+\\vspace{1em}\\phantomsection\\textbf{Monoid}\\quad\\label{o-glossary-mon}A set with an associative
+binary operation that has a unit. See page \\pageref{o-glossary-declaration-site-mon}
+\\vspace{1em}\\phantomsection\\textbf{Category Theory}\\quad\\label{o-glossary-cat}A theory of typed
+composition; e.g., typed monoids. See page \\pageref{o-glossary-declaration-site-cat}
 \\section*{Category Theory\\hfill{}\\textsc{documentation}}
 \\label{sec:org0000001}
 A theory of typed composition; e.g., typed monoids.
@@ -66,4 +73,5 @@ A glossary entry may instead be a block, which exports nothing:
 
 
 
-Then, \\hyperref[o-glossary-cat]{Category Theory}\\label{o-glossary-declaration-site-cat} studies \\hyperref[o-glossary-mon]{monoids}\\label{o-glossary-declaration-site-mon} and their kin.")
+Then, \\hyperref[o-glossary-cat]{Category Theory}\\label{o-glossary-declaration-site-cat} studies
+\\hyperref[o-glossary-mon]{monoids}\\label{o-glossary-declaration-site-mon} and their kin.")

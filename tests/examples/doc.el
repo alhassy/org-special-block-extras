@@ -41,7 +41,11 @@ The <code>doc</code> link type can be used to show tooltips for Emacs Lisp comma
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"Thread FORMS elements as the last argument of their successor.<br>Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>&emsp;&emsp;&emsp;(/ 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent to:<br>&emsp;&emsp;(+ 40 (- (/ 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list before<br>threading.<br><br>(fn &rest FORMS)\">thread-last</abbr>
+<abbr class=\"tooltip\" title=\"Thread FORMS elements as the last argument of their successor.<br>
+Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>
+&emsp;&emsp;&emsp;(/ 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent
+to:<br>&emsp;&emsp;(+ 40 (- (/ 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list
+before<br>threading.<br><br>(fn &rest FORMS)\">thread-last</abbr>
 </p>
 
 <p>
@@ -56,7 +60,8 @@ Then you can refer to it using the given :label, if any:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category Theory</abbr>
+<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
+Theory</abbr>
 </p>
 
 <p>
@@ -64,7 +69,8 @@ Or else refer to it with underscores in lieu of spaces:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category Theory</abbr>
+<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
+Theory</abbr>
 </p>
 
 <p>
@@ -73,16 +79,21 @@ If you want to change what's rendered, provide a description:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">abstract nonsense</abbr>
+<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">abstract
+nonsense</abbr>
 </p>
 
 <p>
-Finally, if <code>doc</code> gets a label that is not an Emacs Lisp command, variable, nor a user-defined
-definition via #+begin<sub>documentation</sub>, then we try to look up its definition via the dictionary:
+Finally, if <code>doc</code> gets a label that is not an Emacs Lisp command, variable, nor a
+user-defined
+definition via #+begin<sub>documentation</sub>, then we try to look up its definition via the
+dictionary:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"<br>Overview of noun happiness<br><br>The noun happiness has 2 senses (first 2 from tagged texts)<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<br>1. (4) happiness, felicity -- (state of well-being characterized by emotions ranging from contentment to intense joy)<br>2. (2) happiness -- (emotions experienced when in a state of well-being)<br><br>Synonyms/Hypernyms (Ordered by Estimated Frequency) of noun happiness<br><br>2 senses of happiness&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; <br><br>Sense 1<br>happiness, felicity<br>&emsp;&emsp;&emsp; => emotional state, spirit<br><br>Sense 2<br>happiness<br>&emsp;&emsp;&emsp; => feeling<br>\">happiness</abbr>
+<abbr class=\"tooltip\" title=\"<br>Overview of noun happiness<br><br>The noun happiness has 2 senses
+(first 2 from tagged texts)<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<br>1. (4) happiness, felicity -- (state of well-being characterized by emotions ranging from contentment to intense joy)<br>2. (2) happiness -- (emotions experienced when in a state of well-being)<br><br>Synonyms/Hypernyms (Ordered by Estimated Frequency) of noun happiness<br><br>2 senses of happiness&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; <br><br>Sense 1<br>happiness, felicity<br>&emsp;&emsp;&emsp; => emotional state, spirit<br><br>Sense 2<br>happiness<br>&emsp;&emsp;&emsp; => feeling<br>\">happiness</abbr>
 </p>"
   :latex "The \\texttt{doc} link type can be used to show tooltips for Emacs Lisp commands such as
 
@@ -99,14 +110,17 @@ Then you can refer to it using the given :label, if any:
 
 Or else refer to it with underscores in lieu of spaces:
 
-\\hyperref[o-glossary-Category_Theory]{Category Theory}\\label{o-glossary-declaration-site-Category_Theory}
+\\hyperref[o-glossary-Category_Theory]{Category Theory}
+\\label{o-glossary-declaration-site-Category_Theory}
 
 Either approach renders the name of the term, not the way its referenced.
 If you want to change what's rendered, provide a description:
 
 \\hyperref[o-glossary-cat]{abstract nonsense}\\label{o-glossary-declaration-site-cat}
 
-Finally, if \\texttt{doc} gets a label that is not an Emacs Lisp command, variable, nor a user-defined
-definition via \\#+begin\\textsubscript{documentation}, then we try to look up its definition via the dictionary:
+Finally, if \\texttt{doc} gets a label that is not an Emacs Lisp command, variable, nor a
+user-defined
+definition via \\#+begin\\textsubscript{documentation}, then we try to look up its definition via the
+dictionary:
 
 \\hyperref[o-glossary-happiness]{happiness}\\label{o-glossary-declaration-site-happiness}")

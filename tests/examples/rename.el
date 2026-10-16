@@ -19,7 +19,8 @@ The <code>rename</code> block is for Textual Substitution. For example, as a tra
 
 
 <p>
-Quran 12-4: <b><span class=\"underline\">Joseph</span></b> said to his father ( <span class=\"underline\"><b>Jacob</b></span> ), <i>“O my father,
+Quran 12-4: <b><span class=\"underline\">Joseph</span></b> said to his father ( <span
+class=\"underline\"><b>Jacob</b></span> ), <i>“O my father,
 indeed I have seen (in a dream) eleven stars and the sun and the
 moon; I saw them prostrating to me.”</i>
 </p>
@@ -31,7 +32,8 @@ In the rendered result, the Arabic names are replaced with their English counter
   :latex "The \\texttt{rename} block is for Textual Substitution. For example, as a translation tool:
 
 
-Quran 12-4: \\textbf{\\uline{Joseph}} said to his father ( \\uline{\\textbf{Jacob}} ), \\emph{“O my father,
+Quran 12-4: \\textbf{\\uline{Joseph}} said to his father ( \\uline{\\textbf{Jacob}} ), \\emph{“O my
+father,
 indeed I have seen (in a dream) eleven stars and the sun and the
 moon; I saw them prostrating to me.”}
 

@@ -10,6 +10,7 @@
 (require 'cl-lib)
 
 (load-file (expand-file-name "~/snap/snap.el"))
+(unless (fboundp 'org-test--fill) (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 (load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
 (add-to-list 'load-path (expand-file-name "~/org-special-block-extras/org-graph"))
 (load-file (expand-file-name "~/org-special-block-extras/org-graph/org-graph-block.el"))
@@ -35,11 +36,12 @@ Headings export sans table of contents and section numbers, which would only dis
   (downcase (replace-regexp-in-string "[ \t\n\r]+" "" s)))
 
 (snap-define-relation org-example (input html latex)
-  "Org INPUT exports to HTML and LATEX, modulo whitespace and case; a nil or `:live' expectation goes unchecked."
+  "Org INPUT exports to HTML and LATEX, modulo whitespace and case; a nil or `:live' expectation goes unchecked.
+Snapshots are filled by `org-test--fill', so they are read without scrolling sideways."
   (let ((html* (if (eq html :live) :live (org-example--export input 'html)))
         (latex* (org-example--export input 'latex)))
     (when (stringp html) (should (equal (org-example--normalise html) (org-example--normalise html*))))
     (when latex (should (equal (org-example--normalise latex) (org-example--normalise latex*))))
-    (list :html html* :latex latex*)))
+    (list :html (if (stringp html*) (org-test--fill html*) html*) :latex (org-test--fill latex* t))))
 
 (provide 'org-examples)

@@ -105,9 +105,10 @@
   :to md
   :equals "
 
-           <abbr class=\"tooltip\" title=\"A set with an associative &lt;op&gt; &amp; a &quot;unit&quot;.&#10;Really.\">Monoid</abbr>
+<abbr class=\"tooltip\" title=\"A set with an associative &lt;op&gt; &amp; a
+&quot;unit&quot;.&#10;Really.\">Monoid</abbr>
 
-           ")
+")
 
 (define-org-export-test "a spoiler is numbered blanks in Markdown, with the answers folded away beneath" [markdown]
   :input "

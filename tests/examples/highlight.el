@@ -11,7 +11,8 @@ Skimming readers see [[highlight:yellow][the one sentence that matters]], and [[
 A whole paragraph, gently set apart.
 #+end_highlight"
   :html "<p>
-Skimming readers see <span style=\"background-color:yellow;\">the one sentence that matters</span>, and <span style=\"background-color:pink;\">the one to reread</span>.
+Skimming readers see <span style=\"background-color:yellow;\">the one sentence that matters</span>,
+and <span style=\"background-color:pink;\">the one to reread</span>.
 </p>
 
 <div style=\"background-color:#e5f5e5;\">
@@ -19,9 +20,11 @@ Skimming readers see <span style=\"background-color:yellow;\">the one sentence t
 A whole paragraph, gently set apart.
 </p>
 </div>"
-  :latex "Skimming readers see \\colorlet{osbe-highlight}{yellow}\\colorbox{osbe-highlight}{the one sentence that matters}, and \\colorlet{osbe-highlight}{pink}\\colorbox{osbe-highlight}{the one to reread}.
+  :latex "Skimming readers see \\colorlet{osbe-highlight}{yellow}\\colorbox{osbe-highlight}{the one sentence
+that matters}, and \\colorlet{osbe-highlight}{pink}\\colorbox{osbe-highlight}{the one to reread}.
 
-\\definecolor{osbe-highlight}{HTML}{e5f5e5}\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{
+\\definecolor{osbe-highlight}{HTML}{e5f5e5}
+\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{
 A whole paragraph, gently set apart.
 }}")
 

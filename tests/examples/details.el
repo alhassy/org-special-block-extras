@@ -33,11 +33,23 @@ Full syntax ~#+begin_details \"title\" :background-color \"cyan\" :title-color \
   :html "<p>
 Sometimes there is a remark or a code snippet that is useful to
 have, but not relevant to the discussion at hand and so we want to
-<i>fold away such <abbr class=\"tooltip\" title=\"Enclose contents in a folded up box, for HTML.<br><br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such blocks is “Details”,<br>its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.<br><br>In HTML, we show folded, details, regions with a nice greenish colour.<br><br>Regarding the Lisp function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org special block<br><br>&emsp;&emsp; #+begin_details<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp; #+end_details<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/details ‘latex ''Hello, world'')\">details</abbr></i>.
+<i>fold away such <abbr class=\"tooltip\" title=\"Enclose contents in a folded up box, for HTML.<br>
+<br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such
+blocks is “Details”,<br>its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.<br><br>In
+HTML, we show folded, details, regions with a nice greenish colour.<br><br>Regarding the Lisp
+function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text
+as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’
+version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key
+CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org
+special block<br><br>&emsp;&emsp; #+begin_details<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp;
+#+end_details<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/details
+‘latex ''Hello, world'')\">details</abbr></i>.
 </p>
 
-<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
-<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Example use cases</font></strong></summary>
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Example use
+cases</font></strong></summary>
 <ul class=\"org-ul\">
 <li>‘Conversation-style’ articles, where the author asks the reader questions
 whose answers are “folded away” so the reader can think about the exercise
@@ -54,10 +66,12 @@ Full syntax <code>#+begin_details \"title\" :background-color \"cyan\" :title-co
 </p>"
   :latex "Sometimes there is a remark or a code snippet that is useful to
 have, but not relevant to the discussion at hand and so we want to
-\\emph{fold away such \\hyperref[o-glossary-org-block/details]{details}\\label{o-glossary-declaration-site-org-block/details}}.
+\\emph{fold away such \\hyperref[o-glossary-org-block/details]{details}
+\\label{o-glossary-declaration-site-org-block/details}}.
 
 \\definecolor{osbe-bg}{HTML}{e5f5e5}\\colorlet{osbe-fg}{green}\\begin{quote}
-\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Example use cases},sharp corners,boxrule=0.4pt]
+\\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Example use cases},sharp corners,
+boxrule=0.4pt]
 \\begin{itemize}
 \\item ‘Conversation-style’ articles, where the author asks the reader questions
 whose answers are “folded away” so the reader can think about the exercise

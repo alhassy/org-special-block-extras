@@ -337,7 +337,8 @@ Plain text.
 <div id=\"outline-container-org-id-1\" class=\"outline-2\">
 <h2 id=\"org-id-1\"><span class=\"section-number-2\">1.</span> Stuck?</h2>
 <div class=\"outline-text-2\" id=\"text-1\">
-<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
 <summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Hint</font></strong></summary>
 <p>
 Try induction.

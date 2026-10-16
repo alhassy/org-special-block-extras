@@ -41,6 +41,45 @@
 ;; snap.el no longer ships it directly; we define it here via snap-define-fixture.
 (snap-define-fixture deftest)
 
+;;; Snapshots fit the screen
+
+;; Relations store their outputs filled, and compare them filled, so `C-u C-x C-e' writes snapshots that are read
+;; without scrolling sideways; filling is deterministic, so comparing filled forms loses only where whitespace breaks.
+
+(defconst org-test--width 100
+  "The column past which `org-test--fill' breaks a snapshot's line, so it can be read without scrolling.")
+
+(defun org-test--in-pre-p ()
+  "↦ non-nil when point is within a <pre>…</pre>, where whitespace is content."
+  (save-excursion
+    (let ((case-fold-search t))
+      (and (re-search-backward "<\\(/?\\)pre[ >]" nil t) (equal (match-string 1) "")))))
+
+(defun org-test--fill (s &optional latex?)
+  "(S, LATEX?) ↦ S with each line past `org-test--width' broken at its last space, or after its last <br>, there.
+E.g., a tooltip's title of fifty <br>-separated lines ↦ fifty lines.  Outside a <pre>, HTML and LaTeX read a
+newline as they do a space, and nothing follows a <br> but whitespace; so the snapshot renders, and compares
+modulo whitespace, as S does.  LATEX? also breaks after a comma, which tcolorbox's key lists ignore, or
+between a } and a \\, where TeX reads at most a space; LaTeX snapshots are only ever compared, never rendered."
+  (with-temp-buffer
+    (insert s)
+    (goto-char (point-min))
+    (while (not (eobp))
+      (let ((bol (point)) break)
+        (when (> (- (line-end-position) bol) org-test--width)
+          (save-excursion
+            (goto-char (+ bol org-test--width))
+            ;; Not too near the line's start, lest a long URL leave a line of one word behind it.
+            (while (and (not break) (re-search-backward (if latex? " \\|,\\|}\\\\" " \\|<br>") (+ bol 20) t))
+              (unless (org-test--in-pre-p) (setq break (cons (match-beginning 0) (match-string 0)))))))
+        (pcase break
+          (`(,at . " ")    (goto-char at) (delete-char 1) (insert "\n"))
+          (`(,at . "<br>") (goto-char (+ at 4)) (insert "\n"))
+          (`(,at . ,_)     (goto-char (1+ at)) (insert "\n"))   ; After the “,” or “}”.
+          (_ (forward-line 1)))))
+    (buffer-string)))
+
+
 (cl-defmacro with-org-test-buffer ((&key (text "") at (mode '#'org-mode)) &rest body)
   "Run BODY in a fresh MODE buffer, Org by default, holding TEXT; point is just after the first AT, else at the start.
 For a whole test, `org-deftest' says this tersely; this is for a test needing many such buffers, say in a loop."
@@ -218,8 +257,10 @@ See the associated deftest for more example uses.
 USING is a list of (org-defblock ...) forms installed temporarily.
 MODULO enables regex-based approximate matching.
 Org's random ids are renamed org-id-1, org-id-2, …, in both; see `org-test--sanitise-ids'.
-Comparison ignores trailing whitespace on each line, since editors strip it from EQUALS in the source."
+Comparison ignores trailing whitespace on each line, since editors strip it from EQUALS in the source;
+both sides are filled by `org-test--fill', so EQUALS is stored, and read, at the width of the screen."
   (let* ((trim (lambda (s) (replace-regexp-in-string "[ \t]+$" "" s)))
+         (fill (lambda (s) (funcall trim (org-test--fill s (eq to 'latex)))))
          ;; The expectations were recorded with this setting; batch Emacs defaults it to nil.
          (org-src-preserve-indentation t)
          (defs (cond
@@ -245,8 +286,8 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
                           (s-replace-all (--map (cons it ".*") modulos))
                           (format "^%s$"))))
           (should (equal 0 (string-match-p pattern (funcall trim actual)))))
-      (should (equal (funcall trim actual) (funcall trim equals))))
-    (list :equals actual)))
+      (should (equal (funcall fill actual) (funcall fill equals))))
+    (list :equals (if modulo actual (funcall fill actual)))))
 
 ;;; define-org-block-parse-test — relational test fixture for parsing a block
 
@@ -261,10 +302,15 @@ Comparison ignores trailing whitespace on each line, since editors strip it from
 ;;; define-org-call-test — relational test fixture for handler calls
 
 (snap-define-relation org-call (call returns)
-  "Evaluating CALL ---e.g., (org-block/box 'html \"hi\" nil)--- yields RETURNS, modulo trailing whitespace per line."
+  "Evaluating CALL ---e.g., (org-block/box 'html \"hi\" nil)--- yields RETURNS, modulo trailing whitespace per line.
+A string is compared, and stored, filled by `org-test--fill' and sans text properties, which `equal' ignores anyway."
   (let ((actual (eval call t))
-        (trim (lambda (s) (if (stringp s) (replace-regexp-in-string "[ \t]+$" "" s) s))))
-    (should (equal (funcall trim returns) (funcall trim actual)))
-    (list :returns actual)))
+        ;; A string with a \command{ is LaTeX, which `org-test--fill' may also break at commas and between } and \.
+        (fill (lambda (s) (if (stringp s)
+                              (replace-regexp-in-string
+                               "[ \t]+$" "" (org-test--fill (substring-no-properties s) (string-match-p "\\\\[a-z]+{" s)))
+                            s))))
+    (should (equal (funcall fill returns) (funcall fill actual)))
+    (list :returns (funcall fill actual))))
 
 (provide 'org-test-utils)

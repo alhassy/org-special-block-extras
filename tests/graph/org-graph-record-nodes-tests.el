@@ -17,8 +17,10 @@
   + [[struct1::mid]]"
   :output "digraph {
   struct1:mid -> struct2:one;
-  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
-  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
+  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
+  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
   reader [ label=reader ];
   reader -> struct1:mid;
 }")
@@ -33,7 +35,10 @@
 + reader
   + [[struct3::here]]"
   :output "digraph {
-  struct3 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD ROWSPAN=\"3\">hello<BR/>world</TD><TD COLSPAN=\"3\">b</TD><TD ROWSPAN=\"3\">g</TD><TD ROWSPAN=\"3\">h</TD></TR><TR><TD>c</TD><TD PORT=\"here\">d</TD><TD>e</TD></TR><TR><TD COLSPAN=\"3\">f</TD></TR></TABLE>> ];
+  struct3 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+ROWSPAN=\"3\">hello<BR/>world</TD><TD COLSPAN=\"3\">b</TD><TD ROWSPAN=\"3\">g</TD><TD
+ROWSPAN=\"3\">h</TD></TR><TR><TD>c</TD><TD PORT=\"here\">d</TD><TD>e</TD></TR><TR><TD
+COLSPAN=\"3\">f</TD></TR></TABLE>> ];
   reader [ label=reader ];
   reader -> struct3:here;
 }")
@@ -50,7 +55,11 @@
   |----------------|
   | greet()        |"
   :output "digraph {
-  Person [ shape=plain label=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\"><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\"><B>Person</B></TD></TR><HR/><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">name: <FONT FACE=\"monospace\">String</FONT></TD></TR><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">age: <FONT FACE=\"monospace\">Int</FONT></TD></TR><HR/><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">greet()</TD></TR></TABLE>> ];
+  Person [ shape=plain label=<<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\"><TR><TD ALIGN=\"LEFT\"
+BALIGN=\"LEFT\"><B>Person</B></TD></TR><HR/><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">name: <FONT
+FACE=\"monospace\">String</FONT></TD></TR><TR><TD ALIGN=\"LEFT\" BALIGN=\"LEFT\">age: <FONT
+FACE=\"monospace\">Int</FONT></TD></TR><HR/><TR><TD ALIGN=\"LEFT\"
+BALIGN=\"LEFT\">greet()</TD></TR></TABLE>> ];
 }")
 
 (define-graph-test "a record's own attributes, and a template's, sit beside its table; a user's shape beats `plain'"
@@ -63,7 +72,8 @@
   #+record:
   | x | y |"
   :output "digraph {
-  Point [ label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>x</TD><TD>y</TD></TR></TABLE>> color=grey shape=box ];
+  Point [ label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>x</TD><TD>y</TD></TR></TABLE>> color=grey shape=box ];
 }")
 
 (define-graph-test "a cell's link label and `:edge[T].KEY' rows style its arc; a ported-by-text cell has spaces as underscores"
@@ -76,7 +86,8 @@
   :output "digraph {
   lam [ label=\"λ-calculus\" ];
   Lisp:eval_apply -> lam [ label=\"inspired by\" style=dotted ];
-  Lisp [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>car</TD><TD>cdr</TD><TD PORT=\"eval_apply\">eval apply</TD></TR></TABLE>> ];
+  Lisp [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>car</TD><TD>cdr</TD><TD PORT=\"eval_apply\">eval apply</TD></TR></TABLE>> ];
 }")
 
 (define-graph-test "ports are scoped per record, record and port names may contain dots, and `::' after a non-record is text"
@@ -89,8 +100,10 @@
   | <<head>> head | <<v1.2>> v1.2 |
 + z [[r1::head]] [[org.el::v1.2]] [[std::vector]]"
   :output "digraph {
-  r1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD>tail</TD></TR></TABLE>> ];
-  \"org.el\" [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"head\">head</TD><TD PORT=\"v1.2\">v1.2</TD></TR></TABLE>> ];
+  r1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"head\">head</TD><TD>tail</TD></TR></TABLE>> ];
+  \"org.el\" [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"head\">head</TD><TD PORT=\"v1.2\">v1.2</TD></TR></TABLE>> ];
   z -> r1:head;
   z -> \"org.el\":\"v1.2\";
   z -> \"std::vector\";
@@ -105,7 +118,8 @@
   + push
   + pop"
   :output "digraph {
-  Stack [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
+  Stack [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
   Stack -> push;
   push [ label=push ];
   Stack -> pop;
@@ -148,8 +162,10 @@
 #+end_cluster"
   :output "digraph {
   struct1:mid -> struct2:one [ label=calls style=dashed ];
-  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
-  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
+  struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>left</TD><TD PORT=\"mid\">middle</TD><TD>right</TD></TR></TABLE>> ];
+  struct2 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
   subgraph cluster_Legend {
     label=Legend
     legend_1 [ shape=point style=invis ];
@@ -169,7 +185,8 @@
 + t"
   :output "digraph {
   s:p -> t [ style=bold ];
-  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD PORT=\"p\"></TD></TR></TABLE>> ];
+  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
+PORT=\"p\"></TD></TR></TABLE>> ];
   t [ label=t ];
 }")
 

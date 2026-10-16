@@ -36,7 +36,10 @@ text
 (define-org-call-test "box block uses tcolorbox for LaTeX."
   :call (org-block/box 'latex "content" nil)
   :returns "#+begin_export latex
-\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}
+\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,
+colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,
+subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 #+end_export
 content
 #+begin_export latex
@@ -46,7 +49,10 @@ content
 (define-org-call-test "box block passes the title to tcolorbox in LaTeX."
   :call (org-block/box 'latex "content" "Title")
   :returns "#+begin_export latex
-\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Title},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}
+\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Title},colback=osbe-box-back,
+colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,
+subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
 #+end_export
 content
 #+begin_export latex
@@ -79,7 +85,8 @@ content
 
 (define-org-call-test "a box's inset shadow prefixes each of its preset colours with inset"
   :call (org--box-shadow 'inset)
-  :returns "width: 50%; margin: auto; box-shadow: 8px 6px 13px 8px inset hsl(1, 100%, 50%),-16px 12px 20px 16px inset hsl(60, 100%, 50%),48px 36px 71px 28px inset hsl(180, 100%, 50%)")
+  :returns "width: 50%; margin: auto; box-shadow: 8px 6px 13px 8px inset hsl(1, 100%, 50%),-16px 12px 20px 16px
+inset hsl(60, 100%, 50%),48px 36px 71px 28px inset hsl(180, 100%, 50%)")
 
 (provide 'org-box-block-tests)
 ;;; org-box-block-tests.el ends here

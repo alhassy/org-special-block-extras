@@ -27,12 +27,17 @@
 </p>
 
 </div>"
-  :latex "\\definecolor{osbe-callout}{HTML}{1a7f37}\\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\\bfseries,title={Tip},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
+  :latex "\\definecolor{osbe-callout}{HTML}{1a7f37}\\begin{tcolorbox}[colframe=osbe-callout,
+colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,
+fonttitle=\\bfseries,title={Tip},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
 \\texttt{C-h k} followed by any key tells us what that key does.
 
 \\end{tcolorbox}
 
-\\definecolor{osbe-callout}{HTML}{9a6700}\\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\\bfseries,title={Mind the gap},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
+\\definecolor{osbe-callout}{HTML}{9a6700}\\begin{tcolorbox}[colframe=osbe-callout,
+colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,
+fonttitle=\\bfseries,title={Mind the gap},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,
+bottomrule=0pt]
 \\texttt{C-x C-c} quits Emacs, unsaved buffers and all ---it asks first, though.
 
 \\end{tcolorbox}")

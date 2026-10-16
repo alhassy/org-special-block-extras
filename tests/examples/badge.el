@@ -53,7 +53,8 @@ It works when all 5 arguments are provided
 </p>
 
 <p>
-<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a>
+<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img
+src=\"https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir\"></a>
 </p></li>
 
 <li><p>
@@ -61,7 +62,8 @@ It works when we use [ [ link ] ] syntax with generous spaces and newlines
 </p>
 
 <p>
-<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img src=\"https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir\"></a>
+<a href=\"https://lmgtfy.app/?q=badge+shields.io&iie=1\"><img
+src=\"https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir\"></a>
 </p></li>
 
 <li><p>
@@ -78,7 +80,8 @@ It works when all 5 arguments are provided - URL ‘here’ makes it a local lin
 </p>
 
 <p>
-<a id=\"key\" href=\"#key\"><img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>
+<a id=\"key\" href=\"#key\"><img
+src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>
 </p></li>
 
 <li><p>
@@ -86,11 +89,13 @@ We can use spaces, commas, dashes, and percentage symbols in the first argument
 </p>
 
 <p>
-<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange\"></a>
+<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img
+src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange\"></a>
 </p></li>
 
 <li><p>
-It works when only first 2 arguments are given: Default colour &amp; logo are green &amp; no logo shown
+It works when only first 2 arguments are given: Default colour &amp; logo are green &amp; no logo
+shown
 </p>
 
 <p>
@@ -142,7 +147,8 @@ asterisks are passed unaltered into the first argument
 
 \\item We can use spaces, commas, dashes, and percentage symbols in the first argument
 
-\\item It works when only first 2 arguments are given: Default colour \\& logo are green \\& no logo shown
+\\item It works when only first 2 arguments are given: Default colour \\& logo are green \\& no logo
+shown
 
 \\item When only a key is provided, the value slot is shown as an empty green stub
 

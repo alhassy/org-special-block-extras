@@ -112,7 +112,8 @@
   :input "
 + *bold* /it/ _u_ +s+ =v= ~c~"
   :output "digraph {
-  \"bold it u s v c\" [ label=<<B>bold</B> <I>it</I> <U>u</U> <S>s</S> <FONT FACE=\"monospace\">v</FONT> <FONT FACE=\"monospace\">c</FONT>> ];
+  \"bold it u s v c\" [ label=<<B>bold</B> <I>it</I> <U>u</U> <S>s</S> <FONT
+FACE=\"monospace\">v</FONT> <FONT FACE=\"monospace\">c</FONT>> ];
 }")
 
 (define-graph-test "text in a marked-up label is HTML-escaped, both inside and outside the markup"
@@ -812,7 +813,8 @@ Languages, by influence.
   Adjunction [ label=Adjunction ];
   Monad -> Turing [ label=\"Church–\\nTuring thesis\" color=<<B>red</B>> ];
   Turing [ label=Turing ];
-  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>> ];
+  s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>> ];
 }")
 
 ;;; Legends: a top-level `- :T: :: MEANING'

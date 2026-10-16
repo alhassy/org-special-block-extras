@@ -24,11 +24,13 @@
           Use =C-h k= to learn what a key does.
           #+end_tip"
   :to latex
-  :equals "\\definecolor{osbe-callout}{HTML}{1a7f37}\\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\\bfseries,title={Tip},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
-           Use \\texttt{C-h k} to learn what a key does.
+  :equals "\\definecolor{osbe-callout}{HTML}{1a7f37}\\begin{tcolorbox}[colframe=osbe-callout,
+colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,
+fonttitle=\\bfseries,title={Tip},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
+Use \\texttt{C-h k} to learn what a key does.
 
-           \\end{tcolorbox}
-           ")
+\\end{tcolorbox}
+")
 
 (define-org-export-test "a tip callout is GitHub's untitled “> [!TIP]” alert in Markdown" [callout]
   :input "

@@ -50,7 +50,16 @@ It has a tooltip documenting the underlying Lisp function, when possible
 </p>
 
 <p>
-<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"M-s h . ∷ highlight-symbol-at-point<br>Highlight each instance of the symbol at point.<br>Uses the next face from ‘hi-lock-face-defaults’ without prompting,<br>unless you use a prefix argument.<br>Uses ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at point.<br><br>If REGEXP contains upper case characters (excluding those preceded by ‘\\’)<br>and ‘search-upper-case’ is non-nil, the matching is case-sensitive.<br><br>This uses Font lock mode if it is enabled; otherwise it uses overlays,<br>in which case the highlighting will not update as you type.&emsp;The Font<br>Lock mode is considered ''enabled'' in a buffer if its ‘major-mode’<br>causes ‘font-lock-specified-p’ to return non-nil, which means<br>the major mode specifies support for Font Lock.\"><kbd style=\"border-color: red\">M-s h .</kbd></abbr>
+<abbr class=\"tooltip\" style=\"border: none; text-decoration: none;\" title=\"M-s h . ∷
+highlight-symbol-at-point<br>Highlight each instance of the symbol at point.<br>Uses the next face
+from ‘hi-lock-face-defaults’ without prompting,<br>unless you use a prefix argument.<br>Uses
+‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at point.<br><br>If REGEXP contains
+upper case characters (excluding those preceded by ‘\\’)<br>and ‘search-upper-case’ is non-nil, the
+matching is case-sensitive.<br><br>This uses Font lock mode if it is enabled; otherwise it uses
+overlays,<br>in which case the highlighting will not update as you type.&emsp;The Font<br>Lock mode
+is considered ''enabled'' in a buffer if its ‘major-mode’<br>causes ‘font-lock-specified-p’ to
+return non-nil, which means<br>the major mode specifies support for Font Lock.\"><kbd
+style=\"border-color: red\">M-s h .</kbd></abbr>
 </p></li>
 </ol>"
   :latex "\\begin{enumerate}

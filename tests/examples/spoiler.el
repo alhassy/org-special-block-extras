@@ -24,10 +24,13 @@ The <code>spoiler</code> block is for “fill in the blanks” or “guess, and 
 to see the results” style of exposition.
 </p>
 
-<style> .spoiler-grey {color: grey; background-color:grey;} .spoiler-grey:hover {color: black; background-color:white;} </style>
+<style> .spoiler-grey {color: grey; background-color:grey;} .spoiler-grey:hover {color: black;
+background-color:white;} </style>
 <p>
-<span class=\"spoiler-grey\"> Yusuf </span> said to his father <span class=\"spoiler-grey\"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span class=\"spoiler-grey\"> eleven stars </span> and <span class=\"spoiler-grey\"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span class=\"spoiler-grey\"> Yusuf </span> said to his father <span class=\"spoiler-grey\"> Yacoub
+</span>, <i>“O my father, indeed I have seen
+<span class=\"spoiler-grey\"> eleven stars </span> and <span class=\"spoiler-grey\"> the sun and the
+moon </span>; I saw them prostrating to me.”</i>
 </p>
 
 
@@ -36,22 +39,29 @@ There are also options for the left delimiter of a hidden item, the right delimi
 and the color of the hidden item. These default to <code>grey, ((, ))</code> respectively.
 </p>
 
-<style> .spoiler-orange {color: orange; background-color:orange;} .spoiler-orange:hover {color: black; background-color:white;} </style>
+<style> .spoiler-orange {color: orange; background-color:orange;} .spoiler-orange:hover {color:
+black; background-color:white;} </style>
 <p>
-<span class=\"spoiler-orange\"> Yusuf </span> said to his father <span class=\"spoiler-orange\"> Yacoub </span>, <i>“O my father, indeed I have seen
-<span class=\"spoiler-orange\"> eleven stars </span> and <span class=\"spoiler-orange\"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+<span class=\"spoiler-orange\"> Yusuf </span> said to his father <span class=\"spoiler-orange\"> Yacoub
+</span>, <i>“O my father, indeed I have seen
+<span class=\"spoiler-orange\"> eleven stars </span> and <span class=\"spoiler-orange\"> the sun and
+the moon </span>; I saw them prostrating to me.”</i>
 </p>"
   :latex "The \\texttt{spoiler} block is for “fill in the blanks” or “guess, and hover
 to see the results” style of exposition.
 
 
-\\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub}, \\emph{“O my father, indeed I have seen
-\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}
+\\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub},
+\\emph{“O my father, indeed I have seen
+\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}
+\\footnote{the sun and the moon}; I saw them prostrating to me.”}
 
 
 There are also options for the left delimiter of a hidden item, the right delimiter,
 and the color of the hidden item. These default to \\texttt{grey, ((, ))} respectively.
 
 
-\\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub}, \\emph{“O my father, indeed I have seen
-\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}\\footnote{the sun and the moon}; I saw them prostrating to me.”}")
+\\fbox{\\phantom{Yusuf}}\\footnote{Yusuf} said to his father \\fbox{\\phantom{Yacoub}}\\footnote{Yacoub},
+\\emph{“O my father, indeed I have seen
+\\fbox{\\phantom{eleven stars}}\\footnote{eleven stars} and \\fbox{\\phantom{the sun and the moon}}
+\\footnote{the sun and the moon}; I saw them prostrating to me.”}")

@@ -47,30 +47,33 @@
           #+begin_box Exercise :let (N 6 ANSWER (* N 7))
           What is N × 7? It is ANSWER; whereas Nx, and the word answer, are untouched.
           #+end_box"
-  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>Exercise</h3>
-           <p>
-           What is 6 × 7? It is 42; whereas Nx, and the word answer, are untouched.
-           </p>
-           </div>
-           ")
+  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3>Exercise</h3>
+<p>
+What is 6 × 7? It is 42; whereas Nx, and the word answer, are untouched.
+</p>
+</div>
+")
 
 (define-org-export-test "a block marked :boxed TITLE and :folded t is a box, folded away under the block's name" [switches]
   :input "
           #+begin_red :boxed \"Heads up\" :folded t
           Mind the gap.
           #+end_red"
-  :equals "<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
-           <summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Red</font></strong></summary>
-           <div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>Heads up</h3>
-           <span style=\"color:red;\">
-           <p>
-           Mind the gap.
-           </p>
-           </span>
-           </div>
+  :equals "<details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;
+color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">
+<summary><strong><font face=\"Courier\" size=\"3\" color=\"green\">Red</font></strong></summary>
+<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3>Heads up</h3>
+<span style=\"color:red;\">
+<p>
+Mind the gap.
+</p>
+</span>
+</div>
 
-           </details>
-           ")
+</details>
+")
 
 (define-org-export-test "a block marked :boxed t is a tcolorbox in LaTeX" [switches]
   :input "
@@ -78,12 +81,15 @@
           Mind the gap.
           #+end_red"
   :to latex
-  :equals "\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
-           \\begingroup\\color{red}
-           Mind the gap.
-           \\endgroup\\,
-           \\end{tcolorbox}
-           ")
+  :equals "\\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}
+\\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,
+colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,
+subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\\begingroup\\color{red}
+Mind the gap.
+\\endgroup\\,
+\\end{tcolorbox}
+")
 
 (define-org-export-test "a block that declares a keyword of a switch's name receives it, rather than the switch" [switches]
   :input "
@@ -103,14 +109,15 @@
           Rules.
           #+end_strict"
   :using (org-defblock strict (&key colour) (format "STRICT %s" contents))
-  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>Strictly</h3>
-           STRICT
-           <p>
-           Rules.
-           </p>
+  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3>Strictly</h3>
+STRICT
+<p>
+Rules.
+</p>
 
-           </div>
-           ")
+</div>
+")
 
 ;;; Evaluating a switch's Lisp
 

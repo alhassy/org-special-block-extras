@@ -46,7 +46,32 @@ wasted on thin lines; instead, one could save space by using
 /[[doc:org-block/parallel][parallel]] columns of text/."
   :html "<p>
 Reduce the amount of whitespace noise in your articles by using the
-<abbr class=\"tooltip\" title=\"Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be separated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>Regarding the Lisp function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org special block<br><br>&emsp;&emsp; #+begin_parallel<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp; #+end_parallel<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/parallel ‘latex ''Hello, world'')\">parallel</abbr> block to place ideas
+<abbr class=\"tooltip\" title=\"Place ideas side-by-side, possibly with a separator.<br><br>There are
+COLS many columns, and they may be separated by solid<br>vertical rules if BAR is a non-nil
+(colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR
+is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”:
+Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by
+solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on
+the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’,
+‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard
+Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of
+the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The
+contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the
+specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp;
+#+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp;
+#+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp;
+Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏
+measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%”
+is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft
+Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of
+‘#+columnbreak:’ is used to request a column break.<br><br>Regarding the Lisp function:<br>+
+BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text as the user
+wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user
+text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key
+CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org
+special block<br><br>&emsp;&emsp; #+begin_parallel<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp;
+#+end_parallel<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp;
+(org-block/parallel ‘latex ''Hello, world'')\">parallel</abbr> block to place ideas
 side-by-side &mdash;with up to 𝓃-many columns.
 </p>
 
@@ -65,7 +90,8 @@ and grow.</i> The value <code>BAR</code> can either be <code>t</code>, <code>nil
 
 <hr />
 
-<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\"><div style=\"width: 25%; margin: 10px; border-right: 4px solid green;\">
+<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\"><div
+style=\"width: 25%; margin: 10px; border-right: 4px solid green;\">
 <p>
 <b>“Hard Columns”:</b> Alternatively, <i>for non-uniform column widths, 𝓃 may
 instead be a specification of the widths of the columns.</i>
@@ -87,10 +113,36 @@ Goodbye (“God-be-with-ye”) to the right!
 <p>
 In summary, articles can get lengthy when vertical whitespace is
 wasted on thin lines; instead, one could save space by using
-<i><abbr class=\"tooltip\" title=\"Place ideas side-by-side, possibly with a separator.<br><br>There are COLS many columns, and they may be separated by solid<br>vertical rules if BAR is a non-nil (colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’, ‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp; #+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp; #+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp; Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏 measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%” is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.<br><br>Regarding the Lisp function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org special block<br><br>&emsp;&emsp; #+begin_parallel<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp; #+end_parallel<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/parallel ‘latex ''Hello, world'')\">parallel</abbr> columns of text</i>.
+<i><abbr class=\"tooltip\" title=\"Place ideas side-by-side, possibly with a separator.<br><br>There
+are COLS many columns, and they may be separated by solid<br>vertical rules if BAR is a non-nil
+(colour) value.<br><br>+ COLS is either a number or a sequence of the shape: 10% 20% 30%.<br>+ BAR
+is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.<br><br><hr><br><br>“Soft Columns”:
+Writing “#+begin_parallel 𝓃 :bar t” will produce<br>𝒏-many parallel columns, possibly separated by
+solid rules, or a<br>“bar”. This style allows text to freely move between columns,<br>depending on
+the size of the browser, which may dynamically<br>shrink and grow.&emsp;BAR can either be ‘t’,
+‘nil’, or<br>any (backend)-valid colour specification; such as ‘red’ or<br>‘green’.<br><br>“Hard
+Columns”: Alternatively, for non-uniform column widths,<br>COLS may instead be a specification of
+the widths of the<br>columns. However, this extra flexibility comes at an additional<br>cost: The
+contents of the block must now contain 𝒏-1 lines<br>consisting of ‘#+columnbreak:’, when the
+specification determines<br>𝒏 columns, as shown in the following example.<br><br>&emsp;
+#+begin_parallel 20% 60% 20% :bar green<br>&emsp; Hello, to the left!<br><br>&emsp;
+#+columnbreak:<br>&emsp; A super duper wide middle margin!<br><br>&emsp; #+columnbreak:<br>&emsp;
+Goodbye (“God-be-with-ye”) to the right!<br>&emsp; #+end_parallel<br><br>The specification is 𝒏
+measurements denoting widths; which may be<br>in any HTML recognisable units; e.g., “5em 20px 30%”
+is valid.<br>I personally advise only the use of percentage measurements.<br><br>In the Soft
+Columns style above, any ‘#+columnbreak:’ are merely ignored.<br>With LaTeX export, the use of
+‘#+columnbreak:’ is used to request a column break.<br><br>Regarding the Lisp function:<br>+
+BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text as the user
+wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user
+text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key
+CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org
+special block<br><br>&emsp;&emsp; #+begin_parallel<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp;
+#+end_parallel<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp;
+(org-block/parallel ‘latex ''Hello, world'')\">parallel</abbr> columns of text</i>.
 </p>"
   :latex "Reduce the amount of whitespace noise in your articles by using the
-\\hyperref[o-glossary-org-block/parallel]{parallel}\\label{o-glossary-declaration-site-org-block/parallel} block to place ideas
+\\hyperref[o-glossary-org-block/parallel]{parallel}
+\\label{o-glossary-declaration-site-org-block/parallel} block to place ideas
 side-by-side ---with up to 𝓃-many columns.
 
 \\noindent\\rule{\\textwidth}{0.5pt}
@@ -127,4 +179,5 @@ Goodbye (“God-be-with-ye”) to the right!
 
 In summary, articles can get lengthy when vertical whitespace is
 wasted on thin lines; instead, one could save space by using
-\\emph{\\hyperref[o-glossary-org-block/parallel]{parallel}\\label{o-glossary-declaration-site-org-block/parallel} columns of text}.")
+\\emph{\\hyperref[o-glossary-org-block/parallel]{parallel}
+\\label{o-glossary-declaration-site-org-block/parallel} columns of text}.")

@@ -50,4 +50,5 @@ digraph {
 \\end{verbatim}
 
 
-Press \\texttt{C-c C-c} inside the block to render it to a PNG; \\texttt{C-u C-c C-c} shows the dot source instead.")
+Press \\texttt{C-c C-c} inside the block to render it to a PNG; \\texttt{C-u C-c C-c} shows the dot
+source instead.")

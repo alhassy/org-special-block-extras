@@ -22,7 +22,8 @@
 #+end_calc"
   :html "$$\\begin{align*} & \\begin{split}x\\end{split} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ } \\hfill\\\\
+ = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
+\\hfill\\\\
 \\text{ Actually, let me explain: } \\hfill\\\\ \\begin{split} & \\begin{split}x\\end{split} 
 \\\\
  = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
@@ -34,13 +35,15 @@
 \\end{split}\\hfill\\\\
 }}\\right.} 
  \\\\ & \\begin{split}    y \\end{split}\\\\
- ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ } \\hfill\\\\
+ ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ }
+\\hfill\\\\
 }}\\right.} 
  \\\\ & \\begin{split} z\\end{split} 
 \\end{align*}$$"
   :latex "$$\\begin{align*} & \\begin{split}x\\end{split} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ } \\hfill\\\\
+ = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
+\\hfill\\\\
 \\text{ Actually, let me explain: } \\hfill\\\\ \\begin{split} & \\begin{split}x\\end{split} 
 \\\\
  = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
@@ -52,7 +55,8 @@
 \\end{split}\\hfill\\\\
 }}\\right.} 
  \\\\ & \\begin{split}    y \\end{split}\\\\
- ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ } \\hfill\\\\
+ ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ }
+\\hfill\\\\
 }}\\right.} 
  \\\\ & \\begin{split} z\\end{split} 
 \\end{align*}$$")
