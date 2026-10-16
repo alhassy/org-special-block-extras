@@ -207,5 +207,20 @@ Tighten this sentence.
 #+end_rremark" 'latex)))
       (should-not warnings))))
 
+(deftest "a block renders for a backend derived from LaTeX, as for LaTeX; and may single out one backend; issue #12" [derived]
+  (require 'ox-md)
+  (org-export-define-derived-backend 'osbe-test-mylatex 'latex)
+  (org-export-define-derived-backend 'osbe-test-myhugo 'md)
+  (using (org-defblock myblock ()
+           "Wrap the contents in \\my-latex-command; or, in the Hugo-like backend, in a docsy alert."
+           (cond ((org-export-derived-backend-p org-export-current-backend 'osbe-test-myhugo)
+                  (format "{{%% alert %%}}%s{{%% /alert %%}}" raw-contents))
+                 ((equal backend 'latex) (concat "\\my-latex-command\n" raw-contents "\n\\my-latex-command"))
+                 (t raw-contents)))
+    ;; As in the issue: the derived backend's blocks see `backend' as latex.
+    (should (equal (org-export-string "#+begin_myblock\nsome content\n#+end_myblock" 'osbe-test-mylatex)
+                   "\\my-latex-command\nsome content\n\\my-latex-command\n"))
+    (should (s-contains-p "{{% alert %}}some content" (org-export-string "#+begin_myblock\nsome content\n#+end_myblock" 'osbe-test-myhugo)))))
+
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here

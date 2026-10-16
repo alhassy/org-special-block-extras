@@ -4473,6 +4473,20 @@ Mind the gap.
 #+end_note
   #+end_example
 
+  For any backend derived from HTML or LaTeX ---org-reveal's, ox-hugo's, ox-gfm's, beamer's, or
+  our own--- ~backend~ is =html= or =latex=, so one rendering serves them all. To single one out,
+  we ask Org's own ~org-export-current-backend~; by way of example, a docsy alert in Hugo:
+  #+begin_src emacs-lisp
+(org-defblock noteblock (&optional (title "Note") &key (color "primary"))
+  "A note: a docsy alert in Hugo, a noteblock environment in LaTeX, a box elsewhere in HTML."
+  (cond ((org-export-derived-backend-p org-export-current-backend 'hugo)
+         (format "{{%% alert title=\"%s\" color=\"%s\" %%}}\n%s\n{{%% /alert %%}}" title color raw-contents))
+        ((equal backend 'latex) (format "\\begin{noteblock}\n%s\n\\end{noteblock}" contents))
+        (t (format "<div class=\"note\">%s</div>" contents))))
+  #+end_src
+  In similar spirit, ~(org-export-markdown-p)~ and ~(org-export-beamer-p)~ single out Markdown and
+  beamer.
+
   Every block is also a link, with the label as main argument and the description as
   contents: =[[note:Heads up][Mind the gap.]]=. Moreover, defaults may change long after the
   block is defined; e.g., ~(org-set-block-header-args note :color "orange")~.
