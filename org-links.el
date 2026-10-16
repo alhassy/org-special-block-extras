@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.15
+;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, links, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -110,8 +110,13 @@ TEXT is Org, exported as such; or PLAIN? text, such as a docstring, shown as is.
       (format "<abbr title=\"%s\">%s</abbr>"
               (s-replace-all '(("&" . "&amp;") ("\"" . "&quot;") ("<" . "&lt;") (">" . "&gt;") ("\n" . "&#10;")) text)
               body)
-    (format "<abbr class=\"tooltip\" tabindex=\"0\"%s>%s<template>%s</template></abbr>"
-            (if style (format " style=\"%s\"" style) "") body (org--tooltip-html text plain?))))
+    (org--tooltip-abbr body (org--tooltip-html text plain?) (and style (format "style=\"%s\"" style)))))
+
+(defun org--tooltip-abbr (body html &optional attributes)
+  "(BODY, HTML, ATTRIBUTES) ↦ BODY, showing HTML on hover or tap; tooltips.js shows the <template>.
+  \"°\", \"<p>Hi</p>\", \"id=\\\"x\\\"\"  ↦  <abbr class=\"tooltip\" tabindex=\"0\" id=\"x\">°<template><p>Hi</p></template></abbr>"
+  (format "<abbr class=\"tooltip\" tabindex=\"0\"%s>%s<template>%s</template></abbr>"
+          (if attributes (concat " " attributes) "") body html))
 
 (defun org--tooltip-html (text &optional plain?)
   "(TEXT, PLAIN?) ↦ HTML of a tooltip's TEXT: its body-only export as Org; or, when PLAIN?, TEXT escaped in a <pre>.

@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.15
+;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -364,6 +364,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; Switches on any block not of ours ---src, quote, any #+begin_𝒳---, before our own blocks are rewritten.
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
+        (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
@@ -382,6 +383,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
           (org-docs-load-libraries)))
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
+    (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)

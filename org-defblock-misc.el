@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.15
+;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "27.1") (org "9.6"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.github.io/org-special-block-extras
@@ -119,6 +119,30 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
 (org-defblock tooltip (marker "°")
               "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone."
               (concat (org--html-tooltip raw-contents marker) "&emsp13;"))
+
+;;;;;; Footnotes, as tooltips
+
+(defun org--footnote-as-tooltip (footnote-reference &rest args)
+  "Call FOOTNOTE-REFERENCE, `org-html-footnote-reference', with ARGS; then make its number a tooltip of the definition.
+  A remark[fn::An aside.]  ↦  A remark<sup><abbr class=\"tooltip\" … id=\"fnr.1\">1<template>An aside.</template></abbr></sup>
+The definition is exported by the export at hand, so its links and markup resolve as in the footnotes section, which
+stays, for print and for readers sans script; the id stays too, so that section's links back still land.  Markdown,
+which runs no script, keeps Org's own footnotes."
+  (let ((html (apply footnote-reference args)))
+    (-let [(reference _ info) args]
+      (if (or (org-export-markdown-p)
+              (not (string-match "<a id=\"\\([^\"]*\\)\" class=\"footref\"[^>]*>\\([^<]*\\)</a>" html)))
+          html
+        ;; Exporting the definition runs searches of its own, so we take this match's parts first.
+        (let ((before (substring html 0 (match-beginning 0))) (after (substring html (match-end 0)))
+              (id (match-string 1 html)) (number (match-string 2 html)))
+          (concat before
+                  (org--tooltip-abbr number
+                                     (org-trim (org-export-data
+                                                (org-element-contents (org-export-get-footnote-definition reference info))
+                                                info))
+                                     (format "id=\"%s\"" id))
+                  after))))))
 
 (org-defblock latex-definitions nil
               "Declare but do not display the CONTENTS according to the BACKEND."
