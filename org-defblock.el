@@ -482,12 +482,19 @@ So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted st
 ;;;;; org--latex-define-color
 
 (defun org--latex-define-color (name colour)
-  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, else \\colorlet.
+  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, or a
+name xcolor lacks but Emacs knows, such as navy; else \\colorlet, as for red or red!5!white.
 COLOUR may be a symbol, as block arguments such as “:color red!5!white” are read as Lisp."
   (setq colour (format "%s" colour))
-  (if (string-prefix-p "#" colour)
-      (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
-    (format "\\colorlet{%s}{%s}" name colour)))
+  (-if-let (rgb (and (not (string-prefix-p "#" colour))
+                     (not (string-match-p "!" colour))       ; A mix, such as red!5!white, is xcolor's own.
+                     (not (and (boundp 'org--named-colors) (memq (intern colour) org--named-colors)))
+                     ;; Emacs's X11 colour table, which a display-less batch Emacs reads too; e.g., navy, gold.
+                     (tty-color-standard-values colour)))
+      (apply #'format "\\definecolor{%s}{rgb}{%.3f,%.3f,%.3f}" name (--map (/ it 65535.0) rgb))
+    (if (string-prefix-p "#" colour)
+        (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
+      (format "\\colorlet{%s}{%s}" name colour))))
 
 ;;;;; org-defblock
 

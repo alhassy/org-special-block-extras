@@ -44,21 +44,24 @@ class=\"footpara\"><i>Injil</i>, given to Jesus.</p></div></div>
 </div>"
   :latex "The Quran was revealed over 23
 years\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
-\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{gray!80}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
 {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
 From 610 to 632 CE, in Mecca then Medina.
 \\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
 \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}, and the
 Torah\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
-\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{gray!80}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
 {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
 \\emph{Tawrat}, given to Moses; see \\href{https://en.wikipedia.org/wiki/Tawrat}{Tawrat}.
 \\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
 \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{} and the
 Gospel\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
-\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{gray!80}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
 {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
 \\emph{Injil}, given to Jesus.\\label{org0000001}

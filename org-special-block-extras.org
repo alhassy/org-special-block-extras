@@ -8402,6 +8402,23 @@ Manually or using [[https://github.com/alhassy/emacs.d#installing-emacs-packages
     )
 #+END_SRC
 
+*** For PDFs: the LaTeX packages our blocks need
+    :PROPERTIES:
+    :CUSTOM_ID: latex-packages
+    :END:
+
+Org's default LaTeX header already loads ~amsmath~, ~amssymb~, ~ulem~, ~hyperref~, and ~graphicx~; beside
+them, our blocks need just these, which we may copy into a document ---or into ~org-latex-packages-alist~:
+#+begin_src org
+,#+latex_header: \usepackage{xcolor}     % Colours: red:𝒳, highlight, margin, callouts; mixes like red!5!white
+,#+latex_header: \usepackage{tcolorbox}  % box, details, solution, the callouts, and the :boxed and :folded switches
+,#+latex_header: \usepackage{multicol}   % parallel
+,#+latex_header: \usepackage{adjustbox}  % Only a margin block's #+resize:
+#+end_src
+A test, [[https://github.com/alhassy/org-special-block-extras/blob/master/tests/org-pdf-export-tests.el][tests/org-pdf-export-tests.el]], keeps this list honest: it compiles every example of this manual
+to a PDF, with these lines and no others. It uses LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is;
+pdflatex instead needs a ~\newunicodechar~ for each such character.
+
 Then, provide support for a new type of special block, say re-using the ~src~
 blocks that, say, folds up all such blocks in HTML export, by declaring the
 following.

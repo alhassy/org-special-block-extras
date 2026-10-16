@@ -53,8 +53,8 @@ COLOR is the colour of the hints."
           (hint (s-replace "\n" " } \\hfill\\\\\n\\text{ "
                            (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim (or hint ""))))))
     (if (and (equal hint "") (null steps))
-        (format "\\begin{split}%s\\end{split} \n" expr)
-      (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{split}%s\\end{split}"
+        (format "\\begin{aligned}%s\\end{aligned} \n" expr)
+      (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{aligned}%s\\end{aligned}"
               op
               color
               ;; The hfill is so that we do not use substack's default centering, but instead left-align
@@ -62,7 +62,7 @@ COLOR is the colour of the hints."
               ;; HINT-FORMAT's %s is replaced verbatim, never via `format', so its other characters ---say, %--- stay literal.
               (s-replace "%s"
                          (if steps
-                             (format "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{split} & %s \n\\end{split}\\hfill\\\\\n}}"
+                             (format "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{aligned} & %s \n\\end{aligned}\\hfill\\\\\n}}"
                                      hint (s-join "\\\\" steps))
                            (format "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint))
                          hint-format)
@@ -70,7 +70,7 @@ COLOR is the colour of the hints."
 
 (org-defblock calc
               (main-arg nil
-                        rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "maroon")
+                        rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "#800000")
               "Render an Org-list as an equational proof.
 
 Sometimes the notation delimiting justification hints may clash
@@ -90,10 +90,18 @@ as an alignment marker; otherwise math is right-justified.
 
 For HTML, to use an TeX it must be enclosed in $, since that is
 what is required by MathJaX."
-              (thread-last (cdr (org--parse-plain-list raw-contents "calc"))
-                           (--map (org--list-to-calc it rel hint-format explicit-vspace color))
+              ;; LaTeX's \\color takes a name, so a hex COLOR, such as the default maroon, is named first.
+              (concat
+               (if (equal backend 'latex) (org--latex-define-color "osbe-calc" color) "")
+               (thread-last (cdr (org--parse-plain-list raw-contents "calc"))
+                           (--map (org--list-to-calc it rel hint-format explicit-vspace
+                                                     (if (equal backend 'latex) "osbe-calc" color)))
                            (s-join "\\\\")
-                           (format "$$\\begin{align*} & %s \n\\end{align*}$$")))
+                           (format "\\begin{align*} & %s \n\\end{align*}")
+                           ;; A blank line, say between a hint's paragraphs, would end the paragraph mid-align*.
+                           (replace-regexp-in-string "\n[ \t]*\n" "\n")
+                           ;; align* is a display already; MathJax, in HTML, needs it within $$ delimiters.
+                           (format (if (equal backend 'latex) "%s" "$$%s$$")))))
 
 ;;;;;;; inference proof tree
 (defun org--list-to-math (item)

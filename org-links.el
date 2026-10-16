@@ -616,6 +616,14 @@ We use this listing to actually print a glossary using
 
 ;; WHERE ...
 
+(defun org--latex-glossary-text (text &optional plain?)
+  "(TEXT, PLAIN?) ↦ LaTeX of a glossary entry's TEXT: its body-only export as Org; or, when PLAIN?, such as a docstring,
+TEXT in a verbatim environment, as written ---so its #, $, %, and the like need no escaping."
+  (if plain?
+      (format "\n\\begin{verbatim}\n%s\n\\end{verbatim}\n" (string-trim text))
+    (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
+      (string-trim (org-export-string-as text 'latex t)))))
+
 (defun org--docs-plain-p (label)
   "LABEL ↦ non-nil when its glossary entry is plain text ---an Elisp docstring, or a WordNet definition--- not Org.
 Entries of the buffer, or of `org-docs-libraries', are Org; see `org-docs-get'."
@@ -755,11 +763,7 @@ That is what we accomplish with this new `show' link type."
                                                     "\\pageref{o-glossary-declaration-site-%s}")
                                             name
                                             label
-                                            (when doc
-                                              (thread-last doc ;; preserve whitespace
-                                                           (s-replace "&" "\\&") ;; Hack!
-                                                           (s-replace "  " " \\quad ")
-                                                           (s-replace "\n" " \\newline{\\color{white}.}")))
+                                            (when doc (org--latex-glossary-text doc (org--docs-plain-p label)))
                                             label))))))
 
 (provide 'org-links)

@@ -19,6 +19,7 @@ Or, without specifying an explicit label:
 It can be annoying to make readers jump to the bottom of the page to
 read a footnote.  Instead, I prefer to write an <i>inline <abbr class=\"tooltip\"
 tabindex=\"0\">remark<template><pre>Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block’s are.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
@@ -59,12 +60,24 @@ read a footnote.  Instead, I prefer to write an \\emph{inline
 \\label{o-glossary-declaration-site-org-block/tooltip}}
 containing, say, references or additional explanation.
 
-\\emph{<abbr class=\"tooltip\" tabindex=\"0\">Allah<template><p>
-The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not burden a
+\\emph{Allah\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
+{\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
+\\normalfont
+The God of Abraham; known as Elohim in the Bible
+\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
+\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{} does not burden a
     soul beyond what it can bear.} --- Quran 2:286
 
 Or, without specifying an explicit label:
 
-\\emph{Allah<abbr class=\"tooltip\" tabindex=\"0\">°<template><p>
-The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not
+\\emph{Allah°\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
+{\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
+\\normalfont
+The God of Abraham; known as Elohim in the Bible
+\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
+\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{} does not
     burden a soul beyond what it can bear.} --- Quran 2:286")

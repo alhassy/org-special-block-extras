@@ -36,11 +36,11 @@ wide and COLOR coloured; STEP, such as \\stepcounter{footnote}, runs first, so a
 CONTENTS is saved in a minipage, then unfolded in the margin, since verbatim environments, such as src blocks', fail
 as an argument of \\marginpar."
   ;; Outside the minipage, a newline is a space in the running text; so the commands there abut.  Within it, the
-  ;; contents are \\raggedright, not fully justified, and minted is shrunk to fit ---Hack!
+  ;; contents are \\raggedright, not fully justified, and minted, when loaded, is shrunk to fit ---Hack!
   (format (concat "%s${}^{\\textnormal{%s}}$"
                   "\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}"
                   "\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{%s}\n"
-                  "\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{%s}\n"
+                  "\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}\\fi\\color{%s}\n"
                   "{\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n%s\n"
                   "\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}"
                   ;; The {} keeps the space after us, which TeX would otherwise skip as it follows a command.
@@ -119,8 +119,12 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
 
 ;;;;;; Tooltip (HTML)
 (org-defblock tooltip (marker "°")
-              "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone."
-              (concat (org--html-tooltip raw-contents marker) "&emsp13;"))
+              "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
+In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are."
+              (if (equal backend 'latex)
+                  (concat marker (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" contents
+                                                         "\\refstepcounter{footnote}"))
+                (concat (org--html-tooltip raw-contents marker) "&emsp13;")))
 
 ;;;;;; Footnotes, as tooltips
 

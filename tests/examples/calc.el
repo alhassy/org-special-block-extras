@@ -5,7 +5,7 @@
 
 (define-org-example-test "calc"
   :input "
-#+begin_calc :hint-format \"\\\\left\\{ %s\\\\right.\"
+#+begin_calc :hint-format \"\\\\left\\\\{ %s\\\\right.\"
 +     x
 +     y -- Explanation of why $x \\;=\\; y$
   Actually, let me explain:
@@ -20,43 +20,43 @@
 
   -- explain it more, this is ignored from export ;-)
 #+end_calc"
-  :html "$$\\begin{align*} & \\begin{split}x\\end{split} 
+  :html "$$\\begin{align*} & \\begin{aligned}x\\end{aligned} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
+ = \\;\\; & \\qquad \\color{#800000}{\\left\\{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
 \\hfill\\\\
-\\text{ Actually, let me explain: } \\hfill\\\\ \\begin{split} & \\begin{split}x\\end{split} 
+\\text{ Actually, let me explain: } \\hfill\\\\ \\begin{aligned} & \\begin{aligned}x\\end{aligned} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
+ = \\;\\; & \\qquad \\color{#800000}{\\left\\{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}x′ \\end{split}\\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 2 } \\hfill\\\\
+ \\\\ & \\begin{aligned}x′ \\end{aligned}\\\\
+ = \\;\\; & \\qquad \\color{#800000}{\\left\\{ {\\large\\substack{\\text{ hint 2 } \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}y  \\end{split} 
-\\end{split}\\hfill\\\\
+ \\\\ & \\begin{aligned}y  \\end{aligned} 
+\\end{aligned}\\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}    y \\end{split}\\\\
- ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ }
-\\hfill\\\\
+ \\\\ & \\begin{aligned}    y \\end{aligned}\\\\
+ ≤ \\;\\; & \\qquad \\color{#800000}{\\left\\{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$
+} \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split} z\\end{split} 
+ \\\\ & \\begin{aligned} z\\end{aligned} 
 \\end{align*}$$"
-  :latex "$$\\begin{align*} & \\begin{split}x\\end{split} 
+  :latex "\\definecolor{osbe-calc}{HTML}{800000}\\begin{align*} & \\begin{aligned}x\\end{aligned} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
+ = \\;\\; & \\qquad \\color{osbe-calc}{\\left\\{ {\\large\\substack{\\text{ Explanation of why $x \\;=\\; y$ }
 \\hfill\\\\
-\\text{ Actually, let me explain: } \\hfill\\\\ \\begin{split} & \\begin{split}x\\end{split} 
+\\text{ Actually, let me explain: } \\hfill\\\\ \\begin{aligned} & \\begin{aligned}x\\end{aligned} 
 \\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
+ = \\;\\; & \\qquad \\color{osbe-calc}{\\left\\{ {\\large\\substack{\\text{ hint 1 } \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}x′ \\end{split}\\\\
- = \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ hint 2 } \\hfill\\\\
+ \\\\ & \\begin{aligned}x′ \\end{aligned}\\\\
+ = \\;\\; & \\qquad \\color{osbe-calc}{\\left\\{ {\\large\\substack{\\text{ hint 2 } \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}y  \\end{split} 
-\\end{split}\\hfill\\\\
+ \\\\ & \\begin{aligned}y  \\end{aligned} 
+\\end{aligned}\\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split}    y \\end{split}\\\\
- ≤ \\;\\; & \\qquad \\color{maroon}{\\left{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\; z$ }
-\\hfill\\\\
+ \\\\ & \\begin{aligned}    y \\end{aligned}\\\\
+ ≤ \\;\\; & \\qquad \\color{osbe-calc}{\\left\\{ {\\large\\substack{\\text{ Explanation of why $y \\;\\leq\\;
+z$ } \\hfill\\\\
 }}\\right.} 
- \\\\ & \\begin{split} z\\end{split} 
-\\end{align*}$$")
+ \\\\ & \\begin{aligned} z\\end{aligned} 
+\\end{align*}")

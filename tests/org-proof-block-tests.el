@@ -6,18 +6,16 @@
 (define-org-call-test "calc block produces an align* LaTeX environment."
   :call (org-block/calc 'latex "- x\n- = y\n" nil)
   :returns "#+begin_export latex
-$$\\begin{align*} & \\begin{split}x\\end{split} 
-\\\\\\begin{split}= y\\end{split} 
- 
-\\end{align*}$$
+\\definecolor{osbe-calc}{HTML}{800000}\\begin{align*} & \\begin{aligned}x\\end{aligned}
+\\\\\\begin{aligned}= y\\end{aligned}
+\\end{align*}
 #+end_export")
 
 (define-org-call-test "calc block produces MathJax-compatible output for HTML."
   :call (org-block/calc 'html "- x\n- = y\n" nil)
   :returns "#+begin_export html
-$$\\begin{align*} & \\begin{split}x\\end{split} 
-\\\\\\begin{split}= y\\end{split} 
- 
+$$\\begin{align*} & \\begin{aligned}x\\end{aligned}
+\\\\\\begin{aligned}= y\\end{aligned}
 \\end{align*}$$
 #+end_export")
 

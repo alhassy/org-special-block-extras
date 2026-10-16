@@ -88,7 +88,8 @@ note text</p></template></abbr>&emsp13;
   :call (org-block/margin 'latex "note" nil :marker "†" :counter "footnote")
   :returns "#+begin_export latex
 \\!\\!\\stepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
-\\raggedright\\footnotesize\\setminted{fontsize=\\footnotesize, breaklines}\\color{gray!80}
+\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
+\\fi\\color{gray!80}
 {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
 #+end_export
