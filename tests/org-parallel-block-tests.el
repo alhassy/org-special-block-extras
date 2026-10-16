@@ -93,5 +93,17 @@ Left
 Right
 #+end_parallel" 'beamer))))
 
+(deftest "a backend derived from HTML, as org-reveal's is, gets the HTML of blocks and links; issue #44" [parallel]
+  (org-export-define-derived-backend 'osbe-test-reveal 'html)
+  (let ((html (org-export-string "
+#+begin_parallel
+[[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
+
+Pop-quiz: How does doc:apply work?
+#+end_parallel" 'osbe-test-reveal)))
+    (should (s-contains-p "<div style=\"column-count: 2;\">" html))
+    (should (s-contains-p "<span style=\"color:orange;\">Are you excited to learn some Lisp?</span>" html))
+    (should (s-contains-p "<abbr class=\"tooltip\" tabindex=\"0\">apply<template>" html))))
+
 (provide 'org-parallel-block-tests)
 ;;; org-parallel-block-tests.el ends here
