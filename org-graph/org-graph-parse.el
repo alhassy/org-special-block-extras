@@ -205,6 +205,15 @@ footnotes become the node's tooltip."
 `org-graph--resolve-section-hrefs'."
   (if (equal (org-element-property :type o) "file") (org-element-property :path o) (org-element-property :raw-link o)))
 
+(defun org--graph-footnote-text (reference)
+  "A footnote REFERENCE ↦ its definition's text, as a tooltip: [fn::NOTE] and [fn:NAME: NOTE] carry it inline, and a
+bare [fn:NAME] finds it in the buffer, by `org-footnote-get-definition'; e.g., [fn::Born /1958/] ↦ \"Born 1958\"."
+  (-some--> (or (org-element-contents reference)
+                (-some--> (org-element-property :label reference)
+                  (nth 3 (org-footnote-get-definition it))
+                  (org-element-parse-secondary-string it (org-element-restriction 'paragraph))))
+    (s-trim (org--graph-item-render nil it))))
+
 (defun org--graph-item-text-sans-tags (text)
   "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags.
 A web or file link becomes the node's URL, its description staying in the label; an image link, its image."
@@ -215,8 +224,7 @@ A web or file link becomes the node's URL, its description staying in the label;
          (urls   (org-element-map objs 'link (lambda (o) (and (org--graph-external-link-p o) (not (org--graph-image-link-p o))
                                                               (org--graph-link-url o)))))
          (_      (when (cdr urls) (user-error "graph: a node has one URL, but `%s' links to %s" text (s-join " and " urls))))
-         (tooltip (-some--> (org-element-map objs 'footnote-reference
-                              (lambda (o) (-some->> (org-element-contents o) (org--graph-item-render nil))))
+         (tooltip (-some--> (org-element-map objs 'footnote-reference #'org--graph-footnote-text)
                     (s-join " " it)))
          (edge-link? (lambda (o) (and (eq (org-element-type o) 'link) (not (org--graph-external-link-p o)))))
          (links  (--map (cons (org-element-property :path it)
@@ -231,7 +239,9 @@ A web or file link becomes the node's URL, its description staying in the label;
        (list :name (caar links) :label (caar links) :bare-label (cdar links) :reference t))
       ;; A lone image is its own name, drawn sans text.
       (t (list :name (if (s-blank-str-p name) (or target image) name)
-               :label (cond ((org-element-map objs (cons 'line-break (mapcar #'car org--graph-markup-tags)) #'identity nil t)
+               ;; Markup in a footnote is the tooltip's, not the label's.
+               :label (cond ((org-element-map objs (cons 'line-break (mapcar #'car org--graph-markup-tags)) #'identity nil t
+                                              'footnote-reference)
                              (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs)))))
                             ((not (s-blank-str-p name)) name)
                             (target)

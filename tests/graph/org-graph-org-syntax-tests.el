@@ -417,6 +417,23 @@ FACE=\"monospace\">v</FONT> <FONT FACE=\"monospace\">c</FONT>> ];
   Org [ tooltip=Carsten label=Org ];
 }")
 
+(org-deftest "a named footnote is a tooltip too: inline, [fn:NAME: NOTE]; or bare, [fn:NAME], defined in the buffer" [graph]
+  :text "
+#+begin_graph
+#+end_graph
+
+[fn:tawrat] Given the /Torah/."
+  ;; A footnote's markup is its tooltip's, so the label stays plain; an undefined footnote has no tooltip.
+  (should (equal (org--graph-raw->dot "
++ Moses [fn:tawrat]
++ Jesus [fn:injil: Given the /Gospel/.]
++ Nuh [fn:nowhere]" nil)
+                 "digraph {
+  Moses [ tooltip=\"Given the Torah.\" label=Moses ];
+  Jesus [ tooltip=\"Given the Gospel.\" label=Jesus ];
+  Nuh [ label=Nuh ];
+}")))
+
 ;;; Notes are tooltips: #+begin_note
 
 (define-graph-test "a #+begin_note is its item's tooltip, a paragraph a line; with :edge, the arc's; under a reference, the arc's"
