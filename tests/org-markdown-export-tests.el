@@ -105,7 +105,7 @@
   :to md
   :equals "
 
-<abbr class=\"tooltip\" title=\"A set with an associative &lt;op&gt; &amp; a
+<abbr title=\"A set with an associative &lt;op&gt; &amp; a
 &quot;unit&quot;.&#10;Really.\">Monoid</abbr>
 
 ")
@@ -153,11 +153,9 @@
   :call (org-link/badge "key|value" nil 'html)
   :returns "<img src=\"https://img.shields.io/badge/key-value-green\">")
 
-(deftest "tooltip emphasis follows Org's borders: Lisp's (* 25) and a path's /etc/ stay as written" [tooltip]
-  (should (equal (org--tooltip-emphasis "*" "strong" "(* 25)\n(* 25 x)") "(* 25)\n(* 25 x)"))
-  (should (equal (org--tooltip-emphasis "/" "em" "the '/etc/passwd' file") "the '/etc/passwd' file"))
-  (should (equal (org--tooltip-emphasis "~" "code" "named FOO.~i~ for i") "named FOO.~i~ for i"))
-  (should (equal (org--tooltip-emphasis "*" "strong" "*a* *b*, (*c*)") "<strong>a</strong> <strong>b</strong>, (<strong>c</strong>)")))
+(deftest "a tooltip's Org is exported by Org, and a docstring is shown as written: (* 25) and /etc/ stay as is" [tooltip]
+  (should (equal (org--tooltip-html "A /typed/ monoid; e.g., (* 25).") "<p>\nA <i>typed</i> monoid; e.g., (* 25).</p>"))
+  (should (equal (org--tooltip-html "(* 25)\nthe '/etc/passwd' <file>" :plain) "<pre>(* 25)\nthe '/etc/passwd' &lt;file&gt;</pre>")))
 
 (provide 'org-markdown-export-tests)
 ;;; org-markdown-export-tests.el ends here

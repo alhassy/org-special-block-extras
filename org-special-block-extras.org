@@ -3857,13 +3857,14 @@ Let's have some sanity tests...
 Sometimes you want to remark on [[org-block/details][details]] without drawing too much
 attention, and so a tooltip via [[org-block/remark][remark]] suffices.
   
-#+begin_tiny
-#+begin_center
-/(Scroll to make tooltips disappear!)/
-#+end_center
-#+end_tiny
-
    osbe-example:tooltip
+
+   A tooltip opens when its word is hovered with a mouse, or tapped on a phone; it closes when we
+   leave both, tap elsewhere, or press =Escape=. Its text is Org, exported as Org, so it may hold
+   links ---clickable, since moving into the tooltip keeps it open--- and any other markup; an
+   Elisp docstring is shown just as it is written. The machinery is [[https://github.com/alhassy/org-special-block-extras/blob/master/tooltips.js][tooltips.js]], about eighty
+   lines with no dependencies, in the look of [[https://github.com/alhassy/org-special-block-extras/blob/master/tooltips.css][tooltips.css]]; both are inlined into each exported
+   page, which so fetches nothing for them.
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 

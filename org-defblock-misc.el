@@ -23,7 +23,7 @@
 ;;; Code:
 
 (require 'org-defblock)
-(require 'org-links)  ;; for org-ospe-html-export-preserving-whitespace
+(require 'org-links)  ;; for org--html-tooltip
 (require 'org-box-block)    ;; solution uses box
 (require 'org-details-block) ;; solution uses details
 (require 'org-parallel-block) ;; org-demo uses parallel
@@ -112,13 +112,13 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                              (s-trim contents))
                            stepcounter))
                   ;; HTML has no margin per se, so the note is a tooltip on its marker.
-                  (_ (concat (org--html-tooltip (org-ospe-html-export-preserving-whitespace contents) (or marker "∘"))
+                  (_ (concat (org--html-tooltip raw-contents (or marker "∘"))
                              "&emsp13;")))))
 
 ;;;;;; Tooltip (HTML)
 (org-defblock tooltip (marker "°")
-              "Produce an HTML tooltip."
-              (concat (org--html-tooltip (org-ospe-html-export-preserving-whitespace contents) marker) "&emsp13;"))
+              "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone."
+              (concat (org--html-tooltip raw-contents marker) "&emsp13;"))
 
 (org-defblock latex-definitions nil
               "Declare but do not display the CONTENTS according to the BACKEND."

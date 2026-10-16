@@ -15,27 +15,48 @@ emphasises core information.
 #+end_box"
   :html "<p>
 It can be useful to draw attention to some important text by
-enclosing it in a <abbr class=\"tooltip\" title=\"Enclose text in a box, possibly with a TITLE.<br><br>
-By default, the box’s BACKGROUND-COLOR is green for HTML and red for LaTeX;<br>for LaTeX, there are
-also FRAME-COLOR and TITLE-BACKGROUND-COLOR.<br><br>SHADOW is an alternate style of boxing: It
-shows the contents in a centred<br>box with a shadow colour being the given non-nil value of
-SHADOW.<br>If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.<br>
-More accurately, the following are all valid uses:<br><br>&emsp;&emsp;#+begin_box title :shadow
-t<br>&emsp;&emsp;#+begin_box title :shadow inset<br><br>&emsp;&emsp;#+begin_box title :shadow
-''pink''<br>&emsp;&emsp;#+begin_box title :shadow pink<br><br>&emsp;&emsp;#+begin_box title :shadow
-(cyan pink orange yellow)<br>&emsp;&emsp;#+begin_box title :shadow (cyan ''inset pink'' orange)<br>
-&emsp;&emsp;#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left
-yellow)<br><br>Notice that prefixing colours with ‘inset’ causes the colour to be within the
-box,<br>rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.<br>
-<br>The HTML export uses a padded div, whereas the LaTeX export<br>requires the tcolorbox package;
-Markdown, sans colours, gets a quote opening with TITLE in bold.<br><br>Regarding the Lisp
-function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text
-as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’
-version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key
-CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org
-special block<br><br>&emsp;&emsp; #+begin_box<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp;
-#+end_box<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/box ‘latex
-''Hello, world'')\">box</abbr>.
+enclosing it in a <abbr class=\"tooltip\"
+tabindex=\"0\">box<template><pre>Enclose text in a box, possibly with a TITLE.
+
+By default, the box’s BACKGROUND-COLOR is green for HTML and red for LaTeX;
+for LaTeX, there are also FRAME-COLOR and TITLE-BACKGROUND-COLOR.
+
+SHADOW is an alternate style of boxing: It shows the contents in a centred
+box with a shadow colour being the given non-nil value of SHADOW.
+If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.
+More accurately, the following are all valid uses:
+
+    #+begin_box title :shadow t
+    #+begin_box title :shadow inset
+
+    #+begin_box title :shadow \"pink\"
+    #+begin_box title :shadow pink
+
+    #+begin_box title :shadow (cyan pink orange yellow)
+    #+begin_box title :shadow (cyan \"inset pink\" orange)
+    #+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
+
+Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
+
+The HTML export uses a padded div, whereas the LaTeX export
+requires the tcolorbox package; Markdown, sans colours, gets a quote opening with TITLE in bold.
+
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it verbatim.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+For example, upon LaTeX export, the Org special block
+
+     #+begin_box
+     Hello, world
+     #+end_box
+
+ is rewritten to the result of the call
+
+     (org-block/box ‘latex \"Hello, world\")</pre></template></abbr>.
 </p>
 
 <div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>Uses

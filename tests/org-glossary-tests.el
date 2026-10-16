@@ -30,13 +30,13 @@ A unital semigroup.
 
 (deftest "a doc: link cites a heading entry, which exports as an ordinary section"
   (let ((html (org-export-string "* Category Theory :documentation:\n:PROPERTIES:\n:DOC_KEYS: cat\n:END:\nTyped composition.\n* Use\nSee doc:cat.")))
-    (should (s-contains? "title=\"Typed composition.\">Category Theory</abbr>" html))
+    (should (string-match-p "Category Theory<template><p>\\s-*Typed composition\\.\\s-*</p></template></abbr>" html))
     (should (s-contains? "Category Theory" html))))
 
 (deftest "show:GLOSSARY lists every citation in one export, even when it precedes them"
   (let ((html (org-export-string "show:GLOSSARY\n\n#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\n\nSee doc:mon.")))
     ;; Once as the citation, once as the glossary entry.
-    (should (= 2 (s-count-matches "title=\"A unital semigroup.\"" html)))))
+    (should (= 2 (s-count-matches "<template><p>\\s-*A unital semigroup\\.\\s-*</p></template>" html)))))
 
 (deftest "one export's glossary does not leak into the next"
   (org-export-string "#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\nSee doc:mon.")
@@ -65,7 +65,7 @@ Every monoid is a category with one object."
                  '("monoid" "monoid" "A monoid is a set with an /associative/ operation and a unit."))))
 
 (deftest "a doc: link cites a radio target, its paragraph being the tooltip" [radio-target]
-  (should (s-contains? "<abbr class=\"tooltip\" title=\"A monoid is a set with an <em>associative</em> operation and a unit.\">monoid</abbr>"
+  (should (s-contains? "<abbr class=\"tooltip\" tabindex=\"0\">monoid<template><p>\nA monoid is a set with an <i>associative</i> operation and a unit.</p></template></abbr>"
                        (org-export-string "
 A <<<monoid>>> is a set with an /associative/ operation and a unit.
 

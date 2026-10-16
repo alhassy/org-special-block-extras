@@ -17,7 +17,7 @@
 
 ;; Built-in link types: melpa, html-export-style, kbd, octoicon, link-here,
 ;; badge, tweet, reddit, github-*, twitter-follow, doc, show; and the documentation block.
-;; Also houses the org-docs-* glossary system and org-ospe-html-export-preserving-whitespace.
+;; Also houses the org-docs-* glossary system and `org--html-tooltip'.
 ;;
 ;; Full documentation at https://alhassy.github.io/org-special-block-extras
 
@@ -101,10 +101,25 @@ buffer's choice never leaks into another's export."
   :export "")
 
 ;;;;;; Kbd
-(defun org--html-tooltip (title body &optional style)
-  "(TITLE, BODY, STYLE) ↦ BODY as HTML, showing TITLE on hover; e.g., <abbr class=\"tooltip\" title=\"TITLE\">BODY</abbr>."
-  (format "<abbr class=\"tooltip\"%s title=\"%s\">%s</abbr>"
-          (if style (format " style=\"%s\"" style) "") title body))
+(defun org--html-tooltip (text body &optional plain? style)
+  "(TEXT, BODY, PLAIN?, STYLE) ↦ BODY as HTML, showing TEXT on hover or tap; e.g., for TEXT \"A /typed/ monoid\",
+  <abbr class=\"tooltip\" tabindex=\"0\">BODY<template><p>A <i>typed</i> monoid</p></template></abbr>
+TEXT is Org, exported as such; or PLAIN? text, such as a docstring, shown as is.  tooltips.js shows the
+<template>.  Markdown, which runs no script, gets TEXT as a plain title attribute instead."
+  (if (org-export-markdown-p)
+      (format "<abbr title=\"%s\">%s</abbr>"
+              (s-replace-all '(("&" . "&amp;") ("\"" . "&quot;") ("<" . "&lt;") (">" . "&gt;") ("\n" . "&#10;")) text)
+              body)
+    (format "<abbr class=\"tooltip\" tabindex=\"0\"%s>%s<template>%s</template></abbr>"
+            (if style (format " style=\"%s\"" style) "") body (org--tooltip-html text plain?))))
+
+(defun org--tooltip-html (text &optional plain?)
+  "(TEXT, PLAIN?) ↦ HTML of a tooltip's TEXT: its body-only export as Org; or, when PLAIN?, TEXT escaped in a <pre>.
+The nested export keeps the outer one's glossary, which `org--docs-prepare' would otherwise reset."
+  (if plain?
+      (format "<pre>%s</pre>" (org-html-encode-plain-text (string-trim text)))
+    (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
+      (string-trim (org-export-string-as text 'html t)))))
 
 (org-deflink kbd
   "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
@@ -132,10 +147,8 @@ Examples:
   :follow (org--kbd-run the-label)
   :export (cond ((equal o-backend 'latex) (format "\\texttt{%s}" the-label))
                 ;; The style is to remove the underlining caused by <abbr>.
-                (tooltip? (org--html-tooltip
-                           (org-ospe-html-export-preserving-whitespace (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip))
-                           keystrokes
-                           "border: none; text-decoration: none;"))
+                (tooltip? (org--html-tooltip (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip) keystrokes
+                                             :plain "border: none; text-decoration: none;"))
                 (t keystrokes)))
 
 (defun org--kbd-run (keys)
@@ -589,7 +602,7 @@ We use this listing to actually print a glossary using
   :export (progn
             (add-to-list 'org--docs-actually-used (list o-label name docs))
             (pcase o-backend
-              ('html (org--html-tooltip (org-ospe-html-export-preserving-whitespace docs) display-name))
+              ('html (org--html-tooltip docs display-name (org--docs-plain-p o-label)))
               ;; Make the current word refer to its glossary entry, and declare the location
               ;; that the glossary should refer back to; see the GLOSSARY of `org-link/show'.
               ('latex (format "\\hyperref[o-glossary-%s]{%s}\\label{o-glossary-declaration-site-%s}"
@@ -598,56 +611,10 @@ We use this listing to actually print a glossary using
 
 ;; WHERE ...
 
-(defun org--tooltip-emphasis (marker tag s)
-  "(MARKER, TAG, S) ↦ S with each Org emphasis MARKER…MARKER as <TAG>…</TAG>; e.g., (\"*\" \"strong\" \"a *b* c\") ↦ \"a <strong>b</strong> c\".
-As in Org, a MARKER opens after a line's start, a space, or an opening bracket, and before a non-space; it closes
-after a non-space, and before a line's end, a space, or punctuation; emphasis never spans lines."
-  (let ((m (regexp-quote marker)))
-    ;; Twice, since one match's closing border may be the next one's opening border; e.g., “*a* *b*”.
-    (dotimes (_ 2)
-      (setq s (replace-regexp-in-string
-               (format "\\(^\\|[[:space:]('\"{]\\)%s\\([^[:space:]%s]\\|[^[:space:]%s][^\n]*?[^[:space:]]\\)%s\\($\\|[][[:space:].,:;!?'\")}-]\\)"
-                       m marker marker m)
-               (format "\\1<%s>\\2</%s>\\3" tag tag) s t)))
-    s))
-
-(defun org-ospe-html-export-preserving-whitespace (s)
-  "Make Org-markup'd string S ready for HTML presentation, preserving whitespace.
-
-This is orthogonal to the  `org-export-string-as' command; i.e.,
-(org-export-string-as s 'html :body-only-please) does something
-else!  In particular, what this yields is an HTML rendition that
-does not account for whitespace, such as indentation and
-newlines.  In Markdown, which has no tooltipster, S is instead escaped as a plain-text title attribute.
-"
-  ;; Markdown has no tooltipster to render HTML in a tooltip, so its title attribute is plain text.
-  (if (org-export-markdown-p)
-      (s-replace-all '(("&" . "&amp;") ("\"" . "&quot;") ("<" . "&lt;") (">" . "&gt;") ("\n" . "&#10;")) s)
-    ;; Make it look pretty!
-    (thread-last s
-                 (s-replace-regexp "\\#\\+begin_src [^\n]*\n" "<pre class='tooltip'>")
-                 (s-replace-regexp "\\( \\)*\\#\\+end_src\n" "</pre>")
-                 (s-replace-regexp "\\#\\+begin_export [^\n]*\n" "")
-                 (s-replace-regexp "\\( \\)*\\#\\+end_export" "")
-                 ;; Translate Org markup, by Org's own borders, before newlines become <br>; so “(* 25)” and
-                 ;; “/etc/passwd” are Lisp and paths, not emphasis.
-                 (org--tooltip-emphasis "/" "em")
-                 (org--tooltip-emphasis "*" "strong")
-                 (org--tooltip-emphasis "~" "code")
-                 (org--tooltip-emphasis "$" "em")
-                 (s-replace "  " "&emsp;") ; Preserve whitespace
-                 (s-replace "\n" "<br>")   ; Preserve newlines
-                 (s-replace-regexp "\\#\\+begin_example<br>" "")
-                 (s-replace-regexp "\\#\\+end_example<br>" "")
-                 (s-replace-regexp "\\[\\[\\(.*\\)\\]\\[\\(.*\\)\\]\\]" "\\2 (\\1)")
-                 ;; 5+ dashes result in a horizontal line
-                 (s-replace-regexp "-----+" "<hr>")
-                 ;; Spacing in math mode
-                 (s-replace-regexp "\\\\quad" "&#x2000;")
-                 (s-replace-regexp "\\\\," "&#8194;") ;; en space
-                 (s-replace-regexp "\\\\;" "&#8195;") ;; em space
-                 ;; The presence of ‘\"’ in tooltips breaks things, so omit them.
-                 (s-replace-regexp "\\\"" "''"))))
+(defun org--docs-plain-p (label)
+  "LABEL ↦ non-nil when its glossary entry is plain text ---an Elisp docstring, or a WordNet definition--- not Org.
+Entries of the buffer, or of `org-docs-libraries', are Org; see `org-docs-get'."
+  (not (or (assoc label org--docs) (assoc label org--docs-from-libraries))))
 
 ;;;;;;; Documentation
 
@@ -769,7 +736,7 @@ That is what we accomplish with this new `show' link type."
                 ;; Otherwise O-LABEL is glossary, which we print in HTML & LaTeX
                 ((equal 'html o-backend)
                  (s-join " "
-                         (--map (org--html-tooltip (org-ospe-html-export-preserving-whitespace (cl-third it)) (cl-second it))
+                         (--map (org--html-tooltip (cl-third it) (cl-second it) (org--docs-plain-p (cl-first it)))
                                 ;; Ignore duplicates; i.e., entries with the same name/title.
                                 (cl-remove-duplicates org--docs-actually-used :key #'cl-second :test #'cl-equalp))))
                 ;; Each entry is labelled for `org-link/doc' to refer to, and refers back to where it was cited.

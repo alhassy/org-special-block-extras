@@ -221,12 +221,9 @@ definition is obtained from the command line tool ‘wn’.
     \"Define the given word using WordNet, along with synonyms and coordinate terms.\"
     :let (definition (shell-command-to-string (format \"wn %s -over -synsn -coorn\" word)))
     :help-echo definition
-    :export (--> definition
-              (s-replace-regexp \"\\\\\\\"\" \"''\" it) ;; The presence of ‘\\\"’ in tooltips breaks things, so omit them.
-              (s-replace-regexp \"\\n\" \"<br>\" it)
-              (format \"<abbr class=\\\"tooltip\\\" title=\\\"%s\\\">%s</abbr>\" it word)))
+    :export (org--html-tooltip definition word :plain))
 
-For HTML tooltips, see `org-ospe-html-export-preserving-whitespace'.
+See `org--html-tooltip' for HTML tooltips: their text is Org, or, as here, plain.
 
 More generally, org-special-block-extra's “doc” link type
 supports, in order of precedence: User definitions, Emacs Lisp

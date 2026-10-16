@@ -1,0 +1,20 @@
+/* tooltips.css ---The look of tooltips.js: tooltipster's Punk theme, a dark box over a pink rule. */
+
+/* A word with a tooltip.  The pointer cursor also makes iOS deliver taps on it, which it otherwise does not. */
+.tooltip { color: red; border-bottom: 1px dotted; text-decoration: none; cursor: pointer; }
+
+.tooltip-box {
+  position: absolute; z-index: 1000;
+  max-width: min(40em, calc(100vw - 16px)); /* A phone's screen, less the margins `place' keeps. */
+  padding: 8px 16px; border-radius: 5px; border-bottom: 3px solid #f71169;
+  background: #2a2a2a; color: #fff; font-size: 0.9em; line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); overflow-wrap: anywhere;
+  animation: tooltip-grow 0.15s ease-out; transform-origin: center bottom;
+}
+.tooltip-box[hidden] { display: none; }
+.tooltip-box a { color: #ff8ab8; }
+.tooltip-box p { margin: 0.4em 0; }
+/* A docstring keeps its line breaks and indentation, yet wraps rather than overflowing a phone's screen. */
+.tooltip-box pre { margin: 0; white-space: pre-wrap; background: none; color: inherit; border: none; box-shadow: none; }
+
+@keyframes tooltip-grow { from { opacity: 0; transform: scale(0.8); } }

@@ -41,11 +41,21 @@ The <code>doc</code> link type can be used to show tooltips for Emacs Lisp comma
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"Thread FORMS elements as the last argument of their successor.<br>
-Example:<br>&emsp;&emsp;(thread-last<br>&emsp;&emsp;&emsp;5<br>&emsp;&emsp;&emsp;(+ 20)<br>
-&emsp;&emsp;&emsp;(/ 25)<br>&emsp;&emsp;&emsp;-<br>&emsp;&emsp;&emsp;(+ 40))<br>Is equivalent
-to:<br>&emsp;&emsp;(+ 40 (- (/ 25 (+ 20 5))))<br>Note how the single ‘-’ got converted into a list
-before<br>threading.<br><br>(fn &rest FORMS)\">thread-last</abbr>
+<abbr class=\"tooltip\"
+tabindex=\"0\">thread-last<template><pre>Thread FORMS elements as the last argument of their successor.
+Example:
+    (thread-last
+      5
+      (+ 20)
+      (/ 25)
+      -
+      (+ 40))
+Is equivalent to:
+    (+ 40 (- (/ 25 (+ 20 5))))
+Note how the single ‘-’ got converted into a list before
+threading.
+
+(fn &amp;rest FORMS)</pre></template></abbr>
 </p>
 
 <p>
@@ -60,8 +70,8 @@ Then you can refer to it using the given :label, if any:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
-Theory</abbr>
+<abbr class=\"tooltip\" tabindex=\"0\">Category Theory<template><p>
+A theory of typed composition; e.g., typed monoids.</p></template></abbr>
 </p>
 
 <p>
@@ -69,8 +79,8 @@ Or else refer to it with underscores in lieu of spaces:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
-Theory</abbr>
+<abbr class=\"tooltip\" tabindex=\"0\">Category Theory<template><p>
+A theory of typed composition; e.g., typed monoids.</p></template></abbr>
 </p>
 
 <p>
@@ -79,8 +89,8 @@ If you want to change what's rendered, provide a description:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">abstract
-nonsense</abbr>
+<abbr class=\"tooltip\" tabindex=\"0\">abstract nonsense<template><p>
+A theory of typed composition; e.g., typed monoids.</p></template></abbr>
 </p>
 
 <p>
@@ -91,9 +101,24 @@ dictionary:
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"<br>Overview of noun happiness<br><br>The noun happiness has 2 senses
-(first 2 from tagged texts)<br>
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<br>1. (4) happiness, felicity -- (state of well-being characterized by emotions ranging from contentment to intense joy)<br>2. (2) happiness -- (emotions experienced when in a state of well-being)<br><br>Synonyms/Hypernyms (Ordered by Estimated Frequency) of noun happiness<br><br>2 senses of happiness&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; <br><br>Sense 1<br>happiness, felicity<br>&emsp;&emsp;&emsp; => emotional state, spirit<br><br>Sense 2<br>happiness<br>&emsp;&emsp;&emsp; => feeling<br>\">happiness</abbr>
+<abbr class=\"tooltip\" tabindex=\"0\">happiness<template><pre>Overview of noun happiness
+
+The noun happiness has 2 senses (first 2 from tagged texts)
+                                      
+1. (4) happiness, felicity -- (state of well-being characterized by emotions ranging from contentment to intense joy)
+2. (2) happiness -- (emotions experienced when in a state of well-being)
+
+Synonyms/Hypernyms (Ordered by Estimated Frequency) of noun happiness
+
+2 senses of happiness                                                   
+
+Sense 1
+happiness, felicity
+       =&gt; emotional state, spirit
+
+Sense 2
+happiness
+       =&gt; feeling</pre></template></abbr>
 </p>"
   :latex "The \\texttt{doc} link type can be used to show tooltips for Emacs Lisp commands such as
 

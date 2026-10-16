@@ -28,9 +28,10 @@ Our glossary, listing every term this page cites &mdash;even those cited further
 </p>
 
 <p>
-<abbr class=\"tooltip\" title=\"A set with an associative binary operation that has a
-unit.\">Monoid</abbr> <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed
-monoids.\">Category Theory</abbr>
+<abbr class=\"tooltip\" tabindex=\"0\">Monoid<template><p>
+A set with an associative binary operation that has a unit.</p></template></abbr> <abbr
+class=\"tooltip\" tabindex=\"0\">Category Theory<template><p>
+A theory of typed composition; e.g., typed monoids.</p></template></abbr>
 </p>
 <div id=\"outline-container-org0000001\" class=\"outline-2\">
 <h2 id=\"org0000001\">Category Theory&nbsp;&nbsp;&nbsp<span class=\"tag\"><span
@@ -51,9 +52,10 @@ A glossary entry may instead be a block, which exports nothing:
 
 
 <p>
-Then, <abbr class=\"tooltip\" title=\"A theory of typed composition; e.g., typed monoids.\">Category
-Theory</abbr> studies <abbr class=\"tooltip\" title=\"A set with an associative binary operation that
-has a unit.\">monoids</abbr> and their kin.
+Then, <abbr class=\"tooltip\" tabindex=\"0\">Category Theory<template><p>
+A theory of typed composition; e.g., typed monoids.</p></template></abbr> studies <abbr
+class=\"tooltip\" tabindex=\"0\">monoids<template><p>
+A set with an associative binary operation that has a unit.</p></template></abbr> and their kin.
 </p>
 </div>
 </div>"

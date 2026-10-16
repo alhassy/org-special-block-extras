@@ -33,17 +33,31 @@ Full syntax ~#+begin_details \"title\" :background-color \"cyan\" :title-color \
   :html "<p>
 Sometimes there is a remark or a code snippet that is useful to
 have, but not relevant to the discussion at hand and so we want to
-<i>fold away such <abbr class=\"tooltip\" title=\"Enclose contents in a folded up box, for HTML.<br>
-<br>For LaTeX, this is just a boring, but centered, box.<br><br>By default, the TITLE of such
-blocks is “Details”,<br>its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.<br><br>In
-HTML, we show folded, details, regions with a nice greenish colour.<br><br>Regarding the Lisp
-function:<br>+ BACKEND refers to the current export backend.<br>+ RAW-CONTENTS refers to the text
-as the user wrote it verbatim.<br>&emsp;⇒ You may mention CONTENTS to refer to the ‘org parsed’
-version of user text.<br>&emsp;⇒ CONTENTS and RAW-CONTENTS are identical whenever key
-CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For example, upon LaTeX export, the Org
-special block<br><br>&emsp;&emsp; #+begin_details<br>&emsp;&emsp; Hello, world<br>&emsp;&emsp;
-#+end_details<br><br> is rewritten to the result of the call<br><br>&emsp;&emsp; (org-block/details
-‘latex ''Hello, world'')\">details</abbr></i>.
+<i>fold away such <abbr class=\"tooltip\"
+tabindex=\"0\">details<template><pre>Enclose contents in a folded up box, for HTML.
+
+For LaTeX, this is just a boring, but centered, box.
+
+By default, the TITLE of such blocks is “Details”,
+its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
+
+In HTML, we show folded, details, regions with a nice greenish colour.
+
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it verbatim.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+For example, upon LaTeX export, the Org special block
+
+     #+begin_details
+     Hello, world
+     #+end_details
+
+ is rewritten to the result of the call
+
+     (org-block/details ‘latex \"Hello, world\")</pre></template></abbr></i>.
 </p>
 
 <details class=\"code-details\" style=\"padding: 1em; background-color: #e5f5e5; border-radius: 15px;

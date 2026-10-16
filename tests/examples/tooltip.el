@@ -17,20 +17,30 @@ Or, without specifying an explicit label:
        burden a soul beyond what it can bear./ --- Quran 2:286"
   :html "<p>
 It can be annoying to make readers jump to the bottom of the page to
-read a footnote.  Instead, I prefer to write an <i>inline <abbr class=\"tooltip\" title=\"Produce an
-HTML tooltip.<br><br>Regarding the Lisp function:<br>+ BACKEND refers to the current export
-backend.<br>+ RAW-CONTENTS refers to the text as the user wrote it verbatim.<br>&emsp;⇒ You may
-mention CONTENTS to refer to the ‘org parsed’ version of user text.<br>&emsp;⇒ CONTENTS and
-RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.<br><br>For
-example, upon LaTeX export, the Org special block<br><br>&emsp;&emsp; #+begin_tooltip<br>
-&emsp;&emsp; Hello, world<br>&emsp;&emsp; #+end_tooltip<br><br> is rewritten to the result of the
-call<br><br>&emsp;&emsp; (org-block/tooltip ‘latex ''Hello, world'')\">remark</abbr></i>
+read a footnote.  Instead, I prefer to write an <i>inline <abbr class=\"tooltip\"
+tabindex=\"0\">remark<template><pre>Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
+
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it verbatim.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+For example, upon LaTeX export, the Org special block
+
+     #+begin_tooltip
+     Hello, world
+     #+end_tooltip
+
+ is rewritten to the result of the call
+
+     (org-block/tooltip ‘latex \"Hello, world\")</pre></template></abbr></i>
 containing, say, references or additional explanation.
 </p>
 
 <p>
-<i><abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim in the
-Bible\">Allah</abbr>&emsp13; does not burden a
+<i><abbr class=\"tooltip\" tabindex=\"0\">Allah<template><p>
+The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not burden a
     soul beyond what it can bear.</i> &mdash; Quran 2:286
 </p>
 
@@ -39,8 +49,8 @@ Or, without specifying an explicit label:
 </p>
 
 <p>
-<i>Allah<abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim in the
-Bible\">°</abbr>&emsp13; does not
+<i>Allah<abbr class=\"tooltip\" tabindex=\"0\">°<template><p>
+The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not
     burden a soul beyond what it can bear.</i> &mdash; Quran 2:286
 </p>"
   :latex "It can be annoying to make readers jump to the bottom of the page to
@@ -49,12 +59,12 @@ read a footnote.  Instead, I prefer to write an \\emph{inline
 \\label{o-glossary-declaration-site-org-block/tooltip}}
 containing, say, references or additional explanation.
 
-\\emph{<abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim in the
-Bible\">Allah</abbr>&emsp13; does not burden a
+\\emph{<abbr class=\"tooltip\" tabindex=\"0\">Allah<template><p>
+The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not burden a
     soul beyond what it can bear.} --- Quran 2:286
 
 Or, without specifying an explicit label:
 
-\\emph{Allah<abbr class=\"tooltip\" title=\"The God of Abraham; known as Elohim in the
-Bible\">°</abbr>&emsp13; does not
+\\emph{Allah<abbr class=\"tooltip\" tabindex=\"0\">°<template><p>
+The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not
     burden a soul beyond what it can bear.} --- Quran 2:286")

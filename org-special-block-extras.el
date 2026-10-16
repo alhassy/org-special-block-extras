@@ -253,17 +253,9 @@
   (message org-special-block-extras-version))
 
 (defcustom org-special-block-add-html-extra t
-  "Whether to let `org-special-block-extras' to add content to the `ox-html' head tag.
-
-The `org-special-block-extras' mode adds a lot of extra HTML/JS code that
-1. [Bloat] may not be needed by everyone using this package,
-2. [Security Threat] loads stuff from foreign websites.
-
-Since the extra stuff is for beautiful tooltips or styles,
-for ease of use, the default behaviour is to use such
-“untrusted data from untrusted websites”.
-
-To avoid such behaviour, set this variable to `nil'."
+  "Whether `org-special-block-extras-mode' adds its CSS and JS to the `ox-html' head: <kbd> styling and tooltips.
+They are inlined ---see tooltips.css and tooltips.js--- so an exported page loads nothing from elsewhere;
+set this to nil for pages sans them, whose tooltips then never open."
   :type 'boolean
   :group 'org-special-block-extras)
 
@@ -301,48 +293,16 @@ To avoid such behaviour, set this variable to `nil'."
   "Styling for <kbd> elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
 
 (defconst org--tooltip-html-head
-  "
-          <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/tooltipster.bundle.min.css\"/>
-
-          <link rel=\"stylesheet\" type=\"text/css\" href=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css\" />
-
-          <script type=\"text/javascript\">
-              if (typeof jQuery == 'undefined') {
-                  document.write(unescape('%3Cscript src=\"https://code.jquery.com/jquery-1.10.0.min.js\"%3E%3C/script%3E'));
-              }
-          </script>
-
-           <script type=\"text/javascript\"            src=\"https://alhassy.github.io/org-special-block-extras/tooltipster/dist/js/tooltipster.bundle.min.js\"></script>
-
-            <script>
-                   $(document).ready(function() {
-                       $('.tooltip').tooltipster({
-                           theme: 'tooltipster-punk',
-                           contentAsHTML: true,
-                           animation: 'grow',
-                           delay: [100,500],
-                           // trigger: 'click'
-                           trigger: 'custom',
-                           triggerOpen: {
-                               mouseenter: true
-                           },
-                           triggerClose: {
-                               originClick: true,
-                               scroll: true
-                           }
-           });
-                   });
-               </script>
-
-          <style>
-             abbr {color: red;}
-
-             .tooltip { border-bottom: 1px dotted #000;
-                        color:red;
-                        text-decoration: none;}
-          </style>
-          "
-  "Tooltipster CSS/JS for “.tooltip” elements, appended to `org-html-head-extra' by `org-special-block-extras-mode'.")
+  (let ((here (file-name-directory (or load-file-name buffer-file-name))))
+    ;; A package archive must ship these files too; e.g., MELPA's recipe needs :files (:defaults "tooltips.*").
+    (cl-flet ((slurp (file)
+                (if (file-readable-p (expand-file-name file here))
+                    (with-temp-buffer (insert-file-contents (expand-file-name file here)) (buffer-string))
+                  (display-warning 'org-special-block-extras (format "%s is missing, so tooltips will not open" file))
+                  "")))
+      (format "\n<style>\n%s</style>\n<script>\n%s</script>\n" (slurp "tooltips.css") (slurp "tooltips.js"))))
+  "tooltips.css and tooltips.js, inlined, for “.tooltip” elements; appended to `org-html-head-extra' by `org-special-block-extras-mode'.
+Inlined, so an exported page makes no request for them; see https://github.com/alhassy/org-special-block-extras/issues/53.")
 
 ;;;;; Glossary libraries
 
@@ -389,11 +349,10 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
 On a #+begin_NAME line, or a NAME: link, eldoc shows the block's arguments and gist;
 C-c ' edits any special block's contents in an Org buffer, or one of its `:edit-indirect-mode';
-C-c C-v C-d splits any special block in two at point; and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
+C-c C-v C-d splits any special block in two at point;
+and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
 
-This minor mode uses “untrusted data from untrusted websites” when exporting
-to HTML, this is done for beautiful tooltips or styles.
-Disable this behaviour by setting `org-special-block-add-html-extra' to `nil'.
+HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add-html-extra'.
 "
   :global t
   :group 'org-special-block-extras
