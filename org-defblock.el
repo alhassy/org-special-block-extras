@@ -404,8 +404,9 @@ Note: This function mutates the current buffer."
                                           #+end_details
 
 Src, example, quote, verse, center, comment, and export blocks, and special blocks of any name, are left to Org,
-sans their switches; a src block's :folded t is titled by its language.  Note: Babel has evaluated src blocks
-by now, so :let changes only the code shown, not its results."
+sans their switches; a src block's :folded t is titled by its language.  We run before Babel, so a src block's
+:let changes the code it runs, :noexport keeps it from running, and :folded folds its results too; and again
+after, for the blocks of #+INCLUDE: files."
   (setq backend (org--base-backend backend))
   ;; Parsing the whole buffer is dear, so we only do it when some block may have a switch.
   (when (save-excursion (goto-char (point-min))

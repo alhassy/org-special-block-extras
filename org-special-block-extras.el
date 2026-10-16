@@ -361,7 +361,10 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
       (progn
         ;; https://orgmode.org/manual/Advanced-Export-Configuration.html
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
-        ;; Switches on any block not of ours ---src, quote, any #+begin_𝒳---, before our own blocks are rewritten.
+        ;; Switches on any block not of ours ---src, quote, any #+begin_𝒳---, before our own blocks are rewritten;
+        ;; and before Babel too, so a src block's :let reaches the code it runs, and its :noexport stops it running.
+        ;; The second pass serves the blocks of #+INCLUDE: files, which expand between the two.
+        (add-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
@@ -382,6 +385,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
           (setq org--docs-libraries-loaded t)
           (org-docs-load-libraries)))
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-special-blocks-by-handlers)
+    (remove-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)

@@ -4243,9 +4243,10 @@ from∘to m = {! try it! }
   osbe-example:switches
 
   A src block's =:folded t= is titled by its language, and its code is still exported by Org,
-  as ever; since Babel runs before switches apply, its =:let= changes only the code shown, not its
-  results. Other switches then apply to a =:verbatim= showing; e.g., =:verbatim demo :folded t=
-  folds away a block's source and result alike.
+  as ever. Switches apply before Babel runs, so a src block's =:let= changes the code it runs,
+  =:noexport= keeps it from running at all, and =:folded= folds away its results too. Other
+  switches then apply to a =:verbatim= showing; e.g., =:verbatim demo :folded t= folds away a
+  block's source and result alike.
 
   Moreover, =:C-c_C-c ACTION= gives a block an action in Emacs: pressing =C-c C-c= within it
   calls =ACTION= when it names a function, else evaluates it as a Lisp form; see [[#C-c-C-c-for-your-own-blocks][C-c C-c for

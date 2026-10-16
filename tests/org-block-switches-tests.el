@@ -248,6 +248,17 @@ Less is more.
   (should (equal (org--header-sans-switches "Title :when (eq backend 'html) :boxed :n 2" (lambda (k) (memq k org-block-switches)))
                  '((:when (eq backend 'html) :boxed t) . "Title :n 2"))))
 
+(deftest "switches apply before Babel: :let changes the code a src block runs, and :noexport keeps it from running" [switches babel]
+  (let ((org-confirm-babel-evaluate nil))
+    (should (string-match-p "<pre class=\"example\">\\s-*9\\s-*</pre>" (org-export-string "
+#+begin_src emacs-lisp :let (N 3) :exports results
+(* N N)
+#+end_src")))
+    (should (equal "" (org-export-string "
+#+begin_src emacs-lisp :noexport t :exports results
+(error \"Never run\")
+#+end_src")))))
+
 ;;; :verbatim
 
 (deftest "a block marked :verbatim t is shown as the Org source it is, sans its switches" [switches verbatim]
