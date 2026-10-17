@@ -4514,6 +4514,12 @@ Mind the gap.
   ~(org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}")) …)~. A
   LaTeX item is a package name or any preamble line; an HTML item is HTML, a symbol holding it, or
   ~mathjax~. An export that uses the block adds each item its head lacks; one that does not, adds none.
+  The lists go unquoted; e.g., ~:html-head (mathjax my-html-head "<style>.aside {color: gray}</style>")~.
+
+  Name a package, ~"amsthm"~, rather than write ~"\\usepackage{amsthm}"~: a name is left be when the
+  document loads it already, options and all ---say, ~\usepackage[thmmarks]{amsthm}~--- whereas a line
+  is left be only when the document has that very line; else the package loads twice, and differing
+  options clash.
 
   Even Org's own blocks ---=quote=, =verse=, =center=, =example=, =src=, =export=, and =comment=---
   are fair game: an ~(org-defblock verse …)~ overrides every =#+begin_verse=, saying so in

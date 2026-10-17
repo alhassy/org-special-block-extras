@@ -792,10 +792,15 @@ KWDS may also carry options, which are not arguments:
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
 + `:latex-head (ITEM …)' is what a LaTeX document using the block, or its link, needs in its preamble, added once:
-  a package name, or any preamble line; e.g., (\"tcolorbox\" \"\\\\newtcolorbox{aside}{colback=gray!5}\").  A package the
-  document loads already, options and all, is left be; see `org--load-latex-head'.
-+ `:html-head (ITEM …)' is what an HTML page using the block needs in its <head>: a string of HTML, a symbol whose
-  value is one, or `mathjax' for Org's own MathJax setup; see `org--load-html-head'.
+  a package name, or any preamble line; e.g., unquoted,
+      :latex-head (\"tcolorbox\" \"\\\\newtcolorbox{aside}{colback=gray!5}\")
+  Name a package, \"tcolorbox\", rather than write \"\\\\usepackage{tcolorbox}\": a name is left be when the document
+  loads it already, options and all; a line, only when the document has that very line.  See `org--load-latex-head'.
++ `:html-head (ITEM …)' is what an HTML page using the block needs in its <head>, added once: a string of HTML, a
+  symbol whose value is one, or `mathjax' for Org's own MathJax setup; e.g., unquoted,
+      :html-head (mathjax my-html-head \"<style>.aside {color: gray}</style>\")
+  A symbol shares one head among many blocks, as `org--tooltip-html-head' serves every tooltip.  See
+  `org--load-html-head'.
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
   “#+end_proof” as “⏹”, and the contents in italics too.  Each part is optional; see
