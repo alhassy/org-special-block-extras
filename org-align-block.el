@@ -55,7 +55,8 @@ link in Emacs visits the line.
 
 + The contents are LaTeX, not Org markup; as in LaTeX, a line sans a tag ends in \\\\.
 + “:tag-COLOUR: NAME” ≈ “\\tag{$\\color{COLOUR}{\\text{NAME}}$} \\label{NAME} \\\\”, for any xcolor COLOUR.
-+ Shorthands, such as -> above, come from the :let switch, which every block has.
++ Shorthands, such as -> above, come from the :let switch, which every block has; :let NAME shares them, from
+  the table #+name: NAME or the variable NAME.
 + In Markdown, the equations are a fenced math block."
               (let* ((tag ":tag-\\([^: \t\n]+\\):[ \t]*\\(.*?\\)[ \t]*$")
                      (body (replace-regexp-in-string

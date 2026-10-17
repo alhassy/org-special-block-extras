@@ -67,6 +67,50 @@ Both p ⇒ q ≡ ¬p ∨ q and p⇒q≡¬p∨q read as implications.
 </span>
 ")
 
+(define-org-export-test "a block's :let NAME takes its variables from the table #+name: NAME, sans the header above its rule; even a :noexport: one" [switches]
+  :input "
+          #+begin_red :let logic
+          p -> q == ¬p ∨ q
+          #+end_red
+
+          #+begin_blue :let logic
+          q -> q == true
+          #+end_blue
+
+          * Shorthands, shared by the blocks above :noexport:
+          #+name: logic
+          | Variable | Value |
+          |----------+-------|
+          | ->       | ⇒     |
+          | ==       | ≡     |"
+  :equals "<span style=\"color:red;\">
+<p>
+p ⇒ q ≡ ¬p ∨ q
+</p>
+</span>
+
+<span style=\"color:blue;\">
+<p>
+q ⇒ q ≡ true
+</p>
+</span>
+")
+
+(defvar org-block-switches-tests--logic '(-> "⇒")
+  "Shorthands that every document may share, by :let org-block-switches-tests--logic.")
+
+(define-org-export-test "a block's :let NAME, for a NAME that is no table, takes its variables from the Lisp variable NAME" [switches]
+  :input "
+          #+begin_red :let org-block-switches-tests--logic
+          p -> q
+          #+end_red"
+  :equals "<span style=\"color:red;\">
+<p>
+p ⇒ q
+</p>
+</span>
+")
+
 (define-org-export-test "a block marked :boxed TITLE and :folded t is a box, folded away under the block's name" [switches]
   :input "
           #+begin_red :boxed \"Heads up\" :folded t

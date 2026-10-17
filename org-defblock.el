@@ -298,12 +298,27 @@ Lisp written in a document runs with your privileges; as with Babel's
                 (user-error "Declined to evaluate %S" form)))))
   (eval form `((backend . ,backend))))
 
+(defun org--block-let-named (name)
+  "NAME ↦ the (VAR VALUE …) of the table #+name: NAME, row by row, sans any header above its rule; else NAME's value.
+  | -> | \\Rightarrow |  ↦  (-> \"\\\\Rightarrow\")
+Cells stay strings: Babel's reading of a table, `org-babel-ref-resolve', would evaluate a cell such as (f x)."
+  (let ((rows (save-excursion
+                (goto-char (point-min))
+                (when (re-search-forward (format "^[ \t]*#\\+name:[ \t]*%s[ \t]*$" (regexp-quote (symbol-name name))) nil t)
+                  (forward-line 1)
+                  (when (org-at-table-p) (org-table-to-lisp))))))
+    (cond (rows (--mapcat (list (intern (car it)) (cadr it))
+                          (-filter #'consp (or (cdr (memq 'hline rows)) rows))))
+          ((boundp name) (symbol-value name))
+          (t (user-error "‘:let %s’ names neither a table, by #+name:, nor a Lisp variable" name)))))
+
 (defun org--block-let (bindings contents backend)
   "(BINDINGS, CONTENTS, BACKEND) ↦ CONTENTS with each whole-word VAR replaced by its value, for BINDINGS (VAR VALUE …).
   (N (+ 1 2) WHO \"Jasim\"), \"WHO scored N\"  ↦  \"Jasim scored 3\"
   (-> \"⇒\"), \"p->q\"                    ↦  \"p⇒q\"
-Each VALUE may refer to the VARs before it, as with `let*'."
-  (let* ((pairs (-partition 2 bindings))
+Each VALUE may refer to the VARs before it, as with `let*'.  BINDINGS may instead be a symbol, naming a table
+of them, or a variable holding them; see `org--block-let-named'."
+  (let* ((pairs (-partition 2 (if (symbolp bindings) (org--block-let-named bindings) bindings)))
          (values (org--block-eval `(let* ,pairs (list ,@(mapcar #'car pairs))) backend))
          ;; Case matters: a variable SUM leaves the word “sum” be.
          (case-fold-search nil))
@@ -323,7 +338,7 @@ Each VALUE may refer to the VARs before it, as with `let*'."
 
 + :noexport t ↦ nothing at all; likewise :when FORM, when FORM is nil.  FORM may mention `backend'.
 + :let (VAR VALUE …) ↦ each whole-word VAR in CONTENTS, or operator such as ->, becomes its VALUE, beforehand;
-  see `org--block-let'.
+  :let NAME takes them from the table #+name: NAME, else the variable NAME.  See `org--block-let'.
 + :ignore t ↦ CONTENTS as plain Org, bypassing RENDER; i.e., the block's own behaviour.
 + :boxed TITLE ↦ the result within a `box' titled TITLE; for :boxed t, untitled.
 + :folded TITLE ↦ the result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised.

@@ -4240,6 +4240,22 @@ from∘to m = {! try it! }
 
   osbe-example:align
 
+  To share shorthands among many blocks, name them once, in a table that need not itself export:
+  #+begin_example
+,#+begin_align :let logic
+p -> q &== \neg p \lor q
+,#+end_align
+
+,* Shorthands :noexport:
+,#+name: logic
+| Variable | Value       |
+|----------+-------------|
+| ->       | \Rightarrow |
+| ==       | \equiv      |
+  #+end_example
+  The rows above the rule are a header, and are skipped. A Lisp variable serves too, across
+  documents: =(setq logic '(-> "\\Rightarrow"))= and then =:let logic=.
+
 **   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
    :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
@@ -4313,6 +4329,7 @@ from∘to m = {! try it! }
   | =:noexport t=    | Nothing at all; e.g., notes to self                                          |
   | =:when FORM=     | Nothing at all, unless the Lisp =FORM= is non-nil; it may mention =backend= |
   | =:let (VAR VAL …)= | Each whole-word =VAR=, or operator such as =->=, in the contents becomes its value, beforehand |
+  | =:let NAME=      | Likewise, for the =VAR= and =VAL= of each row of the table =#+name: NAME=, else of the variable =NAME= |
   | =:ignore t=      | The contents, as plain Org; i.e., the block's own behaviour is bypassed      |
   | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |
