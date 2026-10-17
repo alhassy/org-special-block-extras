@@ -167,7 +167,22 @@ For example, upon LaTeX export, the Org special block
 
 \(fn TYPE [:title TITLE])"
            contents)
-    (should (equal (car (help-split-fundoc (documentation 'org-block/admonition t) 'org-block/admonition))
-                   "(org-block/admonition TYPE [:title TITLE])"))
-    (should-not (string-match-p "(fn " (cdr (help-split-fundoc (documentation 'org-block/admonition t)
-                                                               'org-block/admonition))))))
+    (should (equal (help-split-fundoc (documentation 'org-block/admonition t) 'org-block/admonition)
+                   (cons "(org-block/admonition TYPE [:title TITLE])"
+                         "Enclose text in a box denoting an admonition.
+
+Regarding the Lisp function:
++ BACKEND refers to the current export backend.
++ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+
+For example, upon LaTeX export, the Org special block
+
+     #+begin_admonition
+     Hello, world
+     #+end_admonition
+
+ is rewritten to the result of the call
+
+     (org-block/admonition `latex \"Hello, world\")")))))
