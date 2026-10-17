@@ -114,7 +114,7 @@
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
 ;; live in a file of their name, as does `org-thread-blockcall'.  The blocks and links built atop them live in
 ;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
-;; org-parallel-block.el, org-proof-block.el, and org-defblock-misc.el; this file
+;; org-parallel-block.el, org-proof-block.el, org-align-block.el, and org-defblock-misc.el; this file
 ;; requires them all and defines the mode.  The graph block, org-graph/org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
@@ -242,6 +242,7 @@
 (require 'org-callout-blocks)
 (require 'org-parallel-block)
 (require 'org-defblock-misc)
+(require 'org-align-block)
 (require 'org-proof-block)
 (require 'org-deftag)
 

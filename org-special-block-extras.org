@@ -3530,7 +3530,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
     + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
     + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
-    + [[#Equational-Proofs][Maths & proofs]] \\ calc · tree · latex-definitions [fn::Equational proofs and inference-rule proof trees, written as Org lists.] :glance_write:
+    + [[#Aligned-equations][Maths & proofs]] \\ align · calc · tree · latex-definitions [fn::Aligned equations, with coloured tags that =eqref:𝒳= cites; equational proofs and proof trees, as Org lists.] :glance_write:
     + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
     + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
   + Links to cite :glance_read:
@@ -4226,7 +4226,20 @@ from∘to m = {! try it! }
   :END:
 
      osbe-example:parallel
-  
+
+** Aligned equations ---=#+begin_align=, cited by =eqref:𝒳=
+  :PROPERTIES:
+  :CUSTOM_ID: Aligned-equations
+  :END:
+
+  An [[doc:org-block/align][align]] block's contents are LaTeX, aligned at each =&=; as in LaTeX, a line ends in
+  =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that colour and is what
+  =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing that, any
+  =\tag{…NAME…}=. An =align :numbered t= numbers its untagged lines too. Since the contents are
+  LaTeX, shorthands are welcome: the [[#Switches-for-every-block][:let switch]] gives them, as below.
+
+  osbe-example:align
+
 **   ~latex-definitions~ for hiding LaTeX declarations in HTML
    :PROPERTIES:
    :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML

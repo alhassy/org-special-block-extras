@@ -23,6 +23,24 @@
 
 ")
 
+(define-org-export-test "an align block is a fenced math block in Markdown, and eqref:NAME its tag, parenthesised" [markdown]
+  :to md
+  :input "
+          #+options: toc:nil
+          #+begin_align
+          x &= y   :tag-blue: Symmetry
+          #+end_align
+          By [[eqref:Symmetry]]."
+  :equals "```math
+\\begin{align*}
+x &= y   \\tag{$\\color{blue}{\\text{Symmetry}}$} \\label{Symmetry}
+\\end{align*}
+```
+
+By (Symmetry).
+
+")
+
 (define-org-export-test "a box is a quote in Markdown, opening with its title in bold" [markdown]
   :input "
           #+options: toc:nil
