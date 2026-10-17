@@ -208,6 +208,15 @@ Tighten this sentence.
 #+end_rremark" 'latex)))
       (should-not warnings))))
 
+(deftest "a block renders for a backend derived from HTML, as org-thtml is, its handler seeing html; issue #33" [derived]
+  (org-export-define-derived-backend 'osbe-test-thtml 'html)
+  (using (org-defblock satz (name "" label "") "A theorem, named NAME." (format "<%s>%s: %s</%s>" backend name raw-contents backend))
+    (should (equal (s-trim (org-export-string-as "
+#+begin_satz Euclid
+There are infinitely many primes.
+#+end_satz" 'osbe-test-thtml t))
+                   "<html>Euclid: There are infinitely many primes.</html>"))))
+
 (deftest "a block renders for a backend derived from LaTeX, as for LaTeX; and may single out one backend; issue #12" [derived]
   (require 'ox-md)
   (org-export-define-derived-backend 'osbe-test-mylatex 'latex)
