@@ -71,13 +71,12 @@ DEFAULT
     (should-not (member 'test-undefblock-target org--supported-blocks))))
 
 (deftest "every def macro of ours indents as defun does; e.g., org-defblock, org-deflink, org-deftag, org-undefblock"
-  (let (ours)
+  (let ((home (file-name-directory (file-truename (symbol-file 'org-defblock 'defun)))) ours)
     (mapatoms (lambda (symbol)
                 (-when-let (file (and (macrop symbol) (string-match-p "\\`org-\\(?:un\\)?def" (symbol-name symbol))
                                       (symbol-file symbol 'defun)))
-                  ;; Our package's own sources, not the tests' fixtures such as `org-deftest'.
-                  (when (and (string-prefix-p (expand-file-name "~/org-special-block-extras/") (file-truename file))
-                             (not (string-match-p "/tests/" file)))
+                  ;; Our package's own sources, wherever it is checked out; not the tests' fixtures, as `org-deftest'.
+                  (when (and (string-prefix-p home (file-truename file)) (not (string-match-p "/tests/" file)))
                     (push symbol ours)))))
     (should (memq 'org-defblock ours))
     (should (memq 'org-deflink ours))
