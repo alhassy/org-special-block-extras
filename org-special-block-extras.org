@@ -3514,7 +3514,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
   + Links to cite :glance_read:
     + [[#Glossaries][=doc:𝒳=]] \\ =show:𝒳= [fn::A term's definition as a tooltip; or a Lisp expression's value, inline.] :glance_read:
     + [[#nice-keystroke-renditions][=kbd:C-x_C-s=]] [fn::Keys as keycaps, their command's documentation as a tooltip; click one in Emacs to run it.] :glance_read:
-    + [[#Badge-Links][Badges]] \\ badge · melpa · github-* [fn::Shields.io badges, for a project's README.] :glance_read:
+    + [[doc:org-make-badge][Badges]] \\ badge · melpa · github-* [fn::Shields.io badges, for a project's README.] :glance_read:
     + Every block, as a link [fn::=red:𝒳=, =[[box:Title][…]]=, and the like: a block's one-line form.] :glance_read:
   + Switches on any block :glance_act:
     + [[#Switches-for-every-block][:when · :noexport]] [fn::Export a block only for some backends, or never.] :glance_act:
@@ -3530,7 +3530,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Make-your-own-blocks][org-defblock]] [fn::A block, its link, and its tag, from one cl-defun-style definition.] :glance_make:
     + [[#Make-your-own-links][org-deflink]] [fn::A link type: how it looks in Emacs and how it exports.] :glance_make:
     + [[#tags-are-functions-of-org-sections][org-deftag]] [fn::A heading tag as a function of its section.] :glance_make:
-    + [[#modularity_with_thread-blockcall][org-thread-blockcall]] [fn::Compose blocks: solution is details of a box of details.] :glance_make:
+    + [[doc:org-thread-blockcall][org-thread-blockcall]] [fn::Compose blocks: solution is details of a box of details.] :glance_make:
   + Options :glance_make:
     + org-defblock-evaluate-switches [fn::May a document's :when, :let, and :C-c_C-c run Lisp? Ask, by default.] :glance_make:
     + org-special-block-add-html-extra [fn::Inline the tooltips' CSS and JS in HTML exports; on, by default.] :glance_make:
@@ -3715,7 +3715,7 @@ attention, and so a tooltip via [[doc:org-block/tooltip][tooltip]] suffices.
 
 ** Nice Keystroke Renditions: kbd:C-h_t
   :PROPERTIES:
-  :CUSTOM_ID: kbd:nice-keystroke-renditions
+  :CUSTOM_ID: nice-keystroke-renditions
   :END:
   
 Anyone who writes /about/ Emacs will likely want to mention keystrokes in an
@@ -8812,9 +8812,6 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #+END_SRC
 #+end_details
-
-The above section, [[#practice_problems][‘practice problems’]], presents a few puzzles to get you
-comfortable with ~defblock~ ;-)
 
 Other cool stuff...
 #+attr_html: :width 800px
