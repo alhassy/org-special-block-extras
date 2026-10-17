@@ -1131,8 +1131,12 @@ it begins with."
                   "\n is rewritten to the result of the call"
                   "\n"
                   (format "\n     (org-block/%s `latex \"Hello, world\")" name))))
-           (put ',defun-name 'function-documentation
-                (format "%s%s%s" user-docs (if (s-ends-with? "\n" user-docs) "" "\n") lisp-docs)))
+           ;; A closing “(fn ARGS)” line is the signature C-h f shows, but only while it closes the docstring.
+           (let ((usage (when (string-match "\n*\\((fn .*)\\)[ \t\n]*\\'" user-docs)
+                          (prog1 (match-string 1 user-docs) (setq user-docs (substring user-docs 0 (match-beginning 0)))))))
+             (put ',defun-name 'function-documentation
+                  (format "%s%s%s%s" user-docs (if (s-ends-with? "\n" user-docs) "" "\n") lisp-docs
+                          (if usage (concat "\n\n" usage) "")))))
          )))))
 
 

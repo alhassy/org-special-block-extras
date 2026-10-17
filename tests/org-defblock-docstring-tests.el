@@ -151,3 +151,23 @@ For example, upon LaTeX export, the Org special block
  is rewritten to the result of the call
 
      (org-block/emoji-greet ‘latex \"Hello, world\")"))))
+
+(deftest "a block's doc: link shows its docstring, in Emacs and as an HTML tooltip; issue #54" [docs]
+  (using (org-defblock admonition (type nil title nil)
+           "Enclose text in a box denoting an admonition of TYPE, titled TITLE."
+           (format "<section class=\"admonition-%s\"><h3>%s</h3>%s</section>" type (or title type) contents))
+    (should (string-prefix-p "Enclose text in a box denoting an admonition"
+                             (cadr (org-docs-get "org-block/admonition"))))
+    (should (string-match-p "<template><pre>Enclose text in a box denoting an admonition"
+                            (org-export-string "doc:org-block/admonition" 'html)))))
+
+(deftest "a block docstring's closing (fn …) line stays last, so C-h f shows it as the signature; issue #54" [docs]
+  (using (org-defblock admonition (type nil title nil)
+           "Enclose text in a box denoting an admonition.
+
+\(fn TYPE [:title TITLE])"
+           contents)
+    (should (equal (car (help-split-fundoc (documentation 'org-block/admonition t) 'org-block/admonition))
+                   "(org-block/admonition TYPE [:title TITLE])"))
+    (should-not (string-match-p "(fn " (cdr (help-split-fundoc (documentation 'org-block/admonition t)
+                                                               'org-block/admonition))))))
