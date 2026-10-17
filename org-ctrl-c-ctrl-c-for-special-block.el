@@ -50,10 +50,13 @@ and should return non-nil to claim the event."
   #+begin_quiz :C-c_C-c (message \"Score: 3/4\")     ;; A form is evaluated
   #+begin_quiz :C-c_C-c my/check-answers           ;; A function is called; interactively, if a command
 
-The Lisp runs as `org-defblock-evaluate-switches' permits."
+The switch may be inherited, as a src block's header-args are; e.g., :header-args:quiz: :C-c_C-c my/check-answers
+in a heading's drawer; see `org--block-header-args'.  The Lisp runs as `org-defblock-evaluate-switches' permits."
   (-when-let* ((blk (org-special-block-at-point))
-               (params (-some--> (org-element-property :parameters blk) (and (string-match-p ":C-c_C-c" it) it)))
-               (action (plist-get (-drop-while (-not #'keywordp) (org--read-header params)) :C-c_C-c)))
+               (action (plist-get (org--plist-merge (org--block-header-args blk (downcase (org--block-name blk)))
+                                                    (-drop-while (-not #'keywordp)
+                                                                 (org--read-header (org-element-property :parameters blk))))
+                                  :C-c_C-c)))
     (if (and (symbolp action) (fboundp action))
         (if (commandp action) (call-interactively action) (funcall action))
       (org--block-eval action nil))

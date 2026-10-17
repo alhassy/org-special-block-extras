@@ -46,6 +46,7 @@
 (require 'org-special-block-indirect-edit)
 (require 'org-special-block-split)
 (require 'org-deftag)
+(require 'org-block-header-args)
 
 ;;;; Core
 ;;;;; defstruct org-special-block
@@ -155,7 +156,9 @@ one it reads as a paragraph, since its “#+end_NAME” is missing, is an error.
                                                 (skip-chars-backward " \t\n\r") (line-beginning-position))))
               ;; The header line, after the name, as a Lisp list: positional arguments, then keyword ones.
               ((positional kwdargs) (--split-with (not (keywordp it))
-                                                  (org--read-header (org--block-parameters elem)))))
+                                                  (org--read-header (org--block-parameters elem))))
+              ;; Atop those it inherits, as a src block does its header-args; see `org--block-header-args'.
+              (kwdargs (org--plist-merge (org--block-header-args elem (downcase (org--block-name elem))) kwdargs)))
         (make-org-special-block
          ;; Block keywords ignore case, as Org's do; e.g., #+BEGIN_SHOUT is a shout block.
          :name (downcase (org--block-name elem))
@@ -555,7 +558,12 @@ after, for the blocks of #+INCLUDE: files."
                 (-let* ((indent (length (match-string 1)))
                         (hash (match-beginning 2))
                         (name (match-string 3))
-                        ((switches . header) (org--header-sans-switches (match-string 4) switch?)))
+                        ((switches . header) (org--header-sans-switches (match-string 4) switch?))
+                        (inherited (org--block-header-args
+                                    block (downcase (or (org-element-property :language block) name))))
+                        (switches (org--plist-merge (cl-loop for (key value) on inherited by #'cddr
+                                                             when (funcall switch? key) append (list key value))
+                                                    switches)))
                   (when switches
                     (when (and (eq (org-element-type block) 'src-block) (eq (plist-get switches :folded) t))
                       (setq switches (plist-put switches :folded (or (org-element-property :language block) "Code"))))
@@ -878,10 +886,9 @@ Example declaration, with all possible features shown:
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
              color editor contents signoff))
 
-   ;; I don't want to change the definition, but I'd like to have
-   ;; the following as personalised defaults for the “remark” block.
-   ;; OR, I'd like to set this for links, which do not have argument options.
-   (org-set-block-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+   ;; Personalised defaults, without changing the definition, as Babel's for a src block of language remark;
+   ;; or, per section, :header-args:remark: :editor \"Jasim Jameson\" in a heading's drawer.
+   (setq org-babel-default-header-args:remark \='((:editor . \"Jasim Jameson\") (:signoff . \"( Aim for success! )\")))
 
 Three example uses:
 
@@ -983,7 +990,7 @@ Three example uses:
   ⇒ May mention symbol “backend” and string “raw-contents”.
 
 Features:
-+ Auto-defaults for main and keyword args via `org--header-args'.
++ Defaults for main and keyword args, as a src block's header-args; see `org--block-header-args'.
   Default values can be set long after the associated handler is created.
 + Optional `contents-occur-as-link-description' flag for minimal output (used in links).
 + Automatic wrapping in export blocks (`org-export', `org-parse')."
@@ -1013,7 +1020,7 @@ Features:
                 &optional ,main-arg-name
                 &rest  org--handler-args
                 ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
-                ;; prefer any `org-set-block-header-args' value over the declared default.
+                ;; prefer any `org-babel-default-header-args:NAME' value over the declared default.
                 &key ,@(mapcar #'car (-partition 2 keywords)) (contents-occur-as-link-description nil)
                 ;; Always allowed here: we refuse unknown keywords ourselves, below, naming only the user's own.
                 &allow-other-keys)
@@ -1037,7 +1044,7 @@ Features:
                (setq ,main-arg-name
                      (or
                       (plist-get org--handler-args ,(intern (format ":%s" main-arg-name)))
-                      (org--header-arg-of ',name :main-arg)
+                      (org--header-arg-of ',name ,(intern (format ":%s" main-arg-name)))
                       ,main-arg-default-value)))
 
              ;; Use any headers for this block type, if no local value is passed
@@ -1204,7 +1211,6 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
           (message ,(format "“%s” is no longer recognised by ‘org-special-block-extras’." name))))
 
 (require 'org-deflink)
-(require 'org-block-header-args)
 
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
@@ -1220,11 +1226,10 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
                         "{\\color{%s}\\bfseries %s:  %s%s}")
                       color editor contents signoff))
 
-;; I don't want to change the definition, but I'd like to have
-;; the following as personalised defaults for the “remark” block.
-;; OR, I'd like to set this for links, which do not have argument options.
-(org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
-
+;; I don't want to change the definition, but I'd like to have the following as personalised defaults for the
+;; “rremark” block, as Babel's are for a src block; links, which have no header line, take them too.
+(defvar org-babel-default-header-args:rremark '((:editor . "Jasim Jameson") (:signoff . "( Aim for success! )"))
+  "The rremark block's defaults, as `org-babel-default-header-args:LANG' are a src block's.")
 
 ;;;;; blockcall
 

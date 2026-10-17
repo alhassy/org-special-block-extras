@@ -108,7 +108,7 @@ html-export-style:solarized_light
 # TODO: Add tests involving header-args
 # Set the width onces-and-for-all using header-args:
 #
-#   (set-block-header-args margin :main-arg \"Hia\" :width \"not working...!\")
+#   (setq org-babel-default-header-args:margin '((:width . "4cm")))
 
 # TODO: Make org-defblock looks almost the same as cl-defun, namely argslist has args being either pairs or singletons!
 
@@ -1830,10 +1830,8 @@ Example declaration, with all possible features shown:
                \"{\\color{%s}\\bfseries %s:  %s%s}\")
              color editor contents signoff))
 
-   ;; I don't want to change the definition, but I'd like to have
-   ;; the following as personalised defaults for the “remark” block.
-   ;; OR, I'd like to set this for links, which do not have argument options.
-   (defblock-header-args remark :main-arg \"Jasim Jameson\" :signoff \"( Aim for success! )\")
+   ;; Personalised defaults, without changing the definition, as Babel's for a src block of language remark.
+   (setq org-babel-default-header-args:remark '((:editor . \"Jasim Jameson\") (:signoff . \"( Aim for success! )\")))
 
 Three example uses:
 
@@ -1906,7 +1904,7 @@ Three example uses:
      ,docstring
      ;; Use default for main argument
      (when (and ',main-arg-name (s-blank-p ,main-arg-name))
-       (--if-let (plist-get (cdr (assoc ',name org--header-args)) :main-arg)
+       (--if-let (org--header-arg-of ',name ,(intern (format ":%s" main-arg-name)))
            (setq ,main-arg-name it)
          (setq ,main-arg-name ,main-arg-value)))
 
@@ -1919,8 +1917,7 @@ Three example uses:
 
        ;; Use any headers for this block type, if no local value is passed
        ,@(cl-loop for k in (mapcar #'car (-partition 2 kwds))
-                  collect `(--when-let (plist-get (cdr (assoc ',name org--header-args))
-                                                  ,(intern (format ":%s" k)))
+                  collect `(--when-let (org--header-arg-of ',name ,(intern (format ":%s" k)))
                              (when (s-blank-p ,k)
                                (setq ,k it))))
 
@@ -2219,27 +2216,10 @@ When you disable the ~org-special-block-extras~ mode, it is deactivated...
    #+begin_details ‘header-args’ Implementation
    Then:
  #+begin_src emacs-lisp
-(defvar org--header-args nil
-  "Alist (name plist) where “:main-arg” is a special plist key.
-
-  It serves a similar role to that of Org's src ‘header-args’.
-
-  See doc of SET-BLOCK-HEADER-ARGS for more information.")
-
-(defmacro org-set-block-header-args (blk &rest kvs)
-  "Set default valuts for special block arguments.
-
-This is similar to, and inspired by, Org-src block header-args.
-
-Example src use:
-    ,#+PROPERTY: header-args:Language :key value
-
-Example block use:
-    (set-block-header-args Block :main-arg mainvalue :key value)
-
-A full, working, example can be seen by “C-h o RET defblock”.
-"
-  `(add-to-list 'org--header-args (list (quote ,blk) ,@kvs)))
+;; A NAME block takes its defaults as a src block of language NAME takes its header-args:
+;; org-babel-default-header-args:NAME, #+property: header-args:NAME, :header-args:NAME: drawers,
+;; and #+header: lines; see org-block-header-args.el.
+(setq org-babel-default-header-args:remark '((:editor . "Jasim Jameson")))
  #+end_src
 
 #+end_details
@@ -2283,14 +2263,13 @@ Perhaps an example will clarify things ...
             "{\\color{%s}\\bfseries %s:  %s%s}")
           color editor contents signoff))
 
-;; I don't want to change the definition, but I'd like to have
-;; the following as personalised defaults for the “remark” block.
-;; OR, I'd like to set this for links, which do not have argument options.
-(org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+;; I don't want to change the definition, but I'd like to have the following as personalised defaults for the
+;; “rremark” block, as Babel's are for a src block; links, which have no header line, take them too.
+(setq org-babel-default-header-args:rremark '((:editor . "Jasim Jameson") (:signoff . "( Aim for success! )")))
  #+end_src
 
  #+RESULTS:
- | rremark | :main-arg | Jasim Jameson | :signoff | ( Aim for success! ) |
+ | ((:editor . Jasim Jameson) (:signoff . ( Aim for success! ))) |
 
  _Example use_
  #+begin_example org :tangle no
@@ -2344,10 +2323,9 @@ has more bells and whistles … keep reading ;-)
             "{\\color{%s}\\bfseries %s:  %s%s}")
           color editor contents signoff))
 
-;; I don't want to change the definition, but I'd like to have
-;; the following as personalised defaults for the “remark” block.
-;; OR, I'd like to set this for links, which do not have argument options.
-(org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+;; I don't want to change the definition, but I'd like to have the following as personalised defaults for the
+;; “rremark” block, as Babel's are for a src block; links, which have no header line, take them too.
+(setq org-babel-default-header-args:rremark '((:editor . "Jasim Jameson") (:signoff . "( Aim for success! )")))
  #+end_src
 
 ** Modularity with ~thread-blockcall~
@@ -4348,6 +4326,9 @@ p -> q &== \neg p \lor q
   calls =ACTION= when it names a function, else evaluates it as a Lisp form; see [[#C-c-C-c-for-your-own-blocks][C-c C-c for
   your own blocks]].
 
+  Switches are inherited as a src block's header-args are; e.g., =:header-args:red: :let (N 3)=
+  in a heading's drawer gives every =red= block of its subtree that =:let=.
+
   A block that declares a keyword of the same name keeps it for itself; e.g., a block with
   its own =folded= argument receives =:folded= as usual. Since =:when=, =:let= and =:C-c_C-c=
   run Lisp written in the document, Emacs asks once before running each distinct form;
@@ -4573,7 +4554,31 @@ Mind the gap.
     (org-parse (org-builtin-block "verse" raw-contents))))
   #+end_src
   Our own =quote= does just this: given a citation, it is ours; else, Org's own. Moreover, defaults may change long after the
-  block is defined; e.g., ~(org-set-block-header-args note :color "orange")~.
+  block is defined, just as a src block's header-args do ---there is nothing new to learn. A
+  =NAME= block reads them as a src block of language =NAME= would; from weakest to strongest:
+  ~(setq org-babel-default-header-args:note '((:color . "orange")))~, then
+  =#+property: header-args:note :color orange= for the whole file, then =:header-args:note:= in
+  a heading's drawer for its subtree ---=:header-args:note+:= adds to it--- then =#+header:=
+  lines just above the block, and finally the block's own line. By way of example, every note
+  in this section is orange, and the second is boxed too:
+  #+begin_example
+,* Exercises
+:PROPERTIES:
+:header-args:note: :color orange
+:END:
+
+,#+begin_note Hint
+Try induction.
+,#+end_note
+
+,#+header: :boxed t
+,#+begin_note Answer
+By induction on n.
+,#+end_note
+  #+end_example
+  A main argument is given by its name, as in =:title Hint=; and [[#Switches-for-every-block][switches]], such as =:let= and
+  =:folded=, are inherited alike ---a src block of language =LANG= even takes them from Babel's
+  own =header-args:LANG=. See =C-h f org--block-header-args=.
 
   One definition gives three uses: a block, a link, and a tag. A section tagged =:note:=
   exports as a =note= block around its own text, up to the next heading; the tag's
