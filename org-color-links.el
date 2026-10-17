@@ -89,7 +89,7 @@ In Markdown, the text is <mark>ed, paragraph by paragraph, which GitHub shows ye
 Only for HTML; elsewhere, nothing.
 
   [[palette:][Pick a background]]"
-  :face (list :background (car (last org-palette-colors)) :box t)
+  :face (list :background (symbol-name (car (last org-palette-colors))) :box t)
   :export (if (not (equal o-backend 'html)) ""
             (format (concat "<button onclick=\"let p = this.nextElementSibling; p.style.display = p.style.display === 'none' ? 'block' : 'none';\">%s</button>"
                             "<div style=\"display: none\">%s</div>")

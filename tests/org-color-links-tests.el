@@ -102,6 +102,13 @@ Do [[highlight:pink][read this]] twice."
   (should (string-match-p ">🎨</button>" (org-export-string "\n[[palette:]]")))
   (should (equal "" (org-export-string "\n[[palette:][Pick a background]]" 'latex))))
 
+(org-deftest "a palette link shows, in Emacs, with a colour name as background, a string as htmlize needs" [palette]
+  :text "
+Do [[palette:][Pick a background]] now."
+  :at "Pick"
+  (font-lock-ensure)
+  (should (equal (get-text-property (point) 'face) '(:background "white" :box t))))
+
 (org-deftest "in Emacs, a colour link shows its text in its colour: a named one, color: by name or hex; issue #58" [color]
   :text "
 [[color:red][this is red text]]
