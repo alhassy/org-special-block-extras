@@ -8386,7 +8386,7 @@ The above is a differential equation with $\ddot{x}$.
 In the produced HTML code, a paragraph ~<p> bla bla </p>~ environment is added inside a ~div~; how do we prevent this from
 happening?
 
-This is hinted at in the docstrings: C-h o RET o-defblock yields
+This is hinted at in the docstrings: ~C-h o RET org-defblock~ yields
 ~...In, hopefully, rare circumstances, one may refer to RAW-CONTENTS to look at the fully unparsed contents....~
 # TODO: The docstring should also mention “org-parse” and its use with “raw-contents”?
 
