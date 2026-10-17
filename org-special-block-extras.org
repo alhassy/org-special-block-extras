@@ -3382,6 +3382,8 @@ creating /custom Org-mode blocks/ and /links/ that work seamlessly
 across backends ---without diving into the dark arts of raw HTML or
 LaTeX!
 
+Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the eyes.
+
 ** 🎁  What Does It Do?
 
 - *🎨 Style with ease* --- add colors, badges, tooltips (from a dictionary, Emacs
@@ -4403,7 +4405,7 @@ the fundamental notions of number, order, and function.
 
   For the reader who would rather pick the page's background colour themself,
   =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colours,
-  ~org-palette-colors~; clicking one makes it the background.
+  ~org-palette-colors~; clicking one makes it the background ---try it: [[palette:][Pick a background]].
 
 ** Page-wide CSS with =style=
   :PROPERTIES:
