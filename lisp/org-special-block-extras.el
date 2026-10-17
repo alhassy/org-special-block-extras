@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 46 new custom blocks & 57 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 

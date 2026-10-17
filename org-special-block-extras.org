@@ -256,7 +256,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp  :noweb yes
-;;; org-special-block-extras.el --- 30 new custom blocks & 34 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 46 new custom blocks & 57 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -373,7 +373,7 @@ To avoid such behaviour, set this variable to `nil'.")
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 30 new custom blocks & 34 link types for Org-mode.
+    "Provide 46 new custom blocks & 57 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
@@ -726,7 +726,7 @@ and the result looks nice. “Look ma, no HTML required!”
 # a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 # a ‘link here’ link type, 8 badge link types,
 # and block and link types for making documentation-glossary entries.
-# That is, *we provide 29 block types and 34 link types*.
+# That is, *we provide 46 block types and 57 link types*.
 #+end_quote
 
 #+attr_html: :width 1000px
@@ -3375,6 +3375,9 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 :End:
 
 * 🧙‍♂️ /Write Once, Export Everywhere/: Say Hello to =org-special-block-extras=
+
+# MELPA's own badge, drawn live, shows the version MELPA serves; melpa: would show ours at export time.
+[[https://melpa.org/#/org-special-block-extras][https://melpa.org/packages/org-special-block-extras-badge.svg]]
 
 *Tired of repeating yourself when writing in Org-mode for LaTeX and HTML
 exports?* =org-special-block-extras= is your magical toolkit for
@@ -9003,7 +9006,7 @@ https://github.com/riscy/melpazoid
     (insert "
 ,#+EXPORT_FILE_NAME: README.md
 #+HTML: <h1> A unified interface for Emacs' Org-mode block & link types (•̀ᴗ•́)و </h1>
-#+HTML: <h2> Which is used to obtain 30 new custom blocks and 34 link types ¯\\_(ツ)_/¯ </h2>
+#+HTML: <h2> Which is used to obtain 46 new custom blocks and 57 link types ¯\\_(ツ)_/¯ </h2>
 ,#+OPTIONS: toc:nil d:nil broken-links:t
 ,#+html: <div align=\"center\">
 ,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Abstract :only-contents t
