@@ -313,12 +313,17 @@ Returns t (claiming C-c C-c)."
               (delete-file map-file))))))
     t))
 
-(org-defblock-add-cc-handler "graph" #'org-graph--cc-handler)
-;; Within a graph's #+begin_cluster, C-c C-c renders the graph; elsewhere, a cluster block is none of ours.
-(org-defblock-add-cc-handler "cluster" (lambda () (and (org-graph--block-at-point) (org-graph--cc-handler))))
-;; Within a graph, a #+begin_note is a tooltip, so C-c C-c renders the graph; elsewhere, a note keeps its switch.
-(org-defblock-add-cc-handler "note" (lambda () (if (org-graph--block-at-point) (org-graph--cc-handler)
-                                                 (org--block-cc-switch))))
+(org-def-action graph ()
+  "Render the graph at point, or show its dot source; see `org-graph--cc-handler'."
+  (org-graph--cc-handler))
+
+(org-def-action cluster ()
+  "Within a graph's #+begin_cluster, render the graph; elsewhere, a cluster block is none of ours."
+  (and (org-graph--block-at-point) (org-graph--cc-handler)))
+
+(org-def-action note ()
+  "Within a graph, a #+begin_note is a tooltip, so render the graph; elsewhere, a note keeps its :C-c_C-c switch."
+  (and (org-graph--block-at-point) (org-graph--cc-handler)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; org-defblock registration

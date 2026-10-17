@@ -4728,25 +4728,27 @@ Mind the gap.
   :END:
 
   Org's =C-c C-c= does the obvious thing at point: it runs a src block, ticks a checkbox,
-  recalculates a table. Our special blocks may join in; one call gives every
-  =#+begin_NAME= … =#+end_NAME= block a =C-c C-c= action.
+  recalculates a table. Our special blocks may join in; one ~org-def-action~ gives every
+  =#+begin_NAME= … =#+end_NAME= block a =C-c C-c= action, as one ~org-defblock~ gives it an export.
 
   For a single block, the =:C-c_C-c= switch suffices: =#+begin_quiz :C-c_C-c my/check-answers=
   makes =C-c C-c= within that block call ~my/check-answers~; a Lisp form, rather than a
-  function name, is evaluated instead. For every block of a kind, we register a handler:
+  function name, is evaluated instead. For every block of a kind, we define an action:
 
   #+begin_src emacs-lisp
 (org-defblock shout () "Upcase the contents." (upcase contents))
 
-(org-defblock-add-cc-handler "shout"
-  (lambda ()
-    (message "C-c C-c inside a shout block!")
-    t)) ;; Non-nil claims the keypress, so Org does nothing else with it.
+(org-def-action shout (&optional greeting &key (volume 1))
+  "Announce the shout's GREETING, at VOLUME."
+  (message "%s, at %s: %s" greeting volume raw-contents))
   #+end_src
 
-  The handler takes no arguments and runs with point inside the block. To see the block
-  itself, we jump to its =#+begin_shout= line and call ~org-special-block-after-point~,
-  which yields the block's name, main argument, keyword arguments, contents and extent.
+  Then =C-c C-c= within =#+begin_shout Hello :volume 11= … =#+end_shout= says /Hello, at 11: …/.
+  The arglist is the block's, in either of ~org-defblock~'s styles; the body sees the
+  arguments by name ---those the block [[#Make-your-own-blocks][inherits]], by =header-args:shout=, too--- and the
+  block's text as =raw-contents=, with point within the block. A non-nil value claims the key
+  press, so Org does nothing else with it; nil declines it, leaving it to the block's
+  =:C-c_C-c= switch, if any.
 
   For a complete worked example, we may mimic the [[doc:org-block/graph][graph]] block's handler,
   [[https://github.com/alhassy/org-special-block-extras/blob/master/org-graph/org-graph-block.el][org-graph--cc-handler]]. It
@@ -4756,9 +4758,11 @@ Mind the gap.
   + inserts a =#+RESULTS:= section after =#+end_graph=, just as src blocks do; and
   + returns =t=, claiming the keypress.
 
-  It is registered with a one-liner at the end of =org-graph/org-graph-block.el=:
+  It is the graph's action, at the end of =org-graph/org-graph-block.el=:
   #+begin_src emacs-lisp
-(org-defblock-add-cc-handler "graph" #'org-graph--cc-handler)
+(org-def-action graph ()
+  "Render the graph at point, or show its dot source; see `org-graph--cc-handler'."
+  (org-graph--cc-handler))
   #+end_src
 
   The dispatcher itself ---a single function on ~org-ctrl-c-ctrl-c-hook~--- lives in
