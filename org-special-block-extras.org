@@ -4449,8 +4449,8 @@ h2 { color: teal; }
 Each block names the LaTeX packages it needs ---a box, ~xcolor~ and ~tcolorbox~; a cited quote,
 ~csquotes~--- and a LaTeX export that uses the block, or its link, loads them just before
 =\begin{document}=. So we declare none ourselves; a package we do load, options and all, is left be.
-To see what a block needs, read the ~:latex-pkgs~ of its definition, or evaluate
-~(get 'org-block/box 'org-latex-packages)~ ⇒ ~("xcolor" "tcolorbox")~.
+To see what a block needs, read the ~:latex-head~ of its definition, or evaluate
+~(get 'org-block/box 'org-latex-head)~ ⇒ ~("xcolor" "tcolorbox")~.
 
 A test, [[https://github.com/alhassy/org-special-block-extras/blob/master/tests/org-pdf-export-tests.el][tests/org-pdf-export-tests.el]], keeps this honest: it compiles every example of this manual to a
 PDF, and to beamer slides, declaring no packages at all. It uses LuaLaTeX, which reads Unicode such
@@ -4510,8 +4510,10 @@ Mind the gap.
   Every block is also a link, with the label as main argument and the description as
   contents: =[[note:Heads up][Mind the gap.]]=.
 
-  A block names the LaTeX packages it needs by ~:latex-pkgs~, say ~(org-defblock thm (&optional title
-  :latex-pkgs ("amsthm")) …)~; a LaTeX export that uses it loads them, unless the document already does.
+  A block names what its document's head needs, added once, by ~:latex-head~ and ~:html-head~; say,
+  ~(org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}")) …)~. A
+  LaTeX item is a package name or any preamble line; an HTML item is HTML, a symbol holding it, or
+  ~mathjax~. An export that uses the block adds each item its head lacks; one that does not, adds none.
 
   Even Org's own blocks ---=quote=, =verse=, =center=, =example=, =src=, =export=, and =comment=---
   are fair game: an ~(org-defblock verse …)~ overrides every =#+begin_verse=, saying so in

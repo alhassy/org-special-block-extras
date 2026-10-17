@@ -1,7 +1,7 @@
 ;;; org-pdf-export-tests.el --- Every example compiles to a PDF, its blocks loading their own LaTeX packages  -*- lexical-binding: t; -*-
 
-;; A document declares no LaTeX packages for our blocks: each block names those it needs by its `:latex-pkgs', and a
-;; LaTeX export loads them, by `org--load-latex-packages'.  So this test declares none, and compiles every example of
+;; A document declares no LaTeX packages for our blocks: each block names those it needs by its `:latex-head', and a
+;; LaTeX export loads them, by `org--load-latex-head'.  So this test declares none, and compiles every example of
 ;; the manual, as an article and as beamer slides.  See https://github.com/alhassy/org-special-block-extras/issues/49.
 ;; We compile with LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is; pdflatex needs \newunicodechar instead.
 

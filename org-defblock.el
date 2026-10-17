@@ -443,30 +443,34 @@ Note: This function mutates the current buffer."
 
 ;;;;; LaTeX packages, loaded as needed
 
-(defvar-local org--latex-packages-used nil
-  "The LaTeX packages of the blocks this export has rendered, by their `:latex-pkgs'; see `org--load-latex-packages'.
+(defvar-local org--latex-head-used nil
+  "What the blocks this export has rendered need in the LaTeX preamble, by their `:latex-head'; see `org--load-latex-head'.
 Local to the buffer an export works in: each export, nested ones included, works in a copy of its own.")
 
-(defun org--load-latex-packages (output backend _info)
-  "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT that loads each package its blocks need, `org--latex-packages-used', yet it does not.
-E.g., a document using a box gains \\usepackage{tcolorbox}, just before \\begin{document}; so after the document's own
-packages, whose options win.  A body-only export, sans preamble, is left be."
-  (if (not (and (org-export-derived-backend-p backend 'latex) org--latex-packages-used
+(defun org--load-latex-head (output backend _info)
+  "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT whose preamble holds, once, each item its blocks need, `org--latex-head-used'.
+A package name, \"xcolor\", is \\usepackage{xcolor} unless the preamble loads it already, options and all; any
+other line, \"\\\\newcommand{\\\\QED}{∎}\", is added unless the preamble has it.  They go just before \\begin{document};
+so after the document's own lines.  A body-only export, sans preamble, is left be."
+  (if (not (and (org-export-derived-backend-p backend 'latex) org--latex-head-used
                 (string-match "^\\\\begin{document}" output)))
       output
     (let* ((preamble (substring output 0 (match-beginning 0)))
-           (loaded? (lambda (package)
-                      (string-match-p (format "\\\\\\(?:usepackage\\|RequirePackage\\)\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?[ \t]*%s[ \t]*[,}]"
-                                              (regexp-quote package))
-                                      preamble)))
-           (missing (-remove loaded? (reverse org--latex-packages-used))))
+           (package? (lambda (item) (string-match-p "\\`[[:alnum:]-]+\\'" item)))
+           (present? (lambda (item)
+                       (if (not (funcall package? item)) (s-contains? item preamble)
+                         (string-match-p (format "\\\\\\(?:usepackage\\|RequirePackage\\)\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?[ \t]*%s[ \t]*[,}]"
+                                                 (regexp-quote item))
+                                         preamble))))
+           (missing (-remove present? (reverse org--latex-head-used))))
       (if (not missing) output
-        (concat preamble (mapconcat (lambda (package) (format "\\usepackage{%s}\n" package)) missing "")
+        (concat preamble
+                (mapconcat (lambda (item) (format (if (funcall package? item) "\\usepackage{%s}\n" "%s\n") item)) missing "")
                 (substring output (length preamble)))))))
 
 (defvar-local org--html-head-used nil
   "What the blocks, and links, this export has rendered need in an HTML page's <head>; see `org--load-html-head'.
-Local to the buffer an export works in, as `org--latex-packages-used' is.")
+Local to the buffer an export works in, as `org--latex-head-used' is.")
 
 (defun org-html-head-require (item)
   "Note that this HTML export's page needs ITEM in its <head>: HTML, a symbol whose value is HTML, or `mathjax'.
@@ -787,8 +791,9 @@ KWDS may also carry options, which are not arguments:
   The link and tag default to `org-defblock-links-and-tags'; for just one of
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.
-+ `:latex-pkgs (PACKAGE …)' names the LaTeX packages the block needs; e.g., (\"xcolor\" \"tcolorbox\").  A LaTeX
-  export that uses the block, or its link, loads each one its preamble does not; see `org--load-latex-packages'.
++ `:latex-head (ITEM …)' is what a LaTeX document using the block, or its link, needs in its preamble, added once:
+  a package name, or any preamble line; e.g., (\"tcolorbox\" \"\\\\newtcolorbox{aside}{colback=gray!5}\").  A package the
+  document loads already, options and all, is left be; see `org--load-latex-head'.
 + `:html-head (ITEM …)' is what an HTML page using the block needs in its <head>: a string of HTML, a symbol whose
   value is one, or `mathjax' for Org's own MathJax setup; see `org--load-html-head'.
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
@@ -871,11 +876,11 @@ Three example uses:
   (when (vectorp docstring)
     (error "‘org-defblock %s’: the link display vector now goes among the options, as `:link %S'" name docstring))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  ;; The options :block, :link, :tag, :edit-indirect-mode, :fontify, :latex-pkgs, and :html-head configure the macro;
+  ;; The options :block, :link, :tag, :edit-indirect-mode, :fontify, :latex-head, and :html-head configure the macro;
   ;; they are not block arguments.
   (let* ((kwds      (org--defblock-desugar-args kwds))
          (edit-mode (plist-get kwds :edit-indirect-mode))
-         (latex-pkgs (plist-get kwds :latex-pkgs))
+         (latex-head (plist-get kwds :latex-head))
          (html-head (plist-get kwds :html-head))
          (fontify   (plist-get kwds :fontify))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
@@ -889,7 +894,7 @@ Three example uses:
          (subsections (when tag? (org--defblock-tag-subsections name tag?)))
          ;; As in `org-defblock-only': other keywords are welcome unless `cl-defun'-style KWDS omit `&allow-other-keys'.
          (other-keys? (or (not (plist-member kwds :allow-other-keys)) (plist-get kwds :allow-other-keys)))
-         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify :latex-pkgs :html-head)
+         (kwds      (cl-reduce #'org-plist-delete '(:block :link :tag :edit-indirect-mode :fontify :latex-head :html-head)
                                :initial-value kwds)))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
@@ -901,8 +906,8 @@ Three example uses:
            `((message "org-defblock: %s overrides Org's own #+begin_%s; a handler may hand some back by `org-builtin-block'"
                       ',name ',name)))
        (org-defblock-only ,name ,kwds ,docstring ,@body)
-       ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-pkgs needs none.
-       (put ',(intern (format "org-block/%s" name)) 'org-latex-packages ',latex-pkgs)
+       ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-head needs none.
+       (put ',(intern (format "org-block/%s" name)) 'org-latex-head ',latex-head)
        ;; ⇨ Likewise, the HTML its pages need in their <head>.
        (put ',(intern (format "org-block/%s" name)) 'org-html-head ',html-head)
        ;; ⇨ The link type support, unless declined via `:link nil'
@@ -1042,11 +1047,11 @@ it begins with."
                (let ((result (let ((contents (org-parse raw-contents))) ,@body)))
                  ,(macroexpand-all `(lf-assert ',name  t
                                                result (stringp it)))
-                 ;; The LaTeX packages it needs, for `org--load-latex-packages'; sans any, when handed back to Org.
+                 ;; The LaTeX packages it needs, for `org--load-latex-head'; sans any, when handed back to Org.
                  (unless (text-property-any 0 (length result) 'org-builtin-block t result)
                    (pcase backend
-                     ('latex (dolist (package (get ',defun-name 'org-latex-packages))
-                               (cl-pushnew package org--latex-packages-used :test #'equal)))
+                     ('latex (dolist (package (get ',defun-name 'org-latex-head))
+                               (cl-pushnew package org--latex-head-used :test #'equal)))
                      ('html (mapc #'org-html-head-require (get ',defun-name 'org-html-head)))))
                  (org-export result))))
          ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks
@@ -1196,7 +1201,7 @@ A full, working, example can be seen by “C-h o org-defblock”.
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-              (editor "Editor Remark" color "red" signoff "" :latex-pkgs ("xcolor")
+              (editor "Editor Remark" color "red" signoff "" :latex-head ("xcolor")
                       :link [:face '(:foreground "red" :weight bold)])
                                         ; :please-preserve-new-lines
               "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."

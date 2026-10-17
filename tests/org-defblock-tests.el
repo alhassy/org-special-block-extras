@@ -262,8 +262,8 @@ Inner.
       (should (s-contains-p "#+begin_tip" latex))
       (should-not (s-contains-p "tcolorbox" latex)))))
 
-(deftest "a block's :latex-pkgs load in a LaTeX export that uses it, unless the document loads them already" [latex-pkgs]
-  (using (org-defblock thm (&optional title :latex-pkgs ("amsthm"))
+(deftest "a block's :latex-head joins the preamble once, when the export uses it, unless the preamble has it" [latex-head]
+  (using (org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}"))
            "A theorem."
            (if (org-string-nw-p title)
                (format "\\begin{theorem}[%s]%s\\end{theorem}" title contents)
@@ -273,6 +273,10 @@ Inner.
       ;; As a link, too; and the document's own, options and all, is left be.
       (should (= 1 (amsthm "See [[thm:Euclid][infinitely many primes]].")))
       (should (= 1 (amsthm "#+latex_header: \\usepackage[thmmarks]{amsthm}\n#+begin_thm Pythagoras\nIt holds.\n#+end_thm")))
+      ;; Any other line is added once too, however many theorems there are; unless the preamble has it.
+      (cl-flet ((newtheorem (input) (s-count-matches "newtheorem{theorem}" (org-export-string-as input 'latex))))
+        (should (= 1 (newtheorem "#+begin_thm A\nOne.\n#+end_thm\n#+begin_thm B\nTwo.\n#+end_thm")))
+        (should (= 1 (newtheorem "#+latex_header: \\newtheorem{theorem}{Theorem}\n#+begin_thm A\nOne.\n#+end_thm"))))
       ;; Sans the block, or handed back to Org, nothing is loaded.
       (should (= 0 (amsthm "No theorems here.")))
       (should (= 0 (amsthm "#+begin_thm\nHanded back.\n#+end_thm"))))))

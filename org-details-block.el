@@ -27,7 +27,7 @@
 ;;;;;; details
 
 (org-defblock details (title "Details" background-color "#e5f5e5" title-color "green"
-                              :latex-pkgs ("xcolor" "tcolorbox"))
+                              :latex-head ("xcolor" "tcolorbox"))
               "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.

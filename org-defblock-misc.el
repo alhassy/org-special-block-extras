@@ -53,7 +53,7 @@ as an argument of \\marginpar."
                       counter "footnote"
                       ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
                       width "\\marginparwidth"
-                      :latex-pkgs ("xcolor")
+                      :latex-head ("xcolor")
                       :link [:display 'full
                              :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
               "Produce an HTML tooltip or a LaTeX margin note.
@@ -120,7 +120,7 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                              "&emsp13;")))))
 
 ;;;;;; Tooltip (HTML)
-(org-defblock tooltip (marker "°" :latex-pkgs ("xcolor"))
+(org-defblock tooltip (marker "°" :latex-head ("xcolor"))
               "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
 In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are;
 in beamer, whose slides have no margins, as a footnote."
@@ -165,9 +165,9 @@ is typeset with “An aside.” in the margin, numbered as footnotes are.  A foo
     ;; Org fills the two %s with the definition and its \label; stepping with \refstepcounter lets that \label name it.
     (plist-put info :latex-default-footnote-command
                (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" "%s%s" "\\refstepcounter{footnote}"))
-    ;; A margin note is coloured; so, when there are footnotes, xcolor is loaded, as a block's :latex-pkgs are.
+    ;; A margin note is coloured; so, when there are footnotes, xcolor is loaded, as a block's :latex-head are.
     (when (save-excursion (goto-char (point-min)) (re-search-forward "\\[fn:" nil t))
-      (cl-pushnew "xcolor" org--latex-packages-used :test #'equal)))
+      (cl-pushnew "xcolor" org--latex-head-used :test #'equal)))
   info)
 
 (org-defblock latex-definitions nil
@@ -184,7 +184,7 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
 ;;;;;; Quotations, cited
 
 ;; Org's own quote, given a citation; a plain #+begin_quote is handed back to Org, by `org-builtin-block'.
-(org-defblock quote (&optional (key "") &key (pages "") :latex-pkgs ("csquotes"))
+(org-defblock quote (&optional (key "") &key (pages "") :latex-head ("csquotes"))
   "Quote CONTENTS, cited as the bibliography's KEY, at PAGES; e.g.,
 
   #+begin_quote zermelo1908 :pages 20-22
@@ -193,7 +193,7 @@ is read into a definition of its own, a macro's #1 would otherwise be an error."
 
 In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, citing by the document's own bibliography ---biblatex,
 BibTeX, or org-cite--- whose \\addbibresource or \\bibliography is ours to give; csquotes itself is loaded for us,
-by its :latex-pkgs.  Elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
+by its :latex-head.  Elsewhere, a quotation attributed to KEY, at PAGES.  Sans a KEY, Org's own quote, as ever.
 As a link, an inline quotation: [[quote:zermelo1908][…]] is \\textcquote{zermelo1908}{…}, and
 [[quote:][to be]] is “to be”.  A section tagged :quote: is a quote block of its text."
   ;; The header reads 20-22 as a symbol, and a key may be one too; we want their names.
@@ -327,7 +327,7 @@ blanks with the answers folded away beneath them."
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-              (editor "Editor Remark" color "black" signoff "" strong nil :latex-pkgs ("xcolor")
+              (editor "Editor Remark" color "black" signoff "" strong nil :latex-head ("xcolor")
                       :link [:face '(:foreground "red" :weight bold)])
               "Format CONTENTS as a first-class editor comment according to BACKEND.
 
