@@ -177,10 +177,21 @@ Save with the menu, often.")))
     (should (string-match-p "<td class=\"org-left\"><abbr class=\"tooltip\" tabindex=\"0\"><code>org-callouts</code><template><pre>The callout blocks,[^<]*</pre></template></abbr></td>
 <td class=\"org-left\">variable</td>" html))))
 
-(provide 'org-links-tests)
-;;; org-links-tests.el ends here
-
 (deftest "the tooltips' CSS and JS are inlined in the HTML head, so a page fetches nothing for them; issue #53" [tooltip]
   (should (s-contains-p ".tooltip-box" org--tooltip-html-head))
   (should (s-contains-p "addEventListener('click'" org--tooltip-html-head))
   (should-not (string-match-p "<script[^>]* src=\\|<link " org--tooltip-html-head)))
+
+(deftest "a page's head holds the tooltips' CSS and JS once, however many tooltips, and exports leave org-html-head-extra be; issue #45" [tooltip]
+  (let ((head-extra org-html-head-extra)
+        (page (lambda () (org-export-string-as "
+#+title: Tooltips
+Press kbd:C-x_C-s, then [[tooltip:A hint][this]], then [[tooltip:Another][that]]." 'html))))
+    (funcall page)
+    (let ((html (funcall page)))
+      (should (= 1 (s-count-matches "<script" html)))
+      (should (= 1 (s-count-matches (regexp-quote ".tooltip-box {") html))))
+    (should (equal head-extra org-html-head-extra))))
+
+(provide 'org-links-tests)
+;;; org-links-tests.el ends here
