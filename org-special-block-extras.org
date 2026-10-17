@@ -3502,7 +3502,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
 #+name: glance_make
 | fillcolor | "#f3e0ff" |
 :END:
-+ <<osbe>> [[#Abstract][*org-special-block-extras*]] [fn::Blocks, links, and switches for Org, exported alike to HTML, LaTeX, and Markdown.]
++ <<osbe>> [[https://github.com/alhassy/org-special-block-extras][*org-special-block-extras*]] [fn::Blocks, links, and switches for Org, exported alike to HTML, LaTeX, and Markdown.]
   + Blocks to write :glance_write:
     + [[#Callouts][Callouts]] \\ note · tip · important · warning · caution [fn::GitHub's alerts: a coloured rule and a titled heading; Markdown gets the alerts themselves.] :glance_write:
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
@@ -3893,8 +3893,8 @@ Let's have some sanity tests...
   :CUSTOM_ID: tooltip
   :END:
 
-Sometimes you want to remark on [[org-block/details][details]] without drawing too much
-attention, and so a tooltip via [[org-block/remark][remark]] suffices.
+Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
+attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
   
    osbe-example:tooltip
 
@@ -4312,7 +4312,7 @@ p -> q &== \neg p \lor q
   | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |
   | =:verbatim t=    | The block as written, sans its switches, shown as Org source                  |
-  | =:verbatim demo= | That source beside what it exports to, as with [[#Longer_Example_Demonstrating_Org-markup_with_org-demo][org-demo]]           |
+  | =:verbatim demo= | That source beside what it exports to, as with [[doc:org-block/org-demo][org-demo]]           |
 
   osbe-example:switches
 
