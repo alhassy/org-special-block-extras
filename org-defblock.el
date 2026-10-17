@@ -1048,9 +1048,14 @@ it begins with."
                              ;; \blockcquote{key}{%⏎ This…⏎\ifhmode\unskip\fi} is \blockcquote{key}{This…}; issue #27.
                              (if (not (eq backend 'latex)) wrapped
                                (--> wrapped
-                                    (replace-regexp-in-string "\\(^\\|[^\\]\\){\n#\\+end_export\n" "\\1{%\n#+end_export\n" it t)
+                                    ;; We add % after { to suppress the newline that opens the contents …
+                                    (replace-regexp-in-string "\\(^\\|[^\\]\\){\n#\\+end_export\n"
+                                                              "\\1{%\n#+end_export\n" it t)
+                                    ;; … and \unskip before } to drop the space of the newline that closes them;
+                                    ;; only amid text, as in vertical mode \unskip would eat the space after a list.
                                     (replace-regexp-in-string "\n#\\+begin_export latex\n}"
-                                                              "\n#+begin_export latex\n\\ifhmode\\unskip\\fi}" it t t))))))
+                                                              "\n#+begin_export latex\n\\ifhmode\\unskip\\fi}"
+                                                              it t t))))))
                        (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))))
                ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',
