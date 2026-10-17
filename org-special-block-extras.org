@@ -4366,6 +4366,10 @@ the fundamental notions of number, order, and function.
   “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise. A quote sans arguments is
   Org's own, as ever.
 
+  The quoted text hugs its braces, =\blockcquote[20-22]{zermelo1908}{Set theory …function.}=, sans
+  the stray spaces LaTeX would read from its newlines; so does the =contents= of any block of ours
+  whose LaTeX wraps it in braces, say =(format "\\textbf{%s}" contents)=.
+
   As a link, a quote is inline: =[[quote:zermelo1908][set theory is …]]= is csquotes'
   =\textcquote{zermelo1908}{…}=, and =[[quote:][to be]]= is just “to be”. A section tagged
   =:quote:= is a quote of its text.

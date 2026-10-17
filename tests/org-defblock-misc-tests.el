@@ -137,9 +137,25 @@ A remark[fn::An /aside/ with a [[https://x.y][link]].] and another[fn:two].
 
 ;;; quote, given a citation
 
+(deftest "a block's Org contents within LaTeX braces hug them, sans the spaces of their newlines; issue #27" [quote]
+  (should (s-contains-p "\\blockcquote[20-22]{zermelo1908}{%
+\\textbf{This} is a \\emph{try}.
+\\ifhmode\\unskip\\fi}"
+                        (org-export-string "
+#+begin_quote zermelo1908 :pages 20-22
+*This* is a /try/.
+#+end_quote" 'latex)))
+  ;; Outside braces, a newline is a space the handler may well want.
+  (org-defblock takeaway () "A takeaway: CONTENTS." (format "Takeaway: %s" contents))
+  (should (s-contains-p "Takeaway: \nRemarkable."
+                        (org-export-string "
+#+begin_takeaway
+Remarkable.
+#+end_takeaway" 'latex))))
+
 (deftest "a quote given a key is csquotes' \\blockcquote in LaTeX, as the issue spells it, :key and all; issue #24" [quote]
   (dolist (header '(":key zermelo1908 :pages 20-22" "zermelo1908 :pages 20-22"))
-    (should (s-contains-p "\\blockcquote[20-22]{zermelo1908}{\nThis is a \\emph{blockquote}.\n}"
+    (should (s-contains-p "\\blockcquote[20-22]{zermelo1908}{%\nThis is a \\emph{blockquote}.\n\\ifhmode\\unskip\\fi}"
                           (org-export-string (format "#+begin_quote %s\n\n    This is a /blockquote/.\n\n#+end_quote" header)
                                              'latex))))
   ;; Sans pages, sans the optional argument.

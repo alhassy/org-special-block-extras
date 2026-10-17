@@ -81,9 +81,9 @@ text
           #+end_highlight"
   :to latex
   :equals "\\definecolor{osbe-highlight}{HTML}{e5f5e5}
-\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{
+\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{%
 A whole paragraph.
-}}
+\\ifhmode\\unskip\\fi}}
 ")
 
 (org-deftest "a highlight link shows, in Emacs, with its colour as background" [highlight]

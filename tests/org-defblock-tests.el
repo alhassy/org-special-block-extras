@@ -30,11 +30,11 @@ hello
                  (format "\\textbf{%s}" contents))
           (org-block/test-latex-export 'latex "world" nil))
   :returns "#+begin_export latex
-\\textbf{
+\\textbf{%
 #+end_export
 world
 #+begin_export latex
-}
+\\ifhmode\\unskip\\fi}
 #+end_export")
 
 (define-org-call-test "Keyword args bind correctly inside the block body."

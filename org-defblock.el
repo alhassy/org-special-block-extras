@@ -1044,7 +1044,13 @@ it begins with."
                                         (string-match-p "^[ \t]*#\\+end_[^ \t\n]+[ \t]*\\'"
                                                         (substring wrapped 0 (- (length wrapped) (length empty-close)))))
                                (setq wrapped (substring wrapped 0 (- (length wrapped) (length empty-close)))))
-                             wrapped)))
+                             ;; Org text within braces hugs them, as LaTeX reads each newline as a space; e.g.,
+                             ;; \blockcquote{key}{%⏎ This…⏎\ifhmode\unskip\fi} is \blockcquote{key}{This…}; issue #27.
+                             (if (not (eq backend 'latex)) wrapped
+                               (--> wrapped
+                                    (replace-regexp-in-string "\\(^\\|[^\\]\\){\n#\\+end_export\n" "\\1{%\n#+end_export\n" it t)
+                                    (replace-regexp-in-string "\n#\\+begin_export latex\n}"
+                                                              "\n#+begin_export latex\n\\ifhmode\\unskip\\fi}" it t t))))))
                        (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
                          (if contents-occur-as-link-description x (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))))
                ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',

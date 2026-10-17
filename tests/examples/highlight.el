@@ -24,9 +24,9 @@ A whole paragraph, gently set apart.
 that matters}, and \\colorlet{osbe-highlight}{pink}\\colorbox{osbe-highlight}{the one to reread}.
 
 \\definecolor{osbe-highlight}{HTML}{e5f5e5}
-\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{
+\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{%
 A whole paragraph, gently set apart.
-}}")
+\\ifhmode\\unskip\\fi}}")
 
 (provide 'highlight)
 ;;; highlight.el ends here
