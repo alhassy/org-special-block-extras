@@ -112,7 +112,7 @@
 ;; `org--supported-blocks' maintains all names introduced by `org-defblock'.
 ;;
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
-;; live in a file of their name.  The blocks and links built atop them live in
+;; live in a file of their name, as does `org-thread-blockcall'.  The blocks and links built atop them live in
 ;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, and org-defblock-misc.el; this file
 ;; requires them all and defines the mode.  The graph block, org-graph/org-graph-block.el,
@@ -234,6 +234,7 @@
 ;;; Code:
 
 (require 'org-defblock)
+(require 'org-thread-blockcall)
 (require 'org-links)
 (require 'org-color-links)
 (require 'org-details-block)

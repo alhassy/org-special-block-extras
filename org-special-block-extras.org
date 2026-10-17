@@ -2386,7 +2386,7 @@ First, we need to handle the case of one block…
 Usage: (blockcall blk-name main-arg even-many:key-values raw-contents)
 
 One should rarely use this directly; instead use
-o-thread-blockcall.
+`org-thread-blockcall'.
 "
   `(concat "#+end_export\n" (,(intern (format "org-block/%s" blk))
     backend ;; defblock internal
@@ -2439,9 +2439,6 @@ A full example:
                                    "\n#+end_export"
                                    )))) result)))
    #+END_SRC
-
-   #+RESULTS:
-   : o-thread-blockcall
 
 #+end_details
 

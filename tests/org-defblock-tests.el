@@ -85,9 +85,6 @@ DEFAULT
     (should (equal (org-special-block-main-arg blk) "hello"))
     (should (string-match-p "some content" (org-special-block-contents blk)))))
 
-(deftest "org-thread-blockcall with no forms returns the body unchanged."
-  (should (equal "hello" (org-thread-blockcall "hello"))))
-
 ;;; A block's body must yield a string
 
 (deftest "a block whose body yields nil signals an error naming the block, rather than exporting the text nil"

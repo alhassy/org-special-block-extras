@@ -1247,44 +1247,6 @@ One should rarely use this directly; instead use
                              ,main-arg
                              ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))
 
-;;;;; thread-blockcall
-
-(defmacro org-thread-blockcall (body &rest forms)
-  "Thread text through a number of blocks.
-
-BODY is likely to be ‘raw-contents’, possibly with user manipulations.
-
-Each FORMS is of the shape '(block-name main-argument :key-value-pairs)'
-
-(thread-blockcall x)       = x
-(thread-blockcall x (f a)) = (blockcall f a x)
-(thread-blockcall x f₁ f₂) ≈ (f₂ (f₁ x))
-
-The third is a ‘≈’, and not ‘=’, because the RHS contains
-‘blockcall’s as well as massages the export matter
-between conseqeuctive blockcalls.
-
-A full example:
-
-    (org-defblock nesting (name nil)
-      \"Show text in a box, within details, which contains a box.\"
-
-      (org-thread-blockcall raw-contents
-                        (box name)
-                        (details (upcase name) :title-color \"green\")
-                        (box (format \"⇨ %s ⇦\" name) :background-color \"blue\")
-                        ))
-"
-  (if (not forms) body
-    `(-let [result (org--blockcall ,@(car forms) ,body)]
-       ,@(cl-loop for b in (cdr forms)
-            collect `(setq result (org--blockcall ,@b
-                                                        (concat
-                                                         "#+begin_export\n"
-                                                         result
-                                                         "\n#+end_export"
-                                                         )))) result)))
-
 ;;;;; fontification
 
 (defun org--display-as (from to string)

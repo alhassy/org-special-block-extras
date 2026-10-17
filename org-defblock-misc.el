@@ -27,6 +27,7 @@
 (require 'org-box-block)    ;; solution uses box
 (require 'org-details-block) ;; solution uses details
 (require 'org-parallel-block) ;; org-demo uses parallel
+(require 'org-thread-blockcall) ;; solution threads its contents
 
 ;;;;;; Margin (LaTeX)
 
