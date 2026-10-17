@@ -301,6 +301,7 @@ Lisp written in a document runs with your privileges; as with Babel's
 (defun org--block-let (bindings contents backend)
   "(BINDINGS, CONTENTS, BACKEND) ↦ CONTENTS with each whole-word VAR replaced by its value, for BINDINGS (VAR VALUE …).
   (N (+ 1 2) WHO \"Jasim\"), \"WHO scored N\"  ↦  \"Jasim scored 3\"
+  (-> \"⇒\"), \"p->q\"                    ↦  \"p⇒q\"
 Each VALUE may refer to the VARs before it, as with `let*'."
   (let* ((pairs (-partition 2 bindings))
          (values (org--block-eval `(let* ,pairs (list ,@(mapcar #'car pairs))) backend))
@@ -308,7 +309,12 @@ Each VALUE may refer to the VARs before it, as with `let*'."
          (case-fold-search nil))
     (cl-loop for (var) in pairs
              for value in values
-             do (setq contents (replace-regexp-in-string (format "\\_<%s\\_>" (regexp-quote (symbol-name var)))
+             ;; A word boundary only at VAR's word ends: an operator such as -> has none, else it would never match.
+             for name = (symbol-name var)
+             for wordy? = (lambda (char) (string-match-p "[[:alnum:]_]" (string char)))
+             do (setq contents (replace-regexp-in-string (concat (if (funcall wordy? (aref name 0)) "\\_<" "")
+                                                                 (regexp-quote name)
+                                                                 (if (funcall wordy? (aref name (1- (length name)))) "\\_>" ""))
                                                          (format "%s" value) contents t t)))
     contents))
 
@@ -316,7 +322,8 @@ Each VALUE may refer to the VARs before it, as with `let*'."
   "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER, HEADER) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say:
 
 + :noexport t ↦ nothing at all; likewise :when FORM, when FORM is nil.  FORM may mention `backend'.
-+ :let (VAR VALUE …) ↦ each whole-word VAR in CONTENTS becomes its VALUE, beforehand; see `org--block-let'.
++ :let (VAR VALUE …) ↦ each whole-word VAR in CONTENTS, or operator such as ->, becomes its VALUE, beforehand;
+  see `org--block-let'.
 + :ignore t ↦ CONTENTS as plain Org, bypassing RENDER; i.e., the block's own behaviour.
 + :boxed TITLE ↦ the result within a `box' titled TITLE; for :boxed t, untitled.
 + :folded TITLE ↦ the result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised.

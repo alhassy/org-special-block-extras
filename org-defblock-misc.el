@@ -277,7 +277,10 @@ In Markdown, the source is a fenced org block above its result, each under its l
 (org-defblock rename (list "")
               "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
-In a link, no quotes are needed."
+In a link, no quotes are needed.
+
+Substitution is handy enough that every block has it: the :let switch, much as a src block's :var, replaces
+whole words and operators by the values of Lisp forms; e.g., #+begin_box :let (Yusuf \"Joseph\" -> \"⇒\")."
               (s-replace-all
                (--map (cons (car it) (cadr it))
                       (--map (s-split " to " (s-trim it))

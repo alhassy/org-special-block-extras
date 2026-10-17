@@ -2738,7 +2738,10 @@ bank of the river/ …]]
 (org-defblock rename (list "")
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
-In a link, no quotes are needed."
+In a link, no quotes are needed.
+
+Substitution is handy enough that every block has it: the :let switch, much as a src block's :var, replaces
+whole words and operators by the values of Lisp forms; e.g., #+begin_box :let (Yusuf \"Joseph\" -> \"⇒\")."
   (s-replace-all
    (--map (cons (car it) (cadr it))
           (--map (s-split " to " (s-trim it))
@@ -2751,6 +2754,12 @@ In a link, no quotes are needed."
 
 
 #+end_solution
+
+Substitution is handy enough that every block has it: the [[#Switches-for-every-block][:let switch]], much as a src block's
+=:var=, replaces whole words ---and operators such as =->=--- by the values of Lisp forms. By way of
+example, =#+begin_box :let (Yusuf "Joseph" -> "⇒")= is a box whose =Yusuf= reads =Joseph=, and whose
+=p -> q= reads =p ⇒ q=.
+
 *** Spoilers! ---“fill in the blanks”
   :PROPERTIES:
   :CUSTOM_ID: spoilers
@@ -4290,7 +4299,7 @@ from∘to m = {! try it! }
   |------------------+------------------------------------------------------------------------------|
   | =:noexport t=    | Nothing at all; e.g., notes to self                                          |
   | =:when FORM=     | Nothing at all, unless the Lisp =FORM= is non-nil; it may mention =backend= |
-  | =:let (VAR VAL …)= | Each whole-word =VAR= in the contents becomes its value, beforehand       |
+  | =:let (VAR VAL …)= | Each whole-word =VAR=, or operator such as =->=, in the contents becomes its value, beforehand |
   | =:ignore t=      | The contents, as plain Org; i.e., the block's own behaviour is bypassed      |
   | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |

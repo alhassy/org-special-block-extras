@@ -55,6 +55,18 @@ What is 6 × 7? It is 42; whereas Nx, and the word answer, are untouched.
 </div>
 ")
 
+(define-org-export-test "a block's :let replaces operators too, such as -> amid p->q, since a variable's punctuation ends need no word boundary" [switches]
+  :input "
+          #+begin_red :let (-> \"⇒\" == \"≡\")
+          Both p -> q == ¬p ∨ q and p->q==¬p∨q read as implications.
+          #+end_red"
+  :equals "<span style=\"color:red;\">
+<p>
+Both p ⇒ q ≡ ¬p ∨ q and p⇒q≡¬p∨q read as implications.
+</p>
+</span>
+")
+
 (define-org-export-test "a block marked :boxed TITLE and :folded t is a box, folded away under the block's name" [switches]
   :input "
           #+begin_red :boxed \"Heads up\" :folded t
