@@ -4602,6 +4602,12 @@ Mind the gap.
   #+begin_src emacs-lisp
 (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic]) …)
   #+end_src
+  Moreover, =:keywords= shows patterns within the contents in a face of their choosing; e.g.,
+  an [[#Aligned-equations][align]] block shows each =:tag-blue:= as a tag, in blue, by
+  #+begin_src emacs-lisp
+:fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--align-tag-face))]
+  #+end_src
+  where a face that is a function is called, with the match data at hand, for the face.
 
   /Convenience:/ For the terse-minded, the arglist may be flattened into the main argument
   and its default, followed by key-value pairs. The block above is then

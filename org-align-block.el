@@ -35,7 +35,14 @@
 
 (require 'org-defblock)
 
-(org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor") :html-head (mathjax))
+(defun org--align-tag-face ()
+  "↦ The face of the “:tag-COLOUR:” just matched: a tag, in COLOUR when Emacs knows that colour."
+  (if (color-defined-p (match-string 1)) (list :inherit 'org-tag :foreground (match-string 1)) 'org-tag))
+
+(org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor") :html-head (mathjax)
+                          :fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--align-tag-face)
+                                                ;; Each & is where the equations align; an escaped \& is a mere ampersand.
+                                                ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face))])
               "Equations aligned at each &, numbered when NUMBERED; a line may end in a coloured tag, “:tag-blue: Name”.
 
   #+begin_align :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")

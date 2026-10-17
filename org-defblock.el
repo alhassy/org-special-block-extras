@@ -810,8 +810,9 @@ KWDS may also carry options, which are not arguments:
   `org--load-html-head'.
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
-  “#+end_proof” as “⏹”, and the contents in italics too.  Each part is optional; see
-  `org--fontify-blocks'.
+  “#+end_proof” as “⏹”, and the contents in italics too.  Moreover, :keywords \='((REGEXP GROUP FACE) …) shows
+  each REGEXP match in the contents in FACE; e.g., the `align' block's “:tag-blue:” shows as a tag, in blue.
+  Each part is optional; see `org--fontify-blocks'.
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -1274,7 +1275,9 @@ One should rarely use this directly; instead use
   "Font-lock matcher: up to LIMIT, show each block in `org--block-fontifications' as its PLIST says; then nil.
   :begin STRING  ↦  “#+begin_NAME” shows as STRING; the header's arguments stay as they are
   :end STRING    ↦  “#+end_NAME” shows as STRING
-  :face FACE     ↦  the contents show in FACE too, atop their Org fontification"
+  :face FACE     ↦  the contents show in FACE too, atop their Org fontification
+  :keywords ((REGEXP GROUP FACE) …)  ↦  each REGEXP match in the contents shows its GROUP in FACE, atop all else;
+                                       a function FACE is called, with the match data at hand, for the face"
   (when org--block-fontifications
     (let ((case-fold-search t)
           (delimiter (format "^[ \t]*\\(#\\+\\(begin\\|end\\)_\\(%s\\)\\)\\(?:[ \t]\\|$\\)"
@@ -1285,11 +1288,18 @@ One should rarely use this directly; instead use
                (begin? (equal (downcase (match-string 2)) "begin")))
           (-when-let (shown (plist-get spec (if begin? :begin :end)))
             (org--display-as (match-beginning 1) (match-end 1) shown))
-          (when (and begin? (plist-get spec :face))
+          (when (and begin? (or (plist-get spec :face) (plist-get spec :keywords)))
             (let ((contents-start (min (1+ (line-end-position)) (point-max))))
               (save-excursion
                 (when (re-search-forward (format "^[ \t]*#\\+end_%s[ \t]*$" (regexp-quote name)) nil t)
-                  (font-lock-append-text-property contents-start (line-beginning-position) 'face (plist-get spec :face))))))))))
+                  (let ((contents-end (line-beginning-position)))
+                    (-when-let (face (plist-get spec :face))
+                      (font-lock-append-text-property contents-start contents-end 'face face))
+                    (pcase-dolist (`(,regexp ,group ,face) (plist-get spec :keywords))
+                      (goto-char contents-start)
+                      (while (re-search-forward regexp contents-end t)
+                        (font-lock-prepend-text-property (match-beginning group) (match-end group) 'face
+                                                         (if (functionp face) (funcall face) face)))))))))))))
   nil)
 
 (defun osbe--block-fontifications ()

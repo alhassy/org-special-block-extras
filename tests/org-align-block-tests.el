@@ -58,5 +58,31 @@ p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :tag-orange: Golden Rule
   (should (looking-at-p "\\\\begin{equation}"))
   (should-error (funcall (org-link-get-parameter "eqref" :follow) "Nowhere" nil) :type 'user-error))
 
+(org-deftest "an align block's :tag-COLOUR: shows as a tag in that colour, and as a plain tag for a colour Emacs lacks" [fontify]
+  :text "
+#+begin_align
+x &= y   :tag-blue: Symmetry
+y &= z   :tag-notacolour: Mystery
+#+end_align
+:tag-blue: outside an align block is left be."
+  (font-lock-ensure)
+  (search-forward ":tag-blue")
+  (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face))))
+  (search-forward ":tag-notacolour")
+  (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
+  (search-forward ":tag-blue")
+  (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
+
+(org-deftest "an align block's & shows as a keyword, since equations align there; an escaped \\& does not" [fontify]
+  :text "
+#+begin_align
+\\text{Q\\&A} &= 42
+#+end_align"
+  (font-lock-ensure)
+  (search-forward "\\&")
+  (should-not (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face))))
+  (search-forward "&")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
+
 (provide 'org-align-block-tests)
 ;;; org-align-block-tests.el ends here
