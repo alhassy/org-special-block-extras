@@ -11,9 +11,8 @@
 
 (load-file (expand-file-name "~/snap/snap.el"))
 (unless (fboundp 'org-test--fill) (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
-(load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
-(add-to-list 'load-path (expand-file-name "~/org-special-block-extras/org-graph"))
-(load-file (expand-file-name "~/org-special-block-extras/org-graph/org-graph-block.el"))
+(load-file (expand-file-name "~/org-special-block-extras/lisp/org-special-block-extras.el"))
+(load-file (expand-file-name "~/org-special-block-extras/lisp/org-graph-block.el"))
 (org-special-block-extras-mode 1)
 ;; Examples run the Lisp of their own blocks' :when and :let switches without asking.
 (setq org-defblock-evaluate-switches t)

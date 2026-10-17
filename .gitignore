@@ -1,7 +1,7 @@
 /README.bbl
 /README.tex
 /_minted-README/
-/org-special-block-extras.elc
+/lisp/org-special-block-extras.elc
 /org-special-block-extras.tex
 /org-special-block-extras.html
 /org-special-block-extras.pdf
@@ -10,8 +10,8 @@
 /_minted-index/
 /index.bbl
 /index.tex
-/mwe.html
-/mwe.bbl
+/tests/mwe.html
+/tests/mwe.bbl
 /ltximg/
 **/.DS_Store
 

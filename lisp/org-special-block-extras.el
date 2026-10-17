@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.16
+;; Version: 26.10.17
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -117,7 +117,7 @@
 ;; org-parallel-block.el, org-proof-block.el, org-align-block.el, org-margin-blocks.el, org-quote-block.el,
 ;; org-solution-block.el, org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-style-block.el,
 ;; org-substitution-blocks.el, and org-latex-definitions-block.el ---one file per family of blocks; this file
-;; requires them all and defines the mode.  The graph block, org-graph/org-graph-block.el,
+;; requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
 ;;

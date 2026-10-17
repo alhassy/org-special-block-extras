@@ -28,7 +28,7 @@
 (require 'cl-lib)
 (require 'dash)
 
-(load-file (expand-file-name "~/org-special-block-extras/org-special-block-extras.el"))
+(load-file (expand-file-name "~/org-special-block-extras/lisp/org-special-block-extras.el"))
 (load-file (expand-file-name "~/snap/snap.el")) ;; For `snap-define-fixture', `snap-define-relation', etc.
 
 ;;

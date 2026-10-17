@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         run: |
-          emacs --batch --eval "(package-initialize)" -L . -L org-graph -L ~/snap -L ~/fancy-C-x-C-e \
+          emacs --batch --eval "(package-initialize)" -L lisp -L ~/snap -L ~/fancy-C-x-C-e \
             $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
             -f ert-run-tests-batch-and-exit
 
@@ -55,7 +55,7 @@ jobs:
         env:
           UNDERCOVER_FORCE: true
         run: |
-          emacs --batch --eval "(package-initialize)" -L . -L org-graph -L ~/snap -L ~/fancy-C-x-C-e \
-            --eval "(progn (require 'undercover) (undercover \"*.el\" \"org-graph/*.el\" (:report-format 'text) (:send-report nil)))" \
+          emacs --batch --eval "(package-initialize)" -L lisp -L ~/snap -L ~/fancy-C-x-C-e \
+            --eval "(progn (require 'undercover) (undercover \"lisp/*.el\" (:report-format 'text) (:send-report nil)))" \
             $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
             -f ert-run-tests-batch-and-exit 2>&1 | sed -n '/Code coverage text report/,$p'

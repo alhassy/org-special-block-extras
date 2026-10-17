@@ -3,7 +3,7 @@
 ;; Copyright (c) 2024 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.16
+;; Version: 26.10.17
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (org-special-block-extras "26.10.16"))
 ;; Keywords: org, blocks, graphviz, dot, convenience
 ;; URL: https://alhassy.com/org-special-block-extras

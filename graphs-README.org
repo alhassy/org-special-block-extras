@@ -4,8 +4,7 @@
 
 # Load the package during export so #+begin_graph blocks are handled.
 #+begin_src emacs-lisp :results none :exports none
-(add-to-list 'load-path (file-name-directory (or load-file-name buffer-file-name)))
-(add-to-list 'load-path (expand-file-name "org-graph" (file-name-directory (or load-file-name buffer-file-name))))
+(add-to-list 'load-path (expand-file-name "lisp" (file-name-directory (or load-file-name buffer-file-name))))
 (require 'org-special-block-extras)
 (require 'org-defblock)
 (require 'org-graph-block)
@@ -22,7 +21,6 @@ No raw dot required.  Nesting encodes edges; inline tables encode attributes.
 ** Setup
 
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/org-special-block-extras/org-graph")
 (require 'org-special-block-extras)
 (require 'org-graph-block)
 #+end_src
@@ -1050,7 +1048,7 @@ Emacs -> Org [ lhead=cluster_Packages ];
    - Table on a list item → node attributes (same as above)
 
    The full attribute catalogue lives in the ~org-graph-attributes~ defcustom, in
-   ~org-graph/org-graph-attributes.el~ (customise via ~M-x customize-variable RET org-graph-attributes~); each
+   ~org-graph-attributes.el~ (customise via ~M-x customize-variable RET org-graph-attributes~); each
    entry has the form:
    #+begin_src emacs-lisp
    (:name "shape" :valid-on (nodes) :default "ellipse"
@@ -1077,7 +1075,7 @@ Emacs -> Org [ lhead=cluster_Packages ];
      arrowhead on the head node of an edge.  Default: normal.”
    - ~C-u RET~ works in the ~C-c '~ buffer too.
 
-   The descriptions come from ~org-graph-attributes~, which lives on its own in ~org-graph/org-graph-attributes.el~:
+   The descriptions come from ~org-graph-attributes~, which lives on its own in ~org-graph-attributes.el~:
    every Graphviz attribute, scraped from [[https://graphviz.org/doc/info/attrs.html][Graphviz's attribute table]]. To add or adjust an attribute,
    edit its entry there, or ~M-x customize-variable RET org-graph-attributes~. Reserved keys are
    described by ~org-graph--reserved-key-docs~, and the header's own keys by ~org-graph--header-key-docs~.
@@ -1099,7 +1097,7 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 #+macro: surface #45475a
 #+macro: sky #89dceb
 
-#+begin_graph :file lambda-to-emacs-fun.png
+#+begin_graph :file images/lambda-to-emacs-fun.png
 #+graph:
 | rankdir  | TB                            |
 | label    | From λ-Calculus to Emacs Lisp |
@@ -1213,7 +1211,7 @@ Its palette is Catppuccin's; the colours it repeats are named once, by Org's own
 #+end_cluster
 #+end_graph
 #+RESULTS:
-[[file:lambda-to-emacs-fun.png]]
+[[file:images/lambda-to-emacs-fun.png]]
 
 * Full Example — λ-Calculus → Emacs Lisp
 
@@ -1226,7 +1224,7 @@ actions) then ~C-c r~ to insert the hex-code at point. Within a graph's table, ~
 on a ~bgcolor~, ~fillcolor~, ~fontcolor~, or ~color~ row, it opens that same picker, and ~RET~ inserts
 the colour's hex code, and its name as a comment.
 
-#+begin_graph :file lambda-to-emacs.png
+#+begin_graph :file images/lambda-to-emacs.png
 :SETTINGS:
 #+graph:
 | rankdir  | TB                            |
@@ -1349,7 +1347,7 @@ the colour's hex code, and its name as a comment.
 #+end_cluster
 #+end_graph
 #+RESULTS:
-[[file:lambda-to-emacs.png]]
+[[file:images/lambda-to-emacs.png]]
 
 
 Also, useful

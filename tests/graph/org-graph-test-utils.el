@@ -11,8 +11,7 @@
 ;; For `deftest', `org-deftest', and snap; it loads org-special-block-extras too.
 (unless (fboundp 'org-deftest)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
-(add-to-list 'load-path (expand-file-name "~/org-special-block-extras/org-graph"))
-(load-file (expand-file-name "~/org-special-block-extras/org-graph/org-graph-block.el"))
+(load-file (expand-file-name "~/org-special-block-extras/lisp/org-graph-block.el"))
 
 ;; Tests stub primitives such as `call-process' via `cl-letf'; under native-comp, that compiles a
 ;; trampoline per primitive, which fails in batch.  Our code loads as source, so stubs work without them.

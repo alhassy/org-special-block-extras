@@ -7,7 +7,6 @@
 
 (unless (fboundp 'deftest)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
-(add-to-list 'load-path (expand-file-name "~/org-special-block-extras/org-graph"))
 (require 'org-graph-block) ; The graph example's block.
 
 (defun org-pdf-test--examples ()

@@ -1,0 +1,57 @@
+#+title: TODO
+#+author: Musa Al-hassy
+
+* TODO Rename =lisp/= to =src/=, split into =core/= and =derived/=
+
+Every =.el= file sits in =lisp/=, which MELPA's default recipe ships. We rename it =src/=:
+=core/= holds the building blocks, and =derived/= holds strictly the block definitions
+and the helpers they use.
+
+#+begin_example
+src/
+├── org-special-block-extras.el      ; the entry point, requires all of derived/
+├── tooltips.css, tooltips.js        ; beside the file that inlines them
+├── core/
+│   ├── org-defblock.el
+│   ├── org-deflink.el
+│   ├── org-deftag.el
+│   ├── org-thread-blockcall.el
+│   ├── org-block-header-args.el
+│   ├── org-special-block-at-point.el
+│   ├── org-special-block-indirect-edit.el
+│   ├── org-special-block-split.el
+│   └── org-ctrl-c-ctrl-c-for-special-block.el
+└── derived/
+    ├── org-{align,box,demo,details,latex-definitions,parallel,
+    │        proof,quote,remark,solution,spoiler,style}-block.el
+    ├── org-{callout,margin,substitution}-blocks.el
+    └── graph/                       ; today's org-graph-*.el
+#+end_example
+
+- [ ] Settle where =org-links.el= (the built-in link types) and =org-color-links.el= live. They define
+  links, not blocks, so =derived/= does not obviously fit.
+- [ ] =git mv lisp src=, then the files into =core/= and =derived/=. =org--tooltip-html-head= reads =tooltips.*= from beside the main file, so
+  those must stay together.
+- [ ] Let =-L src= suffice for users who load from a clone; the main file adds its subdirectories:
+  #+begin_src emacs-lisp
+  (let ((here (file-name-directory (or load-file-name buffer-file-name))))
+    (dolist (d '("core" "derived" "derived/graph")) (add-to-list 'load-path (expand-file-name d here))))
+  #+end_src
+- [ ] Update the =~/org-special-block-extras/lisp/…= paths in the test files, the =-L lisp= flag and =undercover=
+  glob in =.github/workflows/main.yml=, the =lisp= paths and =blob/master/lisp/= links in
+  =org-special-block-extras.org=, and the =load-path= in =graphs-README.org=.
+- [ ] Submit a new MELPA recipe:
+  #+begin_src emacs-lisp
+  (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras"
+   :files ("src/*.el" "src/tooltips.*" "src/core/*.el" "src/derived/*.el" "src/derived/graph/*.el"))
+  #+end_src
+
+* TODO Ship =tooltips.*= on MELPA ---needed today, layout aside
+
+The live recipe has no =:files=, so MELPA ships only its defaults (=*.el= and =lisp/*.el=). Hence a MELPA
+install today lacks =tooltips.css= and =tooltips.js= ---it warns "is missing, so tooltips will not open".
+If the move above is not forthcoming, the minimal fix is:
+#+begin_src emacs-lisp
+(org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras"
+ :files (:defaults "lisp/tooltips.*"))
+#+end_src
