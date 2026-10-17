@@ -70,14 +70,6 @@ DEFAULT
     (org-undefblock test-undefblock-target)
     (should-not (member 'test-undefblock-target org--supported-blocks))))
 
-(deftest "org-set-block-header-args overrides default when no local value is passed."
-  (org-defblock test-header-args-block (main-arg "" color "black") ""
-    color)
-  (let ((org--header-args nil))
-    (org-set-block-header-args test-header-args-block :color "purple")
-    (let ((result (org-block/test-header-args-block 'html "" nil)))
-      (should (string-match-p "purple" result)))))
-
 (org-deftest "Parser extracts name, main-arg, and contents from a temp buffer."
   :text "#+begin_myblock hello\nsome content\n#+end_myblock\n"
   (let ((blk (org-special-block-after-point "myblock")))

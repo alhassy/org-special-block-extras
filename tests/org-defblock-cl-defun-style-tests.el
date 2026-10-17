@@ -90,14 +90,6 @@ Hello
   :equals "Hello/green: Hello
 ")
 
-(deftest "cl-defun-style org-defblock honours org-set-block-header-args"
-  (using (org-defblock folded (&optional (title "More") &key (color "green"))
-           "Fold CONTENTS under TITLE."
-           (format "%s/%s: %s" title color contents))
-    (let ((org--header-args nil))
-      (org-set-block-header-args folded :color "teal")
-      (should (s-contains-p "More/teal" (org-export-string "#+begin_folded\nHello\n#+end_folded" 'latex))))))
-
 (deftest "cl-defun-style and flattened arglists define the same block"
   (let ((input "#+begin_folded \"Click me\"\nHello\n#+end_folded"))
     (should (equal (using (org-defblock folded (&optional (title "More") &key (color "green"))

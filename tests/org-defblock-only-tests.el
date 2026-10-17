@@ -55,15 +55,6 @@ For example, upon LaTeX export, the Org special block
                                Hello, Emacs!!
                                #+end_export")))))
 
-(deftest "`org-defblock-only' uses default values set by `org-set-block-header-args'"
-  (using (org-defblock-only greeting (name "user" punct "!") "Greeting block"
-           (format "Hello, %s%s" name punct))
-    (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
-    (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
-                     (lf-string "#+begin_export test-backend
-                               Hello, dev!×4
-                               #+end_export")))))
-
 (deftest "TODO `org-defblock-only' inconsistent with `org-defblock'" [BUG FIXME]
   ;; ⟨1⟩ `org-defblock' works as expected
   (exporting "Look:

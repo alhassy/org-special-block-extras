@@ -1140,13 +1140,6 @@ it begins with."
       (org-export-as backend nil nil :body-only nil))))
 
 
-(cl-defun org--header-arg-of (block-name arg-name)
-  "Gets the header value for parameter ARG-NAME used with BLOCK-NAME blocks.
-
-ARG-NAME is a keyword, whereas BLOCK-NAME is a symbol."
-  (plist-get (cdr (assoc block-name org--header-args)) arg-name))
-
-
 (defun org--replace-examples-in-string (string fun)
   "Replace each #+begin_example…#+end_example block in STRING
 with a call to (FUN ⟨matched text⟩)."
@@ -1211,29 +1204,7 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
           (message ,(format "“%s” is no longer recognised by ‘org-special-block-extras’." name))))
 
 (require 'org-deflink)
-
-;;;;; header args support
-(defvar org--header-args nil
-  "Alist (name plist) where `:main-arg' is a special plist key.
-
-  It serves a similar role to that of Org's src ‘header-args’.
-
-  See doc of `org-set-block-header-args' for more information.")
-
-(defmacro org-set-block-header-args (blk &rest kvs)
-  "Set default values for special block arguments.
-
-This is similar to, and inspired by, Org-src block header-args.
-
-Example src use:
-    #+PROPERTY: header-args:Language :key value
-
-Example block use:
-    (org-set-block-header-args Block :main-arg mainvalue :key value)
-
-A full, working, example can be seen by “C-h o org-defblock”.
-"
-  `(add-to-list 'org--header-args (list (quote ,blk) ,@kvs)))
+(require 'org-block-header-args)
 
 ;; This is our 𝒳, “remark”.
 ;; As a link, it should be shown angry-red;
@@ -1253,6 +1224,7 @@ A full, working, example can be seen by “C-h o org-defblock”.
 ;; the following as personalised defaults for the “remark” block.
 ;; OR, I'd like to set this for links, which do not have argument options.
 (org-set-block-header-args rremark :main-arg "Jasim Jameson" :signoff "( Aim for success! )")
+
 
 ;;;;; blockcall
 

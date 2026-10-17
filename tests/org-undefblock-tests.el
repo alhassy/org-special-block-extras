@@ -14,15 +14,6 @@
                                Hello, Emacs!!
                                #+end_export")))))
 
-(deftest "`org-defblock' uses default values set by `org-set-block-header-args'"
-  (using (org-defblock greeting (name "user" punct "!") "Greeting block"
-                (format "Hello, %s%s" name punct))
-  (org-set-block-header-args greeting :main-arg "dev" :punct "!×4")
-  (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
-                   (lf-string "#+begin_export test-backend
-                               Hello, dev!×4
-                               #+end_export")))))
-
 (deftest "`org-defblock' defines associated link functions that evaluate correctly"
   (using (org-defblock notice (:link [:face 'italic]) "Example."
                 (format "NOTICE: %s" contents))
