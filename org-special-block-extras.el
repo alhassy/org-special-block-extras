@@ -114,7 +114,9 @@
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each
 ;; live in a file of their name, as does `org-thread-blockcall'.  The blocks and links built atop them live in
 ;; org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
-;; org-parallel-block.el, org-proof-block.el, org-align-block.el, and org-defblock-misc.el; this file
+;; org-parallel-block.el, org-proof-block.el, org-align-block.el, org-margin-blocks.el, org-quote-block.el,
+;; org-solution-block.el, org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-style-block.el,
+;; org-substitution-blocks.el, and org-latex-definitions-block.el ---one file per family of blocks; this file
 ;; requires them all and defines the mode.  The graph block, org-graph/org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
@@ -241,7 +243,15 @@
 (require 'org-box-block)
 (require 'org-callout-blocks)
 (require 'org-parallel-block)
-(require 'org-defblock-misc)
+(require 'org-margin-blocks)
+(require 'org-latex-definitions-block)
+(require 'org-quote-block)
+(require 'org-solution-block)
+(require 'org-demo-block)
+(require 'org-substitution-blocks)
+(require 'org-spoiler-block)
+(require 'org-remark-block)
+(require 'org-style-block)
 (require 'org-align-block)
 (require 'org-proof-block)
 (require 'org-deftag)

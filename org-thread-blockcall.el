@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; By way of example, the `solution' block of org-defblock-misc.el is a red
+;; By way of example, the `solution' block of org-solution-block.el is a red
 ;; `details' inside a blue `box' inside another `details':
 ;;
 ;;     (org-defblock solution (title "Solution" reprimand "Did you try?" really "For real")
