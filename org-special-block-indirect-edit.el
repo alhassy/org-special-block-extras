@@ -94,6 +94,7 @@ So Org keeps all it does ---a table, a link, a src block, even within a special 
   "Emit defun + registration for the C-c ' handler of block NAME.
 NAME is a symbol (the block name); EDIT-MODE is a mode-function symbol.
 Expands to nothing when EDIT-MODE is nil."
+  (declare (indent defun))
   (when edit-mode
     (let ((handler-name (intern (format "org-%s--do-edit-special" name))))
       `(progn

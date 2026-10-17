@@ -1203,6 +1203,7 @@ Note: Link support is also removed, so that \"[[shout: hello, world]]\"
 no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 \"\\\\url{shout: hello, world}\".
 "
+  (declare (indent defun))
   `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
           (setf (alist-get ,(downcase (format "%s" name)) org--block-fontifications nil 'remove #'equal) nil)

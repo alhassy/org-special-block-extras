@@ -70,6 +70,19 @@ DEFAULT
     (org-undefblock test-undefblock-target)
     (should-not (member 'test-undefblock-target org--supported-blocks))))
 
+(deftest "every def macro of ours indents as defun does; e.g., org-defblock, org-deflink, org-deftag, org-undefblock"
+  (let (ours)
+    (mapatoms (lambda (symbol)
+                (-when-let (file (and (macrop symbol) (string-match-p "\\`org-\\(?:un\\)?def" (symbol-name symbol))
+                                      (symbol-file symbol 'defun)))
+                  ;; Our package's own sources, not the tests' fixtures such as `org-deftest'.
+                  (when (and (string-prefix-p (expand-file-name "~/org-special-block-extras/") (file-truename file))
+                             (not (string-match-p "/tests/" file)))
+                    (push symbol ours)))))
+    (should (memq 'org-defblock ours))
+    (should (memq 'org-deflink ours))
+    (should (equal (--remove (eq (function-get it 'lisp-indent-function) 'defun) ours) nil))))
+
 (org-deftest "Parser extracts name, main-arg, and contents from a temp buffer."
   :text "#+begin_myblock hello\nsome content\n#+end_myblock\n"
   (let ((blk (org-special-block-after-point "myblock")))

@@ -306,6 +306,7 @@ flat top-level plist with no enclosing vector:
     \"Shout the label.\"
     :face \\='(:weight bold)
     :export (upcase o-label))"
+  (declare (indent defun))
   ;; An optional leading ARGLIST names the anaphors; see `org--deflink-arglist-p'.
   (let (arglist)
     (when (org--deflink-arglist-p docstring (or display body))
