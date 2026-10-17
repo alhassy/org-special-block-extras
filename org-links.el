@@ -6,7 +6,7 @@
 ;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, links, convenience
-;; URL: https://alhassy.github.io/org-special-block-extras
+;; URL: https://alhassy.com/org-special-block-extras
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 ;; badge, tweet, reddit, github-*, twitter-follow, doc, show; and the documentation block.
 ;; Also houses the org-docs-* glossary system and `org--html-tooltip'.
 ;;
-;; Full documentation at https://alhassy.github.io/org-special-block-extras
+;; Full documentation at https://alhassy.com/org-special-block-extras
 
 ;;; Code:
 
@@ -332,9 +332,9 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
                Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
              ⇒ ‘logo’ examples and how they look can be found at
-                https://alhassy.github.io/org-special-block-extras/#Example-Badge-Icons
+                https://alhassy.com/org-special-block-extras#Example-Badge-Icons
 
-         See also: https://alhassy.github.io/org-special-block-extras/#Common-Project-Badges")
+         See also: https://alhassy.com/org-special-block-extras#Common-Project-Badges")
              o-label key (or value "") (or color "green") (or url "") (or logo ""))
      :export
      (if (equal o-backend 'latex) ""

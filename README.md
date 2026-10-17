@@ -236,16 +236,16 @@ again*.
 
 --------------------------------------------------------------------------------
 
-See the [HTML Article](https://alhassy.github.io/org-special-block-extras)
+See the [HTML Article](https://alhassy.com/org-special-block-extras)
 for demos and detailed uses of the block and link types provided by this package.
 
 (An outdated [PDF
-Article](https://alhassy.github.io/org-special-block-extras/index.pdf) demos
+Article](https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf) demos
 LaTeX export.)
 
 --------------------------------------------------------------------------------
 
-This article is featured in EmacsConf2020, with slides [here](https://alhassy.github.io/org-special-block-extras/emacs-conf-2020):
+This article is featured in EmacsConf2020, with slides [here](https://github.com/alhassy/org-special-block-extras/blob/master/emacs-conf-2020.org):
  No pictures, instead we use this system to make the  slides
  have a variety of styling information; i.e., we write Org
  and the result looks nice. “Look ma, no HTML required!”

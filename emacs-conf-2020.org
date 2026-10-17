@@ -699,7 +699,7 @@ Finally,
 #+ATTR_REVEAL: :frag (appear)
 /More details and examples at/
 #+ATTR_REVEAL: :frag (appear)
-| https://alhassy.github.io/org-special-block-extras |
+| https://alhassy.com/org-special-block-extras |
 
 * Bye!
   :PROPERTIES:
@@ -711,7 +711,7 @@ Finally,
 #+html:<small>
 - The *olive:org-special-block-extras* Library:
 
-  https://alhassy.github.io/org-special-block-extras
+  https://alhassy.com/org-special-block-extras
 
   … has examples, tutorial, and is a /literate program/! (•̀ᴗ•́)و
 
@@ -721,7 +721,7 @@ Finally,
 
 - [[violet:][These slides]]:
 
-    https://alhassy.github.io/org-special-block-extras/emacs-conf-2020
+    https://github.com/alhassy/org-special-block-extras/blob/master/emacs-conf-2020.org
 #+html:</small>
 
 #+begin_export html

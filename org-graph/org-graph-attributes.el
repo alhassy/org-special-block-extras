@@ -3,7 +3,7 @@
 ;; Copyright (c) 2024 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; URL: https://alhassy.github.io/org-special-block-extras
+;; URL: https://alhassy.com/org-special-block-extras
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

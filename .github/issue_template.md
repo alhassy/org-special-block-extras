@@ -26,7 +26,7 @@ Or can be solved by ...
 
 ## Please tick the following, by replacing `[ ]` with `[X]`
 
-1. [ ] I am aware of the extensive documentation at http://alhassy.com/org-special-block-extras/
+1. [ ] I am aware of the extensive documentation at https://alhassy.com/org-special-block-extras
 2. [ ] I have read the documentation of doc:org-defblock
 3. [ ] I have checked some boxes without reading them.
 4. [ ] I am aware that `(org-defblock X ⋯)` gives me a Lisp function `org-block/X`

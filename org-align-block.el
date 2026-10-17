@@ -6,7 +6,7 @@
 ;; Version: 26.10.16
 ;; Package-Requires: ((emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
-;; URL: https://alhassy.github.io/org-special-block-extras
+;; URL: https://alhassy.com/org-special-block-extras
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 ;; and an eqref: link cites a tag by name.  In HTML, MathJax typesets it alike.  See
 ;; `org-block/align' and the `eqref' link.
 ;;
-;; Full documentation at https://alhassy.github.io/org-special-block-extras
+;; Full documentation at https://alhassy.com/org-special-block-extras
 
 ;;; Code:
 

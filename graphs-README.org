@@ -13,7 +13,7 @@
 
 * Overview
 
-~org-graph-block~ extends [[https://alhassy.github.io/org-special-block-extras][org-special-block-extras]] with a ~#+begin_graph~ block that
+~org-graph-block~ extends [[https://alhassy.com/org-special-block-extras][org-special-block-extras]] with a ~#+begin_graph~ block that
 compiles native Org syntax — nested plain lists and two-column tables — into
 [[https://graphviz.org][Graphviz dot]].
 

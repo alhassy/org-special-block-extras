@@ -264,7 +264,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
-;; URL: https://alhassy.github.io/org-special-block-extras
+;; URL: https://alhassy.com/org-special-block-extras
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -318,7 +318,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; further examples demonstrating the special blocks it introduces.
 ;;
 ;; Full documentation can be found at
-;; https://alhassy.github.io/org-special-block-extras
+;; https://alhassy.com/org-special-block-extras
 
 ;;; Code:
 
@@ -600,7 +600,7 @@ badge:EmacsConf|2020|informational|https://youtu.be/BQdNhtJSbqk|youtube
 
 :Outdated_pics:
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf][PDF]] or as [[https://alhassy.com/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 Installation instructions are [[#Summary][below]].
 #+end_quote
 
@@ -691,7 +691,7 @@ for many Emacs users to start using Lisp.
 # a video lecture for this article can be found at
 # badge:EmacsConf|2020|informational|https://youtu.be/BQdNhtJSbqk|youtube.
 
-This article is featured in EmacsConf2020, with slides [[https://alhassy.github.io/org-special-block-extras/emacs-conf-2020][here]]:
+This article is featured in EmacsConf2020, with slides [[https://github.com/alhassy/org-special-block-extras/blob/master/emacs-conf-2020.org][here]]:
 No pictures, instead we use this system to make the  slides
 have a variety of styling information; i.e., we write Org
 and the result looks nice. “Look ma, no HTML required!”
@@ -743,7 +743,7 @@ and the result looks nice. “Look ma, no HTML required!”
 #+html: <!--
 #+latex: \vfill
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf][PDF]] or as [[https://alhassy.com/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 Installation instructions are [[#Summary][below]].
 #+end_quote
 #+html: -->
@@ -751,7 +751,7 @@ Installation instructions are [[#Summary][below]].
 #+latex: \newpage
 #+TOC: headlines 2
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf][PDF]] or as [[https://alhassy.com/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 Installation instructions are [[#Summary][below]].
 #+end_quote
 #+latex: \newpage
@@ -6051,9 +6051,9 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                          or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
                          Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
                        ⇒ ‘logo’ examples and how they look can be found at
-                          https://alhassy.github.io/org-special-block-extras/#Example-Badge-Icons
+                          https://alhassy.com/org-special-block-extras#Example-Badge-Icons
 
-                   See also: https://alhassy.github.io/org-special-block-extras/#Common-Project-Badges"))]
+                   See also: https://alhassy.com/org-special-block-extras#Common-Project-Badges"))]
 
     ;; :export #'org--link--badge
     (if (equal o-backend 'latex) ""
@@ -6456,7 +6456,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 
 + {{{withsrc(badge:Emacs|23/26/28|green|https://www.gnu.org/software/emacs|gnu-emacs)}}}
 + {{{withsrc(badge:Org|9.3.6|blue|https://orgmode.org|gnu)}}}
-+ {{{withsrc([[badge:org-special-block-extras|1.0|informational|https://alhassy.github.io/org-special-block-extras/README.html|Gnu-Emacs][org-special-block-extras badge]])}}}
++ {{{withsrc([[badge:org-special-block-extras|1.0|informational|https://alhassy.com/org-special-block-extras|Gnu-Emacs][org-special-block-extras badge]])}}}
   # + twitter:https://github.com/alhassy/org-special-block-extras
 + {{{withsrc([[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]])}}}
 + {{{withsrc([[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]])}}}
@@ -6565,9 +6565,9 @@ A theory of typed composition; e.g., typed monoids.
    exported, so loading them is quick.
 
    My personal documentation library can be seen here:
-   badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
+   badge:Htmlized|Org|green|https://github.com/alhassy/org-special-block-extras/blob/master/documentation.org
    or
-   badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
+   badge:Pretty|HTML|green|https://github.com/alhassy/org-special-block-extras/blob/master/documentation.org.
 
    
    Moreover, the  [[doc:org-block/doc][doc]] link type lets me reference Emacs-documentation such as
@@ -7452,9 +7452,9 @@ below, for more! )
 #+end_src
 
 My personal documentation library can be seen here:
-badge:Htmlized|Org|green|https://alhassy.github.io/org-special-block-extras/documentation.org.html
+badge:Htmlized|Org|green|https://github.com/alhassy/org-special-block-extras/blob/master/documentation.org
 or
-badge:Pretty|HTML|green|https://alhassy.github.io/org-special-block-extras/documentation.html.
+badge:Pretty|HTML|green|https://github.com/alhassy/org-special-block-extras/blob/master/documentation.org.
 
 #+begin_src emacs-lisp
 (cl-defun org-docs-load-libraries
@@ -8477,7 +8477,7 @@ It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
   :END:
 
 #+begin_quote
-The full article may be read as a [[https://alhassy.github.io/org-special-block-extras/index.pdf][PDF]] or as [[https://alhassy.github.io/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
+The full article may be read as a [[https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf][PDF]] or as [[https://alhassy.com/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
 
 link-here:summary

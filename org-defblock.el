@@ -6,7 +6,7 @@
 ;; Version: 26.10.16
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, convenience
-;; URL: https://alhassy.github.io/org-special-block-extras
+;; URL: https://alhassy.com/org-special-block-extras
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 ;; and supporting macros.  The `org-deflink' macro, keymap, and nav helpers
 ;; live in `org-deflink' (required at the end of this file).
 ;;
-;; Full documentation at https://alhassy.github.io/org-special-block-extras
+;; Full documentation at https://alhassy.com/org-special-block-extras
 
 ;;; Code:
 
