@@ -97,7 +97,8 @@ Do [[highlight:pink][read this]] twice."
 
 (deftest "a palette link is a button unfolding one button per `org-palette-colors' in HTML; nothing elsewhere" [palette]
   (let ((html (org-export-string "\n[[palette:][Pick a background]]")))
-    (should (string-match-p ">Pick a background</button><div style=\"display: none\">" html))
+    ;; A <span>, not a <div>: a <div> closes the enclosing <p>, so the button's nextElementSibling is null.
+    (should (string-match-p ">Pick a background</button><span style=\"display: none\">" html))
     (should (equal (length org-palette-colors) (s-count-matches "document.body.style.background" html))))
   (should (string-match-p ">🎨</button>" (org-export-string "\n[[palette:]]")))
   (should (equal "" (org-export-string "\n[[palette:][Pick a background]]" 'latex))))

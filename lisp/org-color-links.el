@@ -91,8 +91,8 @@ Only for HTML; elsewhere, nothing.
   [[palette:][Pick a background]]"
   :face (list :background (symbol-name (car (last org-palette-colors))) :box t)
   :export (if (not (equal o-backend 'html)) ""
-            (format (concat "<button onclick=\"let p = this.nextElementSibling; p.style.display = p.style.display === 'none' ? 'block' : 'none';\">%s</button>"
-                            "<div style=\"display: none\">%s</div>")
+            (format (concat "<button onclick=\"let p = this.nextElementSibling; p.style.display = p.style.display === 'none' ? 'inline' : 'none';\">%s</button>"
+                            "<span style=\"display: none\">%s</span>")
                     description
                     (mapconcat (lambda (c) (format "<button style=\"background-color: %s\" onclick=\"document.body.style.background = '%s'\">%s</button>" c c c))
                                org-palette-colors ""))))
