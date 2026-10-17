@@ -10,6 +10,8 @@
 #+export_file_name: index
 #+macro: blurb Forty-six custom blocks and fifty-seven link types for Emacs' Org-mode ^_^
 #+toc: headlines 2
+# On alhassy.com, each public top-level heading is its own article; see AlBasmala.org §“A REDIRECT to a container”.
+#+article_style: multiple
 
 # Render diagram: (progn (use-package ob-latex-as-png :ensure t)
 #                        (add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images))
@@ -3375,6 +3377,11 @@ Such “open methods” are known as “multimethods”; e.g., see doc:cl-defgen
 :End:
 
 * 🧙‍♂️ /Write Once, Export Everywhere/: Say Hello to =org-special-block-extras=
+:PROPERTIES:
+:CUSTOM_ID:   org-special-block-extras
+:TITLE:       org-special-block-extras: Write Once, Export Everywhere
+:DESCRIPTION: A unified interface for special blocks and links: defblock.
+:END:
 
 # MELPA's own badge, drawn live, shows the version MELPA serves; melpa: would show ours at export time.
 [[https://melpa.org/#/org-special-block-extras][https://melpa.org/packages/org-special-block-extras-badge.svg]]
@@ -3543,6 +3550,11 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
 #+end_graph
 
 * Block and link types provided by this package
+:PROPERTIES:
+:CUSTOM_ID:   org-special-block-extras-blocks-and-links
+:TITLE:       org-special-block-extras: The block and link types
+:DESCRIPTION: Boxes, details, tooltips, glossaries, graphs, callouts, colours, and more ---each shown beside its export.
+:END:
 ** Boxed Text —Calling out super duper info
    :PROPERTIES:
    :CUSTOM_ID: Boxed-Text
@@ -4485,7 +4497,9 @@ margins, so there our margin notes, tooltips, and Org's footnotes are beamer's o
 
 * Make your own blocks and links ---A developer's guide
   :PROPERTIES:
-  :CUSTOM_ID: Developers-guide
+  :CUSTOM_ID:   org-special-block-extras-developers-guide
+  :TITLE:       org-special-block-extras: Make your own blocks and links
+  :DESCRIPTION: A developer's guide to org-defblock, org-deflink, org-deftag, and the key bindings they get for free.
   :END:
 
   Every block and link above is made with the very tools below, so a new one of our own is a

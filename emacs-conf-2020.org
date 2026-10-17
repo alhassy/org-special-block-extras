@@ -186,15 +186,15 @@ With a bit of Lisp ---and a lot of time--- we obtain
 #+begin_details (•̀ᴗ•́)و
 | Idea                   | Documentation                   | Link only?          |
 |------------------------+---------------------------------+---------------------|
-| Colours                | [[doc:org-special-block-extras--latex-definitions][latex-definitions]], [[doc:org-special-block-extras--color][color]]        |                     |
-| Parallel               | [[doc:org-special-block-extras--parallel][parallel]]                        |                     |
-| Editorial Remarks      | [[doc:org-special-block-extras--remark][remark]]                          |                     |
-| Folded Details         | [[doc:org-special-block-extras--details][details]] ,  [[doc:org-special-block-extras--box][box]]                  |                     |
+| Colours                | [[doc:org-block/latex-definitions][latex-definitions]], [[doc:org-block/color][color]]        |                     |
+| Parallel               | [[doc:org-block/parallel][parallel]]                        |                     |
+| Editorial Remarks      | [[doc:org-block/remark][remark]]                          |                     |
+| Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]]                  |                     |
 | Keystrokes             | kbd:C-c_C-e                     | ~kbd~                 |
 | OctoIcons & Link Here  | octoicon:report link-here:Overview      | ~octoicon~, ~link-here~ |
-| Documentation-Glossary | [[doc:org-special-block-extras--documentation][documentation]]                   | ~doc~                 |
+| Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~                 |
 
-Other fun stuff: [[doc:org-special-block-extras--solution][solution]], [[doc:org-special-block-extras--org-demo][org-demo]], [[doc:org-special-block-extras--stutter][stutter]], [[doc:org-special-block-extras--rename][rename]], [[doc:org-special-block-extras--spoiler][spoiler]] (─‿‿─)
+Other fun stuff: [[doc:org-block/solution][solution]], [[doc:org-block/org-demo][org-demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]] (─‿‿─)
 #+end_details
 #+begin_box Incidentally
 😂 The setup joyously works for org-reveal 😹
@@ -269,7 +269,7 @@ Sacha wrote an Org file and wanted some *feedback*
 ** What /kind/ of feedback?
 
 #+ATTR_REVEAL: :frag (appear)
-- top-level [[doc:org-special-block-extras--remark][remarks]] /visible in the export/
+- top-level [[doc:org-block/remark][remarks]] /visible in the export/
 
   #+ATTR_REVEAL: :frag (appear)
   … suggest red:replacement text
@@ -279,7 +279,7 @@ Sacha wrote an Org file and wanted some *feedback*
 
   #+html: <br>
 
-- [[doc:org-special-block-extras--rename][translate]] in the export
+- [[doc:org-block/rename][translate]] in the export
 
   #+ATTR_REVEAL: :frag (appear)
   … everyone speaks different languages!
@@ -479,7 +479,7 @@ Eek
 - doc:advice-add, for advising Emacs utilities
   to blue:handle their new special blocks
 - doc:-let, pattern matching / [[olive:][“destructuring lets”]]
-- [[doc:org-special-block-extras--extract-arguments][extract-arguments]], an *red:ad-hoc* mechanism to cyan:simulate arguments with special
+- ~extract-arguments~, an *red:ad-hoc* mechanism to cyan:simulate arguments with special
   blocks
 - doc:org-link-set-parameters, to make new link types
 
@@ -508,7 +508,7 @@ doc:defun!
 
 #+html: <br>
 #+ATTR_REVEAL: :frag (appear)
-| ⇒ [[doc:org-special-block-extras--defblock][defblock]] ⇐ |
+| ⇒ [[doc:org-defblock][defblock]] ⇐ |
 #+end_box
 
 ** Solving the friend's trilemma
@@ -681,15 +681,15 @@ I think we should do …
 Using a few lines of Lisp …
 
 #+ATTR_REVEAL: :frag (appear)
-- write text in [[doc:org-special-block-extras--parallel][parallel]] columns
+- write text in [[doc:org-block/parallel][parallel]] columns
 
   … to save on vertical whitespace
 
-- hide away technical [[doc:org-special-block-extras--details][details]] for the interested reader only
+- hide away technical [[doc:org-block/details][details]] for the interested reader only
 
-- enclose text in a pretty [[doc:org-special-block-extras--box][box]]
+- enclose text in a pretty [[doc:org-block/box][box]]
 
-- Educational material blocks: [[doc:org-special-block-extras--spoiler][spolier]], [[doc:org-special-block-extras--solution][solution]], and [[doc:org-special-block-extras--org-demo][org-demo]]
+- Educational material blocks: [[doc:org-block/spoiler][spolier]], [[doc:org-block/solution][solution]], and [[doc:org-block/org-demo][org-demo]]
 
 #+ATTR_REVEAL: :frag (appear)
 Finally,

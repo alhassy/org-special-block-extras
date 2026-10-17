@@ -8,8 +8,10 @@
 ;; The manual loads this file at startup; see tests/org-examples.el for the snapshot relation itself.
 
 (require 'cl-lib)
-(unless (fboundp 'org-defblock)
-  (load-file (expand-file-name "../../org-special-block-extras.el" (file-name-directory (or load-file-name buffer-file-name)))))
+;; This repo's lisp/, after any installed copy: it supplies what an install lacks; e.g., a MELPA build that predates a block.
+(add-to-list 'load-path (expand-file-name "../../lisp" (file-name-directory (or load-file-name buffer-file-name))) t)
+(require 'org-special-block-extras)
+(require 'org-graph-block)  ;; Opt-in, yet the graph example and the manual's doc:org-block/graph need it.
 
 (defconst osbe--examples-directory (file-name-directory (or load-file-name buffer-file-name))
   "The directory of this file, tests/examples/, wherein each example NAME lives in NAME.el.")
@@ -43,7 +45,9 @@
             (funcall panel "peach" (format "%s %s" (funcall title "What You Get")
                                            ;; `:live' examples are exported now, not snapshotted; see tests/org-examples.el.
                                            (if (eq (plist-get example :html) :live)
-                                               (org-export-string-as (plist-get example :input) 'html t)
+                                               ;; Named targets keep their names as ids, lest a host page see Org's random ones.
+                                               (let ((org-html-prefer-user-labels t))
+                                                 (org-export-string-as (plist-get example :input) 'html t))
                                              (plist-get example :html))))
             (org-subtle-colors "custard")
             (org-export-string-as (format "\n#+begin_src emacs-lisp\n%s\n#+end_src\n" (osbe--definition name)) 'html t))))
