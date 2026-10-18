@@ -2,6 +2,8 @@
 
 /* A word with a tooltip.  The pointer cursor also makes iOS deliver taps on it, which it otherwise does not. */
 .tooltip { color: red; border-bottom: 1px dotted; text-decoration: none; cursor: pointer; }
+/* In maths, colour carries meaning, so a tooltip keeps the colour the maths gives it. */
+mjx-container .tooltip { color: inherit; }
 
 .tooltip-box {
   position: absolute; z-index: 1000;

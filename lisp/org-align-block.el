@@ -57,7 +57,8 @@ link in Emacs visits the line.
 + Shorthands, such as -> above, come from the :let switch, which every block has; :let NAME shares them, from
   the table #+name: NAME or the variable NAME.
 + In Markdown, the equations are a fenced math block."
-              (let* ((body (org--math-tags (org--math-uncomment raw-contents)))
+              (let* ((org--math-tips nil)
+                     (body (org--math-tags (org--math-uncomment raw-contents)))
                      ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                      (body (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" body t t))
                      ;; Our links and Org's emphasis, as in a math block; after the tags, lest :tag-blue: read as a link.
@@ -66,7 +67,10 @@ link in Emacs visits the line.
                      (equations (format "\\begin{align%s}\n%s\n\\end{align%s}" star body star)))
                 (cond ((org-export-markdown-p) (format "```math\n%s\n```" equations))
                       ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
-                      ((equal backend 'html) (org-html-encode-plain-text equations))
+                      ((equal backend 'html)
+                       (concat (org-html-encode-plain-text equations)
+                               ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
+                               (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) "")))
                       (t equations))))
 
 (defun org--eqref-visit (name)

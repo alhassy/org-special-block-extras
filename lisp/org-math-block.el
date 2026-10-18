@@ -38,12 +38,26 @@
 (require 'org-color-links)
 
 (declare-function org-docs-get "org-links")
+(declare-function org--docs-plain-p "org-links")
+(declare-function org--tooltip-html "org-links")
+(defvar org--docs-actually-used)
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
-(defun org--math-tip (math tip)
-  "(MATH, TIP) ↦ MATH, with TIP hovering over it in HTML; LaTeX and GitHub's maths have no hovers, so there it is MATH."
-  (if (and (eq org--math-backend 'html) (not (org-export-markdown-p))) (format "\\texttip{%s}{%s}" math tip) math))
+(defvar org--math-tips nil
+  "The <template>s of the tooltips in the maths being exported, newest first; see `org--math-tip'.")
+
+(defun org--math-tip (math tip &optional plain?)
+  "(MATH, TIP, PLAIN?) ↦ MATH, with TIP hovering over it in HTML, as tooltips.js shows prose's tooltips:
+  “x”, “the /current/ element”  ↦  \\class{tooltip osbe-tip-g1}{x}
+noting <template id=\"osbe-tip-g1\"><p>the <i>current</i> element</p></template> in `org--math-tips', since MathJax
+keeps no <template> of its own.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.  LaTeX and GitHub's maths
+have no hovers, so there it is MATH."
+  (if (or (not (eq org--math-backend 'html)) (org-export-markdown-p)) math
+    (let ((id (format "osbe-tip-%s" (gensym))))
+      (org-html-head-require 'org--tooltip-html-head)
+      (push (format "<template id=\"%s\">%s</template>" id (org--tooltip-html tip plain?)) org--math-tips)
+      (format "\\class{tooltip %s}{%s}" id math))))
 
 (defvar org-math-links
   (append
@@ -55,7 +69,11 @@
                            desc)))
      ("highlight" . ,(lambda (path desc) (format "\\colorbox{%s}{$%s$}" (or (org-string-nw-p path) "yellow") desc)))
      ("tooltip" . ,(lambda (path desc) (org--math-tip path desc)))
-     ("doc" . ,(lambda (path desc) (org--math-tip (or desc (car (org-docs-get path))) (cadr (org-docs-get path)))))
+     ("doc" . ,(lambda (path desc)
+                 (-let [(name docs) (org-docs-get path)]
+                   ;; As a doc: link in prose, for the glossary that show:GLOSSARY lists.
+                   (add-to-list 'org--docs-actually-used (list path name docs))
+                   (org--math-tip (or desc name) docs (org--docs-plain-p path)))))
      ("eqref" . ,(lambda (path _) (format "\\eqref{%s}" path)))
      ("https" . ,(lambda (path desc) (format "\\href{https:%s}{%s}" path (or desc path))))
      ("http" . ,(lambda (path desc) (format "\\href{http:%s}{%s}" path (or desc path))))))
@@ -327,20 +345,24 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
   block in `latex-mode'."
-  (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix)))
-    (cond ((org-export-markdown-p)
-           ;; A fenced math block is displayed already, so \[…\] would be one display too many.
-           (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
-             (format "```math\n%s\n```" (string-join (append definitions (and shown (list shown))) "\n"))))
-          ((equal backend 'latex)
-           (concat (when definitions
-                     (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d)) definitions "\n")))
-                   shown))
-          ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
-          (t (concat (when definitions
-                       (format "<p style=\"display:none\">\\[%s\\]</p>\n"
-                               (org-html-encode-plain-text (string-join definitions "\n"))))
-                     (and shown (org-html-encode-plain-text shown)))))))
+  (let ((org--math-tips nil))
+    (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix)))
+      (cond ((org-export-markdown-p)
+             ;; A fenced math block is displayed already, so \[…\] would be one display too many.
+             (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
+               (format "```math\n%s\n```" (string-join (append definitions (and shown (list shown))) "\n"))))
+            ((equal backend 'latex)
+             (concat (when definitions
+                       (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d))
+                                             definitions "\n")))
+                     shown))
+            ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
+            (t (concat (when definitions
+                         (format "<p style=\"display:none\">\\[%s\\]</p>\n"
+                                 (org-html-encode-plain-text (string-join definitions "\n"))))
+                       (and shown (org-html-encode-plain-text shown))
+                       ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
+                       (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) "")))))))
 
 ;;;; C-c C-c ---the maths, as an image atop its block
 

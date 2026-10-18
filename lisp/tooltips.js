@@ -34,12 +34,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (owner === word) return;
     close();
     owner = word;
-    box.innerHTML = word.querySelector(':scope > template')?.innerHTML ?? '';
+    box.innerHTML = tipOf(word)?.innerHTML ?? '';
     box.hidden = false;
     place(word);
   };
 
   const close = () => { clearTimeout(timer); owner = null; box.hidden = true; };
+
+  // A word's tip is its <template>; else, in maths, which MathJax keeps no <template> within, the one its
+  // osbe-tip-ID class names, beside the maths: \class{tooltip osbe-tip-g1}{x} … <template id="osbe-tip-g1">.
+  const tipOf = (word) => word.querySelector(':scope > template')
+    ?? document.getElementById([...word.classList].find((c) => c.startsWith('osbe-tip-')));
 
   // Above the word when there is room, else below; centred on it, yet never past the screen's edges ---a phone's
   // screen being narrower than most tooltips.

@@ -22,10 +22,17 @@
   (should (equal (org--math-markup "[[https://orgmode.org][\\mathrm{Org}]] [[eqref:Golden Rule]] [[file:x.png][x]]" 'latex)
                  "\\href{https://orgmode.org}{\\mathrm{Org}} \\eqref{Golden Rule} x")))
 
-(deftest "in maths, a tooltip: hovers its tip in HTML, whereas LaTeX shows the maths alone"
-  (should (equal (org--math-markup "[[tooltip:violet:x][the current element]]" 'html)
-                 "\\texttip{{\\color{violet}x}}{the current element}"))
-  (should (equal (org--math-markup "[[tooltip:violet:x][the current element]]" 'latex) "{\\color{violet}x}")))
+(defun org-math-tests--tips (math backend)
+  "(MATH, BACKEND) ↦ (MATH in LaTeX . its tooltips' <template>s, oldest first), each gensym numbered from g1."
+  (let ((seed 0) org--math-tips)
+    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (format "g%s" (cl-incf seed)))))
+      (cons (org--math-markup math backend) (reverse org--math-tips)))))
+
+(deftest "in maths, a tooltip: is one of tooltips.js', as in prose, its tip a <template> beside the maths; in LaTeX, none"
+  (should (equal (org-math-tests--tips "[[tooltip:violet:x][the /current/ element]]" 'html)
+                 '("\\class{tooltip osbe-tip-g1}{{\\color{violet}x}}"
+                   "<template id=\"osbe-tip-g1\"><p>\nthe <i>current</i> element</p></template>")))
+  (should (equal (org-math-tests--tips "[[tooltip:violet:x][the current element]]" 'latex) '("{\\color{violet}x}"))))
 
 ;;; Emphasis
 
@@ -93,12 +100,24 @@ red:0 < 1" nil)
 ;;; Footnotes
 
 (deftest "in maths, ATOM[fn::TIP] hovers TIP over ATOM in HTML, a \\command{with}{arguments} being one atom"
-  (should (equal (org--math-markup "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'html)
-                 "\\texttip{x}{the current element} + \\texttip{\\frac{a}{b}}{a ratio}"))
-  (should (equal (org--math-markup "violet:x[fn::the current element]" 'html)
-                 "{\\color{violet}\\texttip{x}{the current element}}"))
+  (should (equal (car (org-math-tests--tips "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'html))
+                 "\\class{tooltip osbe-tip-g1}{x} + \\class{tooltip osbe-tip-g2}{\\frac{a}{b}}"))
+  (should (equal (car (org-math-tests--tips "violet:x[fn::the current element]" 'html))
+                 "{\\color{violet}\\class{tooltip osbe-tip-g1}{x}}"))
   (should (equal (org--math-markup "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'latex)
                  "x + \\frac{a}{b}")))
+
+(define-org-call-test "a math block's tooltips' <template>s follow its display, outside the maths MathJax reads"
+  :call (cl-letf (((symbol-function 'gensym) (lambda (&rest _) "g1")))
+          (org-block/math 'html "
+x[fn::the current element] < 1" nil))
+  :returns "#+begin_export html
+\\[
+\\class{tooltip osbe-tip-g1}{x} &lt; 1
+\\]
+<template id=\"osbe-tip-g1\"><p>
+the current element</p></template>
+#+end_export")
 
 ;;; Structure
 
