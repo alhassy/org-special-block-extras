@@ -37,6 +37,7 @@
 (require 'org-math-block)
 
 (org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
+                          :manual "#Aligned-equations"
                           :fontify [:language "latex"
                                     :keywords (append org--math-fontify-keywords
                                                       ;; Each & is where the equations align; an escaped \& is a mere ampersand.
@@ -90,6 +91,7 @@ link in Emacs visits the line.
   "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for an align block's “:tag-orange: Golden Rule”.
 Following it visits that line, else any \\tag{…NAME…}; it exports as \\eqref{NAME}, which LaTeX and MathJax resolve."
   :follow (org--eqref-visit o-label)
+  :manual "#Aligned-equations"
   :export (cond ((org-export-markdown-p) (format "(%s)" o-label))
                 (t (when (equal o-backend 'html) (org-html-head-require 'mathjax))
                    (format "\\eqref{%s}" o-label))))

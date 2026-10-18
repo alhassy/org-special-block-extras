@@ -331,7 +331,7 @@ DISPLAY is gathered when a line ends in \\\\, and numbered when NUMBERED; each t
 
 (org-defblock math (&key numbered (matrix "pmatrix")
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
-                         :edit-indirect-mode latex-mode
+                         :edit-indirect-mode latex-mode :manual "#math"
                          :fontify [:language "latex" :keywords org--math-fontify-keywords])
   "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
 

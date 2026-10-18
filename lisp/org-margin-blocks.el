@@ -52,7 +52,7 @@ as an argument of \\marginpar."
                       counter "footnote"
                       ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
                       width "\\marginparwidth"
-                      :latex-head ("xcolor")
+                      :latex-head ("xcolor") :manual "#tooltip"
                       :link [:display 'full
                              :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
               "Produce an HTML tooltip or a LaTeX margin note.
@@ -119,7 +119,7 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                              "&emsp13;")))))
 
 ;;;;;; Tooltip (HTML)
-(org-defblock tooltip (marker "°" :latex-head ("xcolor"))
+(org-defblock tooltip (marker "°" :latex-head ("xcolor") :manual "#tooltip")
               "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
 In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are;
 in beamer, whose slides have no margins, as a footnote."

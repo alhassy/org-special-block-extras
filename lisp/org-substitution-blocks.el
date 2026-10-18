@@ -25,13 +25,13 @@
 (require 'org-defblock)
 
 ;;;;;; stutter
-(org-defblock stutter (reps 2)
+(org-defblock stutter (reps 2 :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
               "Output the CONTENTS of the block REPS many times"
               (-let [num (if (numberp reps) reps (string-to-number reps))]
                 (s-repeat num contents)))
 
 ;;;;;; rename
-(org-defblock rename (list "")
+(org-defblock rename (list "" :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
               "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed.

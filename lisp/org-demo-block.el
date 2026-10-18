@@ -29,7 +29,7 @@
                       source-color "cyan" result-color "cyan"
                       style "parallel"
                             sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
-                            )
+                            :manual "#Switches-for-every-block")
               "Output the CONTENTS of the block as both parsed Org and unparsed.
 
 Label the source text by SOURCE and the result text by RESULT

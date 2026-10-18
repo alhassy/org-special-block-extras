@@ -25,7 +25,7 @@
 
 ;;;;;; Style ---CSS for the exported page
 
-(org-defblock style (main-arg nil :link nil :tag nil)
+(org-defblock style (main-arg nil :link nil :tag nil :manual "#style-block")
   "Style the exported HTML page with the block's CSS, taken verbatim; elsewhere, nothing.
 
   #+begin_style

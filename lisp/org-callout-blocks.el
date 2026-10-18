@@ -61,7 +61,8 @@ HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, a
 ;; In Markdown, a callout is GitHub's own alert; being untitled, it shows only a TITLE other than its default.
 (pcase-dolist (`(,name ,colour ,icon ,purpose) org-callouts)
   (let ((default-title (capitalize (symbol-name name))))
-    (eval `(org-defblock ,name (&optional (title ,default-title) :link nil :tag nil :latex-head ("xcolor" "tcolorbox"))
+    (eval `(org-defblock ,name (&optional (title ,default-title) :link nil :tag nil :latex-head ("xcolor" "tcolorbox")
+                                         :manual "#Callouts")
              ,(format "%s\nA callout, titled TITLE, with a %s rule down its left; see `org-callouts'." purpose colour)
              (if (org-export-markdown-p)
                  (org-parse (org--markdown-alert ,(symbol-name name) (unless (equal title ,default-title) title) raw-contents))

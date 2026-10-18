@@ -32,6 +32,7 @@
   "Produce a Melpa badge for a given package O-LABEL, which links to the Melpa page.
 We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
   :face '(:box "purple" :foreground "purple")
+  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :export (format (concat "<a href=\"https://melpa.org/#/%s\">"
                           "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
                           "</a>")
@@ -86,6 +87,7 @@ buffer's choice never leaks into another's export."
 (org-deflink html-export-style
   "Add a dedicated style theme, from `org-html-export-styles'."
   :face '(:underline "green")
+  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :keymap ("?" ;; Let use select new choice of style with the “?” key.
            (-let [choice (completing-read "New HTML style: " (org--html-export-style-names))]
              (save-excursion
@@ -141,6 +143,7 @@ Examples:
   ≈ <kbd: C-x C-s>
   ≈ kbd:C-x_C-s"
   :display 'full
+  :manual "#nice-keystroke-renditions"
   :let (the-label  (s-trim (s-replace "_" " " o-label))
         lisp-func  (ignore-errors (key-binding (kbd the-label)))
         tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
@@ -251,6 +254,7 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
 
 (org-deflink octoicon
   "Show an OctoIcon; one of the `org--supported-octoicons', such as home, link, or mail."
+  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :export (progn
             (unless (org--octoicon (intern o-label))
               (error "octoicon:%s ⇒ This label is not supported; try one of %s" o-label (mapcar #'car org--supported-octoicons)))
@@ -260,6 +264,7 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
 
 (org-deflink link-here
   "Export a link to the current location in an Org file."
+  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :help-echo (format "This is a local anchor link named “%s”" o-label)
   :export (if (equal o-backend 'html)
               (format "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\" href=\"#%s\">%s</a>"
@@ -296,6 +301,7 @@ Then the following exports nicely from an Org file:
      "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
      :display 'full
+     :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
      :let (parts (mapcar #'s-trim (s-split "|" o-label))
            key (nth 0 parts) value (nth 1 parts) color (nth 2 parts) url (nth 3 parts) logo (nth 4 parts))
      :follow (browse-url (or url o-label))
@@ -606,6 +612,7 @@ We use this listing to actually print a glossary using
         display-name (or o-description name))
   :help-echo (format "[%s] %s :: %s" o-label name docs)
   :face '(custom-button)
+  :manual "#Glossaries"
   :export (progn
             (add-to-list 'org--docs-actually-used (list o-label name docs))
             (pcase o-backend
@@ -649,7 +656,7 @@ Entries of the buffer, or of `org-docs-libraries', are Org; see `org-docs-get'."
               (name (error "Documentation block: Name must be provided")
                     label nil show nil color "green"
                     ;; A heading tagged :documentation: is an entry in its own right; see `org--docs-read-buffer'.
-                    :tag nil)
+                    :tag nil :manual "#Glossaries")
               "A glossary entry: CONTENTS defines NAME, cited as doc:LABEL; a heading tagged :documentation: is one too.
 
 The entries live in ‘org--docs’.
@@ -710,7 +717,7 @@ KIND is one of macro, command, function, user option, or variable; GIST is the d
       (-uniq)
       (--sort (string< (car it) (car other))))))
 
-(org-defblock package-docs (feature nil :link nil :tag nil)
+(org-defblock package-docs (feature nil :link nil :tag nil :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
   "A table of the public functions, macros, and variables that FEATURE defines; each documented name is a doc: link,
 so that its full documentation is a tooltip.
 
@@ -747,6 +754,7 @@ to make “link buttons” that do useful things, as follows.
 In particular, `elisp' links do not export the value of their expression.
 That is what we accomplish with this new `show' link type."
   :face '(:underline "green")
+  :manual "#Glossaries"
   :let (glossary? (equal o-label "GLOSSARY")
         o-value (pp-to-string (if glossary?
                                   (mapcar #'cl-second org--docs-actually-used)

@@ -25,7 +25,8 @@
     (dolist (needle '("#+begin_details" "#+end_details"))
       (should (equal (org-test--eldoc-at text needle)
                      (list "Enclose contents in a folded up box, for HTML.
-C-c '    Edit the block in `org-mode'; C-c ' again writes it back."
+C-c '    Edit the block in `org-mode'; C-c ' again writes it back.
+Docs · See the manual"
                            :thing (org-block-signature "details")
                            :face 'font-lock-function-name-face))))))
 
@@ -33,19 +34,55 @@ C-c '    Edit the block in `org-mode'; C-c ' again writes it back."
   (should (equal (car (org-test--eldoc-at "#+begin_math\nx\n#+end_math\n" "#+begin_math"))
                  "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
 C-c C-c  Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'.
-C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.")))
+C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.
+Docs · See the manual")))
+
+(deftest "eldoc shows a block's :hover prose beneath its gist, and closes with buttons to its Docs and :manual"
+  (using (org-defblock shy (:hover "Some prose too long for one line." :manual "https://example.com/shy") "Be shy." contents)
+    (let ((doc (car (org-test--eldoc-at "#+begin_shy\nhi\n#+end_shy\n" "#+begin_shy"))))
+      (should (equal doc "Be shy.
+Some prose too long for one line.
+C-c '    Edit the block in `org-mode'; C-c ' again writes it back.
+Docs · See the manual"))
+      ;; “Docs” describes the block's function; “See the manual” browses its :manual.
+      (let ((push (lambda (label) (button-activate (button-at (1+ (string-match label doc))))))
+            described browsed)
+        (cl-letf (((symbol-function 'describe-function) (lambda (f) (setq described f)))
+                  ((symbol-function 'browse-url) (lambda (url &rest _) (setq browsed url))))
+          (with-temp-buffer
+            (insert doc)
+            (funcall push "Docs")
+            (funcall push "See the manual")))
+        (should (eq described 'org-block/shy))
+        (should (equal browsed "https://example.com/shy"))))))
+
+(deftest "a :manual of #ANCHOR is that section of our manual; and every block and link we ship has a :manual"
+  (should (string-suffix-p "org-special-block-extras-blocks-and-links#math"
+                           (get-text-property 0 'help-echo (car (last (split-string (org--hover-footer 'org-block/math)
+                                                                                    " · "))))))
+  (let ((ours (expand-file-name "lisp/" "~/org-special-block-extras/")))
+    (should-not
+     (cl-loop for symbol in (append (--map (intern (format "org-block/%s" it)) org--supported-blocks)
+                                    (--map (intern (format "org-link/%s" (car it))) org-link-parameters))
+              when (and (fboundp symbol)
+                        (string-prefix-p ours (or (symbol-file symbol 'defun) ""))
+                        ;; A block's link shares its block's manual.
+                        (not (get (intern (string-replace "org-link/" "org-block/" (symbol-name symbol))) 'org-manual))
+                        (not (get symbol 'org-manual)))
+              collect symbol))))
 
 (deftest "eldoc stays quiet inside a block's body, so typing there is not interrupted"
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))
 
 (deftest "eldoc on a link shows its block's signature, else its `org-deflink' docstring"
-  (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:")) "Show text in red color."))
+  (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:")) "Show text in red color.\nDocs · See the manual"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.
   (should (equal (car (org-test--eldoc-at "By [[eqref:Fold]]." "eqref:"))
                  "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for an align block's “:tag-orange: Golden Rule”.
-C-c C-o  Follow it."))
+C-c C-o  Follow it.
+Docs · See the manual"))
   ;; Org's own links are not ours to document.
   (should-not (org-test--eldoc-at "See https://example.com here" "https:")))
 

@@ -295,6 +295,9 @@ style, they form a vector DISPLAY between the docstring and BODY, such as
 
   By default, C-n and C-p are for moving to next and previous occruances of the same link type.
 
++ :hover and :manual are as for `org-defblock': prose eldoc shows beneath the docstring's first line, and the URL,
+  or #ANCHOR of `org-special-block-extras-manual', of where the link is documented.
+
 + :let is a list of alternating variable symbol name and value, which are then used to form
   a concrete `let*' clause. This is useful for introducing local variables for use in the DISPLAY
   as well as in the CONTENTS. Such local declarations may make use of O-LABEL and O-DESCRIPTION, as usual.
@@ -357,8 +360,11 @@ flat top-level plist with no enclosing vector:
              ,@(when keymap
                  `((setf (alist-get ,(symbol-name name) org-special-block-extras-mode-map--link-keymap-docs nil nil #'equal)
                          ',keymap)))
-             ;; Whether following these links does anything, for eldoc to say; see `org--special-block-eldoc'.
+             ;; Whether following these links does anything, and what more to say of them, for eldoc; see
+             ;; `org--special-block-eldoc'.
              (put ',org-link/NAME 'org-deflink-follows ,(and (plist-get display :follow) t))
+             (put ',org-link/NAME 'org-hover ,(plist-get display :hover))
+             (put ',org-link/NAME 'org-manual ,(plist-get display :manual))
              (org-link-set-parameters
               ,(symbol-name name)
               :export #',org-link/NAME

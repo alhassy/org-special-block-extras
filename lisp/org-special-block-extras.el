@@ -349,25 +349,45 @@ Inlined, so an exported page makes no request for them; see https://github.com/a
                                  ;; Every special block is so edited, by `org-special-block-edit'.
                                  "Edit the block in `org-mode'; C-c ' again writes it back."))))))
 
+(defcustom org-special-block-extras-manual "https://alhassy.com/org-special-block-extras-blocks-and-links"
+  "The manual of our blocks and links, whose sections a block's, or link's, `:manual' of #ANCHOR names; see
+`org--hover-footer'."
+  :type 'string)
+
+(defun org--hover-footer (symbol)
+  "SYMBOL ↦ the buttons that close eldoc's word on it: “Docs”, describing SYMBOL; and, given its `:manual', “See the
+manual”, browsing there.  E.g., for `org-block/math', “Docs · See the manual”, the latter leading to
+https://alhassy.com/org-special-block-extras-blocks-and-links#math."
+  (let ((manual (-some--> (get symbol 'org-manual)
+                  (if (string-prefix-p "#" it) (concat org-special-block-extras-manual it) it)))
+        (button (lambda (label action help) (make-text-button (copy-sequence label) nil
+                                                               'action action 'follow-link t 'help-echo help))))
+    (concat (funcall button "Docs" (lambda (_) (describe-function symbol)) (format "Describe `%s'" symbol))
+            (when manual (concat " · " (funcall button "See the manual" (lambda (_) (browse-url manual)) manual))))))
+
 (defun org--special-block-eldoc (callback &rest _)
-  "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point, and the keys that act on it; else nil.
+  "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point, and more; else nil.
 On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, the NAME block, else its `org-deflink'.
-The gist is the first line, which the echo area shows; the keys follow, for a multi-line display such as eldoc-box."
+The gist is the first line, which the echo area shows; for a multi-line display, such as eldoc-box, there follow its
+`:hover' prose, the keys that act on it, and its “Docs · See the manual” buttons; see `org--hover-footer'."
   (when (derived-mode-p 'org-mode)
     (let* ((delimiter? (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+\\(begin\\|end\\)_")))
            (name  (if delimiter? (org-special-block-name-at-point)
                     (-some->> (org--link-at-point) (org-element-property :type))))
            (block (and name (intern-soft (format "org-block/%s" name))))
            (link  (and name (not delimiter?) (intern-soft (format "org-link/%s" name))))
-           (gist  (lambda (docstring) (car (split-string (or docstring "") "\n")))))
+           (gist  (lambda (docstring) (car (split-string (or docstring "") "\n"))))
+           (hover (lambda (symbol gist keys)
+                    (string-join (-non-nil (append (list gist (get symbol 'org-hover)) keys
+                                                   (list (org--hover-footer symbol))))
+                                 "\n"))))
       (cond ((get block 'org-defblock-args)
-             (funcall callback (string-join (cons (funcall gist (get block 'variable-documentation))
-                                                  (and delimiter? (org--block-keys name)))
-                                            "\n")
+             (funcall callback (funcall hover block (funcall gist (get block 'variable-documentation))
+                                        (and delimiter? (org--block-keys name)))
                       :thing (org-block-signature name) :face 'font-lock-function-name-face))
             ((fboundp link)
-             (funcall callback (concat (funcall gist (documentation link t))
-                                       (when (get link 'org-deflink-follows) "\nC-c C-o  Follow it."))
+             (funcall callback (funcall hover link (funcall gist (documentation link t))
+                                        (and (get link 'org-deflink-follows) '("C-c C-o  Follow it.")))
                       :thing (format "%s:" name) :face 'font-lock-function-name-face))))))
 
 ;;;;; Completing #+begin_ lines

@@ -42,19 +42,20 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
     (_ (format "<span style=\"color:%s;\">%s</span>" colour text))))
 
 (dolist (colour org--named-colors)
-  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-head ("xcolor"))
+  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-head ("xcolor")
+                                 :manual "#Colours-links")
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents))))
 
 (org-defblock color
-              (color "black" :latex-head ("xcolor") :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
+              (color "black" :latex-head ("xcolor") :manual "#Colours-links" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
               "Format text according to a given COLOR, which is black by default."
               (org--color-text backend color contents))
 
 ;;;;;; Highlight ---colour the background, rather than the text
 
 (org-defblock highlight
-              (color "yellow" :latex-head ("xcolor") :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))])
+              (color "yellow" :latex-head ("xcolor") :manual "#Highlights" :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))])
               "Highlight text with a background of COLOR, which is yellow by default; as a link, it is so highlighted in Emacs too.
 
   [[highlight:pink][Read this twice.]]
@@ -90,6 +91,7 @@ Only for HTML; elsewhere, nothing.
 
   [[palette:][Pick a background]]"
   :face (list :background (symbol-name (car (last org-palette-colors))) :box t)
+  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :export (if (not (equal o-backend 'html)) ""
             (format (concat "<button onclick=\"let p = this.nextElementSibling; p.style.display = p.style.display === 'none' ? 'inline' : 'none';\">%s</button>"
                             "<span style=\"display: none\">%s</span>")

@@ -3395,6 +3395,9 @@ LaTeX!
 Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the eyes.
 
 ** 🎁  What Does It Do?
+  :PROPERTIES:
+  :CUSTOM_ID: what-does-it-do
+  :END:
 
 - *🎨 Style with ease* --- add colors, badges, tooltips (from a dictionary, Emacs
   Help, or custom file), keystroke notations, inline editorial comments, or even
@@ -4858,7 +4861,18 @@ Two.
 #+begin_details TITLE="Details" :background-color "#e5f5e5" :title-color "green": Enclose contents in a folded up box, for HTML.
   #+end_example
   This needs no setup beyond =org-special-block-extras-mode=, and works for our own blocks too.
-  For the full story of a block, =C-h o org-block/NAME=.
+
+  A multi-line display, such as eldoc-box, shows more beneath that line: the keys that act on the
+  block ---e.g., a math block's =C-c C-c= preview and =C-c '= edit--- and two buttons: /Docs/,
+  for the full story, =C-h o org-block/NAME=; and /See the manual/, for the section of this
+  manual that documents it. Our own blocks declare these as =org-defblock= options:
+  #+begin_example
+(org-defblock shy (:hover "Prose that eldoc shows beneath the docstring's first line."
+                   :manual "https://example.com/shy") ; or "#ANCHOR", a section of this manual
+  "Be shy."
+  contents)
+  #+end_example
+  An =org-deflink= takes =:hover= and =:manual= too.
 
   Likewise, completing on a =#+begin_= line ---=M-TAB=, or any completion popup--- offers every
   block's name beside the first line of its docstring, and Org's own blocks beside them; a popup's

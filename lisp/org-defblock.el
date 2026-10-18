@@ -318,6 +318,10 @@ KWDS may also carry options, which are not arguments:
   each REGEXP match in the contents in FACE; e.g., the `align' block's “:tag-blue:” shows as a tag, in blue.
   And :language \"latex\" shows the contents as a #+begin_src latex block's.  Each part is optional; see
   `org--fontify-blocks'.
++ `:hover STRING' is prose that eldoc shows, on hovering the block's #+begin_ line, beneath its docstring's
+  first line; e.g., a tip too long for that line.  See `org--special-block-eldoc'.
++ `:manual URL' is where the block is documented, which eldoc offers as “See the manual”; a URL of #ANCHOR is
+  that section of `org-special-block-extras-manual'; e.g., :manual \"#math\".
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -402,7 +406,8 @@ Three example uses:
          (tag?    (org--defblock-option kwds :tag))  ;; nil, t, or [:subsections MODE]
          (fontify (plist-get kwds :fontify))
          ;; The options configure the macro; they are not block arguments.
-         (args    (org-plist-delete-all kwds '(:block :link :tag :edit-indirect-mode :fontify :latex-head :html-head))))
+         (args    (org-plist-delete-all kwds '(:block :link :tag :edit-indirect-mode :fontify :latex-head :html-head
+                                                   :hover :manual))))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
        ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
@@ -417,6 +422,9 @@ Three example uses:
        (put ',handler 'org-latex-head ',(plist-get kwds :latex-head))
        ;; ⇨ Likewise, the HTML its pages need in their <head>.
        (put ',handler 'org-html-head ',(plist-get kwds :html-head))
+       ;; ⇨ What eldoc says of it beyond its docstring: more prose, and where its manual is.
+       (put ',handler 'org-hover ,(plist-get kwds :hover))
+       (put ',handler 'org-manual ,(plist-get kwds :manual))
        ;; ⇨ The link type support, unless declined via `:link nil'
        ,@(when link (list (org--defblock-link-form name docstring link)))
        ;; ⇨ Auto-generate C-c ' handler when :edit-indirect-mode is specified.
@@ -596,7 +604,7 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-              (editor "Editor Remark" color "red" signoff "" :latex-head ("xcolor")
+              (editor "Editor Remark" color "red" signoff "" :latex-head ("xcolor") :manual "#tooltip"
                       :link [:face '(:foreground "red" :weight bold)])
                                         ; :please-preserve-new-lines
               "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."

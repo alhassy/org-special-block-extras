@@ -384,7 +384,7 @@ Returns t (claiming C-c C-c)."
       (goto-char (match-beginning 0))
       (buffer-substring (point) (point-max)))))
 
-(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode)
+(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode :manual "#Graphs")
   "Render an Org list + tables as a Graphviz dot graph.
 
 MAIN-ARG is the graph's title, its label.

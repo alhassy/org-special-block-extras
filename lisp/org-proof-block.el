@@ -82,7 +82,7 @@ COLOR is the colour of the hints."
 (org-defblock calc
               (main-arg nil
                         rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "#800000"
-                        :latex-head ("xcolor") :html-head (mathjax))
+                        :latex-head ("xcolor") :html-head (mathjax) :manual "#Aligned-equations")
               "Render an Org-list as an equational proof.
 
 Sometimes the notation delimiting justification hints may clash
@@ -129,7 +129,7 @@ what is required by MathJaX."
           (name (format "\\frac{}{%s}[%s]" conclusion name))
           (t conclusion))))
 
-(org-defblock tree (main-arg nil :html-head (mathjax))
+(org-defblock tree (main-arg nil :html-head (mathjax) :manual "#Aligned-equations")
               "Write a proof tree using Org-lists.
 
 To get

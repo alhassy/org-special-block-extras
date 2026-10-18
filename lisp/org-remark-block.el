@@ -29,7 +29,7 @@
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-              (editor "Editor Remark" color "black" signoff "" strong nil :latex-head ("xcolor")
+              (editor "Editor Remark" color "black" signoff "" strong nil :latex-head ("xcolor") :manual "#tooltip"
                       :link [:face '(:foreground "red" :weight bold)])
               "Format CONTENTS as a first-class editor comment according to BACKEND.
 
