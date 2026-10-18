@@ -109,5 +109,9 @@ What is 1 + 1?
       (org-ctrl-c-ctrl-c)
       (should org-block-header-args-tests--graded))))
 
+(deftest "a header word Lisp reads only by unescaping it, such as the line break \\\\, stays as written" [header-args]
+  (should (equal '("One" "\\\\" "two" :n 2) (--map (if (symbolp it) (if (keywordp it) it (symbol-name it)) it)
+                                                  (org--read-header "One \\\\ two :n 2")))))
+
 (provide 'org-block-header-args-tests)
 ;;; org-block-header-args-tests.el ends here

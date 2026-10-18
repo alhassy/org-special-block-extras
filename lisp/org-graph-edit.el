@@ -16,6 +16,7 @@
 
 (require 'org-graph-read)
 (require 'org-graph-attributes)
+(require 'org-graph-smartdiagram)
 (require 'org-special-block-at-point)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -129,13 +130,16 @@ non-nil to suppress the normal `org-return' behaviour."
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
     (":unknown-tags" . "With random-templates, a tag naming no #+name: template gets a made-up one; else an error.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
+    (":smartdiagram" . "With TYPE, such as constellation, LaTeX's smartdiagram typesets the list, rather than Graphviz.")
+    (":dpi"      . "Under :smartdiagram, the dots per inch of the PNG; 300 by default.")
     (":node."    . "A default attribute of every node; e.g., :node.shape box.")
     (":edge."    . "A default attribute of every edge; e.g., :edge.color grey."))
   "The #+begin_graph keys that are not graph attributes ↦ what they do; shown by completion and eldoc.")
 
 (defconst org-graph--header-key-values
-  '((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
-    (":notes" "tooltip" "inline") (":unknown-tags" "error" "random-templates"))
+  `((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
+    (":notes" "tooltip" "inline") (":unknown-tags" "error" "random-templates")
+    (":smartdiagram" ,@(mapcar #'car org-graph-smartdiagram-types)))
   "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
 
 (defun org-graph--block-at-point ()
@@ -148,6 +152,20 @@ within it; else nil."
         ((or "cluster" "note") (setq block (org-element-lineage block '(special-block))))
         (_         (setq block nil))))
     found))
+
+(defconst org-graph--smartdiagram-header-keys '(":smartdiagram" ":file" ":svg" ":dpi" ":C-c_C-c")
+  "The #+begin_graph keys that mean something under :smartdiagram; Graphviz's attributes do not.")
+
+(defun org-graph--smartdiagram-p ()
+  "Non-nil when the graph around point ---or the one this `org-graph-edit-mode' buffer edits--- has :smartdiagram on
+its #+begin_graph line; so completion and eldoc offer smartdiagram's keys, not Graphviz's."
+  (let ((check (lambda () (-some--> (org-graph--block-at-point) (org-element-property :parameters it)
+                                    (string-match-p ":smartdiagram\\_>" it)))))
+    ;; The marker is local to the edit buffer, so we hold it before leaving.
+    (-if-let (origin (and (derived-mode-p 'org-graph-edit-mode) (bound-and-true-p org-src--beg-marker)))
+        (with-current-buffer (marker-buffer origin)
+          (save-excursion (goto-char origin) (funcall check)))
+      (funcall check))))
 
 (defun org-graph--in-graph-p ()
   "Non-nil when point is in a graph block's body: in one in an Org buffer, or anywhere in its `org-graph-edit-mode' buffer."
@@ -177,7 +195,16 @@ within it; else nil."
 
 (defun org-graph--key-doc (key)
   "A table KEY ↦ its one-line description, from `org-graph--reserved-key-docs' or `org-graph-attributes'; else nil.
-An attribute's description ends with its default, when Graphviz states one."
+An attribute's description ends with its default, when Graphviz states one.  In a smartdiagram, the key is
+smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's, from `org-graph-smartdiagram-item-keys'."
+  (if (org-graph--smartdiagram-p)
+      (or (cdr (assoc key org-graph-smartdiagram-item-keys))
+          (-when-let (entry (org-graph--smartdiagram-key key))
+            (concat (plist-get entry :description) (-some->> (plist-get entry :default) (format "  Default: %s.")))))
+    (org-graph--graphviz-key-doc key)))
+
+(defun org-graph--graphviz-key-doc (key)
+  "A Graphviz graph's table KEY ↦ its one-line description; see `org-graph--key-doc'."
   (or (cdr (assoc key org-graph--reserved-key-docs))
       (-when-let (attr (org-graph--attribute key))
         (concat (plist-get attr :description)
@@ -186,7 +213,7 @@ An attribute's description ends with its default, when Graphviz states one."
 (defun org-graph--header-key-doc (key)
   "A #+begin_graph KEY, such as \":rankdir\" or \":node.shape\", ↦ its one-line description; else nil."
   (or (cdr (assoc key org-graph--header-key-docs))
-      (org-graph--key-doc (org-graph--header->table-key key))))
+      (org-graph--graphviz-key-doc (org-graph--header->table-key key))))
 
 (defun org-graph--header-token-at-point ()
   "On a #+begin_graph line ↦ (BEG END PREVIOUS): the bounds of the word at point, and the word before it; else nil."
@@ -203,10 +230,12 @@ An attribute's description ends with its default, when Graphviz states one."
     (cond
      ((eq (char-after beg) ?:)
       (list beg end
-            (append (--remove (s-ends-with-p "." it) (mapcar #'car org-graph--header-key-docs))
-                    (--map (concat ":" (plist-get it :name)) (org-graph--attributes-on 'graphs))
-                    (--map (concat ":node." (plist-get it :name)) (org-graph--attributes-on 'nodes))
-                    (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges)))
+            (if (org-graph--smartdiagram-p)
+                org-graph--smartdiagram-header-keys
+              (append (--remove (s-ends-with-p "." it) (mapcar #'car org-graph--header-key-docs))
+                      (--map (concat ":" (plist-get it :name)) (org-graph--attributes-on 'graphs))
+                      (--map (concat ":node." (plist-get it :name)) (org-graph--attributes-on 'nodes))
+                      (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges))))
             :annotation-function (lambda (candidate) (-some->> (org-graph--header-key-doc candidate) (concat "  ")))
             :exclusive 'no))
      ((s-starts-with-p ":" previous)
@@ -225,21 +254,35 @@ An attribute's description ends with its default, when Graphviz states one."
 
 (defun org-graph--completion-at-point ()
   "Complete a graph table's key, or value, from `org-graph-attributes'; after `:edge.' or `:edge[T].', only edge ones.
-On a #+begin_graph line, complete its keys and values instead."
+On a #+begin_graph line, complete its keys and values instead; in a smartdiagram, smartdiagram's keys."
   (or
    (org-graph--header-completion)
    (-when-let ((column beg end key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
-     (pcase column
-       (1 (let* ((typed  (buffer-substring beg (point)))
-                 (prefix (and (string-match "\\`:edge\\(?:\\[[^]]*\\]\\)?\\." typed) (match-string 0 typed))))
-            (list beg end
-                  (append (--map (concat prefix (plist-get it :name))
-                                 (org-graph--attributes-on (if prefix 'edges (org-graph--table-context))))
-                          (unless prefix (mapcar #'car org-graph--reserved-key-docs)))
-                  :annotation-function (lambda (candidate) (-some->> (org-graph--key-doc candidate) (concat "  ")))
-                  :exclusive 'no)))
-       (2 (-some--> (plist-get (org-graph--attribute key) :values)
-            (list beg end it :exclusive 'no)))))))
+     (if (org-graph--smartdiagram-p)
+         (org-graph--smartdiagram-completion column beg end key)
+       (pcase column
+         (1 (let* ((typed  (buffer-substring beg (point)))
+                   (prefix (and (string-match "\\`:edge\\(?:\\[[^]]*\\]\\)?\\." typed) (match-string 0 typed))))
+              (list beg end
+                    (append (--map (concat prefix (plist-get it :name))
+                                   (org-graph--attributes-on (if prefix 'edges (org-graph--table-context))))
+                            (unless prefix (mapcar #'car org-graph--reserved-key-docs)))
+                    :annotation-function (lambda (candidate) (-some->> (org-graph--key-doc candidate) (concat "  ")))
+                    :exclusive 'no)))
+         (2 (-some--> (plist-get (org-graph--attribute key) :values)
+              (list beg end it :exclusive 'no))))))))
+
+(defun org-graph--smartdiagram-completion (column beg end key)
+  "In a smartdiagram's table, at COLUMN between BEG and END, on KEY's row ↦ completion: a #+graph: row's key from
+`org-graph-smartdiagram-keys', an item's from `org-graph-smartdiagram-item-keys'; or a value, for keys with few."
+  (pcase column
+    (1 (-some--> (pcase (org-graph--table-context)
+                   ('graphs (--map (plist-get it :name) org-graph-smartdiagram-keys))
+                   ('nodes  (mapcar #'car org-graph-smartdiagram-item-keys)))
+         (list beg end it
+               :annotation-function (lambda (candidate) (-some->> (org-graph--key-doc candidate) (concat "  ")))
+               :exclusive 'no)))
+    (2 (-some--> (plist-get (org-graph--smartdiagram-key key) :values) (list beg end it :exclusive 'no)))))
 
 (defun org-graph--eldoc (callback &rest _)
   "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, or of the key on this graph-table row; else nil."

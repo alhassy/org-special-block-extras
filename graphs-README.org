@@ -638,6 +638,90 @@ the kinds, description terms label the arcs, and an item's ~#+edge:~ dashes ever
 
 The chance node is all target: ~<<specials>>~ names it, and its template's empty ~label~ leaves a dot.
 
+** Smart diagrams: ~:smartdiagram TYPE~
+
+Graphviz lays out a graph; LaTeX's [[https://ctan.org/pkg/smartdiagram][smartdiagram]] package typesets a handful of fixed pictures
+---a planet amid its satellites, a flow of boxes, a column of terms and their descriptions--- that suit a
+README's opening better than any graph. ~:smartdiagram TYPE~ hands the very same list to smartdiagram
+instead; ~C-c C-c~ renders it with ~pdflatex~, and LaTeX export typesets it in place:
+#+macro: replaces \\ [[color:gray][replaces]] \\ [[color:gray][=$1=]]
+#+begin_graph One syntax =(key map)= \\ where =key= is =number=, =:keyword=, ='symbol=, or ="string"=! :smartdiagram constellation
+#+graph:
+| planet color              | black!75        |
+| planet size               | 3.5cm           |
+| planet text width         | 3.3cm           |
+| satellite size            | 3.6cm           |
+| satellite text width      | 3.5cm           |
+| distance planet-satellite | 5.7cm           |
+| connection color          | gray!60         |
+| font                      | \small\sffamily |
+
++ *easy-access.el* \\ one syntax
+  | fontcolor | white |
+  + =(:k plist)= {{{replaces((plist-get plist :k))}}}
+  + =(:k alist)= {{{replaces((cdr (assoc :k alist)))}}}
+  + =(:k hash)= {{{replaces((gethash :k hash))}}}
+  + =(:field instance)= {{{replaces((record-field instance))}}}
+  + =(n sequence)= {{{replaces((seq-elt sequence n))}}}
+  + =(setf (:k p) v)= {{{replaces((map-put p :k v))}}}
+
+-----
+
+=(:school 'math "jasim" :names 2 my-nested-life)=
+
+[[color:gray][replaces]]
+
+#+begin_src emacs-lisp
+(seq-elt (-> my-nested-life
+             (map-elt :school)
+             (map-elt 'math)
+             (map-elt "jasim")
+             person-names)
+         2)
+#+end_src
+#+end_graph
+
+- ~TYPE~ is one of ~constellation~, ~connected-constellation~, ~bubble~, ~flow~, ~flow:horizontal~,
+  ~circular~, ~circular:clockwise~, ~descriptive~, ~priority-descriptive~, or ~sequence~.
+- A constellation or bubble has one top item, its centre; that item's children orbit it. A descriptive
+  diagram's items are ~+ TERM :: DESCRIPTION~. Every other type reads the top items, in order.
+- The ~#+graph:~ rows are ~\smartdiagramset~'s, in smartdiagram's own words: ~| planet color | black!75 |~.
+- An item's ~| color |~, ~| fontcolor |~, and ~| fontsize |~ rows ---Graphviz's names for them--- colour
+  its shape and its text, and size its text; its ~:tags:~ splice ~#+name:~ templates of those rows, as in
+  any graph. An item's later paragraphs sit beneath its text.
+- The title sits above the diagram; prose before the list, between the two; prose after it, beneath.
+- ~:dpi N~ sets the PNG's resolution, 300 by default. ~C-u C-c C-c~ shows the LaTeX.
+- ~C-M-i~ and eldoc know which kind of graph they are in: under ~:smartdiagram~, they offer
+  smartdiagram's keys, with their defaults, rather than Graphviz's.
+- Graphviz's own syntax ---~#+node:~, ~#+edge:~, ~#+rank:~, links between items, records--- draws
+  nothing here, so it is an error rather than silently dropped.
+
+*** Org's markup in place of LaTeX's
+
+The diagram above began life as a ~#+begin_src latex-as-png~ block, via [[https://github.com/alhassy/ob-latex-as-png][ob-latex-as-png]].
+Every LaTeX incantation it needed has an Org counterpart that we already write daily:
+
+| LaTeX                                                     | Org                                                    |
+|-----------------------------------------------------------+--------------------------------------------------------|
+| ~\smartdiagram[constellation diagram]{…}~                 | ~:smartdiagram constellation~, over a nested list      |
+| ~\smartdiagramset{planet color=black!75, …}~              | a ~#+graph:~ table, one row a key                      |
+| ~\newcommand{\old}[1]{\textcolor{black!70}{\texttt{#1}}}~ | ~#+macro: old [[color:gray][=$1=]]~                    |
+| ~\texttt{(:k plist)}~, ~\textbf{…}~                       | ~=(:k plist)=~, ~*…*~                                  |
+| ~\mbox{\texttt{…}}~, lest code break mid-circle           | nothing: code never breaks                             |
+| ~\textcolor{black!70}{replaces}~                          | ~[[color:gray][replaces]]~                             |
+| ~{\color{white}…}~ on the planet                          | a ~fontcolor~ row of ~white~                           |
+| ~\centering{One syntax … \\ …}~ above the diagram         | the block's title                                      |
+| ~\vspace{1em}{\textcolor{black!44}\hrule}\vspace{1em}~    | ~-----~                                                |
+| ~\hspace{7em} (map-elt :school)~, line by line            | a ~#+begin_src~ block, indented as we read it          |
+| ~% \new{(N xs)} \replaces …~                              | ~# + =(N xs)= …~                                       |
+| ~\resizebox~, ~\vspace~, ~{\color{white} Bye!}~ padding   | nothing: the image is cropped to a small border        |
+
+The LaTeX column is a second language inside our Org file: its macros, its colour syntax, and hand-tuned
+~\hspace~'s that drift the moment a line changes. The Org column is the language the rest of the file is
+already in; it folds, links, exports, and completes like everything around it. The only backslashes
+that survive the move are ~\\~ ---which Org itself reads as a line break--- and the font names, such as
+~\small~, that smartdiagram's own settings take as values.
+
 ** ~#+name:~ and ~#+caption:~ make a figure
 
 In Org, ~#+name:~ is what ~[[links]]~ reach, and ~#+caption:~ captions a table or an image. A graph

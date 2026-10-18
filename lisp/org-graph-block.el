@@ -25,6 +25,7 @@
 ;;                                 ; title = graph label; :KEY graph attrs; :directed nil ⇒ undirected; labels fill to 20
 ;;                                 ; :notes inline ⇒ notes beneath labels; :unflatten 3 ⇒ leaves stagger over 3 ranks;
 ;;                                 ; :unknown-tags random-templates ⇒ an unknown :tag: gets a made-up template
+;;                                 ; :smartdiagram constellation ⇒ LaTeX's smartdiagram typesets the list instead
 ;;   #+graph:                      ; global graph[ ] attrs
 ;;   | rankdir | TB      |
 ;;   | bgcolor | #1e1e2e |
@@ -78,6 +79,7 @@
 (require 'org-special-block-extras)
 (require 'org-graph-dot)
 (require 'org-graph-edit)
+(require 'org-graph-smartdiagram)
 (require 'xml)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -280,17 +282,27 @@ Returns t (claiming C-c C-c)."
            (end-pt     (org-special-block-end-point block))
            (block-mode (plist-get kwdargs :C-c_C-c))
            (show-dot?  (xor (equal (format "%s" block-mode) "dot") current-prefix-arg))
-           (dot        (org--graph-raw->dot raw main-arg kwdargs)))
+           (smart      (plist-get kwdargs :smartdiagram))
+           (dot        (if smart (org--smartdiagram raw main-arg kwdargs) (org--graph-raw->dot raw main-arg kwdargs)))
+           (lang       (if smart "latex" "dot")))
       (if show-dot?
           (progn
             (org-graph--show-dot dot)
-            (org-graph--insert-results end-pt (format "#+begin_src dot\n%s\n#+end_src" dot))
-            (message "Graph dot source → *org-graph dot*"))
+            (org-graph--insert-results end-pt (format "#+begin_src %s\n%s\n#+end_src" lang dot))
+            (message "Graph %s source → *org-graph dot*" lang))
         (let ((outfile (or (-some->> (plist-get kwdargs :file) (format "%s"))
                            (org-graph--named-file (org-special-block-anchor block) nil)
                            (expand-file-name
                             (format "graph-%s.png" (substring (md5 dot) 0 12))
                             temporary-file-directory))))
+          (if smart
+              (-let [(exit . err-str) (org-graph--run-latex dot "png" outfile (org-graph--dpi kwdargs))]
+                (unless (zerop exit)
+                  (user-error "pdflatex failed: %s" (org-graph--annotate-latex-error err-str)))
+                (org-graph--insert-results end-pt (format "[[file:%s]]" outfile))
+                (when (fboundp 'org-display-inline-images)
+                  (org-display-inline-images nil t end-pt (save-excursion (goto-char end-pt) (forward-line 3) (point))))
+                (message "Graph rendered → %s" (expand-file-name outfile)))
           ;; The image renders from dot with hrefs, so its map leads back to the items; the plain dot names the file.
           (let ((map-file (make-temp-file "org-graph-" nil ".map")))
             (unwind-protect
@@ -310,7 +322,7 @@ Returns t (claiming C-c C-c)."
                                 (if (s-blank-str-p err-str)
                                     "is Graphviz installed? (M-x shell-command: dot -V)"
                                   (org-graph--annotate-dot-error err-str dot)))))
-              (delete-file map-file))))))
+              (delete-file map-file)))))))
     t))
 
 (org-def-action graph ()
@@ -334,6 +346,24 @@ Returns t (claiming C-c C-c)."
     (if (zerop exit)
         outfile
       (warn "org-graph: dot failed rendering %s:\n%s" outfile (org-graph--annotate-dot-error err-str dot))
+      nil)))
+
+(defun org-graph--dpi (kwdargs)
+  "KWDARGS ↦ the dots per inch a smartdiagram's PNG renders at: its `:dpi', else 300."
+  (or (plist-get kwdargs :dpi) 300))
+
+(defun org-graph--annotate-latex-error (err-str)
+  "ERR-STR, pdflatex's errors, ↦ them with a hint at how to see the LaTeX; sans errors, a hint at installing LaTeX."
+  (if (s-blank-str-p err-str)
+      "is LaTeX installed, with smartdiagram? (M-x shell-command: kpsewhich smartdiagram.sty)"
+    (concat err-str "\n\nC-u C-c C-c on the block shows the LaTeX it typesets.")))
+
+(defun org-graph--render-latex (latex kind outfile dpi)
+  "(LATEX, KIND, OUTFILE, DPI) ↦ OUTFILE, once pdflatex typesets it as KIND; else nil, the error logged to *Warnings*."
+  (-let [(exit . err-str) (org-graph--run-latex latex kind outfile dpi)]
+    (if (zerop exit)
+        outfile
+      (warn "org-graph: pdflatex failed rendering %s:\n%s" outfile (org-graph--annotate-latex-error err-str))
       nil)))
 
 (defun org-graph--png-to-base64 (pngfile)
@@ -371,6 +401,11 @@ are preserved as <title> attributes and appear on hover in browsers).
 Otherwise, renders to an inline base64 PNG.
 For Markdown, it writes the image file and links it, as for a named graph.
 For other backends it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
+
+With :smartdiagram TYPE ---constellation, flow:horizontal, descriptive, and so on--- LaTeX's smartdiagram package
+typesets the list instead, as `org--smartdiagram' says: the #+graph: rows are \\smartdiagramset's, and prose after the
+list sits beneath the diagram.  It renders by pdflatex, at :dpi dots per inch, 300 by default; LaTeX export typesets it
+in place, adding smartdiagram to the preamble.
 
 Within the block body:
 
@@ -418,21 +453,31 @@ Example:
     + calls :: B
       + returns :: C
   #+end_graph"
-  (let* ((dot     (org--graph-raw->dot (org--graph-expand-macros raw-contents) main-arg org--handler-args))
+  (let* ((smart   (plist-get org--handler-args :smartdiagram))
+         (raw     (org--graph-expand-macros raw-contents))
+         (dot     (if smart (org--smartdiagram raw main-arg org--handler-args)
+                    (org--graph-raw->dot raw main-arg org--handler-args)))
+         (render  (if smart
+                      (lambda (kind file) (org-graph--render-latex dot kind file (org-graph--dpi org--handler-args)))
+                    (lambda (kind file) (org-graph--render dot kind file))))
          ;; The header reads :file foo.png as the symbol foo.png; we want its name.
          (outfile (or (and file (format "%s" file)) (org-graph--named-file org--handler-anchor svg)
                       (format "graph-%s.png" (substring (md5 dot) 0 12)))))
     (pcase backend
+      ;; LaTeX typesets a smartdiagram itself: no image, and its packages join the preamble.
+      ((guard (and smart (org-export-derived-backend-p backend 'latex)))
+       (dolist (package org-graph-smartdiagram-latex-head) (cl-pushnew package org--latex-head-used :test #'equal))
+       (format "\\begin{center}\n%s\n\\end{center}" dot))
       ;; A named graph is a figure: an image link, which the block's #+name: and #+caption: label, as with Babel's results.
       ;; Markdown gets one too, since its renderers strip the inline base64 <img> that HTML gets.
       ((guard (or org--handler-anchor (org-export-markdown-p)))
-       (org-graph--render dot (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
+       (funcall render (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
        (org-parse (format "[[file:%s]]" outfile)))
       (`html
        (let ((tmp (make-temp-file "org-graph-" nil (if svg ".svg" ".png"))))
          (unwind-protect
              ;; An inline <svg> keeps the tooltips' <title> elements; else, an inline base64 PNG.
-             (or (when (org-graph--render dot (if svg "svg" "png") tmp)
+             (or (when (funcall render (if svg "svg" "png") tmp)
                    (if svg (org-graph--svg-contents tmp)
                      (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />" (org-graph--png-to-base64 tmp))))
                  ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>
@@ -440,7 +485,8 @@ Example:
            (delete-file tmp))))
       (_
        ;; `org-parse' lets Org export the src block, rather than emit its raw syntax into the output.
-       (org-parse (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot))))))
+       (org-parse (if smart (format "#+begin_src latex\n%s\n#+end_src" dot)
+                    (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot)))))))
 
 ;; A graph's body is its own syntax ---its #+begin_note blocks are tooltips, not callouts--- so export rewrites it
 ;; first.

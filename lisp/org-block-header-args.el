@@ -56,13 +56,17 @@
 (require 'org-element)
 
 (defun org--read-header (header)
-  "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole staying a string.
+  "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole, or reads only by unescaping, staying a string.
   \"Title :n 2 :color #6c7086 :font Helvetica,Arial\"  ↦  (Title :n 2 :color \"#6c7086\" :font \"Helvetica,Arial\")
 So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp."
   (let ((header (or header "")) (pos 0) values)
     (while (string-match "[^ \t\n]+" header pos)
       (let* ((beg (match-beginning 0)) (word-end (match-end 0))
              (read (condition-case nil (read-from-string header beg) (error nil))))
+        ;; A symbol the reader unescaped, such as `\\' read as `\', stays as written.
+        (when (and read (symbolp (car read))
+                   (not (equal (symbol-name (car read)) (substring header beg (cdr read)))))
+          (setq read nil))
         (if (and read (>= (cdr read) word-end))
             (setq values (cons (car read) values) pos (cdr read))
           (setq values (cons (substring header beg word-end) values) pos word-end))))
