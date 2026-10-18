@@ -114,6 +114,13 @@ red:0 < 1" nil)
     (should (string-match-p "\\marginpar.*" (car notes)))
     (should (string-match-p "the current element" (car notes)))))
 
+(deftest "a page that merely mentions MathJax in prose still gets MathJax, which typesets its maths"
+  (should (string-match-p "window.MathJax" (org-export-string-as "
+MathJax typesets this.
+#+begin_math
+x = red:y
+#+end_math" 'html))))
+
 (deftest "a page whose only tooltips are in maths still gets tooltips.js, which shows them"
   ;; The maths' tooltips are noted in a temporary buffer, whereas the page's head is the export buffer's to note.
   (let ((org-special-block-add-html-extra t))

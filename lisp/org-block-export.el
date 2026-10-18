@@ -196,7 +196,7 @@ Our own CSS and JS only if `org-special-block-add-html-extra'; MathJax always, e
       output
     (let* ((at (match-beginning 0))
            (heads (-non-nil
-                   (--map (cond ((eq it 'mathjax) (unless (string-match-p "MathJax" output) (org--html-mathjax info)))
+                   (--map (cond ((eq it 'mathjax) (unless (string-match-p "window.MathJax" output) (org--html-mathjax info)))
                                 ((not org-special-block-add-html-extra) nil)
                                 ((symbolp it) (symbol-value it))
                                 (t it))
