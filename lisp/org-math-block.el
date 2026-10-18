@@ -79,7 +79,8 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
                            (if (string-prefix-p "#" path) (format "[HTML]{%s}" (substring path 1)) (format "{%s}" path))
                            desc)))
      ("highlight" . ,(lambda (path desc) (format "\\colorbox{%s}{$%s$}" (or (org-string-nw-p path) "yellow") desc)))
-     ("tooltip" . ,(lambda (path desc) (org--math-tip path desc)))
+     ;; Sans description, it has no tip; unless it follows an atom, which `org--math-footnotes' sees to.
+     ("tooltip" . ,(lambda (path desc) (if desc (org--math-tip path desc) path)))
      ("doc" . ,(lambda (path desc)
                  (-let [(name docs) (org-docs-get path)]
                    ;; As a doc: link in prose, for the glossary that show:GLOSSARY lists; in LaTeX, that is all.
@@ -153,12 +154,16 @@ a word, else one character.  E.g., before the [fn::…] of “a + \\frac{x}{y}[f
 ;;;; Markup ---Org's footnotes, links, and emphasis, as LaTeX
 
 (defun org--math-footnotes ()
-  "Make each ATOM[fn::TIP] in the buffer a hover of TIP over ATOM, as a graph's node footnote is its tooltip."
+  "Make each ATOM[fn::TIP], or ATOM[[tooltip:TIP]], in the buffer a hover of TIP over ATOM, as a graph's node footnote
+is its tooltip; e.g., x[fn::the current element].  A [[tooltip:TIP]] sans description has no marker of its own, so
+it marks the ATOM before it."
   (goto-char (point-min))
-  (while (search-forward "[fn::" nil t)
-    (let* ((fn-start (- (point) 5))
-           (tip-end (save-excursion (goto-char fn-start) (with-syntax-table org--math-syntax (forward-sexp)) (point)))
-           (tip (string-trim (buffer-substring (point) (1- tip-end))))
+  (while (re-search-forward "\\[fn::\\|\\[\\[tooltip:\\([^]]*\\)\\]\\]" nil t)
+    (let* ((fn-start (match-beginning 0))
+           (link-tip (match-string 1))
+           (tip-end (if link-tip (match-end 0)
+                      (save-excursion (goto-char fn-start) (with-syntax-table org--math-syntax (forward-sexp)) (point))))
+           (tip (string-trim (or link-tip (buffer-substring (point) (1- tip-end)))))
            (atom-start (save-excursion (goto-char fn-start) (org--math-atom-start))))
       (when atom-start
         (let ((atom (buffer-substring atom-start fn-start)))
@@ -346,7 +351,7 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + red:ATOM colours an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
   delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
   [[color:#ff0066][…]], highlight:, eqref:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
-+ ATOM[fn::TIP] is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
++ ATOM[fn::TIP], or ATOM[[tooltip:TIP]], is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
   tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.
 + *bold* /italic/ _underline_ +cancel+ =texttt= ~mathtt~, when the markers hug their text, as in Org's prose.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.

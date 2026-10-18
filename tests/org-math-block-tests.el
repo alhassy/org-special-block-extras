@@ -134,6 +134,11 @@ x[fn::the current element] < 1" nil))
 the current element</p></template>
 #+end_export")
 
+(deftest "in maths, ATOM[[tooltip:TIP]], sans description, is ATOM[fn::TIP]; a lone one is its text, sans tooltip"
+  (should (equal (org-math-tests--tips "violet:x[[tooltip:The current element]] = a" 'html)
+                 (org-math-tests--tips "violet:x[fn::The current element] = a" 'html)))
+  (should (equal (org-math-tests--tips "{} + [[tooltip:Alone]]" 'html) '("{} + Alone"))))
+
 ;;; Structure
 
 (define-org-call-test "a math block's “# …” lines are Org comments, which TeX would read as a macro's parameter"
