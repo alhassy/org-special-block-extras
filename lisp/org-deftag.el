@@ -3,7 +3,7 @@
 ;; Copyright (c) 2023 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.17
+;; Version: 26.10.18
 ;; Package-Requires: ((dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, tags, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -60,7 +60,7 @@ lists NAME DEFAULT pairs, all positional; a missing final DEFAULT is nil."
 
 Group 1 is the tag sans its closing colon ---so axing it leaves its neighbours' colons intact--- and
 group 2 its items; e.g., for :fold_pink_big:, group 2 is \"_pink_big\".  Org tags cannot hold hyphens,
-whereas block names often do ---e.g., latex-definitions--- so we match the line ourselves."
+whereas block names often do ---e.g., org-demo--- so we match the line ourselves."
   (format "\\(:%s\\(_[^: \t]*\\)?\\):\\(?:[^ \t\n]*:\\)?[ \t]*$" (regexp-quote (format "%s" name)))))
 
 (defmacro org-deftag (name args docstring &rest body)

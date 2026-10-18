@@ -1,9 +1,9 @@
-;;; org-special-block-extras.el --- 46 new custom blocks & 57 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 46 new custom blocks & 56 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.17
+;; Version: 26.10.18
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -116,7 +116,7 @@
 ;; them live in org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, org-align-block.el, org-margin-blocks.el, org-quote-block.el,
 ;; org-solution-block.el, org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-style-block.el,
-;; org-substitution-blocks.el, and org-latex-definitions-block.el ---one file per family of blocks; this file
+;; org-substitution-blocks.el, and org-math-block.el ---one file per family of blocks; this file
 ;; requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
@@ -244,7 +244,7 @@
 (require 'org-callout-blocks)
 (require 'org-parallel-block)
 (require 'org-margin-blocks)
-(require 'org-latex-definitions-block)
+(require 'org-math-block)
 (require 'org-quote-block)
 (require 'org-solution-block)
 (require 'org-demo-block)
@@ -387,7 +387,7 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
 
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-  "Provide 46 new custom blocks & 57 link types for Org-mode.
+  "Provide 46 new custom blocks & 56 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 

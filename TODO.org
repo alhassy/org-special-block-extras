@@ -25,7 +25,7 @@ src/
 │   ├── org-special-block-split.el
 │   └── org-ctrl-c-ctrl-c-for-special-block.el
 └── derived/
-    ├── org-{align,box,demo,details,latex-definitions,parallel,
+    ├── org-{align,box,demo,details,math,parallel,
     │        proof,quote,remark,solution,spoiler,style}-block.el
     ├── org-{callout,margin,substitution}-blocks.el
     └── graph/                       ; today's org-graph-*.el

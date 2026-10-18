@@ -96,8 +96,8 @@ LaTeX!
 </tr>
 
 <tr>
-<td class="org-left"><code>latex-definitions</code></td>
-<td class="org-left">Hide LaTeX-only declarations from HTML &#x2014; keep your source clean.</td>
+<td class="org-left"><code>math</code></td>
+<td class="org-left">Display maths wherein <code>red:𝒳</code> colours a symbol, as it colours prose.</td>
 </tr>
 
 <tr>

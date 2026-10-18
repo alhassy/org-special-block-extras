@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.17
+;; Version: 26.10.18
 ;; Package-Requires: ((dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.com/org-special-block-extras

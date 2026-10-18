@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.17
+;; Version: 26.10.18
 ;; Package-Requires: ((emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -34,12 +34,13 @@
 ;;; Code:
 
 (require 'org-defblock)
+(require 'org-math-block)
 
 (defun org--align-tag-face ()
   "↦ The face of the “:tag-COLOUR:” just matched: a tag, in COLOUR when Emacs knows that colour."
   (if (color-defined-p (match-string 1)) (list :inherit 'org-tag :foreground (match-string 1)) 'org-tag))
 
-(org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor") :html-head (mathjax)
+(org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
                           :fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--align-tag-face)
                                                 ;; Each & is where the equations align; an escaped \& is a mere ampersand.
                                                 ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face))])
@@ -53,7 +54,8 @@
 Then [[eqref:Golden Rule]] refers to the second line, as (Golden Rule) in orange; following that
 link in Emacs visits the line.
 
-+ The contents are LaTeX, not Org markup; as in LaTeX, a line sans a tag ends in \\\\.
++ The contents are LaTeX, wherein our links and Org's emphasis are read as a math block reads them, `org-block/math';
+  as in LaTeX, a line sans a tag ends in \\\\.
 + “:tag-COLOUR: NAME” ≈ “\\tag{$\\color{COLOUR}{\\text{NAME}}$} \\label{NAME} \\\\”, for any xcolor COLOUR.
 + Shorthands, such as -> above, come from the :let switch, which every block has; :let NAME shares them, from
   the table #+name: NAME or the variable NAME.
@@ -67,6 +69,8 @@ link in Emacs visits the line.
                             raw-contents t t))
                      ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                      (body (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" body t t))
+                     ;; Our links and Org's emphasis, as in a math block; after the tags, lest :tag-blue: read as a link.
+                     (body (org--math-markup body backend))
                      (star (if numbered "" "*"))
                      (equations (format "\\begin{align%s}\n%s\n\\end{align%s}" star body star)))
                 (cond ((org-export-markdown-p) (format "```math\n%s\n```" equations))

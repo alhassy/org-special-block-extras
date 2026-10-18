@@ -258,12 +258,12 @@ pre.src-C:before { content: 'Org-mode Example!'; }
   :CUSTOM_ID: Preamble
   :END:
 #+BEGIN_SRC emacs-lisp  :noweb yes
-;;; org-special-block-extras.el --- 46 new custom blocks & 57 link types for Org-mode   -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- 46 new custom blocks & 56 link types for Org-mode   -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.17
+;; Version: 26.10.18
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -375,7 +375,7 @@ To avoid such behaviour, set this variable to `nil'.")
 #+BEGIN_SRC emacs-lisp :noweb yes
 ;;;###autoload
 (define-minor-mode org-special-block-extras-mode
-    "Provide 46 new custom blocks & 57 link types for Org-mode.
+    "Provide 46 new custom blocks & 56 link types for Org-mode.
 
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
@@ -728,7 +728,7 @@ and the result looks nice. “Look ma, no HTML required!”
 # a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 # a ‘link here’ link type, 8 badge link types,
 # and block and link types for making documentation-glossary entries.
-# That is, *we provide 46 block types and 57 link types*.
+# That is, *we provide 46 block types and 56 link types*.
 #+end_quote
 
 #+attr_html: :width 1000px
@@ -3438,7 +3438,7 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =stutter=                   | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
   | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
   | =org-demo=                  | Show Org markup alongside its rendered result --- ideal for tutorials.                |
-  | =latex-definitions=         | Hide LaTeX-only declarations from HTML --- keep your source clean.                    |
+  | =math=                      | Display maths wherein =red:𝒳= colours a symbol, as it colours prose.                  |
   | =calc=                      | Step-by-step equational reasoning --- beautiful for math walkthroughs.                |
   | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
   | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
@@ -3520,7 +3520,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
     + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
     + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
-    + [[#Aligned-equations][Maths & proofs]] \\ align · calc · tree · latex-definitions [fn::Aligned equations, with coloured tags that =eqref:𝒳= cites; equational proofs and proof trees, as Org lists.] :glance_write:
+    + [[#Aligned-equations][Maths & proofs]] \\ math · align · calc · tree [fn::Display maths wherein =red:𝒳= colours a symbol; aligned equations, with coloured tags that =eqref:𝒳= cites; equational proofs and proof trees, as Org lists.] :glance_write:
     + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
     + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
   + Links to cite :glance_read:
@@ -4222,6 +4222,24 @@ from∘to m = {! try it! }
 
      osbe-example:parallel
 
+** Display maths ---=#+begin_math=, wherein =red:𝒳= colours a symbol
+  :PROPERTIES:
+  :CUSTOM_ID: math
+  :END:
+
+  To colour a formula, LaTeX ---and MathJax, which typesets it in HTML--- would have us write
+  ={\color{red} x}=; yet our prose colours by =red:x=. A [[doc:org-block/math][math]] block is display maths
+  wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, a =\command{with}{arguments}=, or a
+  word; =[[red:][a + b]]= colours =a + b=. So too for =color:#ff0066=, =highlight:=, =eqref:=, web
+  links, and =tooltip:= and =doc:=, which hover in HTML. Org's emphasis is read when its markers hug
+  their text, as in prose: =*f(a)*= is bold, whereas =a*b*c= and =a = b= are left be.
+
+  A line that begins =\def=, =\newcommand=, …, is a definition: declared, but not shown ---in LaTeX,
+  in the preamble; in HTML, hidden, whence MathJax knows it page-wide. Below, the first block is
+  only definitions, and so shows nothing.
+
+  osbe-example:math
+
 ** Aligned equations ---=#+begin_align=, cited by =eqref:𝒳=
   :PROPERTIES:
   :CUSTOM_ID: Aligned-equations
@@ -4230,8 +4248,8 @@ from∘to m = {! try it! }
   An [[doc:org-block/align][align]] block's contents are LaTeX, aligned at each =&=; as in LaTeX, a line ends in
   =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that colour and is what
   =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing that, any
-  =\tag{…NAME…}=. An =align :numbered t= numbers its untagged lines too. Since the contents are
-  LaTeX, shorthands are welcome: the [[#Switches-for-every-block][:let switch]] gives them, as below.
+  =\tag{…NAME…}=. An =align :numbered t= numbers its untagged lines too. The contents are LaTeX,
+  read as a [[#math][math]] block's are, so =red:𝒳= colours a symbol; shorthands are welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
 
   osbe-example:align
 
@@ -4250,52 +4268,6 @@ p -> q &== \neg p \lor q
   #+end_example
   The rows above the rule are a header, and are skipped. A Lisp variable serves too, across
   documents: =(setq logic '(-> "\\Rightarrow"))= and then =:let logic=.
-
-**   ~latex-definitions~ for hiding LaTeX declarations in HTML
-   :PROPERTIES:
-   :CUSTOM_ID: latex-definitions-for-hiding-LaTeX-declarations-in-HTML
-   :END:
-
-  To present mathematical formulae in HTML export, we may use
-  LaTeX-style commands such as ~{\color{red} x}~ by enclosing them in
-  =$=-symbols to obtain ${\color{red}x}$.  This is known as the MathJax
-  tool ---Emacs' default HTML export includes it.  (Unfortunately,
-  MathJax does not directly support arbitrary HTML elements to occur
-  within the =$=-delimiters.)
-
-  #+latex: \vspace{1em}
-  It is common to declare LaTeX definitions for convenience, but such
-  declarations occur within ~$~-delimiters and thereby produce
-  undesirable extra whitespace. See the superflous vertical whitespace
-  in the =Result= side below. 
-
-   #+begin_org-demo :source-color "custard" :result-color "custard"
- Hello, in this blog post I'd like to talk about quantifiers.
- # First, I'll define some helpers that I use multiple times...
-   $$
-  \def\Plus{\color{teal}\bigoplus}
-  \def\plus{\;\color{teal}\oplus\;}
-  \def\f#1{{\color{brown}f}{\color{violet}(#1)}}
-  \def\xstart{\color{red} a}
-  \def\xend{\color{cyan} b}
-  $$
-  
-  Anyhow, let's talk about quantifiers...
-  $$
-  \Plus_{{\color{violet} x} = \xstart}^{\xend} \f{x}
-  \; = \;
-  \f{{\xstart}} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{{\xend}}
-  $$
-
-  The above “quantification” means [[teal:Loop sequentially with]]
-  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
-  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].
- #+end_org-demo
-
-  As such, we declare the [[doc:org-block/latex-definitions][latex-definitions]] block type which avoids
-  displaying such extra whitespace in the resulting HTML.
-
-  osbe-example:latex-definitions
 
 ** Graphs ---/Org lists, drawn by Graphviz/
   :PROPERTIES:
@@ -4458,7 +4430,7 @@ h2 { color: teal; }
     | =tree=                  | =$$…$$= displays, as GitHub's maths knows no =\[…\]=           |
     | =org-demo=              | the source as a code block, then its result                     |
     | =doc=, =tooltip=, =kbd= | =<abbr>= with a plain-text =title=, as there is no tooltipster  |
-    | =latex-definitions=     | nothing, lest its definitions show                              |
+    | =math=                  | a fenced math block, its definitions within                     |
     | =graph=                 | its image, written to its =:file= (else =graph-HASH.png=), linked |
 
   + Plain HTML :: every other block emits the HTML it always does, which a given Markdown
@@ -8506,7 +8478,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 
 | Idea                   | Documentation                                                    | Link only?          |
 |------------------------+------------------------------------------------------------------+---------------------|
-| Colours                | =𝒞=, [[doc:org--latex-definitions][latex-definitions]], [[doc:org--color][color]]                                      |                     |
+| Colours                | =𝒞=, [[doc:org-block/math][math]], [[doc:org--color][color]]                                      |                     |
 | Parallel               | [[doc:org-block/parallel][parallel]]                             |                     |
 | Editorial Comments     | [[doc:org-block/remark][remark]]                                 |                     |
 | Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]] |                     |
@@ -9020,7 +8992,7 @@ https://github.com/riscy/melpazoid
     (insert "
 ,#+EXPORT_FILE_NAME: README.md
 #+HTML: <h1> A unified interface for Emacs' Org-mode block & link types (•̀ᴗ•́)و </h1>
-#+HTML: <h2> Which is used to obtain 46 new custom blocks and 57 link types ¯\\_(ツ)_/¯ </h2>
+#+HTML: <h2> Which is used to obtain 46 new custom blocks and 56 link types ¯\\_(ツ)_/¯ </h2>
 ,#+OPTIONS: toc:nil d:nil broken-links:t
 ,#+html: <div align=\"center\">
 ,#+INCLUDE: ~/org-special-block-extras/org-special-block-extras.org::#Abstract :only-contents t

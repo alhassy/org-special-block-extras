@@ -138,22 +138,20 @@ By (Symmetry).
 
 ")
 
-(define-org-export-test "latex-definitions export nothing in Markdown, whose renderers would show them" [markdown]
+(define-org-export-test "a math block is a fenced math block in Markdown, its definitions within, as GitHub forgets them between blocks" [markdown]
   :input "
           #+options: toc:nil
-          Before.
-          #+begin_latex-definitions
-          \\def\\N{\\mathbb{N}}
-          #+end_latex-definitions
-          After."
+          #+begin_math
+          \\def\\N{blue:\\mathbb{N}}
+          0 \\in \\N
+          #+end_math"
   :to md
-  :equals "Before.
-           
-           
-           
-           After.
-           
-           ")
+  :equals "```math
+\\def\\N{{\\color{blue}\\mathbb{N}}}
+0 \\in \\N
+```
+
+")
 
 ;;; Bugs found en route
 
