@@ -4282,6 +4282,14 @@ p -> q &== \neg p \lor q
   other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
 
+  osbe-example:smartdiagram
+
+  Under =:smartdiagram TYPE=, the =#+graph:= rows are LaTeX's =\smartdiagramset= keys, and
+  =C-M-i= completes those rather than Graphviz's; rendering needs =pdflatex=, with the
+  smartdiagram package, and =pdftoppm=. Org's own markup ---=#+macro:=, =~code~=, colour
+  links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
+  hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
+
 ** Switches for every block: =:when=, =:let=, =:folded=, …
   :PROPERTIES:
   :CUSTOM_ID: Switches-for-every-block
