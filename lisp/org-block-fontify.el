@@ -55,7 +55,7 @@
             (font-lock-append-text-property contents-start contents-end 'face face))
           (pcase-dolist (`(,regexp ,group ,face) (plist-get spec :keywords))
             (goto-char contents-start)
-            (while (re-search-forward regexp contents-end t)
+            (while (if (functionp regexp) (funcall regexp contents-end) (re-search-forward regexp contents-end t))
               (font-lock-prepend-text-property (match-beginning group) (match-end group) 'face
                                                (if (functionp face) (funcall face) face)))))))))
 
@@ -65,7 +65,8 @@
   :end STRING    ↦  “#+end_NAME” shows as STRING
   :face FACE     ↦  the contents show in FACE too, atop their Org fontification
   :keywords ((REGEXP GROUP FACE) …)  ↦  each REGEXP match in the contents shows its GROUP in FACE, atop all else;
-                                       a function FACE is called, with the match data at hand, for the face"
+                                       a function FACE is called, with the match data at hand, for the face;
+                                       a function REGEXP is a font-lock matcher, called with the contents' end"
   (when org--block-fontifications
     (let ((case-fold-search t)
           (delimiter (format "^[ \t]*\\(#\\+\\(begin\\|end\\)_\\(%s\\)\\)\\(?:[ \t]\\|$\\)"

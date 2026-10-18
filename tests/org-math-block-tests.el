@@ -78,5 +78,152 @@ red:0 < 1" nil)
 \\end{align*}
 ")
 
+;;; Atoms
+
+(deftest "in maths, red:\\left(…\\right) colours the whole bracketing, as a group of \\left( alone is an error"
+  (should (equal (org--math-markup "red:\\left( x \\right) + y" 'latex) "{\\color{red}\\left( x \\right)} + y"))
+  (should (equal (org--math-markup "red:\\left( \\left[ x \\right] \\right) + y" 'latex)
+                 "{\\color{red}\\left( \\left[ x \\right] \\right)} + y")))
+
+(deftest "in maths, a sizer's atom holds its delimiter; and a COLOUR: sans word or group colours one character"
+  (should (equal (org--math-markup "red:\\big( x blue:\\Big\\langle" 'latex)
+                 "{\\color{red}\\big(} x {\\color{blue}\\Big\\langle}"))
+  (should (equal (org--math-markup "a red:+ b red:→ c" 'latex) "a {\\color{red}+} b {\\color{red}→} c")))
+
+;;; Footnotes
+
+(deftest "in maths, ATOM[fn::TIP] hovers TIP over ATOM in HTML, a \\command{with}{arguments} being one atom"
+  (should (equal (org--math-markup "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'html)
+                 "\\texttip{x}{the current element} + \\texttip{\\frac{a}{b}}{a ratio}"))
+  (should (equal (org--math-markup "violet:x[fn::the current element]" 'html)
+                 "{\\color{violet}\\texttip{x}{the current element}}"))
+  (should (equal (org--math-markup "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'latex)
+                 "x + \\frac{a}{b}")))
+
+;;; Structure
+
+(define-org-call-test "a math block's “# …” lines are Org comments, which TeX would read as a macro's parameter"
+  :call (org-block/math 'latex "
+# The identity, for one.
+x = x" nil)
+  :returns "#+begin_export latex
+\\[
+x = x
+\\]
+#+end_export")
+
+(define-org-call-test "a math block's definition runs through the line that closes its braces; in HTML, it is escaped"
+  :call (org-block/math 'html "
+\\newcommand{\\lt}[2]{
+  #1 < #2}
+\\lt{a}{b}" nil)
+  :returns "#+begin_export html
+<p style=\"display:none\">\\[\\newcommand{\\lt}[2]{
+  #1 &lt; #2}\\]</p>
+\\[
+\\lt{a}{b}
+\\]
+#+end_export")
+
+(define-org-call-test "a math block's multiline definition is one #+latex_header: line per line"
+  :call (org-block/math 'latex "
+\\newcommand{\\pair}[2]{
+  \\langle #1, #2 \\rangle}" nil)
+  :returns "#+latex_header: \\newcommand{\\pair}[2]{
+#+latex_header:   \\langle #1, #2 \\rangle}
+#+begin_export latex
+
+#+end_export")
+
+(define-org-call-test "a math block's Org table is a matrix, sans its rules; :matrix names its environment"
+  :call (org-block/math 'latex "
+I =
+| red:1 | 0 |
+|-------+---|
+| 0     | 1 |" nil :matrix "bmatrix")
+  :returns "#+begin_export latex
+\\[
+I =
+\\begin{bmatrix} {\\color{red}1} & 0 \\\\ 0 & 1 \\end{bmatrix}
+\\]
+#+end_export")
+
+(define-org-call-test "a math block's lines that end in \\\\ are gathered; :numbered t numbers them"
+  :call (org-block/math 'latex "
+a = b \\\\
+c = d" nil :numbered t)
+  :returns "#+begin_export latex
+\\begin{gather}
+a = b \\\\
+c = d
+\\end{gather}
+#+end_export")
+
+(define-org-call-test "a math block's :tag-COLOUR: NAME is a coloured \\tag, labelled NAME; tagged lines are gathered"
+  :call (org-block/math 'latex "
+a = b   :tag-blue: One
+c = d   :tag-red: Two" nil)
+  :returns "#+begin_export latex
+\\begin{gather*}
+a = b   \\tag{$\\color{blue}{\\text{One}}$} \\label{One} \\\\
+c = d   \\tag{$\\color{red}{\\text{Two}}$} \\label{Two}
+\\end{gather*}
+#+end_export")
+
+(define-org-call-test "a math block that is :numbered t, of one line, is LaTeX's equation"
+  :call (org-block/math 'latex "
+e^{i\\pi} + 1 = 0" nil :numbered t)
+  :returns "#+begin_export latex
+\\begin{equation}
+e^{i\\pi} + 1 = 0
+\\end{equation}
+#+end_export")
+
+(org-deftest "following eqref:NAME visits a math block's line tagged NAME, as it does an align block's"
+  :text "
+By [[eqref:Euler]].
+#+begin_math
+e^{i\\pi} + 1 = 0   :tag-teal: Euler
+#+end_math"
+  (funcall (org-link-get-parameter "eqref" :follow) "Euler" nil)
+  (should (looking-at-p "e\\^{i")))
+
+;;; In Emacs
+
+(org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and its tags as align's" [fontify]
+  :text "
+#+begin_math
+teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
+#+end_math"
+  (font-lock-ensure)
+  (search-forward "red:")
+  (should (member '(:foreground "red") (ensure-list (get-text-property (point) 'face))))
+  ;; Org's own plain link would run on to “cyan:b”; ours stops at the atom.
+  (search-forward "}^{")
+  (should-not (member '(:foreground "red") (ensure-list (get-text-property (point) 'face))))
+  (search-forward "cyan:")
+  (should (member '(:foreground "cyan") (ensure-list (get-text-property (point) 'face))))
+  (search-forward ":tag-blue")
+  (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face)))))
+
+(deftest "C-c ' edits a math block in latex-mode"
+  (should (eq (alist-get "math" org--block-edit-special-handlers nil nil #'equal) 'org-math--do-edit-special)))
+
+(org-deftest "C-c C-c within a math block shows its maths as an image atop it; C-c C-c again removes the image"
+  :text "
+#+begin_math
+red:x^2 + y^2 = z^2
+#+end_math"
+  :at "y^2"
+  (skip-unless (and (executable-find "latex") (executable-find "dvipng")))
+  ;; Sans a display, as in batch, Org's colours are unspecified; we name them.
+  (setq-local org-format-latex-options (org-combine-plists org-format-latex-options '(:foreground "Black" :background "White")))
+  (org-ctrl-c-ctrl-c)
+  (let ((image (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
+    (should image)
+    (should (eq (overlay-get image 'org-overlay-type) 'org-latex-overlay)))
+  (org-ctrl-c-ctrl-c)
+  (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
+
 (provide 'org-math-block-tests)
 ;;; org-math-block-tests.el ends here

@@ -26,7 +26,7 @@
 ;;
 ;; exports to LaTeX's align*: both equations hinge at their first ≡, one atop the other, as in a
 ;; textbook derivation; each is tagged ---“(Implication)” in blue, “(Golden Rule)” in orange---
-;; and an eqref: link cites a tag by name.  In HTML, MathJax typesets it alike.  See
+;; and an eqref: link cites a tag by name; a math block's tags too.  In HTML, MathJax typesets it alike.  See
 ;; `org-block/align' and the `eqref' link.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
@@ -36,14 +36,10 @@
 (require 'org-defblock)
 (require 'org-math-block)
 
-(defun org--align-tag-face ()
-  "↦ The face of the “:tag-COLOUR:” just matched: a tag, in COLOUR when Emacs knows that colour."
-  (if (color-defined-p (match-string 1)) (list :inherit 'org-tag :foreground (match-string 1)) 'org-tag))
-
 (org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
-                          :fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--align-tag-face)
-                                                ;; Each & is where the equations align; an escaped \& is a mere ampersand.
-                                                ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face))])
+                          :fontify [:keywords (append org--math-fontify-keywords
+                                                      ;; Each & is where the equations align; an escaped \& is a mere ampersand.
+                                                      '(("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face)))])
               "Equations aligned at each &, numbered when NUMBERED; a line may end in a coloured tag, “:tag-blue: Name”.
 
   #+begin_align :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
@@ -54,19 +50,13 @@
 Then [[eqref:Golden Rule]] refers to the second line, as (Golden Rule) in orange; following that
 link in Emacs visits the line.
 
-+ The contents are LaTeX, wherein our links and Org's emphasis are read as a math block reads them, `org-block/math';
-  as in LaTeX, a line sans a tag ends in \\\\.
++ The contents are LaTeX, wherein our links, Org's emphasis and footnotes, and “# …” comments are read as a math block
+  reads them, `org-block/math'; as in LaTeX, a line sans a tag ends in \\\\.
 + “:tag-COLOUR: NAME” ≈ “\\tag{$\\color{COLOUR}{\\text{NAME}}$} \\label{NAME} \\\\”, for any xcolor COLOUR.
 + Shorthands, such as -> above, come from the :let switch, which every block has; :let NAME shares them, from
   the table #+name: NAME or the variable NAME.
 + In Markdown, the equations are a fenced math block."
-              (let* ((tag ":tag-\\([^: \t\n]+\\):[ \t]*\\(.*?\\)[ \t]*$")
-                     (body (replace-regexp-in-string
-                            tag (lambda (line)
-                                  (string-match tag line)
-                                  (format "\\tag{$\\color{%s}{\\text{%s}}$} \\label{%2$s} \\\\"
-                                          (match-string 1 line) (match-string 2 line)))
-                            raw-contents t t))
+              (let* ((body (org--math-tags (org--math-uncomment raw-contents)))
                      ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                      (body (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" body t t))
                      ;; Our links and Org's emphasis, as in a math block; after the tags, lest :tag-blue: read as a link.

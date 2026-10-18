@@ -4229,16 +4229,37 @@ from∘to m = {! try it! }
 
   To colour a formula, LaTeX ---and MathJax, which typesets it in HTML--- would have us write
   ={\color{red} x}=; yet our prose colours by =red:x=. A [[doc:org-block/math][math]] block is display maths
-  wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, a =\command{with}{arguments}=, or a
-  word; =[[red:][a + b]]= colours =a + b=. So too for =color:#ff0066=, =highlight:=, =eqref:=, web
-  links, and =tooltip:= and =doc:=, which hover in HTML. Org's emphasis is read when its markers hug
-  their text, as in prose: =*f(a)*= is bold, whereas =a*b*c= and =a = b= are left be.
+  wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, =\left(…\right)=, a
+  =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colours =a + b=. So too
+  for =color:#ff0066=, =highlight:=, =eqref:=, web links, and =tooltip:= and =doc:=, which hover in
+  HTML; as does a footnote, =x[fn::the current element]=. Org's emphasis is read when its markers
+  hug their text, as in prose: =*f(a)*= is bold, whereas =a*b*c= and =a = b= are left be.
 
-  A line that begins =\def=, =\newcommand=, …, is a definition: declared, but not shown ---in LaTeX,
-  in the preamble; in HTML, hidden, whence MathJax knows it page-wide. Below, the first block is
-  only definitions, and so shows nothing.
+  A line that begins =\def=, =\newcommand=, …, begins a definition, through the line that closes
+  its braces: declared, but not shown ---in LaTeX, in the preamble; in HTML, hidden, whence MathJax
+  knows it page-wide. A line =# …= is a comment. Below, the first block is only definitions, and so
+  shows nothing.
 
   osbe-example:math
+
+  The rest of Org's markup is read as one would hope:
+  + An Org table is a matrix ---a =pmatrix=, or whichever environment =:matrix= names--- whose
+    columns =TAB= aligns for us. As in Org, a line that begins =|= is a table; so we write
+    =\lvert x \rvert= for an absolute value.
+  + A line ending =:tag-COLOUR: NAME= is tagged, as in an [[#Aligned-equations][align]] block, and
+    =[[eqref:NAME]]= cites it; =:numbered t= numbers the rest.
+  + Lines that end in =\\= are gathered, each centred on a line of its own; to line them up at
+    =&=, we reach for an [[#Aligned-equations][align]] block.
+  + In Emacs, each =red:ATOM= shows in red, as the maths reads it; =C-c C-c= shows the maths as an
+    image atop the block, until =C-c C-c= again, or an edit; and =C-c '= edits it in =latex-mode=.
+
+  #+begin_example
+,#+begin_math :numbered t :matrix bmatrix
+R_{teal:\theta} =
+| \cos teal:\theta | -\sin teal:\theta |
+| \sin teal:\theta | \cos teal:\theta  |
+,#+end_math
+  #+end_example
 
 ** Aligned equations ---=#+begin_align=, cited by =eqref:𝒳=
   :PROPERTIES:
@@ -4248,8 +4269,9 @@ from∘to m = {! try it! }
   An [[doc:org-block/align][align]] block's contents are LaTeX, aligned at each =&=; as in LaTeX, a line ends in
   =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that colour and is what
   =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing that, any
-  =\tag{…NAME…}=. An =align :numbered t= numbers its untagged lines too. The contents are LaTeX,
-  read as a [[#math][math]] block's are, so =red:𝒳= colours a symbol; shorthands are welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
+  =\tag{…NAME…}=, as in a [[#math][math]] block. An =align :numbered t= numbers its untagged lines too.
+  The contents are LaTeX, read as a math block's are, so =red:𝒳= colours a symbol; shorthands are
+  welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
 
   osbe-example:align
 
