@@ -26,8 +26,8 @@
 ;; colours ⊕ teal, x violet, a red, and b cyan, as red:𝒳 colours prose; hovering over x shows its footnote; the
 ;; equation is tagged “(Fold)”, in teal, which [[eqref:Fold]] cites.  The \def line is a definition, declared but not
 ;; shown: in LaTeX, in the preamble; in HTML, for MathJax, hidden.  An Org table is a matrix; lines that end in \\ are
-;; gathered.  In Emacs, C-c C-c shows the maths as an image atop the block, and C-c ' edits it in `latex-mode'.
-;; The align block's equations are read alike.  See `org-block/math'.
+;; gathered; lines with an & are aligned at it, as in a textbook derivation.  In Emacs, C-c C-c shows the maths as an
+;; image atop the block, and C-c ' edits it in `latex-mode'.  See `org-block/math'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -294,8 +294,10 @@ Org prepended the link's face to those beneath, LaTeX's, which we keep."
 (defconst org--math-fontify-keywords
   '((org--math-unlink 0 nil)
     (":tag-\\([^: \t\n]+\\):" 0 org--math-tag-face)
-    (org--math-match-plain-link 0 org--math-link-face))
-  "How a math block's tags and TYPE:ATOM links look in Org buffers; see `org--fontify-blocks'.")
+    (org--math-match-plain-link 0 org--math-link-face)
+    ;; Each & is where lines may align; an escaped \& is a mere ampersand.
+    ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face))
+  "How a math block's tags, TYPE:ATOM links, and &s look in Org buffers; see `org--fontify-blocks'.")
 
 (defconst org--math-definition-re "^[ \t]*\\\\\\(def\\|let\\|newcommand\\|renewcommand\\|DeclareMathOperator\\)\\b"
   "A line that declares a macro, rather than showing maths.")
@@ -317,16 +319,30 @@ closes its braces; and the remaining lines, trimmed, sans blank ones."
           (delete-region start (min (1+ (point)) (point-max)))))
       (cons (nreverse definitions) (string-join (split-string (buffer-string) "\n" t "[ \t]+") "\n")))))
 
+(defun org--math-top-level-marks (math)
+  "MATH ↦ its &s and \\\\s, in order, outside every {group} and \\begin…\\end; e.g., “a &= \\cases{1 & 0} \\\\” ↦ (\"&\"
+\"\\\\\\\\\"), as the cases' & is its own.  An escaped \\& is none."
+  (let ((depth 0) (start 0) marks)
+    (while (string-match "\\\\[[:alpha:]]+\\|\\\\.\\|[{}&]" math start)
+      (setq start (match-end 0))
+      (pcase (match-string 0 math)
+        ((or "{" "\\begin") (cl-incf depth))
+        ((or "}" "\\end") (cl-decf depth))
+        ((and (or "&" "\\\\") mark (guard (zerop depth))) (push mark marks))))
+    (nreverse marks)))
+
 (defun org--math-render (raw backend numbered matrix)
   "(RAW, BACKEND, NUMBERED, MATRIX) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil sans maths.
-DISPLAY is gathered when a line ends in \\\\, and numbered when NUMBERED; each table is a MATRIX environment."
+DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as `org--math-top-level-marks' sees them; and
+numbered when NUMBERED.  Each table is a MATRIX environment."
   (pcase-let* ((`(,definitions . ,math)
                 (org--math-split-definitions
                  (org--math-markup (org--math-tags (org--math-tables (org--math-uncomment raw) matrix)) backend)))
                ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                (math (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" math t t))
-               (gather? (string-match-p "\\\\\\\\[ \t]*$" math))
-               (environment (concat (if gather? "gather" "equation") (unless numbered "*"))))
+               (marks (org--math-top-level-marks math))
+               (environment (concat (cond ((member "&" marks) "align") ((member "\\\\" marks) "gather") (t "equation"))
+                                    (unless numbered "*"))))
     (cons definitions
           (unless (equal math "")
             (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
@@ -356,7 +372,8 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + *bold* /italic/ _underline_ +cancel+ =texttt= ~mathtt~, when the markers hug their text, as in Org's prose.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[eqref:NAME]] cites; NUMBERED numbers the rest.
-+ Lines that end in \\\\ are gathered, each centred on a line of its own; align them at & with an align block.
++ Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
+  a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
 + A line “# …” is a comment.  A line that begins \\def, \\let, \\newcommand, \\renewcommand, or \\DeclareMathOperator
   begins a definition, through the line that closes its braces: declared, but not shown.  In LaTeX, it goes to the
   preamble; in HTML, MathJax reads it hidden, and then knows it page-wide.
@@ -384,6 +401,28 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
                        (and shown (org-html-encode-plain-text shown))
                        ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
                        (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) "")))))))
+
+;;;; eqref ---citing a tagged line
+
+(defun org--eqref-visit (name)
+  "NAME ↦ point at the equation tagged NAME: a math block's “:tag-COLOUR: NAME” line, else a \\tag{…NAME…}."
+  (let ((at (save-excursion
+              (goto-char (point-min))
+              (or (re-search-forward (format ":tag-[^: \t\n]+:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
+                  (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
+    (unless at (user-error "No equation is tagged “%s”" name))
+    (push-mark)
+    (goto-char at)
+    (beginning-of-line)))
+
+(org-deflink eqref
+  "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for a math block's “:tag-orange: Golden Rule”.
+Following it visits that line, else any \\tag{…NAME…}; it exports as \\eqref{NAME}, which LaTeX and MathJax resolve."
+  :follow (org--eqref-visit o-label)
+  :manual "#math"
+  :export (cond ((org-export-markdown-p) (format "(%s)" o-label))
+                (t (when (equal o-backend 'html) (org-html-head-require 'mathjax))
+                   (format "\\eqref{%s}" o-label))))
 
 ;;;; C-c C-c ---the maths, as an image atop its block
 

@@ -3523,7 +3523,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
     + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
     + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
-    + [[#Aligned-equations][Maths & proofs]] \\ math · align · calc · tree [fn::Display maths wherein =red:𝒳= colours a symbol; aligned equations, with coloured tags that =eqref:𝒳= cites; equational proofs and proof trees, as Org lists.] :glance_write:
+    + [[#math][Maths & proofs]] \\ math · calc · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =eqref:𝒳= cites; equational proofs and proof trees, as Org lists.] :glance_write:
     + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
     + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
   + Links to cite :glance_read:
@@ -4250,10 +4250,10 @@ from∘to m = {! try it! }
   + An Org table is a matrix ---a =pmatrix=, or whichever environment =:matrix= names--- whose
     columns =TAB= aligns for us. As in Org, a line that begins =|= is a table; so we write
     =\lvert x \rvert= for an absolute value.
-  + A line ending =:tag-COLOUR: NAME= is tagged, as in an [[#Aligned-equations][align]] block, and
+  + A line ending =:tag-COLOUR: NAME= is tagged ---see [[#Aligned-equations][aligned equations]]--- and
     =[[eqref:NAME]]= cites it; =:numbered t= numbers the rest.
-  + Lines that end in =\\= are gathered, each centred on a line of its own; to line them up at
-    =&=, we reach for an [[#Aligned-equations][align]] block.
+  + Lines with an =&= are [[#Aligned-equations][aligned]] at it; else, lines that end in =\\= are
+    gathered, each centred on a line of its own.
   + In Emacs, the block looks as a =#+begin_src latex= block does, with each =red:ATOM= in red, as
     the maths reads it; =C-c C-c= shows the maths as an image atop the block, until =C-c C-c= again,
     or an edit; and =C-c '= edits it in =latex-mode=.
@@ -4266,25 +4266,26 @@ R_{teal:\theta} =
 ,#+end_math
   #+end_example
 
-** Aligned equations ---=#+begin_align=, cited by =eqref:𝒳=
+** Aligned equations ---=&= in a math block, cited by =eqref:𝒳=
   :PROPERTIES:
   :CUSTOM_ID: Aligned-equations
   :END:
 
-  An [[doc:org-block/align][align]] block's contents are LaTeX, aligned at each =&=; as in LaTeX, a line ends in
-  =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that colour and is what
-  =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing that, any
-  =\tag{…NAME…}=, as in a [[#math][math]] block. An =align :numbered t= numbers its untagged lines too.
-  The contents are LaTeX, read as a math block's are, so =red:𝒳= colours a symbol; shorthands are
-  welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
+  A [[#math][math]] block whose lines have an =&= is LaTeX's =align=: its lines line up at each =&=. As
+  in LaTeX, a line ends in =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that
+  colour and is what =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing
+  that, any =\tag{…NAME…}=. With =:numbered t=, the untagged lines are numbered too. Only the block's
+  own =&= counts: one within a ={group}= or a =\begin{cases}…\end{cases}= belongs to it, so a
+  piecewise definition is one equation, unless its line aligns at an =&= of its own. Shorthands
+  are welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
 
   osbe-example:align
 
   To share shorthands among many blocks, name them once, in a table that need not itself export:
   #+begin_example
-,#+begin_align :let logic
+,#+begin_math :let logic
 p -> q &== \neg p \lor q
-,#+end_align
+,#+end_math
 
 ,* Shorthands :noexport:
 ,#+name: logic
@@ -4651,9 +4652,9 @@ Mind the gap.
 (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic]) …)
   #+end_src
   Moreover, =:keywords= shows patterns within the contents in a face of their choosing; e.g.,
-  an [[#Aligned-equations][align]] block shows each =:tag-blue:= as a tag, in blue, by
+  a [[#math][math]] block shows each =:tag-blue:= as a tag, in blue, by
   #+begin_src emacs-lisp
-:fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--align-tag-face))]
+:fontify [:keywords '((":tag-\\([^: \t\n]+\\):" 0 org--math-tag-face))]
   #+end_src
   where a face that is a function is called, with the match data at hand, for the face.
 

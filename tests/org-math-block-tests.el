@@ -1,4 +1,4 @@
-;;; org-math-block-tests.el --- Tests for the math block, and the maths that align shares with it  -*- lexical-binding: t; -*-
+;;; org-math-block-tests.el --- Tests for the math block, its alignment at &, and eqref links  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
@@ -75,16 +75,117 @@ red:0 < 1" nil)
 
 #+end_export")
 
-(define-org-export-test "an align block reads our links and Org's emphasis, as a math block does"
+;;; Alignment ---lines aligned at a top-level &
+
+(deftest "a math block's top-level marks are its & and \\\\ outside every {group} and \\begin…\\end; an escaped \\& is none"
+  (should (equal (org--math-top-level-marks "a &= b \\\\ c &= d") '("&" "\\\\" "&")))
+  (should (equal (org--math-top-level-marks "\\text{Q\\&A} = \\{ x \\mid x \\} \\cases{1 & n \\cr 0 & m}") nil))
+  (should (equal (org--math-top-level-marks "f &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}") '("&"))))
+
+(define-org-call-test "a math block whose lines have an & is an align; its :tag-COLOUR: NAME a \\tag; its last \\ dropped"
+  :call (org-block/math 'latex "x &= x + 0 \\\\
+x + 0 &= 0 + x   :tag-blue: Symmetry" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+x &= x + 0 \\\\
+x + 0 &= 0 + x   \\tag{$\\color{blue}{\\text{Symmetry}}$} \\label{Symmetry}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "an aligned math block that is :numbered t is LaTeX's align, sans a trailing \\ that would number an empty line"
+  :call (org-block/math 'latex "a &= b \\\\
+c &= d \\\\
+" nil :numbered t)
+  :returns "#+begin_export latex
+\\begin{align}
+a &= b \\\\
+c &= d
+\\end{align}
+#+end_export")
+
+(define-org-call-test "an aligned math block escapes & and < in HTML, which MathJax then reads as LaTeX"
+  :call (org-block/math 'html "0 &< 1" nil)
+  :returns "#+begin_export html
+\\begin{align*}
+0 &amp;&lt; 1
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "an aligned math block keeps its definitions and tables, as any math block does"
+  :call (org-block/math 'latex "
+\\def\\N{\\mathbb{N}}
+M &=
+| 1 & 0 |
+| 0 & 1 |
+" nil)
+  :returns "#+latex_header: \\def\\N{\\mathbb{N}}
+#+begin_export latex
+\\begin{align*}
+M &=
+\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}
+\\end{align*}
+#+end_export")
+
+(define-org-export-test "an aligned math block reads our links, Org's emphasis, and :let shorthands"
   :to latex
   :input "
-          #+begin_align
-          *x* &= red:y   :tag-blue: Colour
-          #+end_align"
+          #+begin_math :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
+          *p* -> q &== red:\\neg p \\lor q   :tag-blue: Implication
+          #+end_math
+          By [[eqref:Implication]], p -> p."
   :equals "\\begin{align*}
-\\boldsymbol{x} &= {\\color{red}y}   \\tag{$\\color{blue}{\\text{Colour}}$} \\label{Colour}
+\\boldsymbol{p} \\Rightarrow q &\\equiv {\\color{red}\\neg} p \\lor q   \\tag{$\\color{blue}{\\text{Implication}}$} \\label{Implication}
 \\end{align*}
+By \\eqref{Implication}, p -> p.
 ")
+
+;;; Cases ---whose & and \\ are their own, not the block's
+
+(define-org-call-test "a math block's \\begin{cases} keeps its & and \\\\, so the block is one equation, neither aligned nor gathered"
+  :call (org-block/math 'latex "
+n! = \\begin{cases}
+1 & n = 0 \\\\
+n \\cdot (n - 1)! & n > 0
+\\end{cases}" nil)
+  :returns "#+begin_export latex
+\\[
+n! = \\begin{cases}
+1 & n = 0 \\\\
+n \\cdot (n - 1)! & n > 0
+\\end{cases}
+\\]
+#+end_export")
+
+(define-org-call-test "a math block's plain-TeX \\cases{…} keeps its &, so the block is one equation"
+  :call (org-block/math 'latex "
+\\lvert x \\rvert = \\cases{x & x \\geq 0 \\cr -x & x < 0}" nil :numbered t)
+  :returns "#+begin_export latex
+\\begin{equation}
+\\lvert x \\rvert = \\cases{x & x \\geq 0 \\cr -x & x < 0}
+\\end{equation}
+#+end_export")
+
+(define-org-call-test "a math block's lines may align at & around cases, whose own & and \\\\ are left be"
+  :call (org-block/math 'latex "
+f(n) &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}   :tag-teal: Indicator
+g(n) &= 1 - f(n)" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+f(n) &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}   \\tag{$\\color{teal}{\\text{Indicator}}$} \\label{Indicator} \\\\
+g(n) &= 1 - f(n)
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's lines that end in \\\\ around cases are gathered, by their own \\\\ alone"
+  :call (org-block/math 'latex "
+a = \\begin{cases} 1 & p \\\\ 0 & q \\end{cases} \\\\
+b = 2" nil)
+  :returns "#+begin_export latex
+\\begin{gather*}
+a = \\begin{cases} 1 & p \\\\ 0 & q \\end{cases} \\\\
+b = 2
+\\end{gather*}
+#+end_export")
 
 ;;; Atoms
 
@@ -225,18 +326,22 @@ e^{i\\pi} + 1 = 0
 \\end{equation}
 #+end_export")
 
-(org-deftest "following eqref:NAME visits a math block's line tagged NAME, as it does an align block's"
+(org-deftest "following eqref:NAME visits the line tagged :tag-COLOUR: NAME, else a \\tag{…NAME…}"
   :text "
-By [[eqref:Euler]].
+By [[eqref:Golden Rule]] and [[eqref:Leibniz]].
 #+begin_math
-e^{i\\pi} + 1 = 0   :tag-teal: Euler
-#+end_math"
-  (funcall (org-link-get-parameter "eqref" :follow) "Euler" nil)
-  (should (looking-at-p "e\\^{i")))
+p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :tag-orange: Golden Rule
+#+end_math
+\\begin{equation} x = y \\Rightarrow f(x) = f(y) \\tag{Leibniz} \\end{equation}"
+  (funcall (org-link-get-parameter "eqref" :follow) "Golden Rule" nil)
+  (should (looking-at-p "p \\\\land q"))
+  (funcall (org-link-get-parameter "eqref" :follow) "Leibniz" nil)
+  (should (looking-at-p "\\\\begin{equation}"))
+  (should-error (funcall (org-link-get-parameter "eqref" :follow) "Nowhere" nil) :type 'user-error))
 
 ;;; In Emacs
 
-(org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and its tags as align's" [fontify]
+(org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and each tag in its colour" [fontify]
   :text "
 #+begin_math
 teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
@@ -289,6 +394,33 @@ red:x^2 + y^2 = z^2
     (should (eq (overlay-get image 'org-overlay-type) 'org-latex-overlay)))
   (org-ctrl-c-ctrl-c)
   (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
+
+(org-deftest "a math block's :tag-COLOUR: shows as a tag in that colour, and as a plain tag for a colour Emacs lacks" [fontify]
+  :text "
+#+begin_math
+x &= y   :tag-blue: Symmetry
+y &= z   :tag-notacolour: Mystery
+#+end_math
+:tag-blue: outside a math block is left be."
+  (font-lock-ensure)
+  (search-forward ":tag-blue")
+  (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face))))
+  (search-forward ":tag-notacolour")
+  (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
+  (search-forward ":tag-blue")
+  (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
+
+(org-deftest "a math block's & shows as a keyword, since lines align there; an escaped \\& is LaTeX's alone" [fontify]
+  :text "
+#+begin_math
+\\text{Q\\&A} &= 42
+#+end_math"
+  (font-lock-ensure)
+  (search-forward "\\&")
+  ;; LaTeX shows \\& as one command; were & marked as where lines align, it would wear a face more than \\.
+  (should (equal (get-text-property (- (point) 2) 'face) (get-text-property (1- (point)) 'face)))
+  (search-forward "&")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
 
 (provide 'org-math-block-tests)
 ;;; org-math-block-tests.el ends here

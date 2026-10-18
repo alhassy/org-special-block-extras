@@ -1,22 +1,21 @@
-;;; align.el --- Snapshot of the `align' showcase example  -*- lexical-binding: t; -*-
+;;; align.el --- Snapshot of the aligned `math' showcase example  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-example-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-examples.el")))
 
 (define-org-example-test "align"
-  :input "An ~align~ block lines equations up at each =&=; a line may end in a coloured tag, to which an
-=eqref:= link refers. Shorthands, such as =->= below, come from the =:let= switch every block has.
+  :input "A ~math~ block aligns its lines at each =&=; a line may end in a coloured tag,
+to which an =eqref:= link refers. Shorthands, such as =->= below, come from the =:let= switch every block has.
 
-#+begin_align :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
+#+begin_math :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
 p -> q &== \\neg p \\lor q          :tag-blue: Implication
 p \\land q &== p == q == p \\lor q  :tag-orange: Golden Rule
-#+end_align
+#+end_math
 
 By [[eqref:Golden Rule]], conjunction is defined by equivalence and disjunction."
   :html "<p>
-An <code>align</code> block lines equations up at each <code>&amp;</code>; a line may end in a
-coloured tag, to which an
-<code>eqref:</code> link refers. Shorthands, such as <code>-&gt;</code> below, come from the
+A <code>math</code> block aligns its lines at each <code>&amp;</code>; a line may
+end in a coloured tag, to which an <code>eqref:</code> link refers. Shorthands, such as <code>-&gt;</code> below, come from the
 <code>:let</code> switch every block has.
 </p>
 
@@ -30,9 +29,8 @@ p \\land q &amp;\\equiv p \\equiv q \\equiv p \\lor q  \\tag{$\\color{orange}{\\
 <p>
 By \\eqref{Golden Rule}, conjunction is defined by equivalence and disjunction.
 </p>"
-  :latex "An \\texttt{align} block lines equations up at each \\texttt{\\&}; a line may end in a coloured tag,
-to which an
-\\texttt{eqref:} link refers. Shorthands, such as \\texttt{->} below, come from the \\texttt{:let}
+  :latex "A \\texttt{math} block aligns its lines at each \\texttt{\\&}; a line may end in a
+coloured tag, to which an \\texttt{eqref:} link refers. Shorthands, such as \\texttt{->} below, come from the \\texttt{:let}
 switch every block has.
 
 \\begin{align*}

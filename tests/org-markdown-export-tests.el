@@ -23,13 +23,13 @@
 
 ")
 
-(define-org-export-test "an align block is a fenced math block in Markdown, and eqref:NAME its tag, parenthesised" [markdown]
+(define-org-export-test "an aligned math block is a fenced math block in Markdown, and eqref:NAME its tag, parenthesised" [markdown]
   :to md
   :input "
           #+options: toc:nil
-          #+begin_align
+          #+begin_math
           x &= y   :tag-blue: Symmetry
-          #+end_align
+          #+end_math
           By [[eqref:Symmetry]]."
   :equals "```math
 \\begin{align*}

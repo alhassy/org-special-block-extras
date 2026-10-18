@@ -80,7 +80,7 @@ Docs · See the manual"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.
   (should (equal (car (org-test--eldoc-at "By [[eqref:Fold]]." "eqref:"))
-                 "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for an align block's “:tag-orange: Golden Rule”.
+                 "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for a math block's “:tag-orange: Golden Rule”.
 C-c C-o  Follow it.
 Docs · See the manual"))
   ;; Org's own links are not ours to document.
