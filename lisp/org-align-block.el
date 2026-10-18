@@ -37,7 +37,8 @@
 (require 'org-math-block)
 
 (org-defblock align (&key numbered :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
-                          :fontify [:keywords (append org--math-fontify-keywords
+                          :fontify [:language "latex"
+                                    :keywords (append org--math-fontify-keywords
                                                       ;; Each & is where the equations align; an escaped \& is a mere ampersand.
                                                       '(("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face)))])
               "Equations aligned at each &, numbered when NUMBERED; a line may end in a coloured tag, “:tag-blue: Name”.

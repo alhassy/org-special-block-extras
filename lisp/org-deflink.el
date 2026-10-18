@@ -361,7 +361,8 @@ flat top-level plist with no enclosing vector:
               ,(symbol-name name)
               :export #',org-link/NAME
               ;; How these links look, and what clicking them does, within Emacs; there is no description here.
-              :face (lambda (o-label) (let ((o-description nil)) ,(scoped (plist-get display :face))))
+              ;; Sans a :face of their own, they look as Org's links do, lest readers miss that they are clickable.
+              :face (lambda (o-label) (let ((o-description nil)) (or ,(scoped (plist-get display :face)) 'org-link)))
               :follow (lambda (o-label o-prefix) (let ((o-description nil)) ,(scoped (plist-get display :follow))))
               ;; E.g., 'full: such links are never folded in descriptive display; i.e.,
               ;; “[[example:label][description]]” appears verbatim.

@@ -316,7 +316,8 @@ KWDS may also carry options, which are not arguments:
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
   “#+end_proof” as “⏹”, and the contents in italics too.  Moreover, :keywords \='((REGEXP GROUP FACE) …) shows
   each REGEXP match in the contents in FACE; e.g., the `align' block's “:tag-blue:” shows as a tag, in blue.
-  Each part is optional; see `org--fontify-blocks'.
+  And :language \"latex\" shows the contents as a #+begin_src latex block's.  Each part is optional; see
+  `org--fontify-blocks'.
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the

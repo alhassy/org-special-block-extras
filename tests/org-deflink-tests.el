@@ -34,6 +34,9 @@
   (let* ((face-fn (plist-get (cdr (assoc "greenlink" org-link-parameters)) :face)))
     (should (equal (funcall face-fn "green-text") '(:foreground "green")))))
 
+(deftest "a link sans a :face of its own looks as Org's links do, so readers see they may click it; e.g., eqref:"
+  (should (eq (funcall (org-link-get-parameter "eqref" :face) "Fold") 'org-link)))
+
 (deftest "Test that :follow executes correctly and can use prefix arg."
   (let ((followed nil))
     (org-deflink test-follow

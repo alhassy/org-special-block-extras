@@ -73,14 +73,15 @@ y &= z   :tag-notacolour: Mystery
   (search-forward ":tag-blue")
   (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
 
-(org-deftest "an align block's & shows as a keyword, since equations align there; an escaped \\& does not" [fontify]
+(org-deftest "an align block's & shows as a keyword, since equations align there; an escaped \\& is LaTeX's alone" [fontify]
   :text "
 #+begin_align
 \\text{Q\\&A} &= 42
 #+end_align"
   (font-lock-ensure)
   (search-forward "\\&")
-  (should-not (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face))))
+  ;; LaTeX shows \\& as one command; were & marked as where equations align, it would wear a face more than \\.
+  (should (equal (get-text-property (- (point) 2) 'face) (get-text-property (1- (point)) 'face)))
   (search-forward "&")
   (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
 

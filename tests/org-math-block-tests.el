@@ -206,6 +206,25 @@ teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
   (search-forward ":tag-blue")
   (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face)))))
 
+(org-deftest "a math block looks as a #+begin_src latex block does, with our links and Org's emphasis atop" [fontify]
+  :text "
+#+begin_math
+\\def\\xstart{red:a}
+\\sum_{i = red:a} *f*
+#+end_math"
+  (font-lock-ensure)
+  (search-forward "\\def")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face))))
+  (should (memq 'org-block (ensure-list (get-text-property (1- (point)) 'face))))
+  (search-forward "red:")
+  (should (member '(:foreground "red") (ensure-list (get-text-property (point) 'face))))
+  ;; Org's link face is gone from the brace after the atom, which keeps LaTeX's look.
+  (forward-char 1)
+  (should-not (member '(:foreground "red") (ensure-list (get-text-property (point) 'face))))
+  (should (memq 'org-block (ensure-list (get-text-property (point) 'face))))
+  (search-forward "*f")
+  (should (memq 'bold (ensure-list (get-text-property (point) 'face)))))
+
 (deftest "C-c ' edits a math block in latex-mode"
   (should (eq (alist-get "math" org--block-edit-special-handlers nil nil #'equal) 'org-math--do-edit-special)))
 

@@ -230,17 +230,30 @@ and \\\; e.g., “x :tag-blue: Id” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$}
   "↦ The face of the “:tag-COLOUR:” just matched: a tag, in COLOUR when Emacs knows that colour."
   (if (color-defined-p (match-string 1)) (list :inherit 'org-tag :foreground (match-string 1)) 'org-tag))
 
+(defun org--math-link-type-face (type path)
+  "(TYPE, PATH) ↦ the face Org shows a TYPE:PATH link in, by TYPE's :face; e.g., red ↦ (:foreground \"red\")."
+  (let ((face (org-link-get-parameter type :face)))
+    (cond ((functionp face) (funcall face path)) (face) (t 'org-link))))
+
 (defun org--math-link-face ()
-  "↦ The face of the TYPE:ATOM just matched: in TYPE's colour when it is one, as [[red:…]] is in prose; else a link."
-  (if (color-defined-p (match-string 1)) (list :foreground (match-string 1)) 'org-link))
+  "↦ The face of the TYPE:ATOM just matched: TYPE's own, as [[red:…]] shows red in prose."
+  (org--math-link-type-face (match-string 1) (buffer-substring (1+ (match-end 1)) (match-end 0))))
 
 (defun org--math-unlink (limit)
   "Font-lock matcher that matches nothing: up to LIMIT, it clears Org's look of each plain TYPE: link of
-`org-math-links', since Org reads red:a}^{cyan:b as one link; `org--math-match-plain-link' then shows the maths' own."
+`org-math-links', since Org reads red:a}^{cyan:b as one link; `org--math-match-plain-link' then shows the maths' own.
+Org prepended the link's face to those beneath, LaTeX's, which we keep."
   (while (re-search-forward org-link-plain-re limit t)
-    (when (assoc (match-string 1) org-math-links)
-      (remove-text-properties (match-beginning 0) (match-end 0)
-                              '(face nil mouse-face nil keymap nil help-echo nil htmlize-link nil))))
+    (-when-let* ((type (car (assoc (match-string 1) org-math-links)))
+                 (beg (match-beginning 0)) (end (match-end 0))
+                 (link-face (org--math-link-type-face type (match-string 2))))
+      (remove-text-properties beg end '(mouse-face nil keymap nil help-echo nil htmlize-link nil))
+      (while (< beg end)
+        (let ((faces (get-text-property beg 'face)) (next (next-single-property-change beg 'face nil end)))
+          (put-text-property beg next 'face (cond ((equal faces link-face) nil)
+                                                  ((consp faces) (remove link-face faces))
+                                                  (t faces)))
+          (setq beg next)))))
   nil)
 
 (defconst org--math-fontify-keywords
@@ -288,7 +301,8 @@ DISPLAY is gathered when a line ends in \\\\, and numbered when NUMBERED; each t
 
 (org-defblock math (&key numbered (matrix "pmatrix")
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
-                         :edit-indirect-mode latex-mode :fontify [:keywords org--math-fontify-keywords])
+                         :edit-indirect-mode latex-mode
+                         :fontify [:language "latex" :keywords org--math-fontify-keywords])
   "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
 
   #+begin_math

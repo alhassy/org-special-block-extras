@@ -419,6 +419,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
+        ;; Prepended, so Org's own fontification lands atop a block's :language.
+        (font-lock-add-keywords 'org-mode '((org--fontify-block-languages)))
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
@@ -440,6 +442,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
+    (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
     (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
     (remove-hook 'org-mode-hook #'org--special-block-capf-setup)

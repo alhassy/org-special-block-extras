@@ -4250,8 +4250,9 @@ from∘to m = {! try it! }
     =[[eqref:NAME]]= cites it; =:numbered t= numbers the rest.
   + Lines that end in =\\= are gathered, each centred on a line of its own; to line them up at
     =&=, we reach for an [[#Aligned-equations][align]] block.
-  + In Emacs, each =red:ATOM= shows in red, as the maths reads it; =C-c C-c= shows the maths as an
-    image atop the block, until =C-c C-c= again, or an edit; and =C-c '= edits it in =latex-mode=.
+  + In Emacs, the block looks as a =#+begin_src latex= block does, with each =red:ATOM= in red, as
+    the maths reads it; =C-c C-c= shows the maths as an image atop the block, until =C-c C-c= again,
+    or an edit; and =C-c '= edits it in =latex-mode=.
 
   #+begin_example
 ,#+begin_math :numbered t :matrix bmatrix

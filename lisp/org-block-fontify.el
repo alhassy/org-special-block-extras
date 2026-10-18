@@ -66,7 +66,8 @@
   :face FACE     ↦  the contents show in FACE too, atop their Org fontification
   :keywords ((REGEXP GROUP FACE) …)  ↦  each REGEXP match in the contents shows its GROUP in FACE, atop all else;
                                        a function FACE is called, with the match data at hand, for the face;
-                                       a function REGEXP is a font-lock matcher, called with the contents' end"
+                                       a function REGEXP is a font-lock matcher, called with the contents' end
+  :language LANG ↦  the contents show as a #+begin_src LANG block's do; see `org--fontify-block-languages'"
   (when org--block-fontifications
     (let ((case-fold-search t)
           (delimiter (format "^[ \t]*\\(#\\+\\(begin\\|end\\)_\\(%s\\)\\)\\(?:[ \t]\\|$\\)"
@@ -79,6 +80,22 @@
             (org--display-as (match-beginning 1) (match-end 1) shown))
           (when (and begin? (or (plist-get spec :face) (plist-get spec :keywords)))
             (org--fontify-block-contents name spec))))))
+  nil)
+
+(defun org--fontify-block-languages (limit)
+  "Font-lock matcher: up to LIMIT, show the contents of each block whose `:fontify' names a :language LANG as a
+#+begin_src LANG block shows; then nil.  It runs ahead of Org's own fontification, whose links and
+emphasis so land atop; by way of example, a math block's \\def shows as in `latex-mode', and its red:x in red."
+  (-when-let (names (--keep (and (plist-get (cdr it) :language) (car it)) org--block-fontifications))
+    (let ((case-fold-search t)
+          (begin (format "^[ \t]*#\\+begin_\\(%s\\)\\(?:[ \t].*\\)?$" (regexp-opt names))))
+      (while (re-search-forward begin limit t)
+        (let ((name (downcase (match-string 1)))
+              (contents-start (min (1+ (line-end-position)) (point-max))))
+          (save-excursion
+            (when (re-search-forward (format "^[ \t]*#\\+end_%s[ \t]*$" (regexp-quote name)) nil t)
+              (org-src-font-lock-fontify-block (plist-get (cdr (assoc name org--block-fontifications)) :language)
+                                               contents-start (line-beginning-position))))))))
   nil)
 
 (defun osbe--block-fontifications ()
