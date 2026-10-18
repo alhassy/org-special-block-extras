@@ -13,6 +13,9 @@ src/
 ├── tooltips.css, tooltips.js        ; beside the file that inlines them
 ├── core/
 │   ├── org-defblock.el
+│   ├── org-defblock-tag.el
+│   ├── org-special-block-parse.el
+│   ├── org-block-{switches,export,fontify}.el
 │   ├── org-deflink.el
 │   ├── org-deftag.el
 │   ├── org-thread-blockcall.el

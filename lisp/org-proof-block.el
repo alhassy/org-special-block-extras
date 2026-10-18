@@ -24,6 +24,17 @@
 
 (require 'org-defblock)
 
+(defun org--parse-plain-list (string block)
+  "(STRING, BLOCK) ↦ `org-list-to-lisp' of the Org plain list STRING; else a `user-error' naming the BLOCK."
+  (condition-case err
+      (with-temp-buffer
+        (delay-mode-hooks (org-mode))
+        (insert string)
+        (goto-char (point-min))
+        (org-list-to-lisp))
+    (error (user-error "#+begin_%s block does not contain a valid Org plain list; each item must be a `-' or `+' bullet.\nParsing error: %s"
+                       block (error-message-string err)))))
+
 ;;;;;; Mathematical Proofs
 ;;;;;;; Calculational style proofs
 

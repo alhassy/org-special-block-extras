@@ -55,7 +55,18 @@
 (require 'org)
 (require 'org-element)
 
-(declare-function org--read-header "org-defblock" (header))
+(defun org--read-header (header)
+  "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole staying a string.
+  \"Title :n 2 :color #6c7086 :font Helvetica,Arial\"  ↦  (Title :n 2 :color \"#6c7086\" :font \"Helvetica,Arial\")
+So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp."
+  (let ((header (or header "")) (pos 0) values)
+    (while (string-match "[^ \t\n]+" header pos)
+      (let* ((beg (match-beginning 0)) (word-end (match-end 0))
+             (read (condition-case nil (read-from-string header beg) (error nil))))
+        (if (and read (>= (cdr read) word-end))
+            (setq values (cons (car read) values) pos (cdr read))
+          (setq values (cons (substring header beg word-end) values) pos word-end))))
+    (nreverse values)))
 
 (defun org--header-arg-of (name key)
   "(NAME, KEY) ↦ the default `org-babel-default-header-args:NAME' gives KEY, as Babel's does for a src block.
@@ -69,6 +80,14 @@
     (dolist (plist plists merged)
       (cl-loop for (key value) on plist by #'cddr
                do (setq merged (plist-put merged key value))))))
+
+(defun org--plist-partition (plist pred)
+  "(PLIST, PRED) ↦ (MATCHING . REST): PLIST's KEY VALUE pairs whose KEY satisfies PRED, and the others.
+  (:folded t :color red), (lambda (key) (eq key :folded))  ↦  ((:folded t) :color red)"
+  (let (matching rest)
+    (cl-loop for (key value) on plist by #'cddr
+             do (if (funcall pred key) (setq matching (cl-list* value key matching)) (setq rest (cl-list* value key rest))))
+    (cons (nreverse matching) (nreverse rest))))
 
 (defun org--block-header-args (elem name)
   "(ELEM, NAME) ↦ the keyword arguments block ELEM inherits as a src block of language NAME would; see the Commentary.

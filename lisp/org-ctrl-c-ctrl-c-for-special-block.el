@@ -36,9 +36,9 @@
 (defvar org--block-cc-handlers nil
   "Alist of (block-name-string . handler-function) for C-c C-c dispatch; `org-def-action' adds to it.")
 
-(declare-function org--read-header "org-defblock")
-(declare-function org--block-eval "org-defblock")
-(declare-function org--block-name "org-defblock")
+(declare-function org--read-header "org-block-header-args")
+(declare-function org--block-eval "org-block-switches")
+(declare-function org--block-name "org-special-block-parse")
 (declare-function org--defblock-desugar-args "org-defblock")
 (declare-function org--block-header-args "org-block-header-args")
 (declare-function org--plist-merge "org-block-header-args")

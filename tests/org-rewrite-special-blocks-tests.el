@@ -16,8 +16,7 @@
                    #+end_foobar
                    ")
   ;; Only “foo” is supported, and its handler is a stub; the real blocks and backend stay untouched.
-  (let ((org--supported-blocks '("foo"))
-        (org--current-backend nil))
+  (let ((org--supported-blocks '("foo")))
     (cl-letf (((symbol-function 'org-block/foo)
                (lambda (backend contents arg &rest args)
                  (format "FOO block (%s): %s [arg: %s] [args: %s]" backend contents arg args))))
