@@ -32,7 +32,8 @@
   (should (equal (org-math-tests--tips "[[tooltip:violet:x][the /current/ element]]" 'html)
                  '("\\class{tooltip osbe-tip-g1}{{\\color{violet}x}}"
                    "<template id=\"osbe-tip-g1\"><p>\nthe <i>current</i> element</p></template>")))
-  (should (equal (org-math-tests--tips "[[tooltip:violet:x][the current element]]" 'latex) '("{\\color{violet}x}"))))
+  (should (equal (car (org-math-tests--tips "[[tooltip:violet:x][the current element]]" 'latex))
+                 "{{\\color{violet}x}}^{\\textnormal{\\the\\numexpr\\value{footnote}+1\\relax}}")))
 
 ;;; Emphasis
 
@@ -104,8 +105,22 @@ red:0 < 1" nil)
                  "\\class{tooltip osbe-tip-g1}{x} + \\class{tooltip osbe-tip-g2}{\\frac{a}{b}}"))
   (should (equal (car (org-math-tests--tips "violet:x[fn::the current element]" 'html))
                  "{\\color{violet}\\class{tooltip osbe-tip-g1}{x}}"))
-  (should (equal (org--math-markup "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'latex)
-                 "x + \\frac{a}{b}")))
+  ;; In LaTeX, as a prose tooltip is: a margin note, numbered at its ATOM; maths holds no \\marginpar, so it follows.
+  (-let [(math . notes) (org-math-tests--tips "x[fn::the current element] + \\frac{a}{b}[fn::a ratio]" 'latex)]
+    (should (equal math (concat "{x}^{\\textnormal{\\the\\numexpr\\value{footnote}+1\\relax}}"
+                                " + {\\frac{a}{b}}^{\\textnormal{\\the\\numexpr\\value{footnote}+2\\relax}}")))
+    (should (equal (length notes) 2))
+    (should (string-prefix-p "\\refstepcounter{footnote}\\newsavebox" (car notes)))
+    (should (string-match-p "\\marginpar.*" (car notes)))
+    (should (string-match-p "the current element" (car notes)))))
+
+(deftest "a page whose only tooltips are in maths still gets tooltips.js, which shows them"
+  ;; The maths' tooltips are noted in a temporary buffer, whereas the page's head is the export buffer's to note.
+  (let ((org-special-block-add-html-extra t))
+    (should (string-match-p "tooltip-box" (org-export-string-as "
+#+begin_math
+x[fn::the current element]
+#+end_math" 'html)))))
 
 (define-org-call-test "a math block's tooltips' <template>s follow its display, outside the maths MathJax reads"
   :call (cl-letf (((symbol-function 'gensym) (lambda (&rest _) "g1")))

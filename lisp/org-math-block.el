@@ -40,24 +40,35 @@
 (declare-function org-docs-get "org-links")
 (declare-function org--docs-plain-p "org-links")
 (declare-function org--tooltip-html "org-links")
+(declare-function org--latex-margin-note "org-margin-blocks")
 (defvar org--docs-actually-used)
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
 (defvar org--math-tips nil
-  "The <template>s of the tooltips in the maths being exported, newest first; see `org--math-tip'.")
+  "What follows the maths being exported, for its tooltips, newest first: in HTML, their <template>s; in LaTeX, their
+margin notes; see `org--math-tip'.  A block binds it, and emits it after its maths.")
 
 (defun org--math-tip (math tip &optional plain?)
-  "(MATH, TIP, PLAIN?) ↦ MATH, with TIP hovering over it in HTML, as tooltips.js shows prose's tooltips:
-  “x”, “the /current/ element”  ↦  \\class{tooltip osbe-tip-g1}{x}
-noting <template id=\"osbe-tip-g1\"><p>the <i>current</i> element</p></template> in `org--math-tips', since MathJax
-keeps no <template> of its own.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.  LaTeX and GitHub's maths
-have no hovers, so there it is MATH."
-  (if (or (not (eq org--math-backend 'html)) (org-export-markdown-p)) math
-    (let ((id (format "osbe-tip-%s" (gensym))))
-      (org-html-head-require 'org--tooltip-html-head)
-      (push (format "<template id=\"%s\">%s</template>" id (org--tooltip-html tip plain?)) org--math-tips)
-      (format "\\class{tooltip %s}{%s}" id math))))
+  "(MATH, TIP, PLAIN?) ↦ MATH with TIP as a tooltip, as a prose tooltip: link is, noting in `org--math-tips' what must
+follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
++ HTML: “x”, “the /current/ element”  ↦  \\class{tooltip osbe-tip-g1}{x}, for tooltips.js, beside
+  <template id=\"osbe-tip-g1\"><p>the <i>current</i> element</p></template>, as MathJax keeps no <template>.
++ LaTeX: MATH wears the number of TIP's margin note, which follows the maths since maths holds no \\marginpar;
+  in beamer, which has no margins, a footnote.
++ Markdown: MATH alone, as GitHub's maths has no hovers."
+  (pcase (if (org-export-markdown-p) 'md org--math-backend)
+    ('html (let ((id (format "osbe-tip-%s" (gensym))))
+             (push (format "<template id=\"%s\">%s</template>" id (org--tooltip-html tip plain?)) org--math-tips)
+             (format "\\class{tooltip %s}{%s}" id math)))
+    ('latex (let ((note (string-trim (org-export-string-as tip 'latex t))))
+              (push (if (org-export-beamer-p) (format "\\stepcounter{footnote}\\footnotetext{%s}" note)
+                      (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" note
+                                              "\\refstepcounter{footnote}" t))
+                    org--math-tips)
+              ;; The number its note steps to, read sans stepping, as amsmath may typeset the maths twice.
+              (format "{%s}^{\\textnormal{\\the\\numexpr\\value{footnote}+%d\\relax}}" math (length org--math-tips))))
+    (_ math)))
 
 (defvar org-math-links
   (append
@@ -71,9 +82,10 @@ have no hovers, so there it is MATH."
      ("tooltip" . ,(lambda (path desc) (org--math-tip path desc)))
      ("doc" . ,(lambda (path desc)
                  (-let [(name docs) (org-docs-get path)]
-                   ;; As a doc: link in prose, for the glossary that show:GLOSSARY lists.
+                   ;; As a doc: link in prose, for the glossary that show:GLOSSARY lists; in LaTeX, that is all.
                    (add-to-list 'org--docs-actually-used (list path name docs))
-                   (org--math-tip (or desc name) docs (org--docs-plain-p path)))))
+                   (if (eq org--math-backend 'latex) (or desc name)
+                     (org--math-tip (or desc name) docs (org--docs-plain-p path))))))
      ("eqref" . ,(lambda (path _) (format "\\eqref{%s}" path)))
      ("https" . ,(lambda (path desc) (format "\\href{https:%s}{%s}" path (or desc path))))
      ("http" . ,(lambda (path desc) (format "\\href{http:%s}{%s}" path (or desc path))))))
@@ -334,7 +346,8 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + red:ATOM colours an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
   delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
   [[color:#ff0066][…]], highlight:, eqref:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
-+ ATOM[fn::TIP] hovers TIP over ATOM in HTML, as [[tooltip:ATOM][TIP]] does.
++ ATOM[fn::TIP] is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
+  tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.
 + *bold* /italic/ _underline_ +cancel+ =texttt= ~mathtt~, when the markers hug their text, as in Org's prose.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[eqref:NAME]] cites; NUMBERED numbers the rest.
@@ -355,9 +368,12 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
              (concat (when definitions
                        (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d))
                                              definitions "\n")))
-                     shown))
+                     shown
+                     ;; The margin notes of the maths' tooltips, after it, as maths holds no \marginpar.
+                     (string-join (reverse org--math-tips))))
             ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
-            (t (concat (when definitions
+            (t (when org--math-tips (org-html-head-require 'org--tooltip-html-head))
+               (concat (when definitions
                          (format "<p style=\"display:none\">\\[%s\\]</p>\n"
                                  (org-html-encode-plain-text (string-join definitions "\n"))))
                        (and shown (org-html-encode-plain-text shown))
@@ -374,7 +390,7 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
          (end (save-excursion (goto-char (org-element-property :end block)) (skip-chars-backward " \t\n") (point)))
          (shown (--first (overlay-get it 'org-math-preview) (overlays-in beg end))))
     (if shown (delete-overlay shown)
-      (pcase-let* ((`(,definitions . ,math) (org--math-render raw 'latex numbered matrix))
+      (pcase-let* ((`(,definitions . ,math) (let (org--math-tips) (org--math-render raw 'latex numbered matrix)))
                    (png (make-temp-file "org-math-" nil ".png"))
                    (org-latex-packages-alist (append '(("" "xcolor") ("" "cancel")) org-latex-packages-alist))
                    (overlay (make-overlay beg end)))

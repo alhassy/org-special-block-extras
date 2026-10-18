@@ -68,10 +68,12 @@ link in Emacs visits the line.
                 (cond ((org-export-markdown-p) (format "```math\n%s\n```" equations))
                       ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
                       ((equal backend 'html)
+                       (when org--math-tips (org-html-head-require 'org--tooltip-html-head))
                        (concat (org-html-encode-plain-text equations)
                                ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
                                (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) "")))
-                      (t equations))))
+                      ;; The margin notes of the maths' tooltips, after it, as maths holds no \marginpar.
+                      (t (concat equations (string-join (reverse org--math-tips)))))))
 
 (defun org--eqref-visit (name)
   "NAME ↦ point at the equation tagged NAME: an align block's “:tag-COLOUR: NAME” line, else a \\tag{…NAME…}."

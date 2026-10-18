@@ -27,22 +27,24 @@
 
 ;;;;;; Margin (LaTeX)
 
-(defun org--latex-margin-note (marker width color contents &optional step)
-  "(MARKER, WIDTH, COLOR, CONTENTS, STEP) ↦ LaTeX for MARKER in the text, and CONTENTS in the margin under MARKER, WIDTH
-wide and COLOR coloured; STEP, such as \\stepcounter{footnote}, runs first, so a MARKER of \\thefootnote is the new number.
+(defun org--latex-margin-note (marker width color contents &optional step sans-mark)
+  "(MARKER, WIDTH, COLOR, CONTENTS, STEP, SANS-MARK) ↦ LaTeX for MARKER in the text, and CONTENTS in the margin under
+MARKER, WIDTH wide and COLOR coloured; STEP, such as \\stepcounter{footnote}, runs first, so a MARKER of \\thefootnote
+is the new number.  SANS-MARK omits MARKER from the text, which has marked the spot itself; e.g., within maths.
 CONTENTS is saved in a minipage, then unfolded in the margin, since verbatim environments, such as src blocks', fail
 as an argument of \\marginpar."
   ;; Outside the minipage, a newline is a space in the running text; so the commands there abut.  Within it, the
   ;; contents are \\raggedright, not fully justified, and minted, when loaded, is shrunk to fit ---Hack!
-  (format (concat "%s${}^{\\textnormal{%s}}$"
-                  "\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}"
-                  "\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{%s}\n"
-                  "\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}\\fi\\color{%s}\n"
-                  "{\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n%s\n"
-                  "\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}"
-                  ;; The {} keeps the space after us, which TeX would otherwise skip as it follows a command.
-                  "\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}")
-          (or step "") marker width color marker contents))
+  (apply #'format
+         (concat "%s" (unless sans-mark "${}^{\\textnormal{%s}}$")
+                 "\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}"
+                 "\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{%s}\n"
+                 "\\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}\\fi\\color{%s}\n"
+                 "{\\color{black}${}^{\\textnormal{%s}}$}\n\\normalfont\n%s\n"
+                 "\\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}"
+                 ;; The {} keeps the space after us, which TeX would otherwise skip as it follows a command.
+                 "\\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}")
+         (append (list (or step "")) (unless sans-mark (list marker)) (list width color marker contents))))
 
 (org-defblock margin
               (marker nil

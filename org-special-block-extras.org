@@ -4232,7 +4232,8 @@ from∘to m = {! try it! }
   wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, =\left(…\right)=, a
   =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colours =a + b=. So too
   for =color:#ff0066=, =highlight:=, =eqref:=, web links, and =tooltip:= and =doc:=, which hover in
-  HTML; as does a footnote, =x[fn::the current element]=. Org's emphasis is read when its markers
+  HTML; as does a footnote, =x[fn::the current element]=. A tooltip in maths is as one in prose: the
+  same box in HTML, and in LaTeX, a margin note, its number on =x=. Org's emphasis is read when its markers
   hug their text, as in prose: =*f(a)*= is bold, whereas =a*b*c= and =a = b= are left be.
 
   A line that begins =\def=, =\newcommand=, …, begins a definition, through the line that closes
