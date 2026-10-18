@@ -357,6 +357,8 @@ flat top-level plist with no enclosing vector:
              ,@(when keymap
                  `((setf (alist-get ,(symbol-name name) org-special-block-extras-mode-map--link-keymap-docs nil nil #'equal)
                          ',keymap)))
+             ;; Whether following these links does anything, for eldoc to say; see `org--special-block-eldoc'.
+             (put ',org-link/NAME 'org-deflink-follows ,(and (plist-get display :follow) t))
              (org-link-set-parameters
               ,(symbol-name name)
               :export #',org-link/NAME

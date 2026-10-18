@@ -20,13 +20,20 @@
                  "#+begin_box TITLE=\"\" :background-color :shadow :frame-color :title-background-color"))
   (should-not (org-block-signature "no-such-block")))
 
-(deftest "eldoc on a #+begin_ or #+end_ line shows the block's signature and the first line of its docstring"
+(deftest "eldoc on a #+begin_ or #+end_ line shows the block's signature, its docstring's first line, and its keys"
   (let ((text "#+begin_details Hi\nbody\n#+end_details\n"))
     (dolist (needle '("#+begin_details" "#+end_details"))
       (should (equal (org-test--eldoc-at text needle)
-                     (list "Enclose contents in a folded up box, for HTML."
+                     (list "Enclose contents in a folded up box, for HTML.
+C-c '    Edit the block in `org-mode'; C-c ' again writes it back."
                            :thing (org-block-signature "details")
                            :face 'font-lock-function-name-face))))))
+
+(deftest "eldoc's keys are those the block declares: math's C-c C-c previews it, and its C-c ' edits in latex-mode"
+  (should (equal (car (org-test--eldoc-at "#+begin_math\nx\n#+end_math\n" "#+begin_math"))
+                 "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
+C-c C-c  Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'.
+C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.")))
 
 (deftest "eldoc stays quiet inside a block's body, so typing there is not interrupted"
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))
@@ -35,6 +42,10 @@
   (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:")) "Show text in red color."))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
+  ;; A link that does something when followed says so.
+  (should (equal (car (org-test--eldoc-at "By [[eqref:Fold]]." "eqref:"))
+                 "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for an align block's “:tag-orange: Golden Rule”.
+C-c C-o  Follow it."))
   ;; Org's own links are not ours to document.
   (should-not (org-test--eldoc-at "See https://example.com here" "https:")))
 

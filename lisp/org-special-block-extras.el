@@ -334,9 +334,25 @@ Inlined, so an exported page makes no request for them; see https://github.com/a
               (mapconcat (-lambda ((key default)) (format " :%s%s" key (if default (format " %S" default) "")))
                          (-partition 2 keys) "")))))
 
+(defun org--block-keys (name)
+  "NAME ↦ the keys that act on a NAME block, each beside the gist of what it does, as `org-def-action' and
+`org-defblock''s :edit-indirect-mode declare; e.g., for math,
+  (\"C-c C-c  Show the maths as an image atop the block; again, to remove it.  See …\"
+   \"C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.\")"
+  ;; Raw, lest C-c ' read as C-c ’.
+  (let ((gist (lambda (f) (car (split-string (or (documentation f t) "") "\n")))))
+    (-non-nil
+     (list (-some--> (intern-soft (format "org-action/%s" name))
+             (and (fboundp it) (concat "C-c C-c  " (funcall gist it))))
+           (concat "C-c '    " (-if-let (edit (alist-get name org--block-edit-special-handlers nil nil #'equal))
+                                   (funcall gist edit)
+                                 ;; Every special block is so edited, by `org-special-block-edit'.
+                                 "Edit the block in `org-mode'; C-c ' again writes it back."))))))
+
 (defun org--special-block-eldoc (callback &rest _)
-  "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point; else nil.
-On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, the NAME block, else its `org-deflink'."
+  "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point, and the keys that act on it; else nil.
+On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, the NAME block, else its `org-deflink'.
+The gist is the first line, which the echo area shows; the keys follow, for a multi-line display such as eldoc-box."
   (when (derived-mode-p 'org-mode)
     (let* ((delimiter? (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+\\(begin\\|end\\)_")))
            (name  (if delimiter? (org-special-block-name-at-point)
@@ -345,10 +361,13 @@ On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, t
            (link  (and name (not delimiter?) (intern-soft (format "org-link/%s" name))))
            (gist  (lambda (docstring) (car (split-string (or docstring "") "\n")))))
       (cond ((get block 'org-defblock-args)
-             (funcall callback (funcall gist (get block 'variable-documentation))
+             (funcall callback (string-join (cons (funcall gist (get block 'variable-documentation))
+                                                  (and delimiter? (org--block-keys name)))
+                                            "\n")
                       :thing (org-block-signature name) :face 'font-lock-function-name-face))
             ((fboundp link)
-             (funcall callback (funcall gist (documentation link))
+             (funcall callback (concat (funcall gist (documentation link t))
+                                       (when (get link 'org-deflink-follows) "\nC-c C-o  Follow it."))
                       :thing (format "%s:" name) :face 'font-lock-function-name-face))))))
 
 ;;;;; Completing #+begin_ lines

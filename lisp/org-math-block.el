@@ -389,7 +389,7 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
     t))
 
 (org-def-action math (&key numbered (matrix "pmatrix"))
-  "Toggle an image of the block's maths atop it; see `org--math-preview'."
+  "Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'."
   (org--math-preview raw-contents numbered matrix))
 
 (provide 'org-math-block)
