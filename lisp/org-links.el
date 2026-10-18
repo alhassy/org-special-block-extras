@@ -187,6 +187,37 @@ Only the markup is displayed differently, so the keys themselves stay editable."
 
 (org-link-set-parameters "kbd" :activate-func #'org--kbd-prettify)
 
+;;;;;; Links show in full while point is in them
+
+(defvar-local org--link-at-point nil
+  "The bounds (START . END) of the link that point was in, after the last command; else nil.")
+
+(defun org--link-bounds ()
+  "↦ The bounds (START . END) of the link that point is in; else nil."
+  (when (get-text-property (point) 'htmlize-link)
+    (let ((link (org-element-context)))
+      (when (eq (org-element-type link) 'link)
+        (cons (org-element-property :begin link)
+              (- (org-element-property :end link) (org-element-property :post-blank link)))))))
+
+(defun org--link-refresh ()
+  "Re-fontify the links that point left or entered, so Org hides the one left and `org--reveal-link-at-point' the other."
+  (let ((bounds (org--link-bounds)))
+    (unless (equal bounds org--link-at-point)
+      (let ((left org--link-at-point))
+        (setq org--link-at-point bounds)
+        (dolist (it (list left bounds))
+          (when it (font-lock-flush (car it) (min (cdr it) (point-max)))))))))
+
+(defun org--reveal-link-at-point (limit)
+  "Font-lock matcher: show the link point is in, from point to LIMIT, in full; e.g., [[X][Y]] rather than Y.
+This always returns nil, so it adds no face itself."
+  (-let [(start . end) org--link-at-point]
+    (when (and start (< start limit) (< (point) end))
+      (with-silent-modifications
+        (remove-text-properties start (min end (point-max)) '(invisible nil)))))
+  nil)
+
 ;;;;;; Octoicon
 
 (defvar

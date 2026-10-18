@@ -45,7 +45,18 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
   (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-head ("xcolor")
                                  :manual "#Colours-links")
            ,(format "Show text in %s color." colour)
-           (org--color-text backend ',colour contents))))
+           (org--color-text backend ',colour contents)))
+  (org-link-set-parameters (symbol-name colour) :activate-func #'org--color-link-hide-type))
+
+(defun org--color-link-hide-type (start end _path _bracket?)
+  "Hide the “red:” of the colour link from START to END, since its colour says as much.
+  [[red: hello world]]  ↦  hello world, in red; with point in it, `org--reveal-link-at-point' shows it in full.
+As with Org's hidden brackets, `org-toggle-link-display' shows it all."
+  (save-excursion
+    (goto-char start)
+    (when (and org-link-descriptive (re-search-forward "[a-z]+:[ \t]*" end t))
+      (put-text-property start (point) 'invisible 'org-link)
+      (org-rear-nonsticky-at (point)))))
 
 (org-defblock color
               (color "black" :latex-head ("xcolor") :manual "#Colours-links" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])

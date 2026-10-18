@@ -419,8 +419,9 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
                   (current-buffer))))))))
 
 (defun org--special-block-capf-setup ()
-  "In this Org buffer, complete #+begin_ lines before Org's own pcomplete does."
-  (add-hook 'completion-at-point-functions #'org--special-block-capf -50 t))
+  "In this Org buffer, complete #+begin_ lines before Org's own pcomplete does; and show links in full while point is in them."
+  (add-hook 'completion-at-point-functions #'org--special-block-capf -50 t)
+  (add-hook 'post-command-hook #'org--link-refresh nil t))
 
 ;;;;; The mode
 
@@ -460,6 +461,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
         ;; Prepended, so Org's own fontification lands atop a block's :language.
         (font-lock-add-keywords 'org-mode '((org--fontify-block-languages)))
+        ;; Appended, so the link point is in shows in full after Org hides its brackets.
+        (font-lock-add-keywords 'org-mode '((org--reveal-link-at-point)) 'append)
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
@@ -482,11 +485,14 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
+    (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
     (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
     (remove-hook 'org-mode-hook #'org--special-block-capf-setup)
     (dolist (buffer (buffer-list))
-      (with-current-buffer buffer (remove-hook 'completion-at-point-functions #'org--special-block-capf t)))))
+      (with-current-buffer buffer
+        (remove-hook 'completion-at-point-functions #'org--special-block-capf t)
+        (remove-hook 'post-command-hook #'org--link-refresh t)))))
 
 ;;;;; Exporting sans the mode
 

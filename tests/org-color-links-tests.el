@@ -124,3 +124,29 @@ Do [[palette:][Pick a background]] now."
 
 (provide 'org-color-links-tests)
 ;;; org-color-links-tests.el ends here
+
+;;; Colour links, as displayed in Emacs
+
+(defun org-color-links-tests--visible ()
+  "↦ The current buffer's text sans its invisible parts."
+  (apply #'concat (cl-loop for pos from (point-min) below (point-max)
+                           unless (get-text-property pos 'invisible) collect (string (char-after pos)))))
+
+(org-deftest "a link shows in full while point is in it: a colour link's “red:” too, and a described link's target" [color]
+  :text "See [[red: hello world]], teal:there, and [[https://alhassy.com][my blog]] now."
+  (org-special-block-extras-mode 1)
+  (font-lock-add-keywords nil '((org--reveal-link-at-point)) 'append)
+  (font-lock-ensure)
+  (should (equal (org-color-links-tests--visible) "See hello world, there, and my blog now."))
+  (search-forward "hello")
+  (org--link-refresh)
+  (font-lock-ensure)  ; as redisplay does, after the refresh flushes
+  (should (equal (org-color-links-tests--visible) "See [[red: hello world]], there, and my blog now."))
+  (search-forward "ther")
+  (org--link-refresh)
+  (font-lock-ensure)
+  (should (equal (org-color-links-tests--visible) "See hello world, teal:there, and my blog now."))
+  (search-forward "my")
+  (org--link-refresh)
+  (font-lock-ensure)
+  (should (equal (org-color-links-tests--visible) "See hello world, there, and [[https://alhassy.com][my blog]] now.")))
