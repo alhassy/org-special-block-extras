@@ -35,7 +35,9 @@
 
 In LaTeX, csquotes' \\blockcquote[PAGES]{KEY}{CONTENTS}, which biblatex ---as Org's #+cite_export: biblatex--- counts
 among the works cited; csquotes itself is loaded for us, by its :latex-head.  Elsewhere, a quotation attributed to Org's
-own citation, [cite:@KEY, PAGES], which #+print_bibliography: so lists.  Sans a KEY, Org's own quote, as ever.  An inline
+own citation, [cite:@KEY, PAGES], which #+print_bibliography: so lists.  Hence a cited quote needs a #+bibliography:
+naming a file that holds KEY; sans one, Org renders the citation as “(??, ????, 20-22)”, as it would any citation of
+an unknown work.  Sans a KEY, Org's own quote, as ever.  An inline
 quotation needs no link: Org's own \"to be\" [cite:@KEY] serves.  A section tagged :quote: is a quote block of its text."
   ;; The header reads 20-22 as a symbol, and a key may be one too; we want their names.
   (let* ((key (format "%s" key))

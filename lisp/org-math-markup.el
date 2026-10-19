@@ -252,6 +252,17 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
                                         (t (or desc link)))))))
       (goto-char (point-min))
       (org--math-plain-links)
+      ;; A link in a hint's prose is maths within it, $…$, as MathJax reads no macro in \text{…} sans its textmacros; its
+      ;; words stay text.  E.g., “\text{by \href{#a}{its law}}” ↦ “\text{by $\href{#a}{\text{its law}}$}”.
+      (goto-char (point-min))
+      (while (re-search-forward "\\\\\\(eqref\\|href\\|hyperref\\)\\([{[]\\)" nil t)
+        (let ((start (match-beginning 0)) (eqref? (equal (match-string 1) "eqref")))
+          (when (org--math-text-p start)
+            (with-syntax-table org--math-syntax
+              (let* ((target (progn (goto-char (match-beginning 2)) (forward-sexp) (buffer-substring start (point))))
+                     (desc (unless eqref? (buffer-substring (1+ (point)) (progn (forward-sexp) (1- (point)))))))
+                (delete-region start (point))
+                (insert "$" target (if desc (format "{\\text{%s}}" desc) "") "$"))))))
       ;; Org's own emphasis: a marker hugs its text, and follows a space, (, {, ', or a hint's $, as in Org's prose; so
       ;; a = b and a*b*c are left be.  In a hint's prose, it is text's emphasis; see `org--math-text-p'.
       (goto-char (point-min))

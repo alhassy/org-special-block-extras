@@ -4459,35 +4459,29 @@ rational root equivales perfect power.
 
 #+begin_details ★ "Proof of “1 + 1 = 2” with source"  :title-color orange
 <<1+1=2>>
+Addition is defined by moving the $\mathsf{suc}$-s from the left argument to the right: we define $x + y$ by the
+possible /shape/ of $x$, which could only be a $\mathsf{zero}$ or a $\mathsf{suc}$-cessor.
 #+begin_math
 \def\suc{\mathsf{suc}\,}
 \def\zero{\mathsf{zero}}
+\zero + n &= n                :tag-teal: Base Case
+\suc m + n &= m + \suc n      :tag-teal: Inductive Step
+#+end_math
+#+begin_math
   1 + 1
 ={ “1” abbreviates “$\suc \zero$” }
   \suc \zero + \suc \zero
-={ Addition is defined by moving the
-   $\suc$-s from the left argument to the
-   right.
+={ By the [[Inductive Step]], we move the
+   $\suc$ to the right, and continue to try
+   adding.
 
-   That is, we define $x + y$ by considering
-   the possible $shape$ of $x$, which could
-   only be a $\zero$ or a $\suc$-cessor.
-
-   When $x$ is zero, there are no $\suc$-s
-   to move to the right, so we yield the
-   right:
-   \[ \zero + n = n \quad (\textsf{Base Case}) \]
-   When $x$ is a $\suc$, we move the $\suc$
-   to the right, and continue to try adding:
-   \[ \suc m + n = m + \suc n \quad (\textsf{Inductive Step}) \]
-   Since we're moving a $\suc$ at each step,
-   eventually we'll hit the base case and be
-   done adding.
-
-   For now, we apply the Inductive Step.
+   Since we move a $\suc$ at each step,
+   eventually we hit the [[Base Case]] and
+   are done adding.
  }
   \zero + \suc (\suc \zero)
-={ Using the Base Case of addition }
+={ By the [[Base Case]], there are no $\suc$-s
+   left to move, so we yield the right }
   \suc (\suc \zero)
 ={ Switching to ‘conventional’ notation }
   2
@@ -4495,35 +4489,29 @@ rational root equivales perfect power.
 --------------------------------------------------------------------------------
 *Source:*
 #+begin_src org :tangle no
+Addition is defined by moving the $\mathsf{suc}$-s from the left argument to the right: we define $x + y$ by the
+possible /shape/ of $x$, which could only be a $\mathsf{zero}$ or a $\mathsf{suc}$-cessor.
 ,#+begin_math
 \def\suc{\mathsf{suc}\,}
 \def\zero{\mathsf{zero}}
+\zero + n &= n                :tag-teal: Base Case
+\suc m + n &= m + \suc n      :tag-teal: Inductive Step
+,#+end_math
+,#+begin_math
   1 + 1
 ={ “1” abbreviates “$\suc \zero$” }
   \suc \zero + \suc \zero
-={ Addition is defined by moving the
-   $\suc$-s from the left argument to the
-   right.
+={ By the [[Inductive Step]], we move the
+   $\suc$ to the right, and continue to try
+   adding.
 
-   That is, we define $x + y$ by considering
-   the possible $shape$ of $x$, which could
-   only be a $\zero$ or a $\suc$-cessor.
-
-   When $x$ is zero, there are no $\suc$-s
-   to move to the right, so we yield the
-   right:
-   \[ \zero + n = n \quad (\textsf{Base Case}) \]
-   When $x$ is a $\suc$, we move the $\suc$
-   to the right, and continue to try adding:
-   \[ \suc m + n = m + \suc n \quad (\textsf{Inductive Step}) \]
-   Since we're moving a $\suc$ at each step,
-   eventually we'll hit the base case and be
-   done adding.
-
-   For now, we apply the Inductive Step.
+   Since we move a $\suc$ at each step,
+   eventually we hit the [[Base Case]] and
+   are done adding.
  }
   \zero + \suc (\suc \zero)
-={ Using the Base Case of addition }
+={ By the [[Base Case]], there are no $\suc$-s
+   left to move, so we yield the right }
   \suc (\suc \zero)
 ={ Switching to ‘conventional’ notation }
   2

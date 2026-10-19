@@ -102,7 +102,8 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
       (car rows))))
 
 (defconst org--math-hint-html-head
-  "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again; shift-click, every hint of this proof.</p></template>
+  "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again; shift-click, every hint of this proof.
+A link within it is followed instead.</p></template>
 <style>
   .osbe-hint { cursor: pointer; }
   /* A hint is plainly a hint ---prose, maybe coloured--- so it wears no tooltip's dotted underline. */
@@ -112,10 +113,11 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
 </style>
 <script>
   // A click on a math block's hint folds it to [⋯], or unfolds it, as TAB does in Emacs; a shift-click folds every
-  // hint of its proof, unless all are folded, whence it unfolds them, as C-TAB does.
+  // hint of its proof, unless all are folded, whence it unfolds them, as C-TAB does.  A click on a link within a hint,
+  // such as a [[NAME]] citing a tag, follows it instead.
   document.addEventListener('click', (event) => {
     const hint = event.target.closest?.('.osbe-hint');
-    if (!hint) return;
+    if (!hint || event.target.closest('a')) return;
     if (!event.shiftKey) return hint.classList.toggle('osbe-folded');
     const hints = [...(hint.closest('mjx-container') ?? document).querySelectorAll('.osbe-hint')];
     const fold = hints.some((h) => !h.classList.contains('osbe-folded'));
