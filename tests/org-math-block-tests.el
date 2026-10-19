@@ -131,6 +131,28 @@ red:0 < 1" nil)
   (should (equal (org--math-top-level-marks "f &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}")
                  '(("&" . 2) ("{" . 46)))))
 
+(deftest "a tag's name may hold maths, \\meet or ⊑, shown in $…$; its label is a key LaTeX's and MathJax's links take alike"
+  (should (equal (org--math-tag-text "Distributivity of \\meet") "Distributivity of $\\meet$"))
+  (should (equal (org--math-tag-text "⊑-Definition") "$⊑$-Definition"))
+  (should (equal (org--math-tag-text "Golden Rule") "Golden Rule"))
+  (should (equal (org--math-label "Distributivity of \\meet") "Distributivity of meet"))
+  (should (equal (org--math-label "⊑-Definition") "u2291-Definition"))
+  ;; A plain name is its own label, so a document's labels stay as they were.
+  (should (equal (org--math-label "Golden Rule") "Golden Rule")))
+
+(define-org-export-test "a math block's tag of a name with maths shows it, and eqref: cites it by that very name"
+  :to latex
+  :input "
+          #+begin_math
+          (p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   :tag-teal: Distributivity of \\meet
+          #+end_math
+          By [[eqref:Distributivity of \\meet]]."
+  :equals "\\[
+(p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   \\tag{$\\color{teal}{\\text{Distributivity of $\\meet$}}$} \\label{Distributivity of meet}
+\\]
+By \\eqref{Distributivity of meet}.
+")
+
 (define-org-call-test "a math block whose lines have an & is an align; its :tag-COLOUR: NAME a \\tag; its last \\ dropped"
   :call (org-block/math 'latex "x &= x + 0 \\\\
 x + 0 &= 0 + x   :tag-blue: Symmetry" nil)

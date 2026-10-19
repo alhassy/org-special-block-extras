@@ -99,7 +99,7 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
                    (add-to-list 'org--docs-actually-used (list path name docs))
                    (if (eq org--math-backend 'latex) (or desc name)
                      (org--math-tip (or desc name) docs (org--docs-plain-p path))))))
-     ("eqref" . ,(lambda (path _) (format "\\eqref{%s}" path)))
+     ("eqref" . ,(lambda (path _) (format "\\eqref{%s}" (org--math-label path))))
      ("https" . ,(lambda (path desc) (format "\\href{https:%s}{%s}" path (or desc path))))
      ("http" . ,(lambda (path desc) (format "\\href{http:%s}{%s}" path (or desc path))))))
   "Link types that maths knows, each TYPE ↦ (λ PATH DESC ↦ LaTeX); DESC is nil for [[TYPE:PATH]] and TYPE:PATH.
@@ -328,14 +328,32 @@ As an Org table is a matrix; a line that begins “- x” sans “ :: ” stays 
 (defconst org--math-tag-re ":tag-\\([^: \t\n]+\\):[ \t]*\\(.*?\\)[ \t]*$"
   "A line's ending “:tag-COLOUR: NAME”.")
 
+(defconst org--math-symbol-re "[Ͱ-Ͽ℀-⅏←-⇿∀-⋿⌀-⏿⟀-⟿⤀-⫿𝐀-𝟿]"
+  "A character that is maths, not text: Greek, letterlike, an arrow, an operator, a technical or maths symbol, or a
+maths alphanumeric, such as ⊑ or 𝒩; a LaTeX text font has none of these.")
+
+(defun org--math-tag-text (name)
+  "NAME ↦ NAME as text, for a tag, its maths within $…$, which text lacks: a \\command, a sub- or superscript, or a
+symbol such as ⊑; e.g., “Distributivity of \\meet” ↦ “Distributivity of $\\meet$”.  MathJax too reads $…$ in text."
+  (replace-regexp-in-string
+   (concat "\\(?:\\\\[[:alpha:]]+\\(?:{[^{}]*}\\)*\\|[_^]\\(?:{[^{}]*}\\|[^{}]\\)\\|" org--math-symbol-re "\\)+")
+   (lambda (maths) (format "$%s$" maths)) name t t))
+
+(defun org--math-label (name)
+  "NAME ↦ a label for it, which LaTeX's and MathJax's links alike take: each \\command as its name, and each character
+other than an ASCII letter, digit, space, or -:.,()' as uXXXX; e.g., “⊑ of \\meet” ↦ “u2291 of meet”.  So a plain
+name is its own label; an eqref: of NAME cites the same."
+  (mapconcat (lambda (c) (if (string-match-p "[A-Za-z0-9 :.,()'-]" (string c)) (string c) (format "u%04x" c)))
+             (replace-regexp-in-string "\\\\\\([[:alpha:]]+\\)" "\\1" name) ""))
+
 (defun org--math-tags (math)
   "MATH ↦ MATH whose each line ending in “:tag-COLOUR: NAME” ends instead in NAME as a COLOUR \\tag, labelled NAME,
 and \\\; e.g., “x :tag-blue: Id” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id} \\\\”."
   (replace-regexp-in-string org--math-tag-re
                             (lambda (line)
                               (string-match org--math-tag-re line)
-                              (format "\\tag{$\\color{%s}{\\text{%s}}$} \\label{%2$s} \\\\"
-                                      (match-string 1 line) (match-string 2 line)))
+                              (format "\\tag{$\\color{%s}{\\text{%s}}$} \\label{%s} \\\\" (match-string 1 line)
+                                      (org--math-tag-text (match-string 2 line)) (org--math-label (match-string 2 line))))
                             math t t))
 
 (defun org--math-tag-face ()
@@ -643,8 +661,8 @@ its lines align at its first word."
               (fill-region-as-paragraph (point) end))))))
     t))
 
-(defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color{[^}]*}{\\\\text{[^}]*}}\\$} \\\\label{[^}]*}\\)"
-  "A tag, as `org--math-tags' writes it.")
+(defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color.*?\\$} \\\\label{[^}]*}\\)"
+  "A tag, as `org--math-tags' writes it; its label, from `org--math-label', has no braces.")
 
 (defun org--math-render (raw backend numbered matrix &optional name hints)
   "(RAW, BACKEND, NUMBERED, MATRIX, NAME, HINTS) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil
@@ -674,10 +692,12 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
                              (if lines (format "\\begin{%s}\n%s\n\\end{%1$s}" (if (equal lines "align") "split" "gathered")
                                                (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
                                (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
-                             (cond (tags (concat " " (car tags))) (name (format " \\label{%s}" name)) (t "")))))
+                             (cond (tags (concat " " (car tags))) (name (format " \\label{%s}" (org--math-label name)))
+                                   (t "")))))
                   (t (let ((math (cond ((not name) math)
-                                       (numbered (format "%s \\label{%s}" math name))
-                                       (t (format "%s \\tag{%s} \\label{%2$s}" math name))))
+                                       (numbered (format "%s \\label{%s}" math (org--math-label name)))
+                                       (t (format "%s \\tag{%s} \\label{%s}" math (org--math-tag-text name)
+                                                  (org--math-label name)))))
                            (environment (concat (or lines "equation") (unless numbered "*"))))
                        (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
                          (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math)))))))))
@@ -828,7 +848,7 @@ Following it visits that line, else any \\tag{…NAME…}; it exports as \\eqref
   :manual "#math"
   :export (cond ((org-export-markdown-p) (format "(%s)" o-label))
                 (t (when (equal o-backend 'html) (org-html-head-require 'mathjax))
-                   (format "\\eqref{%s}" o-label))))
+                   (format "\\eqref{%s}" (org--math-label o-label)))))
 
 ;;;; C-c C-c ---the maths, as an image atop its block
 
