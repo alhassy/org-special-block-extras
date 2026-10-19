@@ -757,6 +757,12 @@ x &= y \\\\
     (should (string-prefix-p "Let \\({x}^{\\textnormal{\\the\\numexpr\\value{footnote}+1\\relax}} = 1\\)\\refstepcounter" latex))
     (should (string-match-p "\\\\marginpar{.*}.*\\\\(\\\\)\\.\n*\\'" latex))))
 
+(deftest "inline maths is read, but a bare LaTeX command in prose, such as \\ref{…}, is no maths, and is left be"
+  (dolist (backend '(latex html))
+    (let ((out (org-export-string-as "See \\ref{sec:red:x}, by $red:y$." backend t)))
+      (should (string-match-p (regexp-quote "\\ref{sec:red:x}") out))
+      (should (string-match-p (regexp-quote "{\\color{red}y}") out)))))
+
 (define-org-export-test "inline maths reads our links in HTML too, for MathJax"
   :to html
   :input "We have $red:x$."

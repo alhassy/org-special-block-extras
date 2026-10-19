@@ -462,7 +462,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
         ;; C-c C-x C-l, and #+startup: latexpreview, show our math blocks as Org's own maths.
         (advice-add 'org--latex-preview-region :after #'org--math-preview-region)
-        (add-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
+        (advice-add 'org-latex-latex-fragment :around #'org--math-inline)
+        (advice-add 'org-html-latex-fragment :around #'org--math-inline)
         ;; M-q within a math block fills its hint at point alone, never its maths.
         (advice-add 'org-fill-paragraph :before-until #'org--math-fill-hint)
         ;; TAB on a hint folds it to ={…}, as TAB folds a heading.
@@ -503,7 +504,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
     (advice-remove 'org--latex-preview-region #'org--math-preview-region)
-    (remove-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
+    (advice-remove 'org-latex-latex-fragment #'org--math-inline)
+    (advice-remove 'org-html-latex-fragment #'org--math-inline)
     (advice-remove 'org-fill-paragraph #'org--math-fill-hint)
     (remove-hook 'org-tab-first-hook #'org--math-fold-hint)
     (remove-hook 'org-special-block-edit-functions #'org--math-edit-setup)

@@ -875,22 +875,25 @@ shown already is left be.  Org's own images of the maths within a block, such as
 
 ;;;; Inline maths ---$…$ reads our markup too
 
-(defun org--math-inline (fragment backend _info)
-  "(FRAGMENT, BACKEND) ↦ the inline maths FRAGMENT, such as $red:x$ or \\(red:x\\), wherein our links and Org's markup
-are LaTeX's, as in a math block; followed by its tooltips' tips, as a math block's are.  Org hands LaTeX's maths over
-sans its delimiters, which it adds afterwards; HTML's, with them."
-  (let* ((delimited? (string-match "\\`\\(\\$\\$?\\|\\\\[[(]\\)\\(\\(?:.\\|\n\\)*\\)\\(\\$\\$?\\|\\\\[])]\\)\\'" fragment))
-         (open (if delimited? (match-string 1 fragment) ""))
-         (close (if delimited? (match-string 3 fragment) ""))
-         (math (if delimited? (match-string 2 fragment) fragment))
-         (backend (if (org-export-derived-backend-p backend 'latex) 'latex 'html))
-         (org--math-tips nil)
-         (math (org--math-markup math backend)))
-    (cond ((null org--math-tips) (concat open math close))
-          ((eq backend 'html) (org-html-head-require 'org--tooltip-html-head)
-           (concat open math close (string-join (reverse org--math-tips))))
-          ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for the notes, then reopen.
-          (t (concat math "\\)" (string-join (reverse org--math-tips)) "\\(")))))
+(defun org--math-inline (transcode fragment contents info)
+  "Advice around a latex-fragment's TRANSCODE, of FRAGMENT, CONTENTS, and INFO: inline maths, such as $red:x$ or
+\\(red:x\\), reads our links and Org's markup, as a math block does, its tooltips' tips following it.  Only maths:
+a bare LaTeX command in prose, such as \\ref{sec:red:x}, Org also calls a fragment, yet is no maths, so is left be.
+Org's LaTeX transcoder strips the delimiters, then adds its own about the result; HTML's keeps them."
+  (let ((value (org-element-property :value fragment)))
+    (if (not (string-match "\\`\\(\\$\\$?\\|\\\\[[(]\\)\\(\\(?:.\\|\n\\)*\\)\\(\\$\\$?\\|\\\\[])]\\)\\'" value))
+        (funcall transcode fragment contents info)
+      (let* ((open (match-string 1 value)) (math (match-string 2 value)) (close (match-string 3 value))
+             (backend (if (org-export-derived-backend-p (plist-get info :back-end) 'latex) 'latex 'html))
+             (org--math-tips nil)
+             (marked (concat open (org--math-markup math backend) close))
+             (out (funcall transcode (org-element-put-property (org-element-copy fragment) :value marked) contents info)))
+        (cond ((null org--math-tips) out)
+              ((eq backend 'html)
+               (org-html-head-require 'org--tooltip-html-head)
+               (concat out (string-join (reverse org--math-tips))))
+              ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for the notes, then reopen.
+              (t (concat out "\\)" (string-join (reverse org--math-tips)) "\\(")))))))
 
 (provide 'org-math-block)
 ;;; org-math-block.el ends here
