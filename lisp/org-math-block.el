@@ -46,6 +46,22 @@
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
+(defvar org--math-hint-format nil
+  "How a hint shows, its %s the hint, replaced verbatim; e.g., “\\left[ %s \\right.”, a bracket that opens it; or none,
+to show no hints.  A math block binds it by its :hint-format; nil is as the layout has it: see
+`org--math-hint-styled'.")
+
+(defvar org--math-hint-color nil
+  "The colour of a hint: a name, such as teal; or #RRGGBB, such as maroon's #800000.  A math block binds it by its
+:hint-color; nil is as the layout has it: see `org--math-hint-styled'.")
+
+(defun org--math-color (colour)
+  "COLOUR ↦ the argument of \\color for it, in maths: “#ff0066” ↦ “[RGB]{255,0,102}”, “teal” ↦ “{teal}”.
+RGB, as LaTeX's xcolor and MathJax both know it; MathJax knows no HTML model."
+  (if (string-prefix-p "#" colour)
+      (apply #'format "[RGB]{%d,%d,%d}" (--map (string-to-number (substring colour it (+ it 2)) 16) '(1 3 5)))
+    (format "{%s}" colour)))
+
 (defvar org--math-tips nil
   "What follows the maths being exported, for its tooltips, newest first: in HTML, their <template>s; in LaTeX, their
 margin notes; see `org--math-tip'.  A block binds it, and emits it after its maths.")
@@ -75,10 +91,7 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
   (append
    (--map (cons (symbol-name it) (lambda (path desc) (format "{\\color{%s}%s}" it (or desc path))))
           org--named-colors)
-   `(("color" . ,(lambda (path desc)
-                   (format "{\\color%s%s}"
-                           (if (string-prefix-p "#" path) (format "[HTML]{%s}" (substring path 1)) (format "{%s}" path))
-                           desc)))
+   `(("color" . ,(lambda (path desc) (format "{\\color%s%s}" (org--math-color path) desc)))
      ("highlight" . ,(lambda (path desc) (format "\\colorbox{%s}{$%s$}" (or (org-string-nw-p path) "yellow") desc)))
      ;; Sans description, it has no tip; unless it follows an atom, which `org--math-footnotes' sees to.
      ("tooltip" . ,(lambda (path desc) (if desc (org--math-tip path desc) path)))
@@ -363,36 +376,106 @@ ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a spac
             (when end (push (list rel at end) spans)))))
       (nreverse spans))))
 
-(defun org--math-hints (math)
+(defun org--math-hint (text &optional between)
+  "(TEXT, BETWEEN) ↦ the LaTeX of a hint: its lines, top-aligned with its step, a blank one a gap; and each
+\\[ CALCULATION \\] within, a nested calculation, whose hints are read alike, so they may nest too, set BETWEEN its
+expressions as the block's are; see `org--math-hints'.  A hint of one line is a \\text{…}.
+E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the aligned x &\\quad = \\quad y && \\text{h}."
+  (let ((pos 0) rows)
+    (cl-flet ((lines (string) (--map (if (equal it "") "" (format "\\text{%s}" it))
+                                     (split-string (string-trim string) "[ \t]*\n[ \t]*"))))
+      ;; Each \[ with the \] that closes it, as nested calculations may nest; a \\[ is a line break, not one.
+      (while (string-match "\\(?:\\`\\|[^\\]\\)\\(\\\\\\[\\)" text pos)
+        (let ((open (match-beginning 1)) (close (match-end 1)) (depth 1))
+          (while (and (< 0 depth) (string-match "\\\\[][]" text close))
+            (setq close (match-end 0))
+            (cl-incf depth (if (eq (aref text (1- close)) ?\[) 1 -1)))
+          (unless (string-blank-p (substring text pos open)) (setq rows (append rows (lines (substring text pos open)))))
+          (setq rows (append rows (list (format "\\begin{aligned}[t] %s \\end{aligned}"
+                                                (string-trim (replace-regexp-in-string
+                                                              "[ \t]*\n[ \t]*" " "
+                                                              (org--math-hints (substring text (+ open 2) (- close 2)) between t)))))))
+          (setq pos close)))
+      (unless (string-blank-p (substring text pos)) (setq rows (append rows (lines (substring text pos))))))
+    ;; Beside its step, a hint's first line is level with the step's; between steps, its row is its own, so it is centred,
+    ;; whence a \\left[ about it, which grows alike above and below, fits it.
+    (if (cdr rows) (format "\\begin{array}%s{@{}l@{}} %s \\end{array}" (if between "" "[t]") (string-join rows " \\\\ "))
+      (car rows))))
+
+(defconst org--math-hint-html-head
+  "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again.</p></template>
+<style>
+  .osbe-hint { cursor: pointer; }
+  .osbe-hint-fold, .osbe-hint.osbe-folded .osbe-hint-body { display: none; }
+  .osbe-hint.osbe-folded .osbe-hint-fold { display: inline-block; }
+</style>
+<script>
+  // A click on a math block's hint folds it to “…”, or unfolds it, as TAB does in Emacs.
+  document.addEventListener('click', (event) => event.target.closest?.('.osbe-hint')?.classList.toggle('osbe-folded'));
+</script>"
+  "The tip, style, and script by which a click folds a math block's hint; added to a page whose maths has hints.")
+
+(defun org--math-hint-styled (hint between)
+  "(HINT, BETWEEN) ↦ HINT as `org--math-hint-format' and `org--math-hint-color' say; else, as the layout has it: a hint
+BETWEEN expressions is maroon, after a bracket that opens it, lest it be mistaken for maths; a hint beside its step is
+plain, as its column sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,0,0} \\left[ \\text{h}
+\\right.}”.  A format of none shows no hint.  In HTML, a click on the hint folds it; see `org--math-hint-html-head'."
+  (let ((format (format "%s" (or org--math-hint-format (if between "\\left[ %s \\right." "%s"))))
+        (colour (or org--math-hint-color (and between "#800000"))))
+    (if (equal format "none") ""
+      (let ((shown (string-replace "%s" hint format)))
+        ;; In HTML, a click folds the hint to “…”, as TAB does in Emacs; its tooltip says so.
+        (when (and (eq org--math-backend 'html) (not (org-export-markdown-p)))
+          (org-html-head-require 'org--tooltip-html-head)
+          (org-html-head-require 'org--math-hint-html-head)
+          (setq shown (format "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{\\text{…}}}"
+                              shown)))
+        (if colour (format "{\\color%s %s}" (org--math-color (format "%s" colour)) shown) shown)))))
+
+(defun org--math-hints (math &optional between nested)
   "MATH ↦ MATH whose each hint, “REL{ HINT }” of `org--math-hint-spans', is “&\\quad REL \\quad”, its HINT at its step's
 end ---before the next hint, else the maths' end--- yet before a tag or \\\\ there; e.g., “x ={ by IH } y ={ by IH } z”
 ↦ “x &\\quad = \\quad y && \\text{by IH} \\\\ &\\quad = \\quad z && \\text{by IH}”.  So each hint but the first begins a
-row, wherever the newlines fall; LaTeX reads them as spaces."
+row, wherever the newlines fall; LaTeX reads them as spaces.  When BETWEEN, each hint is a row of its own between the
+expressions it relates, as Feijen and Dijkstra set a calculation: “x ={ by IH } y” ↦ “& x \\\\ = & \\quad \\text{by IH}
+\\notag \\\\ & y”; so a wide expression leaves its hint room.  A NESTED calculation's hint rows are no \\notag, as
+an aligned within maths has no numbers to forgo."
   (with-temp-buffer
     (insert math)
-    (let ((next (point-max)))
+    (let ((spans (org--math-hint-spans math)) (next (point-max)))
       ;; The last first, lest rewriting a step move those before it; a string's index i is the buffer's position i + 1.
-      (pcase-dolist (`(,rel ,brace ,end) (reverse (org--math-hint-spans math)))
-        ;; A hint spanning lines shows on those lines, top-aligned with its step; a blank one is a gap.
-        (let* ((lines (split-string (string-trim (buffer-substring (+ brace 2) end)) "[ \t]*\n[ \t]*"))
-               (hint (if (null (cdr lines)) (format "\\text{%s}" (car lines))
-                       (format "\\begin{array}[t]{@{}l@{}} %s \\end{array}"
-                               (mapconcat (lambda (line) (if (equal line "") "" (format "\\text{%s}" line)))
-                                          lines " \\\\ ")))))
-          ;; The step's end, where its hint shows; one before another step ends its row, unless a tag or \\ ends it.
-          (goto-char next)
-          (skip-chars-backward " \t\n")
-          (let* ((line (buffer-substring (line-beginning-position) (point)))
-                 (ended (or (string-match org--math-tag-re line) (string-match "\\\\\\\\\\'" line))))
-            (when ended (goto-char (+ (line-beginning-position) ended)) (skip-chars-backward " \t"))
-            (insert " && " hint)
-            (unless (or ended (= next (point-max))) (insert " \\\\")))
-          ;; A step's relation stands apart, by a quad either side, as in a calculational proof.
-          (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
-          (insert " \\quad ")
-          (goto-char (1+ rel))
-          (insert "&\\quad ")
-          (setq next (1+ rel)))))
+      (pcase-dolist (`(,rel ,brace ,end) (reverse spans))
+        (let ((hint (org--math-hint-styled (org--math-hint (buffer-substring (+ brace 2) end) between) between)))
+          (if between
+              (let* ((relation (buffer-substring (1+ rel) (1+ brace)))
+                     ;; The expression before ends its row, unless a tag or \\ ends it already.
+                     (line (save-excursion (goto-char (1+ rel)) (skip-chars-backward " \t\n")
+                                           (buffer-substring (line-beginning-position) (point))))
+                     (ended (or (string-match-p org--math-tag-re line) (string-match-p "\\\\\\\\\\'" line))))
+                (delete-region (1+ rel) (progn (goto-char (1+ end)) (skip-chars-forward " \t\n") (point)))
+                (goto-char (1+ rel))
+                (insert (if ended "" "\\\\ ") relation " & \\quad " hint (if nested "" " \\notag") " \\\\ & "))
+            ;; The step's end, where its hint shows; one before another step ends its row, unless a tag or \\ ends it.
+            (goto-char next)
+            (skip-chars-backward " \t\n")
+            (let* ((line (buffer-substring (line-beginning-position) (point)))
+                   (ended (or (string-match org--math-tag-re line) (string-match "\\\\\\\\\\'" line)))
+                   (last? (= next (point-max))))
+              (when ended (goto-char (+ (line-beginning-position) ended)) (skip-chars-backward " \t"))
+              (insert " && " hint)
+              (unless (or ended last?) (insert " \\\\")))
+            ;; A step's relation stands apart, by a quad either side, as in a calculational proof.
+            (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
+            (insert " \\quad ")
+            (goto-char (1+ rel))
+            (insert "&\\quad ")
+            (setq next (1+ rel)))))
+      ;; The first expression, after the definitions, is a row of the expressions' column too.
+      (when (and between spans)
+        (goto-char (point-min))
+        (while (and (not (eobp)) (looking-at (concat "[ \t]*$\\|" org--math-definition-re))) (forward-line 1))
+        (skip-chars-forward " \t")
+        (insert "& ")))
     (buffer-string)))
 
 (defun org--math-match-hint (limit)
@@ -406,61 +489,99 @@ The block begins after its #+begin_math line; or, in its C-c ' buffer, which has
       (set-match-data (list (+ start (nth 1 span)) (+ start (nth 2 span))))
       (goto-char (+ start (nth 2 span))))))
 
+(defun org--math-block-contents-start ()
+  "↦ where the contents of the math block at point start, else nil."
+  (let ((block (org-special-block-at-point)))
+    (and block (equal (downcase (org-element-property :type block)) "math") (org-element-property :contents-begin block))))
+
+(defun org--math-hint-at-point ()
+  "↦ (REL BRACE END) of the hint at point, “REL{ HINT }” of `org--math-hint-spans', as buffer positions; else nil.
+Point is at the hint when it is on its relation, or within its braces."
+  (-when-let (start (org--math-block-contents-start))
+    (let ((end (org-element-property :contents-end (org-special-block-at-point))))
+      (--when-let (--first (and (<= (+ start (car it)) (point)) (< (point) (+ start (nth 2 it))))
+                           (org--math-hint-spans (buffer-substring-no-properties start end)))
+        (--map (+ start it) it)))))
+
+(defun org--math-fold-hint ()
+  "When point is at a math block's hint, fold it to “REL{…}”, or unfold it if folded, and ↦ t; else ↦ nil.
+A function of `org-tab-first-hook', so TAB folds a hint as it folds a heading; the text itself is untouched."
+  (-when-let ((_ brace end) (org--math-hint-at-point))
+    (-if-let (fold (--first (overlay-get it 'org-math-hint-fold) (overlays-in (1+ brace) (1- end))))
+        (delete-overlay fold)
+      (let ((fold (make-overlay (1+ brace) (1- end))))
+        (overlay-put fold 'org-math-hint-fold t)
+        (overlay-put fold 'display "…")
+        (overlay-put fold 'evaporate t)))
+    t))
+
 (defun org--math-fill-hint (&rest _)
-  "Within a math block, fill the hint at point alone, as prose, and ↦ t; elsewhere in the block, leave its maths be, and
-↦ t, as maths is no prose.  Outside a math block, ↦ nil, so Org fills as ever.  A hint's lines align at its first word."
-  (let* ((block (org-special-block-at-point))
-         (start (and block (equal (downcase (org-element-property :type block)) "math")
-                     (org-element-property :contents-begin block))))
-    (when start
-      (when-let* ((spans (org--math-hint-spans
-                          (buffer-substring-no-properties start (org-element-property :contents-end block))))
-                  (span (--first (and (<= (+ start (nth 1 it)) (point)) (< (point) (+ start (nth 2 it)))) spans)))
-        (save-excursion
-          (goto-char (+ start (nth 1 span) 1))
-          (skip-chars-forward " \t\n")
-          ;; Its lines align at its first word, not as adaptive filling would guess from them.
-          (let ((fill-prefix (make-string (current-column) ?\s)) (adaptive-fill-mode nil))
-            (fill-region-as-paragraph (point) (+ start (nth 2 span) -1)))))
-      t)))
+  "Within a math block, fill the paragraph at point of the hint at point alone, as prose, and ↦ t; elsewhere in the
+block, leave its maths be, and ↦ t, as maths is no prose ---so too a nested calculation, \\[ … \\], within a hint.
+Outside a math block, ↦ nil, so Org fills as ever.  A hint's paragraph ends at a blank line, or a nested calculation;
+its lines align at its first word."
+  (when (org--math-block-contents-start)
+    (-when-let ((_ brace end) (org--math-hint-at-point))
+      (let* ((hint-start (1+ brace))
+             (hint-end (1- end))
+             (boundary "^[ \t]*$\\|\\\\\\[\\|\\\\\\]")
+             (before (save-excursion (and (re-search-backward boundary hint-start t) (match-string 0))))
+             (beg (save-excursion (if (re-search-backward boundary hint-start t) (match-end 0) hint-start)))
+             ;; The paragraph's last text; not the newline before a boundary, lest filling join the two.
+             (end (save-excursion (goto-char (if (re-search-forward boundary hint-end t) (match-beginning 0) hint-end))
+                                  (skip-chars-backward " \t\n")
+                                  (point))))
+        ;; Within a nested calculation, the nearest boundary before point opens it.
+        (unless (equal before "\\[")
+          (save-excursion
+            (goto-char beg)
+            (skip-chars-forward " \t\n" end)
+            ;; Its lines align at its first word, not as adaptive filling would guess from them.
+            (let ((fill-prefix (make-string (current-column) ?\s)) (adaptive-fill-mode nil))
+              (fill-region-as-paragraph (point) end))))))
+    t))
 
 (defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color{[^}]*}{\\\\text{[^}]*}}\\$} \\\\label{[^}]*}\\)"
   "A tag, as `org--math-tags' writes it.")
 
-(defun org--math-render (raw backend numbered matrix &optional name)
-  "(RAW, BACKEND, NUMBERED, MATRIX, NAME) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil sans
-maths.  DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as
+(defun org--math-render (raw backend numbered matrix &optional name hints)
+  "(RAW, BACKEND, NUMBERED, MATRIX, NAME, HINTS) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil
+sans maths.  DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as
 `org--math-top-level-marks' sees them; numbered when NUMBERED, and as one equation when it is `once'; and labelled
-NAME, tagged so when unnumbered.  Each table is a MATRIX environment."
-  (pcase-let* ((`(,definitions . ,math)
-                (org--math-split-definitions
-                 (org--math-markup (org--math-tags (org--math-hints (org--math-tables (org--math-uncomment raw) matrix)))
-                                   backend)))
-               ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
-               (math (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" math t t))
-               (marks (org--math-top-level-marks math))
-               (lines (cond ((assoc "&" marks) "align") ((assoc "\\\\" marks) "gather"))))
-    (cons definitions
-          (cond ((equal math "") nil)
-                ;; One equation, one number: the lines split, or gathered, within it; its one tag, else NAME, labels it.
-                ((eq numbered 'once)
-                 (let ((tags (mapcar #'cadr (s-match-strings-all org--math-tagged-re math))))
-                   (when (cdr tags) (user-error "A math block :numbered once has one number, so one tag; not %d" (length tags)))
-                   (format "\\begin{equation}\n%s%s\n\\end{equation}"
-                           (if lines (format "\\begin{%s}\n%s\n\\end{%1$s}" (if (equal lines "align") "split" "gathered")
-                                             (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
-                             (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
-                           (cond (tags (concat " " (car tags))) (name (format " \\label{%s}" name)) (t "")))))
-                (t (let ((math (cond ((not name) math)
-                                     (numbered (format "%s \\label{%s}" math name))
-                                     (t (format "%s \\tag{%s} \\label{%2$s}" math name))))
-                         (environment (concat (or lines "equation") (unless numbered "*"))))
-                     (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
-                       (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math))))))))
+NAME, tagged so when unnumbered.  Its hints are set `between' its expressions when HINTS is so, else beside; see
+`org--math-hints'.  Each table is a MATRIX environment."
+  ;; Bound throughout, so hints know the backend as links do.
+  (let ((org--math-backend backend))
+    (pcase-let* ((`(,definitions . ,math)
+                  (org--math-split-definitions
+                   (org--math-markup (org--math-tags (org--math-hints (org--math-tables (org--math-uncomment raw) matrix)
+                                                                      (eq hints 'between)))
+                                     backend)))
+                 ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
+                 (math (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" math t t))
+                 (marks (org--math-top-level-marks math))
+                 (lines (cond ((assoc "&" marks) "align") ((assoc "\\\\" marks) "gather"))))
+      (cons definitions
+            (cond ((equal math "") nil)
+                  ;; One equation, one number: the lines split, or gathered, within it; its one tag, else NAME, labels it.
+                  ((eq numbered 'once)
+                   (let ((tags (mapcar #'cadr (s-match-strings-all org--math-tagged-re math))))
+                     (when (cdr tags) (user-error "A math block :numbered once has one number, so one tag; not %d" (length tags)))
+                     (format "\\begin{equation}\n%s%s\n\\end{equation}"
+                             (if lines (format "\\begin{%s}\n%s\n\\end{%1$s}" (if (equal lines "align") "split" "gathered")
+                                               (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
+                               (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
+                             (cond (tags (concat " " (car tags))) (name (format " \\label{%s}" name)) (t "")))))
+                  (t (let ((math (cond ((not name) math)
+                                       (numbered (format "%s \\label{%s}" math name))
+                                       (t (format "%s \\tag{%s} \\label{%2$s}" math name))))
+                           (environment (concat (or lines "equation") (unless numbered "*"))))
+                       (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
+                         (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math)))))))))
 
 ;;;; The block
 
-(org-defblock math (&key numbered (matrix "pmatrix")
+(org-defblock math (&key numbered (matrix "pmatrix") hints hint-format hint-color
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
                          :edit-indirect-mode latex-mode :manual "#math"
                          :fontify [:language "latex" :keywords org--math-fontify-keywords])
@@ -488,9 +609,13 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + “X ={ HINT } Y” aligns its line at =, and shows HINT at the line's end, as in a calculational proof; so too for any
   relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space or newline follows it, so x ={a} is no hint; in
   Emacs, a hint shows as a comment does, so we see which {…} is one.  A step runs from its hint to the next, its
-  hint at its end; so each hint but the first begins a row, wherever the newlines fall, sans our writing \\\\.  A hint
+  hint at its end ---in HTML, a click on it folds it, as TAB does in Emacs; so each hint but the first begins a row, wherever the newlines fall, sans our writing \\\\.  With
+  HINTS between, each hint is a row of its own, between the expressions it relates, so wide ones leave it room.  A hint
   may span lines, and shows on those lines, a blank one a gap; M-q within it fills it alone, as prose, whereas M-q
   elsewhere in the block leaves the maths be.
++ A hint shows in HINT-COLOR, a name or #RRGGBB, as HINT-FORMAT says, its %s the hint.  By default, a hint beside
+  its step is plain, as its column sets it apart; one between expressions is maroon, after a bracket that opens it,
+  \\left[ %s \\right., lest it be mistaken for maths.  A HINT-FORMAT of none hides hints from the export.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
@@ -502,8 +627,9 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
   block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
-  (let ((org--math-tips nil))
-    (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor)))
+  (let ((org--math-tips nil) (org--math-hint-format hint-format) (org--math-hint-color hint-color))
+    (pcase-let ((`(,definitions . ,shown)
+                 (org--math-render raw-contents backend numbered matrix org--handler-anchor hints)))
       (cond ((org-export-markdown-p)
              ;; A fenced math block is displayed already, so \[…\] would be one display too many.
              (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
@@ -550,7 +676,7 @@ Following it visits that line, else any \\tag{…NAME…}; it exports as \\eqref
 
 ;;;; C-c C-c ---the maths, as an image atop its block
 
-(defun org--math-preview (raw numbered matrix)
+(defun org--math-preview (raw numbered matrix &optional hints)
   "Show the RAW maths of the block at point, NUMBERED and with MATRIX tables, as an image atop the block; if one is
 already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes it too."
   (let* ((block (org-special-block-at-point))
@@ -558,7 +684,7 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
          (end (save-excursion (goto-char (org-element-property :end block)) (skip-chars-backward " \t\n") (point)))
          (shown (--first (overlay-get it 'org-math-preview) (overlays-in beg end))))
     (if shown (delete-overlay shown)
-      (pcase-let* ((`(,definitions . ,math) (let (org--math-tips) (org--math-render raw 'latex numbered matrix)))
+      (pcase-let* ((`(,definitions . ,math) (let (org--math-tips) (org--math-render raw 'latex numbered matrix nil hints)))
                    (png (make-temp-file "org-math-" nil ".png"))
                    (org-latex-packages-alist (append '(("" "xcolor") ("" "cancel")) org-latex-packages-alist))
                    (overlay (make-overlay beg end)))
@@ -572,9 +698,10 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
         (overlay-put overlay 'display (create-image png 'png nil :ascent 'center))))
     t))
 
-(org-def-action math (&key numbered (matrix "pmatrix"))
+(org-def-action math (&key numbered (matrix "pmatrix") hints hint-format hint-color)
   "Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'."
-  (org--math-preview raw-contents numbered matrix))
+  (let ((org--math-hint-format hint-format) (org--math-hint-color hint-color))
+    (org--math-preview raw-contents numbered matrix hints)))
 
 (defun org--math-preview-region (beg end)
   "Show each math block from BEG to END as an image atop it, as Org's C-c C-x C-l shows its own maths there; a block

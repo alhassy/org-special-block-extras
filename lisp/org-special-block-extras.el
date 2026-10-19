@@ -461,6 +461,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
         ;; M-q within a math block fills its hint at point alone, never its maths.
         (advice-add 'org-fill-paragraph :before-until #'org--math-fill-hint)
+        ;; TAB on a hint folds it to ={…}, as TAB folds a heading.
+        (add-hook 'org-tab-first-hook #'org--math-fold-hint)
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
         ;; Prepended, so Org's own fontification lands atop a block's :language.
@@ -490,6 +492,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org--latex-preview-region #'org--math-preview-region)
     (remove-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
     (advice-remove 'org-fill-paragraph #'org--math-fill-hint)
+    (remove-hook 'org-tab-first-hook #'org--math-fold-hint)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))

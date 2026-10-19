@@ -97,12 +97,7 @@ LaTeX!
 
 <tr>
 <td class="org-left"><code>math</code></td>
-<td class="org-left">Display maths wherein <code>red:𝒳</code> colours a symbol, as it colours prose.</td>
-</tr>
-
-<tr>
-<td class="org-left"><code>calc</code></td>
-<td class="org-left">Step-by-step equational reasoning &#x2014; beautiful for math walkthroughs.</td>
+<td class="org-left">Display maths wherein <code>red:𝒳</code> colours a symbol; calculational proofs, with hints.</td>
 </tr>
 </tbody>
 </table>

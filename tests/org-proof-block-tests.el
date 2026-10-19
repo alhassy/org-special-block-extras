@@ -1,28 +1,7 @@
-;;; org-proof-block-tests.el --- Tests for calc and tree proof blocks  -*- lexical-binding: t; -*-
+;;; org-proof-block-tests.el --- Tests for the tree proof block  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
-
-(define-org-call-test "calc block produces an align* LaTeX environment."
-  :call (org-block/calc 'latex "- x\n- = y\n" nil)
-  :returns "#+begin_export latex
-\\definecolor{osbe-calc}{HTML}{800000}\\begin{align*} & \\begin{aligned}x\\end{aligned}
-\\\\\\begin{aligned}= y\\end{aligned}
-\\end{align*}
-#+end_export")
-
-(define-org-call-test "calc block produces MathJax-compatible output for HTML."
-  :call (org-block/calc 'html "- x\n- = y\n" nil)
-  :returns "#+begin_export html
-$$\\begin{align*} & \\begin{aligned}x\\end{aligned}
-\\\\\\begin{aligned}= y\\end{aligned}
-\\end{align*}$$
-#+end_export")
-
-(deftest "calc block signals a user-error when the content is not a valid list."
-  (should-error
-   (org-block/calc 'latex "not a list at all" nil)
-   :type 'user-error))
 
 (define-org-call-test "tree block produces \\frac for a simple rule."
   :call (org-block/tree 'latex "+ Trans :: P = Q\n  - P = P\n    + ✓\n" nil)
@@ -50,9 +29,6 @@ $$\\begin{align*} & \\begin{aligned}x\\end{aligned}
 
 (deftest "tree keeps everything after a reason's first ::"
   (should (s-contains-p "{x :: Int}" (org--list-to-math '("f :: x :: Int")))))
-
-(deftest "calc renders a step that has nested steps but no hint"
-  (should (stringp (org-block/calc 'latex "- x\n  - y -- h" nil))))
 
 (provide 'org-proof-block-tests)
 ;;; org-proof-block-tests.el ends here

@@ -18,7 +18,7 @@
 
 (deftest "in maths, [[TYPE:PATH][DESC]] is TYPE's LaTeX; an unknown TYPE shows its DESC alone"
   (should (equal (org--math-markup "[[red:][a + b]] [[color:#ff0066][c]] [[color:navy][d]]" 'latex)
-                 "{\\color{red}a + b} {\\color[HTML]{ff0066}c} {\\color{navy}d}"))
+                 "{\\color{red}a + b} {\\color[RGB]{255,0,102}c} {\\color{navy}d}"))
   (should (equal (org--math-markup "[[https://orgmode.org][\\mathrm{Org}]] [[eqref:Golden Rule]] [[file:x.png][x]]" 'latex)
                  "\\href{https://orgmode.org}{\\mathrm{Org}} \\eqref{Golden Rule} x")))
 
@@ -481,7 +481,8 @@ Addition moves the $\\suc$-s from the left argument to the
 \\begin{align*}
 \\zero + \\suc \\zero
 &\\quad = \\quad
-\\suc (\\zero + \\zero) && \\begin{array}[t]{@{}l@{}} \\text{Addition moves the $\\suc$-s from the left argument to the} \\\\ \\text{right.} \\end{array}
+\\suc (\\zero + \\zero) && \\begin{array}[t]{@{}l@{}} \\text{Addition moves the $\\suc$-s from the left
+argument to the} \\\\ \\text{right.} \\end{array}
 \\end{align*}
 #+end_export")
 
@@ -492,9 +493,75 @@ x ={ First, this.
      Then, that. } y" nil)
   :returns "#+begin_export latex
 \\begin{align*}
-x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{First, this.} \\\\  \\\\ \\text{Then, that.} \\end{array}
+x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{First, this.} \\\\  \\\\ \\text{Then, that.}
+\\end{array}
 \\end{align*}
 #+end_export")
+
+(define-org-call-test "a math block's hint may hold a nested calculation, \\[ … \\], its own hints read alike"
+  :call (org-block/math 'latex "
+x ={ Why? Let me explain:
+     \\[    x
+        ={ hint 1 } x′
+        ={ hint 2 } y \\]
+     So there.
+   } y" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{Why? Let me explain:} \\\\ \\begin{aligned}[t] x
+&\\quad = \\quad x′ && \\text{hint 1} \\\\ &\\quad = \\quad y && \\text{hint 2} \\end{aligned} \\\\ \\text{So
+there.} \\end{array}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's nested calculation may nest a calculation in turn"
+  :call (org-block/math 'latex "
+a ={ \\[ a ={ \\[ a ={ inmost } b \\] } b \\] } b" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+a &\\quad = \\quad b && \\begin{aligned}[t] a &\\quad = \\quad b && \\begin{aligned}[t] a &\\quad = \\quad
+b && \\text{inmost} \\end{aligned} \\end{aligned}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block :hints between sets each hint on a row of its own, between the expressions it relates"
+  :call (org-block/math 'latex "
+\\def\\N{\\mathbb{N}}
+  x
+={ why x is y } y   :tag-blue: Step
+≤{ why y is below z,
+   over lines } z" nil :hints 'between)
+  :returns "#+latex_header: \\def\\N{\\mathbb{N}}
+#+begin_export latex
+\\begin{align*}
+& x
+\\\\ = & \\quad {\\color[RGB]{128,0,0} \\left[ \\text{why x is y} \\right.} \\notag \\\\ & y
+\\tag{$\\color{blue}{\\text{Step}}$} \\label{Step} \\\\
+≤ & \\quad {\\color[RGB]{128,0,0} \\left[ \\begin{array}{@{}l@{}} \\text{why y is below z,} \\\\
+\\text{over lines} \\end{array} \\right.} \\notag \\\\ & z
+\\end{align*}
+#+end_export")
+
+(deftest "a math block's hint in HTML is clickable, to fold it to …, its tooltip saying so; LaTeX's is no such thing"
+  (let ((html (org-block/math 'html "x ={ h } y" nil)))
+    (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{\\text{h}}\\class{osbe-hint-fold}{\\text{…}}}")
+                            html)))
+  (should-not (string-match-p "class" (org-block/math 'latex "x ={ h } y" nil))))
+
+(deftest "a math block's hint colour is LaTeX's and MathJax's alike: #RRGGBB as RGB, since MathJax has no HTML model"
+  (should (equal (org--math-color "#800000") "[RGB]{128,0,0}"))
+  (should (equal (org--math-color "teal") "{teal}")))
+
+(deftest "a math block's hint is plain beside its step, maroon and bracketed between expressions; switches restyle it"
+  (should (string-match-p (regexp-quote "&& \\text{h}\n") (org-block/math 'latex "x ={ h } y" nil)))
+  (should (string-match-p (regexp-quote "= & \\quad {\\color[RGB]{128,0,0} \\left[ \\text{h} \\right.}")
+                          (org-block/math 'latex "x ={ h } y" nil :hints 'between)))
+  (should (string-match-p (regexp-quote "&& {\\color{teal} \\langle \\text{h} \\rangle}")
+                          (org-block/math 'latex "x ={ h } y" nil :hint-format "\\langle %s \\rangle" :hint-color "teal")))
+  ;; A format of none hides hints from the export; their steps remain.
+  (let ((hidden (org-block/math 'latex "x ={ h } y" nil :hint-format 'none :hints 'between)))
+    (should-not (string-match-p "\\\\text{h}" hidden))
+    (should (string-match-p "& y" hidden))))
 
 (define-org-call-test "a math block's REL{GROUP}, ^{ 2 }, \\frac{ a }{ b }, and a REL{ … } within cases are no hints"
   :call (org-block/math 'latex "
@@ -741,6 +808,50 @@ right, one at a time.
 }
   \\suc \\zero
 #+end_math")))
+
+(org-deftest "M-q within a math block's hint fills the paragraph at point alone; a nested calculation is left be"
+  :text "
+#+begin_math
+x ={ First paragraph, left as it
+     is.
+
+     Second paragraph, which is rather long indeed.
+     \\[ x
+        ={ a nested hint, left be } y \\]
+   } y
+#+end_math"
+  :at "rather long"
+  (let ((fill-column 30) (before (buffer-string)))
+    (fill-paragraph)
+    (should (equal (buffer-string)
+                   (replace-regexp-in-string "Second paragraph, which is rather long indeed."
+                                             "Second paragraph, which\n     is rather long indeed." before t t)))
+    ;; Within the nested calculation, M-q leaves all be.
+    (search-forward "nested hint")
+    (setq before (buffer-string))
+    (fill-paragraph)
+    (should (equal (buffer-string) before))))
+
+(org-deftest "TAB on a math block's hint folds it to ={…}, and TAB again unfolds it; the text itself is untouched"
+  :text "
+#+begin_math
+x ={ a long reason,
+     over lines } y
+#+end_math"
+  :at "long reason"
+  (let ((before (buffer-string))
+        (folds (lambda () (--filter (overlay-get it 'org-math-hint-fold) (overlays-in (point-min) (point-max))))))
+    (org-cycle)
+    (should (equal (mapcar (lambda (o) (list (buffer-substring (overlay-start o) (overlay-end o)) (overlay-get o 'display)))
+                           (funcall folds))
+                   '((" a long reason,\n     over lines " "…"))))
+    (should (equal (buffer-string) before))
+    ;; On its relation too.
+    (goto-char (point-min))
+    (search-forward "x =")
+    (backward-char)
+    (org-cycle)
+    (should-not (funcall folds))))
 
 (org-deftest "M-q within a math block, but not a hint, leaves the maths be, as it is no prose"
   :text "

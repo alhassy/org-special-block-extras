@@ -64,18 +64,18 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
 The above is a differential equation with $\ddot{x}$.
 #+end_details
 
-#+begin_calc :hint-format "\\left\\{ %s\\right."
-                  +     x
-                  +     y -- Explanation of why $x \;=\; y$
-                    Actually, let me explain:
-                    * x
-                    * x′ -- hint 1
-                    * y  -- hint 2
-
-                    No words can appear (in the export) *after* a nested calculation, for now.
-                  + [≤] z
-                    --
-                    Explanation of why $y \;\leq\; z$
-
-                    -- explain it more, this is ignored from export ;-)
-#+end_calc
+#+begin_math
+  x
+={ Explanation of why $x \;=\; y$.
+   Actually, let me explain:
+   \[   x
+      ={ hint 1 } x′
+      ={ hint 2 } y \]
+   Words may follow a nested calculation.
+ }
+  y
+≤{ Explanation of why $y \;\leq\; z$
+   # Explain it more; this comment is absent from the export ;-)
+ }
+  z
+#+end_math

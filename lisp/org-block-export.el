@@ -184,7 +184,7 @@ E.g., our tooltips ask for (org-html-head-require \='org--tooltip-html-head); a 
 
 (defun org--html-mathjax (info)
   "INFO ↦ Org's own MathJax setup, by the user's MathJax options, as for a page whose maths is Org's own.
-Org sets MathJax up only for maths it parsed itself; ours, such as a calc block's, is raw HTML to it."
+Org sets MathJax up only for maths it parsed itself; ours, such as a math block's, is raw HTML to it."
   (org-html--build-mathjax-config
    (plist-put (copy-sequence info) :parse-tree '(org-data nil (latex-fragment (:value "\\(x\\)"))))))
 

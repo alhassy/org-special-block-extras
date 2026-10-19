@@ -1,4 +1,4 @@
-;;; org-proof-block.el --- Calculational and tree proof blocks  -*- lexical-binding: t; -*-
+;;; org-proof-block.el --- Proof trees, as Org lists  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -15,8 +15,8 @@
 
 ;;; Commentary:
 
-;; Mathematical proof blocks: `calc' for calculational/equational proofs
-;; and `tree' for natural-deduction inference trees.
+;; The `tree' block draws a natural-deduction inference tree from an Org list.  Calculational proofs
+;; are a math block's hints, “X ={ HINT } Y”; see `org-block/math'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -36,85 +36,6 @@
                        block (error-message-string err)))))
 
 ;;;;;; Mathematical Proofs
-;;;;;;; Calculational style proofs
-
-(defun org--list-to-calc (item rel hint-format NL-length color)
-  "Render ITEM, from `org-list-to-lisp', and its nested items as one step of a calculational proof.
-
-ITEM's line is “[OP] EXPRESSION -- HINT”, each part optional; both the expression
-and the hint may span multiple lines.
-
-REL is the default relation in the left-most column.
-
-HINT-FORMAT is the formatting string for hints; e.g.,
-\"\\color{maroon}{\\langle\\large\\substack{\\text{ %s }}⟩}\"
-
-NL-length is how long the explicit vertical space, \\, should be.
-The number refers to the vspace occupied nearly by the height of
-a single normal sized letter.
-
-COLOR is the colour of the hints."
-  (-let* (((line children) item)               ;; CHILDREN is (unordered ITEM…), or nil.
-          ((expr₀ hint) (s-split "--" line))
-          ((op₀ expr₁) (cdr (s-match "^\\[\\(.*\\)\\]\\(.*\\)" expr₀)))
-          (op (or op₀ rel))
-          (expr (or expr₁ expr₀))
-          (steps (--map (org--list-to-calc it rel hint-format NL-length color) (cdr children)))
-          ;; Hints keep their line breaks; a blank line becomes NL-length vertical space.
-          (hint (s-replace "\n" " } \\hfill\\\\\n\\text{ "
-                           (s-replace "\n\n" (s-repeat (* 6 NL-length) "\n $\\,$") (s-trim (or hint ""))))))
-    (if (and (equal hint "") (null steps))
-        (format "\\begin{aligned}%s\\end{aligned} \n" expr)
-      (format "\n %s \\;\\; & \\qquad \\color{%s}{%s} \n \\\\ & \\begin{aligned}%s\\end{aligned}"
-              op
-              color
-              ;; The hfill is so that we do not use substack's default centering, but instead left-align
-              ;; justification hints; nested steps appear beneath their hint.
-              ;; HINT-FORMAT's %s is replaced verbatim, never via `format', so its other characters ---say, %--- stay literal.
-              (s-replace "%s"
-                         (if steps
-                             (format "{\\large\\substack{\\text{ %s } \\hfill\\\\ \\begin{aligned} & %s \n\\end{aligned}\\hfill\\\\\n}}"
-                                     hint (s-join "\\\\" steps))
-                           (format "{\\large\\substack{\\text{ %s } \\hfill\\\\\n}}" hint))
-                         hint-format)
-              expr))))
-
-(org-defblock calc
-              (main-arg nil
-                        rel "=" hint-format "\\left[ %s \\right." explicit-vspace 2 color "#800000"
-                        :latex-head ("xcolor") :html-head (mathjax) :manual "#Aligned-equations")
-              "Render an Org-list as an equational proof.
-
-Sometimes the notation delimiting justification hints may clash
-with the domain topic, so we can change the hint format, e.g., to
-\"\\left\\langle %s \\right\\rangle\".  Set HINT-FORMAT to the
-empty string, \"\", to comment-out all hints in the exported
-version.
-
-The hint is the text immediately after a “--”, if there are
-multiple such delimiters only the first is shown; this can be
-useful if we want to have multiple alternatives, say for extra
-details in the source but not so much in the export.
-
-Line breaks are taken literally in the hints, but not in the
-math; where one uses \\\\.  For math with multiple lines, use ‘&’
-as an alignment marker; otherwise math is right-justified.
-
-For HTML, to use an TeX it must be enclosed in $, since that is
-what is required by MathJaX."
-              ;; LaTeX's \\color takes a name, so a hex COLOR, such as the default maroon, is named first.
-              (concat
-               (if (equal backend 'latex) (org--latex-define-color "osbe-calc" color) "")
-               (thread-last (cdr (org--parse-plain-list raw-contents "calc"))
-                           (--map (org--list-to-calc it rel hint-format explicit-vspace
-                                                     (if (equal backend 'latex) "osbe-calc" color)))
-                           (s-join "\\\\")
-                           (format "\\begin{align*} & %s \n\\end{align*}")
-                           ;; A blank line, say between a hint's paragraphs, would end the paragraph mid-align*.
-                           (replace-regexp-in-string "\n[ \t]*\n" "\n")
-                           ;; align* is a display already; MathJax, in HTML, needs it within $$ delimiters.
-                           (format (if (equal backend 'latex) "%s" "$$%s$$")))))
-
 ;;;;;;; inference proof tree
 (defun org--list-to-math (item)
   "Render ITEM, from `org-list-to-lisp', as a proof tree: its line is “REASON :: CONCLUSION”, its nested items the premises."
