@@ -4294,8 +4294,9 @@ R_{teal:\theta} =
   rule, Emacs shows each hint as a comment, by the very reading the export makes; any other ={…}= is LaTeX's own.
   A step runs from its hint to the next, its hint shown at its end; so each hint but the first begins a row,
   wherever the newlines fall ---we need not write =\\=, and may give each expression and hint a line of its own,
-  in Dijkstra's style. A hint may span lines, as a long reason does; =M-q= within it fills it alone, as prose,
-  whereas =M-q= elsewhere in the block leaves the maths be.
+  in Dijkstra's style. A hint may span lines, as a long reason does, and shows on those very lines ---a blank one
+  a gap between paragraphs; =M-q= within it fills it alone, as prose, and so sets its lines, whereas =M-q=
+  elsewhere in the block leaves the maths be.
   #+begin_example
 ,#+begin_math :let (== "\\equiv")
 p \land q =={ Golden Rule } p == q == p \lor q

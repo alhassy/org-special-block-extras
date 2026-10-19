@@ -469,7 +469,7 @@ p &\\quad \\equiv \\quad q && \\text{by definition}
 \\end{align*}
 ")
 
-(define-org-call-test "a math block's hint may span lines, its { followed by a newline; it shows on one line"
+(define-org-call-test "a math block's hint may span lines, its { followed by a newline; it shows on those lines"
   :call (org-block/math 'latex "
 \\zero + \\suc \\zero
   ={
@@ -481,7 +481,18 @@ Addition moves the $\\suc$-s from the left argument to the
 \\begin{align*}
 \\zero + \\suc \\zero
 &\\quad = \\quad
-\\suc (\\zero + \\zero) && \\text{Addition moves the $\\suc$-s from the left argument to the right.}
+\\suc (\\zero + \\zero) && \\begin{array}[t]{@{}l@{}} \\text{Addition moves the $\\suc$-s from the left argument to the} \\\\ \\text{right.} \\end{array}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's hint keeps its blank lines, as gaps between its paragraphs"
+  :call (org-block/math 'latex "
+x ={ First, this.
+
+     Then, that. } y" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{First, this.} \\\\  \\\\ \\text{Then, that.} \\end{array}
 \\end{align*}
 #+end_export")
 

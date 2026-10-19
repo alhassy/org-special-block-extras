@@ -373,15 +373,19 @@ row, wherever the newlines fall; LaTeX reads them as spaces."
     (let ((next (point-max)))
       ;; The last first, lest rewriting a step move those before it; a string's index i is the buffer's position i + 1.
       (pcase-dolist (`(,rel ,brace ,end) (reverse (org--math-hint-spans math)))
-        ;; A hint spanning lines shows on one.
-        (let ((hint (string-trim (replace-regexp-in-string "[ \t\n]+" " " (buffer-substring (+ brace 2) end)))))
+        ;; A hint spanning lines shows on those lines, top-aligned with its step; a blank one is a gap.
+        (let* ((lines (split-string (string-trim (buffer-substring (+ brace 2) end)) "[ \t]*\n[ \t]*"))
+               (hint (if (null (cdr lines)) (format "\\text{%s}" (car lines))
+                       (format "\\begin{array}[t]{@{}l@{}} %s \\end{array}"
+                               (mapconcat (lambda (line) (if (equal line "") "" (format "\\text{%s}" line)))
+                                          lines " \\\\ ")))))
           ;; The step's end, where its hint shows; one before another step ends its row, unless a tag or \\ ends it.
           (goto-char next)
           (skip-chars-backward " \t\n")
           (let* ((line (buffer-substring (line-beginning-position) (point)))
                  (ended (or (string-match org--math-tag-re line) (string-match "\\\\\\\\\\'" line))))
             (when ended (goto-char (+ (line-beginning-position) ended)) (skip-chars-backward " \t"))
-            (insert (format " && \\text{%s}" hint))
+            (insert " && " hint)
             (unless (or ended (= next (point-max))) (insert " \\\\")))
           ;; A step's relation stands apart, by a quad either side, as in a calculational proof.
           (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
@@ -485,7 +489,8 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
   relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space or newline follows it, so x ={a} is no hint; in
   Emacs, a hint shows as a comment does, so we see which {…} is one.  A step runs from its hint to the next, its
   hint at its end; so each hint but the first begins a row, wherever the newlines fall, sans our writing \\\\.  A hint
-  may span lines; M-q within it fills it alone, as prose, whereas M-q elsewhere in the block leaves the maths be.
+  may span lines, and shows on those lines, a blank one a gap; M-q within it fills it alone, as prose, whereas M-q
+  elsewhere in the block leaves the maths be.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
