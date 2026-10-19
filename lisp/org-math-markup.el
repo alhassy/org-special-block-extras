@@ -35,7 +35,6 @@
 (declare-function org--docs-plain-p "org-links")
 (declare-function org--tooltip-template "org-links")
 (declare-function org--latex-margin-note "org-margin-blocks")
-(declare-function org--math-label "org-math-structure")
 (defvar org--docs-actually-used)
 
 ;;;; Atoms ---what red:ATOM colours, and what an ATOM[fn::…] tip hovers over
@@ -143,7 +142,6 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
                    (add-to-list 'org--docs-actually-used (list path name docs))
                    (if (eq org--math-backend 'latex) (or desc name)
                      (org--math-tip (or desc name) docs (org--docs-plain-p path))))))
-     ("eqref" . ,(lambda (path _) (format "\\eqref{%s}" (org--math-label path))))
      ("https" . ,(lambda (path desc) (format "\\href{https:%s}{%s}" path (or desc path))))
      ("http" . ,(lambda (path desc) (format "\\href{http:%s}{%s}" path (or desc path))))))
   "Link types that maths knows, each TYPE ↦ (λ PATH DESC ↦ LaTeX); DESC is nil for [[TYPE:PATH]] and TYPE:PATH.

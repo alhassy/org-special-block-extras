@@ -15,39 +15,105 @@
 
 ;;; Commentary:
 
-;; A math block's line tagged “:tag-COLOUR: NAME”, or a block “#+name: NAME”, is cited by NAME; following the
-;; citation in Emacs visits the line.  See `org--eqref-visit'.
+;; A math block's line tagged “:tag-COLOUR: NAME”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
+;; element; by way of example,
+;;
+;;     #+begin_math
+;;     p ⊑ q ≡ p ⊓ q = p   :tag-blue: ⊑-Definition
+;;     #+end_math
+;;     By [[⊑-Definition]], or by [[⊑-Definition][its definition]], …
+;;
+;; exports as \eqref, which LaTeX and MathJax resolve; a description links its words to the equation.  In Emacs,
+;; C-c C-o on the link visits the line.  A NAME may hold maths, as ⊑ or \meet; see `org--math-label'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
 ;;; Code:
 
-(require 'org-defblock)
+(require 'org)
+(require 'org-special-block-at-point)
 (require 'org-math-structure)
 
-;;;; Citations
+(declare-function org-html-head-require "org-block-export")
 
-(defun org--eqref-visit (name)
-  "NAME ↦ point at the equation tagged NAME: a math block's “:tag-COLOUR: NAME” line, else the block “#+name: NAME”,
-else a \\tag{…NAME…}."
-  (let ((at (save-excursion
-              (goto-char (point-min))
-              (or (re-search-forward (format ":tag-[^: \t\n]+:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
-                  (re-search-forward (format "^[ \t]*#\\+[nN][aA][mM][eE]:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
-                  (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
-    (unless at (user-error "No equation is tagged “%s”" name))
-    (push-mark)
-    (goto-char at)
-    (beginning-of-line)))
+;;;; Following a citation ---C-c C-o visits the tagged line
 
-(org-deflink eqref
-  "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for a math block's “:tag-orange: Golden Rule”.
-Following it visits that line, else any \\tag{…NAME…}; it exports as \\eqref{NAME}, which LaTeX and MathJax resolve."
-  :follow (org--eqref-visit o-label)
-  :manual "#math"
-  :export (cond ((org-export-markdown-p) (format "(%s)" o-label))
-                (t (when (equal o-backend 'html) (org-html-head-require 'mathjax))
-                   (format "\\eqref{%s}" (org--math-label o-label)))))
+(defun org--math-ref-follow (name)
+  "When NAME is the tag of a math block's line, “:tag-COLOUR: NAME”, or a block's “#+name: NAME”, or a \\tag{…NAME…},
+visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-execute-file-search-functions', so C-c C-o on
+[[NAME]] visits it."
+  (when (derived-mode-p 'org-mode)
+    (let ((at (save-excursion
+                (goto-char (point-min))
+                (or (re-search-forward (format ":tag-[^: \t\n]+:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
+                    (re-search-forward (format "^[ \t]*#\\+[nN][aA][mM][eE]:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
+                    (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
+      (when at
+        (push-mark)
+        (goto-char at)
+        (beginning-of-line)
+        t))))
+
+;;;; Exporting citations ---[[NAME]] as \eqref, before Org parses
+
+(defun org--math-ref-names ()
+  "↦ each name a math block of the buffer gives its maths to cite: its lines' “:tag-COLOUR: NAME”s, and its #+name:."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((case-fold-search t) names)
+      (while (re-search-forward "^[ \t]*#\\+begin_math\\b" nil t)
+        (save-excursion
+          (beginning-of-line)
+          ;; Its affiliated keywords, #+name: among them, are the lines just above it.
+          (while (and (zerop (forward-line -1)) (looking-at "[ \t]*#\\+\\([[:alnum:]_]+\\):[ \t]*\\(.*?\\)[ \t]*$"))
+            (when (equal (downcase (match-string 1)) "name") (push (match-string 2) names))))
+        (let ((end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point)))))
+          (while (and end (re-search-forward org--math-tag-re end t))
+            (push (match-string 2) names))))
+      names)))
+
+(defun org--math-ref (name desc backend in-maths)
+  "(NAME, DESC, BACKEND, IN-MATHS) ↦ a citation of the equation NAME tags, for BACKEND: \\eqref{LABEL}; or, with DESC, its
+words linked to the equation.  Within maths, LaTeX; in prose, export snippets about DESC, which stays Org.  In
+Markdown, (NAME), as GitHub resolves no \\eqref in prose."
+  (let* ((label (org--math-label name))
+         ;; MathJax's anchor for a label: “mjx-eqn:” and it, its spaces as _, as a link writes it, percent-encoded.
+         (anchor (url-hexify-string (concat "mjx-eqn:" (replace-regexp-in-string "[ \t]" "_" label))))
+         (latex? (org-export-derived-backend-p backend 'latex))
+         (md? (org-export-derived-backend-p backend 'md)))
+    (cond (in-maths (cond ((not desc) (format "\\eqref{%s}" label))
+                          (latex? (format "\\hyperref[%s]{%s}" label desc))
+                          (t (format "\\href{#%s}{%s}" anchor desc))))
+          (md? (or desc (format "(%s)" name)))
+          (latex? (if desc (format "@@latex:\\hyperref[%s]{@@%s@@latex:}@@" label desc) (format "@@latex:\\eqref{%s}@@" label)))
+          ((org-export-derived-backend-p backend 'html)
+           (org-html-head-require 'mathjax)
+           (if desc (format "@@html:<a href=\"#%s\">@@%s@@html:</a>@@" anchor desc) (format "@@html:\\eqref{%s}@@" label)))
+          (t (or desc (format "(%s)" name))))))
+
+(defun org--math-cite (backend)
+  "Before BACKEND's export parses the buffer, make each [[NAME]] or [[NAME][DESC]] whose NAME a math block gives a
+citation of it, `org--math-ref'; while the blocks' tags are still to be read, ere they are rewritten.  A link in
+verbatim text, such as a src block's or =this=, is left be; so is one to anything else, for Org to resolve, or report."
+  (-when-let (names (org--math-ref-names))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward org-link-bracket-re nil t)
+        (let ((name (match-string-no-properties 1)) (desc (match-string-no-properties 2))
+              (start (match-beginning 0)) (end (match-end 0)))
+          (when (and (member name names)
+                     (save-excursion
+                       (goto-char start)
+                       (not (or (memq (org-element-type (org-element-at-point))
+                                      '(src-block example-block export-block fixed-width comment-block))
+                                (memq (org-element-type (org-element-context)) '(verbatim code inline-src-block))))))
+            (let ((in-maths (save-excursion
+                              (goto-char start)
+                              (let ((block (org-special-block-at-point)))
+                                (and block (equal (downcase (org-element-property :type block)) "math"))))))
+              (delete-region start end)
+              (goto-char start)
+              (insert (org--math-ref name desc backend in-maths)))))))))
 
 (provide 'org-math-refs)
 ;;; org-math-refs.el ends here

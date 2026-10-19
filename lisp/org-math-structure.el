@@ -101,7 +101,7 @@ symbol such as ⊑; e.g., “Distributivity of \\meet” ↦ “Distributivity o
 (defun org--math-label (name)
   "NAME ↦ a label for it, which LaTeX's and MathJax's links alike take: each \\command as its name, and each character
 other than an ASCII letter, digit, space, or -:.,()' as uXXXX; e.g., “⊑ of \\meet” ↦ “u2291 of meet”.  So a plain
-name is its own label; an eqref: of NAME cites the same."
+name is its own label; a citation, [[NAME]], cites the same."
   (mapconcat (lambda (c) (if (string-match-p "[A-Za-z0-9 :.,()'-]" (string c)) (string c) (format "u%04x" c)))
              (replace-regexp-in-string "\\\\\\([[:alpha:]]+\\)" "\\1" name) ""))
 

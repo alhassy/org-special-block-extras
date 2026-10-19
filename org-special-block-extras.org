@@ -3522,7 +3522,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Boxed-Text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
     + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
     + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
-    + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =eqref:𝒳= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
+    + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =[[𝒳]]= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
     + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
     + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
   + Links to cite :glance_read:
@@ -4233,7 +4233,7 @@ from∘to m = {! try it! }
   ={\color{red} x}=; yet our prose colours by =red:x=. A [[doc:org-block/math][math]] block is display maths
   wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, =\left(…\right)=, a
   =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colours =a + b=. So too
-  for =color:#ff0066=, =highlight:=, =eqref:=, web links, and =tooltip:= and =doc:=, which hover in
+  for =color:#ff0066=, =highlight:=, web links, and =tooltip:= and =doc:=, which hover in
   HTML; as does a footnote, =x[fn::the current element]=, or =x[fn:elt]=, whose =[fn:elt] …= definition
   sits elsewhere, as in prose ---so one long tip serves many atoms. A tooltip in maths is as one in prose: the
   same box in HTML, and in LaTeX, a margin note, its number on =x=. Org's emphasis is read when its markers
@@ -4251,8 +4251,8 @@ from∘to m = {! try it! }
     columns =TAB= aligns for us. As in Org, a line that begins =|= is a table; so we write
     =\lvert x \rvert= for an absolute value.
   + A line ending =:tag-COLOUR: NAME= is tagged ---see [[#Aligned-equations][aligned equations]]--- and
-    =[[eqref:NAME]]= cites it; =:numbered t= numbers the rest. Org's own =#+name: NAME= labels the
-    block's last line, so =[[eqref:NAME]]= cites a single equation sans a tag; unnumbered, it is tagged =NAME=.
+    =[[NAME]]= cites it; =:numbered t= numbers the rest. Org's own =#+name: NAME= labels the
+    block's last line, so =[[NAME]]= cites a single equation sans a tag; unnumbered, it is tagged =NAME=.
   + A description list is a =cases= environment, each term a value and each description its
     condition ---one of mere words, such as =otherwise=, is prose:
     #+begin_example
@@ -4285,15 +4285,18 @@ R_{teal:\theta} =
 ,#+end_math
   #+end_example
 
-** Aligned equations ---=&= in a math block, cited by =eqref:𝒳=
+** Aligned equations ---=&= in a math block, cited by =[[𝒳]]=
   :PROPERTIES:
   :CUSTOM_ID: Aligned-equations
   :END:
 
   A [[#math][math]] block whose lines have an =&= is LaTeX's =align=: its lines line up at each =&=. As
   in LaTeX, a line ends in =\\=, unless it ends in a tag =:tag-COLOUR: NAME=, which is =NAME= in that
-  colour and is what =[[eqref:NAME]]= cites. Following such a link in Emacs visits the line; failing
-  that, any =\tag{…NAME…}=. With =:numbered t=, the untagged lines are numbered too. Only the block's
+  colour. We cite it as Org cites any named thing: =[[NAME]]= is its number, or name, as LaTeX's =\eqref=
+  shows it; and =[[NAME][these words]]= links the words to it. =C-c C-o= on the link, in Emacs, visits
+  the line; failing that, any =\tag{…NAME…}=. A =NAME= may hold maths, such as =⊑-Definition= or
+  =Distributivity of \meet=, which shows as maths in the tag, and is cited by the very same name. With
+  =:numbered t=, the untagged lines are numbered too. Only the block's
   own =&= counts: one within a ={group}= or a =\begin{cases}…\end{cases}= belongs to it, so a
   piecewise definition is one equation, unless its line aligns at an =&= of its own. A hint,
   =X ={ HINT } Y=, aligns its line too ---see [[#Equational-Proofs][calculational proofs]]. Shorthands
@@ -4748,7 +4751,7 @@ $r$; read the key beneath, then hover, click, and =TAB= away.
   1 - r^n   :tag-teal: Geometric
 #+end_math
 
-Hence, by [[eqref:Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
+Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
 + Colour tells where to look: red:red, the factor a step distributes; teal:teal, the sum it
   reindexes; violet:violet, the two terms that survive. Inline maths is coloured alike: $red:r ≠ 1$.
@@ -4757,7 +4760,7 @@ Hence, by [[eqref:Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠
 + =:let (Σ "\\sum_{i=0}^{n-1}")= is a shorthand, so each line writes =Σ r^i=; it reaches the nested
   calculation too.
 + The index shift is a nested calculation, =\[ … \]=, within its hint.
-+ =:tag-teal: Geometric= tags the result, which =[[eqref:Geometric]]= then cites.
++ =:tag-teal: Geometric= tags the result, which =[[Geometric]]= then cites, as Org cites any named thing.
 + A line =# …= is a comment, kept in the source yet absent from the export.
 + For a puzzle, try =:hints (between folded)=: the reader clicks each hint to see it ---or
   shift-clicks, for all of them.

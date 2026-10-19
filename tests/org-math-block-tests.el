@@ -1,4 +1,4 @@
-;;; org-math-block-tests.el --- Tests for the math block, its alignment at &, and eqref links  -*- lexical-binding: t; -*-
+;;; org-math-block-tests.el --- Tests for the math block, its alignment at &, and citations of its tags  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
@@ -23,8 +23,8 @@
 (deftest "in maths, [[TYPE:PATH][DESC]] is TYPE's LaTeX; an unknown TYPE shows its DESC alone"
   (should (equal (org--math-markup "[[red:][a + b]] [[color:#ff0066][c]] [[color:navy][d]]" 'latex)
                  "{\\color{red}a + b} {\\color[RGB]{255,0,102}c} {\\color{navy}d}"))
-  (should (equal (org--math-markup "[[https://orgmode.org][\\mathrm{Org}]] [[eqref:Golden Rule]] [[file:x.png][x]]" 'latex)
-                 "\\href{https://orgmode.org}{\\mathrm{Org}} \\eqref{Golden Rule} x")))
+  (should (equal (org--math-markup "[[https://orgmode.org][\\mathrm{Org}]] [[file:x.png][x]]" 'latex)
+                 "\\href{https://orgmode.org}{\\mathrm{Org}} x")))
 
 (defun org-math-tests--tips (math backend)
   "(MATH, BACKEND) ↦ (MATH in LaTeX . its tooltips' <template>s, oldest first), each gensym numbered from g1."
@@ -140,13 +140,13 @@ red:0 < 1" nil)
   ;; A plain name is its own label, so a document's labels stay as they were.
   (should (equal (org--math-label "Golden Rule") "Golden Rule")))
 
-(define-org-export-test "a math block's tag of a name with maths shows it, and eqref: cites it by that very name"
+(define-org-export-test "a math block's tag of a name with maths shows it, and [[NAME]] cites it by that very name"
   :to latex
   :input "
           #+begin_math
           (p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   :tag-teal: Distributivity of \\meet
           #+end_math
-          By [[eqref:Distributivity of \\meet]]."
+          By [[Distributivity of \\meet]]."
   :equals "\\[
 (p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   \\tag{$\\color{teal}{\\text{Distributivity of $\\meet$}}$} \\label{Distributivity of meet}
 \\]
@@ -203,7 +203,7 @@ M &=
           #+begin_math :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
           *p* -> q &== red:\\neg p \\lor q   :tag-blue: Implication
           #+end_math
-          By [[eqref:Implication]], p -> p."
+          By [[Implication]], p -> p."
   :equals "\\begin{align*}
 \\boldsymbol{p} \\Rightarrow q &\\equiv {\\color{red}\\neg} p \\lor q   \\tag{$\\color{blue}{\\text{Implication}}$} \\label{Implication}
 \\end{align*}
@@ -450,36 +450,38 @@ e^{i\\pi} + 1 = 0
 \\end{equation}
 #+end_export")
 
-(org-deftest "following eqref:NAME visits the line tagged :tag-COLOUR: NAME, else a \\tag{…NAME…}"
+(org-deftest "C-c C-o on [[NAME]] visits the line tagged :tag-COLOUR: NAME, else a \\tag{…NAME…}; else Org's own search"
   :text "
-By [[eqref:Golden Rule]] and [[eqref:Leibniz]].
+By [[Golden Rule]], [[⊑-Definition]], and [[Leibniz]].
 #+begin_math
 p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :tag-orange: Golden Rule
+p ⊑ q &\\equiv p \\land q \\equiv p   :tag-blue: ⊑-Definition
 #+end_math
 \\begin{equation} x = y \\Rightarrow f(x) = f(y) \\tag{Leibniz} \\end{equation}"
-  (funcall (org-link-get-parameter "eqref" :follow) "Golden Rule" nil)
-  (should (looking-at-p "p \\\\land q"))
-  (funcall (org-link-get-parameter "eqref" :follow) "Leibniz" nil)
-  (should (looking-at-p "\\\\begin{equation}"))
-  (should-error (funcall (org-link-get-parameter "eqref" :follow) "Nowhere" nil) :type 'user-error))
+  (dolist (case '(("[[Golden Rule]]" . "p \\\\land q") ("[[⊑-Definition]]" . "p ⊑ q") ("[[Leibniz]]" . "\\\\begin{equation}")))
+    (goto-char (point-min))
+    (search-forward (car case))
+    (backward-char 3)
+    (org-open-at-point)
+    (should (looking-at-p (cdr case)))))
 
 ;;; Names ---Org's own #+name: labels the block
 
-(define-org-export-test "a named math block that is :numbered t is labelled by its #+name:, which eqref: cites"
+(define-org-export-test "a named math block that is :numbered t is labelled by its #+name:, which [[NAME]] cites"
   :to latex
   :input "
           #+name: Euler
           #+begin_math :numbered t
           e^{i\\pi} + 1 = 0
           #+end_math
-          By [[eqref:Euler]]."
+          By [[Euler]]."
   :equals "\\begin{equation}
 e^{i\\pi} + 1 = 0 \\label{Euler}
 \\end{equation}
 By \\eqref{Euler}.
 ")
 
-(define-org-export-test "a named math block sans numbers is tagged by its #+name:, so eqref: has a name to cite"
+(define-org-export-test "a named math block sans numbers is tagged by its #+name:, so [[NAME]] has a name to cite"
   :to latex
   :input "
           #+name: Euler
@@ -491,15 +493,52 @@ e^{i\\pi} + 1 = 0 \\tag{Euler} \\label{Euler}
 \\]
 ")
 
-(org-deftest "following eqref:NAME visits the math block named NAME"
+(org-deftest "C-c C-o on [[NAME]] visits the math block named NAME"
   :text "
-By [[eqref:Euler]].
+By [[Euler]].
 #+name: Euler
 #+begin_math
 e^{i\\pi} + 1 = 0
 #+end_math"
-  (funcall (org-link-get-parameter "eqref" :follow) "Euler" nil)
+  (search-forward "Euler")
+  (org-open-at-point)
   (should (looking-at-p "#\\+name: Euler")))
+
+(define-org-export-test "[[NAME][words]] links its words to the equation tagged NAME, in LaTeX as in HTML for MathJax"
+  :to latex
+  :input "
+          #+begin_math
+          a = b   :tag-teal: Golden Rule
+          #+end_math
+          By [[Golden Rule][the /rule/ of thumb]]."
+  :equals "\\[
+a = b   \\tag{$\\color{teal}{\\text{Golden Rule}}$} \\label{Golden Rule}
+\\]
+By \\hyperref[Golden Rule]{the \\emph{rule} of thumb}.
+")
+
+(deftest "[[NAME]] in HTML is MathJax's \\eqref, and [[NAME][words]] a link to its anchor; in Markdown, (NAME)"
+  (let ((org "#+begin_math\na = b   :tag-teal: Golden Rule\n#+end_math\nBy [[Golden Rule]], or [[Golden Rule][the rule]]."))
+    (should (string-match-p (regexp-quote "By \\eqref{Golden Rule}, or <a href=\"#mjx-eqn%3AGolden_Rule\">the rule</a>.")
+                            (org-export-string-as org 'html t)))
+    (should (string-match-p (regexp-quote "By (Golden Rule), or the rule.") (org-export-string-as org 'md t)))))
+
+(deftest "[[NAME]] within maths is \\eqref too; a source listing's, and a link to no tag, are Org's as ever"
+  (let ((latex (org-export-string-as "
+#+begin_math
+a = b   :tag-teal: Golden Rule
+#+end_math
+#+begin_math
+c = d \\quad \\text{by } [[Golden Rule]]
+#+end_math
+#+begin_src org
+By [[Golden Rule]].
+#+end_src
+* A heading
+See [[A heading]]." 'latex t)))
+    (should (string-match-p (regexp-quote "c = d \\quad \\text{by } \\eqref{Golden Rule}") latex))
+    (should (string-match-p (regexp-quote "By [[Golden Rule]].") latex))
+    (should (string-match-p (regexp-quote "See \\ref{sec:") latex))))
 
 ;;; Hints ---REL{ HINT } aligns its line at REL, the hint in a column of its own
 

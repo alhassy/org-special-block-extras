@@ -79,10 +79,11 @@ Docs · See the manual"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.
-  (should (equal (car (org-test--eldoc-at "By [[eqref:Fold]]." "eqref:"))
-                 "Refer to the equation tagged NAME; e.g., [[eqref:Golden Rule]] for a math block's “:tag-orange: Golden Rule”.
-C-c C-o  Follow it.
-Docs · See the manual"))
+  (unwind-protect
+      (progn (org-deflink test-follow "Visit the page named LABEL." :follow (message "%s" o-label) :export o-label)
+             (should (equal (car (org-test--eldoc-at "By [[test-follow:Fold]]." "test-follow:"))
+                            "Visit the page named LABEL.\nC-c C-o  Follow it.\nDocs")))
+    (setq org-link-parameters (assoc-delete-all "test-follow" org-link-parameters)))
   ;; Org's own links are not ours to document.
   (should-not (org-test--eldoc-at "See https://example.com here" "https:")))
 

@@ -24,7 +24,7 @@
 ;;     #+end_math
 ;;
 ;; colours ⊕ teal, x violet, a red, and b cyan, as red:𝒳 colours prose; hovering over x shows its footnote; the
-;; equation is tagged “(Fold)”, in teal, which [[eqref:Fold]] cites.  The \def line is a definition, declared but not
+;; equation is tagged “(Fold)”, in teal, which [[Fold]] cites.  The \def line is a definition, declared but not
 ;; shown: in LaTeX, in the preamble; in HTML, for MathJax, hidden.  An Org table is a matrix; lines that end in \\ are
 ;; gathered; lines with an & are aligned at it, as in a textbook derivation.  In Emacs, C-c C-c shows the maths as an
 ;; image atop the block, and C-c ' edits it in `latex-mode'.  See `org-block/math'.
@@ -108,11 +108,11 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
   teal:\\bigoplus_{violet:x[fn::the current element] = \\xstart}^{cyan:b} brown:f(violet:x)   :tag-teal: Fold
   #+end_math
 
-Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
+Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link to it.
 
 + red:ATOM colours an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
   delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
-  [[color:#ff0066][…]], highlight:, eqref:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
+  [[color:#ff0066][…]], highlight:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
 + ATOM[fn::TIP], or ATOM[[tooltip:TIP]], is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
   tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.  ATOM[fn:NAME]'s TIP is its “[fn:NAME] TIP”
   definition, elsewhere in the buffer; so one long tip may serve many atoms.
@@ -121,8 +121,9 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A description list, “- VALUE :: CONDITION” lines, is a cases environment; a CONDITION of mere words, such as
   otherwise, is prose.
-+ A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[eqref:NAME]] cites; NUMBERED numbers the rest.
-  A block's “#+name: NAME” labels its last line, so [[eqref:NAME]] cites it too; it is tagged NAME when unnumbered.
++ A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[NAME]] cites, as Org cites a named thing, and
+  C-c C-o on it visits; NAME may hold maths, as \\meet or ⊑.  NUMBERED numbers the rest.  A block's “#+name: NAME”
+  labels its last line, so [[NAME]] cites it too; it is tagged NAME when unnumbered.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
 + “X ={ HINT } Y” states why the step holds, as in a calculational proof; so too for any relation, ≤{ … }, \\equiv{ … },
