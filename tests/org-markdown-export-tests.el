@@ -28,7 +28,7 @@
   :input "
           #+options: toc:nil
           #+begin_math
-          x &= y   :Symmetry:blue:
+          x &= y   blue:<<Symmetry>>
           #+end_math
           By [[Symmetry]]."
   :equals "```math

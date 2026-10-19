@@ -4257,7 +4257,7 @@ from∘to m = {! try it! }
   + An Org table is a matrix ---a =pmatrix=, or whichever environment =:matrix= names--- whose
     columns =TAB= aligns for us. As in Org, a line that begins =|= is a table; so we write
     =\lvert x \rvert= for an absolute value.
-  + A line ending =:NAME:COLOUR:= is tagged, as Org tags a heading ---see [[#Aligned-equations][aligned equations]]--- and
+  + A line ending =COLOUR:<<NAME>>=, Org's own target, is tagged ---see [[#Aligned-equations][aligned equations]]--- and
     =[[NAME]]= cites it; =:numbered t= numbers the rest. Org's own =#+name: NAME= labels the
     block's last line, so =[[NAME]]= cites a single equation sans a tag; unnumbered, it is tagged =NAME=.
   + A description list is a =cases= environment, each term a value and each description its
@@ -4303,10 +4303,10 @@ R_{teal:\theta} =
   :END:
 
   A [[#math][math]] block whose lines have an =&= is LaTeX's =align=: its lines line up at each =&=. As
-  in LaTeX, a line ends in =\\=, unless it ends in a tag =:NAME:COLOUR:=, which is =NAME= in that
-  colour; =:NAME:= is plain. As an Org tag has no spaces, a =_= is one: =:Base_Case:= is
-  =:Base Case:=, and =[[Base_Case]]= cites it too. In Emacs, it shows as a heading's tags read, =[NAME][COLOUR]=. Its colons
-  delimit it, so a hint's nested calculation, =\[ … \]=, may hold one too. We cite it as Org cites any
+  in LaTeX, a line ends in =\\=, unless it ends in a tag =COLOUR:<<NAME>>=, which is =NAME= in that
+  colour, as =red:x= colours maths; =<<NAME>>= is plain. It is Org's own target, so =NAME= may hold
+  spaces, and a =_= is a subscript: =<<Base Case_1>>= is tagged “Base Case₁”. Its brackets delimit it, so
+  a hint's nested calculation, =\[ … \]=, may hold one too. We cite it as Org cites any
   named thing: =[[NAME]]= is its number, or name, as LaTeX's =\eqref=
   shows it; and =[[NAME][these words]]= links the words to it. =C-c C-o= on the link, in Emacs, visits
   the line; failing that, any =\tag{…NAME…}=. A =NAME= may hold maths, such as =⊑-Definition= or
@@ -4479,10 +4479,10 @@ rational root equivales perfect power.
    When $x$ is zero, there are no $\suc$-s
    to move to the right, so we yield the
    right:
-   \[ \zero + n = n   :Base Case:teal: \]
+   \[ \zero + n = n   teal:<<Base Case>> \]
    When $x$ is a $\suc$, we move the $\suc$
    to the right, and continue to try adding:
-   \[ \suc m + n = m + \suc n   :Inductive Step:teal: \]
+   \[ \suc m + n = m + \suc n   teal:<<Inductive Step>> \]
    Since we're moving a $\suc$ at each step,
    eventually we'll hit the [[Base Case]] and be
    done adding.
@@ -4515,10 +4515,10 @@ rational root equivales perfect power.
    When $x$ is zero, there are no $\suc$-s
    to move to the right, so we yield the
    right:
-   \[ \zero + n = n   :Base Case:teal: \]
+   \[ \zero + n = n   teal:<<Base Case>> \]
    When $x$ is a $\suc$, we move the $\suc$
    to the right, and continue to try adding:
-   \[ \suc m + n = m + \suc n   :Inductive Step:teal: \]
+   \[ \suc m + n = m + \suc n   teal:<<Inductive Step>> \]
    Since we're moving a $\suc$ at each step,
    eventually we'll hit the [[Base Case]] and be
    done adding.
@@ -4763,7 +4763,7 @@ $r$; read the key beneath, then hover, click, and =TAB= away.
 ={ Only the first and the last terms survive }
   violet:{r^0} - violet:{r^n}
 ={ $r^0 = 1$ }
-  1 - r^n   :Geometric:teal:
+  1 - r^n   teal:<<Geometric>>
 #+end_math
 
 Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
@@ -4775,7 +4775,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 + =:let (Σ "\\sum_{i=0}^{n-1}")= is a shorthand, so each line writes =Σ r^i=; it reaches the nested
   calculation too.
 + The index shift is a nested calculation, =\[ … \]=, within its hint.
-+ =:Geometric:teal:= tags the result, which =[[Geometric]]= then cites, as Org cites any named thing.
++ =teal:<<Geometric>>= tags the result, which =[[Geometric]]= then cites, as Org cites any named thing.
 + A line =# …= is a comment, kept in the source yet absent from the export.
 + For a puzzle, try =:hints (between folded)=: the reader clicks each hint to see it ---or
   shift-clicks, for all of them.
@@ -4801,7 +4801,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 ={ Only the first and the last terms survive }
   violet:{r^0} - violet:{r^n}
 ={ $r^0 = 1$ }
-  1 - r^n   :Geometric:teal:
+  1 - r^n   teal:<<Geometric>>
 ,#+end_math
 #+end_src
 
@@ -5148,7 +5148,7 @@ Mind the gap.
 (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic]) …)
   #+end_src
   Moreover, =:keywords= shows patterns within the contents in a face of their choosing; e.g.,
-  a [[#math][math]] block shows each =:Fold:blue:= as a tag, in blue, by
+  a [[#math][math]] block shows each =blue:<<Fold>>= as a tag, in blue, by
   #+begin_src emacs-lisp
 :fontify [:keywords '((org--math-match-tag 0 org--math-tag-face))]
   #+end_src
@@ -6960,7 +6960,7 @@ may be useful to colour the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
 * Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
-  :CUSTOM_ID: Tooltips-for-Glossaries-Dictionaries-and-Documentation
+  :CUSTOM_ID: tooltips-for-glossaries-dictionaries-and-documentation
   :END:
 
 # TODO: The main difference between “doc” and “margin” is that the latter admits a block form,

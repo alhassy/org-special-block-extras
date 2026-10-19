@@ -20,7 +20,7 @@
 ;;     #+begin_math
 ;;     # The bounds, declared once; this line is a comment.
 ;;     \def\xstart{red:a}
-;;     teal:\bigoplus_{violet:x[fn::the current element] = \xstart}^{cyan:b} brown:f(violet:x)   :Fold:teal:
+;;     teal:\bigoplus_{violet:x[fn::the current element] = \xstart}^{cyan:b} brown:f(violet:x)   teal:<<Fold>>
 ;;     #+end_math
 ;;
 ;; colours ⊕ teal, x violet, a red, and b cyan, as red:𝒳 colours prose; hovering over x shows its footnote; the
@@ -50,7 +50,7 @@
 
 (defconst org--math-fontify-keywords
   '((org--math-unlink 0 nil)
-    ;; A tag, “:NAME:COLOUR:”, shows as a heading's do, “[NAME][COLOUR]”, in COLOUR.
+    ;; A tag, “COLOUR:<<NAME>>”, shows as Org's target, in COLOUR.
     (org--math-match-tag 0 org--math-tag-face)
     (org--math-match-plain-link 0 org--math-link-face)
     ;; Each & is where lines may align; an escaped \& is a mere ampersand.
@@ -117,7 +117,7 @@ all that its lines imply; sans star, it is numbered."
   #+begin_math
   # The bounds, declared once; this line is a comment.
   \\def\\xstart{red:a}
-  teal:\\bigoplus_{violet:x[fn::the current element] = \\xstart}^{cyan:b} brown:f(violet:x)   :Fold:teal:
+  teal:\\bigoplus_{violet:x[fn::the current element] = \\xstart}^{cyan:b} brown:f(violet:x)   teal:<<Fold>>
   #+end_math
 
 Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link to it.
@@ -133,11 +133,11 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A description list, “- VALUE :: CONDITION” lines, is a cases environment; a CONDITION of mere words, such as
   otherwise, is prose.
-+ A line ending “:NAME:COLOUR:”, as Org tags a heading, is tagged NAME, in COLOUR, which [[NAME]] cites, as Org cites
-  a named thing, and C-c C-o on it visits; sans COLOUR, “:NAME:” is plain.  A _ is a space, so
-  :Base_Case: is :Base Case:, as an Org tag has no spaces.  NAME may hold maths, as \\meet or ⊑.  A
-  hint's \\[ … \\] may be tagged too, for its colons delimit the tag: “\\[ 0 + n = n :Base Case:teal: \\]”.  NUMBERED numbers the rest.  A block's “#+name: NAME”
-  labels its last line, so [[NAME]] cites it too; it is tagged NAME when unnumbered.
++ A line ending “COLOUR:<<NAME>>”, Org's own target, is tagged NAME, in COLOUR, which [[NAME]] cites, as Org cites
+  a target, and C-c C-o on it visits; sans COLOUR, “<<NAME>>” is plain.  NAME may hold maths, as \\meet, ⊑, or a
+  subscript, as <<Base Case_1>>.  A hint's \\[ … \\] may be tagged too: “\\[ 0 + n = n teal:<<Base Case>> \\]”.
+  NUMBERED numbers the rest.  A block's “#+name: NAME” labels its last line, so [[NAME]] cites it too; it is
+  tagged NAME when unnumbered.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
 + “X ={ HINT } Y” states why the step holds, as in a calculational proof; so too for any relation, ≤{ … }, \\equiv{ … },

@@ -15,11 +15,11 @@
 
 ;;; Commentary:
 
-;; A math block's line tagged “:NAME:COLOUR:”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
+;; A math block's line tagged “COLOUR:<<NAME>>”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
 ;; element; by way of example,
 ;;
 ;;     #+begin_math
-;;     p ⊑ q ≡ p ⊓ q = p   :⊑-Definition:blue:
+;;     p ⊑ q ≡ p ⊓ q = p   blue:<<⊑-Definition>>
 ;;     #+end_math
 ;;     By [[⊑-Definition]], or by [[⊑-Definition][its definition]], …
 ;;
@@ -40,18 +40,13 @@
 ;;;; Following a citation ---C-c C-o visits the tagged line
 
 (defun org--math-ref-follow (name)
-  "When NAME is the tag of a math block's line, “:NAME:COLOUR:”, or a block's “#+name: NAME”, or a \\tag{…NAME…},
-visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-execute-file-search-functions', so C-c C-o on
+  "When NAME is a \\tag{…NAME…}, visit it and ↦ t; else ↦ nil, so Org searches as ever, and finds a tag, <<NAME>>, as
+its own target, and a block's “#+name: NAME”.  A function of `org-execute-file-search-functions', so C-c C-o on
 [[NAME]] visits it."
   (when (derived-mode-p 'org-mode)
     (let ((at (save-excursion
                 (goto-char (point-min))
-                (or (re-search-forward (format "[ \t]:%s:\\(?:[^: \t\n]+:\\)?"
-                                               ;; Either spelling, a _ or a space; see `org--math-tag-name'.
-                                               (string-replace " " "[ _]" (regexp-quote (org--math-tag-name name))))
-                                       nil t)
-                    (re-search-forward (format "^[ \t]*#\\+[nN][aA][mM][eE]:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
-                    (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
+                (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t))))
       (when at
         (push-mark)
         (goto-char at)
@@ -61,7 +56,7 @@ visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-e
 ;;;; Exporting citations ---[[NAME]] as \eqref, before Org parses
 
 (defun org--math-ref-names ()
-  "↦ each name a math block of the buffer gives its maths to cite, as (NAME . NESTED): its tags, “:NAME:COLOUR:”, and its
+  "↦ each name a math block of the buffer gives its maths to cite, as (NAME . NESTED): its tags, “COLOUR:<<NAME>>”, and its
 #+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag nor \\eqref."
   (save-excursion
     (goto-char (point-min))
@@ -75,7 +70,7 @@ visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-e
         (let ((start (point)) (end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point)))))
           (while (and end (re-search-forward org--math-tag-re end t))
             ;; Nested: within a \[ that no \] has closed yet; a \\[ is a line break, not one.
-            (let ((name (org--math-tag-name (match-string 1))) (at (match-beginning 0)))
+            (let ((name (match-string 1)) (at (match-beginning 0)))
               (push (cons name (< (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\]" start at))
                                   (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\[" start at))))
                     names)))))
@@ -114,8 +109,6 @@ verbatim text, such as a src block's or =this=, is left be; so is one to anythin
       (while (re-search-forward org-link-bracket-re nil t)
         (let ((name (match-string-no-properties 1)) (desc (match-string-no-properties 2))
               (start (match-beginning 0)) (end (match-end 0)))
-          ;; A #+name: is cited as written; a tag, its _s spaces too.
-          (setq name (car (or (assoc name names) (assoc (org--math-tag-name name) names) (list name))))
           (when (and (assoc name names)
                      (save-excursion
                        (goto-char start)

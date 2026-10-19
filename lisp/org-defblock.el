@@ -315,7 +315,7 @@ KWDS may also carry options, which are not arguments:
 + `:fontify [:begin STRING :end STRING :face FACE]' says how the block looks in Org buffers;
   e.g., [:begin \"Proof.\" :end \"⏹\" :face \='italic] shows “#+begin_proof” as “Proof.”,
   “#+end_proof” as “⏹”, and the contents in italics too.  Moreover, :keywords \='((REGEXP GROUP FACE) …) shows
-  each REGEXP match in the contents in FACE; e.g., the `math' block's “:Fold:blue:” shows as a tag, in blue.
+  each REGEXP match in the contents in FACE; e.g., the `math' block's “blue:<<Fold>>” shows as a tag, in blue.
   And :language \"latex\" shows the contents as a #+begin_src latex block's.  Each part is optional; see
   `org--fontify-blocks'.
 + `:hover STRING' is prose that eldoc shows, on hovering the block's #+begin_ line, beneath its docstring's

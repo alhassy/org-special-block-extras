@@ -77,7 +77,7 @@ ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a spac
 (defun org--math-hint (text &optional between)
   "(TEXT, BETWEEN) ↦ the LaTeX of a hint: its lines, top-aligned with its step, a blank one a gap; and each
 \\[ CALCULATION \\] within, a nested calculation, whose hints are read alike, so they may nest too, set BETWEEN its
-expressions as the block's are; see `org--math-hints'; its tags, “:NAME:COLOUR:”, are anchored in place, as an
+expressions as the block's are; see `org--math-hints'; its tags, “COLOUR:<<NAME>>”, are anchored in place, as an
 aligned has no \\tag; see `org--math-tags'.  A hint of one line is a \\text{…}.
 E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the aligned x &\\quad = \\quad y && \\text{h}."
   (let ((pos 0) rows)

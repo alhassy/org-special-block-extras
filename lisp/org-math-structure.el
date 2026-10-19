@@ -86,9 +86,9 @@ As an Org table is a matrix; a line that begins “- x” sans “ :: ” stays 
 
 ;;;; Tags ---a line's coloured name, and the label citations reach
 
-(defconst org--math-tag-re "[ \t]+:\\([^: \t\n]\\(?:[^:\n]*[^: \t\n]\\)?\\):\\(?:\\([^: \t\n]+\\):\\)?"
-  "A tag, “:NAME:” or “:NAME:COLOUR:”, after a space, as Org tags a heading; e.g., “x = y   :Base Case:teal:”.  Its
-colons delimit it, so maths may follow it, as a nested calculation's \\] does.")
+(defconst org--math-tag-re "\\(?:\\(?2:[[:alpha:]]+\\):\\)?<<\\(?1:[^<>\n]+\\)>>"
+  "A tag, “<<NAME>>” or “COLOUR:<<NAME>>”, Org's own target, coloured as maths is; e.g., “x = y   teal:<<Base Case>>”.
+Its brackets delimit it, so maths may follow it, as a nested calculation's \\] does.")
 
 (defconst org--math-symbol-re "[Ͱ-Ͽ℀-⅏←-⇿∀-⋿⌀-⏿⟀-⟿⤀-⫿𝐀-𝟿]"
   "A character that is maths, not text: Greek, letterlike, an arrow, an operator, a technical or maths symbol, or a
@@ -108,26 +108,20 @@ name is its own label; a citation, [[NAME]], cites the same."
   (mapconcat (lambda (c) (if (string-match-p "[A-Za-z0-9 :.,()'-]" (string c)) (string c) (format "u%04x" c)))
              (replace-regexp-in-string "\\\\\\([[:alpha:]]+\\)" "\\1" name) ""))
 
-(defun org--math-tag-name (name)
-  "NAME ↦ NAME, its each _ a space, as an Org tag has none; e.g., “Base_Case” ↦ “Base Case”.  So :Base_Case: and
-:Base Case: are one tag, and [[Base_Case]] cites it too.  A subscript, then, is braced: x_{0} stays."
-  (replace-regexp-in-string "_\\([^{]\\|\\'\\)" " \\1" name t))
-
 (defun org--math-tag-anchor (name)
   "NAME ↦ the id of the anchor MathJax gives the equation NAME tags: “mjx-eqn:” and its label, its spaces as _."
   (concat "mjx-eqn:" (replace-regexp-in-string "[ \t]" "_" (org--math-label name))))
 
 (defun org--math-tags (math &optional nested)
-  "MATH ↦ MATH whose each tag, “:NAME:COLOUR:” of `org--math-tag-re', is NAME as a COLOUR \\tag, labelled NAME ---its _s spaces, by
-`org--math-tag-name'--- and,
-ending its line, \\\\; e.g., “x :Id:blue:” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id}”.  Sans COLOUR, it is
+  "MATH ↦ MATH whose each tag, “COLOUR:<<NAME>>” of `org--math-tag-re', is NAME as a COLOUR \\tag, labelled NAME, and,
+ending its line, \\\\; e.g., “x blue:<<Id>>” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id}”.  Sans COLOUR, it is
 plain.  A NESTED calculation's tag, as a hint's \\[ … \\], is no \\tag, which an aligned forbids, but NAME in brackets
 there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
   (with-temp-buffer
     (insert math)
     (goto-char (point-min))
     (while (re-search-forward org--math-tag-re nil t)
-      (let* ((name (org--math-tag-name (match-string 1))) (colour (match-string 2)) (text (org--math-tag-text name))
+      (let* ((name (match-string 1)) (colour (match-string 2)) (text (org--math-tag-text name))
              (tag (cond ((not nested) (format "\\tag{%s} \\label{%s}"
                                              (if colour (format "$\\color{%s}{\\text{%s}}$" colour text) text)
                                              (org--math-label name)))
@@ -137,27 +131,18 @@ there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
                                                      ('latex (format "\\hypertarget{%s}{%s}" (org--math-label name) shown))
                                                      ('html (format "\\cssId{%s}{%s}" (org--math-tag-anchor name) shown))
                                                      (_ shown))))))))
-        (delete-region (1- (match-beginning 1)) (match-end 0))
+        (delete-region (match-beginning 0) (match-end 0))
         (insert tag (if (looking-at "[ \t]*\n") " \\\\" ""))))
     (buffer-string)))
 
 (defun org--math-match-tag (limit)
-  "Font-lock matcher: up to LIMIT, the next tag, “:NAME:COLOUR:”, shown as “[NAME][COLOUR]”, as a heading's tags read;
-its text is untouched, only its colons displayed as brackets.  See `org--math-tag-face'."
-  (when (re-search-forward org--math-tag-re limit t)
-    (let ((open (1- (match-beginning 1))) (middle (match-end 1)) (close (match-end 2)))
-      (org--display-as open (1+ open) "[")
-      (if close
-          (progn (org--display-as middle (1+ middle) "][") (org--display-as close (1+ close) "]"))
-        (org--display-as middle (1+ middle) "]"))
-      (set-match-data (list open (1+ (or close middle)) (match-beginning 1) (match-end 1)
-                            (match-beginning 2) (match-end 2)))
-      t)))
+  "Font-lock matcher: up to LIMIT, the next tag, “COLOUR:<<NAME>>”; see `org--math-tag-face'."
+  (re-search-forward org--math-tag-re limit t))
 
 (defun org--math-tag-face ()
-  "↦ The face of the tag just matched: Org's tag, in its COLOUR when Emacs knows that colour."
+  "↦ The face of the tag just matched: Org's target, in its COLOUR when Emacs knows that colour."
   (let ((colour (match-string 2)))
-    (if (and colour (color-defined-p colour)) (list :inherit 'org-tag :foreground colour) 'org-tag)))
+    (if (and colour (color-defined-p colour)) (list :inherit 'org-target :foreground colour) 'org-target)))
 
 ;;;; Definitions, and the marks that set a display's environment
 
