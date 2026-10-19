@@ -188,6 +188,30 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
                          ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
                          (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) ""))))))))
 
+;;;; In Emacs ---cdlatex reads a math block as maths
+
+(defvar texmathp-why)
+
+(defun org--math-maths-at-point-p ()
+  "Whether point is in a math block's maths: its contents, save a hint's prose, yet within that prose's $…$; e.g., in
+“x ={ by $y$ } z”, at x, y, and z, yes, and at “by” no.  In an Org buffer, or the block's C-c ' buffer."
+  (-when-let (start (and (or org--math-edit-buffer (derived-mode-p 'org-mode)) (org--math-block-contents-start)))
+    (let ((end (if org--math-edit-buffer (point-max) (org-element-property :contents-end (org-special-block-at-point)))))
+      (and (<= start (point)) (< (point) end)
+           (pcase (org--math-hint-at-point)
+             (`(,_ ,brace ,_) (or (<= (point) brace) (cl-oddp (cl-count ?$ (buffer-substring (1+ brace) (point))))))
+             (_ t))))))
+
+(defun org--math-inside-fragment (inside &optional element)
+  "Advice around `org-inside-LaTeX-fragment-p', INSIDE, of ELEMENT: sans ELEMENT, a math block's maths is maths too,
+`org--math-maths-at-point-p'; so org-cdlatex-mode's _, ^, ', and TAB act there, as within $…$."
+  (or (and (not element) (org--math-maths-at-point-p)) (funcall inside element)))
+
+(defun org--math-texmathp (texmathp &rest args)
+  "Advice around AUCTeX's `texmathp', TEXMATHP, of ARGS: a math block's maths is maths, `org--math-maths-at-point-p';
+so cdlatex wraps no $…$ about what it inserts there."
+  (if (org--math-maths-at-point-p) (progn (setq texmathp-why '("a math block" . 0)) t) (apply texmathp args)))
+
 ;;;; C-c C-c ---the maths, as an image atop its block
 
 (defun org--math-preview (raw numbered matrix &optional hints environment)

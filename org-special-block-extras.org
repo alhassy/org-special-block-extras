@@ -4276,6 +4276,8 @@ n! =
     the maths reads it; =C-c C-c= shows the maths as an image atop the block, until =C-c C-c= again,
     or an edit; and =C-c '= edits it in =latex-mode=, its hints, tags, and colours shown as in the Org buffer. Org's own =C-c C-x C-l=, and
     =#+startup: latexpreview=, show math blocks as images too.
+  + With =org-cdlatex-mode=, a math block reads as maths, as =$…$= does: =_= and =^= open braces, =`a=
+    is =\alpha=, and =TAB= expands cdlatex's templates; a hint's prose is prose, save its own =$…$=.
   + Unicode, such as =∀ x ∈ ℕ=, typesets in HTML as is; in LaTeX, it needs =#+latex_compiler: lualatex=
     and =#+latex_header: \usepackage{unicode-math}=, else its symbols are dropped ---silently, with only
     a “Missing character” in the log.

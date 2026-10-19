@@ -469,6 +469,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (advice-add 'org-html-latex-fragment :around #'org--math-inline)
         ;; M-q within a math block fills its hint at point alone, never its maths.
         (advice-add 'org-fill-paragraph :before-until #'org--math-fill-hint)
+        ;; org-cdlatex-mode reads a math block's contents as maths, as it reads $…$.
+        (advice-add 'org-inside-LaTeX-fragment-p :around #'org--math-inside-fragment)
+        (advice-add 'texmathp :around #'org--math-texmathp)
         ;; TAB on a hint folds it to ={…}, as TAB folds a heading.
         (add-hook 'org-tab-first-hook #'org--math-fold-hint)
         ;; In C-c ' buffers too; and eldoc tells of a hint at point.
@@ -512,6 +515,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-latex-latex-fragment #'org--math-inline)
     (advice-remove 'org-html-latex-fragment #'org--math-inline)
     (advice-remove 'org-fill-paragraph #'org--math-fill-hint)
+    (advice-remove 'org-inside-LaTeX-fragment-p #'org--math-inside-fragment)
+    (advice-remove 'texmathp #'org--math-texmathp)
     (remove-hook 'org-tab-first-hook #'org--math-fold-hint)
     (remove-hook 'org-special-block-edit-functions #'org--math-edit-setup)
     (remove-hook 'eldoc-documentation-functions #'org--math-hint-eldoc)

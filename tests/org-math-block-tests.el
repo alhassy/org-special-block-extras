@@ -1148,6 +1148,31 @@ x ={ a reason } y
                (should (string-match-p "TAB" said)))
       (org-edit-src-abort))))
 
+(org-deftest "cdlatex reads a math block's contents as maths, as within $…$; a hint's prose is no maths, but its $…$ is"
+  :text "
+Prose.
+#+begin_math
+x ={ by $y + 1$, of course } z
+#+end_math"
+  (let ((at (lambda (needle &optional back)
+              (goto-char (point-min)) (search-forward needle) (backward-char (or back 1))
+              (list (org--math-maths-at-point-p) (and (org-inside-LaTeX-fragment-p) t)))))
+    (should (equal (funcall at "x =") '(t t)))
+    (should (equal (funcall at "} z") '(t t)))
+    (should (equal (funcall at "+ 1") '(t t)))
+    (should (equal (funcall at "of course") '(nil nil)))
+    (should (equal (funcall at "Prose") '(nil nil)))
+    (should (equal (funcall at "#+begin_math") '(nil nil)))
+    ;; cdlatex's own test, texmathp, of AUCTeX, agrees; were it absent, we stand one in.
+    (let ((stubbed (not (fboundp 'texmathp))))
+      (when stubbed (defun texmathp () nil))
+      (unwind-protect
+          (progn (funcall at "x =")
+                 (should (texmathp))
+                 (funcall at "of course")
+                 (should-not (texmathp)))
+        (when stubbed (fmakunbound 'texmathp))))))
+
 (org-deftest "M-q within a math block, but not a hint, leaves the maths be, as it is no prose"
   :text "
 #+begin_math
