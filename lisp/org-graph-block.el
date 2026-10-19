@@ -399,7 +399,8 @@ linked node's label--- vanish, lest the browser's native tooltips compete.
             (maphash (lambda (key tip) (push (concat "\n" (org--tooltip-template key tip)) templates)) tips)
             (apply #'concat (nreverse templates)))))
 
-(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode :manual "#Graphs")
+(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode :manual "#Graphs"
+                    &context backend raw-contents args anchor)
   "Render an Org list + tables as a Graphviz dot graph.
 
 MAIN-ARG is the graph's title, its label.
@@ -469,19 +470,19 @@ Example:
     + calls :: B
       + returns :: C
   #+end_graph"
-  (let* ((smart   (plist-get org--handler-args :smartdiagram))
+  (let* ((smart   (plist-get args :smartdiagram))
          (raw     (org--graph-expand-macros raw-contents))
          ;; HTML inlines a graph's <svg>, for its tooltips, unless told :svg nil; `svg' alone cannot tell nil from omitted.
-         (inline-svg (and (eq backend 'html) (not org--handler-anchor) (not (org-export-markdown-p))
-                          (or svg (not (or smart (plist-member org--handler-args :svg))))))
+         (inline-svg (and (eq backend 'html) (not anchor) (not (org-export-markdown-p))
+                          (or svg (not (or smart (plist-member args :svg))))))
          (org--graph-tips (and inline-svg (make-hash-table :test #'equal)))
-         (dot     (if smart (org--smartdiagram raw main-arg org--handler-args)
-                    (org--graph-raw->dot raw main-arg org--handler-args)))
+         (dot     (if smart (org--smartdiagram raw main-arg args)
+                    (org--graph-raw->dot raw main-arg args)))
          (render  (if smart
-                      (lambda (kind file) (org-graph--render-latex dot kind file (org-graph--dpi org--handler-args)))
+                      (lambda (kind file) (org-graph--render-latex dot kind file (org-graph--dpi args)))
                     (lambda (kind file) (org-graph--render dot kind file))))
          ;; The header reads :file foo.png as the symbol foo.png; we want its name.
-         (outfile (or (and file (format "%s" file)) (org-graph--named-file org--handler-anchor svg)
+         (outfile (or (and file (format "%s" file)) (org-graph--named-file anchor svg)
                       (format "graph-%s.png" (substring (md5 dot) 0 12)))))
     (pcase backend
       ;; LaTeX typesets a smartdiagram itself: no image, and its packages join the preamble.
@@ -490,7 +491,7 @@ Example:
        (format "\\begin{center}\n%s\n\\end{center}" dot))
       ;; A named graph is a figure: an image link, which the block's #+name: and #+caption: label, as with Babel's results.
       ;; Markdown gets one too, since its renderers strip the inline base64 <img> that HTML gets.
-      ((guard (or org--handler-anchor (org-export-markdown-p)))
+      ((guard (or anchor (org-export-markdown-p)))
        (funcall render (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
        (org-parse (format "[[file:%s]]" outfile)))
       (`html
@@ -503,7 +504,7 @@ Example:
                  ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>, its tooltips as text.
                  (format "<pre>%s</pre>" (s-replace "<" "&lt;" (if (and inline-svg (not smart))
                                                                     (let (org--graph-tips)
-                                                                      (org--graph-raw->dot raw main-arg org--handler-args))
+                                                                      (org--graph-raw->dot raw main-arg args))
                                                                   dot))))
            (delete-file tmp))))
       (_

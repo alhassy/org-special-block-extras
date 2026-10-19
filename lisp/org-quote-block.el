@@ -26,7 +26,8 @@
 ;;;;;; Quotations, cited
 
 ;; Org's own quote, given a citation; a plain #+begin_quote is handed back to Org, by `org-builtin-block'.
-(org-defblock quote (&optional (key "") &key (pages "") :link nil :latex-head ("csquotes") :manual "#quote-citations")
+(org-defblock quote (&optional (key "") &key (pages "") :link nil :latex-head ("csquotes") :manual "#quote-citations"
+                    &context backend raw-contents contents)
   "Quote CONTENTS, cited as the bibliography's KEY, at PAGES; e.g.,
 
   #+begin_quote zermelo1908 :pages 20-22

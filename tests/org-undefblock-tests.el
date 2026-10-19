@@ -15,7 +15,7 @@
                                #+end_export")))))
 
 (deftest "`org-defblock' defines associated link functions that evaluate correctly"
-  (using (org-defblock notice (:link [:face 'italic]) "Example."
+  (using (org-defblock notice (:link [:face 'italic] &context contents) "Example."
                 (format "NOTICE: %s" contents))
   (should (fboundp 'org-block/notice))
   (should (fboundp 'org-link/notice))
@@ -27,7 +27,7 @@
           #+begin_aside Warning :style color:orange
           Something **important** here.
           #+end_aside"
-  :using (org-defblock aside (label "Note" style "color:red") "Aside block"
+  :using (org-defblock aside (label "Note" style "color:red" &context contents) "Aside block"
            (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
   :equals "<p>
            Look:
@@ -42,7 +42,7 @@
 
 (deftest "`org-undefblock' removes org-special-block-support for a block type: Both block & link support"
   (-let (org--supported-blocks)
-    (org-defblock shout () (upcase contents))
+    (org-defblock shout (&context contents) (upcase contents))
     (should (-contains? org--supported-blocks 'shout))
     (should (fboundp 'org-block/shout))
     (should (fboundp 'org-link/shout))

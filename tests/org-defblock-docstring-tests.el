@@ -35,7 +35,7 @@
                        Enjoy!"))))
 
 (deftest "`org--replace-examples-in-string' can read an “:exporting-to” key"
-  (using (org-defblock shout () (upcase contents))
+  (using (org-defblock shout (&context contents) (upcase contents))
     (should (equal
              (org--replace-examples-in-string
               (lf-string "The `shout' block can be used as follows:
@@ -79,7 +79,7 @@
                        Note: No other backends are supported.")))))
 
 (deftest "`org-defblock' docstring is saved to the symbol variable, unchanged"
-  (using (org-defblock emoji-greet (pleasantry "" to nil)
+  (using (org-defblock emoji-greet (pleasantry "" to nil &context raw-contents)
            "Greet someone, with a flair of emojis.
 
 #+begin_example :exporting-to latex
@@ -105,7 +105,7 @@ Have you noticed how blessed we are?
 
 
 (deftest "`org-defblock' docstrings actually Org-export any “#+example” blocks in the generated `defun'"
-  (using (org-defblock emoji-greet (pleasantry "" to nil)
+  (using (org-defblock emoji-greet (pleasantry "" to nil &context raw-contents)
            "Greet someone, with a flair of emojis.
 
 #+begin_example :exporting-to latex
@@ -139,8 +139,8 @@ LaTeX-exports to
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
 + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+  ⇒ Its body asks, by &context, for CONTENTS: the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &context is non-nil.
 
 For example, upon LaTeX export, the Org special block
 
@@ -153,7 +153,7 @@ For example, upon LaTeX export, the Org special block
      (org-block/emoji-greet ‘latex \"Hello, world\")"))))
 
 (deftest "a block's doc: link shows its docstring, in Emacs and as an HTML tooltip; issue #54" [docs]
-  (using (org-defblock admonition (type nil title nil)
+  (using (org-defblock admonition (type nil title nil &context contents)
            "Enclose text in a box denoting an admonition of TYPE, titled TITLE."
            (format "<section class=\"admonition-%s\"><h3>%s</h3>%s</section>" type (or title type) contents))
     (should (string-prefix-p "Enclose text in a box denoting an admonition"
@@ -162,7 +162,7 @@ For example, upon LaTeX export, the Org special block
                             (org-export-string "doc:org-block/admonition" 'html)))))
 
 (deftest "a block docstring's closing (fn …) line stays last, so C-h f shows it as the signature; issue #54" [docs]
-  (using (org-defblock admonition (type nil title nil)
+  (using (org-defblock admonition (type nil title nil &context contents)
            "Enclose text in a box denoting an admonition.
 
 \(fn TYPE [:title TITLE])"
@@ -174,8 +174,8 @@ For example, upon LaTeX export, the Org special block
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
 + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+  ⇒ Its body asks, by &context, for CONTENTS: the ‘org parsed’ version of user text.
+  ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &context is non-nil.
 
 For example, upon LaTeX export, the Org special block
 

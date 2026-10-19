@@ -30,7 +30,7 @@
 
 (org-defblock remark
               (editor "Editor Remark" color "black" signoff "" strong nil :latex-head ("xcolor") :manual "#tooltip"
-                      :link [:face '(:foreground "red" :weight bold)])
+                      :link [:face '(:foreground "red" :weight bold)] &context backend raw-contents contents link?)
               "Format CONTENTS as a first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
@@ -52,7 +52,7 @@ leave to you, since #+bind lets a document set any variable.
 In Markdown, a remark block is GitHub's “> [!NOTE]” alert, titled EDITOR; as a link, it stays HTML."
               (cond
                (org-hide-editor-comments "")
-               ((and (org-export-markdown-p) (not contents-occur-as-link-description))
+               ((and (org-export-markdown-p) (not link?))
                 (-let [(this that) (s-split "\\#\\+replacewith:" raw-contents)]
                   (org-parse (org--markdown-alert "note" editor
                                                   (concat (if that (format "*Replace:* %s\n\n*With:* %s" (s-trim this) (s-trim that)) raw-contents)

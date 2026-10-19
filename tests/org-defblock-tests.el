@@ -9,12 +9,12 @@
     (should (member 'test-basic-reg org--supported-blocks))))
 
 (deftest "org-defblock creates an org-block/NAME function."
-  (org-defblock test-handler-fn () "handler body"
+  (org-defblock test-handler-fn (&context contents) "handler body"
     (upcase contents))
   (should (fboundp 'org-block/test-handler-fn)))
 
 (define-org-call-test "Block handler output contains the HTML markup and the content."
-  :call (using (org-defblock test-html-export () ""
+  :call (using (org-defblock test-html-export (&context contents) ""
                  (format "<b>%s</b>" contents))
           (org-block/test-html-export 'html "hello" nil))
   :returns "#+begin_export html
@@ -26,7 +26,7 @@ hello
 #+end_export")
 
 (define-org-call-test "Block handler output contains the LaTeX markup and the content."
-  :call (using (org-defblock test-latex-export () ""
+  :call (using (org-defblock test-latex-export (&context contents) ""
                  (format "\\textbf{%s}" contents))
           (org-block/test-latex-export 'latex "world" nil))
   :returns "#+begin_export latex
@@ -38,7 +38,7 @@ world
 #+end_export")
 
 (define-org-call-test "Keyword args bind correctly inside the block body."
-  :call (using (org-defblock test-kwdargs (main-arg "" color "red") ""
+  :call (using (org-defblock test-kwdargs (main-arg "" color "red" &context contents) ""
                  (format "%s:%s" color contents))
           (org-block/test-kwdargs 'html "text" nil :color "blue"))
   :returns "#+begin_export html
@@ -58,14 +58,14 @@ DEFAULT
 #+end_export")
 
 (deftest "org-defblock-only does NOT create an org-link/NAME function."
-  (org-defblock-only test-only-block () ""
+  (org-defblock-only test-only-block (&context contents) ""
     contents)
   (should (fboundp 'org-block/test-only-block))
   (should-not (fboundp 'org-link/test-only-block)))
 
 (deftest "org-undefblock removes a block from org--supported-blocks."
   (let ((org--supported-blocks nil))
-    (org-defblock test-undefblock-target () "" contents)
+    (org-defblock test-undefblock-target (&context contents) "" contents)
     (should (member 'test-undefblock-target org--supported-blocks))
     (org-undefblock test-undefblock-target)
     (should-not (member 'test-undefblock-target org--supported-blocks))))
@@ -98,7 +98,7 @@ DEFAULT
       (should (s-contains-p "(result satisfies (stringp it) = nil : symbol)" (cadr err))))))
 
 (deftest "a block handler rejects a non-symbol backend"
-  (using (org-defblock test-backend-check () "Echo." contents)
+  (using (org-defblock test-backend-check (&context contents) "Echo." contents)
     (should-error (org-block/test-backend-check "html" "body"))))
 
 ;;; A block's #+name:
@@ -149,7 +149,7 @@ Trivially so.
 #+begin_proofs
 Not a proof block.
 #+end_proofs"
-  (using (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic])
+  (using (org-defblock proof (&optional title :fontify [:begin "Proof." :end "⏹" :face 'italic] &context contents)
            "A proof, titled TITLE." (format "%s: %s" title contents))
     (font-lock-ensure)
     (should (equal (org-defblock-tests--displayed) "
@@ -165,12 +165,12 @@ Not a proof block.
     (should-not (memq 'italic (ensure-list (get-text-property (point) 'face))))))
 
 (deftest "undefining a block forgets its :fontify look" [fontify]
-  (using (org-defblock proof (:fontify [:end "⏹"]) "A proof." contents)
+  (using (org-defblock proof (:fontify [:end "⏹"] &context contents) "A proof." contents)
     (should (assoc "proof" org--block-fontifications)))
   (should-not (assoc "proof" org--block-fontifications)))
 
 (deftest "a :fontify display edited away is cleared as Org refontifies" [fontify]
-  (using (org-defblock proof (:fontify [:end "⏹"]) "A proof." contents)
+  (using (org-defblock proof (:fontify [:end "⏹"] &context contents) "A proof." contents)
     (with-org-test-buffer (:text "
 #+begin_proof
 Done.
@@ -210,7 +210,7 @@ Tighten this sentence.
 
 (deftest "a block renders for a backend derived from HTML, as org-thtml is, its handler seeing html; issue #33" [derived]
   (org-export-define-derived-backend 'osbe-test-thtml 'html)
-  (using (org-defblock satz (name "" label "") "A theorem, named NAME." (format "<%s>%s: %s</%s>" backend name raw-contents backend))
+  (using (org-defblock satz (name "" label "" &context backend raw-contents) "A theorem, named NAME." (format "<%s>%s: %s</%s>" backend name raw-contents backend))
     (should (equal (s-trim (org-export-string-as "
 #+begin_satz Euclid
 There are infinitely many primes.
@@ -221,7 +221,7 @@ There are infinitely many primes.
   (require 'ox-md)
   (org-export-define-derived-backend 'osbe-test-mylatex 'latex)
   (org-export-define-derived-backend 'osbe-test-myhugo 'md)
-  (using (org-defblock myblock ()
+  (using (org-defblock myblock (&context backend raw-contents)
            "Wrap the contents in \\my-latex-command; or, in the Hugo-like backend, in a docsy alert."
            (cond ((org-export-derived-backend-p org-export-current-backend 'osbe-test-myhugo)
                   (format "{{%% alert %%}}%s{{%% /alert %%}}" raw-contents))
@@ -233,7 +233,7 @@ There are infinitely many primes.
     (should (s-contains-p "{{% alert %}}some content" (org-export-string "#+begin_myblock\nsome content\n#+end_myblock" 'osbe-test-myhugo)))))
 
 (deftest "a block's main argument may also be given by its own name, as a keyword; issue #47" [main-arg]
-  (using (org-defblock satz (name "" label "")
+  (using (org-defblock satz (name "" label "" &context contents)
            "A labelled sentence, named NAME."
            (format "\\tag{%s}\\label{%s} %s" name label contents))
     (dolist (header '("myname :label mylabel" ":name myname :label mylabel"))
@@ -243,7 +243,7 @@ There are infinitely many primes.
 (deftest "org-defblock may override one of Org's own blocks, saying so, and hand some of them back to Org" [builtin]
   (let (messages)
     (cl-letf (((symbol-function 'message) (lambda (fmt &rest args) (push (apply #'format fmt args) messages))))
-      (using (org-defblock verse (&optional poet)
+      (using (org-defblock verse (&optional poet &context raw-contents contents)
                "A verse, signed by POET; sans one, Org's own verse."
                (if (org-string-nw-p poet)
                    (format "\\begin{verse}\n%s\n\\end{verse}\n--- %s" contents poet)
@@ -273,7 +273,7 @@ Inner.
       (should-not (s-contains-p "tcolorbox" latex)))))
 
 (deftest "a block's :latex-head joins the preamble once, when the export uses it, unless the preamble has it" [latex-head]
-  (using (org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}"))
+  (using (org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}") &context raw-contents contents)
            "A theorem."
            (if (org-string-nw-p title)
                (format "\\begin{theorem}[%s]%s\\end{theorem}" title contents)

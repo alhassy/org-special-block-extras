@@ -24,7 +24,7 @@
 (require 'org-defblock)
 
 ;;;;;; spoiler
-(org-defblock spoiler (color "grey" left "((" right "))" :manual "#Boxed-Text")
+(org-defblock spoiler (color "grey" left "((" right "))" :manual "#Boxed-Text" &context backend raw-contents contents)
               "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.

@@ -25,7 +25,7 @@
 (require 'org-defblock)
 
 ;;;;;; stutter
-(org-defblock stutter (reps 2 :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
+(org-defblock stutter (reps 2 :manual "https://alhassy.com/org-special-block-extras#what-does-it-do" &context contents)
               "Output the CONTENTS of the block REPS many times"
               (-let [num (if (numberp reps) reps (string-to-number reps))]
                 (s-repeat num contents)))

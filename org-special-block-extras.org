@@ -804,7 +804,7 @@ mimic the usual ~src~-block syntax for argument passing to support special block
 For instance, here is a sample declaration.
 
 #+begin_src emacs-lisp :tangle no
-(org-defblock stutter (nil nil reps 2)
+(org-defblock stutter (nil nil reps 2 &context contents)
   "Output the CONTENTS of the block REPS many times"
   (org-parse (s-repeat reps contents)))
 #+end_src
@@ -2118,7 +2118,7 @@ hello</li>
 (deftest "Identity blocks preserve indentation/enumeration"
     :expected-result :failed
   :tags '(core)
-  (org-defblock id nil "doc" contents)
+  (org-defblock id (&context contents) "doc" contents)
   (should (equal
 "
   1. item one
@@ -2146,7 +2146,7 @@ hello</li>
 
 (deftest "Identity blocks export to LaTex preserves indentation/enumeration"
     :expected-result :failed
-(org-defblock id nil "doc" contents)
+(org-defblock id (&context contents) "doc" contents)
 (should (equal
 "\\begin{enumerate}
 \\item item one
@@ -2168,7 +2168,7 @@ world
 
 (deftest "Identity blocks export to HTML preserves indentation/enumeration"
     :expected-result :failed
-(org-defblock id nil "doc" contents)
+(org-defblock id (&context contents) "doc" contents)
 (should (equal
 
 "<ol class=\"org-ol\">
@@ -2255,7 +2255,7 @@ Perhaps an example will clarify things ...
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  (editor "Editor Remark" color "red" signoff "")
+  (editor "Editor Remark" color "red" signoff "" &context backend contents)
   (vector :face angry-red)
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
   (format (if (equal backend 'html)
@@ -2314,7 +2314,7 @@ has more bells and whistles … keep reading ;-)
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-  (editor "Editor Remark" color "red" signoff "")
+  (editor "Editor Remark" color "red" signoff "" &context backend contents)
   [:face '(:foreground "red" :weight bold)]
   ; :please-preserve-new-lines
   "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
@@ -2433,7 +2433,7 @@ text before seeing the answer ----this works well in HTML, not so in LaTeX.
 #+begin_src emacs-lisp
 (org-defblock solution
   (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
-   really "Solution, for real")
+   really "Solution, for real" &context raw-contents)
   "Show the answers to a problem, but with a reprimand in case no attempt was made."
   (org-thread-blockcall raw-contents
                     (details really :title-color "red")
@@ -2615,7 +2615,7 @@ woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times
 #+html: <br>
 #+begin_solution
 #+begin_src emacs-lisp
-(org-defblock stutter (reps 2)
+(org-defblock stutter (reps 2 &context contents)
   "Output the CONTENTS of the block REPS many times"
   (-let [num (if (numberp reps) reps (string-to-number reps))]
     (s-repeat num contents)))
@@ -2673,7 +2673,7 @@ Genesis 41-17: Firaun said unto Yusuf, /In my dream, behold, I stood upon the ba
 
 #+begin_solution
 #+begin_src emacs-lisp
-(org-defblock rename (list "")
+(org-defblock rename (list "" &context contents)
   "Perform the given LIST of substitutions on the text.
 The LIST is a comma separated list of ‘to’ separated symbols.
 In a link, no quotes are needed.
@@ -2783,7 +2783,7 @@ Whereas, the following begins with ~#+begin_spoiler orange~ ...
 --------------------------------------------------------------------------------
 
 #+begin_src emacs-lisp
-(org-defblock spoiler (color "grey" left "((" right "))")
+(org-defblock spoiler (color "grey" left "((" right "))" &context backend contents)
   "Hide text enclosed in double parens ((like this)) as if it were spoilers.
    LEFT and RIGHT may be other kinds of delimiters.
    The main argument, COLOR, indicates which color to use.
@@ -2891,7 +2891,7 @@ Possibly using ID's as the current working solution above.
                 conclusion
                 (if named? (format "[\\text{%s}]" name) "")))))))
 
-(org-defblock tree (main-arg)
+(org-defblock tree (main-arg &context raw-contents)
   "Write a proof tree using Org-lists.
 
 To get
@@ -3564,8 +3564,8 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
    Regarding the Lisp function:
    + BACKEND refers to the current export backend.
    + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+     ⇒ Its body asks, by &amp;context, for CONTENTS: the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &amp;context is non-nil.
    
    For example, upon LaTeX export, the Org special block
    
@@ -3730,8 +3730,8 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
    Regarding the Lisp function:
    + BACKEND refers to the current export backend.
    + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+     ⇒ Its body asks, by &amp;context, for CONTENTS: the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &amp;context is non-nil.
    
    For example, upon LaTeX export, the Org special block
    
@@ -4078,8 +4078,8 @@ attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
    Regarding the Lisp function:
    + BACKEND refers to the current export backend.
    + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+     ⇒ Its body asks, by &amp;context, for CONTENTS: the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &amp;context is non-nil.
    
    For example, upon LaTeX export, the Org special block
    
@@ -4799,8 +4799,8 @@ from∘to m = {! try it! }
      Regarding the Lisp function:
      + BACKEND refers to the current export backend.
      + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-       ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-       ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+       ⇒ Its body asks, by &amp;context, for CONTENTS: the ‘org parsed’ version of user text.
+       ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &amp;context is non-nil.
      
      For example, upon LaTeX export, the Org special block
      
@@ -4896,8 +4896,8 @@ from∘to m = {! try it! }
      Regarding the Lisp function:
      + BACKEND refers to the current export backend.
      + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
-       ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
-       ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+       ⇒ Its body asks, by &amp;context, for CONTENTS: the ‘org parsed’ version of user text.
+       ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &amp;context is non-nil.
      
      For example, upon LaTeX export, the Org special block
      
@@ -6160,11 +6160,15 @@ margins, so there our margin notes, tooltips, and Org's footnotes are beamer's o
 
   We declare a block just as we declare a function with ~cl-defun~: the block's main
   argument ---written right after =#+begin_NAME=--- is its =&optional= argument, and its
-  header arguments are its =&key= arguments. In the body, ~backend~ names the current
-  export backend and ~contents~ the block's Org-parsed contents.
+  header arguments are its =&key= arguments. After =&context= come the names the body
+  needs of the export: ~backend~, the current export backend, and ~contents~, the block's
+  Org-parsed contents; there are also ~raw-contents~, ~args~, ~link?~, and ~anchor~.  The
+  body sees only what it so asks for, so none of ours shadows a variable of its own; a name
+  already taken may be had under another, as in =&context ((:contents text))=. See the
+  docstring of ~org-defblock~ for the lot, and why we prefer this to anaphora.
 
   #+begin_src emacs-lisp
-(org-defblock note (&optional (title "Note") &key (color "teal"))
+(org-defblock note (&optional (title "Note") &key (color "teal") &context backend contents)
   "Call out CONTENTS under TITLE, tinted COLOR."
   (pcase backend
     ('html (format "<div style=\"border-left: 4px solid %s; padding-left: 1em\"><b>%s</b>%s</div>"
@@ -6185,7 +6189,7 @@ Mind the gap.
   our own--- ~backend~ is =html= or =latex=, so one rendering serves them all. To single one out,
   we ask Org's own ~org-export-current-backend~; by way of example, a docsy alert in Hugo:
   #+begin_src emacs-lisp
-(org-defblock noteblock (&optional (title "Note") &key (color "primary"))
+(org-defblock noteblock (&optional (title "Note") &key (color "primary") &context backend raw-contents contents)
   "A note: a docsy alert in Hugo, a noteblock environment in LaTeX, a box elsewhere in HTML."
   (cond ((org-export-derived-backend-p org-export-current-backend 'hugo)
          (format "{{%% alert title=\"%s\" color=\"%s\" %%}}\n%s\n{{%% /alert %%}}" title color raw-contents))
@@ -6214,7 +6218,7 @@ Mind the gap.
   =*Messages*=. To leave some to Org, a handler hands them back; by way of example, a verse
   signed by its poet, else Org's own:
   #+begin_src emacs-lisp
-(org-defblock verse (&optional poet)
+(org-defblock verse (&optional poet &context raw-contents contents)
   "A verse, signed by POET; sans one, Org's own verse."
   (if (org-string-nw-p poet)
       (format "\\begin{verse}\n%s\n\\end{verse}\n--- %s" contents poet)
@@ -6404,7 +6408,7 @@ Mind the gap.
   function name, is evaluated instead. For every block of a kind, we define an action:
 
   #+begin_src emacs-lisp
-(org-defblock shout () "Upcase the contents." (upcase contents))
+(org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
 
 (org-def-action shout (&optional greeting &key (volume 1))
   "Announce the shout's GREETING, at VOLUME."
@@ -6452,7 +6456,7 @@ Mind the gap.
   attributes.
 
   #+begin_src emacs-lisp
-(org-defblock poem (&optional title :edit-indirect-mode text-mode)
+(org-defblock poem (&optional title :edit-indirect-mode text-mode &context contents)
   "Set CONTENTS in italics, under TITLE."
   (format "<h3>%s</h3><em>%s</em>" title contents))
   #+end_src
@@ -6667,7 +6671,7 @@ e.g., [[doc:org-block/color][color]] and [[doc:org-block/teal][teal]].
 
 (cl-loop for colour in org--named-colors
          do (eval `(org-defblock ,colour
-                     (the-color "black")
+                     (the-color "black" &context backend contents)
                      (vector :face `(:foreground ,(format "%s" (quote ,colour))))
                      ,(format "Show text in %s color." colour)
                      (let ()
@@ -6734,7 +6738,7 @@ Let's have some sanity tests...
 
     #+begin_src emacs-lisp
 (org-defblock color
-  (color black)
+  (color black &context backend contents)
   (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
   "Format text according to a given COLOR, which is black by default."
   (format (pcase backend
@@ -6918,7 +6922,7 @@ _Yields_
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-      (editor "Editor Remark" color "black" signoff "" strong nil)
+      (editor "Editor Remark" color "black" signoff "" strong nil &context backend contents)
 ; :inline-please__see_margin_block_for_a_similar_incantation ; ⇒ crashes!
 [:face '(:foreground "red" :weight bold)]
 "Format CONTENTS as an first-class editor comment according to BACKEND.
@@ -9206,7 +9210,7 @@ the problem of *producing* documentation entries with a block type interface...
 #+BEGIN_SRC emacs-lisp
 (org-defblock documentation
   (name (error "Documentation block: Name must be provided")
-       label nil show nil color "green")
+       label nil show nil color "green" &context raw-contents)
   "Register the dictionary entries in CONTENTS to the dictionary variable.
 
 The dictionary variable is ‘org--docs’.
@@ -9458,7 +9462,7 @@ With that in-hand, let's define our theorem block.
 #+begin_src emacs-lisp
 (setq my/theorem-counter 0)
 
-(org-defblock theorem (title)
+(org-defblock theorem (title &context raw-contents)
   "Show block contents prefixed with “Theorem 𝒏”, where the 𝒏umbering automatically increments."
   (format "<div class=\"theorem\"><b>Theorem %s%s.</b>&nbsp;%s</div>"
           (cl-incf my/theorem-counter)
@@ -9560,7 +9564,7 @@ Then, provide support for a new type of special block, say re-using the ~src~
 blocks that, say, folds up all such blocks in HTML export, by declaring the
 following.
 #+BEGIN_SRC emacs-lisp :tangle no
-(org-defblock src (lang nil title nil exports nil file nil)
+(org-defblock src (lang nil title nil exports nil file nil &context raw-contents)
   "Fold-away all ‘src’ blocks as ‘<details>’ HTML export.
 If a block has a ‘:title’, use that to title the ‘<details>’."
   (format "<details> <summary> %s </summary> <pre> %s </pre></details>"

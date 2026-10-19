@@ -44,7 +44,6 @@
 (require 'org-math-refs)
 
 (declare-function org--block-action-call "org-ctrl-c-ctrl-c-for-special-block")
-(defvar org--handler-anchor)
 
 ;;;; The block
 
@@ -111,7 +110,8 @@ all that its lines imply; sans star, it is numbered."
 (org-defblock math (&key numbered (matrix "pmatrix") (hints 'between) environment
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
                          :edit-indirect-mode latex-mode :manual "#math"
-                         :fontify [:language "latex" :keywords org--math-fontify-keywords])
+                         :fontify [:language "latex" :keywords org--math-fontify-keywords]
+                         &context backend raw-contents anchor)
   "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
 
   #+begin_math
@@ -166,7 +166,8 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
   block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
   (pcase-let ((`(,layout ,format ,folded) (org--math-hints-switch hints)))
     (let ((org--math-tips nil) (org--math-hint-format format) (org--math-hint-folded folded))
-      (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor layout environment)))
+      (pcase-let ((`(,definitions . ,shown)
+                   (org--math-render raw-contents backend numbered matrix anchor layout environment)))
         (cond ((org-export-markdown-p)
                ;; A fenced math block is displayed already, so \[…\] would be one display too many.
                (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))

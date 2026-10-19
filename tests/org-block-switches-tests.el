@@ -152,7 +152,7 @@ Mind the gap.
           #+begin_drawer :folded closed
           Socks.
           #+end_drawer"
-  :using (org-defblock drawer (&key folded) (format "Drawer is %s: %s" folded contents))
+  :using (org-defblock drawer (&key folded &context contents) (format "Drawer is %s: %s" folded contents))
   :equals "Drawer is closed:
            <p>
            Socks.
@@ -164,7 +164,7 @@ Mind the gap.
           #+begin_strict :boxed Strictly
           Rules.
           #+end_strict"
-  :using (org-defblock strict (&key colour) (format "STRICT %s" contents))
+  :using (org-defblock strict (&key colour &context contents) (format "STRICT %s" contents))
   :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
 <h3>Strictly</h3>
 STRICT
@@ -314,6 +314,10 @@ Less is more.
     (should (string-match-p "Peek.*</summary>[^z]*JASIM"
                             (org-export-string "#+begin_example :let (WHO \"jasim\") :folded \"Peek\" :shout t\nWHO\n#+end_example"))))
   (should-not (org--block-switch-p :shout)))
+
+(deftest "`org-defswitch' refuses a key not on offer as the switch expands, rather than binding it to nil" [switches]
+  (should (string-match-p ":contnets.*not on offer"
+                          (cadr (should-error (macroexpand '(org-defswitch :typo (_ &key contnets) "Typo." contnets)))))))
 
 (deftest "`org-defswitch' hands a switch only the keys it names; a `let' around it keeps its own `name'" [switches]
   (let ((org-block-switches org-block-switches)

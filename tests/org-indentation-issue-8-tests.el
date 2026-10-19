@@ -12,7 +12,7 @@
             inner
             #+end_testblock
           - item three"
-  :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
+  :using (org-defblock testblock (&context contents)  "docs"  (concat "HANDLED:" contents))
   :equals
   "<ul class=\"org-ul\">
    <li>item one</li>
@@ -35,7 +35,7 @@
              #+end_testblock
           3. Third"
   :to latex
-  :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
+  :using (org-defblock testblock (&context contents)  "docs"  (concat "HANDLED:" contents))
   :equals
   "\\begin{enumerate}
    \\item First
@@ -53,7 +53,7 @@
           #+end_testblock
           next line
           - B"
-  :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
+  :using (org-defblock testblock (&context contents)  "docs"  (concat "HANDLED:" contents))
   :equals
   "<ul class=\"org-ul\">
    <li>A</li>
@@ -91,7 +91,7 @@
              \\n content 4
           "
   :to latex
-  :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
+  :using (org-defblock testblock (&context contents)  "docs"  (concat "HANDLED:" contents))
   :equals
   "\\begin{enumerate}
    \\item builtin source block
@@ -127,7 +127,7 @@
           4. prose
              \\n content 4
           "
-  :using (org-defblock testblock ()  "docs"  (concat "HANDLED:" contents))
+  :using (org-defblock testblock (&context contents)  "docs"  (concat "HANDLED:" contents))
   :equals
   "<ol class=\"org-ol\">
 <li><p>
@@ -179,9 +179,9 @@ content 3
              #+end_baz
           "
   :to latex
-  :using ((org-defblock foo () (format "FOO⟨%s⟩" contents))
-          (org-defblock bar () (format "BAR⟨%s⟩" contents))
-          (org-defblock baz () (format "BAZ⟨%s⟩" contents)))
+  :using ((org-defblock foo (&context contents) (format "FOO⟨%s⟩" contents))
+          (org-defblock bar (&context contents) (format "BAR⟨%s⟩" contents))
+          (org-defblock baz (&context contents) (format "BAZ⟨%s⟩" contents)))
   :equals
   "FOO⟨
    \\begin{enumerate}
@@ -233,7 +233,7 @@ content 3
     (should (string-match-p "text continuing item one\n\\\\item outer two\n\\\\end{enumerate}" latex))))
 
 (deftest "a list of propositions, each item's proof a block of paragraphs, stays one list" [issue♯8]
-  (using (org-defblock prf () "A proof." (format "\\begin{proof}\n%s\n\\end{proof}" contents))
+  (using (org-defblock prf (&context contents) "A proof." (format "\\begin{proof}\n%s\n\\end{proof}" contents))
     (let ((latex (org-export-string "
 - first
 - second

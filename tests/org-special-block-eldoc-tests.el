@@ -38,7 +38,7 @@ C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.
 Docs · See the manual")))
 
 (deftest "eldoc shows a block's :hover prose beneath its gist, and closes with buttons to its Docs and :manual"
-  (using (org-defblock shy (:hover "Some prose too long for one line." :manual "https://example.com/shy") "Be shy." contents)
+  (using (org-defblock shy (:hover "Some prose too long for one line." :manual "https://example.com/shy" &context contents) "Be shy." contents)
     (let ((doc (car (org-test--eldoc-at "#+begin_shy\nhi\n#+end_shy\n" "#+begin_shy"))))
       (should (equal doc "Be shy.
 Some prose too long for one line.

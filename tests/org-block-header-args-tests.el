@@ -27,7 +27,7 @@
                                    #+end_export"))))))
 
 (deftest "a cl-defun-style org-defblock honours org-babel-default-header-args:NAME" [header-args]
-  (using (org-defblock folded (&optional (title "More") &key (color "green"))
+  (using (org-defblock folded (&optional (title "More") &key (color "green") &context contents)
            "Fold CONTENTS under TITLE."
            (format "%s/%s: %s" title color contents))
     (dlet ((org-babel-default-header-args:folded '((:color . "teal"))))
@@ -104,7 +104,7 @@ p -> q
 What is 1 + 1?
 #+end_quiz"
   :at "What is"
-  (using (org-defblock quiz () "A quiz." contents)
+  (using (org-defblock quiz (&context contents) "A quiz." contents)
     (dlet ((org-block-header-args-tests--graded nil))
       (org-ctrl-c-ctrl-c)
       (should org-block-header-args-tests--graded))))

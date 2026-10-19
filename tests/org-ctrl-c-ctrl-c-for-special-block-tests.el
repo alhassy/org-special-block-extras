@@ -12,7 +12,7 @@
 Mind the gap.
 #+end_shout"
   :at "Mind"
-  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+  (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
           (org-def-action shout (&optional greeting &key (volume 1) (pitch "low"))
@@ -28,7 +28,7 @@ Mind the gap.
 Mind the gap -> or else.
 #+end_shout"
   :at "Mind"
-  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+  (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
           (org-def-action shout () "Say the shout's text." (setq org-def-action-tests--said raw-contents))
@@ -43,7 +43,7 @@ Mind the gap -> or else.
 | 3 |
 #+end_shout"
   :at "| 3"
-  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+  (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
           (setq org-def-action-tests--said nil)
@@ -63,7 +63,7 @@ Mind the gap -> or else.
 Mind the gap.
 #+end_shout"
   :at "Mind"
-  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+  (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
           (org-def-action shout (greeting "Hey" volume 1)
@@ -79,7 +79,7 @@ Mind the gap.
 Mind the gap.
 #+end_shout"
   :at "Mind"
-  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+  (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
           (org-def-action shout () "Decline, by yielding nil." nil)

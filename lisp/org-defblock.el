@@ -90,8 +90,27 @@ links with `org-deflink' and tags with `org-deftag' just where wanted."
   :type 'boolean
   :group 'org-special-block-extras))
 
-(eval-and-compile ;; `org-defblock' calls this as it expands.
+(eval-and-compile ;; `org-defblock' checks a block's &context against these as it expands.
+(defconst org--block-context-keys '(:backend :contents :raw-contents :args :link? :anchor)
+  "What a block's body may ask for, after &context in its arglist; see `org-defblock'."))
+
+(eval-and-compile ;; `org-defblock' calls these as it expands.
 (defun org--defblock-desugar-args (args)
+  "ARGS ↦ `org--defblock-desugar-args-sans-context' of those before any &context, then :context (SPEC …) of those after.
+  (title nil &context backend ((:contents text)))  ↦  (title nil :context (backend ((:contents text))))
+An option, such as :tag nil, may follow &context too, as anywhere else; see `org--block-context-keys'."
+  (let ((context (cdr (memq '&context args))) specs options)
+    (while context
+      (if (keywordp (car context)) (setq options (append options (list (pop context) (pop context))))
+        (push (pop context) specs)))
+    (let* ((flat (org--defblock-desugar-args-sans-context
+                  (append (-take-while (lambda (it) (not (eq it '&context))) args) options)))
+           ;; A flat (MAIN) lacks its default, which a :context after it would otherwise be taken for.
+           (names (-take-while (lambda (it) (not (keywordp it))) flat)))
+      (append names (when (cl-oddp (length names)) '(nil)) (-drop (length names) flat)
+              (when specs (list :context (nreverse specs)))))))
+
+(defun org--defblock-desugar-args-sans-context (args)
   "ARGS ↦ the flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist, when ARGS is `cl-defun'-style; otherwise ARGS.
 
   (&optional (title \"Details\") &key (color \"green\") style)  ↦  (title \"Details\" color \"green\" style nil :allow-other-keys nil)
@@ -218,8 +237,8 @@ So, say, a named block's #+name: and #+caption: label what it begins with."
    "\nRegarding the Lisp function:"
    "\n+ BACKEND refers to the current export backend."
    "\n+ RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation."
-   "\n  ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text."
-   "\n  ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil."
+   "\n  ⇒ Its body asks, by &context, for CONTENTS: the ‘org parsed’ version of user text."
+   "\n  ⇒ CONTENTS and RAW-CONTENTS are identical for the description of a link; whence the LINK? of &context is non-nil."
    "\n\nFor example, upon LaTeX export, the Org special block"
    "\n"
    (format "\n     #+begin_%s" name)
@@ -328,15 +347,35 @@ The docstring is displayed as part of the tooltip for the
 produced link type.
 
 Finally, the BODY is a (sequence of) Lisp forms ---no progn
-needed--- that may refer to the names BACKEND and CONTENTS which
-refer to the current export backend and the contents of the
-special block ---or the description clause of a link.
+needed--- that sees KWDS' arguments, and whatever else it asks for
+after &context in KWDS:
 
-CONTENTS refers to an Org-mode parsed string; i.e., Org-markup is
-acknowledged.
+   (org-defblock shout (&optional (title \"Hey\") &context backend contents)
+     (format (if (eq backend \='html) \"<b>%s</b>: %s\" \"%s: %s\") title (upcase contents)))
 
-In, hopefully, rare circumstances, one may refer to RAW-CONTENTS
-to look at the fully unparsed contents.
+On offer, as `org--block-context-keys' lists them:
++ backend      ⇒ the current export backend; e.g., html, or latex.
++ contents     ⇒ the block's contents, Org-parsed; i.e., Org-markup is
+                 acknowledged ---or the description clause of a link.
++ raw-contents ⇒ the contents unparsed, for the rare body that wants them.
++ args         ⇒ the plist of every keyword argument the block was given.
++ link?        ⇒ whether we are rendering a link's description, not a block.
++ anchor       ⇒ the block's #+name:, else nil.
+
+This is dependency injection, by keyword: every block is offered the
+whole record, and takes only what it names.  Hence BODY sees no name
+it did not ask for, so nothing of ours captures a variable of its own;
+e.g., a main argument named `contents' is just that.  An item we offer
+in due time is invisible to the blocks that do not ask for it; and an
+item not on offer, such as a misspelt contnets, is an error at once.
+An item may be bound under another name, ((:ITEM VAR)), as when KWDS
+already uses ITEM's name; an item named both ways is an error:
+
+   (org-defblock quip (contents &context ((:contents text)))
+     (format \"%s, said of %s\" contents text))  ;; #+begin_quip Ha! ⇒ “Ha!, said of …”
+
+See “Keyword Parameters” in Practical Common Lisp, a gentle tour of
+such renaming: https://gigamonkeys.com/book/functions.html
 
 Finally, this macro exposes two functions:
 + ORG-EXPORT: Wrap the argument in an export block for the current backend.
@@ -365,7 +404,7 @@ Example declaration, with all possible features shown:
 
    (org-defblock remark
      (&optional (editor \"Editor Remark\") &key (color \"red\") (signoff \"\")
-      :link [:face angry-red])
+      :link [:face angry-red] &context backend contents)
      \"Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red.\"
      (format (if (equal backend 'html)
                \"<strong style=\\\"color: %s;\\\">⟦%s:  %s%s⟧</strong>\"
@@ -435,7 +474,8 @@ Three example uses:
        (setf (alist-get ,(downcase (format "%s" name)) org--block-fontifications nil 'remove #'equal)
              ,(when fontify `(list ,@(append fontify nil))))
        ;; ⇨ The tag, unless declined via `:tag nil': a section tagged :NAME: exports as a NAME block around its text.
-       ,@(when tag? (list (org--defblock-tag-form name args (org--defblock-tag-subsections name tag?)))))))
+       ,@(when tag? (list (org--defblock-tag-form name (org-plist-delete args :context)
+                                                     (org--defblock-tag-subsections name tag?)))))))
 
 (defmacro org-defblock-alias (alias name)
   "Make ALIAS a block, link, and tag that do just as those of NAME, an `org-defblock', do; e.g., as LaTeX and HTML
@@ -459,7 +499,7 @@ have their own words for one thing:
         argument and its default, followed by “keyword default-value” pairs.
         See `org--defblock-desugar-args'.
 - BODY: Code to be executed just before export.
-  ⇒ May mention symbol “backend” and string “raw-contents”.
+  ⇒ Sees just what ARGS asks for after &context; e.g., &context backend raw-contents.  See `org-defblock'.
 
 Features:
 + Defaults for main and keyword args, as a src block's header-args; see `org--block-header-args'.
@@ -475,27 +515,33 @@ Features:
    ;; Mimicking (cl-defun f () 'x 'y) then (f) ⇒ 'y
    ((not (stringp docstring)) (setq body (cons docstring body)) (setq docstring "")))
   (let* ((allow-other-keys? (org--defblock-other-keys-p args))
-         (args (org-plist-delete args :allow-other-keys))
+         (context (plist-get args :context))
+         (args (org-plist-delete-all args '(:allow-other-keys :context)))
          (defun-name (intern (format "org-block/%s" name)))
          (main-arg-name (or (cl-first args) 'main-arg))
          (main-arg-default-value (cl-second args))
          (keywords (cddr args))
          (keyword-names (org--block-declared-keywords args)))
+    (-when-let (clash (-intersection (org--injected-vars name context org--block-context-keys)
+                                     (cons main-arg-name keyword-names)))
+      (error "‘org-defblock %s’: %s is both an argument and in &context; rename the latter, as ((:%s VAR))"
+             name (car clash) (car clash)))
     `(prog1
          (cl-defun ,defun-name
-             (backend      ;; Symbol
-              raw-contents ;; String
+             ;; Names of our own, which BODY cannot capture; it sees just what its &context asks for.
+             (org--backend      ;; Symbol
+              org--raw-contents ;; String
               &optional ,main-arg-name
               &rest  org--handler-args
               ;; No defaults here: an omitted keyword must arrive as nil, so the body below can
               ;; prefer any `org-babel-default-header-args:NAME' value over the declared default.
-              &key ,@keyword-names (contents-occur-as-link-description nil)
+              &key ,@keyword-names ((:contents-occur-as-link-description org--link?) nil)
               ;; Always allowed here: we refuse unknown keywords ourselves, below, naming only the user's own.
               &allow-other-keys)
            ;; Assertions are expanded here, once: the handler runs interpreted, which would re-expand them on every call.
-           ,(macroexpand-all `(lf-assert ',name        t
-                                         backend      (and it (symbolp it))
-                                         raw-contents (stringp it)))
+           ,(macroexpand-all `(lf-assert ',name             t
+                                         org--backend      (and it (symbolp it))
+                                         org--raw-contents (stringp it)))
 
            ,@(unless allow-other-keys?
                `((org--block-refuse-unknown-keys ',name org--handler-args
@@ -518,15 +564,19 @@ Features:
 
            ;; Lexical, since BODY is spliced right here; `cl-letf' would clobber any global `org-export'.
            (cl-flet ((org-export (x) "Wrap X in an export block for the current backend; see `org--export-wrap'."
-                       (if contents-occur-as-link-description x (org--export-wrap backend x)))
+                       (if org--link? x (org--export-wrap org--backend x)))
                      (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
-                       (if contents-occur-as-link-description x (org--export-escape backend x))))
+                       (if org--link? x (org--export-escape org--backend x))))
              ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',
              ;; would silently export as the text “nil”.
-             (let ((result (let ((contents (org-parse raw-contents))) ,@body)))
+             (let ((result (cl-destructuring-bind (&key ,@context &allow-other-keys)
+                               (list :backend org--backend :raw-contents org--raw-contents
+                                     :contents (org-parse org--raw-contents) :args org--handler-args
+                                     :link? org--link? :anchor org--handler-anchor)
+                             ,@body)))
                ,(macroexpand-all `(lf-assert ',name  t
                                              result (stringp it)))
-               (org--block-note-heads ',defun-name backend result)
+               (org--block-note-heads ',defun-name org--backend result)
                (org-export result))))
        ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks
        ;; such as the one used to make the docs for this package.
@@ -617,7 +667,7 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 ;; with default values being "red" and "".
 (org-defblock rremark
               (editor "Editor Remark" color "red" signoff "" :latex-head ("xcolor") :manual "#tooltip"
-                      :link [:face '(:foreground "red" :weight bold)])
+                      :link [:face '(:foreground "red" :weight bold)] &context backend contents)
                                         ; :please-preserve-new-lines
               "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
               (format (if (equal backend 'html)
@@ -641,7 +691,7 @@ One should rarely use this directly; instead use
 `org-thread-blockcall'.
 "
   `(concat "#+end_export\n" (,(intern (format "org-block/%s" blk))
-                             backend ;; defblock internal
+                             org--backend ;; The enclosing handler's own, which no binding in its body can shadow
                              ,@(last keyword-args-then-contents) ;; contents
                              ,main-arg
                              ,@(-drop-last 1 keyword-args-then-contents)) "\n#+begin_export"))

@@ -55,7 +55,7 @@
           body
           #+end_opt-handler"
   :to latex
-  :using (org-defblock opt-handler (&optional x :block nil) "Show X and CONTENTS." (format "[%s|%s]" x contents))
+  :using (org-defblock opt-handler (&optional x :block nil &context contents) "Show X and CONTENTS." (format "[%s|%s]" x contents))
   :equals "\\begin{opt-handler}
 body
 \\end{opt-handler}
@@ -64,7 +64,7 @@ body
 (define-org-export-test "with :block nil, the link still works"
   :input "[[opt-handler:T][body]]"
   :to latex
-  :using (org-defblock opt-handler (&optional x :block nil) "Show X and CONTENTS." (format "[%s|%s]" x contents))
+  :using (org-defblock opt-handler (&optional x :block nil &context contents) "Show X and CONTENTS." (format "[%s|%s]" x contents))
   :equals "[T|body]
 ")
 
@@ -72,7 +72,7 @@ body
   :input "* Heading :opt-handler_T:
           body"
   :to latex
-  :using (org-defblock opt-handler (&optional x :block nil) "Show X and CONTENTS." (format "[%s|%s]" x contents))
+  :using (org-defblock opt-handler (&optional x :block nil &context contents) "Show X and CONTENTS." (format "[%s|%s]" x contents))
   :equals "\\section{Heading}
 \\label{sec:org-id-1}
 [T|
@@ -83,13 +83,13 @@ body
 (deftest "org-defblock's :link [DISPLAY] gives the link that display, in every arglist style"
   (using ((org-defblock opt-face-cl (&optional x :link [:face '(:foreground "red")]) "Echo X." x)
           (org-defblock opt-face-flat (x nil :link [:face '(:foreground "red")]) "Echo X." x)
-          (org-defblock opt-face-none (:link [:face '(:foreground "red")]) "Echo." contents))
+          (org-defblock opt-face-none (:link [:face '(:foreground "red")] &context contents) "Echo." contents))
     (dolist (name '("opt-face-cl" "opt-face-flat" "opt-face-none"))
       (should (equal (funcall (org-link-get-parameter name :face) "label") '(:foreground "red"))))))
 
 (deftest "org-defblock rejects the retired display vector after KWDS, naming the :link option instead"
   (should (string-match-p ":link \\[:face"
-                          (cadr (should-error (macroexpand '(org-defblock opt-old () [:face bold] "Doc." contents)))))))
+                          (cadr (should-error (macroexpand '(org-defblock opt-old (&context contents) [:face bold] "Doc." contents)))))))
 
 (provide 'org-defblock-options-tests)
 ;;; org-defblock-options-tests.el ends here

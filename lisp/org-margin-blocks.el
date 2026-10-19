@@ -54,7 +54,8 @@ as an argument of \\marginpar."
                       width "\\marginparwidth"
                       :latex-head ("xcolor") :manual "#tooltip"
                       :link [:display 'full
-                             :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
+                             :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")]
+                      &context backend raw-contents contents link?)
               "A remark, CONTENTS, on MARKER in the text: in HTML, a tooltip on MARKER, hovered on a desktop, tapped on a
 phone; in LaTeX, MARKER followed by CONTENTS as a margin note, numbered by COUNTER, as footnotes are; in beamer, whose
 slides have no margins, a footnote.  Sans MARKER, the note's number alone in LaTeX, and “°” in HTML.
@@ -80,7 +81,7 @@ note resized, to 1.3 the margin's width ---requiring \\usepackage{adjustbox}.
                   (`latex
                    (concat
                     ;; Sans MARKER, a block follows the newline, a space, after the word it remarks on; we swallow it.
-                    (if (or marker contents-occur-as-link-description) marker "\\!\\!")
+                    (if (or marker link?) marker "\\!\\!")
                     (org--latex-margin-note (format "{\\the%s}" counter) width color
                                            (if (s-contains? "#+resize:" contents)
                                                (s-concat

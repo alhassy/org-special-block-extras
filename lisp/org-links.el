@@ -633,7 +633,7 @@ Entries of the buffer, or of `org-docs-libraries', are Org; see `org-docs-get'."
               (name (error "Documentation block: Name must be provided")
                     label nil show nil color "green"
                     ;; A heading tagged :documentation: is an entry in its own right; see `org--docs-read-buffer'.
-                    :tag nil :manual "#Glossaries")
+                    :tag nil :manual "#Glossaries" &context raw-contents)
               "A glossary entry: CONTENTS defines NAME, cited as doc:LABEL; a heading tagged :documentation: is one too.
 
 The entries live in ‘org--docs’.

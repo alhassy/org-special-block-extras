@@ -30,7 +30,7 @@
   :input "#+begin_shout \"Hello, to the \"
           world
           #+end_shout"
-  :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+  :using (org-defblock shout (greeting &context contents) "docs" (concat greeting (upcase contents)))
   :equals "Hello, to the
            <p>
            WORLD
@@ -41,7 +41,7 @@
   :input "#+begin_shout
           world
           #+end_shout"
-  :using (org-defblock shout (greeting) "docs" (concat greeting (upcase contents)))
+  :using (org-defblock shout (greeting &context contents) "docs" (concat greeting (upcase contents)))
   :equals "
            <p>
            WORLD
@@ -55,7 +55,7 @@
           world
           #+end_shout
           "
-  :using (org-defblock shout (greeting nil to nil) "docs" (format "%s ⟶%s⟶ %s" greeting to (upcase contents)))
+  :using (org-defblock shout (greeting nil to nil &context contents) "docs" (format "%s ⟶%s⟶ %s" greeting to (upcase contents)))
   :equals "nil ⟶me⟶
            <p>
            WORLD

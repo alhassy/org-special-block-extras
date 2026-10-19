@@ -9,7 +9,7 @@
   :input "* Why bother? :memo_Spoiler_alert:
           Body text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Why bother?}
@@ -26,7 +26,7 @@ Body text.
           :END:
           Body text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Why bother?}
@@ -45,7 +45,7 @@ Body text.
           * Without :memo:
           Two."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{With a property}
@@ -70,9 +70,9 @@ Two.
           :END:
           Body."
   :to latex
-  :using (org-defblock memo (&optional title &key &allow-other-keys :tag t)
+  :using (org-defblock memo (&optional title &key &allow-other-keys :tag t &context args)
            "Show the header's keyword arguments."
-           (format "%S" org--handler-args))
+           (format "%S" args))
   :equals "\\section{Plot}
 \\label{sec:org-id-1}
 (:node.shape \"box\" :rankdir \"LR\")
@@ -86,9 +86,9 @@ Two.
           :END:
           Body."
   :to latex
-  :using (org-defblock memo (&optional title &key color :tag t)
+  :using (org-defblock memo (&optional title &key color :tag t &context args)
            "Show the header's keyword arguments."
-           (format "%S" org--handler-args))
+           (format "%S" args))
   :equals "\\section{Plot}
 \\label{sec:org-id-1}
 (:color \"red\")
@@ -102,7 +102,7 @@ Two.
           ** Inner
           Inner text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer\\hfill{}\\textsc{draft}}
@@ -119,7 +119,7 @@ Inner text.
   :input "* Plain
           Plain text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag t &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Plain}
@@ -131,7 +131,7 @@ Plain text.
   :input "* Just a tag :memo:
           Body text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag nil)
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag nil &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Just a tag\\hfill{}\\textsc{memo}}
@@ -148,7 +148,7 @@ Body text.
   :returns (title "Memo" :tag t :allow-other-keys nil))
 
 (deftest "a tagged section keeps its property drawer, so properties such as CUSTOM_ID still apply"
-  (using (org-defblock memo (&optional (title "Memo")) "Show TITLE." (format "[%s: %s]" title contents))
+  (using (org-defblock memo (&optional (title "Memo") &context contents) "Show TITLE." (format "[%s: %s]" title contents))
     (let ((html (org-export-string "* Heading :memo:\n:PROPERTIES:\n:CUSTOM_ID: here\n:END:\nBody." 'html)))
       (should (s-contains-p "id=\"here\"" html))
       (should-not (s-contains-p ":CUSTOM_ID:" html)))))
@@ -161,7 +161,7 @@ Body text.
           ** Inner
           Inner text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections ignore])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections ignore] &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
@@ -175,7 +175,7 @@ Inner text.
 ")
 
 (deftest "with :subsections error, a tagged section with a subsection is refused, naming both"
-  (using (org-defblock memo (&optional (title "Memo") :tag [:subsections error])
+  (using (org-defblock memo (&optional (title "Memo") :tag [:subsections error] &context contents)
            "Show TITLE." (format "[%s: %s]" title contents))
     (let ((err (should-error (org-export-string "* Outer :memo:\nOuter text.\n** Inner\nInner text." 'latex)
                              :type 'user-error)))
@@ -189,7 +189,7 @@ Inner text.
           * Sibling
           Sibling text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections error])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections error] &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Lonely}
@@ -215,7 +215,7 @@ Sibling text.
           * After
           After text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse] &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
@@ -246,7 +246,7 @@ After text.
           ** Plain
           Plain text."
   :to latex
-  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse])
+  :using (org-defblock memo (&optional (title "Memo") &key (color "teal") :tag [:subsections recurse] &context contents)
            "Show TITLE and COLOR around CONTENTS."
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
@@ -289,7 +289,7 @@ Plain text.
   (should-not (memq #'org-deftag/memo-lifecycle org-export-before-parsing-functions)))
 
 (deftest "tags run before special blocks are rewritten, whatever the order they were hooked in"
-  (using (org-defblock memo (&optional (title "Memo") :tag t) "Show TITLE." (format "[%s: %s]" title contents))
+  (using (org-defblock memo (&optional (title "Memo") :tag t &context contents) "Show TITLE." (format "[%s: %s]" title contents))
     ;; Re-enabling the mode re-adds the block rewriter after the tag was hooked.
     (org-special-block-extras-mode -1)
     (org-special-block-extras-mode 1)
@@ -344,7 +344,7 @@ Try induction.
 (ert-deftest org-defblock-tag-renders-for-derived-backends ()
   "A tagged section exports as its block under a backend derived from html, not as an ignored export block."
   (org-export-define-derived-backend 'org-test-derived-html 'html)
-  (org-defblock shout (&optional (title "Shout") :tag t)
+  (org-defblock shout (&optional (title "Shout") :tag t &context contents)
     "Wrap CONTENTS in a <shout> element."
     (format "<shout>%s</shout>" contents))
   (unwind-protect

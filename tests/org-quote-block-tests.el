@@ -12,7 +12,7 @@
 *This* is a /try/.
 #+end_quote" 'latex)))
   ;; Outside braces, a newline is a space the handler may well want.
-  (org-defblock takeaway () "A takeaway: CONTENTS." (format "Takeaway: %s" contents))
+  (org-defblock takeaway (&context contents) "A takeaway: CONTENTS." (format "Takeaway: %s" contents))
   (should (s-contains-p "Takeaway: \nRemarkable."
                         (org-export-string "
 #+begin_takeaway

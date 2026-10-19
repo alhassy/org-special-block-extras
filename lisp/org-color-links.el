@@ -43,7 +43,7 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
 
 (dolist (colour org--named-colors)
   (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-head ("xcolor")
-                                 :manual "#Colours-links")
+                                 :manual "#Colours-links" &context backend contents)
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents)))
   (org-link-set-parameters (symbol-name colour) :activate-func #'org--color-link-hide-type))
@@ -59,14 +59,16 @@ As with Org's hidden brackets, `org-toggle-link-display' shows it all."
       (org-rear-nonsticky-at (point)))))
 
 (org-defblock color
-              (color "black" :latex-head ("xcolor") :manual "#Colours-links" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))])
+              (color "black" :latex-head ("xcolor") :manual "#Colours-links" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))]
+               &context backend contents)
               "Format text according to a given COLOR, which is black by default."
               (org--color-text backend color contents))
 
 ;;;;;; Highlight ---colour the background, rather than the text
 
 (org-defblock highlight
-              (color "yellow" :latex-head ("xcolor") :manual "#Highlights" :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))])
+              (color "yellow" :latex-head ("xcolor") :manual "#Highlights" :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))]
+               &context backend raw-contents contents link?)
               "Highlight text with a background of COLOR, which is yellow by default; as a link, it is so highlighted in Emacs too.
 
   [[highlight:pink][Read this twice.]]
@@ -74,16 +76,16 @@ As with Org's hidden brackets, `org-toggle-link-display' shows it all."
 For LaTeX, a hex COLOR such as #e5f5e5 needs no quotes; a block's text is a full-width paragraph box.
 In Markdown, the text is <mark>ed, paragraph by paragraph, which GitHub shows yellow whatever COLOR is."
               (pcase (if (org-export-markdown-p) 'md backend)
-                ('md (if contents-occur-as-link-description
+                ('md (if link?
                          (format "<mark>%s</mark>" contents)
                        (org-parse (format "@@html:<mark>@@%s@@html:</mark>@@"
                                           (s-replace-regexp "\n\n+" "@@html:</mark>@@\n\n@@html:<mark>@@" (s-trim raw-contents))))))
                 ('latex (concat (org--latex-define-color "osbe-highlight" color)
-                                (if contents-occur-as-link-description
+                                (if link?
                                     (format "\\colorbox{osbe-highlight}{%s}" contents)
                                   (format "\\colorbox{osbe-highlight}{\\parbox{\\dimexpr\\linewidth-2\\fboxsep}{%s}}" contents))))
                 ;; A block's text is paragraphs, which a <span> may not hold.
-                (_ (format (if contents-occur-as-link-description
+                (_ (format (if link?
                                "<span style=\"background-color:%s;\">%s</span>"
                              "<div style=\"background-color:%s;\">%s</div>")
                            color contents))))

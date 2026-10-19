@@ -53,6 +53,21 @@ any other #+begin_𝒳 block, too; see `org--rewrite-any-block-switches'.
   #+begin_src emacs-lisp :folded t                            ;; Folded away, titled by its language
   #+begin_tip :demo t                                         ;; Its source, then what it exports to")
 
+(eval-and-compile ;; `org-defswitch' and `org-defblock' call this as they expand.
+(defun org--injected-vars (who spec offered)
+  "(WHO, SPEC, OFFERED) ↦ the variables SPEC, a `cl-defun' &key list, binds; an error, naming WHO, for a key not
+OFFERED.
+  (backend ((:contents text))), (:backend :contents)  ↦  (backend text)
+Hence a misspelt key, such as contnets, is refused as the definition expands, rather than silently bound to nil."
+  (--map (pcase-let ((`(,key ,var) (pcase it
+                                     ((pred symbolp) (list (intern (format ":%s" it)) it))
+                                     (`((,key ,var) . ,_) (list key var))
+                                     (`(,var . ,_) (list (intern (format ":%s" var)) var)))))
+           (unless (memq key offered)
+             (error "‘%s’ asks for %s, which is not on offer; only %s are" who key offered))
+           var)
+         spec)))
+
 (defmacro org-defswitch (key arglist docstring &rest body)
   "Make KEY a switch that every block understands: a block with KEY VALUE renders as BODY, a string, says.
   (org-defswitch :shout (loud? &key render contents)
@@ -64,17 +79,22 @@ ARGLIST names VALUE, then, as `cl-defun' keys, whichever of these BODY needs:
 Not calling `render' replaces the block; transforming `contents' first, or the result after, wraps it.
 
 Every switch is offered the whole record, and takes only what it names ---dependency injection, by keyword:
-+ Hygiene: BODY sees only the names it lists, so a `let' around the definition keeps its own `name';
-  a switch wanting both renames the key, as in (_ &key ((:name block)) render contents).
++ Hygiene: BODY sees only the names it lists, so a `let' around the definition keeps its own `name'.
 + Growth: a key we offer in due time, such as :anchor, is invisible to the switches that do not ask for it;
   whereas a new anaphor would shadow each existing switch's variable of that name.
-+ Clarity: what BODY depends on is read off its head, not from this docstring.
++ Clarity: what BODY depends on is read off its head, not from this docstring; a key not on offer is an error.
+A key may be bound under another name, ((:KEY VAR)), as when BODY uses KEY's name for something else already:
+  (org-defswitch :greet (_ &key ((:name block)) render contents) …)  ;; `block' is the block's name
+See “Keyword Parameters” in Practical Common Lisp, https://gigamonkeys.com/book/functions.html, for a gentle tour.
 
 BODY may open with :depth N, an integer as `add-hook' takes, to place KEY among the other switches: a smaller N
 wraps a larger one, so that :noexport (-90) hides even a :folded (-60) box (-50).  N is 0 by default; i.e.,
 within :let (-20), so that BODY sees its substitutions, yet without :verbatim (50) and :ignore (60).
 The switch fires only when VALUE is non-nil; e.g., :folded nil leaves a block be."
   (declare (indent defun) (doc-string 3))
+  (org--injected-vars key
+                      (-take-while (lambda (it) (not (memq it '(&allow-other-keys &aux)))) (cdr (memq '&key arglist)))
+                      '(:render :contents :backend :name :header))
   (let ((depth (if (eq (car body) :depth) (prog1 (cadr body) (setq body (cddr body))) 0)))
     `(org--add-switch ,key ,depth
                       (cl-function (lambda (,@arglist ,@(unless (memq '&key arglist) '(&key))
