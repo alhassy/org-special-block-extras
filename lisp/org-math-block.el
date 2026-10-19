@@ -292,14 +292,19 @@ Org prepended the link's face to those beneath, LaTeX's, which we keep."
           (setq beg next)))))
   nil)
 
+(defface org-math-hint '((t :inherit font-lock-comment-face))
+  "How a math block's hint, “REL{ HINT }”, looks: muted, as a comment, since it says why a step holds, not what it is.
+Not `shadow', which some themes make the colour of all text."
+  :group 'org-special-block-extras)
+
 (defconst org--math-fontify-keywords
   '((org--math-unlink 0 nil)
     (":tag-\\([^: \t\n]+\\):" 0 org--math-tag-face)
     (org--math-match-plain-link 0 org--math-link-face)
     ;; Each & is where lines may align; an escaped \& is a mere ampersand.
     ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face)
-    ;; A hint shows grey, so we see at a glance which {…} the export reads as one.
-    (org--math-match-hint 0 shadow))
+    ;; A hint shows as a comment, so we see at a glance which {…} the export reads as one.
+    (org--math-match-hint 0 org-math-hint))
   "How a math block's tags, TYPE:ATOM links, &s, and hints look in Org buffers; see `org--fontify-blocks'.")
 
 (defconst org--math-definition-re "^[ \t]*\\\\\\(def\\|let\\|newcommand\\|renewcommand\\|DeclareMathOperator\\)\\b"
@@ -344,49 +349,76 @@ closes its braces; and the remaining lines, trimmed, sans blank ones."
   "A relation, which a hint may follow; e.g., =, ≤, \\equiv.")
 
 (defun org--math-hint-spans (math)
-  "MATH ↦ each line's first top-level hint, “REL{ HINT }”, as (REL BRACE END): where REL starts, where its { starts, and
-where its } ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a space must follow it; so “x ={a}”,
-“^{ 2 }”, and “\\frac{ a }” are no hints, nor is one with an unclosed {, as while we type it."
+  "MATH ↦ each top-level hint, “REL{ HINT }”, as (REL BRACE END): where REL starts, where its { starts, and where its }
+ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a space or newline must follow it; so “x ={a}”, “^{ 2 }”, and
+“\\frac{ a }” are no hints, nor is one with an unclosed {, as while we type it."
   (with-temp-buffer
     (insert math)
-    (let (spans lines)
+    (let (spans)
       (pcase-dolist (`(,mark . ,at) (org--math-top-level-marks math))
         (goto-char (1+ at))
-        (when (and (equal mark "{") (looking-at "{[ \t]") (not (memq (line-number-at-pos) lines))
-                   (looking-back org--math-relation-re (line-beginning-position) t))
+        (when (and (equal mark "{") (looking-at "{[ \t\n]") (looking-back org--math-relation-re (line-beginning-position) t))
           (let ((rel (1- (match-beginning 0)))
                 (end (ignore-errors (with-syntax-table org--math-syntax (forward-sexp) (1- (point))))))
-            (when end
-              (push (line-number-at-pos) lines)
-              (push (list rel at end) spans)))))
+            (when end (push (list rel at end) spans)))))
       (nreverse spans))))
 
 (defun org--math-hints (math)
-  "MATH ↦ MATH whose each hint, “REL{ HINT }” of `org--math-hint-spans', is “&REL”, its HINT at the line's end, before
-its tag or \\\\; e.g., “x ={ by IH } y” ↦ “x &= y && \\text{by IH}”."
+  "MATH ↦ MATH whose each hint, “REL{ HINT }” of `org--math-hint-spans', is “&\\quad REL \\quad”, its HINT at its step's
+end ---before the next hint, else the maths' end--- yet before a tag or \\\\ there; e.g., “x ={ by IH } y ={ by IH } z”
+↦ “x &\\quad = \\quad y && \\text{by IH} \\\\ &\\quad = \\quad z && \\text{by IH}”.  So each hint but the first begins a
+row, wherever the newlines fall; LaTeX reads them as spaces."
   (with-temp-buffer
     (insert math)
-    ;; The last first, lest rewriting a hint move those after it; a string's index i is the buffer's position i + 1.
-    (pcase-dolist (`(,rel ,brace ,end) (reverse (org--math-hint-spans math)))
-      (let ((hint (string-trim (buffer-substring (+ brace 2) end))))
-        (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
-        (insert " ")
-        (goto-char (1+ rel))
-        (insert "&")
-        (beginning-of-line)
-        (re-search-forward "[ \t]*\\(?::tag-[^: \t\n]+:.*\\|\\\\\\\\[ \t]*\\)?$" (line-end-position))
-        (goto-char (match-beginning 0))
-        (insert (format " && \\text{%s}" hint))))
+    (let ((next (point-max)))
+      ;; The last first, lest rewriting a step move those before it; a string's index i is the buffer's position i + 1.
+      (pcase-dolist (`(,rel ,brace ,end) (reverse (org--math-hint-spans math)))
+        ;; A hint spanning lines shows on one.
+        (let ((hint (string-trim (replace-regexp-in-string "[ \t\n]+" " " (buffer-substring (+ brace 2) end)))))
+          ;; The step's end, where its hint shows; one before another step ends its row, unless a tag or \\ ends it.
+          (goto-char next)
+          (skip-chars-backward " \t\n")
+          (let* ((line (buffer-substring (line-beginning-position) (point)))
+                 (ended (or (string-match org--math-tag-re line) (string-match "\\\\\\\\\\'" line))))
+            (when ended (goto-char (+ (line-beginning-position) ended)) (skip-chars-backward " \t"))
+            (insert (format " && \\text{%s}" hint))
+            (unless (or ended (= next (point-max))) (insert " \\\\")))
+          ;; A step's relation stands apart, by a quad either side, as in a calculational proof.
+          (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
+          (insert " \\quad ")
+          (goto-char (1+ rel))
+          (insert "&\\quad ")
+          (setq next (1+ rel)))))
     (buffer-string)))
 
 (defun org--math-match-hint (limit)
-  "Font-lock matcher: up to LIMIT, the next hint's “{ HINT }”, as `org--math-hint-spans' reads the block; else nil."
-  (let* ((start (save-excursion (re-search-backward "^[ \t]*#\\+begin_math\\b") (forward-line 1) (point)))
+  "Font-lock matcher: up to LIMIT, the next hint's “{ HINT }”, as `org--math-hint-spans' reads the block; else nil.
+The block begins after its #+begin_math line; or, in its C-c ' buffer, which has none, at the buffer's start."
+  (let* ((start (save-excursion (if (re-search-backward "^[ \t]*#\\+begin_math\\b" nil t) (line-beginning-position 2)
+                                  (point-min))))
          (span (--first (<= (point) (+ start (nth 1 it)))
                         (org--math-hint-spans (buffer-substring-no-properties start limit)))))
     (when span
       (set-match-data (list (+ start (nth 1 span)) (+ start (nth 2 span))))
       (goto-char (+ start (nth 2 span))))))
+
+(defun org--math-fill-hint (&rest _)
+  "Within a math block, fill the hint at point alone, as prose, and ↦ t; elsewhere in the block, leave its maths be, and
+↦ t, as maths is no prose.  Outside a math block, ↦ nil, so Org fills as ever.  A hint's lines align at its first word."
+  (let* ((block (org-special-block-at-point))
+         (start (and block (equal (downcase (org-element-property :type block)) "math")
+                     (org-element-property :contents-begin block))))
+    (when start
+      (when-let* ((spans (org--math-hint-spans
+                          (buffer-substring-no-properties start (org-element-property :contents-end block))))
+                  (span (--first (and (<= (+ start (nth 1 it)) (point)) (< (point) (+ start (nth 2 it)))) spans)))
+        (save-excursion
+          (goto-char (+ start (nth 1 span) 1))
+          (skip-chars-forward " \t\n")
+          ;; Its lines align at its first word, not as adaptive filling would guess from them.
+          (let ((fill-prefix (make-string (current-column) ?\s)) (adaptive-fill-mode nil))
+            (fill-region-as-paragraph (point) (+ start (nth 2 span) -1)))))
+      t)))
 
 (defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color{[^}]*}{\\\\text{[^}]*}}\\$} \\\\label{[^}]*}\\)"
   "A tag, as `org--math-tags' writes it.")
@@ -450,8 +482,10 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
 + “X ={ HINT } Y” aligns its line at =, and shows HINT at the line's end, as in a calculational proof; so too for any
-  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space follows it, so x ={a} is no hint; in
-  Emacs, a hint shows grey, so we see which {…} is one.
+  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space or newline follows it, so x ={a} is no hint; in
+  Emacs, a hint shows as a comment does, so we see which {…} is one.  A step runs from its hint to the next, its
+  hint at its end; so each hint but the first begins a row, wherever the newlines fall, sans our writing \\\\.  A hint
+  may span lines; M-q within it fills it alone, as prose, whereas M-q elsewhere in the block leaves the maths be.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
@@ -462,7 +496,7 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
   preamble; in HTML, MathJax reads it hidden, and then knows it page-wide.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
-  block in `latex-mode'.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
+  block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
   (let ((org--math-tips nil))
     (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor)))
       (cond ((org-export-markdown-p)

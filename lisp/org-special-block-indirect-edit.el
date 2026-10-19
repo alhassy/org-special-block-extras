@@ -37,6 +37,8 @@
 (require 'org)
 (require 'org-special-block-at-point)
 
+(defvar org--block-fontifications)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Runtime dispatch
 
@@ -70,10 +72,21 @@ and should return non-nil to claim the event."
      (org-src--construct-edit-buffer-name (buffer-name) name)
      (lambda ()
        (funcall (or mode #'org-mode))
+       (org--block-fontify-edit-buffer name)
        (setq-local header-line-format
                    (substitute-command-keys (format "%s block ---\\[org-edit-src-exit] to apply & exit." name))))
      t)
     t))
+
+(defun org--block-fontify-edit-buffer (name)
+  "Show this edit buffer's text as the NAME block's :fontify :keywords show it in Org buffers; see `org--fontify-blocks'.
+A keyword's function face is called for the face, as there."
+  (-when-let (keywords (plist-get (cdr (assoc (downcase name) org--block-fontifications)) :keywords))
+    (font-lock-add-keywords
+     nil (--map (-let [(matcher group face) it]
+                  (list matcher (list group (if (functionp face) (list face) (list 'quote face)) 'prepend)))
+                keywords)
+     'append)))
 
 (defun org--special-block-edit-fallback (edit-special &rest args)
   "Call EDIT-SPECIAL with ARGS; where Org knows no special environment, yet point is in a special block, edit its contents.

@@ -388,8 +388,64 @@ e^{i\\pi} + 1 = 0
 ≥{ as squares are nonnegative } 2ab" nil)
   :returns "#+begin_export latex
 \\begin{align*}
-(a + b)^2 &= a^2 + 2ab + b^2 && \\text{by expanding} \\\\
-&≥ 2ab && \\text{as squares are nonnegative}
+(a + b)^2 &\\quad = \\quad a^2 + 2ab + b^2 && \\text{by expanding} \\\\
+&\\quad ≥ \\quad 2ab && \\text{as squares are nonnegative}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's line before a hint's ends there, since a hint begins a step; so it needs no \\\\"
+  :call (org-block/math 'latex "
+p \\land q ={ Golden Rule } p = q = p \\lor q
+          ={ by symmetry } q \\land p \\\\
+          ={ by me and my ideas } p \\land q" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+p \\land q &\\quad = \\quad p = q = p \\lor q && \\text{Golden Rule} \\\\
+&\\quad = \\quad q \\land p && \\text{by symmetry} \\\\
+&\\quad = \\quad p \\land q && \\text{by me and my ideas}
+\\end{align*}
+#+end_export")
+
+(deftest "a math block's step runs from one hint to the next, wherever its newlines fall; as LaTeX reads them, they are spaces"
+  (let ((squeeze (lambda (s) (replace-regexp-in-string "[ \t\n]+" " " s))))
+    (should (equal (funcall squeeze (org-block/math 'latex "
+p \\land q ={ Golden Rule } p = q = & p \\lor q
+          ={ by symmetry } q \\land & p
+          ={ by me and my ideas } & p \\land q" nil))
+                   (funcall squeeze (org-block/math 'latex "
+  p \\land q
+={ Golden Rule }
+  p = q = & p \\lor q
+={ by symmetry }
+  q \\land & p
+={ by me and my ideas }
+& p \\land q" nil))))))
+
+(define-org-call-test "a math block's hint goes at its step's end, before the tag there; a step may begin a line's middle"
+  :call (org-block/math 'latex "
+\\def\\N{\\mathbb{N}}
+p \\land q
+={ Golden Rule }
+p = q   :tag-blue: Step
+={ by symmetry } q = p ={ by reflexivity } q = p" nil)
+  :returns "#+latex_header: \\def\\N{\\mathbb{N}}
+#+begin_export latex
+\\begin{align*}
+p \\land q
+&\\quad = \\quad
+p = q && \\text{Golden Rule}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step} \\\\
+&\\quad = \\quad q = p && \\text{by symmetry} \\\\ &\\quad = \\quad q = p && \\text{by reflexivity}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's definition right before a hint's line is left be, as no line of maths"
+  :call (org-block/math 'latex "
+\\def\\N{\\mathbb{N}}
+x ={ by definition } \\N" nil)
+  :returns "#+latex_header: \\def\\N{\\mathbb{N}}
+#+begin_export latex
+\\begin{align*}
+x &\\quad = \\quad \\N && \\text{by definition}
 \\end{align*}
 #+end_export")
 
@@ -398,7 +454,7 @@ e^{i\\pi} + 1 = 0
 x ={ by {IH} } y   :tag-blue: Step" nil)
   :returns "#+begin_export latex
 \\begin{align*}
-x &= y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
+x &\\quad = \\quad y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
 \\end{align*}
 #+end_export")
 
@@ -409,9 +465,25 @@ x &= y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
           p =={ by definition } q
           #+end_math"
   :equals "\\begin{align*}
-p &\\equiv q && \\text{by definition}
+p &\\quad \\equiv \\quad q && \\text{by definition}
 \\end{align*}
 ")
+
+(define-org-call-test "a math block's hint may span lines, its { followed by a newline; it shows on one line"
+  :call (org-block/math 'latex "
+\\zero + \\suc \\zero
+  ={
+Addition moves the $\\suc$-s from the left argument to the
+  right.
+}
+  \\suc (\\zero + \\zero)" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+\\zero + \\suc \\zero
+&\\quad = \\quad
+\\suc (\\zero + \\zero) && \\text{Addition moves the $\\suc$-s from the left argument to the right.}
+\\end{align*}
+#+end_export")
 
 (define-org-call-test "a math block's REL{GROUP}, ^{ 2 }, \\frac{ a }{ b }, and a REL{ … } within cases are no hints"
   :call (org-block/math 'latex "
@@ -529,6 +601,27 @@ teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
 (deftest "C-c ' edits a math block in latex-mode"
   (should (eq (alist-get "math" org--block-edit-special-handlers nil nil #'equal) 'org-math--do-edit-special)))
 
+(org-deftest "C-c ' edits a math block in latex-mode, which shows its hints and tags as the Org buffer does"
+  :text "
+#+begin_math
+x ={ by IH } y   :tag-blue: Step
+={ by symmetry } z
+#+end_math"
+  :at "by IH"
+  (org-edit-special)
+  (unwind-protect
+      (progn
+        (should (derived-mode-p 'latex-mode))
+        (font-lock-ensure)
+        (dolist (hint '("by IH" "by symmetry"))
+          (goto-char (point-min))
+          (search-forward hint)
+          (should (memq 'org-math-hint (ensure-list (get-text-property (1- (point)) 'face)))))
+        (goto-char (point-min))
+        (search-forward ":tag-blue")
+        (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (1- (point)) 'face)))))
+    (org-edit-src-abort)))
+
 (org-deftest "C-c C-c within a math block shows its maths as an image atop it; C-c C-c again removes the image"
   :text "
 #+begin_math
@@ -581,21 +674,73 @@ y &= z   :tag-notacolour: Mystery
   (search-forward ":tag-blue")
   (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
 
-(org-deftest "a math block's hint, “REL{ HINT }”, shows grey, as the export reads it; LaTeX's own groups do not" [fontify]
+(org-deftest "a math block's hint, “REL{ HINT }”, shows as a comment, as the export reads it; LaTeX's own groups do not" [fontify]
   :text "
 #+begin_math
-x ={ by {IH} } y ={ not this, the line has one } z \\\\
+x ={ by {IH} } y ={ this too, the next step } z \\\\
 \\frac{ a }{ b } ={a} \\begin{cases} p ={ nor this } q \\end{cases}
 \\leq{ by monotonicity } w
 #+end_math"
   (font-lock-ensure)
   (search-forward "by {IH")
-  (should (memq 'shadow (ensure-list (get-text-property (point) 'face))))
-  (dolist (plain '("not this" "{ a }" "{a}" "nor this"))
+  (should (memq 'org-math-hint (ensure-list (get-text-property (point) 'face))))
+  (search-forward "this too")
+  (should (memq 'org-math-hint (ensure-list (get-text-property (point) 'face))))
+  (dolist (plain '("{ a }" "{a}" "nor this"))
     (search-forward plain)
-    (should-not (memq 'shadow (ensure-list (get-text-property (1- (point)) 'face)))))
+    (should-not (memq 'org-math-hint (ensure-list (get-text-property (1- (point)) 'face)))))
   (search-forward "by monotonicity")
-  (should (memq 'shadow (ensure-list (get-text-property (1- (point)) 'face)))))
+  (should (memq 'org-math-hint (ensure-list (get-text-property (1- (point)) 'face)))))
+
+(org-deftest "a math block's hint may span lines, and shows as a comment throughout" [fontify]
+  :text "
+#+begin_math
+\\zero + \\suc \\zero
+  ={
+Addition moves the suc-s
+  right.
+}
+  \\suc \\zero
+#+end_math"
+  (font-lock-ensure)
+  (dolist (hint '("Addition" "right."))
+    (search-forward hint)
+    (should (memq 'org-math-hint (ensure-list (get-text-property (1- (point)) 'face))))))
+
+(org-deftest "M-q within a math block's hint fills the hint alone, as prose; the maths around it is left be"
+  :text "
+#+begin_math
+\\zero + \\suc \\zero   :tag-blue: Start
+  ={
+Addition moves the suc-s from the left argument to the
+  right, one at a time.
+}
+  \\suc \\zero
+#+end_math"
+  :at "suc-s"
+  (let ((fill-column 30))
+    (fill-paragraph))
+  (should (equal (buffer-string) "
+#+begin_math
+\\zero + \\suc \\zero   :tag-blue: Start
+  ={
+Addition moves the suc-s from
+the left argument to the
+right, one at a time.
+}
+  \\suc \\zero
+#+end_math")))
+
+(org-deftest "M-q within a math block, but not a hint, leaves the maths be, as it is no prose"
+  :text "
+#+begin_math
+a + b
+  = c   :tag-blue: Start
+#+end_math"
+  :at "a + b"
+  (let ((before (buffer-string)) (fill-column 10))
+    (fill-paragraph)
+    (should (equal (buffer-string) before))))
 
 (org-deftest "a math block's & shows as a keyword, since lines align there; an escaped \\& is LaTeX's alone" [fontify]
   :text "

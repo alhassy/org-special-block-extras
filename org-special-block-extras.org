@@ -4259,7 +4259,7 @@ from∘to m = {! try it! }
   + Inline maths, =$red:x$= or =\(red:x\)=, reads our links and Org's markup just as the block does.
   + In Emacs, the block looks as a =#+begin_src latex= block does, with each =red:ATOM= in red, as
     the maths reads it; =C-c C-c= shows the maths as an image atop the block, until =C-c C-c= again,
-    or an edit; and =C-c '= edits it in =latex-mode=. Org's own =C-c C-x C-l=, and
+    or an edit; and =C-c '= edits it in =latex-mode=, its hints, tags, and colours shown as in the Org buffer. Org's own =C-c C-x C-l=, and
     =#+startup: latexpreview=, show math blocks as images too.
   + Unicode, such as =∀ x ∈ ℕ=, typesets in HTML as is; in LaTeX, it needs =#+latex_compiler: lualatex=
     and =#+latex_header: \usepackage{unicode-math}=, else its symbols are dropped ---silently, with only
@@ -4287,13 +4287,18 @@ R_{teal:\theta} =
   are welcome too: the [[#Switches-for-every-block][:let switch]] gives them, as below.
 
   A calculational proof states why each step holds. We write the hint right after the relation,
-  =X ={ HINT } Y=: the line aligns at === and =HINT= shows at its end, in a column of its own. So too for
+  =X ={ HINT } Y=: the line aligns at ===, set apart by a =\quad= either side, and =HINT= shows at its
+  end, in a column of its own. So too for
   any relation ---=≤{ … }=, =\equiv{ … }=, or a =:let= shorthand's, as below. The ={= hugs the relation and
-  a space follows it, so LaTeX's own =x ={a}= and =\frac{ a }{ b }= are left be. So that we need not recall the
-  rule, Emacs shows each hint grey, by the very reading the export makes; a ={…}= not grey is LaTeX's own.
+  a space or newline follows it, so LaTeX's own =x ={a}= and =\frac{ a }{ b }= are left be. So that we need not recall the
+  rule, Emacs shows each hint as a comment, by the very reading the export makes; any other ={…}= is LaTeX's own.
+  A step runs from its hint to the next, its hint shown at its end; so each hint but the first begins a row,
+  wherever the newlines fall ---we need not write =\\=, and may give each expression and hint a line of its own,
+  in Dijkstra's style. A hint may span lines, as a long reason does; =M-q= within it fills it alone, as prose,
+  whereas =M-q= elsewhere in the block leaves the maths be.
   #+begin_example
 ,#+begin_math :let (== "\\equiv")
-p \land q =={ Golden Rule } p == q == p \lor q \\
+p \land q =={ Golden Rule } p == q == p \lor q
            =={ by symmetry } q \land p
 ,#+end_math
   #+end_example
