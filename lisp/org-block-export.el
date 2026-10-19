@@ -45,10 +45,10 @@
 
 ;;;; org-eval-replace-block
 
-(defun org--block-declared-keywords (args)
-  "The flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist ARGS ↦ (KEY₁ …); see `org--defblock-desugar-args'.
-  (title \"Details\" color \"green\" style nil)  ↦  (color style)"
-  (mapcar #'car (-partition 2 (cddr args))))
+(defun org--block-declared-keywords (spec)
+  "The parsed arglist SPEC ↦ its keyword arguments' names; see `org--defblock-parse-args'.
+  (:main (title \"Details\") :keys ((color \"green\") (style nil)))  ↦  (color style)"
+  (mapcar #'car (plist-get spec :keys)))
 
 (cl-defmethod org-eval-replace-block ((block org-special-block) backend)
   "Replace a special Org block with the result of evaluating its handler.

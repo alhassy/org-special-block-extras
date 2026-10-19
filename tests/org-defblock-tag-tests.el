@@ -139,13 +139,13 @@ Plain text.
 Body text.
 ")
 
-(define-org-call-test "org--defblock-desugar-args passes :tag through, as any other option"
-  :call (org--defblock-desugar-args '(&optional (title "Memo") &key (color "teal") :tag t))
-  :returns (title "Memo" color "teal" :tag t :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args passes :tag through, as any other option"
+  :call (org--defblock-parse-args '(&optional (title "Memo") &key (color "teal") :tag t))
+  :returns (:main (title "Memo") :keys ((color "teal")) :other-keys nil :context nil :options (:tag t)))
 
-(define-org-call-test "org--defblock-desugar-args accepts :tag right after &optional, without &key"
-  :call (org--defblock-desugar-args '(&optional (title "Memo") :tag t))
-  :returns (title "Memo" :tag t :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args accepts :tag right after &optional, without &key"
+  :call (org--defblock-parse-args '(&optional (title "Memo") :tag t))
+  :returns (:main (title "Memo") :keys nil :other-keys nil :context nil :options (:tag t)))
 
 (deftest "a tagged section keeps its property drawer, so properties such as CUSTOM_ID still apply"
   (using (org-defblock memo (&optional (title "Memo") &context contents) "Show TITLE." (format "[%s: %s]" title contents))

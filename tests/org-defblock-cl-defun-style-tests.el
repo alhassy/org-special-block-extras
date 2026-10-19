@@ -3,44 +3,45 @@
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
-;;; `org--defblock-desugar-args': cl-defun-style ↦ flat
+;;; `org--defblock-parse-args': a cl-defun-style arglist ↦ its parts, by name
 
-(deftest "org--defblock-desugar-args rejects a flattened arglist"
-  (should-error (org--defblock-desugar-args '(title "Details" color "green"))))
+(deftest "org--defblock-parse-args rejects a flattened arglist"
+  (should-error (org--defblock-parse-args '(title "Details" color "green"))))
 
-(define-org-call-test "org--defblock-desugar-args reads an empty arglist as no arguments, and no other keys"
-  :call (org--defblock-desugar-args '())
-  :returns (main-arg nil :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args reads an empty arglist as no arguments, and no other keys"
+  :call (org--defblock-parse-args '())
+  :returns (:main nil :keys nil :other-keys nil :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args reads a bare &optional as the main argument without default"
-  :call (org--defblock-desugar-args '(&optional title))
-  :returns (title nil :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args reads a bare &optional as the main argument without default"
+  :call (org--defblock-parse-args '(&optional title))
+  :returns (:main (title nil) :keys nil :other-keys nil :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args reads an &optional (name default) pair"
-  :call (org--defblock-desugar-args '(&optional (title "Details")))
-  :returns (title "Details" :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args reads an &optional (name default) pair"
+  :call (org--defblock-parse-args '(&optional (title "Details")))
+  :returns (:main (title "Details") :keys nil :other-keys nil :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args names the main argument main-arg when only &key is given"
-  :call (org--defblock-desugar-args '(&key (style "color:red") class))
-  :returns (main-arg nil style "color:red" class nil :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args has no main argument when only &key is given"
+  :call (org--defblock-parse-args '(&key (style "color:red") class))
+  :returns (:main nil :keys ((style "color:red") (class nil)) :other-keys nil :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args reads &optional and &key together"
-  :call (org--defblock-desugar-args '(&optional (title "Details") &key (color "green") style))
-  :returns (title "Details" color "green" style nil :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args reads &optional and &key together"
+  :call (org--defblock-parse-args '(&optional (title "Details") &key (color "green") style))
+  :returns (:main (title "Details") :keys ((color "green") (style nil)) :other-keys nil :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args reads &allow-other-keys as the option :allow-other-keys t"
-  :call (org--defblock-desugar-args '(&optional title &key color &allow-other-keys))
-  :returns (title nil color nil :allow-other-keys t))
+(define-org-call-test "org--defblock-parse-args reads &allow-other-keys as :other-keys t"
+  :call (org--defblock-parse-args '(&optional title &key color &allow-other-keys))
+  :returns (:main (title nil) :keys ((color nil)) :other-keys t :context nil :options nil))
 
-(define-org-call-test "org--defblock-desugar-args passes options such as :edit-indirect-mode through"
-  :call (org--defblock-desugar-args '(&optional (kind "directed") &key file :edit-indirect-mode org-mode))
-  :returns (kind "directed" file nil :edit-indirect-mode org-mode :allow-other-keys nil))
+(define-org-call-test "org--defblock-parse-args gathers options such as :edit-indirect-mode, wherever they are"
+  :call (org--defblock-parse-args '(&optional (kind "directed") :manual "#x" &key file :edit-indirect-mode org-mode))
+  :returns (:main (kind "directed") :keys ((file nil)) :other-keys nil :context nil
+            :options (:manual "#x" :edit-indirect-mode org-mode)))
 
-(deftest "org--defblock-desugar-args rejects arguments before &optional or &key"
-  (should-error (org--defblock-desugar-args '(backend &optional title))))
+(deftest "org--defblock-parse-args rejects arguments before &optional or &key"
+  (should-error (org--defblock-parse-args '(backend &optional title))))
 
-(deftest "org--defblock-desugar-args rejects more than one &optional argument"
-  (should-error (org--defblock-desugar-args '(&optional title subtitle))))
+(deftest "org--defblock-parse-args rejects more than one &optional argument"
+  (should-error (org--defblock-parse-args '(&optional title subtitle))))
 
 ;;; Blocks defined with cl-defun-style arglists
 
@@ -118,9 +119,10 @@ body
 
 ;;; &context: what a body asks of the export, by name
 
-(define-org-call-test "org--defblock-desugar-args reads what follows &context as the option :context"
-  :call (org--defblock-desugar-args '(&optional title &key color &context backend ((:contents text))))
-  :returns (title nil color nil :allow-other-keys nil :context (backend ((:contents text)))))
+(define-org-call-test "org--defblock-parse-args reads what follows &context as :context, an option after it too"
+  :call (org--defblock-parse-args '(&optional title &key color &context backend ((:contents text)) :tag nil))
+  :returns (:main (title nil) :keys ((color nil)) :other-keys nil :context (backend ((:contents text)))
+            :options (:tag nil)))
 
 (deftest "a body sees only what its &context asks for; a main argument named contents is just that"
   (using (org-defblock quip (&optional contents &context ((:raw-contents text)))

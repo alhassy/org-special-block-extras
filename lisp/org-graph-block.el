@@ -399,11 +399,11 @@ linked node's label--- vanish, lest the browser's native tooltips compete.
             (maphash (lambda (key tip) (push (concat "\n" (org--tooltip-template key tip)) templates)) tips)
             (apply #'concat (nreverse templates)))))
 
-(org-defblock graph (&optional main-arg &key file svg &allow-other-keys :edit-indirect-mode org-graph-edit-mode
+(org-defblock graph (&optional title &key file svg &allow-other-keys :edit-indirect-mode org-graph-edit-mode
                     :manual "#Graphs" &context backend raw-contents args anchor)
   "Render an Org list + tables as a Graphviz dot graph.
 
-MAIN-ARG is the graph's title, its label.
+TITLE is the graph's label.
 The header's other keys are graph attributes, such as :rankdir LR; :node.KEY and :edge.KEY set node and edge defaults;
 :directed nil makes an undirected graph; :wrap N fills labels to N characters a line; :unflatten N staggers
 wide rows of leaves over N ranks; and :unknown-tags random-templates gives an unknown tag a made-up template,
@@ -476,8 +476,8 @@ Example:
          (inline-svg (and (eq backend 'html) (not anchor) (not (org-export-markdown-p))
                           (or svg (not (or smart (plist-member args :svg))))))
          (org--graph-tips (and inline-svg (make-hash-table :test #'equal)))
-         (dot     (if smart (org--smartdiagram raw main-arg args)
-                    (org--graph-raw->dot raw main-arg args)))
+         (dot     (if smart (org--smartdiagram raw title args)
+                    (org--graph-raw->dot raw title args)))
          (render  (if smart
                       (lambda (kind file) (org-graph--render-latex dot kind file (org-graph--dpi args)))
                     (lambda (kind file) (org-graph--render dot kind file))))
@@ -504,7 +504,7 @@ Example:
                  ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>, its tooltips as text.
                  (format "<pre>%s</pre>" (s-replace "<" "&lt;" (if (and inline-svg (not smart))
                                                                     (let (org--graph-tips)
-                                                                      (org--graph-raw->dot raw main-arg args))
+                                                                      (org--graph-raw->dot raw title args))
                                                                   dot))))
            (delete-file tmp))))
       (_

@@ -325,13 +325,13 @@ Inlined, so an exported page makes no request for them; see https://github.com/a
 (defun org-block-signature (name)
   "NAME ↦ how its block is called, with defaults; e.g., #+begin_details TITLE=\"Details\" :title-color \"green\"; else nil."
   (-when-let (args (get (intern-soft (format "org-block/%s" name)) 'org-defblock-args))
-    (-let [(main default . keys) args]
+    (-let [(&plist :main (main default) :keys keys) args]
       (concat (format "#+begin_%s" name)
-              ;; The anonymous main argument is omitted, unless it has a default to show.
-              (if (and (eq main 'main-arg) (null default)) "" (format " %s" (upcase (symbol-name main))))
+              ;; A block sans main argument shows none.
+              (if main (format " %s" (upcase (symbol-name main))) "")
               (if default (format "=%S" default) "")
               (mapconcat (-lambda ((key default)) (format " :%s%s" key (if default (format " %S" default) "")))
-                         (-partition 2 keys) "")))))
+                         keys "")))))
 
 (defun org--block-keys (name)
   "NAME ↦ the keys that act on a NAME block, each beside the gist of what it does, as `org-def-action' and

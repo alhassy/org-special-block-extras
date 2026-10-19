@@ -41,7 +41,7 @@
 (declare-function org--read-header "org-block-header-args")
 (declare-function org--block-eval "org-block-switches")
 (declare-function org--block-name "org-special-block-parse")
-(declare-function org--defblock-desugar-args "org-defblock")
+(declare-function org--defblock-parse-args "org-defblock")
 (declare-function org--block-header-args "org-block-header-args")
 (declare-function org--plist-merge "org-block-header-args")
 
@@ -52,13 +52,13 @@ ARGS are as `org-defblock''s; BODY sees them by name, and the block's text as RA
 within the block.  The function is `org-action/NAME'.  A non-nil value claims the key press; nil declines it."
   (declare (indent defun) (doc-string 3))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  (let* ((flat (cl-loop for (key value) on (org--defblock-desugar-args args) by #'cddr
-                        unless (keywordp key) append (list key value)))
-         (main (or (car flat) 'main-arg))
+  (let* ((spec (org--defblock-parse-args args))
+         (main (or (car (plist-get spec :main)) 'main-arg))
          (function (intern (format "org-action/%s" name))))
     `(progn
        ;; All arguments by keyword, the main one too: so an absent one takes its default, as a block's does.
-       (cl-defun ,function (raw-contents &key (,main ,(cadr flat)) ,@(-partition 2 (cddr flat)) &allow-other-keys)
+       (cl-defun ,function (raw-contents &key (,main ,(cadr (plist-get spec :main))) ,@(plist-get spec :keys)
+                                         &allow-other-keys)
          ,@(when docstring (list docstring))
          (ignore raw-contents ,main)
          ,@body)
