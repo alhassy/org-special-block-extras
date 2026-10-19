@@ -4289,7 +4289,8 @@ R_{teal:\theta} =
   A calculational proof states why each step holds. We write the hint right after the relation,
   =X ={ HINT } Y=: the line aligns at === and =HINT= shows at its end, in a column of its own. So too for
   any relation ---=≤{ … }=, =\equiv{ … }=, or a =:let= shorthand's, as below. The ={= hugs the relation and
-  a space follows it, so LaTeX's own =x ={a}= and =\frac{ a }{ b }= are left be.
+  a space follows it, so LaTeX's own =x ={a}= and =\frac{ a }{ b }= are left be. So that we need not recall the
+  rule, Emacs shows each hint grey, by the very reading the export makes; a ={…}= not grey is LaTeX's own.
   #+begin_example
 ,#+begin_math :let (== "\\equiv")
 p \land q =={ Golden Rule } p == q == p \lor q \\

@@ -581,6 +581,22 @@ y &= z   :tag-notacolour: Mystery
   (search-forward ":tag-blue")
   (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
 
+(org-deftest "a math block's hint, “REL{ HINT }”, shows grey, as the export reads it; LaTeX's own groups do not" [fontify]
+  :text "
+#+begin_math
+x ={ by {IH} } y ={ not this, the line has one } z \\\\
+\\frac{ a }{ b } ={a} \\begin{cases} p ={ nor this } q \\end{cases}
+\\leq{ by monotonicity } w
+#+end_math"
+  (font-lock-ensure)
+  (search-forward "by {IH")
+  (should (memq 'shadow (ensure-list (get-text-property (point) 'face))))
+  (dolist (plain '("not this" "{ a }" "{a}" "nor this"))
+    (search-forward plain)
+    (should-not (memq 'shadow (ensure-list (get-text-property (1- (point)) 'face)))))
+  (search-forward "by monotonicity")
+  (should (memq 'shadow (ensure-list (get-text-property (1- (point)) 'face)))))
+
 (org-deftest "a math block's & shows as a keyword, since lines align there; an escaped \\& is LaTeX's alone" [fontify]
   :text "
 #+begin_math

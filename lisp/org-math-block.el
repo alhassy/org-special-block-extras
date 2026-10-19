@@ -297,8 +297,10 @@ Org prepended the link's face to those beneath, LaTeX's, which we keep."
     (":tag-\\([^: \t\n]+\\):" 0 org--math-tag-face)
     (org--math-match-plain-link 0 org--math-link-face)
     ;; Each & is where lines may align; an escaped \& is a mere ampersand.
-    ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face))
-  "How a math block's tags, TYPE:ATOM links, and &s look in Org buffers; see `org--fontify-blocks'.")
+    ("\\(?:^\\|[^\\]\\)\\(&\\)" 1 font-lock-keyword-face)
+    ;; A hint shows grey, so we see at a glance which {…} the export reads as one.
+    (org--math-match-hint 0 shadow))
+  "How a math block's tags, TYPE:ATOM links, &s, and hints look in Org buffers; see `org--fontify-blocks'.")
 
 (defconst org--math-definition-re "^[ \t]*\\\\\\(def\\|let\\|newcommand\\|renewcommand\\|DeclareMathOperator\\)\\b"
   "A line that declares a macro, rather than showing maths.")
@@ -341,35 +343,50 @@ closes its braces; and the remaining lines, trimmed, sans blank ones."
                       t))
   "A relation, which a hint may follow; e.g., =, ≤, \\equiv.")
 
-(defun org--math-hints (math)
-  "MATH ↦ MATH whose each line's first top-level “REL{ HINT }” is “&REL”, its HINT at the line's end, before its tag or
-\\\; e.g., “x ={ by IH } y” ↦ “x &= y && \\text{by IH}”.  The { must hug REL, and a space must follow it; so “x ={a}”,
-“^{ 2 }”, and “\\frac{ a }” are no hints."
+(defun org--math-hint-spans (math)
+  "MATH ↦ each line's first top-level hint, “REL{ HINT }”, as (REL BRACE END): where REL starts, where its { starts, and
+where its } ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a space must follow it; so “x ={a}”,
+“^{ 2 }”, and “\\frac{ a }” are no hints, nor is one with an unclosed {, as while we type it."
   (with-temp-buffer
     (insert math)
-    (let (hints lines)
+    (let (spans lines)
       (pcase-dolist (`(,mark . ,at) (org--math-top-level-marks math))
         (goto-char (1+ at))
         (when (and (equal mark "{") (looking-at "{[ \t]") (not (memq (line-number-at-pos) lines))
-                   (looking-back org--math-relation-re (line-beginning-position)))
-          (push (line-number-at-pos) lines)
-          (push (point) hints)))
-      ;; The last first, lest rewriting a hint move those after it.
-      (dolist (at hints)
-        (goto-char at)
-        (looking-back org--math-relation-re (line-beginning-position) t)
-        (let* ((rel (match-beginning 0))
-               (end (with-syntax-table org--math-syntax (save-excursion (forward-sexp) (point))))
-               (hint (string-trim (buffer-substring (1+ at) (1- end)))))
-          (delete-region at (progn (goto-char end) (skip-chars-forward " \t") (point)))
-          (insert " ")
-          (goto-char rel)
-          (insert "&")
-          (beginning-of-line)
-          (re-search-forward "[ \t]*\\(?::tag-[^: \t\n]+:.*\\|\\\\\\\\[ \t]*\\)?$" (line-end-position))
-          (goto-char (match-beginning 0))
-          (insert (format " && \\text{%s}" hint)))))
+                   (looking-back org--math-relation-re (line-beginning-position) t))
+          (let ((rel (1- (match-beginning 0)))
+                (end (ignore-errors (with-syntax-table org--math-syntax (forward-sexp) (1- (point))))))
+            (when end
+              (push (line-number-at-pos) lines)
+              (push (list rel at end) spans)))))
+      (nreverse spans))))
+
+(defun org--math-hints (math)
+  "MATH ↦ MATH whose each hint, “REL{ HINT }” of `org--math-hint-spans', is “&REL”, its HINT at the line's end, before
+its tag or \\\\; e.g., “x ={ by IH } y” ↦ “x &= y && \\text{by IH}”."
+  (with-temp-buffer
+    (insert math)
+    ;; The last first, lest rewriting a hint move those after it; a string's index i is the buffer's position i + 1.
+    (pcase-dolist (`(,rel ,brace ,end) (reverse (org--math-hint-spans math)))
+      (let ((hint (string-trim (buffer-substring (+ brace 2) end))))
+        (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
+        (insert " ")
+        (goto-char (1+ rel))
+        (insert "&")
+        (beginning-of-line)
+        (re-search-forward "[ \t]*\\(?::tag-[^: \t\n]+:.*\\|\\\\\\\\[ \t]*\\)?$" (line-end-position))
+        (goto-char (match-beginning 0))
+        (insert (format " && \\text{%s}" hint))))
     (buffer-string)))
+
+(defun org--math-match-hint (limit)
+  "Font-lock matcher: up to LIMIT, the next hint's “{ HINT }”, as `org--math-hint-spans' reads the block; else nil."
+  (let* ((start (save-excursion (re-search-backward "^[ \t]*#\\+begin_math\\b") (forward-line 1) (point)))
+         (span (--first (<= (point) (+ start (nth 1 it)))
+                        (org--math-hint-spans (buffer-substring-no-properties start limit)))))
+    (when span
+      (set-match-data (list (+ start (nth 1 span)) (+ start (nth 2 span))))
+      (goto-char (+ start (nth 2 span))))))
 
 (defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color{[^}]*}{\\\\text{[^}]*}}\\$} \\\\label{[^}]*}\\)"
   "A tag, as `org--math-tags' writes it.")
@@ -433,7 +450,8 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
 + “X ={ HINT } Y” aligns its line at =, and shows HINT at the line's end, as in a calculational proof; so too for any
-  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space follows it, so x ={a} is no hint.
+  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space follows it, so x ={a} is no hint; in
+  Emacs, a hint shows grey, so we see which {…} is one.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
