@@ -401,7 +401,7 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
       (car rows))))
 
 (defconst org--math-hint-html-head
-  "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again.</p></template>
+  "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again; shift-click, every hint of this proof.</p></template>
 <style>
   .osbe-hint { cursor: pointer; }
   /* A hint is plainly a hint ---prose, maybe coloured--- so it wears no tooltip's dotted underline. */
@@ -410,8 +410,16 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
   .osbe-hint.osbe-folded .osbe-hint-fold { display: inline-block; }
 </style>
 <script>
-  // A click on a math block's hint folds it to [⋯], or unfolds it, as TAB does in Emacs.
-  document.addEventListener('click', (event) => event.target.closest?.('.osbe-hint')?.classList.toggle('osbe-folded'));
+  // A click on a math block's hint folds it to [⋯], or unfolds it, as TAB does in Emacs; a shift-click folds every
+  // hint of its proof, unless all are folded, whence it unfolds them, as C-TAB does.
+  document.addEventListener('click', (event) => {
+    const hint = event.target.closest?.('.osbe-hint');
+    if (!hint) return;
+    if (!event.shiftKey) return hint.classList.toggle('osbe-folded');
+    const hints = [...(hint.closest('mjx-container') ?? document).querySelectorAll('.osbe-hint')];
+    const fold = hints.some((h) => !h.classList.contains('osbe-folded'));
+    hints.forEach((h) => h.classList.toggle('osbe-folded', fold));
+  });
 </script>"
   "The tip, style, and script by which a click folds a math block's hint; added to a page whose maths has hints.")
 
@@ -504,26 +512,44 @@ The block begins after its #+begin_math line; or, in its C-c ' buffer, which has
       (and block (equal (downcase (org-element-property :type block)) "math")
            (org-element-property :contents-begin block)))))
 
+(defun org--math-hint-spans-here ()
+  "↦ each hint, (REL BRACE END) of `org--math-hint-spans', of the math block at point, as buffer positions; else nil."
+  (-when-let (start (org--math-block-contents-start))
+    (let ((end (if org--math-edit-buffer (point-max) (org-element-property :contents-end (org-special-block-at-point)))))
+      (--map (--map (+ start it) it) (org--math-hint-spans (buffer-substring-no-properties start end))))))
+
 (defun org--math-hint-at-point ()
   "↦ (REL BRACE END) of the hint at point, “REL{ HINT }” of `org--math-hint-spans', as buffer positions; else nil.
 Point is at the hint when it is on its relation, or within its braces."
-  (-when-let (start (org--math-block-contents-start))
-    (let ((end (if org--math-edit-buffer (point-max) (org-element-property :contents-end (org-special-block-at-point)))))
-      (--when-let (--first (and (<= (+ start (car it)) (point)) (< (point) (+ start (nth 2 it))))
-                           (org--math-hint-spans (buffer-substring-no-properties start end)))
-        (--map (+ start it) it)))))
+  (--first (and (<= (car it) (point)) (< (point) (nth 2 it))) (org--math-hint-spans-here)))
+
+(defun org--math-hint-fold (brace end)
+  "↦ the overlay folding the hint whose { is at BRACE, its } before END, to “{…}”, if it is folded; else nil."
+  (--first (overlay-get it 'org-math-hint-fold) (overlays-in (1+ brace) (1- end))))
+
+(defun org--math-fold (brace end)
+  "Fold the hint whose { is at BRACE, its } before END, to “{…}”; the text itself is untouched."
+  (let ((fold (make-overlay (1+ brace) (1- end))))
+    (overlay-put fold 'org-math-hint-fold t)
+    (overlay-put fold 'display "…")
+    (overlay-put fold 'evaporate t)))
 
 (defun org--math-fold-hint ()
   "When point is at a math block's hint, fold it to “REL{…}”, or unfold it if folded, and ↦ t; else ↦ nil.
 A function of `org-tab-first-hook', so TAB folds a hint as it folds a heading; the text itself is untouched."
   (-when-let ((_ brace end) (org--math-hint-at-point))
-    (-if-let (fold (--first (overlay-get it 'org-math-hint-fold) (overlays-in (1+ brace) (1- end))))
-        (delete-overlay fold)
-      (let ((fold (make-overlay (1+ brace) (1- end))))
-        (overlay-put fold 'org-math-hint-fold t)
-        (overlay-put fold 'display "…")
-        (overlay-put fold 'evaporate t)))
+    (-if-let (fold (org--math-hint-fold brace end)) (delete-overlay fold) (org--math-fold brace end))
     t))
+
+(defun org--math-cycle-hints ()
+  "Fold every hint of the math block at point; or, when all are folded already, unfold them all.  C-TAB, there."
+  (interactive)
+  (let* ((spans (org--math-hint-spans-here))
+         (folds (--map (org--math-hint-fold (nth 1 it) (nth 2 it)) spans)))
+    (if (and spans (-all-p #'identity folds))
+        (progn (mapc #'delete-overlay folds) (message "Every hint shown"))
+      (--each spans (unless (org--math-hint-fold (nth 1 it) (nth 2 it)) (org--math-fold (nth 1 it) (nth 2 it))))
+      (message "Every hint folded"))))
 
 (defun org--math-fill-hint (&rest _)
   "Within a math block, fill the paragraph at point of the hint at point alone, as prose, and ↦ t; elsewhere in the
@@ -594,7 +620,7 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
 (defun org--math-hint-eldoc (callback &rest _)
   "Hand eldoc's CALLBACK what a hint is, how it is written, and how it folds, when point is at one; else nil."
   (when (and (or (derived-mode-p 'org-mode) org--math-edit-buffer) (org--math-hint-at-point))
-    (funcall callback "A proof hint, REL{ REASON }, the { hugging REL, a space after it; TAB folds or unfolds it."
+    (funcall callback "A proof hint, REL{ REASON }, the { hugging REL, a space after it; TAB folds it, C-TAB all hints."
              :thing "Proof hint" :face 'org-math-hint)))
 
 (defun org--math-tab ()
@@ -609,10 +635,11 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
   (org--math-fill-hint))
 
 (define-minor-mode org--math-edit-mode
-  "In a math block's C-c ' buffer: TAB folds a hint, M-q fills it alone, and eldoc tells of it, as in Org buffers."
+  "In a math block's C-c ' buffer: TAB folds a hint, C-TAB all, M-q fills one alone, and eldoc tells of it, as in Org."
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "TAB") #'org--math-tab)
             (define-key map (kbd "M-q") #'org--math-fill)
+            (define-key map (kbd "C-<tab>") #'org--math-cycle-hints)
             map)
   (setq org--math-edit-buffer org--math-edit-mode)
   (if org--math-edit-mode

@@ -466,6 +466,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; In C-c ' buffers too; and eldoc tells of a hint at point.
         (add-hook 'org-special-block-edit-functions #'org--math-edit-setup)
         (add-hook 'eldoc-documentation-functions #'org--math-hint-eldoc)
+        ;; C-TAB within a math block folds, or unfolds, all its hints; elsewhere, Org leaves it unbound, so it is as ever.
+        (define-key org-mode-map (kbd "C-<tab>")
+                    `(menu-item "" org--math-cycle-hints :filter ,(lambda (command) (and (org--math-block-contents-start) command))))
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
         ;; Prepended, so Org's own fontification lands atop a block's :language.
@@ -498,6 +501,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-tab-first-hook #'org--math-fold-hint)
     (remove-hook 'org-special-block-edit-functions #'org--math-edit-setup)
     (remove-hook 'eldoc-documentation-functions #'org--math-hint-eldoc)
+    (define-key org-mode-map (kbd "C-<tab>") nil)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))

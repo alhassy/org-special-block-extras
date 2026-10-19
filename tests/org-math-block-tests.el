@@ -558,7 +558,10 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
     (should (string-match-p (regexp-quote "classList.toggle('osbe-folded')") head))
     (should (string-match-p "tooltip-box" head))
     ;; A hint is plainly a hint, so it wears no tooltip's dotted underline; as two classes, the rule outranks .tooltip.
-    (should (string-match-p (regexp-quote ".tooltip.osbe-hint { border-bottom: none; }") head))))
+    (should (string-match-p (regexp-quote ".tooltip.osbe-hint { border-bottom: none; }") head))
+    ;; A shift-click toggles every hint of its proof, as C-TAB does in Emacs; the tip says so.
+    (should (string-match-p "shiftKey" head))
+    (should (string-match-p "shift-click" head))))
 
 (deftest "a math block's hint colour is LaTeX's and MathJax's alike: #RRGGBB as RGB, since MathJax has no HTML model"
   (should (equal (org--math-color "#800000") "[RGB]{128,0,0}"))
@@ -875,6 +878,35 @@ x ={ a long reason,
     (backward-char)
     (org-cycle)
     (should-not (funcall folds))))
+
+(org-deftest "C-TAB in a math block folds all its hints, unless all are folded, whence it unfolds them; so too under C-c '"
+  :text "
+#+begin_math
+x ={ one } y ={ two } z
+#+end_math
+Outside."
+  :at "x ="
+  (let ((folds (lambda () (length (--filter (overlay-get it 'org-math-hint-fold) (overlays-in (point-min) (point-max)))))))
+    (should (eq (key-binding (kbd "C-<tab>")) 'org--math-cycle-hints))
+    ;; One folded already: C-TAB folds the rest.
+    (search-forward "one")
+    (org--math-fold-hint)
+    (should (= 1 (funcall folds)))
+    (call-interactively #'org--math-cycle-hints)
+    (should (= 2 (funcall folds)))
+    (call-interactively #'org--math-cycle-hints)
+    (should (= 0 (funcall folds)))
+    ;; Outside a math block, C-TAB is as ever.
+    (search-forward "Outside")
+    (should-not (eq (key-binding (kbd "C-<tab>")) 'org--math-cycle-hints))
+    (goto-char (point-min))
+    (search-forward "one")
+    (org-edit-special)
+    (unwind-protect
+        (progn (should (eq (key-binding (kbd "C-<tab>")) 'org--math-cycle-hints))
+               (call-interactively #'org--math-cycle-hints)
+               (should (= 2 (funcall folds))))
+      (org-edit-src-abort))))
 
 (org-deftest "TAB folds a hint in a math block's C-c ' buffer too; elsewhere there, TAB does as latex-mode's"
   :text "
