@@ -116,8 +116,8 @@
 ;; them live in org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, org-margin-blocks.el, org-quote-block.el, org-solution-block.el,
 ;; org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-style-block.el, org-substitution-blocks.el, and
-;; org-math-block.el ---one file per family of blocks; this file
-;; requires them all and defines the mode.  The graph block, org-graph-block.el,
+;; org-math-block.el, whose parts are org-math-markup.el, org-math-structure.el, org-math-hints.el, and org-math-refs.el
+;; ---one file per family of blocks; this file requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
 ;;
