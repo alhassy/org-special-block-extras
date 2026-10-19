@@ -1,8 +1,8 @@
-;;; org-pdf-export-tests.el --- Every example compiles to a PDF, its blocks loading their own LaTeX packages  -*- lexical-binding: t; -*-
+;;; org-pdf-export-tests.el --- Every demo compiles to a PDF, its blocks loading their own LaTeX packages  -*- lexical-binding: t; -*-
 
 ;; A document declares no LaTeX packages for our blocks: each block names those it needs by its `:latex-head', and a
-;; LaTeX export loads them, by `org--load-latex-head'.  So this test declares none, and compiles every example of
-;; the manual, as an article and as beamer slides.  See https://github.com/alhassy/org-special-block-extras/issues/49.
+;; LaTeX export loads them, by `org--load-latex-head'.  So this test declares none, and compiles every demo of the manual
+;; and of tests/demos.org, as an article and as beamer slides.  See https://github.com/alhassy/org-special-block-extras/issues/49.
 ;; We compile with LuaLaTeX, which reads Unicode such as 𝒳 and ⇒ as is; pdflatex needs \newunicodechar instead.
 
 (unless (fboundp 'deftest)
@@ -10,13 +10,15 @@
 (require 'org-graph-block) ; The graph example's block.
 
 (defun org-pdf-test--examples ()
-  "↦ (NAME . INPUT) for each `define-org-example-test' of tests/examples/*.el, by NAME."
-  (cl-loop for file in (directory-files (expand-file-name "~/org-special-block-extras/tests/examples") t "\\.el\\'")
+  "↦ (NAME . SOURCE) for each exported :demo of the manual and of tests/demos.org, NAME being its file and line."
+  (cl-loop for file in '("org-special-block-extras.org" "tests/demos.org")
            append (with-temp-buffer
-                    (insert-file-contents file)
-                    (cl-loop for form = (ignore-errors (read (current-buffer))) while form
-                             when (eq (car-safe form) 'define-org-example-test)
-                             collect (cons (cadr form) (plist-get (cddr form) :input))))))
+                    (insert-file-contents (expand-file-name file "~/org-special-block-extras"))
+                    (let ((org-inhibit-startup t)) (org-mode))
+                    (cl-loop for site in (reverse (org-demo--sites t))
+                             unless (save-excursion (goto-char (car site)) (org-in-commented-heading-p))
+                             collect (cons (format "%s, line %s" (file-name-nondirectory file) (line-number-at-pos (car site)))
+                                           (org-demo--source site 'latex))))))
 
 (defun org-pdf-test--compile (name export &optional heading-depth)
   "(NAME, EXPORT, HEADING-DEPTH) ↦ the first LaTeX error, else nil, of compiling every example to NAME.pdf via EXPORT,

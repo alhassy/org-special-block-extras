@@ -54,7 +54,7 @@
 ;; retrives the documentation for thread-first and attachs it as a tooltip to
 ;; the text in the HTML export and as a glossary entry in the LaTeX export
 ;;
-;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
+;; 7. Various other blocks: Solution, spoiler (“fill in the blanks”).
 ;;
 ;; The .el files are the source of truth; org-special-block-extras.org is the
 ;; manual, with further examples demonstrating these blocks.
@@ -112,10 +112,11 @@
 ;; `org--supported-blocks' maintains all names introduced by `org-defblock'.
 ;;
 ;; 7. [Code Organisation] `org-defblock', `org-deflink', and `org-deftag' each live in a file of their name, as do
-;; `org-thread-blockcall' and, in org-block-header-args.el, the blocks' header-args.  The blocks and links built atop
+;; `org-thread-blockcall' and, in org-block-header-args.el, the blocks' header-args; the :demo
+;; switch lives in org-demo.el.  The blocks and links built atop
 ;; them live in org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, org-margin-blocks.el, org-quote-block.el, org-solution-block.el,
-;; org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-substitution-blocks.el, and
+;; org-spoiler-block.el, org-remark-block.el, org-substitution-blocks.el, and
 ;; org-math-block.el, whose parts are org-math-markup.el, org-math-structure.el, org-math-hints.el, and org-math-refs.el
 ;; ---one file per family of blocks; this file requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
@@ -247,7 +248,7 @@
 (require 'org-math-block)
 (require 'org-quote-block)
 (require 'org-solution-block)
-(require 'org-demo-block)
+(require 'org-demo)
 (require 'org-substitution-blocks)
 (require 'org-spoiler-block)
 (require 'org-remark-block)
@@ -451,6 +452,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; The second pass serves the blocks of #+INCLUDE: files, which expand between the two.
         (add-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
+        ;; Demos before all else: each renders its block as written, in a document of its own; see `org-demo'.
+        (add-hook 'org-export-before-processing-functions #'org--rewrite-demos -20)
+        (add-hook 'org-export-before-parsing-functions #'org--rewrite-demos -70)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
         ;; In HTML, <<X>> is a permalink #X to itself; <<<X>>> keeps Org's look, yet is #X too.
@@ -505,6 +509,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-execute-file-search-functions #'org--math-ref-follow)
     (remove-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
+    (remove-hook 'org-export-before-processing-functions #'org--rewrite-demos)
+    (remove-hook 'org-export-before-parsing-functions #'org--rewrite-demos)
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
     (advice-remove 'org-html--reference #'org--target-readable-reference)
     (advice-remove 'org-html-target #'org--target-as-permalink)

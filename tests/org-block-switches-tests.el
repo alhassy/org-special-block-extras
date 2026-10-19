@@ -299,10 +299,21 @@ Less is more.
   :equals "")
 
 (deftest "`org--header-sans-switches' splits a header into its switches and the rest, values read as Lisp" [switches]
-  (should (equal (org--header-sans-switches "emacs-lisp :folded \"See it\" :exports code" (lambda (k) (memq k org-block-switches)))
+  (should (equal (org--header-sans-switches "emacs-lisp :folded \"See it\" :exports code" #'org--block-switch-p)
                  '((:folded "See it") . "emacs-lisp :exports code")))
-  (should (equal (org--header-sans-switches "Title :when (eq backend 'html) :boxed :n 2" (lambda (k) (memq k org-block-switches)))
+  (should (equal (org--header-sans-switches "Title :when (eq backend 'html) :boxed :n 2" #'org--block-switch-p)
                  '((:when (eq backend 'html) :boxed t) . "Title :n 2"))))
+
+(deftest "`org-defswitch' makes a switch every block understands, placed among the others by its :depth" [switches]
+  (let ((org-block-switches org-block-switches))
+    (org-defswitch :shout loud?
+      "Upper-case the block's rendering, when LOUD?."
+      (upcase (funcall render contents)))
+    (should (string-match-p "HELLO" (org-export-string "#+begin_src text :shout t\nhello\n#+end_src")))
+    ;; Within :let, at depth 0: it shouts the substitution; within :folded, too, which titles the details.
+    (should (string-match-p "Peek.*</summary>[^z]*JASIM"
+                            (org-export-string "#+begin_example :let (WHO \"jasim\") :folded \"Peek\" :shout t\nWHO\n#+end_example"))))
+  (should-not (org--block-switch-p :shout)))
 
 (deftest "switches apply before Babel: :let changes the code a src block runs, and :noexport keeps it from running" [switches babel]
   (let ((org-confirm-babel-evaluate nil))
@@ -331,30 +342,6 @@ Hi *there*.
 </code></pre>
 </div>
 "))))
-
-(define-org-export-test "a block marked :verbatim demo is its source beside what it exports to, as with org-demo" [switches verbatim]
-  :input "
-          #+begin_aside :verbatim demo
-          Hi *there*.
-          #+end_aside"
-  :equals "<div style=\"column-count: 2;\">
-<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\">
-<h3>Source</h3>
-<div ><pre class=\"src src-org\">#+begin_aside
-Hi *there*.
-#+end_aside</pre></div>
-</div>
-<div style=\"padding: 1em;background-color: cyan;border-radius: 15px;font-size: 0.9em;\">
-<h3>Result</h3>
-<div class=\"aside\" id=\"org-id-1\">
-<p>
-Hi <b>there</b>.
-</p>
-
-</div>
-</div>
-</div>
-")
 
 (provide 'org-block-switches-tests)
 ;;; org-block-switches-tests.el ends here

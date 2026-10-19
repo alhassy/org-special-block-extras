@@ -1,0 +1,441 @@
+#+title: Demos that are tests, rather than docs
+# Each :demo block here is a test, as those of the manual are: C-c C-c on one snapshots what it renders to, and
+# tests/org-demo-tests.el checks every one still renders so, by `org-demo-failures'.  See the manual's “Demos”.
+
+* badge
+#+begin_org :ignore t :demo org-link/badge
+1. It works when all 5 arguments are provided
+
+   badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir
+
+2. It works when we use [ [ link ] ] syntax with generous spaces and newlines
+
+   [[badge: Let me google that | for you! | orange |
+         https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir]]
+
+3. It works when only the first 2 arguments are provided;
+   asterisks are passed unaltered into the first argument
+   
+   badge:Let_me_*not*_google_that|for_you
+
+4. It works sans a URL, yet with a logo; Org's own <<key>> beside it is a permalink to here
+
+   <<key>> badge:key|value|informational||Elixir
+
+5. We can use spaces, commas, dashes, and percentage symbols in the first argument
+
+   badge:example_with_spaces,_-,_and_%|points_right_here|orange
+
+6. It works when only first 2 arguments are given: Default colour & logo are green & no logo shown
+
+   badge:key|value
+
+7. When only a key is provided, the value slot is shown as an empty green stub
+
+   badge:key
+
+8. When only a value is provided, only the value is shown in a default green
+   ---no stub for the missing key, yay
+
+   badge:|value
+
+9. It's only a green stub when provided with an empty key and empty value
+
+   badge:||green
+
+10. It's only a green stub when we use no options at all
+
+   [[badge:]]
+#+end_org
+
+#+RESULTS[788551cab3]:
+:results:
+#+begin_export html
+<ol class="org-ol">
+<li><p>
+It works when all 5 arguments are provided
+</p>
+
+<p>
+<a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"><img src="https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir"></a>
+</p></li>
+
+<li><p>
+It works when we use [ [ link ] ] syntax with generous spaces and newlines
+</p>
+
+<p>
+<a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"><img src="https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir"></a>
+</p></li>
+
+<li><p>
+It works when only the first 2 arguments are provided;
+asterisks are passed unaltered into the first argument
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-green">
+</p></li>
+
+<li><p>
+It works sans a URL, yet with a logo; Org's own <a class="anchor" id="key" href="#key" aria-label="Permalink to key"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> beside it is a permalink to here
+</p>
+
+<p>
+<a class="anchor" id="key" href="#key" aria-label="Permalink to key"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> <img src="https://img.shields.io/badge/key-value-informational?logo=Elixir">
+</p></li>
+
+<li><p>
+We can use spaces, commas, dashes, and percentage symbols in the first argument
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange">
+</p></li>
+
+<li><p>
+It works when only first 2 arguments are given: Default colour &amp; logo are green &amp; no logo shown
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/key-value-green">
+</p></li>
+
+<li><p>
+When only a key is provided, the value slot is shown as an empty green stub
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/key--green">
+</p></li>
+
+<li><p>
+When only a value is provided, only the value is shown in a default green
+&mdash;no stub for the missing key, yay
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/-value-green">
+</p></li>
+
+<li><p>
+It's only a green stub when provided with an empty key and empty value
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/--green">
+</p></li>
+
+<li><p>
+It's only a green stub when we use no options at all
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/--green">
+</p></li>
+</ol>
+#+end_export
+#+begin_export latex
+\begin{enumerate}
+\item It works when all 5 arguments are provided
+
+\item It works when we use [ [ link ] ] syntax with generous spaces and newlines
+
+\item It works when only the first 2 arguments are provided;
+asterisks are passed unaltered into the first argument
+
+\item It works sans a URL, yet with a logo; Org's own \label{org0000001} beside it is a permalink to here
+
+\label{org0000003}
+
+\item We can use spaces, commas, dashes, and percentage symbols in the first argument
+
+\item It works when only first 2 arguments are given: Default colour \& logo are green \& no logo shown
+
+\item When only a key is provided, the value slot is shown as an empty green stub
+
+\item When only a value is provided, only the value is shown in a default green
+---no stub for the missing key, yay
+
+\item It's only a green stub when provided with an empty key and empty value
+
+\item It's only a green stub when we use no options at all
+\end{enumerate}
+#+end_export
+:end:
+
+* calc
+#+begin_org :ignore t :demo t
+#+begin_math
+  x
+={ Explanation of why $x \;=\; y$.
+   Actually, let me explain:
+   \[   x
+      ={ hint 1 } x′
+      ={ hint 2 } y \]
+   Words may follow a nested calculation.
+ }
+  y
+≤{ Explanation of why $y \;\leq\; z$
+   # Explain it more; this comment is absent from the export ;-)
+ }
+  z
+#+end_math
+#+end_org
+
+#+RESULTS[55c8db4662]:
+:results:
+#+begin_export html
+\begin{align*}
+&amp; x
+\\ = &amp; \quad \class{tooltip osbe-tip-hint osbe-hint}{\class{osbe-hint-body}{{\color[RGB]{128,0,0} \left[ \begin{array}{@{}l@{}} \text{Explanation of why $x \;=\; y$.} \\ \text{Actually, let me explain:} \\ \begin{aligned}[t] &amp; x \\ = &amp; \quad \class{tooltip osbe-tip-hint osbe-hint}{\class{osbe-hint-body}{{\color[RGB]{128,0,0} \left[ \text{hint 1} \right.}}\class{osbe-hint-fold}{{\color[RGB]{128,0,0} [\,\cdots\,]}}} \\ &amp; x′ \\ = &amp; \quad \class{tooltip osbe-tip-hint osbe-hint}{\class{osbe-hint-body}{{\color[RGB]{128,0,0} \left[ \text{hint 2} \right.}}\class{osbe-hint-fold}{{\color[RGB]{128,0,0} [\,\cdots\,]}}} \\ &amp; y \end{aligned} \\ \text{Words may follow a nested calculation.} \end{array} \right.}}\class{osbe-hint-fold}{{\color[RGB]{128,0,0} [\,\cdots\,]}}} \notag \\ &amp; y
+\\ ≤ &amp; \quad \class{tooltip osbe-tip-hint osbe-hint}{\class{osbe-hint-body}{{\color[RGB]{128,0,0} \left[ \text{Explanation of why $y \;\leq\; z$} \right.}}\class{osbe-hint-fold}{{\color[RGB]{128,0,0} [\,\cdots\,]}}} \notag \\ &amp; z
+\end{align*}
+#+end_export
+#+begin_export latex
+\begin{align*}
+& x
+\\ = & \quad {\color[RGB]{128,0,0} \left[ \begin{array}{@{}l@{}} \text{Explanation of why $x \;=\; y$.} \\ \text{Actually, let me explain:} \\ \begin{aligned}[t] & x \\ = & \quad {\color[RGB]{128,0,0} \left[ \text{hint 1} \right.} \\ & x′ \\ = & \quad {\color[RGB]{128,0,0} \left[ \text{hint 2} \right.} \\ & y \end{aligned} \\ \text{Words may follow a nested calculation.} \end{array} \right.} \notag \\ & y
+\\ ≤ & \quad {\color[RGB]{128,0,0} \left[ \text{Explanation of why $y \;\leq\; z$} \right.} \notag \\ & z
+\end{align*}
+#+end_export
+:end:
+
+* kbd
+#+begin_org :ignore t :demo org-link/kbd
+1. It becomes <kbd> tags, but final symbol non-ascii *may* be ignored
+
+   kbd:C-u_80_-∀
+
+2. [ [ It ] ] becomes <kbd> tags
+
+   [[kbd:C-u_80_-]]
+
+3. Using syntax <it> becomes <kbd> tags, and surrounding space is trimmed
+
+   <kbd: C-u 80 - >
+
+4. It has a tooltip documenting the underlying Lisp function, when possible
+
+   <kbd: M-s h .>
+#+end_org
+
+#+RESULTS[c009c63e8d]:
+:results:
+#+begin_export html
+<ol class="org-ol">
+<li><p>
+It becomes &lt;kbd&gt; tags, but final symbol non-ascii <b>may</b> be ignored
+</p>
+
+<p>
+<kbd style="">C-u 80 -</kbd>∀
+</p></li>
+
+<li><p>
+[ [ It ] ] becomes &lt;kbd&gt; tags
+</p>
+
+<p>
+<kbd style="">C-u 80 -</kbd>
+</p></li>
+
+<li><p>
+Using syntax &lt;it&gt; becomes &lt;kbd&gt; tags, and surrounding space is trimmed
+</p>
+
+<p>
+<kbd style="">C-u 80 -</kbd>
+</p></li>
+
+<li><p>
+It has a tooltip documenting the underlying Lisp function, when possible
+</p>
+
+<p>
+<abbr class="tooltip" tabindex="0" style="border: none; text-decoration: none;"><kbd style="border-color: red">M-s h .</kbd><template><pre>M-s h . ∷ highlight-symbol-at-point
+Highlight each instance of the symbol at point.
+Uses the next face from ‘hi-lock-face-defaults’ without prompting,
+unless you use a prefix argument.
+Uses ‘find-tag-default-as-symbol-regexp’ to retrieve the symbol at point.
+
+If REGEXP contains upper case characters (excluding those preceded by ‘\’)
+and ‘search-upper-case’ is non-nil, the matching is case-sensitive.
+
+This uses Font lock mode if it is enabled; otherwise it uses overlays,
+in which case the highlighting will not update as you type.  The Font
+Lock mode is considered "enabled" in a buffer if its ‘major-mode’
+causes ‘font-lock-specified-p’ to return non-nil, which means
+the major mode specifies support for Font Lock.</pre></template></abbr>
+</p></li>
+</ol>
+#+end_export
+#+begin_export latex
+\begin{enumerate}
+\item It becomes <kbd> tags, but final symbol non-ascii \textbf{may} be ignored
+
+\texttt{C-u 80 -}∀
+
+\item {[} [ It ] ] becomes <kbd> tags
+
+\texttt{C-u 80 -}
+
+\item Using syntax <it> becomes <kbd> tags, and surrounding space is trimmed
+
+\texttt{C-u 80 -}
+
+\item It has a tooltip documenting the underlying Lisp function, when possible
+
+\texttt{M-s h .}
+\end{enumerate}
+#+end_export
+:end:
+
+* solution
+#+begin_org :ignore t :demo org-block/solution
+What is the name of Prophet Yusuf's father?
+
+Hint: The father's name also starts with `y`.
+
+#+begin_solution
+Yacoub
+#+end_solution
+#+end_org
+
+#+RESULTS[dd3ef8caeb]:
+:results:
+#+begin_export html
+<p>
+What is the name of Prophet Yusuf's father?
+</p>
+
+<p>
+Hint: The father's name also starts with `y`.
+</p>
+
+<details class="code-details" style="padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;">
+<summary><strong><font face="Courier" size="3" color="green">Solution</font></strong></summary>
+<div style="padding: 1em;background-color: #CCFFFF;border-radius: 15px;font-size: 0.9em;"> <h3>Did you actually try? Maybe see the ‘hints’ above!</h3> 
+<details class="code-details" style="padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;">
+<summary><strong><font face="Courier" size="3" color="red">Solution, for real</font></strong></summary>
+<p>
+Yacoub
+</p>
+
+</details>
+</div>
+
+</details>
+#+end_export
+#+begin_export latex
+What is the name of Prophet Yusuf's father?
+
+Hint: The father's name also starts with `y`.
+
+\definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{green}\begin{quote}
+\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution},sharp corners,boxrule=0.4pt]
+\colorlet{osbe-box-back}{blue}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={Did you actually try? Maybe see the ‘hints’ above!},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{red}\begin{quote}
+\begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Solution, for real},sharp corners,boxrule=0.4pt]
+Yacoub
+
+\end{tcolorbox}
+\end{quote}
+\end{tcolorbox}
+
+\end{tcolorbox}
+\end{quote}
+#+end_export
+:end:
+
+* spoiler
+#+begin_org :ignore t :demo org-block/spoiler
+The ~spoiler~ block is for “fill in the blanks” or “guess, and hover
+to see the results” style of exposition.
+
+#+begin_spoiler
+((Yusuf)) said to his father ((Yacoub)), /“O my father, indeed I have seen
+((eleven stars)) and ((the sun and the moon)); I saw them prostrating to me.”/
+#+end_spoiler
+
+There are also options for the left delimiter of a hidden item, the right delimiter,
+and the color of the hidden item. These default to ~grey, ((, ))~ respectively.
+
+#+begin_spoiler orange :left "[" :right "]"
+[Yusuf] said to his father [Yacoub], /“O my father, indeed I have seen
+[eleven stars] and [the sun and the moon]; I saw them prostrating to me.”/
+#+end_spoiler
+#+end_org
+
+#+RESULTS[bddd4a34a1]:
+:results:
+#+begin_export html
+<p>
+The <code>spoiler</code> block is for “fill in the blanks” or “guess, and hover
+to see the results” style of exposition.
+</p>
+
+<style> .spoiler-grey {color: grey; background-color:grey;} .spoiler-grey:hover {color: black; background-color:white;} </style>
+<p>
+<span class="spoiler-grey"> Yusuf </span> said to his father <span class="spoiler-grey"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span class="spoiler-grey"> eleven stars </span> and <span class="spoiler-grey"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+</p>
+
+
+<p>
+There are also options for the left delimiter of a hidden item, the right delimiter,
+and the color of the hidden item. These default to <code>grey, ((, ))</code> respectively.
+</p>
+
+<style> .spoiler-orange {color: orange; background-color:orange;} .spoiler-orange:hover {color: black; background-color:white;} </style>
+<p>
+<span class="spoiler-orange"> Yusuf </span> said to his father <span class="spoiler-orange"> Yacoub </span>, <i>“O my father, indeed I have seen
+<span class="spoiler-orange"> eleven stars </span> and <span class="spoiler-orange"> the sun and the moon </span>; I saw them prostrating to me.”</i>
+</p>
+#+end_export
+#+begin_export latex
+The \texttt{spoiler} block is for “fill in the blanks” or “guess, and hover
+to see the results” style of exposition.
+
+\fbox{\phantom{Yusuf}}\footnote{Yusuf} said to his father \fbox{\phantom{Yacoub}}\footnote{Yacoub}, \emph{“O my father, indeed I have seen
+\fbox{\phantom{eleven stars}}\footnote{eleven stars} and \fbox{\phantom{the sun and the moon}}\footnote{the sun and the moon}; I saw them prostrating to me.”}
+
+
+There are also options for the left delimiter of a hidden item, the right delimiter,
+and the color of the hidden item. These default to \texttt{grey, ((, ))} respectively.
+
+\fbox{\phantom{Yusuf}}\footnote{Yusuf} said to his father \fbox{\phantom{Yacoub}}\footnote{Yacoub}, \emph{“O my father, indeed I have seen
+\fbox{\phantom{eleven stars}}\footnote{eleven stars} and \fbox{\phantom{the sun and the moon}}\footnote{the sun and the moon}; I saw them prostrating to me.”}
+#+end_export
+:end:
+
+* tree
+#+begin_org :ignore t :demo org-block/tree
+#+begin_box Programming ≈ Proving
+#+begin_tree
++ Function Application :: f(a) : B
+  - a : A
+  - f : A → B
+
++ Modus Ponens :: q
+  - p
+  - p ⇒ q
+#+end_tree
+#+end_box
+#+end_org
+
+#+RESULTS[791bc2a4c8]:
+:results:
+#+begin_export html
+<div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Programming ≈ Proving</h3> 
+\[\frac{\displaystyle a : A \qquad f : A → B
+}{f(a) : B}[\text{Function Application}]\]\[\frac{\displaystyle p \qquad p ⇒ q}{q}[\text{Modus Ponens}]\]
+</div>
+#+end_export
+#+begin_export latex
+\colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={Programming ≈ Proving},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+\[\frac{\displaystyle a : A \qquad f : A → B
+}{f(a) : B}[\text{Function Application}]\]\[\frac{\displaystyle p \qquad p ⇒ q}{q}[\text{Modus Ponens}]\]
+\end{tcolorbox}
+#+end_export
+:end:

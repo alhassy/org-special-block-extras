@@ -86,18 +86,18 @@ By (Symmetry).
 
            ")
 
-(define-org-export-test "an org-demo is its source as code, then its result, each under a bold label, in Markdown" [markdown]
+(define-org-export-test "a demo is its source as code, then its rendering, each under a bold label, in Markdown" [markdown demo]
   :input "
           #+options: toc:nil
-          #+begin_org-demo
+          #+begin_org :ignore t :demo t
           *bold*
-          #+end_org-demo"
+          #+end_org"
   :to md
-  :equals "**Source**
+  :equals "**What You Write**
 
     *bold*
 
-**Result**
+**What You Get**
 
 **bold**
 

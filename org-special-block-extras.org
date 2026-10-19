@@ -61,7 +61,6 @@
 (require 'org-special-block-extras)
 (require 'org-graph-block)
 
-(load-file "./tests/examples/README.el") ;; The osbe-example:NAME link
 
 (org-html-export-to-html)
 
@@ -313,7 +312,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; retrives the documentation for thread-first and attachs it as a tooltip to
 ;; the text in the HTML export and as a glossary entry in the LaTeX export
 ;;
-;; 7. Various other blocks: Solution, org-demo, spoiler (“fill in the blanks”).
+;; 7. Various other blocks: Solution, spoiler (“fill in the blanks”).
 ;;
 ;; This file has been tangled from a literate, org-mode, file; and so contains
 ;; further examples demonstrating the special blocks it introduces.
@@ -2469,133 +2468,80 @@ If you're interested in such ‘fundamental’ questions, consider reading
 
 We will make use of this block below when we get to guided problems ;-)
 
-*** Longer Example: Demonstrating Org-markup with ~org-demo~
+*** Longer Example: Demonstrating Org-markup with ~:demo~
   :PROPERTIES:
-  :CUSTOM_ID: longer-example-demonstrating-org-markup-with-org-demo
+  :CUSTOM_ID: longer-example-demonstrating-org-markup-with-demo
   :END:
 
-  
 Sometimes, we want to show verbatim source and its resulting rendition ---which
-is a major part of this article! So, let's make a block to mitigate such an
-error-prone tedium.
+is a major part of this article! Every block understands the switch ~:demo~: it shows
+the block as written, then what it exports to. With ~:ignore t~, the block itself is
+bypassed, so its source is just its contents; any name then serves to demonstrate plain
+Org. By way of example, here is a demo of a demo:
 
-#+begin_details Implementation
- #+begin_src emacs-lisp
-(org-defblock org-demo (nil nil source "Source" result "Result"
-                        source-color "cyan" result-color "cyan"
-                        style "parallel"
-                        sep (if (equal backend 'html) "@@html:<p><br>@@" "\n\n\n\n")
-                        )
-  "Output the CONTENTS of the block as both parsed Org and unparsed.
-
-Label the source text by SOURCE and the result text by RESULT
-
-finally, the source-result fragments can be shown in a STYLE
-that is either “parallel” (default) or “sequential”.
-
-SEP is the separator; e.g., a rule ‘<hr>'.
-"
-  (-let [text (concat
-               ;; Source
-               (thread-last raw-contents
-                 (format (if (equal backend 'html)
-                             "<div ><pre class=\"src src-org\">%s</pre></div>"
-                           "\n\\begin{verbatim}\n%s\n\\end{verbatim}"))
-                 org-export
-                 (org--blockcall box source :background-color source-color)
-                 org-export)
-               ;; Separator
-               sep
-               ;; Result
-               (thread-last raw-contents
-                 (org--blockcall box result :background-color result-color)
-                 org-export))]
-
-   (if (equal style "parallel")
-       (org--blockcall parallel "2" :bar nil text)
-       (concat "#+end_export\n" text "\n#+begin_export"))))
- #+end_src
-
- #+RESULTS:
- | :export | (lambda (label description backend) (s-replace-all `((@@ . )) (org--org-demo backend (or description label) label :o-link? t))) | :help-echo | (lambda (window object position) (save-excursion (goto-char position) (-let* (((&plist :path :format :raw-link :contents-begin :contents-end) (cadr (org-element-context))) (description (when (equal format 'bracket) (copy-region-as-kill contents-begin contents-end) (substring-no-properties (car kill-ring))))) (format %s |
-
-
-
-
-#+end_details
-#+html: <br>
-
- #+begin_box Example
- #+begin_parallel :bar t
- _This_
- #+begin_example org
-,#+begin_org-demo
+#+begin_org :ignore t :demo t
+#+begin_org :ignore t :demo t
 /italics/ and _underline_
 
 $e^{i \times \pi} + 1 = 0$
-,#+end_org-demo
- #+end_example
+#+end_org
 
-#+html: <hr><br>
+#+RESULTS[889316472b]:
+:results:
+#+begin_export html
+<p>
+,#+begin<sub>org</sub> :ignore t :demo t
+<i>italics</i> and <span class="underline">underline</span>
+</p>
 
- _Yields_
- #+begin_org-demo
- /italics/ and _underline_
+<p>
+\(e^{i \times \pi} + 1 = 0\)
+</p>
+#+end_export
+#+begin_export latex
+\#+begin\textsubscript{org} :ignore t :demo t
+\emph{italics} and \uline{underline}
 
- $e^{i \times \pi} + 1 = 0$
- #+end_org-demo
-#+end_parallel
- #+end_box
+\(e^{i \times \pi} + 1 = 0\)
+#+end_export
+:end:
+#+end_org
 
- #+html: <br>
+A demo renders in a document of its own, so special blocks, links, and even headings
+---escaped by a comma, as in an example block--- show as they would anywhere else:
 
- #+begin_box (Sequential) Example
-  #+begin_parallel :bar t
- _This_
- #+begin_example org
-,#+begin_org-demo :style seq
-/italics/ and _underline_
+#+begin_org :ignore t :demo t
+,* A heading
+#+begin_box
+A box, and [[box:][a box as a link! Boxception!]]
+#+end_box
+#+end_org
 
-$e^{i \times \pi} + 1 = 0$
-,#+end_org-demo
- #+end_example
-#+html: <br><br><br><p><br><p><br><p><hr><p><br><p>
+#+RESULTS[e5693a707e]:
+:results:
+#+begin_export html
+<div id="outline-container-org0000001" class="outline-2">
+<h2 id="org0000001">A heading</h2>
+<div class="outline-text-2" id="text-org0000001">
+<div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3></h3> 
+<p>
+A box, and <div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3></h3> a box as a link! Boxception! </div>
+</p>
+</div>
+</div>
+</div>
+#+end_export
+#+begin_export latex
+\section*{A heading}
+\label{sec:org0000001}
+\colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+A box, and \colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]a box as a link! Boxception!\end{tcolorbox}
+\end{tcolorbox}
+#+end_export
+:end:
 
- _Yields_
- #+begin_org-demo :style seq
- /italics/ and _underline_
-
- $e^{i \times \pi} + 1 = 0$
- #+end_org-demo
-#+end_parallel
- #+end_box
-
- However, since our implementation scheme relies on a preprocessing step before
- export, we cannot use ~org-demo~ to show the results of special blocks: They
- disappear in the preprocessing step!
- #+begin_parallel :bar t
- E.g., this
- #+begin_example org
-,#+begin_org-demo
-,#+begin_box
-There is no special block ‘box’ to touch!
-,#+end_box
-,#+end_org-demo
- #+end_example
-
-#+html: <br><p><hr><br>
- yields the /mess/
- #+begin_org-demo
- #+begin_box
- There is no special block ‘box’ to touch!
- #+end_box
- #+end_org-demo
-#+end_parallel
-
- However, it does work with links!
- #+begin_org-demo
- [[box:][Box-as-link! Boxception!]]
- #+end_org-demo
+A demo is also a test: =C-c C-c= on it snapshots what it renders to, and each export then
+checks that it still does; see [[#demos][Demos]].
 #+latex: \fi
 ** Practice Problems: /Now you try!/
    :PROPERTIES:
@@ -2648,9 +2594,21 @@ Body1
 #+columnbreak:
 
 In contrast …
-#+begin_org-demo
+#+begin_org :ignore t :demo t
 [[stutter:5][woah, I'm repeated 5 times!]]
-#+end_org-demo
+#+end_org
+
+#+RESULTS[d5161978fa]:
+:results:
+#+begin_export html
+<p>
+woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!
+</p>
+#+end_export
+#+begin_export latex
+woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!woah, I'm repeated 5 times!
+#+end_export
+:end:
 #+end_parallel
 #+end_box
 
@@ -3318,9 +3276,10 @@ post")
 :END:
 
 Consider the source and how it exports ...
-#+begin_org-demo
-The link “ [[shout:me the author][hello to the world]] ” exports with bold in HTML and large in LaTeX.
-#+end_org-demo
+# The shout link is defined only by this manual's startup-code, below, which a demo's document of its own cannot see.
+# #+begin_org :ignore t :demo t
+# The link “ [[shout:me the author][hello to the world]] ” exports with bold in HTML and large in LaTeX.
+# #+end_org
 # C-c C-e h o ⇒ bold
 # C-c C-e l o ⇒ large
 
@@ -3439,7 +3398,6 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =tree=                      | Display proof trees and logical derivations --- fantastic for formal logic.           |
   | =stutter=                   | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
   | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
-  | =org-demo=                  | Show Org markup alongside its rendered result --- ideal for tutorials.                |
   | =math=                      | Display maths wherein =red:𝒳= colours a symbol; calculational proofs, with hints.     |
   | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
   | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
@@ -3562,7 +3520,81 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
    :CUSTOM_ID: boxed-text
    :END:
 
-   osbe-example:box
+   #+begin_org :ignore t :demo org-block/box
+   It can be useful to draw attention to some important text by
+   enclosing it in a [[doc:org-block/box][box]].
+
+   #+begin_box Uses of callout boxes
+   Such boxes often callout tips, warnings, cautionary info or
+   emphasises core information.
+   #+end_box
+   #+end_org
+
+   #+RESULTS[e8b915155a]:
+   :results:
+   #+begin_export html
+   <p>
+   It can be useful to draw attention to some important text by
+   enclosing it in a <abbr class="tooltip" tabindex="0">box<template><pre>Enclose text in a box, possibly with a TITLE.
+   
+   By default, the box’s BACKGROUND-COLOR is green for HTML and red for LaTeX;
+   for LaTeX, there are also FRAME-COLOR and TITLE-BACKGROUND-COLOR.
+   
+   SHADOW is an alternate style of boxing: It shows the contents in a centred
+   box with a shadow colour being the given non-nil value of SHADOW.
+   If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.
+   More accurately, the following are all valid uses:
+   
+       ,#+begin_box title :shadow t
+       ,#+begin_box title :shadow inset
+   
+       ,#+begin_box title :shadow "pink"
+       ,#+begin_box title :shadow pink
+   
+       ,#+begin_box title :shadow (cyan pink orange yellow)
+       ,#+begin_box title :shadow (cyan "inset pink" orange)
+       ,#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
+   
+   Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+   rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
+   
+   The HTML export uses a padded div, whereas the LaTeX export
+   requires the tcolorbox package; Markdown, sans colours, gets a quote opening with TITLE in bold.
+   
+   Regarding the Lisp function:
+   + BACKEND refers to the current export backend.
+   + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+   
+   For example, upon LaTeX export, the Org special block
+   
+        ,#+begin_box
+        Hello, world
+        ,#+end_box
+   
+    is rewritten to the result of the call
+   
+        (org-block/box ‘latex "Hello, world")</pre></template></abbr>.
+   </p>
+   
+   <div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Uses of callout boxes</h3> 
+   <p>
+   Such boxes often callout tips, warnings, cautionary info or
+   emphasises core information.
+   </p>
+   </div>
+   #+end_export
+   #+begin_export latex
+   It can be useful to draw attention to some important text by
+   enclosing it in a \hyperref[o-glossary-org-block/box]{box}\label{o-glossary-declaration-site-org-block/box}.
+   
+   \colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={Uses of callout boxes},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+   Such boxes often callout tips, warnings, cautionary info or
+   emphasises core information.
+   \end{tcolorbox}
+   #+end_export
+   :end:
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
    
@@ -3663,7 +3695,94 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
   :CUSTOM_ID: folded-details
   :END:
 
-   osbe-example:details
+   #+begin_org :ignore t :demo org-block/details
+   Sometimes there is a remark or a code snippet that is useful to
+   have, but not relevant to the discussion at hand and so we want to
+   /fold away such [[doc:org-block/details][details]]/.
+
+   #+begin_details Example use cases
+   + ‘Conversation-style’ articles, where the author asks the reader questions
+     whose answers are “folded away” so the reader can think about the exercise
+     before seeing the answer.
+
+   + Hiding boring but important code snippets, such as a list of import
+     declarations or a tedious implementation.
+   #+end_details
+
+   Full syntax ~#+begin_details "title" :background-color "cyan" :title-color "green"~.
+   #+end_org
+
+   #+RESULTS[ca8d302267]:
+   :results:
+   #+begin_export html
+   <p>
+   Sometimes there is a remark or a code snippet that is useful to
+   have, but not relevant to the discussion at hand and so we want to
+   <i>fold away such <abbr class="tooltip" tabindex="0">details<template><pre>Enclose contents in a folded up box, for HTML.
+   
+   For LaTeX, this is just a boring, but centered, box.
+   
+   By default, the TITLE of such blocks is “Details”,
+   its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
+   
+   In HTML, we show folded, details, regions with a nice greenish colour.
+   
+   Regarding the Lisp function:
+   + BACKEND refers to the current export backend.
+   + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+   
+   For example, upon LaTeX export, the Org special block
+   
+        ,#+begin_details
+        Hello, world
+        ,#+end_details
+   
+    is rewritten to the result of the call
+   
+        (org-block/details ‘latex "Hello, world")</pre></template></abbr></i>.
+   </p>
+   
+   <details class="code-details" style="padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;">
+   <summary><strong><font face="Courier" size="3" color="green">Example use cases</font></strong></summary>
+   <ul class="org-ul">
+   <li>‘Conversation-style’ articles, where the author asks the reader questions
+   whose answers are “folded away” so the reader can think about the exercise
+   before seeing the answer.</li>
+   
+   <li>Hiding boring but important code snippets, such as a list of import
+   declarations or a tedious implementation.</li>
+   </ul>
+   
+   </details>
+   
+   <p>
+   Full syntax <code>#+begin_details "title" :background-color "cyan" :title-color "green"</code>.
+   </p>
+   #+end_export
+   #+begin_export latex
+   Sometimes there is a remark or a code snippet that is useful to
+   have, but not relevant to the discussion at hand and so we want to
+   \emph{fold away such \hyperref[o-glossary-org-block/details]{details}\label{o-glossary-declaration-site-org-block/details}}.
+   
+   \definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{green}\begin{quote}
+   \begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Example use cases},sharp corners,boxrule=0.4pt]
+   \begin{itemize}
+   \item ‘Conversation-style’ articles, where the author asks the reader questions
+   whose answers are “folded away” so the reader can think about the exercise
+   before seeing the answer.
+   
+   \item Hiding boring but important code snippets, such as a list of import
+   declarations or a tedious implementation.
+   \end{itemize}
+   
+   \end{tcolorbox}
+   \end{quote}
+   
+   Full syntax \texttt{\#+begin\_details "title" :background-color "cyan" :title-color "green"}.
+   #+end_export
+   :end:
 
    Src blocks fold too: the header argument =:folded t= exports a src block, exactly as Org
    otherwise would, inside a =details= block titled by its language; =:folded "TITLE"= picks
@@ -3915,7 +4034,105 @@ Let's have some sanity tests...
 Sometimes you want to remark on [[doc:org-block/details][details]] without drawing too much
 attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
   
-   osbe-example:tooltip
+   #+begin_org :ignore t :demo org-block/tooltip
+   It can be annoying to make readers jump to the bottom of the page to
+   read a footnote.  Instead, I prefer to write an /inline [[doc:org-block/tooltip][remark]]/
+   containing, say, references or additional explanation.
+
+      /[[tooltip:Allah][The God of Abraham; known as Elohim in the Bible]] does not burden a
+          soul beyond what it can bear./ --- Quran 2:286
+
+   Or, without specifying an explicit label:
+
+      /Allah[[tooltip:][The God of Abraham; known as Elohim in the Bible]] does not
+          burden a soul beyond what it can bear./ --- Quran 2:286
+   #+end_org
+
+   #+RESULTS[a29b7d33bd]:
+   :results:
+   #+begin_export html
+   <p>
+   It can be annoying to make readers jump to the bottom of the page to
+   read a footnote.  Instead, I prefer to write an <i>inline <abbr class="tooltip" tabindex="0">remark<template><pre>A remark, CONTENTS, on MARKER in the text: in HTML, a tooltip on MARKER, hovered on a desktop, tapped on a
+   phone; in LaTeX, MARKER followed by CONTENTS as a margin note, numbered by COUNTER, as footnotes are; in beamer, whose
+   slides have no margins, a footnote.  Sans MARKER, the note’s number alone in LaTeX, and “°” in HTML.
+   
+     It’s a                                   /Allah[[margin:][The God of Abraham]] does not burden a soul …/
+     ,#+begin_tooltip simple
+     Squint, and Maybe ℕ is ℕ.
+     ,#+end_tooltip
+     exercise.
+   
+   The block is one-off, “inline footnotes”; Org’s own [fn::…] are such remarks too.  For a note used repeatedly, consider
+   declaring it with ‘documentation’ and citing it with ‘doc’.
+   
+   WIDTH, COUNTER, and COLOR are LaTeX’s: the note is WIDTH wide, coloured COLOR, its number in black.  Since verbatim
+   environments fail as arguments to \marginpar, CONTENTS is saved in a minipage within a LaTeX box, then unfolded in the
+   margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For LaTeX, a ‘#+resize:’ line has the rest of the
+   note resized, to 1.3 the margin’s width ---requiring \usepackage{adjustbox}.
+   
+   ‘tooltip’ is an alias, for when we think in HTML rather than LaTeX.
+   
+   An alias of ‘org-block/margin’.
+   
+   Regarding the Lisp function:
+   + BACKEND refers to the current export backend.
+   + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+     ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+     ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+   
+   For example, upon LaTeX export, the Org special block
+   
+        ,#+begin_tooltip
+        Hello, world
+        ,#+end_tooltip
+   
+    is rewritten to the result of the call
+   
+        (org-block/tooltip ‘latex "Hello, world")</pre></template></abbr></i>
+   containing, say, references or additional explanation.
+   </p>
+   
+   <p>
+   <i><abbr class="tooltip" tabindex="0">Allah<template><p>
+   The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not burden a
+       soul beyond what it can bear.</i> &mdash; Quran 2:286
+   </p>
+   
+   <p>
+   Or, without specifying an explicit label:
+   </p>
+   
+   <p>
+   <i>Allah<abbr class="tooltip" tabindex="0">°<template><p>
+   The God of Abraham; known as Elohim in the Bible</p></template></abbr>&emsp13; does not
+       burden a soul beyond what it can bear.</i> &mdash; Quran 2:286
+   </p>
+   #+end_export
+   #+begin_export latex
+   It can be annoying to make readers jump to the bottom of the page to
+   read a footnote.  Instead, I prefer to write an \emph{inline \hyperref[o-glossary-org-block/tooltip]{remark}\label{o-glossary-declaration-site-org-block/tooltip}}
+   containing, say, references or additional explanation.
+   
+   \emph{Allah\refstepcounter{footnote}${}^{\textnormal{{\thefootnote}}}$\newsavebox{\OrgSpecialBlockExtrasMarginBox}\begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}\begin{minipage}{\marginparwidth}
+   \raggedright\footnotesize\ifdefined\setminted\setminted{fontsize=\footnotesize, breaklines}\fi\color{gray!80}
+   {\color{black}${}^{\textnormal{{\thefootnote}}}$}
+   \normalfont
+   The God of Abraham; known as Elohim in the Bible
+   \end{minipage}\end{lrbox}\marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}}\global\let\OrgSpecialBlockExtrasMarginBox\relax{} does not burden a
+       soul beyond what it can bear.} --- Quran 2:286
+   
+   Or, without specifying an explicit label:
+   
+   \emph{Allah\refstepcounter{footnote}${}^{\textnormal{{\thefootnote}}}$\newsavebox{\OrgSpecialBlockExtrasMarginBox}\begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}\begin{minipage}{\marginparwidth}
+   \raggedright\footnotesize\ifdefined\setminted\setminted{fontsize=\footnotesize, breaklines}\fi\color{gray!80}
+   {\color{black}${}^{\textnormal{{\thefootnote}}}$}
+   \normalfont
+   The God of Abraham; known as Elohim in the Bible
+   \end{minipage}\end{lrbox}\marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}}\global\let\OrgSpecialBlockExtrasMarginBox\relax{} does not
+       burden a soul beyond what it can bear.} --- Quran 2:286
+   #+end_export
+   :end:
 
    A tooltip opens when its word is hovered with a mouse, or tapped on a phone; it closes when we
    leave both, tap elsewhere, or press =Escape=. Its text is Org, exported as Org, so it may hold
@@ -3930,7 +4147,61 @@ attention, and so a tooltip via [[doc:org-block/remark][remark]] suffices.
    anonymous =[fn::…]=, a named =[fn:NAME]= defined elsewhere, and a named inline =[fn:NAME: …]=, which
    later =[fn:NAME]= references share.
 
-   osbe-example:footnote
+   #+begin_org :ignore t :demo t
+   The Quran was revealed over 23 years[fn::From 610 to 632 CE, in Mecca then Medina.], and the
+   Torah[fn:torah] and the Gospel[fn:injil: /Injil/, given to Jesus.] are honoured in it as earlier
+   scriptures; the Gospel[fn:injil] is named in it a dozen times.
+
+   [fn:torah] /Tawrat/, given to Moses; see [[https://en.wikipedia.org/wiki/Tawrat][Tawrat]].
+   #+end_org
+
+   #+RESULTS[36670bde0a]:
+   :results:
+   #+begin_export html
+   <p>
+   The Quran was revealed over 23 years<sup><abbr class="tooltip" tabindex="0" id="fnr.1">1<template>From 610 to 632 CE, in Mecca then Medina.</template></abbr></sup>, and the
+   Torah<sup><abbr class="tooltip" tabindex="0" id="fnr.torah">2<template><p class="footpara">
+   <i>Tawrat</i>, given to Moses; see <a href="https://en.wikipedia.org/wiki/Tawrat">Tawrat</a>.
+   </p></template></abbr></sup> and the Gospel<sup><abbr class="tooltip" tabindex="0" id="fnr.injil">3<template><i>Injil</i>, given to Jesus.</template></abbr></sup> are honoured in it as earlier
+   scriptures; the Gospel<sup><abbr class="tooltip" tabindex="0" id="fnr.injil.3">3<template><i>Injil</i>, given to Jesus.</template></abbr></sup> is named in it a dozen times.
+   </p>
+   <div id="footnotes">
+   <h2 class="footnotes">Footnotes: </h2>
+   <div id="text-footnotes">
+   
+   <div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1" role="doc-backlink">1</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">From 610 to 632 CE, in Mecca then Medina.</p></div></div>
+   
+   <div class="footdef"><sup><a id="fn.torah" class="footnum" href="#fnr.torah" role="doc-backlink">2</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara">
+   <i>Tawrat</i>, given to Moses; see <a href="https://en.wikipedia.org/wiki/Tawrat">Tawrat</a>.
+   </p></div></div>
+   
+   <div class="footdef"><sup><a id="fn.injil" class="footnum" href="#fnr.injil" role="doc-backlink">3</a></sup> <div class="footpara" role="doc-footnote"><p class="footpara"><i>Injil</i>, given to Jesus.</p></div></div>
+   
+   
+   </div>
+   </div>
+   #+end_export
+   #+begin_export latex
+   The Quran was revealed over 23 years\refstepcounter{footnote}${}^{\textnormal{{\thefootnote}}}$\newsavebox{\OrgSpecialBlockExtrasMarginBox}\begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}\begin{minipage}{\marginparwidth}
+   \raggedright\footnotesize\ifdefined\setminted\setminted{fontsize=\footnotesize, breaklines}\fi\color{gray!80}
+   {\color{black}${}^{\textnormal{{\thefootnote}}}$}
+   \normalfont
+   From 610 to 632 CE, in Mecca then Medina.
+   \end{minipage}\end{lrbox}\marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}}\global\let\OrgSpecialBlockExtrasMarginBox\relax{}, and the
+   Torah\refstepcounter{footnote}${}^{\textnormal{{\thefootnote}}}$\newsavebox{\OrgSpecialBlockExtrasMarginBox}\begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}\begin{minipage}{\marginparwidth}
+   \raggedright\footnotesize\ifdefined\setminted\setminted{fontsize=\footnotesize, breaklines}\fi\color{gray!80}
+   {\color{black}${}^{\textnormal{{\thefootnote}}}$}
+   \normalfont
+   \emph{Tawrat}, given to Moses; see \href{https://en.wikipedia.org/wiki/Tawrat}{Tawrat}.
+   \end{minipage}\end{lrbox}\marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}}\global\let\OrgSpecialBlockExtrasMarginBox\relax{} and the Gospel\refstepcounter{footnote}${}^{\textnormal{{\thefootnote}}}$\newsavebox{\OrgSpecialBlockExtrasMarginBox}\begin{lrbox}{\OrgSpecialBlockExtrasMarginBox}\begin{minipage}{\marginparwidth}
+   \raggedright\footnotesize\ifdefined\setminted\setminted{fontsize=\footnotesize, breaklines}\fi\color{gray!80}
+   {\color{black}${}^{\textnormal{{\thefootnote}}}$}
+   \normalfont
+   \emph{Injil}, given to Jesus.\label{org0000001}
+   \end{minipage}\end{lrbox}\marginpar{\usebox{\OrgSpecialBlockExtrasMarginBox}}\global\let\OrgSpecialBlockExtrasMarginBox\relax{} are honoured in it as earlier
+   scriptures; the Gospel\textsuperscript{\ref{org0000001}} is named in it a dozen times.
+   #+end_export
+   :end:
 
 *** TODO COMMENT Extra notes, either make into yaml tests or more to an FAQ section
 
@@ -4188,7 +4459,151 @@ from∘to m = {! try it! }
   reference in LaTeX. Here 𝒳 is an Emacs Lisp function or variable, a word in the English
   dictionary ---via [[https://wordnet.princeton.edu][WordNet]]'s =wn=, should we have it--- or, best of all, a term of our own.
 
-  osbe-example:doc
+  #+begin_org :ignore t :demo org-link/doc
+  The ~doc~ link type can be used to show tooltips for Emacs Lisp commands such as
+
+                           doc:thread-last
+                           
+  However, it can also be used for your own definitions/glossary.
+  First define a term as follows, which does not render anything in the resulting HTML.
+
+                   #+begin_documentation Category Theory :label cat
+                   A theory of typed composition; e.g., typed monoids.
+                   #+end_documentation
+
+  Then you can refer to it using the given :label, if any:
+
+                               doc:cat
+    
+  Or else refer to it with underscores in lieu of spaces:
+
+                         doc:Category_Theory
+
+  Either approach renders the name of the term, not the way its referenced.
+  If you want to change what's rendered, provide a description:
+
+                    [[doc:cat][abstract nonsense]]
+
+  Finally, if ~doc~ gets a label that is not an Emacs Lisp command, variable, nor a user-defined
+  definition via #+begin_documentation, then we try to look up its definition via the dictionary:
+
+                            doc:happiness
+  #+end_org
+
+  #+RESULTS[c1c6ccd163]:
+  :results:
+  #+begin_export html
+  <p>
+  The <code>doc</code> link type can be used to show tooltips for Emacs Lisp commands such as
+  </p>
+  
+  <p>
+  <abbr class="tooltip" tabindex="0">thread-last<template><pre>Thread FORMS elements as the last argument of their successor.
+  Example:
+      (thread-last
+        5
+        (+ 20)
+        (/ 25)
+        -
+        (+ 40))
+  Is equivalent to:
+      (+ 40 (- (/ 25 (+ 20 5))))
+  Note how the single ‘-’ got converted into a list before
+  threading.
+  
+  (fn &amp;rest FORMS)</pre></template></abbr>
+  </p>
+  
+  <p>
+  However, it can also be used for your own definitions/glossary.
+  First define a term as follows, which does not render anything in the resulting HTML.
+  </p>
+  
+  
+  
+  <p>
+  Then you can refer to it using the given :label, if any:
+  </p>
+  
+  <p>
+  <abbr class="tooltip" tabindex="0">Category Theory<template><p>
+  A theory of typed composition; e.g., typed monoids.</p></template></abbr>
+  </p>
+  
+  <p>
+  Or else refer to it with underscores in lieu of spaces:
+  </p>
+  
+  <p>
+  <abbr class="tooltip" tabindex="0">Category Theory<template><p>
+  A theory of typed composition; e.g., typed monoids.</p></template></abbr>
+  </p>
+  
+  <p>
+  Either approach renders the name of the term, not the way its referenced.
+  If you want to change what's rendered, provide a description:
+  </p>
+  
+  <p>
+  <abbr class="tooltip" tabindex="0">abstract nonsense<template><p>
+  A theory of typed composition; e.g., typed monoids.</p></template></abbr>
+  </p>
+  
+  <p>
+  Finally, if <code>doc</code> gets a label that is not an Emacs Lisp command, variable, nor a user-defined
+  definition via #+begin<sub>documentation</sub>, then we try to look up its definition via the dictionary:
+  </p>
+  
+  <p>
+  <abbr class="tooltip" tabindex="0">happiness<template><pre>Overview of noun happiness
+  
+  The noun happiness has 2 senses (first 2 from tagged texts)
+                                        
+  1. (4) happiness, felicity -- (state of well-being characterized by emotions ranging from contentment to intense joy)
+  2. (2) happiness -- (emotions experienced when in a state of well-being)
+  
+  Synonyms/Hypernyms (Ordered by Estimated Frequency) of noun happiness
+  
+  2 senses of happiness                                                   
+  
+  Sense 1
+  happiness, felicity
+         =&gt; emotional state, spirit
+  
+  Sense 2
+  happiness
+         =&gt; feeling</pre></template></abbr>
+  </p>
+  #+end_export
+  #+begin_export latex
+  The \texttt{doc} link type can be used to show tooltips for Emacs Lisp commands such as
+  
+  \hyperref[o-glossary-thread-last]{thread-last}\label{o-glossary-declaration-site-thread-last}
+  
+  However, it can also be used for your own definitions/glossary.
+  First define a term as follows, which does not render anything in the resulting HTML.
+  
+  
+  
+  Then you can refer to it using the given :label, if any:
+  
+  \hyperref[o-glossary-cat]{Category Theory}\label{o-glossary-declaration-site-cat}
+  
+  Or else refer to it with underscores in lieu of spaces:
+  
+  \hyperref[o-glossary-Category_Theory]{Category Theory}\label{o-glossary-declaration-site-Category_Theory}
+  
+  Either approach renders the name of the term, not the way its referenced.
+  If you want to change what's rendered, provide a description:
+  
+  \hyperref[o-glossary-cat]{abstract nonsense}\label{o-glossary-declaration-site-cat}
+  
+  Finally, if \texttt{doc} gets a label that is not an Emacs Lisp command, variable, nor a user-defined
+  definition via \#+begin\textsubscript{documentation}, then we try to look up its definition via the dictionary:
+  
+  \hyperref[o-glossary-happiness]{happiness}\label{o-glossary-declaration-site-happiness}
+  #+end_export
+  :end:
 
   Our own terms are /data/ in an Org file: an entry is either a =documentation= block, which
   exports nothing, or a heading tagged =:documentation:=, which exports as an ordinary
@@ -4202,7 +4617,82 @@ from∘to m = {! try it! }
   =<<<monoid>>>= is a unital semigroup”, Org already links each later “monoid” to its
   definition; in HTML, each such mention is also a tooltip of the defining paragraph.
 
-  osbe-example:documentation
+  #+begin_org :ignore t :demo org-block/documentation
+  Our glossary, listing every term this page cites ---even those cited further below:
+
+  #+print_glossary:
+
+  ,* Category Theory                                                   :documentation:
+  :PROPERTIES:
+  :DOC_KEYS: cat
+  :END:
+  A theory of typed composition; e.g., typed monoids.
+
+  ,* Using our terms
+
+  A glossary entry may instead be a block, which exports nothing:
+
+  #+begin_documentation Monoid :label mon
+  A set with an associative binary operation that has a unit.
+  #+end_documentation
+
+  Then, doc:cat studies [[doc:mon][monoids]] and their kin.
+  #+end_org
+
+  #+RESULTS[d6b858a6a0]:
+  :results:
+  #+begin_export html
+  <p>
+  Our glossary, listing every term this page cites &mdash;even those cited further below:
+  </p>
+  
+  <abbr class="tooltip" tabindex="0">Monoid<template><p>
+  A set with an associative binary operation that has a unit.</p></template></abbr> <abbr class="tooltip" tabindex="0">Category Theory<template><p>
+  A theory of typed composition; e.g., typed monoids.</p></template></abbr>
+  <div id="outline-container-org0000001" class="outline-2">
+  <h2 id="org0000001">Category Theory&nbsp;&nbsp;&nbsp<span class="tag"><span class="documentation">documentation</span></span></h2>
+  <div class="outline-text-2" id="text-org0000001">
+  <p>
+  A theory of typed composition; e.g., typed monoids.
+  </p>
+  </div>
+  </div>
+  <div id="outline-container-org0000004" class="outline-2">
+  <h2 id="org0000004">Using our terms</h2>
+  <div class="outline-text-2" id="text-org0000004">
+  <p>
+  A glossary entry may instead be a block, which exports nothing:
+  </p>
+  
+  
+  
+  <p>
+  Then, <abbr class="tooltip" tabindex="0">Category Theory<template><p>
+  A theory of typed composition; e.g., typed monoids.</p></template></abbr> studies <abbr class="tooltip" tabindex="0">monoids<template><p>
+  A set with an associative binary operation that has a unit.</p></template></abbr> and their kin.
+  </p>
+  </div>
+  </div>
+  #+end_export
+  #+begin_export latex
+  Our glossary, listing every term this page cites ---even those cited further below:
+  
+  \vspace{1em}\phantomsection\textbf{Monoid}\quad\label{o-glossary-mon}A set with an associative binary operation that has a unit. See page \pageref{o-glossary-declaration-site-mon}
+  
+  \vspace{1em}\phantomsection\textbf{Category Theory}\quad\label{o-glossary-cat}A theory of typed composition; e.g., typed monoids. See page \pageref{o-glossary-declaration-site-cat}
+  \section*{Category Theory\hfill{}\textsc{documentation}}
+  \label{sec:org0000001}
+  A theory of typed composition; e.g., typed monoids.
+  \section*{Using our terms}
+  \label{sec:org0000004}
+  
+  A glossary entry may instead be a block, which exports nothing:
+  
+  
+  
+  Then, \hyperref[o-glossary-cat]{Category Theory}\label{o-glossary-declaration-site-cat} studies \hyperref[o-glossary-mon]{monoids}\label{o-glossary-declaration-site-mon} and their kin.
+  #+end_export
+  :end:
 
   Terms we cite across many files go in a library: a list of Org files in
   ~org-docs-libraries~, whose entries ---blocks and headings alike--- every =doc:𝒳= link may
@@ -4219,7 +4709,249 @@ from∘to m = {! try it! }
   :CUSTOM_ID: parallel
   :END:
 
-     osbe-example:parallel
+     #+begin_org :ignore t :demo org-block/parallel
+     Reduce the amount of whitespace noise in your articles by using the
+     [[doc:org-block/parallel][parallel]] block to place ideas
+     side-by-side ---with up to 𝓃-many columns.
+
+     ----------------------------------------------------------------------
+
+     #+begin_parallel 2
+     ,*“Soft Columns”:* Writing ~#+begin_parallel 𝓃 :bar BAR~ will produce
+     𝒏-many parallel columns, possibly separated by solid rules, or a
+     “bar”. /This style allows text to freely move between columns,
+     depending on the size of the browser, which may dynamically shrink
+     and grow./ The value ~BAR~ can either be ~t~, ~nil~, or any
+     (backend)-valid colour specification; such as ~red~ or ~green~.
+     #+end_parallel
+
+     ----------------------------------------------------------------------
+
+     #+begin_parallel 25% 50% 25% :bar green
+
+     ,*“Hard Columns”:* Alternatively, /for non-uniform column widths, 𝓃 may
+     instead be a specification of the widths of the columns./
+
+     #+columnbreak:  
+     However, this extra flexibility comes at an additional cost: The
+     contents of the block must now contain /𝓃-1/ lines consisting of
+     ~#+columnbreak:~, when the specification determines 𝓃-many columns.
+
+     #+columnbreak:
+     Goodbye (“God-be-with-ye”) to the right!
+
+     #+end_parallel
+
+     # In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+
+     In summary, articles can get lengthy when vertical whitespace is
+     wasted on thin lines; instead, one could save space by using
+     /[[doc:org-block/parallel][parallel]] columns of text/.
+     #+end_org
+
+     #+RESULTS[16f51b69d3]:
+     :results:
+     #+begin_export html
+     <p>
+     Reduce the amount of whitespace noise in your articles by using the
+     <abbr class="tooltip" tabindex="0">parallel<template><pre>Place ideas side-by-side, possibly with a separator.
+     
+     There are COLS many columns, and they may be separated by solid
+     vertical rules if BAR is a non-nil (colour) value.
+     
+     + COLS is either a number or a sequence of the shape: 10% 20% 30%.
+     + BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.
+     
+     ----------------------------------------------------------------------
+     
+     “Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
+     𝒏-many parallel columns, possibly separated by solid rules, or a
+     “bar”. This style allows text to freely move between columns,
+     depending on the size of the browser, which may dynamically
+     shrink and grow.  BAR can either be ‘t’, ‘nil’, or
+     any (backend)-valid colour specification; such as ‘red’ or
+     ‘green’.
+     
+     “Hard Columns”: Alternatively, for non-uniform column widths,
+     COLS may instead be a specification of the widths of the
+     columns. However, this extra flexibility comes at an additional
+     cost: The contents of the block must now contain 𝒏-1 lines
+     consisting of ‘#+columnbreak:’, when the specification determines
+     𝒏 columns, as shown in the following example.
+     
+        ,#+begin_parallel 20% 60% 20% :bar green
+        Hello, to the left!
+     
+        ,#+columnbreak:
+        A super duper wide middle margin!
+     
+        ,#+columnbreak:
+        Goodbye (“God-be-with-ye”) to the right!
+        ,#+end_parallel
+     
+     The specification is 𝒏 measurements denoting widths; which may be
+     in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
+     I personally advise only the use of percentage measurements.
+     
+     In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+     With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
+     
+     Regarding the Lisp function:
+     + BACKEND refers to the current export backend.
+     + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+       ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+       ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+     
+     For example, upon LaTeX export, the Org special block
+     
+          ,#+begin_parallel
+          Hello, world
+          ,#+end_parallel
+     
+      is rewritten to the result of the call
+     
+          (org-block/parallel ‘latex "Hello, world")</pre></template></abbr> block to place ideas
+     side-by-side &mdash;with up to 𝓃-many columns.
+     </p>
+     
+     <hr />
+     
+     <div style="column-count: 2;">
+     <p>
+     <b>“Soft Columns”:</b> Writing <code>#+begin_parallel 𝓃 :bar BAR</code> will produce
+     𝒏-many parallel columns, possibly separated by solid rules, or a
+     “bar”. <i>This style allows text to freely move between columns,
+     depending on the size of the browser, which may dynamically shrink
+     and grow.</i> The value <code>BAR</code> can either be <code>t</code>, <code>nil</code>, or any
+     (backend)-valid colour specification; such as <code>red</code> or <code>green</code>.
+     </p>
+     </div>
+     
+     <hr />
+     
+     <div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="width: 25%; margin: 10px; border-right: 4px solid green;">
+     <p>
+     <b>“Hard Columns”:</b> Alternatively, <i>for non-uniform column widths, 𝓃 may
+     instead be a specification of the widths of the columns.</i>
+     </p>
+     
+     <p>
+     </div><div style="width: 50%; margin: 10px; border-right: 4px solid green;">
+     However, this extra flexibility comes at an additional cost: The
+     contents of the block must now contain <i>𝓃-1</i> lines consisting of
+     <code>#+columnbreak:</code>, when the specification determines 𝓃-many columns.
+     </p>
+     
+     <p>
+     </div><div style="width: 25%; margin: 10px; border-right: none;">
+     Goodbye (“God-be-with-ye”) to the right!
+     </p>
+     </div></div>
+     
+     <p>
+     In summary, articles can get lengthy when vertical whitespace is
+     wasted on thin lines; instead, one could save space by using
+     <i><abbr class="tooltip" tabindex="0">parallel<template><pre>Place ideas side-by-side, possibly with a separator.
+     
+     There are COLS many columns, and they may be separated by solid
+     vertical rules if BAR is a non-nil (colour) value.
+     
+     + COLS is either a number or a sequence of the shape: 10% 20% 30%.
+     + BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.
+     
+     ----------------------------------------------------------------------
+     
+     “Soft Columns”: Writing “#+begin_parallel 𝓃 :bar t” will produce
+     𝒏-many parallel columns, possibly separated by solid rules, or a
+     “bar”. This style allows text to freely move between columns,
+     depending on the size of the browser, which may dynamically
+     shrink and grow.  BAR can either be ‘t’, ‘nil’, or
+     any (backend)-valid colour specification; such as ‘red’ or
+     ‘green’.
+     
+     “Hard Columns”: Alternatively, for non-uniform column widths,
+     COLS may instead be a specification of the widths of the
+     columns. However, this extra flexibility comes at an additional
+     cost: The contents of the block must now contain 𝒏-1 lines
+     consisting of ‘#+columnbreak:’, when the specification determines
+     𝒏 columns, as shown in the following example.
+     
+        ,#+begin_parallel 20% 60% 20% :bar green
+        Hello, to the left!
+     
+        ,#+columnbreak:
+        A super duper wide middle margin!
+     
+        ,#+columnbreak:
+        Goodbye (“God-be-with-ye”) to the right!
+        ,#+end_parallel
+     
+     The specification is 𝒏 measurements denoting widths; which may be
+     in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
+     I personally advise only the use of percentage measurements.
+     
+     In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
+     With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
+     
+     Regarding the Lisp function:
+     + BACKEND refers to the current export backend.
+     + RAW-CONTENTS refers to the text as the user wrote it, sans its least indentation.
+       ⇒ You may mention CONTENTS to refer to the ‘org parsed’ version of user text.
+       ⇒ CONTENTS and RAW-CONTENTS are identical whenever key CONTENTS-OCCUR-AS-LINK-DESCRIPTION is non-nil.
+     
+     For example, upon LaTeX export, the Org special block
+     
+          ,#+begin_parallel
+          Hello, world
+          ,#+end_parallel
+     
+      is rewritten to the result of the call
+     
+          (org-block/parallel ‘latex "Hello, world")</pre></template></abbr> columns of text</i>.
+     </p>
+     #+end_export
+     #+begin_export latex
+     Reduce the amount of whitespace noise in your articles by using the
+     \hyperref[o-glossary-org-block/parallel]{parallel}\label{o-glossary-declaration-site-org-block/parallel} block to place ideas
+     side-by-side ---with up to 𝓃-many columns.
+     
+     \noindent\rule{\textwidth}{0.5pt}
+     
+     \par \setlength{\columnseprule}{0 pt}
+     \begin{minipage}[t]{\linewidth}
+     \begin{multicols}{2}
+     \textbf{“Soft Columns”:} Writing \texttt{\#+begin\_parallel 𝓃 :bar BAR} will produce
+     𝒏-many parallel columns, possibly separated by solid rules, or a
+     “bar”. \emph{This style allows text to freely move between columns,
+     depending on the size of the browser, which may dynamically shrink
+     and grow.} The value \texttt{BAR} can either be \texttt{t}, \texttt{nil}, or any
+     (backend)-valid colour specification; such as \texttt{red} or \texttt{green}.
+     
+     \end{multicols}\end{minipage}
+     
+     \noindent\rule{\textwidth}{0.5pt}
+     
+     \par \setlength{\columnseprule}{2 pt}
+     \begin{minipage}[t]{\linewidth}
+     \begin{multicols}{3}
+     \textbf{“Hard Columns”:} Alternatively, \emph{for non-uniform column widths, 𝓃 may
+     instead be a specification of the widths of the columns.}
+     
+     \columnbreak
+     However, this extra flexibility comes at an additional cost: The
+     contents of the block must now contain \emph{𝓃-1} lines consisting of
+     \texttt{\#+columnbreak:}, when the specification determines 𝓃-many columns.
+     
+     \columnbreak
+     Goodbye (“God-be-with-ye”) to the right!
+     
+     \end{multicols}\end{minipage}
+     
+     In summary, articles can get lengthy when vertical whitespace is
+     wasted on thin lines; instead, one could save space by using
+     \emph{\hyperref[o-glossary-org-block/parallel]{parallel}\label{o-glossary-declaration-site-org-block/parallel} columns of text}.
+     #+end_export
+     :end:
 
 ** Display maths ---=#+begin_math=, wherein =red:𝒳= colours a symbol
   :PROPERTIES:
@@ -4241,7 +4973,67 @@ from∘to m = {! try it! }
   knows it page-wide. A line =# …= is a comment. Below, the first block is only definitions, and so
   shows nothing.
 
-  osbe-example:math
+  #+begin_org :ignore t :demo org-block/math
+  Hello, in this blog post I'd like to talk about quantifiers.
+
+  # First, I'll define some helpers that I use multiple times; they are declared, not shown.
+  #+begin_math
+  \def\Plus{teal:\bigoplus}
+  \def\plus{\;teal:\oplus\;}
+  \def\f#1{brown:f violet:{(#1)}}
+  \def\xstart{red:a}
+  \def\xend{cyan:b}
+  #+end_math
+
+  Anyhow, let's talk about quantifiers...
+  #+begin_math
+  \Plus_{violet:x = \xstart}^{\xend} \f{x} \; = \; \f{\xstart} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{\xend}
+  #+end_math
+
+  The above “quantification” means [[teal:Loop sequentially with]]
+  [[brown:loop-bodies f(x)]] [[teal:fused using ⊕]], using [[violet:x as the
+  name of the current element]], [[red:starting at a]] and [[cyan:ending at b]].
+  #+end_org
+
+  #+RESULTS[858b06053a]:
+  :results:
+  #+begin_export html
+  <p>
+  Hello, in this blog post I'd like to talk about quantifiers.
+  </p>
+  
+  <p style="display:none">\[\def\Plus{{\color{teal}\bigoplus}}
+  \def\plus{\;{\color{teal}\oplus}\;}
+  \def\f#1{{\color{brown}f} {\color{violet}{(#1)}}}
+  \def\xstart{{\color{red}a}}
+  \def\xend{{\color{cyan}b}}\]</p>
+  
+  <p>
+  Anyhow, let's talk about quantifiers&hellip;
+  </p>
+  \[
+  \Plus_{{\color{violet}x} = \xstart}^{\xend} \f{x} \; = \; \f{\xstart} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{\xend}
+  \]
+  
+  <p>
+  The above “quantification” means <span style="color:teal;">Loop sequentially with</span>
+  <span style="color:brown;">loop-bodies f(x)</span> <span style="color:teal;">fused using ⊕</span>, using <span style="color:violet;">x as the name of the current element</span>, <span style="color:red;">starting at a</span> and <span style="color:cyan;">ending at b</span>.
+  </p>
+  #+end_export
+  #+begin_export latex
+  Hello, in this blog post I'd like to talk about quantifiers.
+  
+  
+  
+  Anyhow, let's talk about quantifiers\ldots{}
+  \[
+  \Plus_{{\color{violet}x} = \xstart}^{\xend} \f{x} \; = \; \f{\xstart} \plus \f{a+1} \plus \f{a+2} \plus \cdots \plus \f{\xend}
+  \]
+  
+  The above “quantification” means \begingroup\color{teal}Loop sequentially with\endgroup\,
+  \begingroup\color{brown}loop-bodies f(x)\endgroup\, \begingroup\color{teal}fused using ⊕\endgroup\,, using \begingroup\color{violet}x as the name of the current element\endgroup\,, \begingroup\color{red}starting at a\endgroup\, and \begingroup\color{cyan}ending at b\endgroup\,.
+  #+end_export
+  :end:
 
   The rest of Org's markup is read as one would hope:
   + An Org table is a matrix ---a =pmatrix=, or whichever environment =:matrix= names--- whose
@@ -4307,7 +5099,47 @@ R_{teal:\theta} =
   =X ={ HINT } Y=, aligns its line too ---see [[#equational-proofs][calculational proofs]]. Shorthands
   are welcome too: the [[#switches-for-every-block][:let switch]] gives them, as below.
 
-  osbe-example:align
+  #+begin_org :ignore t :demo t
+  A ~math~ block aligns its lines at each =&=; a line may end in a coloured tag,
+  which a link, =[[Golden Rule]]=, cites. Shorthands, such as =->= below, come from the =:let= switch every block has.
+
+  #+begin_math :let (-> "\\Rightarrow" == "\\equiv")
+  p -> q &== \neg p \lor q          blue:<<Implication>>
+  p \land q &== p == q == p \lor q  orange:<<Golden Rule>>
+  #+end_math
+
+  By [[Golden Rule]], conjunction is defined by equivalence and disjunction.
+  #+end_org
+
+  #+RESULTS[aea107c8b7]:
+  :results:
+  #+begin_export html
+  <p>
+  A <code>math</code> block aligns its lines at each <code>&amp;</code>; a line may end in a coloured tag,
+  which a link, <code>[[Golden Rule]]</code>, cites. Shorthands, such as <code>-&gt;</code> below, come from the <code>:let</code> switch every block has.
+  </p>
+  
+  \begin{align*}
+  p \Rightarrow q &amp;\equiv \neg p \lor q          \tag{$\color{blue}{\text{Implication}}$} \label{Implication} \\
+  p \land q &amp;\equiv p \equiv q \equiv p \lor q  \tag{$\color{orange}{\text{Golden Rule}}$} \label{Golden Rule}
+  \end{align*}
+  
+  <p>
+  By \eqref{Golden Rule}, conjunction is defined by equivalence and disjunction.
+  </p>
+  #+end_export
+  #+begin_export latex
+  A \texttt{math} block aligns its lines at each \texttt{\&}; a line may end in a coloured tag,
+  which a link, \texttt{[[Golden Rule]]}, cites. Shorthands, such as \texttt{->} below, come from the \texttt{:let} switch every block has.
+  
+  \begin{align*}
+  p \Rightarrow q &\equiv \neg p \lor q          \tag{$\color{blue}{\text{Implication}}$} \label{Implication} \\
+  p \land q &\equiv p \equiv q \equiv p \lor q  \tag{$\color{orange}{\text{Golden Rule}}$} \label{Golden Rule}
+  \end{align*}
+  
+  By \eqref{Golden Rule}, conjunction is defined by equivalence and disjunction.
+  #+end_export
+  :end:
 
   To share shorthands among many blocks, name them once, in a table that need not itself export:
   #+begin_example
@@ -4800,7 +5632,29 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   :CUSTOM_ID: graphs
   :END:
 
-  osbe-example:graph
+  #+begin_org :ignore t :demo (live org-block/graph)
+  Org lists are already trees, so the ~graph~ block draws them with Graphviz:
+  nesting makes an edge, and a two-column table styles the item above it.
+
+  #+begin_graph :file lambda-calculus.png
+  #+graph:
+  | rankdir | LR |
+
+  #+node:
+  | shape | box |
+
+  + λ-calculus
+    | shape | ellipse |
+    + encodes :: Church encodings
+    + <<combinators>> Combinators
+      + S K I
+  + Lisp
+    + borrows :: [[combinators]]
+      | :edge.style | dotted |
+  #+end_graph
+
+  Press =C-c C-c= inside the block to render it to a PNG; =C-u C-c C-c= shows the dot source instead.
+  #+end_org
 
   The [[doc:org-block/graph][graph]] block is opt-in, so we load it separately with
   ~(require 'org-graph-block)~. Rendering needs the =dot= executable from [[https://graphviz.org][Graphviz]]:
@@ -4808,7 +5662,31 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   tooltips, via =:svg nil=--- whereas other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
 
-  osbe-example:smartdiagram
+  #+begin_org :ignore t :demo live
+  Some lists want a picture rather than a graph: a centre and what orbits it, or a flow of steps.
+  ~:smartdiagram TYPE~ hands the very same list to LaTeX's smartdiagram package instead of Graphviz:
+
+  #+begin_graph One Org source, rich HTML and LaTeX :smartdiagram constellation
+  #+graph:
+  | planet color              | black!75        |
+  | planet font               | \bfseries       |
+  | planet text width         | 3cm             |
+  | satellite size            | 2.8cm           |
+  | satellite text width      | 2.6cm           |
+  | distance planet-satellite | 4.6cm           |
+  | font                      | \small\sffamily |
+
+  + org-special-block-extras \\ define blocks & links
+    | fontcolor | white |
+    + =org-defblock= \\ custom blocks
+    + =org-deflink= \\ custom links
+    + =details= =parallel= \\ =proof= =margin=
+    + =doc:= =kbd:= \\ =badge:= =fortune:=
+    + HTML & LaTeX \\ one Org source
+  #+end_graph
+
+  Press =C-c C-c= inside the block to render it with =pdflatex=; LaTeX export typesets it in place.
+  #+end_org
 
   Under =:smartdiagram TYPE=, the =#+graph:= rows are LaTeX's =\smartdiagramset= keys, and
   =C-M-i= completes those rather than Graphviz's; rendering needs =pdflatex=, with the
@@ -4835,15 +5713,81 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   | =:boxed TITLE=   | The result, within a [[doc:org-block/box][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org-block/details][details]] titled =TITLE=; =t= for the block's name |
   | =:verbatim t=    | The block as written, sans its switches, shown as Org source                  |
-  | =:verbatim demo= | That source beside what it exports to, as with [[doc:org-block/org-demo][org-demo]]           |
+  | =:demo t=        | That source, then what it exports to; and a test that it still does; see [[#demos][Demos]] |
 
-  osbe-example:switches
+  #+begin_org :ignore t :demo t
+  #+begin_box Exercise :let (N 7)
+  What do the first N odd numbers sum to?
+  #+end_box
+
+  #+begin_box Answer :let (N 7 SUM (* N N)) :folded "Peek at the answer"
+  The first N odd numbers sum to N × N, which is SUM.
+  #+end_box
+
+  #+begin_remark :noexport t
+  Ask the class for a proof by induction next week.
+  #+end_remark
+
+  #+begin_parallel :when (eq backend 'html) :boxed "On the web only"
+  Columns suit wide screens.
+  #+columnbreak:
+  Print gets one column.
+  #+end_parallel
+  #+end_org
+
+  #+RESULTS[6de787e368]:
+  :results:
+  #+begin_export html
+  <div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Exercise</h3> 
+  <p>
+  What do the first 7 odd numbers sum to?
+  </p>
+  </div>
+  
+  <details class="code-details" style="padding: 1em; background-color: #e5f5e5; border-radius: 15px; color: hsl(157 75% 20%); font-size: 0.9em; box-shadow: 0.05em 0.1em 5px 0.01em #00000057;">
+  <summary><strong><font face="Courier" size="3" color="green">Peek at the answer</font></strong></summary>
+  <div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>Answer</h3> 
+  <p>
+  The first 7 odd numbers sum to 7 × 7, which is 49.
+  </p>
+  </div>
+  
+  </details>
+  
+  
+  
+  <div style="padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;"> <h3>On the web only</h3> 
+  <div style="column-count: 2;">
+  <p>
+  Columns suit wide screens.
+  </p>
+  <p>
+  Print gets one column.
+  </p>
+  </div>
+  </div>
+  #+end_export
+  #+begin_export latex
+  \colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={Exercise},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+  What do the first 7 odd numbers sum to?
+  \end{tcolorbox}
+  
+  \definecolor{osbe-bg}{HTML}{e5f5e5}\colorlet{osbe-fg}{green}\begin{quote}
+  \begin{tcolorbox}[colback=osbe-bg,colframe=osbe-fg,title={Peek at the answer},sharp corners,boxrule=0.4pt]
+  \colorlet{osbe-box-back}{red!5!white}\colorlet{osbe-box-frame}{red!75!black}\colorlet{osbe-box-title}{yellow!50!red}\begin{tcolorbox}[title={Answer},colback=osbe-box-back,colframe=osbe-box-frame,colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\bfseries,subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]
+  The first 7 odd numbers sum to 7 × 7, which is 49.
+  \end{tcolorbox}
+  
+  \end{tcolorbox}
+  \end{quote}
+  #+end_export
+  :end:
 
   A src block's =:folded t= is titled by its language, and its code is still exported by Org,
   as ever. Switches apply before Babel runs, so a src block's =:let= changes the code it runs,
   =:noexport= keeps it from running at all, and =:folded= folds away its results too. Other
-  switches then apply to a =:verbatim= showing; e.g., =:verbatim demo :folded t= folds away a
-  block's source and result alike.
+  switches then apply to a =:verbatim= or =:demo= showing; e.g., =:demo t :folded t= folds away
+  a block's source and rendering alike.
 
   Moreover, =:C-c_C-c ACTION= gives a block an action in Emacs: pressing =C-c C-c= within it
   calls =ACTION= when it names a function, else evaluates it as a Lisp form; see [[#c-c-c-c-for-your-own-blocks][C-c C-c for
@@ -4857,6 +5801,78 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   run Lisp written in the document, Emacs asks once before running each distinct form;
   ~org-defblock-evaluate-switches~ may instead allow them freely, or never.
 
+** Demos ---a block, then what it exports to, and a test that it still does
+  :PROPERTIES:
+  :CUSTOM_ID: demos
+  :END:
+
+  Any block marked =:demo t= exports as ﴾What You Write﴿, the block as written sans its
+  switches, then ﴾What You Get﴿, what it renders to. Pressing =C-c C-c= within it snapshots
+  that rendering, along HTML and LaTeX ---~org-demo-backends~--- in a =#+RESULTS:= drawer just
+  after it, as Babel does a src block's results:
+
+  #+begin_src org
+,#+begin_box Title :demo t
+Hi *there*
+,#+end_box
+
+,#+RESULTS[96978da579]:
+:results:
+,#+begin_export html
+<div style="padding: 1em;background-color: #CCFFCC; …"> <h3>Title</h3> <p> Hi <b>there</b> </p> </div>
+,#+end_export
+,#+begin_export latex
+… \begin{tcolorbox}[title={Title}, …] Hi \textbf{there} \end{tcolorbox}
+,#+end_export
+:end:
+  #+end_src
+
+  So a demo is three things at once:
+
+  1. *A demonstration,* in the docs: the source, then its rendering; the snapshot is what is
+     shown, so a reader sees what we saw, whatever build of ours renders the page.
+  2. *A test in the small,* upon export: the block is rendered afresh and compared, sans
+     whitespace and case, to its snapshot; a mismatch is a warning, or an error, or nothing,
+     as ~org-demo-check~ says. The hash, =[96978da579]=, tells the two failures apart: a
+     source changed since its snapshot, or a rendering that changed for the same source
+     ---a regression, or an intended change, which another =C-c C-c= records.
+  3. *A test suite in the large:* ~org-demo-failures~ checks every demo of a file, along every
+     snapshotted backend; this manual's own are an ERT test,
+     #+begin_src emacs-lisp :tangle no
+(ert-deftest manual ()
+  (should-not (org-demo-failures "org-special-block-extras.org")))
+     #+end_src
+
+  ~M-x org-demo-refresh-buffer~ snapshots them all; =C-u C-c C-c= leaves =C-c C-c= to the
+  block's own action, if any.
+
+  A demo's value says what else to show: =:demo org-block/box= folds away the definition of
+  ~org-block/box~, below the rendering; =:demo (f v)= those of the function =f= and the
+  variable =v=, wherever they are defined ---a library, or this very document. A =live= demo,
+  =:demo live=, keeps no snapshot: its rendering varies by machine, say, so it renders afresh
+  each export and checks nothing.
+
+  Its other switches apply as ever: =:let= to its source, =:folded= to the whole showing.
+  With =:ignore t=, the block is bypassed, so the source is just its contents ---the way to
+  demonstrate plain Org, or several blocks at once; as in an example block, a line opening
+  with =*= or =#+= may be escaped by a comma, so a demo may hold headings.
+
+  #+begin_org :ignore t :demo t
+  /italics/ and [[stutter:2][twice]]
+  #+end_org
+
+  #+RESULTS[ddb8532eb6]:
+  :results:
+  #+begin_export html
+  <p>
+  <i>italics</i> and twicetwice
+  </p>
+  #+end_export
+  #+begin_export latex
+  \emph{italics} and twicetwice
+  #+end_export
+  :end:
+
 ** Callouts ---Note, tip, important, warning, caution
   :PROPERTIES:
   :CUSTOM_ID: callouts
@@ -4865,7 +5881,47 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   Five blocks, after GitHub's alerts, call out a paragraph with a coloured rule down its
   left under a titled heading; the title defaults to the block's name.
 
-  osbe-example:callout
+  #+begin_org :ignore t :demo t
+  #+begin_tip
+  =C-h k= followed by any key tells us what that key does.
+  #+end_tip
+
+  #+begin_warning Mind the gap
+  =C-x C-c= quits Emacs, unsaved buffers and all ---it asks first, though.
+  #+end_warning
+  #+end_org
+
+  #+RESULTS[ecaae07453]:
+  :results:
+  #+begin_export html
+  <div class="callout" style="border-left: 0.25em solid #1a7f37; padding: 0.5em 1em; margin: 1em 0;">
+  <p style="color: #1a7f37; font-weight: bold; margin: 0;">💡 Tip</p>
+  <p>
+  <code>C-h k</code> followed by any key tells us what that key does.
+  </p>
+  
+  </div>
+  
+  <div class="callout" style="border-left: 0.25em solid #9a6700; padding: 0.5em 1em; margin: 1em 0;">
+  <p style="color: #9a6700; font-weight: bold; margin: 0;">⚠️ Mind the gap</p>
+  <p>
+  <code>C-x C-c</code> quits Emacs, unsaved buffers and all &mdash;it asks first, though.
+  </p>
+  
+  </div>
+  #+end_export
+  #+begin_export latex
+  \definecolor{osbe-callout}{HTML}{1a7f37}\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\bfseries,title={Tip},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
+  \texttt{C-h k} followed by any key tells us what that key does.
+  
+  \end{tcolorbox}
+  
+  \definecolor{osbe-callout}{HTML}{9a6700}\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\bfseries,title={Mind the gap},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]
+  \texttt{C-x C-c} quits Emacs, unsaved buffers and all ---it asks first, though.
+  
+  \end{tcolorbox}
+  #+end_export
+  :end:
 
   The colours, icons, and intended uses live in ~org-callouts~. Since a heading tagged
   =:note:= is common enough to mean something else entirely, callouts claim neither tags nor
@@ -4885,7 +5941,77 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   block, a link, and a tag; =color= takes any other, by name or hex code. In Emacs, too, each such link
   shows its text in its colour, as soon as =org-special-block-extras-mode= is on.
 
-  osbe-example:colors
+  #+begin_org :ignore t :demo t
+  #+begin_red
+  Look at my text, it's red!
+  #+end_red
+
+  #+begin_pink
+  Look at my text, it's pink!
+  #+end_pink
+
+  #+begin_color cyan
+  Look at my text, it's cyan!
+  #+end_color
+
+  green:Look
+  blue:Here
+  orange:Buddo!
+
+  [[color:#ff0066][Any hex colour]], [[color:navy][any colour's name]], and [[red:][a described red link]].
+  #+end_org
+
+  #+RESULTS[37ebeb6a51]:
+  :results:
+  #+begin_export html
+  <span style="color:red;">
+  <p>
+  Look at my text, it's red!
+  </p>
+  </span>
+  
+  <span style="color:pink;">
+  <p>
+  Look at my text, it's pink!
+  </p>
+  </span>
+  
+  <span style="color:cyan;">
+  <p>
+  Look at my text, it's cyan!
+  </p>
+  </span>
+  
+  <p>
+  <span style="color:green;">Look</span>
+  <span style="color:blue;">Here</span>
+  <span style="color:orange;">Buddo</span>!
+  </p>
+  
+  <p>
+  <span style="color:#ff0066;">Any hex colour</span>, <span style="color:navy;">any colour's name</span>, and <span style="color:red;">a described red link</span>.
+  </p>
+  #+end_export
+  #+begin_export latex
+  \begingroup\color{red}
+  Look at my text, it's red!
+  \endgroup\,
+  
+  \begingroup\color{pink}
+  Look at my text, it's pink!
+  \endgroup\,
+  
+  \begingroup\color{cyan}
+  Look at my text, it's cyan!
+  \endgroup\,
+  
+  \begingroup\color{green}Look\endgroup\,
+  \begingroup\color{blue}Here\endgroup\,
+  \begingroup\color{orange}Buddo\endgroup\,!
+  
+  \definecolor{osbe-color}{HTML}{ff0066}\begingroup\color{osbe-color}Any hex colour\endgroup\,, \definecolor{osbe-color}{rgb}{0.000,0.000,0.502}\begingroup\color{osbe-color}any colour's name\endgroup\,, and \begingroup\color{red}a described red link\endgroup\,.
+  #+end_export
+  :end:
 
 ** Quotations, cited ---=#+begin_quote KEY=
   :PROPERTIES:
@@ -4922,7 +6048,35 @@ the fundamental notions of number, order, and function.
   Where =red:𝒳= colours text, =[[highlight:pink][𝒳]]= colours its background; the colour
   defaults to yellow, and the link shows so highlighted in Emacs too.
 
-  osbe-example:highlight
+  #+begin_org :ignore t :demo org-block/highlight
+  Skimming readers see [[highlight:yellow][the one sentence that matters]], and [[highlight:pink][the one to reread]].
+
+  #+begin_highlight #e5f5e5
+  A whole paragraph, gently set apart.
+  #+end_highlight
+  #+end_org
+
+  #+RESULTS[57f4c8c0ae]:
+  :results:
+  #+begin_export html
+  <p>
+  Skimming readers see <span style="background-color:yellow;">the one sentence that matters</span>, and <span style="background-color:pink;">the one to reread</span>.
+  </p>
+  
+  <div style="background-color:#e5f5e5;">
+  <p>
+  A whole paragraph, gently set apart.
+  </p>
+  </div>
+  #+end_export
+  #+begin_export latex
+  Skimming readers see \colorlet{osbe-highlight}{yellow}\colorbox{osbe-highlight}{the one sentence that matters}, and \colorlet{osbe-highlight}{pink}\colorbox{osbe-highlight}{the one to reread}.
+  
+  \definecolor{osbe-highlight}{HTML}{e5f5e5}\colorbox{osbe-highlight}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
+  A whole paragraph, gently set apart.
+  \ifhmode\unskip\fi}}
+  #+end_export
+  :end:
 
   For the reader who would rather pick the page's background colour themself,
   =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colours,
@@ -4950,7 +6104,7 @@ the fundamental notions of number, order, and function.
     | =highlight=             | =<mark>=, which GitHub shows yellow, whatever the colour        |
     | =spoiler=               | numbered blanks, with the answers folded away beneath           |
     | =tree=                  | =$$…$$= displays, as GitHub's maths knows no =\[…\]=           |
-    | =org-demo=              | the source as a code block, then its result                     |
+    | =:demo=                 | the source as a code block, then its rendering                  |
     | =doc=, =tooltip=, =kbd= | =<abbr>= with a plain-text =title=, as there is no tooltipster  |
     | =math=                  | a fenced math block, its definitions within                     |
     | =graph=                 | its image, written to its =:file= (else =graph-HASH.png=), linked |
@@ -6132,9 +7286,21 @@ Going forward, we could give every heading such a permalink too, producing click
 org-headings similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
 
 #+html: <br>
-#+begin_org-demo Example :source-color custard :result-color custard
+#+begin_org :ignore t :demo t
 <<example-location>> (Click the icon and see the URL has changed!)
-#+end_org-demo
+#+end_org
+
+#+RESULTS[ae6a403b2e]:
+:results:
+#+begin_export html
+<p>
+<a class="anchor" id="example-location" href="#example-location" aria-label="Permalink to example-location"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a> (Click the icon and see the URL has changed!)
+</p>
+#+end_export
+#+begin_export latex
+\label{org0000001} (Click the icon and see the URL has changed!)
+#+end_export
+:end:
 
 #+begin_details Tests
 #+begin_src emacs-lisp :tangle tests.el :comments link
@@ -6180,7 +7346,7 @@ the brand on your jeans or other reliable product. --- [[https://github.com/dwyl
 :End:
 
 # :style sequential
-#+begin_org-demo
+#+begin_org :ignore t :demo t
 What are badges?
 
 badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir
@@ -6193,7 +7359,47 @@ or
 or
 
 badge:Let_me_*not*_google_that|for_you
-#+end_org-demo
+#+end_org
+
+#+RESULTS[08a87fb654]:
+:results:
+#+begin_export html
+<p>
+What are badges?
+</p>
+
+<p>
+<a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"><img src="https://img.shields.io/badge/Let_me_google_that-for_you%21-orange?logo=Elixir"></a>
+</p>
+
+<p>
+or
+</p>
+
+<p>
+<a href="https://lmgtfy.app/?q=badge+shields.io&iie=1"><img src="https://img.shields.io/badge/Let%20me%20google%20that-for%20you%21-orange?logo=Elixir"></a>
+</p>
+
+<p>
+or
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/Let_me_%2Anot%2A_google_that-for_you-green">
+</p>
+#+end_export
+#+begin_export latex
+What are badges?
+
+
+
+or
+
+
+
+or
+#+end_export
+:end:
 
 Notice that the orange:orange badge points to a URL and so is clickable, whereas
 the green:green one does not point to a URL and so is not clickable.
@@ -6631,7 +7837,7 @@ Here are some examples.
    :CUSTOM_ID: example-colours
    :END:
 
-#+begin_org-demo
+#+begin_org :ignore t :demo t
 + badge:|red|red badge:|critical|critical
 + badge:|blue|blue badge:|informational|informational
 + badge:|brightgreen|brightgreen badge:|success|success
@@ -6647,7 +7853,51 @@ Here are some examples.
 
 Consult https://htmlcolorcodes.com/ to see the HEX code of any other colour you
 wish to use; e.g., badge:|1d8348|1d8348
-#+end_org-demo
+#+end_org
+
+#+RESULTS[122950e850]:
+:results:
+#+begin_export html
+<ul class="org-ul">
+<li><img src="https://img.shields.io/badge/-red-red"> <img src="https://img.shields.io/badge/-critical-critical"></li>
+<li><img src="https://img.shields.io/badge/-blue-blue"> <img src="https://img.shields.io/badge/-informational-informational"></li>
+<li><img src="https://img.shields.io/badge/-brightgreen-brightgreen"> <img src="https://img.shields.io/badge/-success-success"></li>
+<li><img src="https://img.shields.io/badge/-orange-orange"> <img src="https://img.shields.io/badge/-important-important"></li>
+<li><img src="https://img.shields.io/badge/-lightgrey-lightgrey"> <img src="https://img.shields.io/badge/-inactive-inactive"></li>
+<li><img src="https://img.shields.io/badge/-green-green"></li>
+<li><img src="https://img.shields.io/badge/-yellowgreen-yellowgreen"></li>
+<li><img src="https://img.shields.io/badge/-yellow-yellow"></li>
+<li><img src="https://img.shields.io/badge/-blueviolet-blueviolet"></li>
+<li><img src="https://img.shields.io/badge/-ff69b4-ff69b4"></li>
+<li><img src="https://img.shields.io/badge/-9cf-9cf"></li>
+<li>&hellip;</li>
+</ul>
+
+<p>
+Consult <a href="https://htmlcolorcodes.com/">https://htmlcolorcodes.com/</a> to see the HEX code of any other colour you
+wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
+</p>
+#+end_export
+#+begin_export latex
+\begin{itemize}
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item 
+\item \ldots{}
+\end{itemize}
+
+Consult \url{https://htmlcolorcodes.com/} to see the HEX code of any other colour you
+wish to use; e.g.,
+#+end_export
+:end:
 
 ** Example Badge Icons
    :PROPERTIES:
@@ -8254,7 +9504,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Badges                 | [[doc:org-make-badge][badge]]                                    |                     |
 | Equational proofs      | [[doc:org-block/math][math]]                                     |                     |
 
-Other fun stuff: [[doc:org-block/solution][solution]], [[doc:org-block/org-demo][org-demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]], [[doc:org-block/tree][tree]] :grin:
+Other fun stuff: [[doc:org-block/solution][solution]], [[#demos][:demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]], [[doc:org-block/tree][tree]] :grin:
 
 There are also the social badge links:
 =reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars, github-watchers=, and =tweet=.

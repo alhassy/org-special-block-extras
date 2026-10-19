@@ -12,8 +12,9 @@ Everything is ERT underneath, written with [[https://github.com/alhassy/snap][sn
   - Shared machinery ---=deftest=, =org-deftest=, =using=, =exporting=, and the relations--- lives in =org-test-utils.el=;
     a test's temporary =org-defblock= may not reuse a built-in block's name, since its cleanup would undefine it.
 - =graph/org-graph-*-tests.el= :: the =graph= block, sharing =graph/org-graph-test-utils.el= and its =define-graph-test=.
-- =examples/NAME.el= :: one snapshot per showcase example ---Org source ⟶ HTML & LaTeX---
-  sharing the relation in =org-examples.el=. The docs render these via =osbe-example:NAME=.
+- =:demo= blocks :: the manual's showcase examples are its =:demo= blocks: each holds its source and, in a
+  =#+RESULTS:= drawer, a snapshot of its HTML & LaTeX; =org-demo-tests.el= checks every one still renders so, as do
+  those of =demos.org=, which are tests rather than docs. See the manual's “Demos”.
 
 Relations compare modulo trailing whitespace per line, since editors strip it from expectations on save.
 
@@ -24,8 +25,7 @@ Press =C-c C-c= on any block below.
 In this Emacs session:
 #+begin_src emacs-lisp :results none
 (dolist (f (append (directory-files "~/org-special-block-extras/tests" t "-tests\\.el\\'")
-                   (directory-files "~/org-special-block-extras/tests/graph" t "-tests\\.el\\'")
-                   (directory-files "~/org-special-block-extras/tests/examples" t "\\.el\\'")))
+                   (directory-files "~/org-special-block-extras/tests/graph" t "-tests\\.el\\'")))
   (load-file f))
 (ert t)
 #+end_src
@@ -33,7 +33,7 @@ In this Emacs session:
 Exactly as CI does it ---see =.github/workflows/main.yml=:
 #+begin_src shell :dir .. :results output
 emacs --batch --eval "(package-initialize)" -L ~/lf -L . -L ~/snap -L ~/fancy-C-x-C-e \
-  $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
+  $(for f in tests/*-tests.el tests/graph/*-tests.el; do echo "-l $f"; done) \
   -f ert-run-tests-batch-and-exit 2>&1 | grep -E "^Ran|FAILED"
 #+end_src
 
@@ -43,47 +43,24 @@ Each source file's percentage of lines the tests run, as CI reports it; needs =M
 #+begin_src shell :dir .. :results output
 UNDERCOVER_FORCE=true emacs --batch --eval "(package-initialize)" -L ~/lf -L . -L ~/snap -L ~/fancy-C-x-C-e \
   --eval "(progn (require 'undercover) (undercover \"*.el\" (:report-format 'text) (:send-report nil)))" \
-  $(for f in tests/*-tests.el tests/graph/*-tests.el tests/examples/*.el; do echo "-l $f"; done) \
+  $(for f in tests/*-tests.el tests/graph/*-tests.el; do echo "-l $f"; done) \
   -f ert-run-tests-batch-and-exit 2>&1 | sed -n '/Code coverage text report/,$p'
 #+end_src
 
-* Run one example
-
-=C-x C-e= after any =(define-org-example-test …)= form both defines and runs it.
-
 * Update snapshots
 
-One example: =C-u C-x C-e= after its form, or press =[Update Snapshot]= in the ERT failure report.
-
-All examples ---then review the changes in Magit before committing:
-#+begin_src emacs-lisp :results none
-(load-file "~/org-special-block-extras/tests/org-examples.el")
-(dolist (f (directory-files "~/org-special-block-extras/tests/examples" t "\\.el\\'"))
-  (with-current-buffer (find-file-noselect f)
-    (goto-char (point-min))
-    (search-forward "(define-org-example-test ")
-    (org-example--update-at (match-beginning 0))
-    (save-buffer)))
-#+end_src
+One demo: =C-c C-c= within it, in the manual or =demos.org=; then review the change in Magit before committing.
+All of a file's demos: =M-x org-demo-refresh-buffer=.
 
 * Add an example
 
-Make =examples/NAME.el= with an =:input= and empty outputs, then =C-u C-x C-e= it:
-#+begin_src emacs-lisp
-(unless (fboundp 'define-org-example-test)
-  (load-file (expand-file-name "~/org-special-block-extras/tests/org-examples.el")))
-
-(define-org-example-test "NAME"
-  :input "#+begin_NAME\nHello\n#+end_NAME"
-  :html nil
-  :latex nil)
-#+end_src
+Write a =:demo= block in the manual ---say, =#+begin_org :ignore t :demo org-block/NAME=--- then =C-c C-c= within it.
 
 * Notes
 
 - Tests =load-file= via =~/org-special-block-extras/…=, so the repo must live there; CI symlinks it.
 - =(package-initialize)= must come /before/ =-L .=; otherwise your installed MELPA copy of
   =org-special-block-extras= shadows the working tree, and we silently test the wrong code.
-- Snapshots compare modulo whitespace and case (=org-example--normalise=), and pin =gensym=, =user-full-name= and
-  =emacs-version= (=org-example--export=), so they agree across machines.
+- Snapshots compare modulo whitespace and case (=org-demo--normalise=), and pin =gensym=, Org's ids, and htmlize's
+  colours (=org-demo--export=), so they agree across machines.
 - =org-element= warnings about non-Org buffers are benign.
