@@ -141,8 +141,37 @@ silently contributing nothing."
 
 (defconst org--graph-markup-tags
   '((bold "<B>" "</B>") (italic "<I>" "</I>") (underline "<U>" "</U>") (strike-through "<S>" "</S>")
-    (code "<FONT FACE=\"monospace\">" "</FONT>") (verbatim "<FONT FACE=\"monospace\">" "</FONT>"))
+    (code "<FONT FACE=\"monospace\">" "</FONT>") (verbatim "<FONT FACE=\"monospace\">" "</FONT>")
+    (subscript "<SUB>" "</SUB>") (superscript "<SUP>" "</SUP>"))
   "Org markup ↦ the Graphviz HTML-label tags around it.")
+
+(defconst org--graph-objects
+  '(bold italic underline strike-through code verbatim subscript superscript entity export-snippet link target
+         radio-target footnote-reference line-break)
+  "The Org objects an item's text may hold; others, such as timestamps and statistics cookies, are plain text.")
+
+(defvar org--graph-radio nil
+  "While a graph is parsed, (REGEXP . TARGETS): its <<<radio targets>>>, and Org's regexp matching their mentions.")
+
+(defun org--graph-parse-objects (text restriction)
+  "TEXT ↦ its Org objects of the types RESTRICTION lists; a mention of one of this graph's radio targets is a link.
+  \"Lisp, after Church\"  ↦  (\"Lisp, after \" (link (:type \"radio\" :path \"Church\" …)))  when <<<Church>>> is one"
+  ;; The parse copies the current buffer's locals, and only those; so our binding must be a local one.
+  (mapc #'make-local-variable '(org-target-link-regexp org-target-link-regexps))
+  (let ((org-target-link-regexp (car org--graph-radio)) (org-target-link-regexps nil))
+    (org-element-parse-secondary-string text restriction)))
+
+(defun org--graph-radio-target (path)
+  "A radio link's PATH ↦ the radio target it mentions, as declared; Org matches mentions sans case, e.g. \"church\" ↦ \"Church\"."
+  (or (--first (equal (downcase (s-collapse-whitespace it)) (downcase (s-collapse-whitespace path))) (cdr org--graph-radio))
+      path))
+
+(defun org--graph-html-object-p (o)
+  "Non-nil when object O needs an HTML-like label: markup, a line break, a braced a_{b} or a^{b}, or a @@dot:…@@ snippet."
+  (pcase (org-element-type o)
+    ((or 'subscript 'superscript) (org-element-property :use-brackets-p o))
+    ('export-snippet (equal "dot" (org-element-property :back-end o)))
+    (_ t)))
 
 (defun org--graph-html-escape (s)
   "S with the characters that HTML-like labels reserve escaped, e.g. \"a<b\" ↦ \"a&lt;b\"."
@@ -191,7 +220,7 @@ footnotes become the node's tooltip."
 (defun org--graph-external-link-p (o)
   "Non-nil when O is a link object to anything but a node: a web page, a file, a section such as [[*Heading]], …"
   (and (eq (org-element-type o) 'link)
-       (or (not (equal (org-element-property :type o) "fuzzy"))
+       (or (not (member (org-element-property :type o) '("fuzzy" "radio")))
            (s-starts-with-p "*" (org-element-property :path o)))))
 
 (defun org--graph-image-link-p (o)
@@ -218,8 +247,7 @@ or, while `org--graph-tips' collects tooltips, the Org \"Born /1958/\"."
 (defun org--graph-item-text-sans-tags (text)
   "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags.
 A web or file link becomes the node's URL, its description staying in the label; an image link, its image."
-  (let* ((objs (org-element-parse-secondary-string
-                text '(bold italic underline strike-through code verbatim link target footnote-reference line-break)))
+  (let* ((objs (org--graph-parse-objects text org--graph-objects))
          (image  (-some--> (org-element-map objs 'link (lambda (o) (and (org--graph-image-link-p o) o)) nil t)
                    (org-element-property :path it)))
          (urls   (org-element-map objs 'link (lambda (o) (and (org--graph-external-link-p o) (not (org--graph-image-link-p o))
@@ -228,10 +256,14 @@ A web or file link becomes the node's URL, its description staying in the label;
          (tooltip (-some--> (org-element-map objs 'footnote-reference #'org--graph-footnote-text)
                     (s-join " " it)))
          (edge-link? (lambda (o) (and (eq (org-element-type o) 'link) (not (org--graph-external-link-p o)))))
-         (links  (--map (cons (org-element-property :path it)
-                              (-some->> (org-element-contents it) (org--graph-item-render nil)))
-                        (-filter edge-link? (org-element-map objs 'link #'identity))))
-         (target (car (org-element-map objs 'target (lambda (o) (org-element-property :value o)))))
+         (target (car (org-element-map objs '(target radio-target) (lambda (o) (org-element-property :value o)))))
+         ;; A radio target's mention is an arc sans label; one in its own item, none.
+         (links  (--remove (equal (car it) target)
+                           (--map (if (equal "radio" (org-element-property :type it))
+                                      (list (org--graph-radio-target (org-element-property :path it)))
+                                    (cons (org-element-property :path it)
+                                          (-some->> (org-element-contents it) (org--graph-item-render nil))))
+                                  (-filter edge-link? (org-element-map objs 'link #'identity)))))
          (name   (s-trim (s-collapse-whitespace (org--graph-item-render nil objs)))))
     (append
      (cond
@@ -241,8 +273,8 @@ A web or file link becomes the node's URL, its description staying in the label;
       ;; A lone image is its own name, drawn sans text.
       (t (list :name (if (s-blank-str-p name) (or target image) name)
                ;; Markup in a footnote is the tooltip's, not the label's.
-               :label (cond ((org-element-map objs (cons 'line-break (mapcar #'car org--graph-markup-tags)) #'identity nil t
-                                              'footnote-reference)
+               :label (cond ((org-element-map objs `(line-break export-snippet ,@(mapcar #'car org--graph-markup-tags))
+                                   #'org--graph-html-object-p nil t 'footnote-reference)
                              (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs)))))
                             ((not (s-blank-str-p name)) name)
                             (target)
@@ -251,7 +283,9 @@ A web or file link becomes the node's URL, its description staying in the label;
      (list :tooltip tooltip :url (car urls) :image image))))
 
 (defun org--graph-item-render (html? objs)
-  "OBJS, a parsed item text, ↦ its plain text; or, when HTML?, its HTML-like label body. Edge links and targets vanish."
+  "OBJS, a parsed item text, ↦ its plain text; or, when HTML?, its HTML-like label body. Edge links and targets vanish,
+while radio targets and their mentions stay; an entity is its character, \\alpha ↦ α; and a @@dot:…@@ snippet is raw
+label HTML, any other snippet vanishing."
   ;; Sans the parse's text properties, which would otherwise ride along into the dot source.
   (substring-no-properties
    (mapconcat
@@ -263,6 +297,15 @@ A web or file link becomes the node's URL, its description staying in the label;
          ((stringp o) (if html? (org--graph-html-escape o) o))
          ((memq type '(target footnote-reference)) "")
          ((eq type 'line-break) (if html? "<BR/>" " "))
+         ((eq type 'entity) (org-element-property :utf-8 o))
+         ((eq type 'export-snippet) (if (and html? (equal "dot" (org-element-property :back-end o)))
+                                        (org-element-property :value o)
+                                      ""))
+         ;; As under Org's `^:{}', a_b is plain text; only a_{b} subscripts, so names such as snake_case stay whole.
+         ((and (memq type '(subscript superscript)) (not (org-element-property :use-brackets-p o)))
+          (concat (if (eq type 'subscript) "_" "^") (org--graph-item-render html? (org-element-contents o))))
+         ((or (eq type 'radio-target) (equal "radio" (org-element-property :type o)))
+          (org--graph-item-render html? (org-element-contents o)))
          ((eq type 'link) (if (or (not (org--graph-external-link-p o)) (org--graph-image-link-p o)) ""
                             ;; A bare [[*Org mode]] shows as the section's title, sans star.
                             (org--graph-item-render html? (or (org-element-contents o)
@@ -281,9 +324,8 @@ A web or file link becomes the node's URL, its description staying in the label;
 
 (defun org--graph-cell-html (cell)
   "A record CELL's text ↦ its HTML-like label body: markup as tags, a `\\\\' as <BR/>; targets and links vanish."
-  (s-trim (org--graph-item-render t (org-element-parse-secondary-string
-                                     (org--graph-break-lines cell)
-                                     '(bold italic underline strike-through code verbatim link target line-break)))))
+  (s-trim (org--graph-item-render t (org--graph-parse-objects (org--graph-break-lines cell)
+                                                              (remq 'footnote-reference org--graph-objects)))))
 
 (defun org--graph-break-lines (text)
   "TEXT with each `\\\\' ending a line, as Org's line breaks must; e.g. \"a \\\\ b\" ↦ \"a\\\\\\nb\"."
@@ -669,7 +711,8 @@ A note outside every item is the graph's own; PREAMBLE's :body holds it under `:
                                                                                         '("error" "random-templates")))
                                            0))
          (buffer   (org--graph-buffer-templates))
-         (raw      (org--graph-read raw-contents))
+         (raw      (let ((org--graph-strict t)) (org--graph-read raw-contents)))
+         (org--graph-radio (plist-get raw :radio))
          (tables   (plist-get raw :name-tables))
          ;; Before `org--graph-expand-scope' expands them away, `#+edge: :faint:' style arcs.
          (edge-uses (--map (cons (concat ":edge." (car it)) (cdr it)) (plist-get raw :edge-rows)))

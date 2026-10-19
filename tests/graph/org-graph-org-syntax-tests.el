@@ -134,6 +134,59 @@ FACE=\"monospace\">v</FONT> <FONT FACE=\"monospace\">c</FONT>> ];
   \"org-graph.el\" [ label=\"org-graph.el\" ];
 }")
 
+(define-graph-test "an entity is its character; a braced a_{b} or a^{b} is a <SUB> or <SUP>, an unbraced one plain text"
+  :input "
++ \\alpha \\to \\beta
++ x^{2} H_{2}O H_2O"
+  :output "digraph {
+  \"α → β\" [ label=\"α → β\" ];
+  \"x2 H2O H_2O\" [ label=<x<SUP>2</SUP> H<SUB>2</SUB>O H_2O> ];
+}")
+
+(define-graph-test "a @@dot:…@@ snippet is raw label HTML, while a snippet for any other backend vanishes"
+  :input "
++ @@dot:<FONT COLOR=\"red\">@@Alert@@dot:</FONT>@@ @@html:<b>@@"
+  :output "digraph {
+  Alert [ label=<<FONT COLOR=\"red\">Alert</FONT>> ];
+}")
+
+(define-graph-test "timestamps, statistics cookies, and citations stay as written"
+  :input "
++ Exam <2026-10-18 Sun> [1/2] [cite:@knuth]"
+  :output "digraph {
+  \"Exam <2026-10-18 Sun> [1/2] [cite:@knuth]\" [ label=\"Exam <2026-10-18 Sun> [1/2] [cite:@knuth]\" ];
+}")
+
+;;; <<<Radio targets>>> are mentioned, not linked
+
+(define-graph-test "a <<<radio target>>> is a node, and any item mentioning it, in whatever case, has an arc to it"
+  :input "
++ <<<Church>>> encodes numbers as Church numerals
++ Lisp, after Church
++ Haskell, after church and Lisp"
+  :output "digraph {
+  Church [ label=\"Church encodes numbers as Church numerals\" ];
+  \"Lisp, after Church\" -> Church;
+  \"Lisp, after Church\" [ label=\"Lisp, after Church\" ];
+  \"Haskell, after church and Lisp\" -> Church;
+  \"Haskell, after church and Lisp\" [ label=\"Haskell, after church and Lisp\" ];
+}")
+
+;;; Org syntax that means nothing in a graph is an error, not silently dropped
+
+(deftest "a headline, a quote, an unknown #+begin_foo, or an unknown #+key: is a user error; comments are fine"
+  (dolist (raw '("+ a\n* Heading" "#+begin_quote\nx\n#+end_quote" "#+begin_foo\n#+end_foo" "#+rnak: a b"))
+    (should-error (org--graph-raw->dot raw nil) :type 'user-error))
+  (should (equal (org--graph-raw->dot "
+# a comment
+#+begin_comment
+x
+#+end_comment
++ a" nil)
+                 "digraph {
+  a [ label=a ];
+}")))
+
 ;;; Ordered lists keep their order, on one rank
 
 (define-graph-test "ordered children sit on one rank, in the order written"

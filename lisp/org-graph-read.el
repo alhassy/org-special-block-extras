@@ -94,6 +94,18 @@ else nil.  Then tooltips are Org, not plain text, and dot sees only their keys; 
 (defvar org--graph-anonymous-clusters 0
   "How many untitled #+begin_cluster blocks the graph being read has had so far; each is named by its count.")
 
+(defvar org--graph-strict nil
+  "Non-nil while a Graphviz graph is read: then Org syntax that means nothing in a graph, such as a headline or a
+#+begin_quote, is a user error; smartdiagram's reading keeps it, as prose.")
+
+(defconst org--graph-inert-elements '(comment comment-block footnote-definition)
+  "Elements a graph's body may hold yet ignores; a bare [fn:NAME] finds its definition wherever it sits.")
+
+(defun org--graph-stray (el what)
+  "Unless EL is inert, a user error, under `org--graph-strict', saying WHAT, at EL's line, is not graph syntax."
+  (when (and org--graph-strict (not (memq (org-element-type el) org--graph-inert-elements)))
+    (user-error "graph: line %d: %s is not graph syntax" (line-number-at-pos (org-element-property :begin el)) what)))
+
 (defun org--graph-keyword-tags (value)
   "A #+graph:, #+node:, #+edge:, or #+name: keyword's VALUE ↦ its tags, as an :inherit row; else nil.
   \":wife:base:\"  ↦  (\":inherit\" \"wife base\")"
@@ -141,7 +153,8 @@ A table belongs to the directive above it, past any tables between: #+graph:, #+
               (-some--> (org--graph-keyword-tags value) (push it (alist-get key rows))))
              ('record (setq owner 'record))
              ('rank (unless (s-blank-str-p value) (push (s-trim value) ranks)))
-             ('name (setq owner (org--graph-add-template templates value nil))))))
+             ('name (setq owner (org--graph-add-template templates value nil)))
+             (_ (org--graph-stray el (format "#+%s:" key))))))
         ('table
          (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil)))
          (pcase owner
@@ -155,14 +168,15 @@ A table belongs to the directive above it, past any tables between: #+graph:, #+
          (setq owner nil)
          (pcase (downcase (org-element-property :type el))
            ((pred (string-match-p "\\`cluster\\(?:-[0-9]+\\)?\\'")) (push (org--graph-read-cluster el templates) items))
-           ("note" (push (org--graph-read-note el) notes))))
+           ("note" (push (org--graph-read-note el) notes))
+           (type (org--graph-stray el (format "#+begin_%s" type)))))
         ;; Prose past an item's first paragraph ---its text--- is a note, as a #+begin_note block's body is.
         ('paragraph
          (setq owner nil)
          (push (list :edge nil :text (buffer-substring-no-properties (org-element-property :contents-begin el)
                                                                      (org-element-property :contents-end el)))
                notes))
-        (_ (setq owner nil))))
+        (type (setq owner nil) (org--graph-stray el (format "a %s" (s-replace "-" " " (symbol-name type)))))))
     (list :graph-rows (nreverse (alist-get 'graph rows))
           :node-rows  (nreverse (alist-get 'node rows))
           :edge-rows  (nreverse (alist-get 'edge rows))
@@ -246,7 +260,8 @@ with the first end of its name, only then do nested clusters parse as nested blo
                         (s-lines raw)))))
 
 (defun org--graph-read (raw)
-  "A graph's RAW body ↦ its top-level SCOPE, plus :name-tables, its #+name: templates wherever they sit.
+  "A graph's RAW body ↦ its top-level SCOPE, plus :name-tables, its #+name: templates wherever they sit, and :radio,
+its <<<radio targets>>> as `org--graph-radio' holds them.
   \"#+node:\\n| shape | box |\\n+ A\"  ↦  (:name-tables #s(…) :node-rows ((\"shape\" \"box\")) :items ((:text \"A\" …)) …)
 Org parses RAW in a buffer of its own, so the elements' positions are those of RAW."
   (with-temp-buffer
@@ -260,7 +275,12 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
         (lambda (p) (let ((text (buffer-substring (org-element-property :begin p) (org-element-property :end p))))
                       (when (string-match "^[ \t]*#\\+begin_cluster\\(?:-[0-9]+\\)?\\_>[ \t]*\\(.*\\)" text)
                         (user-error "graph: `#+begin_cluster %s' has no #+end_cluster" (match-string 1 text))))))
-      (cons :name-tables (cons templates (org--graph-read-scope (org-element-contents tree) templates))))))
+      (org-update-radio-target-regexp)
+      (append (list :name-tables templates
+                    :radio (when org-target-link-regexp
+                             (cons org-target-link-regexp
+                                   (org-element-map tree 'radio-target (lambda (o) (org-element-property :value o))))))
+              (org--graph-read-scope (org-element-contents tree) templates)))))
 
 (defconst org--graph-header-keys '(:file :svg :directed :wrap :notes :unflatten :unknown-tags :C-c_C-c
                                          :contents-occur-as-link-description :exports :results)

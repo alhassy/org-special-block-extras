@@ -119,6 +119,25 @@ lisp -> church;
   the label. See [[*Web links are URLs, image links are images][Web links]].
 - In a ~#+record:~ table, a cell's ~<<target>>~ is its port, and its ~[[links]]~ are arcs from that port.
 
+** ~<<<radio targets>>>~ draw arcs from every mention
+
+In Org, a radio target ~<<<Church>>>~ stays visible, and every mention of "Church" elsewhere becomes a link
+to it, sans brackets. In a graph, the radio target is a node, and every item mentioning it ---in whatever
+case--- has an arc to it:
+#+begin_src org
++ <<<Church>>> encodes numbers as Church numerals
++ Lisp, after Church
++ Haskell, after church and Lisp
+#+end_src
+#+begin_src dot
+Church [ label="Church encodes numbers as Church numerals" ];
+"Lisp, after Church" -> Church;
+"Haskell, after church and Lisp" -> Church;
+#+end_src
+
+The mention stays in the label, and the radio target's own item never arcs to itself. Mind that this is
+Org's semantics exactly: a casual "Church" draws an arc too.
+
 ** Description lists label arcs
 
 Org's description list, ~- TERM :: DEFINITION~, attaches a word to an item. In a graph, that word sits on
@@ -346,6 +365,24 @@ We escape ~&~, ~<~, ~>~, and ~"~ for you. Graphviz has no way to tell ~=code=~ f
 monospace. A ~#+record:~ table's cells keep their markup too. Names such as ~a_b~, ~C++~, and
 ~org-graph.el~ are not mistaken for markup.
 
+Org's entities are their characters, and braced sub- and superscripts are Graphviz's own; as under Org's
+~#+options: ^:{}~, an unbraced ~a_b~ stays text, so ~snake_case~ ids are safe. A ~@@dot:…@@~ export
+snippet is raw label HTML, for whatever Org has no markup for; a snippet for any other backend vanishes:
+#+begin_src org
++ \alpha \to \beta
++ x^{2} H_{2}O
++ @@dot:<FONT COLOR="red">@@Alert@@dot:</FONT>@@
+#+end_src
+#+begin_src dot
+"α → β" [ label="α → β" ];
+"x2 H2O" [ label=<x<SUP>2</SUP> H<SUB>2</SUB>O> ];
+Alert [ label=<<FONT COLOR="red">Alert</FONT>> ];
+#+end_src
+
+Timestamps, statistics cookies, and citations show as written; LaTeX fragments too, since Graphviz has
+no math. Syntax that means nothing in a graph ---a headline, a ~#+begin_quote~, an unknown ~#+key:~--- is
+an error, rather than silently dropped; comments are fine.
+
 ** ~\\~ breaks a line
 
 In Org, a ~\\~ ending a line is a hard line break; in a graph, it breaks the node's label. Since a label
@@ -458,6 +495,9 @@ item, anywhere in the block:
 #+end_src
 
 Templates name whole bundles of rows; macros name single values. An undefined macro is an error.
+
+In similar spirit, inline ~src_LANG{…}~ blocks and ~call_NAME()~ calls run at export, as anywhere in
+Org, their results landing in the label; ~C-c C-c~ shows them as written.
 
 ** Ordered lists keep their order
 

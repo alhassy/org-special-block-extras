@@ -437,7 +437,9 @@ A section tagged :graph: exports as a graph of its text, its :PROPERTIES: drawer
 
 Each list item declares a node.  Nesting encodes edges (parent → child); ordered children, 1. 2. 3., share a rank
 in the order written.  An item's text may hold a <<target>>, its id; [[TARGET]] or [[TARGET][LABEL]] links, extra arcs;
-and *bold*, /italic/, _underline_, +strike+, =code=, or ~pre~, which make its label an HTML-like one.
+and *bold*, /italic/, _underline_, +strike+, =code=, or ~pre~, a braced x^{2} or H_{2}O, or a @@dot:…@@ snippet,
+which make its label an HTML-like one; an entity, \\alpha, is its character.  A <<<radio target>>> is a node, every
+item mentioning it having an arc to it.  Other Org syntax in a block, such as a headline or #+begin_quote, is an error.
 A description tag, `+ L :: CHILD', labels the arc into CHILD; trailing `:T:' tags splice #+name: templates;
 an inline footnote, [fn::NOTE], is the node's tooltip, as is a note: a paragraph past the item's first, or a
 #+begin_note block ---with `#+begin_note :edge', the arc's---, shown beneath the label instead under :notes inline;
