@@ -77,11 +77,6 @@ See the subroutine ‘basic-save-buffer’ for more information.
       (should (string-match-p "<abbr" result))
       (should (string-match-p "Test Word" result)))))
 
-(define-org-call-test "show link evaluates and returns the expression's value."
-  :call (org-link/show "(+ 1 2)" nil 'html)
-  :returns "3
-")
-
 ;;; Within Emacs, and the LaTeX glossary
 
 (org-deftest "the badge link's tooltip names each part of its label"
@@ -109,12 +104,18 @@ See the subroutine ‘basic-save-buffer’ for more information.
 A <a id=\"monoid\">monoid</a> is neat; every <a href=\"#monoid\">monoid</a> is.</p>
 ")
 
+(deftest "#+html_export_style: THEME sets up THEME's look, at export; an unknown THEME is an error naming the known ones"
+  (should (s-contains-p "notes.css" (org-export-string-as "#+html_export_style: rose\nHello." 'html)))
+  (should-not (s-contains-p "notes.css" (org-export-string-as "Hello." 'html)))
+  (should (string-match-p "∉ (random .*rose" (cadr (should-error (org-export-string-as "#+html_export_style: nope\nHi." 'html))))))
+
 (deftest "a LaTeX glossary entry refers back to where its doc link declared it"
   (let ((org--docs '(("cat" "Category Theory" "Typed composition.")))
         (org--docs-from-libraries nil)
         (org--docs-actually-used nil))
     (let ((citation (org-link/doc "cat" nil 'latex))
-          (glossary (org-link/show "GLOSSARY" nil 'latex)))
+          (glossary (org--docs-glossary #'ignore '(keyword (:key "PRINT_GLOSSARY")) nil
+                                        (list :back-end (org-export-get-backend 'latex)))))
       (should (s-contains-p "\\label{o-glossary-declaration-site-cat}" citation))
       (should (s-contains-p "\\pageref{o-glossary-declaration-site-cat}" glossary))
       (should (s-contains-p "\\hyperref[o-glossary-cat]" citation))

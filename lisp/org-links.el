@@ -15,8 +15,9 @@
 
 ;;; Commentary:
 
-;; Built-in link types: melpa, html-export-style, kbd, octoicon, badge, tweet, reddit, github-*,
-;; twitter-follow, doc, show; and the documentation block.  In HTML, each <<X>> exports as a permalink to itself.
+;; Built-in link types: melpa, kbd, octoicon, badge, tweet, reddit, github-*, twitter-follow, doc; the
+;; documentation block; and the #+html_export_style: and #+print_glossary: keywords.  In HTML, each <<X>> exports
+;; as a permalink to itself, and each mention of a <<<X>>> as a tooltip of X's paragraph.
 ;; Also houses the org-docs-* glossary system and `org--html-tooltip'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
@@ -40,7 +41,7 @@ We try to get the package's version from a constant “⟨O-LABEL⟩-version” 
                   (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
                   (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
 
-;;;;;; html-export-style
+;;;;;; #+html_export_style: THEME
 
 (defvar org-html-export-styles
   `((default . "")
@@ -48,7 +49,7 @@ We try to get the package's version from a constant “⟨O-LABEL⟩-version” 
     (readtheorg . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup")
     (rose . "#+HTML_HEAD: <link href=\"https://taopeng.me/org-notes-style/css/notes.css\" rel=\"stylesheet\" type=\"text/css\" />")
     (latexcss . "#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://latex.now.sh/style.min.css\" />"))
-  "An alist of theme-to-setup pairs, symbols-to-strings, used by `org-link/html-export-style'.
+  "An alist of theme-to-setup pairs, symbols-to-strings, that “#+html_export_style: THEME” picks from.
 
   For live examples of many of the themes, see
   https://olmon.gitlab.io/org-themes/.
@@ -64,43 +65,20 @@ We try to get the package's version from a constant “⟨O-LABEL⟩-version” 
                                      solarized_light stylish_white)
          do (push (cons theme (format "#+SETUPFILE: https://gitlab.com/OlMon/org-themes/-/raw/master/src/%s/%s.theme" theme theme)) org-html-export-styles))
 
-(defun org--html-export-style-names ()
-  "The names of the `org-html-export-styles', and \"random\"."
-  (cons "random" (--map (symbol-name (car it)) org-html-export-styles)))
-
 (defun org--html-export-style-setup (_backend)
-  "Insert the setup of the theme named by the buffer's “html-export-style:THEME” link, if any.
+  "Insert the setup of the theme named by the buffer's “#+html_export_style: THEME” keyword, if any.
 
 THEME is one of `org-html-export-styles', or random; it is read at export time, so a
 buffer's choice never leaks into another's export."
   (save-excursion
     (goto-char (point-min))
-    (when (re-search-forward "html-export-style:\\([^ \t\n]+\\)" nil t)
+    (when (let ((case-fold-search t)) (re-search-forward "^[ \t]*#\\+html_export_style:[ \t]*\\([^ \t\n]+\\)" nil t))
       (let* ((label (match-string 1))
              (theme (if (equal label "random") (car (seq-random-elt org-html-export-styles)) (intern label))))
         (goto-char (point-min))
         (insert (format "\n %s \n" (cdr (or (assoc theme org-html-export-styles)
-                                             (error "Error: Unknown html-export-style ∷ %s ∉ '%s"
-                                                    label (org--html-export-style-names))))))))))
-
-
-(org-deflink html-export-style
-  "Add a dedicated style theme, from `org-html-export-styles'."
-  :face '(:underline "green")
-  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-  :keymap ("?" ;; Let use select new choice of style with the “?” key.
-           (-let [choice (completing-read "New HTML style: " (org--html-export-style-names))]
-             (save-excursion
-               (beginning-of-line)
-               (while (re-search-forward (rx (seq "html-export-style:" (one-or-more word))) nil t)
-                 (replace-match (concat "html-export-style:" choice))))))
-  :help-echo (thread-last (org--html-export-style-names)
-                          (-partition 4)
-                          (--map (s-join "     " it))
-                          (s-join "\n")
-                          (format "Press “?” to change the theme. \n\n Supported themes include:\n\n%s"))
-  ;; The theme is set up by `org--html-export-style-setup'; the link itself exports to nothing.
-  :export "")
+                                             (error "Error: Unknown #+html_export_style: %s ∉ %s"
+                                                    label (cons "random" (--map (symbol-name (car it)) org-html-export-styles)))))))))))
 
 ;;;;;; Kbd
 (defun org--html-tooltip (text body &optional plain? style)
@@ -314,6 +292,20 @@ bare <a id=\"orgNNNNNNN\"></a>, which a reader can neither see nor click."
     (format "<a class=\"anchor\" id=\"%s\" href=\"#%s\" aria-label=\"Permalink to %s\">%s</a>"
             id id id (org--octoicon 'link))))
 
+(defvar org--docs) ;; The glossary, below.
+
+(defun org--radio-link-as-tooltip (link-transcoder link desc info)
+  "A mention of a <<<X>>> radio target ↦ LINK-TRANSCODER's link to it, under DESC and INFO, wearing X's paragraph as a
+tooltip; e.g., “A <<<monoid>>> is a unital semigroup.  ⋯ every monoid ⋯”, the latter hovered, shows the former.  The
+glossary entry is `org--docs-read-buffer''s; a mention within the paragraph itself, as any other LINK, is left be."
+  (let ((html (funcall link-transcoder link desc info)))
+    (if-let* (((equal (org-element-property :type link) "radio"))
+              (target (org-export-resolve-radio-link link info))
+              ((not (eq (org-element-lineage link 'paragraph) (org-element-lineage target 'paragraph))))
+              (entry (assoc (downcase (s-replace " " "_" (s-trim (org-element-property :value target)))) org--docs)))
+        (org--html-tooltip (cl-third entry) html)
+      html)))
+
 ;;;;;; Badge (org-make-badge)
 
 (cl-defmacro org-make-badge
@@ -339,7 +331,7 @@ E.g., to create a badge named “go”:
 
 Then the following exports nicely from an Org file:
 
-     go:key|value|blue|here|gnu-emacs"
+     go:key|value|blue||gnu-emacs"
   `(org-deflink ,(intern name)
      "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
@@ -370,9 +362,8 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
              ⇒ ‘|’ is not a valid substring, but ‘-, %%, ?’ are okay.
 
           ► ‘|color|url|logo’ are optional;
-             ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink.
-             ⇒ if ‘url’ is ‘here’ then we have a local link;
-                i.e., the resulting badge behaves like <<key>>.
+             ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink;
+                for a local link, place Org's own <<key>> beside it.
              ⇒ ‘color’ may be: ‘brightgreen’ or ‘success’,
                                ‘red’         or ‘important’,
                                ‘orange’      or ‘critical’,
@@ -399,7 +390,6 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                               (if (org-string-nw-p logo) (format "?logo=%s" logo) ""))))
              (target ,(if social-shields-name `(format ,social-url o-label) 'url)))
          (pcase target
-           ("here" (format "<a id=\"%s\" href=\"#%s\">%s</a>" key key img))
            ((or "" 'nil) img) ;; e.g., badge:key|value|color||logo or badge:key|value|color
            (_ (format "<a href=\"%s\">%s</a>" target img)))))))
 
@@ -618,14 +608,17 @@ Later entries come first, so they win when labels clash; as when the blocks were
          end))
     ""))
 
+(defvar org--docs-actually-used nil
+  "The (LABEL NAME DESCRIPTION) glossary entries the current export cites, which “#+print_glossary:” lists.")
+
 (defun org--docs-prepare (&rest _)
   "Before each export: reset the glossary to the buffer's own entries, and its citations to the buffer's doc: links.
-Citations are gathered up front, so show:GLOSSARY lists them all in one export, wherever it sits;
+Citations are gathered up front, so “#+print_glossary:” lists them all in one export, wherever it sits;
 nothing carries over from one export, or buffer, to the next.  Citations within documentation blocks
 are not counted, since those blocks do not export their contents."
   (setq org--docs nil org--docs-actually-used nil)
   ;; Parsing the whole buffer is dear, so we only do it when there may be entries or citations.
-  (when (save-excursion (goto-char (point-min)) (re-search-forward "doc:\\|documentation" nil t))
+  (when (save-excursion (goto-char (point-min)) (re-search-forward "doc:\\|documentation\\|<<<" nil t))
     (let ((tree (org-element-parse-buffer)))
       (setq org--docs (org--docs-read-buffer tree))
       (org-element-map tree 'link
@@ -638,11 +631,22 @@ are not counted, since those blocks do not export their contents."
               (-when-let (entry (ignore-errors (org-docs-get label)))
                 (add-to-list 'org--docs-actually-used (cons label entry))))))))))
 
-(defvar org--docs-actually-used nil
-  "Which words are actually cited in the current article.
-
-We use this listing to actually print a glossary using
-‘show:GLOSSARY’.")
+(defun org--docs-glossary (keyword-transcoder keyword contents info)
+  "“#+print_glossary:” ↦ the cited entries, `org--docs-actually-used', as #+print_bibliography: lists the cited works:
+in LaTeX, each entry in full, labelled for its doc: links, and referring back to where it was cited; in HTML, each
+entry's name, its description a tooltip.  Any other KEYWORD is KEYWORD-TRANSCODER's, under CONTENTS and INFO."
+  (cond
+   ((not (equal (org-element-property :key keyword) "PRINT_GLOSSARY")) (funcall keyword-transcoder keyword contents info))
+   ((org-export-derived-backend-p (plist-get info :back-end) 'latex)
+    (s-join "\n\n"
+            (cl-loop for (label name doc) in org--docs-actually-used
+                     collect (format (concat "\\vspace{1em}\\phantomsection\\textbf{%s}\\quad"
+                                             "\\label{o-glossary-%s}%s See page \\pageref{o-glossary-declaration-site-%s}")
+                                     name label (if doc (org--latex-glossary-text doc (org--docs-plain-p label)) "")
+                                     label))))
+   (t (s-join " " (--map (org--html-tooltip (cl-third it) (cl-second it) (org--docs-plain-p (cl-first it)))
+                         ;; Ignore duplicates; i.e., entries with the same name/title.
+                         (cl-remove-duplicates org--docs-actually-used :key #'cl-second :test #'cl-equalp))))))
 
 (org-deflink doc
   "Export O-LABEL as itself, or as the provided O-DESCRIPTION,
@@ -661,7 +665,7 @@ We use this listing to actually print a glossary using
             (pcase o-backend
               ('html (org--html-tooltip docs display-name (org--docs-plain-p o-label)))
               ;; Make the current word refer to its glossary entry, and declare the location
-              ;; that the glossary should refer back to; see the GLOSSARY of `org-link/show'.
+              ;; that the glossary should refer back to; see `org--docs-glossary'.
               ('latex (format "\\hyperref[o-glossary-%s]{%s}\\label{o-glossary-declaration-site-%s}"
                               o-label display-name o-label))
               (_ display-name))))
@@ -775,61 +779,6 @@ so that its full documentation is a tooltip.
                                 ;; A ‘|’ would end the cell early.
                                 (replace-regexp-in-string "|" "\\\\vert{}" (or gist "") t t)))
                       (org--package-docs (intern feature)) "\n"))))
-
-;;;;;; Show
-
-(org-deflink show
-  "Yield the value of the expression O-LABEL, with =GLOSSARY= being a reserved name.
-
-Example uses:
-
-    show:user-full-name
-
-    <show: (* 2 (+ 3 4 (- pi))) >
-
-
-Note that there is `elisp' links with Emacs, out of the box.
-However, they only serve to evaluate Lisp expressions; for example,
-to make “link buttons” that do useful things, as follows.
-
-   [[elisp:(find-file user-init-file)][Init]]
-
-In particular, `elisp' links do not export the value of their expression.
-That is what we accomplish with this new `show' link type."
-  :face '(:underline "green")
-  :manual "#Glossaries"
-  :let (glossary? (equal o-label "GLOSSARY")
-        o-value (pp-to-string (if glossary?
-                                  (mapcar #'cl-second org--docs-actually-used)
-                                (eval (car (read-from-string o-label)))))
-        o-expr (if glossary?
-                   (concat "GLOSSARY ---i.e., org--docs-actually-used"
-                           "\n\nEach export gathers the citations afresh, from the doc: links of its buffer.")
-                 o-label))
-  :help-echo (format (concat "Upon export, the following will be placed literally"
-                             "\n\t%s"
-                             "\nWhich is the value of the expression:\n\t%s")
-                     o-value o-expr)
-  :export (cond ((not glossary?) o-value)
-                ;; Otherwise O-LABEL is glossary, which we print in HTML & LaTeX
-                ((equal 'html o-backend)
-                 (s-join " "
-                         (--map (org--html-tooltip (cl-third it) (cl-second it) (org--docs-plain-p (cl-first it)))
-                                ;; Ignore duplicates; i.e., entries with the same name/title.
-                                (cl-remove-duplicates org--docs-actually-used :key #'cl-second :test #'cl-equalp))))
-                ;; Each entry is labelled for `org-link/doc' to refer to, and refers back to where it was cited.
-                (t (s-join "\n\n"
-                           (cl-loop for (label name doc) in org--docs-actually-used
-                                    collect
-                                    (format (concat "\\vspace{1em}\\phantomsection"
-                                                    "\\textbf{%s}\\quad"
-                                                    "\\label{o-glossary-%s}"
-                                                    "%s See page "
-                                                    "\\pageref{o-glossary-declaration-site-%s}")
-                                            name
-                                            label
-                                            (when doc (org--latex-glossary-text doc (org--docs-plain-p label)))
-                                            label))))))
 
 (provide 'org-links)
 ;;; org-links.el ends here

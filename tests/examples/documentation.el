@@ -1,4 +1,4 @@
-;;; documentation.el --- Snapshot of the glossary showcase: entries as blocks or headings, and show:GLOSSARY  -*- lexical-binding: t; -*-
+;;; documentation.el --- Snapshot of the glossary showcase: entries as blocks or headings, and #+print_glossary:  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-example-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-examples.el")))
@@ -6,7 +6,7 @@
 (define-org-example-test "documentation"
   :input "Our glossary, listing every term this page cites ---even those cited further below:
 
-                                     show:GLOSSARY
+#+print_glossary:
 
 * Category Theory                                                   :documentation:
 :PROPERTIES:
@@ -27,12 +27,10 @@ Then, doc:cat studies [[doc:mon][monoids]] and their kin."
 Our glossary, listing every term this page cites &mdash;even those cited further below:
 </p>
 
-<p>
 <abbr class=\"tooltip\" tabindex=\"0\">Monoid<template><p>
 A set with an associative binary operation that has a unit.</p></template></abbr> <abbr
 class=\"tooltip\" tabindex=\"0\">Category Theory<template><p>
 A theory of typed composition; e.g., typed monoids.</p></template></abbr>
-</p>
 <div id=\"outline-container-org0000001\" class=\"outline-2\">
 <h2 id=\"org0000001\">Category Theory&nbsp;&nbsp;&nbsp<span class=\"tag\"><span
 class=\"documentation\">documentation</span></span></h2>
@@ -63,6 +61,7 @@ A set with an associative binary operation that has a unit.</p></template></abbr
 
 \\vspace{1em}\\phantomsection\\textbf{Monoid}\\quad\\label{o-glossary-mon}A set with an associative
 binary operation that has a unit. See page \\pageref{o-glossary-declaration-site-mon}
+
 \\vspace{1em}\\phantomsection\\textbf{Category Theory}\\quad\\label{o-glossary-cat}A theory of typed
 composition; e.g., typed monoids. See page \\pageref{o-glossary-declaration-site-cat}
 \\section*{Category Theory\\hfill{}\\textsc{documentation}}

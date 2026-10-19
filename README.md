@@ -76,11 +76,6 @@ LaTeX!
 </tr>
 
 <tr>
-<td class="org-left"><code>rename</code></td>
-<td class="org-left">Automated text substitution &#x2014; great for translation or glossary effects.</td>
-</tr>
-
-<tr>
 <td class="org-left"><code>stutter</code></td>
 <td class="org-left">Repeat content multiple times &#x2014; e.g., for emphasis or stylistic flair.</td>
 </tr>
@@ -137,11 +132,6 @@ LaTeX!
 </tr>
 
 <tr>
-<td class="org-left"><code>html-export-style:</code></td>
-<td class="org-left">Pick a visual theme for HTML exports &#x2014; one click, new style.</td>
-</tr>
-
-<tr>
 <td class="org-left"><code>badge:</code></td>
 <td class="org-left">Embed project badges &#x2014; e.g., GitHub stars, Reddit subs, versioning.</td>
 </tr>
@@ -159,11 +149,6 @@ LaTeX!
 <tr>
 <td class="org-left"><code>&lt;&lt;X&gt;&gt;</code></td>
 <td class="org-left">Permalinks &#x2014; Org&rsquo;s own targets, made a visible 🔗 in HTML.</td>
-</tr>
-
-<tr>
-<td class="org-left"><code>show:</code></td>
-<td class="org-left">Show a variable value &#x2014; dynamically insert content like your name or version.</td>
 </tr>
 
 <tr>
@@ -283,7 +268,7 @@ The following example showcases the prominent features of this library.
     #+LATEX_HEADER: \usepackage{tcolorbox}
     #+latex: In the LaTeX output, we have a glossary.
 
-    show:GLOSSARY
+    #+print_glossary:
 
     badge:Thanks|for_reading
     tweet:https://github.com/alhassy/org-special-block-extras

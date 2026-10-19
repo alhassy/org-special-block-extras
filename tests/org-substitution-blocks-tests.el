@@ -1,4 +1,4 @@
-;;; org-substitution-blocks-tests.el --- Tests for the stutter and rename blocks  -*- lexical-binding: t; -*-
+;;; org-substitution-blocks-tests.el --- Tests for the stutter block  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
@@ -14,13 +14,6 @@ ha
 
 #+end_export
 ha
-#+begin_export html
-
-#+end_export")
-
-(define-org-call-test "rename block performs comma-separated 'to' substitutions."
-  :call (org-block/rename 'html "Hello World" "Hello to Hi, World to Earth")
-  :returns "Hi Earth
 #+begin_export html
 
 #+end_export")

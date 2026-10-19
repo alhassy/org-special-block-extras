@@ -1,4 +1,4 @@
-;;; org-substitution-blocks.el --- Textual substitution: stutter and rename  -*- lexical-binding: t; -*-
+;;; org-substitution-blocks.el --- Textual substitution: stutter  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -15,8 +15,8 @@
 
 ;;; Commentary:
 
-;; A stutter block repeats its contents; a rename block performs substitutions on them.  For substitution
-;; on any block at all, see the :let switch, `org--block-let'.
+;; A stutter block repeats its contents.  For substitution on any block at all, see the :let switch,
+;; `org--block-let'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -29,20 +29,6 @@
               "Output the CONTENTS of the block REPS many times"
               (-let [num (if (numberp reps) reps (string-to-number reps))]
                 (s-repeat num contents)))
-
-;;;;;; rename
-(org-defblock rename (list "" :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
-              "Perform the given LIST of substitutions on the text.
-The LIST is a comma separated list of ‘to’ separated symbols.
-In a link, no quotes are needed.
-
-Substitution is handy enough that every block has it: the :let switch, much as a src block's :var, replaces
-whole words and operators by the values of Lisp forms; e.g., #+begin_box :let (Yusuf \"Joseph\" -> \"⇒\")."
-              (s-replace-all
-               (--map (cons (car it) (cadr it))
-                      (--map (s-split " to " (s-trim it))
-                             (s-split "," list)))
-               contents))
 
 (provide 'org-substitution-blocks)
 ;;; org-substitution-blocks.el ends here

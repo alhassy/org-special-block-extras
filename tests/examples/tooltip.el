@@ -18,9 +18,27 @@ Or, without specifying an explicit label:
   :html "<p>
 It can be annoying to make readers jump to the bottom of the page to
 read a footnote.  Instead, I prefer to write an <i>inline <abbr class=\"tooltip\"
-tabindex=\"0\">remark<template><pre>Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
-In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block’s are;
-in beamer, whose slides have no margins, as a footnote.
+tabindex=\"0\">remark<template><pre>A remark, CONTENTS, on MARKER in the text: in HTML, a tooltip on MARKER, hovered on a desktop, tapped on a
+phone; in LaTeX, MARKER followed by CONTENTS as a margin note, numbered by COUNTER, as footnotes are; in beamer, whose
+slides have no margins, a footnote.  Sans MARKER, the note’s number alone in LaTeX, and “°” in HTML.
+
+  It’s a                                   /Allah[[margin:][The God of Abraham]] does not burden a soul …/
+  #+begin_tooltip simple
+  Squint, and Maybe ℕ is ℕ.
+  #+end_tooltip
+  exercise.
+
+The block is one-off, “inline footnotes”; Org’s own [fn::…] are such remarks too.  For a note used repeatedly, consider
+declaring it with ‘documentation’ and citing it with ‘doc’.
+
+WIDTH, COUNTER, and COLOR are LaTeX’s: the note is WIDTH wide, coloured COLOR, its number in black.  Since verbatim
+environments fail as arguments to \\marginpar, CONTENTS is saved in a minipage within a LaTeX box, then unfolded in the
+margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For LaTeX, a ‘#+resize:’ line has the rest of the
+note resized, to 1.3 the margin’s width ---requiring \\usepackage{adjustbox}.
+
+‘tooltip’ is an alias, for when we think in HTML rather than LaTeX.
+
+An alias of ‘org-block/margin’.
 
 Regarding the Lisp function:
 + BACKEND refers to the current export backend.
@@ -73,7 +91,7 @@ The God of Abraham; known as Elohim in the Bible
 
 Or, without specifying an explicit label:
 
-\\emph{Allah°\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+\\emph{Allah\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
 \\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
 \\fi\\color{gray!80}
 {\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}

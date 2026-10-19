@@ -2,7 +2,9 @@
 
 
 # Is non-nil upon a second export, since no doc:𝒳 encountered yet.
-My glossary: show:GLOSSARY
+My glossary:
+
+#+print_glossary:
 
 # + [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 # + Pop-quiz: How does doc:apply work?
@@ -53,7 +55,9 @@ beyond what it can bear./ --- Quran 2:286
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
 
-My glossary: show:GLOSSARY
+My glossary:
+
+#+print_glossary:
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras

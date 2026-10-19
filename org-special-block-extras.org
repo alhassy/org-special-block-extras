@@ -52,7 +52,7 @@
 # TODO: Final version should not have the following incantation active.
 #+options: broken-links:auto
 
-html-export-style:solarized_light
+#+html_export_style: solarized_light
 
 #+begin_src emacs-lisp
 (setq org-export-with-broken-links nil)
@@ -128,7 +128,6 @@ html-export-style:solarized_light
 
 
 #  1. osbe-example:doc
-#  2. osbe-example:rename
 
 ** See changes for current buffer only
 C-c M-g will pop up a menu just for that fie and you can hit d there to get a diff, then stage as you like!
@@ -1051,7 +1050,7 @@ this, we use Org's link mechanism./
 
   #+html: <br>
 
-+ Textual expansions :: =show:user-full-name= expands, upon export, to /Musa
++ Textual expansions :: Org's own =src_elisp[:results raw]{user-full-name}= expands, upon export, to /Musa
   Al-hassy/ on my machine. Or maybe we want a splash of colour in our lives:
   =*<pink: super neato stuff>*= becomes *<pink: super neato stuff>*.
 
@@ -2674,7 +2673,7 @@ In contrast …
   :END:
 
 Define a block
-[[doc:org--rename][rename]] so that the following examples behave as shown.
+=rename= so that the following examples behave as shown.
 
 #+begin_details Hints
 1. It can be done in less than 10 lines of Lisp.
@@ -2696,18 +2695,19 @@ stars and the sun and the moon; I saw them prostrating to me.”/
 ,#+end_rename
 #+end_example
 Yields…
-#+begin_rename "Allah to God, Yacoub to Jacob, Yusuf to Joseph"
-Quran 12-4: *_Yusuf_* said to his father ( _*Yacoub*_ ), /“O my father, indeed I have seen (in a dream) eleven
+
+Quran 12-4: *_Joseph_* said to his father ( _*Jacob*_ ), /“O my father, indeed I have seen (in a dream) eleven
 stars and the sun and the moon; I saw them prostrating to me.”/
-#+end_rename
 
 --------------------------------------------------------------------------------
-#+begin_org-demo :style sequential
-
+As a link, no quotes are needed:
+#+begin_example org
 [[rename:Pharaoh to Firaun, Joseph to Yusuf][Genesis 41-17: Pharaoh said unto Joseph, /In my dream, behold, I stood upon the
 bank of the river/ …]]
+#+end_example
+Yields…
 
-#+end_org-demo
+Genesis 41-17: Firaun said unto Yusuf, /In my dream, behold, I stood upon the bank of the river/ …
 
 #+end_box
 
@@ -3437,7 +3437,6 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =box=                       | Emphasize content with nicely styled borders --- great for callouts or side notes.    |
   | =spoiler=                   | Hide content visually until the reader chooses to see it --- useful in teaching.      |
   | =tree=                      | Display proof trees and logical derivations --- fantastic for formal logic.           |
-  | =rename=                    | Automated text substitution --- great for translation or glossary effects.            |
   | =stutter=                   | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
   | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
   | =org-demo=                  | Show Org markup alongside its rendered result --- ideal for tutorials.                |
@@ -3446,7 +3445,6 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
   | =highlight=                 | Colour a paragraph's background, rather than its text.                                |
   | =package-docs=              | A table of a package's public API, each name a =doc:= tooltip.                        |
-  | =style=                     | Page-wide CSS, verbatim; nothing outside HTML.                                        |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
   # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
 
@@ -3461,14 +3459,18 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
     | =highlight:=         | Colour the background instead ---so highlighted in Emacs too.                                   |
     | =palette:=           | A button for readers to pick the page's background colour.                                      |
     | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                     |
-    | =html-export-style:= | Pick a visual theme for HTML exports --- one click, new style.                                  |
     | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
     | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
     | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                      |
     | =<<X>>=             | Permalinks --- Org's own targets, made a visible 🔗 in HTML.                                      |
-    | =show:=              | Show a variable value --- dynamically insert content like your name or version.                 |
     | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                         |
     
+
+    Org's own =elisp:= links evaluate Lisp; e.g., =[[elisp:(find-file user-init-file)][Init]]= is a
+    “link button” that visits our init file. Yet they do not export the value of their expression;
+    for that, Org's own inline src blocks serve: =src_elisp[:results raw]{user-full-name}= exports as
+    /Musa Al-hassy/ on my machine, and =src_elisp{(* 2 (+ 3 4))}= as =14=. As for any Babel code, Org
+    asks before running a stranger's Lisp; see ~org-confirm-babel-evaluate~.
 
 --------------------------------------------------------------------------------
     
@@ -3524,9 +3526,9 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#Highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
     + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =[[𝒳]]= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
     + [[#Graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
-    + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once, cite it everywhere with =doc:𝒳=; =show:GLOSSARY= lists every citation.] :glance_write:
+    + [[#Glossaries][Glossaries]] \\ documentation [fn::Define a term once ---even as Org's own =<<<radio target>>>=, whose every mention is then a tooltip--- and cite it everywhere with =doc:𝒳=; =#+print_glossary:= lists every citation.] :glance_write:
   + Links to cite :glance_read:
-    + [[#Glossaries][=doc:𝒳=]] \\ =show:𝒳= [fn::A term's definition as a tooltip; or a Lisp expression's value, inline.] :glance_read:
+    + [[#Glossaries][=doc:𝒳=]] [fn::A term's definition as a tooltip.] :glance_read:
     + [[#nice-keystroke-renditions][=kbd:C-x_C-s=]] [fn::Keys as keycaps, their command's documentation as a tooltip; click one in Emacs to run it.] :glance_read:
     + [[doc:org-make-badge][Badges]] \\ badge · melpa · github-* [fn::Shields.io badges, for a project's README.] :glance_read:
     + Every block, as a link [fn::=red:𝒳=, =[[box:Title][…]]=, and the like: a block's one-line form.] :glance_read:
@@ -4194,8 +4196,13 @@ from∘to m = {! try it! }
   exports nothing, or a heading tagged =:documentation:=, which exports as an ordinary
   section. The heading's title is the term's name, its =:DOC_KEYS:= property lists the labels
   by which we cite it, and its own text is the definition. Either way, the name with
-  underscores in lieu of spaces is a label too; e.g., =doc:Category_Theory=. Moreover,
-  =show:GLOSSARY= lists every term the page cites, wherever it sits.
+  underscores in lieu of spaces is a label too; e.g., =doc:Category_Theory=. Moreover, as
+  =#+print_bibliography:= lists the works a page cites, =#+print_glossary:= lists every term
+  the page cites, wherever it sits.
+
+  Org's own radio targets are entries too, with no markup of ours at all: in “A
+  =<<<monoid>>>= is a unital semigroup”, Org already links each later “monoid” to its
+  definition; in HTML, each such mention is also a tooltip of the defining paragraph.
 
   osbe-example:documentation
 
@@ -4902,17 +4909,17 @@ the fundamental notions of number, order, and function.
   #+end_example
   In LaTeX, and so in beamer, this is csquotes' =\blockcquote[20-22]{zermelo1908}{…}=, cited by
   our bibliography ---biblatex's ~\addbibresource~, BibTeX's ~\bibliography~, or org-cite---
-  which is ours to give; csquotes itself is loaded for us, unless we load it ourselves. In HTML, it is a =<blockquote>= closed by
-  “--- /zermelo1908/, 20-22”; in Markdown, a quote closed likewise. A quote sans arguments is
+  which is ours to give; csquotes itself is loaded for us, unless we load it ourselves. In HTML, it is a =<blockquote>= closed by Org's
+  own citation, =[cite:@zermelo1908, 20-22]=, so =#+print_bibliography:= lists the work; in
+  Markdown, a quote closed likewise. A quote sans arguments is
   Org's own, as ever.
 
   The quoted text hugs its braces, =\blockcquote[20-22]{zermelo1908}{Set theory …function.}=, sans
   the stray spaces LaTeX would read from its newlines; so does the =contents= of any block of ours
   whose LaTeX wraps it in braces, say =(format "\\textbf{%s}" contents)=.
 
-  As a link, a quote is inline: =[[quote:zermelo1908][set theory is …]]= is csquotes'
-  =\textcquote{zermelo1908}{…}=, and =[[quote:][to be]]= is just “to be”. A section tagged
-  =:quote:= is a quote of its text.
+  An inline quotation needs nothing of ours: Org's own ="to be" [cite:@shakespeare]= serves,
+  smart quotes and all. A section tagged =:quote:= is a quote of its text.
 
 ** Highlights ---Colour the background, not the text
   :PROPERTIES:
@@ -4928,18 +4935,6 @@ the fundamental notions of number, order, and function.
   =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colours,
   ~org-palette-colors~; clicking one makes it the background ---try it: [[palette:][Pick a background]].
 
-** Page-wide CSS with =style=
-  :PROPERTIES:
-  :CUSTOM_ID: style-block
-  :END:
-
-  A =style= block is the page's CSS, taken verbatim; it exports to nothing but HTML.
-  #+begin_example
-,#+begin_style
-h2 { color: teal; }
-,#+end_style
-  #+end_example
-
 ** Markdown export ---What survives GitHub, and how to change it
   :PROPERTIES:
   :CUSTOM_ID: Markdown-export
@@ -4950,7 +4945,7 @@ h2 { color: teal; }
   GitHub's, keeps only some HTML: it strips every =style=, =class=, =<style>=, and =<font>=, yet
   keeps =<details>=, =<kbd>=, =<mark>=, =<ins>=, =<abbr title>=, =<img>=, and =$$= maths.
 
-  + Work as-is :: =badge=, =melpa=, =kbd=, =details=, =solution=, =rename=, and =show= export
+  + Work as-is :: =badge=, =melpa=, =kbd=, =details=, and =solution= export
     just as they do to HTML, and so render on GitHub ---sans colours.
 
   + Markdown of their own :: these blocks export to Markdown idioms, rather than HTML.
@@ -4969,8 +4964,8 @@ h2 { color: teal; }
 
   + Plain HTML :: every other block emits the HTML it always does, which a given Markdown
     renderer may not honour; e.g., on GitHub, colours ---=red:𝒳=, =#+begin_color=--- and
-    =parallel='s columns are stripped, leaving plain, stacked text. Then there are =style=,
-    =palette=, =html-export-style=, and =toggle-details=, which are HTML-only by design: they
+    =parallel='s columns are stripped, leaving plain, stacked text. Then there are =palette=,
+    =#+html_export_style:=, and =toggle-details=, which are HTML-only by design: they
     dress the page itself, and Markdown has no say over the page.
 
   Dislike how a block B exports to Markdown? Advise ~org-block/B~ on your own machine; its
@@ -5702,7 +5697,7 @@ Let's have some sanity tests...
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
   
-*  :fire: HTML Export Styles as Links
+*  :fire: HTML Export Styles ---=#+html_export_style: THEME=
   :PROPERTIES:
   :CUSTOM_ID: HTML-Export-Styles-as-Links
   :END:
@@ -5713,84 +5708,10 @@ Let's have some sanity tests...
     dumping links to them into your Org.
   - Ideally, you would use Org and /declaratively/ request a theme ---from a
     pre-compiled list of themes, which you can add to.
-  - Now you can! Just write =html-export-style:𝑻𝑯𝑬𝑴𝑬= anywhere in your Org file.
-    + In Emacs, hover over this new link type to see a list of supported themes.
-    + By default, we ship themes: =stylish_white solarized_light solarized_dark=
-      =simple_gray retro_dark simple_whiteblue rethink_inline imagine_light=
-      =comfy_inline default bigblow readtheorg rose latexcss=.
-      # src_emacs-lisp[:exports results]{(mapcar #'car org-html-export-styles)}.
-
-  #+begin_src emacs-lisp
-(defvar org--html-export-style-choice "default"
-  "This variable holds the link label declared by users.
-  It is used in the hook to Org's reprocessing; `org--html-export-style-setup'.")
-
-(defvar org-html-export-styles
-      `((default . "")
-        (bigblow . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-bigblow.setup")
-        (readtheorg . "#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup")
-        (rose . "#+HTML_HEAD: <link href=\"https://taopeng.me/org-notes-style/css/notes.css\" rel=\"stylesheet\" type=\"text/css\" />")
-        (latexcss . "#+HTML_HEAD: <link rel=\"stylesheet\" href=\"https://latex.now.sh/style.min.css\" />"))
-      "An alist of theme-to-setup pairs, symbols-to-strings, used by `org-link/html-export-style'.
-
-  For live examples of many of the themes, see
-  https://olmon.gitlab.io/org-themes/.
-
-  In due time, I would like to add more, such as those linked from
-  the discussion https://news.ycombinator.com/item?id=23130104.
-  A nice, simple, opportunity for someone else to contribute.")
-;;
-;; Add a bunch more
-(cl-loop for theme in '(comfy_inline imagine_light
-                        rethink_inline simple_whiteblue
-                        retro_dark simple_gray solarized_dark
-                        solarized_light stylish_white)
-         do (push (cons theme (format "#+SETUPFILE: https://gitlab.com/OlMon/org-themes/-/raw/master/src/%s/%s.theme" theme theme)) org-html-export-styles))
-
-(defun org--html-export-style-setup (_backend)
-  "Insert an HTML theme link setup, according to `org-html-export-styles'."
-  (save-excursion
-    (goto-char (point-min))
-    (-> (or (assoc org--html-export-style-choice org-html-export-styles)
-           (error  "Error: Unknown html-export-style ∷ %s ∉ '%s"
-                   org--html-export-style-choice
-                   (-cons* 'random 'default (mapcar 'car org-html-export-styles))))
-       cdr
-       (format "\n %s \n")
-       insert)))
-
-(org-deflink html-export-style
-  "Add a dedicated style theme, from `org-html-export-styles'."
-  [:face '(:underline "green")
-   :keymap ("?" ;; Let use select new choice of style with the “?” key.
-            (-let [choice (completing-read
-                           "New HTML style: "
-                           (cons "random" (--map (pp-to-string (car it)) org-html-export-styles)))]
-              (save-excursion
-                (beginning-of-line)
-                (while (re-search-forward
-                        (rx (seq "html-export-style:" (one-or-more word))) nil t)
-                  (replace-match (concat "html-export-style:" choice))))))
-   :help-echo (thread-last (cons "random" (--map (pp-to-string (car it)) org-html-export-styles))
-                (-partition 4)
-                (--map (s-join "     " it))
-                (s-join "\n")
-                (format "Press “?” to change the theme. \n\n Supported themes include:\n\n%s"))
-   :let (whatdo (progn
-                  (setq org--html-export-style-choice
-                        (if (equal "random" o-label)
-                            (seq-random-elt (mapcar 'car org-html-export-styles))
-                          (intern o-label)))
-                  (pcase o-label
-                    ;; TODO: Move this to when the mode is enabled/disabled?
-                    ("default" (remove-hook 'org-export-before-processing-hook
-                                            'org--html-export-style-setup))
-                    (_   (add-hook 'org-export-before-processing-hook
-                                   'org--html-export-style-setup)))))
-   ]
-  ;; Result string, nothing.
-  "")
-#+end_src
+  - Now you can! Just write =#+html_export_style: 𝑻𝑯𝑬𝑴𝑬= in your Org file, where 𝑻𝑯𝑬𝑴𝑬 is
+    one of ~org-html-export-styles~, or =random=; upon export, the theme's =#+SETUPFILE:=, or
+    =#+HTML_HEAD:=, is inserted for us.
+    + For live examples of many of the themes, see https://olmon.gitlab.io/org-themes/.
 
 * Editor Comments
   :PROPERTIES:
@@ -6401,13 +6322,13 @@ Let's have some sanity tests...
 
 (deftest "It works when all 5 arguments are provided - URL ‘here’ makes it a local link"
   [badge]
-  (⇝ (⟰ "badge:key|value|informational|here|Elixir")
+  (⇝ (⟰ "badge:key|value|informational||Elixir")
      "<a id=\"key\" href=\"#key\">"
      "<img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>"))
 
 (deftest "We can use spaces, commas, dashes, and percentage symbols in the first argument"
   [badge]
-  (⇝ (⟰ "badge:example_with_spaces,_-,_and_%|points_right_here|orange|here")
+  (⇝ (⟰ "badge:example_with_spaces,_-,_and_%|points_right_here|orange")
      "<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\">"
      "<img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a>"))
 
@@ -6462,17 +6383,17 @@ badge:key|value|colour|url|logo
 badge:key|value
 
 # Only show a coloured logo pointed to its location
-badge:||colour|here|logo
+badge:||colour||logo
 #+end_example
 :End:
 
-+ badge:key|value|informational|here|Elixir
-  ⇐ ~badge:key|value|informational|here|Elixir~
-  - Standard template; with URL pointing to current location which is named =#key=
++ <<key>> badge:key|value|informational||Elixir
+  ⇐ ~<<key>> badge:key|value|informational||Elixir~
+  - Standard template; Org's own target beside it is a permalink to the current location, named =#key=
     ---click on it and look at your browser's URL ;-)
 
-+ badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
- ⇐ ~badge:example_with_spaces,_-,_and_%|points_right_here|orange|here~
++ badge:example_with_spaces,_-,_and_%|points_right_here|orange
+ ⇐ ~badge:example_with_spaces,_-,_and_%|points_right_here|orange~
   #  - Use ‘_’ to denote spaces
 
 + badge:no_colour|given
@@ -6545,7 +6466,7 @@ E.g., to create a badge named “go”:
 
 Then the following exports nicely from an Org file:
 
-     go:key|value|blue|here|gnu-emacs"
+     go:key|value|blue||gnu-emacs"
   `(org-deflink ,(intern name)
     "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
@@ -6647,8 +6568,7 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
      ⇒ ‘__’ is interpreted as an underscore;
      ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
   - ‘|color|url|logo’ are optional;
-     if ‘url’ is ‘|here’ then the resulting badge behaves
-     like <<key>>.
+     for a local link, place Org's own <<key>> beside the badge.
   - ‘color’ may be: ‘brightgreen’ or ‘success’,
                     ‘red’         or ‘important’,
                     ‘orange’      or ‘critical’,
@@ -6868,7 +6788,7 @@ wish to use; e.g., badge:|1d8348|1d8348
     - {{{showicon(hackhands)}}}
     - {{{showicon(google-messages)}}}
     - {{{showicon(Slack)}}}
-    # Tor badge:||grey|here|Tor
+    # Tor badge:||grey||Tor
 
 --------------------------------------------------------------------------------
 
@@ -6944,8 +6864,8 @@ wish to use; e.g., badge:|1d8348|1d8348
      - {{{showicon(lua)}}}
      - {{{showicon(adobe-acrobat-reader)}}}
      - {{{showicon(perl)}}}
-    # c-+-+              badge:||grey|here|c-+-+
-    # c#                 badge:||grey|here|c#
+    # c-+-+              badge:||grey||c-+-+
+    # c#                 badge:||grey||c#
 
 --------------------------------------------------------------------------------
 
@@ -6974,10 +6894,10 @@ wish to use; e.g., badge:|1d8348|1d8348
      - {{{showicon(GIMP)}}}
      - {{{showicon(atom)}}}
 
-    # pokemon            badge:||grey|here|pokemon
-   #                     badge:||grey|here|1001-track-lists
-   #                     badge:||grey|here|auda-city
-   #                     badge:||grey|here|dribble
+    # pokemon            badge:||grey||pokemon
+   #                     badge:||grey||1001-track-lists
+   #                     badge:||grey||auda-city
+   #                     badge:||grey||dribble
 #+end_parallel
 
 ** Common Project Badges ---with copyable source
@@ -6995,14 +6915,14 @@ wish to use; e.g., badge:|1d8348|1d8348
   # + twitter:https://github.com/alhassy/org-special-block-extras
 + {{{withsrc([[badge:melpa|pending|critical|https://github.com/alhassy/emacs.d#use-package-the-start-of-initel|github][melpa badge]])}}}
 + {{{withsrc([[badge:docs|literate|success|https://github.com/alhassy/emacs.d#what-does-literate-programming-look-like|read-the-docs][read-the-docs badge]])}}}
-  {{{withsrc(badge:wiki|github|informational|here|wikipedia)}}}
-+ {{{withsrc(badge:code_coverage|88%|green|here|codecov)}}}
-  {{{withsrc(badge:build|passing|success|here|azure-pipelines)}}}
+  {{{withsrc(badge:wiki|github|informational||wikipedia)}}}
++ {{{withsrc(badge:code_coverage|88%|green||codecov)}}}
+  {{{withsrc(badge:build|passing|success||azure-pipelines)}}}
 + {{{withsrc(badge:author|musa_al-hassy|purple|https://alhassy.github.io/|nintendo-3ds)}}}
 + {{{withsrc(badge:author|musa_al-hassy|purple|https://alhassy.github.io/|gimp)}}}
 + {{{withsrc([[badge:license|GNU_3|informational|https://www.gnu.org/licenses/gpl-3.0.en.html|read-the-docs][gnu 3 license badge]])}}}
-+ {{{withsrc(badge:issue_tracking|github|informational|here|github)}}}
-+ {{{withsrc(badge:help_forum|discourse|informational|here|discourse)}}}
++ {{{withsrc(badge:issue_tracking|github|informational||github)}}}
++ {{{withsrc(badge:help_forum|discourse|informational||discourse)}}}
 + {{{withsrc(badge:social_chat|gitter|informational|https://gitter.im/explore|gitter)}}}
 + {{{withsrc(badge:Maintained?|yes|success)}}}
   {{{withsrc(badge:Maintained?|no|critical)}}}
@@ -7095,7 +7015,7 @@ may be useful to colour the =|=-separated fields of a badge link.
 :END:
 A theory of typed composition; e.g., typed monoids.
    #+end_example
-   Entries are read afresh before each export, so =show:GLOSSARY= lists every citation in a
+   Entries are read afresh before each export, so =#+print_glossary:= lists every citation in a
    single export, wherever it sits; and the files in ~org-docs-libraries~ are read, not
    exported, so loading them is quick.
 
@@ -8042,7 +7962,7 @@ or from the fallback--- so that we may process it later on.
   "Which words are actually cited in the current article.
 
 We use this listing to actually print a glossary using
-‘show:GLOSSARY’.")
+“#+print_glossary:”.")
 #+end_src
 
 #+RESULTS:
@@ -8287,85 +8207,9 @@ library. Multiple imports lead to broken features.
    A PDF is essentially a fancy piece of paper, so tooltips will take on the
    form of glossary entries: Using =doc:𝒳= will result in the word =𝒳= being printed
    as a hyperlink to a glossary entry, which you the user will eventually
-   declare using =show:GLOSSARY=; moreover, the glossary entry will also have a
+   declare using =#+print_glossary:=, as =#+print_bibliography:= lists cited works; moreover, the glossary entry will also have a
    link back to where the =doc:𝒳= was declared.  E.g., doc:defmacro and
    doc:lambda.
-
-   We make a ~show:𝒳~ link type to print the value of the variable =𝒳=
-   as follows, with =GLOSSARY= being a reserved name.
-   #+begin_details Implementation of ‘show’
- #+begin_src emacs-lisp
-(org-deflink show
-  "Yield the value of the expression O-LABEL, with =GLOSSARY= being a reserved name.
-
-Example uses:
-
-    show:user-full-name
-
-    <show: (* 2 (+ 3 4 (- pi))) >
-
-
-Note that there is `elisp' links with Emacs, out of the box.
-However, they only serve to evaluate Lisp expressions; for example,
-to make “link buttons” that do useful things, as follows.
-
-   [[elisp:(find-file user-init-file)][Init]]
-
-In particular, `elisp' links do not export the value of their expression.
-That is what we accomplish with this new `show' link type."
-  [:face '(:underline "green")
-   :let (o-value (if (equal o-label "GLOSSARY")
-                     (pp-to-string (mapcar #'cl-second org--docs-actually-used))
-                   (pp-to-string (eval (car (read-from-string o-label)))))
-         o-expr (if (equal o-label "GLOSSARY")
-                    (concat "GLOSSARY ---i.e., org--docs-actually-used"
-                            "\n\nWe erase the glossary not on the first export, but on the second export."
-                            "\nThe first export collects all citations, which are used in the second export.")
-                  o-label))
-  :help-echo (format
-              (concat "Upon export, the following will be placed literally"
-                      "\n\t%s"
-                      "\nWhich is the value of the expression:\n\t%s")
-              o-value
-              o-expr)]
-  (cond ((not (equal o-label "GLOSSARY")) o-value)
-
-       ;; Otherwise O-LABEL is glossary, which we print in HTML & LaTeX
-       ((equal 'html o-backend)
-          (s-join " "
-                  (--map
-                   (format "<abbr class=\"tooltip\" title=\"%s\">%s</abbr>"
-                           (org-osbe-html-export-preserving-whitespace (cl-third it))
-                           (cl-second it))
-                   ;; Ignore duplicates; i.e., entries with the same name/title.
-                   (cl-remove-duplicates org--docs-actually-used
-                                         :test (lambda (x y) (cl-equalp (cl-second x) (cl-second y)))))))
-       (:otherwise (s-join "\n\n"
-                  (cl-loop for (label name doc)
-                           in org--docs-actually-used
-                           collect
-                           (format
-                           (concat "\\vspace{1em}\\phantomsection"
-                                   "\\textbf{%s}\\quad"
-                                   "\\label{o-glossary-%s}"
-                                   "%s See page "
-                                   "\\pageref{org-special-block-extras"
-                                   "-glossary-declaration-site-%s}")
-                           name
-                           o-label
-                           (when doc
-                             (thread-last doc ;; preserve whitespace
-                               (s-replace "&" "\\&") ;; Hack!
-                               (s-replace "  " " \\quad ")
-                               (s-replace "\n" " \\newline{\\color{white}.}")))
-                           o-label))))))
- #+end_src
-#+end_details
-
- As an example, we know have generic sentences:
- | =My name is show:user-full-name and I am using Emacs show:emacs-version ^_^=  |
- |----------------------------------------------------------------------------|
- | My name is show:user-full-name and I am using Emacs show:emacs-version ^_^  |
 
  For example, here is a word whose documentation is obtained from Emacs rather
  than me writing it: doc:thread-last.  If you click on it, in the LaTeX output,
@@ -8649,7 +8493,7 @@ not burden a soul beyond what it can bear./ --- Quran 2:286
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
 
-show:GLOSSARY
+#+print_glossary:
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
@@ -8700,7 +8544,7 @@ beyond what it can bear./ --- Quran 2:286
 ,#+LATEX_HEADER: \\usepackage{tcolorbox}
 ,#+latex: In the LaTeX output, we have a glossary.
 
-show:GLOSSARY
+#+print_glossary:
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
@@ -8884,7 +8728,7 @@ not burden a soul beyond what it can bear./ --- Quran 2:286
 #+LATEX_HEADER: \usepackage{tcolorbox}
 #+latex: In the LaTeX output, we have a glossary.
 
-show:GLOSSARY
+#+print_glossary:
 
 badge:Thanks|for_reading
 tweet:https://github.com/alhassy/org-special-block-extras
@@ -9055,7 +8899,7 @@ https://github.com/riscy/melpazoid
 #+latex: \section*{Glossary}
 #+latex: \addcontentsline{toc}{section}{Glossary}
 
- show:GLOSSARY
+ #+print_glossary:
 * Footnotes
   :PROPERTIES:
   :CUSTOM_ID: Footnotes

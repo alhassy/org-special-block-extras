@@ -19,13 +19,13 @@
    
    badge:Let_me_*not*_google_that|for_you
 
-4. It works when all 5 arguments are provided - URL ‘here’ makes it a local link
+4. It works sans a URL, yet with a logo; Org's own <<key>> beside it is a permalink to here
 
-   badge:key|value|informational|here|Elixir
+   <<key>> badge:key|value|informational||Elixir
 
 5. We can use spaces, commas, dashes, and percentage symbols in the first argument
 
-   badge:example_with_spaces,_-,_and_%|points_right_here|orange|here
+   badge:example_with_spaces,_-,_and_%|points_right_here|orange
 
 6. It works when only first 2 arguments are given: Default colour & logo are green & no logo shown
 
@@ -76,12 +76,23 @@ asterisks are passed unaltered into the first argument
 </p></li>
 
 <li><p>
-It works when all 5 arguments are provided - URL ‘here’ makes it a local link
+It works sans a URL, yet with a logo; Org's own <a class=\"anchor\" id=\"key\" href=\"#key\"
+aria-label=\"Permalink to key\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\"
+width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4
+3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98
+0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
+0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6
+13 6z\"></path></svg></a> beside it is a permalink to here
 </p>
 
 <p>
-<a id=\"key\" href=\"#key\"><img
-src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\"></a>
+<a class=\"anchor\" id=\"key\" href=\"#key\" aria-label=\"Permalink to key\"><svg
+xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path
+fill-rule=\"evenodd\" d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91
+2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4
+9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64
+1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13
+6z\"></path></svg></a> <img src=\"https://img.shields.io/badge/key-value-informational?logo=Elixir\">
 </p></li>
 
 <li><p>
@@ -89,8 +100,7 @@ We can use spaces, commas, dashes, and percentage symbols in the first argument
 </p>
 
 <p>
-<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\"><img
-src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange\"></a>
+<img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange\">
 </p></li>
 
 <li><p>
@@ -143,7 +153,10 @@ It's only a green stub when we use no options at all
 \\item It works when only the first 2 arguments are provided;
 asterisks are passed unaltered into the first argument
 
-\\item It works when all 5 arguments are provided - URL ‘here’ makes it a local link
+\\item It works sans a URL, yet with a logo; Org's own \\label{org0000001} beside it is a permalink
+to here
+
+\\label{org0000003}
 
 \\item We can use spaces, commas, dashes, and percentage symbols in the first argument
 

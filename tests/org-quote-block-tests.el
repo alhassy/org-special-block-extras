@@ -28,12 +28,16 @@ Remarkable.
   (should (s-contains-p "\\blockcquote{zermelo1908}{"
                         (org-export-string "#+begin_quote zermelo1908\nQuoted.\n#+end_quote" 'latex))))
 
-(deftest "a quote given a key is a blockquote attributed to its key, at its pages, in HTML and Markdown" [quote]
+(deftest "a quote given a key is a blockquote attributed to Org's citation of it, which the bibliography so lists" [quote]
   (require 'ox-md)
-  (let ((input "#+begin_quote zermelo1908 :pages 20-22\nQuoted.\n#+end_quote"))
-    (should (s-contains-p "<footer>&mdash; <cite>zermelo1908</cite>, 20-22</footer></blockquote>"
-                          (org-export-string input 'html)))
-    (should (s-contains-p "> Quoted.\n> \n> &mdash; *zermelo1908*, 20-22" (org-export-string input 'md)))))
+  (let* ((bib (make-temp-file "osbe" nil ".bib" "@book{zermelo1908,\n  author = {Ernst Zermelo},\n  title = {Mengenlehre},\n  year = {1908}\n}\n"))
+         (input (format "#+bibliography: %s\n\n#+begin_quote zermelo1908 :pages 20-22\nQuoted.\n#+end_quote\n\n#+print_bibliography:" bib)))
+    (unwind-protect
+        (let ((html (org-export-string input 'html)))
+          (should (string-match-p "<footer>\\s-*<p>\\s-*&mdash; (Ernst Zermelo, 1908, 20-22)\\s-*</p>\\s-*</footer></blockquote>" html))
+          (should (s-contains-p "Ernst Zermelo (1908). <i>Mengenlehre</i>." html))
+          (should (s-contains-p "> Quoted.\n> \n> &mdash; (Ernst Zermelo, 1908, 20-22)" (org-export-string input 'md))))
+      (delete-file bib))))
 
 (deftest "a plain quote, sans arguments, stays Org's own, in every backend, and warns of nothing" [quote]
   (require 'ox-md)
@@ -54,19 +58,13 @@ Remarkable.
         (should (equal ours orgs))))
     (should-not warnings)))
 
-(deftest "a quote: link is an inline quotation, cited when keyed; a section tagged :quote: is Org's own quote of its text" [quote]
-  (let ((latex (org-export-string "
-Hamlet says [[quote:][to be]]; Zermelo writes [[quote:zermelo1908][set theory is …]].
+(deftest "a section tagged :quote: is Org's own quote of its text; quote: is no link, as Org's \"…\" [cite:@KEY] serves" [quote]
+  (should (string-match-p "\\\\begin{quote}\nLess is more\\.\n\\\\end{quote}" (org-export-string "* Credo :quote:\nLess is more." 'latex)))
+  (should-not (org-link-get-parameter "quote" :export)))
 
-* Credo :quote:
-Less is more." 'latex)))
-    (should (s-contains-p "Hamlet says ``to be''; Zermelo writes \\textcquote{zermelo1908}{set theory is …}." latex))
-    (should (string-match-p "\\\\begin{quote}\nLess is more\\.\n\\\\end{quote}" latex))))
-
-(deftest "a cited quote, or quote: link, loads csquotes in LaTeX, unless the document already does" [quote]
+(deftest "a cited quote loads csquotes in LaTeX, unless the document already does" [quote]
   (cl-flet ((csquotes (input) (s-count-matches "{csquotes}" (org-export-string-as input 'latex))))
     (should (= 1 (csquotes "#+begin_quote zermelo1908 :pages 20-22\nQuoted.\n#+end_quote")))
-    (should (= 1 (csquotes "As Zermelo has it, [[quote:zermelo1908][set theory]] is foundational.")))
     ;; The document's own, options and all, is left be; and a document sans cited quotes gets nothing.
     (should (= 1 (csquotes "#+latex_header: \\usepackage[autostyle]{csquotes}\n#+begin_quote zermelo1908\nQuoted.\n#+end_quote")))
     (should (= 0 (csquotes "#+begin_quote\nPlain.\n#+end_quote")))))

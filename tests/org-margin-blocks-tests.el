@@ -17,14 +17,13 @@ tip text</p></template></abbr>&emsp13;
 note text</p></template></abbr>&emsp13;
 #+end_export")
 
-(define-org-call-test "margin block produces a \\marginpar for LaTeX."
+(define-org-call-test "margin block, in LaTeX, is its marker followed by a \\marginpar numbered as footnotes are."
   :call (org-block/margin 'latex "note" nil :marker "†" :counter "footnote")
   :returns "#+begin_export latex
-\\!\\!${}^{\\textnormal{†}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}
-\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
+†\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
 \\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
 \\fi\\color{gray!80}
-{\\color{black}${}^{\\textnormal{†}}$}
+{\\color{black}${}^{\\textnormal{{\\thefootnote}}}$}
 \\normalfont
 #+end_export
 note
@@ -32,6 +31,12 @@ note
 \\end{minipage}\\end{lrbox}\\marginpar{\\usebox{\\OrgSpecialBlockExtrasMarginBox}}
 \\global\\let\\OrgSpecialBlockExtrasMarginBox\\relax{}
 #+end_export")
+
+(deftest "tooltip is an alias of margin: the same block, link, and tag, under the name HTML thinks in" [alias]
+  (should (equal (org-block/tooltip 'latex "note" "word") (org-block/margin 'latex "note" "word")))
+  (should (memq 'tooltip org--supported-blocks))
+  (should (org-link-get-parameter "tooltip" :export))
+  (should (s-contains-p "An alias of" (documentation 'org-block/tooltip t))))
 
 (deftest "a footnote reference is a tooltip of its definition, exported as the rest of the page is; the id stays" [footnote]
   (let ((html (org-export-string "

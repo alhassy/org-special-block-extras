@@ -55,57 +55,33 @@ as an argument of \\marginpar."
                       :latex-head ("xcolor") :manual "#tooltip"
                       :link [:display 'full
                              :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")])
-              "Produce an HTML tooltip or a LaTeX margin note.
+              "A remark, CONTENTS, on MARKER in the text: in HTML, a tooltip on MARKER, hovered on a desktop, tapped on a
+phone; in LaTeX, MARKER followed by CONTENTS as a margin note, numbered by COUNTER, as footnotes are; in beamer, whose
+slides have no margins, a footnote.  Sans MARKER, the note's number alone in LaTeX, and “°” in HTML.
 
-The ‘margin’ block is intended for “one-off” (mostly optional) remarks.
+  It's a                                   /Allah[[margin:][The God of Abraham]] does not burden a soul …/
+  #+begin_tooltip simple
+  Squint, and Maybe ℕ is ℕ.
+  #+end_tooltip
+  exercise.
 
-It is essentially “inline footnotes”.
+The block is one-off, “inline footnotes”; Org's own [fn::…] are such remarks too.  For a note used repeatedly, consider
+declaring it with ‘documentation’ and citing it with ‘doc’.
 
-For notes that you want to use repeatedly, in multiple articles
-or in multiple locations in the same article, consider using
-‘documentation’ to declare them and ‘doc’ to invoke them.
+WIDTH, COUNTER, and COLOR are LaTeX's: the note is WIDTH wide, coloured COLOR, its number in black.  Since verbatim
+environments fail as arguments to \\marginpar, CONTENTS is saved in a minipage within a LaTeX box, then unfolded in the
+margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For LaTeX, a ‘#+resize:’ line has the rest of the
+note resized, to 1.3 the margin's width ---requiring \\usepackage{adjustbox}.
 
-For LaTeX, place ‘#+resize:’ to have the remainder of a block be
-resized, for now 1.3 the margin width ---requires \\usepackage{adjustbox}.
-
-----------------------------------------------------------------------
-
-WIDTH, COUNTER, and COLOR are LaTeX specific.
-
-When no label, marker, is used for a marginal note, we rely
-on a COUNTER, such as ‘footnote’ (default) or ‘sidenote.’
-Since HTML has no margin per se, we use “∘” as default marker:
-Users hover over it to read the marginal note.
-
-Marginal notes have their labels, markers, in black
-and the notes themselves have COLOR being grey!80.
-In Emacs, margin links appear grey with an orange tinted border.
-
-Regarding LaTeX, since verbatim environments do not in general work well
-as arguments to other commands, such as ‘\\marginpar’, we save the contents
-of the special block in a ‘minipage’ within a LaTeX ‘box’; then we can unfold such
-a box in the margin. Hence, ‘src’ blocks can appear within ‘margin’ blocks (•̀ᴗ•́)و
-
-The WIDTH argument is the width of the margin; i.e., the width of the underlying
-minipage.
-
-One could use \\maxsizebox{.25\\textwidth}{\\textheight}{ ... }
-which only resizes the content if its natural size is larger than
-the given 〈width〉 or 〈height〉.  We don't use this, since
-maxsizebox does not natively allow linebreaks
-(e.g., one would wrap contents in a tabular environment then use
-‘\\\\’, two backslashes, to request a line break; but this
-crashes if one wants to also use verbatim environments.)
-
-In LaTeX, it may be useful to invoke ‘\\dotfill’."
-              (-let [stepcounter (if marker "" (format "\\stepcounter{%s}" counter))]
+`tooltip' is an alias, for when we think in HTML rather than LaTeX."
+              (let ((marker (org-string-nw-p marker)))
                 (pcase backend
-                  ((guard (org-export-beamer-p)) (format "\\footnote{%s}" (s-trim contents)))
+                  ((guard (org-export-beamer-p)) (format "%s\\footnote{%s}" (or marker "") (s-trim contents)))
                   (`latex
-                   ;; A block follows the newline, a space, after the word it remarks on; we swallow it.
                    (concat
-                    "\\!\\!"
-                    (org--latex-margin-note (or marker (format "{\\the%s}" counter)) width color
+                    ;; Sans MARKER, a block follows the newline, a space, after the word it remarks on; we swallow it.
+                    (if (or marker contents-occur-as-link-description) marker "\\!\\!")
+                    (org--latex-margin-note (format "{\\the%s}" counter) width color
                                            (if (s-contains? "#+resize:" contents)
                                                (s-concat
                                                 (s-replace "#+resize:"
@@ -113,22 +89,11 @@ In LaTeX, it may be useful to invoke ‘\\dotfill’."
                                                            (s-trim contents))
                                                 "\n\\end{tabular}}")
                                              (s-trim contents))
-                                           stepcounter)))
+                                           (format "\\refstepcounter{%s}" counter))))
                   ;; HTML has no margin per se, so the note is a tooltip on its marker.
-                  (_ (concat (org--html-tooltip raw-contents (or marker "∘"))
-                             "&emsp13;")))))
+                  (_ (concat (org--html-tooltip raw-contents (or marker "°")) "&emsp13;")))))
 
-;;;;;; Tooltip (HTML)
-(org-defblock tooltip (marker "°" :latex-head ("xcolor") :manual "#tooltip")
-              "Show CONTENTS, as Org, in a tooltip on MARKER; hovered on a desktop, tapped on a phone.
-In LaTeX, MARKER is followed by CONTENTS as a margin note, numbered as footnotes are, as the margin block's are;
-in beamer, whose slides have no margins, as a footnote."
-              (if (equal backend 'latex)
-                  (concat marker (if (org-export-beamer-p)
-                                     (format "\\footnote{%s}" contents)
-                                   (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" contents
-                                                           "\\refstepcounter{footnote}")))
-                (concat (org--html-tooltip raw-contents marker) "&emsp13;")))
+(org-defblock-alias tooltip margin)
 
 ;;;;;; Footnotes, as tooltips
 

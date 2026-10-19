@@ -418,6 +418,8 @@ Three example uses:
            `((message "org-defblock: %s overrides Org's own #+begin_%s; a handler may hand some back by `org-builtin-block'"
                       ',name ',name)))
        (org-defblock-only ,name ,args ,docstring ,@body)
+       ;; ⇨ Its definition, whereby `org-defblock-alias' makes another name do as this one does.
+       (put ',handler 'org-defblock-definition '(,kwds ,docstring ,@body))
        ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-head needs none.
        (put ',handler 'org-latex-head ',(plist-get kwds :latex-head))
        ;; ⇨ Likewise, the HTML its pages need in their <head>.
@@ -434,6 +436,16 @@ Three example uses:
              ,(when fontify `(list ,@(append fontify nil))))
        ;; ⇨ The tag, unless declined via `:tag nil': a section tagged :NAME: exports as a NAME block around its text.
        ,@(when tag? (list (org--defblock-tag-form name args (org--defblock-tag-subsections name tag?)))))))
+
+(defmacro org-defblock-alias (alias name)
+  "Make ALIAS a block, link, and tag that do just as those of NAME, an `org-defblock', do; e.g., as LaTeX and HTML
+have their own words for one thing:
+  (org-defblock-alias tooltip margin)  ⇒  #+begin_tooltip ≡ #+begin_margin, and [[tooltip:x][…]] ≡ [[margin:x][…]]"
+  (declare (indent defun))
+  `(pcase-let ((`(,kwds ,docstring . ,body)
+                (or (get ',(intern (format "org-block/%s" name)) 'org-defblock-definition)
+                    (error "‘org-defblock-alias %s’: %s is no org-defblock" ',alias ',name))))
+     (eval `(org-defblock ,',alias ,kwds ,(format "%s\n\nAn alias of `org-block/%s'." (or docstring "") ',name) ,@body) t)))
 
 (cl-defmacro org-defblock-only (name args &optional docstring &rest body)
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.

@@ -26,7 +26,7 @@ src/
 │   └── org-ctrl-c-ctrl-c-for-special-block.el
 └── derived/
     ├── org-{align,box,demo,details,math,parallel,
-    │        proof,quote,remark,solution,spoiler,style}-block.el
+    │        proof,quote,remark,solution,spoiler}-block.el
     ├── org-{callout,margin,substitution}-blocks.el
     └── graph/                       ; today's org-graph-*.el
 #+end_example
@@ -58,3 +58,14 @@ If the move above is not forthcoming, the minimal fix is:
 (org-special-block-extras :fetcher github :repo "alhassy/org-special-block-extras"
  :files (:defaults "lisp/tooltips.*"))
 #+end_src
+
+* TODO Does =#+html_export_style:= belong in this package?
+
+It began as a link, =html-export-style:THEME=, that exported to nothing; it is now Org's own kind of
+thing, a keyword ---=#+html_export_style: rose=--- read by ~org--html-export-style-setup~, which inserts the
+theme's =#+SETUPFILE:= or =#+HTML_HEAD:= from ~org-html-export-styles~ before export. Yet it has nothing to
+do with special blocks, and Org already says the same thing natively: =#+SETUPFILE: URL= is one line
+too. Its only gains are short names and =random=. We wrote it for fun; either it moves to a tiny package
+of its own (=org-html-themes=, say) or we axe it and the manual lists the =#+SETUPFILE:= lines instead.
+- [ ] Decide: keep, spin off, or axe.
+- [ ] If kept: complete =THEME= after =#+html_export_style:= with C-M-i, as the link's =?= key once chose one.

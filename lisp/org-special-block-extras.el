@@ -115,7 +115,7 @@
 ;; `org-thread-blockcall' and, in org-block-header-args.el, the blocks' header-args.  The blocks and links built atop
 ;; them live in org-links.el, org-color-links.el, org-details-block.el, org-box-block.el, org-callout-blocks.el,
 ;; org-parallel-block.el, org-proof-block.el, org-margin-blocks.el, org-quote-block.el, org-solution-block.el,
-;; org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-style-block.el, org-substitution-blocks.el, and
+;; org-demo-block.el, org-spoiler-block.el, org-remark-block.el, org-substitution-blocks.el, and
 ;; org-math-block.el, whose parts are org-math-markup.el, org-math-structure.el, org-math-hints.el, and org-math-refs.el
 ;; ---one file per family of blocks; this file requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
@@ -251,7 +251,6 @@
 (require 'org-substitution-blocks)
 (require 'org-spoiler-block)
 (require 'org-remark-block)
-(require 'org-style-block)
 (require 'org-proof-block)
 (require 'org-deftag)
 
@@ -457,6 +456,11 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; In HTML, <<X>> is a permalink #X to itself; <<<X>>> keeps Org's look, yet is #X too.
         (advice-add 'org-html--reference :around #'org--target-readable-reference)
         (advice-add 'org-html-target :override #'org--target-as-permalink)
+        ;; Each mention of a <<<X>>> is a tooltip of X's paragraph, its glossary entry.
+        (advice-add 'org-html-link :around #'org--radio-link-as-tooltip)
+        ;; #+print_glossary: lists the page's citations, as #+print_bibliography: its works.
+        (advice-add 'org-html-keyword :around #'org--docs-glossary)
+        (advice-add 'org-latex-keyword :around #'org--docs-glossary)
         (add-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
         (add-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
         (add-hook 'org-export-filter-final-output-functions #'org--load-html-head)
@@ -504,6 +508,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
     (advice-remove 'org-html--reference #'org--target-readable-reference)
     (advice-remove 'org-html-target #'org--target-as-permalink)
+    (advice-remove 'org-html-link #'org--radio-link-as-tooltip)
+    (advice-remove 'org-html-keyword #'org--docs-glossary)
+    (advice-remove 'org-latex-keyword #'org--docs-glossary)
     (remove-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-html-head)

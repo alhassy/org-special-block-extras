@@ -33,14 +33,14 @@ A unital semigroup.
     (should (string-match-p "Category Theory<template><p>\\s-*Typed composition\\.\\s-*</p></template></abbr>" html))
     (should (s-contains? "Category Theory" html))))
 
-(deftest "show:GLOSSARY lists every citation in one export, even when it precedes them"
-  (let ((html (org-export-string "show:GLOSSARY\n\n#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\n\nSee doc:mon.")))
+(deftest "#+print_glossary: lists every citation in one export, even when it precedes them"
+  (let ((html (org-export-string "#+print_glossary:\n\n#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\n\nSee doc:mon.")))
     ;; Once as the citation, once as the glossary entry.
     (should (= 2 (s-count-matches "<template><p>\\s-*A unital semigroup\\.\\s-*</p></template>" html)))))
 
 (deftest "one export's glossary does not leak into the next"
   (org-export-string "#+begin_documentation Monoid :label mon\nA unital semigroup.\n#+end_documentation\nSee doc:mon.")
-  (should-not (s-contains? "unital" (org-export-string "Nothing cited here.\n\nshow:GLOSSARY"))))
+  (should-not (s-contains? "unital" (org-export-string "Nothing cited here.\n\n#+print_glossary:"))))
 
 (deftest "`org-docs-load-libraries' reads a library's blocks and headings, without exporting it"
   (let ((lib (make-temp-file "osbe-glossary" nil ".org"
@@ -70,3 +70,18 @@ Every monoid is a category with one object."
 A <<<monoid>>> is a set with an /associative/ operation and a unit.
 
 Every doc:monoid is a category with one object."))))
+
+(deftest "each mention of a radio target wears its paragraph as a tooltip, bar those within that paragraph" [radio-target]
+  (let ((html (org-export-string "
+A <<<monoid>>> is a set with an /associative/ operation; every monoid is a semigroup.
+
+Thus a monoid is a category with one object.")))
+    (should (s-contains? "Thus a <abbr class=\"tooltip\" tabindex=\"0\"><a href=\"#monoid\">monoid</a><template><p>
+A monoid is a set with an <i>associative</i> operation; every monoid is a semigroup.</p></template></abbr>" html))
+    (should (s-contains? "every <a href=\"#monoid\">monoid</a> is" html))))
+
+(deftest "#+print_glossary: is a radio target's too, once a doc: link cites it; in LaTeX, entries refer back" [radio-target]
+  (let ((input "\nA <<<monoid>>> is a unital semigroup.\n\nSee doc:monoid.\n\n#+print_glossary:"))
+    (should (= 2 (s-count-matches "<template><p>\\s-*A monoid is a unital semigroup\\.\\s-*</p></template>" (org-export-string input))))
+    (should (s-contains? "\\textbf{monoid}\\quad\\label{o-glossary-monoid}A monoid is a unital semigroup."
+                         (org-export-string input 'latex)))))
