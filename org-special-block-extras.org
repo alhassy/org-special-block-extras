@@ -4234,7 +4234,8 @@ from∘to m = {! try it! }
   wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, =\left(…\right)=, a
   =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colours =a + b=. So too
   for =color:#ff0066=, =highlight:=, =eqref:=, web links, and =tooltip:= and =doc:=, which hover in
-  HTML; as does a footnote, =x[fn::the current element]=. A tooltip in maths is as one in prose: the
+  HTML; as does a footnote, =x[fn::the current element]=, or =x[fn:elt]=, whose =[fn:elt] …= definition
+  sits elsewhere, as in prose ---so one long tip serves many atoms. A tooltip in maths is as one in prose: the
   same box in HTML, and in LaTeX, a margin note, its number on =x=. Org's emphasis is read when its markers
   hug their text, as in prose: =*f(a)*= is bold, whereas =a*b*c= and =a = b= are left be.
 
@@ -4252,6 +4253,18 @@ from∘to m = {! try it! }
   + A line ending =:tag-COLOUR: NAME= is tagged ---see [[#Aligned-equations][aligned equations]]--- and
     =[[eqref:NAME]]= cites it; =:numbered t= numbers the rest. Org's own =#+name: NAME= labels the
     block's last line, so =[[eqref:NAME]]= cites a single equation sans a tag; unnumbered, it is tagged =NAME=.
+  + A description list is a =cases= environment, each term a value and each description its
+    condition ---one of mere words, such as =otherwise=, is prose:
+    #+begin_example
+,#+begin_math
+n! =
+- 1 :: n = 0
+- n · (n-1)! :: otherwise
+,#+end_math
+    #+end_example
+    A line that begins =- x=, sans a =::=, stays maths.
+  + A section link ---=[[*Heading][f]]=, =[[#custom-id][f]]=, or =[[id:ID][f]]=--- links its description
+    to that section, as a graph's node does; sans description, the heading shows.
   + Lines with an =&= are [[#Aligned-equations][aligned]] at it; else, lines that end in =\\= are
     gathered, each centred on a line of its own. With =:numbered once=, the lines are one equation,
     with one number: split at their =&=, else gathered.
@@ -4706,6 +4719,73 @@ z
 \end{calc}
 #+end_src
 #+end_details
+
+*** ★ Everything at once: the geometric series
+   :PROPERTIES:
+   :CUSTOM_ID: calculation-showcase
+   :END:
+A calculation enjoys all of a math block's maths. Below, we sum the first $n$ powers of
+$r$; read the key beneath, then hover, click, and =TAB= away.
+#+begin_math :let (Σ "\\sum_{i=0}^{n-1}")
+# A comment, absent from the export: 𝒮ₙ is defined once.
+\def\Sn{\mathcal{S}_n}
+  red:{(1 - r)} · \Sn[fn::the first $n$ powers of $r$, summed]
+={ Definition of $\Sn$ }
+  red:{(1 - r)} · Σ r^i
+={ Distribute $red:{(1 - r)}$ over the sum }
+  Σ r^i - teal:{Σ r^{i+1}}
+={ Shift the second sum's index:
+   \[   Σ r^{i+1}
+      ={ Let $j = i + 1$, from $1$ to $n$ } \sum_{j=1}^{n} r^j
+      ={ Rename $j$ back to $i$ } \sum_{i=1}^{n} r^i \] }
+  Σ r^i - teal:{\sum_{i=1}^{n} r^i}
+={ Expand both sums: each of $r^1, …, r^{n-1}$ appears in
+   both, once added and once subtracted, and so cancels }
+  r^0 + +r^1+ + ⋯ + +r^{n-1}+ - +r^1+ - ⋯ - +r^{n-1}+ - r^n
+={ Only the first and the last terms survive }
+  violet:{r^0} - violet:{r^n}
+={ $r^0 = 1$ }
+  1 - r^n   :tag-teal: Geometric
+#+end_math
+
+Hence, by [[eqref:Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
+
++ Colour tells where to look: red:red, the factor a step distributes; teal:teal, the sum it
+  reindexes; violet:violet, the two terms that survive. Inline maths is coloured alike: $red:r ≠ 1$.
++ Org's =+strike+= is LaTeX's =\cancel=, so the telescoping cancellation is drawn as one.
++ =\Sn[fn::…]= is a tooltip: hover over $\mathcal{S}_n$ in the first line. =\def\Sn= names it once.
++ =:let (Σ "\\sum_{i=0}^{n-1}")= is a shorthand, so each line writes =Σ r^i=; it reaches the nested
+  calculation too.
++ The index shift is a nested calculation, =\[ … \]=, within its hint.
++ =:tag-teal: Geometric= tags the result, which =[[eqref:Geometric]]= then cites.
++ A line =# …= is a comment, kept in the source yet absent from the export.
++ For a puzzle, try =:hints (between folded)=: the reader clicks each hint to see it ---or
+  shift-clicks, for all of them.
+
+*Source:*
+#+begin_src org :tangle no
+,#+begin_math :let (Σ "\\sum_{i=0}^{n-1}")
+# A comment, absent from the export: 𝒮ₙ is defined once.
+\def\Sn{\mathcal{S}_n}
+  red:{(1 - r)} · \Sn[fn::the first $n$ powers of $r$, summed]
+={ Definition of $\Sn$ }
+  red:{(1 - r)} · Σ r^i
+={ Distribute $red:{(1 - r)}$ over the sum }
+  Σ r^i - teal:{Σ r^{i+1}}
+={ Shift the second sum's index:
+   \[   Σ r^{i+1}
+      ={ Let $j = i + 1$, from $1$ to $n$ } \sum_{j=1}^{n} r^j
+      ={ Rename $j$ back to $i$ } \sum_{i=1}^{n} r^i \] }
+  Σ r^i - teal:{\sum_{i=1}^{n} r^i}
+={ Expand both sums: each of $r^1, …, r^{n-1}$ appears in
+   both, once added and once subtracted, and so cancels }
+  r^0 + +r^1+ + ⋯ + +r^{n-1}+ - +r^1+ - ⋯ - +r^{n-1}+ - r^n
+={ Only the first and the last terms survive }
+  violet:{r^0} - violet:{r^n}
+={ $r^0 = 1$ }
+  1 - r^n   :tag-teal: Geometric
+,#+end_math
+#+end_src
 
 ** Graphs ---/Org lists, drawn by Graphviz/
   :PROPERTIES:

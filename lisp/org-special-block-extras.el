@@ -454,6 +454,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
         (add-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
         (add-hook 'org-export-filter-final-output-functions #'org--load-html-head)
+        (add-hook 'org-export-filter-final-output-functions #'org--resolve-section-links)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
         ;; C-c C-x C-l, and #+startup: latexpreview, show our math blocks as Org's own maths.
@@ -492,6 +493,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-html-head)
+    (remove-hook 'org-export-filter-final-output-functions #'org--resolve-section-links)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)

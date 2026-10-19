@@ -36,6 +36,7 @@
 (require 'org-element)
 (require 'ox-latex)
 (require 'ox-html)
+(require 'xml)
 (require 'org-deflink)
 (require 'org-special-block-parse)
 (require 'org-block-switches)
@@ -204,6 +205,34 @@ Our own CSS and JS only if `org-special-block-add-html-extra'; MathJax always, e
            (missing (--remove (s-contains? it output) (-uniq heads))))
       (if (not missing) output
         (concat (substring output 0 at) (apply #'concat missing) (substring output at))))))
+
+;;;; Section links ---resolved once Org knows where each section lands
+
+(defun org--resolve-section-links (output backend info)
+  "BACKEND's OUTPUT with each section link our blocks wrote ↦ that section's anchor, as INFO places it; e.g., in HTML,
+a graph's href=\"*Heading\" and a math block's \\href{id:ID} ↦ #ANCHOR; in LaTeX, a math block's \\hyperref[*Heading],
+or [#CUSTOM-ID], ↦ its \\label's.  An unresolvable link stays as it is.  Our blocks render before Org parses the
+buffer, so only now is a section's anchor known.  A \\href{#CUSTOM-ID} needs none: HTML's anchor is the custom id."
+  (cl-flet ((resolve (regexp anchor)
+              (replace-regexp-in-string
+               regexp
+               (lambda (match)
+                 ;; `replace-regexp-in-string' replaces by the match data that REP is handed, so resolving must not
+                 ;; clobber it.
+                 (save-match-data
+                   (string-match regexp match)
+                   (let ((open (match-string 1 match)) (link (match-string 2 match)) (close (match-string 3 match)))
+                     (condition-case nil
+                         (concat open (funcall anchor (org-export-resolve-link (xml-substitute-special link) info)) close)
+                       (error match)))))
+               output t t)))
+    (cond ((org-export-derived-backend-p backend 'html)
+           (resolve "\\(href=\"\\|\\\\href{\\)\\(\\*[^\"}]*\\|id:[^\"}]*\\)\\([\"}]\\)"
+                    (lambda (datum) (concat "#" (org-html--reference datum info)))))
+          ((org-export-derived-backend-p backend 'latex)
+           (resolve "\\(\\\\hyperref\\[\\)\\([*#][^]]*\\|id:[^]]*\\)\\(]\\)"
+                    (lambda (datum) (org-latex--label datum info t))))
+          (t output))))
 
 (defun org--block-note-heads (handler backend result)
   "Note what HANDLER's RESULT needs atop a BACKEND document, by its `:latex-head' or `:html-head'; see `org-defblock'.

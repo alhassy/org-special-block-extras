@@ -202,7 +202,7 @@ footnotes become the node's tooltip."
 (defun org--graph-link-url (o)
   "A link object O ↦ where it points: [[file:a.org]] ↦ \"a.org\", [[https://o.org][O]] ↦ \"https://o.org\", and
 [[*Org mode]] ↦ \"*Org mode\", which HTML export resolves to that section's anchor, by
-`org-graph--resolve-section-hrefs'."
+`org--resolve-section-links'."
   (if (equal (org-element-property :type o) "file") (org-element-property :path o) (org-element-property :raw-link o)))
 
 (defun org--graph-footnote-text (reference)

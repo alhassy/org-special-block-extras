@@ -513,25 +513,6 @@ Example:
 ;; first.
 (setq org--supported-blocks (cons 'graph (delq 'graph org--supported-blocks)))
 
-(defun org-graph--resolve-section-hrefs (output backend info)
-  "HTML OUTPUT with each graph node's section link, href=\"*Heading\" or href=\"id:ID\", ↦ href=\"#ANCHOR\", where
-that section lands in this export; other BACKENDs' OUTPUT is unchanged.  An unresolvable link stays as it is.
-Graphviz writes a node's URL verbatim into an inline <svg>, yet only Org, given INFO, knows a section's anchor."
-  (if (not (org-export-derived-backend-p backend 'html))
-      output
-    (replace-regexp-in-string
-     "href=\"\\(\\*[^\"]*\\|id:[^\"]*\\)\""
-     (lambda (match)
-       ;; `replace-regexp-in-string' replaces by the match data that REP is handed, so resolving must not clobber it.
-       (save-match-data
-         (let ((link (xml-substitute-special (match-string 1 match))))
-           (condition-case nil
-               (format "href=\"#%s\"" (org-html--reference (org-export-resolve-link link info) info))
-             (error match)))))
-     output t t)))
-
-(add-to-list 'org-export-filter-final-output-functions #'org-graph--resolve-section-hrefs)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (provide 'org-graph-block)

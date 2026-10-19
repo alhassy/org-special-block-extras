@@ -87,7 +87,8 @@ Functions with their environment."
 ;;; HTML export: a section link reaches that section's anchor
 
 (deftest "HTML export resolves a node's [[*Heading]] href to that section's anchor, and leaves an unknown one be"
-  (let ((html (org-export-string-as "Intro.
+  (let* ((org-export-filter-final-output-functions '(org--resolve-section-links))
+         (html (org-export-string-as "Intro.
 @@html:<a xlink:href=\"*Closures\">c</a> <a xlink:href=\"*Nowhere\">n</a>@@
 * Closures
 Text." 'html t)))
@@ -96,7 +97,7 @@ Text." 'html t)))
     (should (s-contains-p "xlink:href=\"*Nowhere\"" html))))
 
 (deftest "non-HTML exports leave section hrefs be"
-  (should (equal "href=\"*X\"" (org-graph--resolve-section-hrefs "href=\"*X\"" 'latex nil))))
+  (should (equal "href=\"*X\"" (org--resolve-section-links "href=\"*X\"" 'latex nil))))
 
 (provide 'org-graph-image-map-tests)
 ;;; org-graph-image-map-tests.el ends here

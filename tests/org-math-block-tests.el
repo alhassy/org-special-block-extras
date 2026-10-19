@@ -13,6 +13,10 @@
   (should (equal (org--math-markup "red:\\frac{a}{b} + blue:\\mathbb{N}" 'latex)
                  "{\\color{red}\\frac{a}{b}} + {\\color{blue}\\mathbb{N}}")))
 
+(deftest "in maths, COLOUR:ATOM right after a $ is a link too, as in a hint's inline maths"
+  (should (equal (org--math-markup "\\text{Distribute $red:{(1 - r)}$ over}" 'latex)
+                 "\\text{Distribute ${\\color{red}{(1 - r)}}$ over}")))
+
 (deftest "in maths, a COLOUR: sans atom is no link, and a word merely ending in a colour's name is no link either"
   (should (equal (org--math-markup "f : A \\to B, Fred:x" 'latex) "f : A \\to B, Fred:x")))
 
@@ -250,7 +254,60 @@ the current element</p></template>
                  (org-math-tests--tips "violet:x[fn::The current element] = a" 'html)))
   (should (equal (org-math-tests--tips "{} + [[tooltip:Alone]]" 'html) '("{} + Alone"))))
 
+(deftest "in maths, ATOM[fn:NAME] hovers NAME's definition over ATOM, as ATOM[fn::TIP] hovers TIP; one tip serves many"
+  (with-temp-buffer
+    (org-mode)
+    (insert "\n[fn:elt] The /current/ element.\n")
+    (should (equal (org-math-tests--tips "x[fn:elt] + y[fn:elt]" 'html)
+                   (org-math-tests--tips "x[fn::The /current/ element.] + y[fn::The /current/ element.]" 'html)))
+    (should-error (org--math-markup "x[fn:nowhere]" 'html) :type 'user-error)))
+
+(deftest "in maths, a section link, [[*Heading]], [[#custom-id]], or [[id:ID]], links its description to that section"
+  (should (equal (org--math-markup "[[*Folds][\\oplus]] + [[#fold][f]]" 'html) "\\href{*Folds}{\\oplus} + \\href{#fold}{f}"))
+  (should (equal (org--math-markup "[[id:42][\\oplus]]" 'latex) "\\hyperref[id:42]{\\oplus}"))
+  ;; Sans description, the heading shows, as text; Markdown's maths has no links.
+  (should (equal (org--math-markup "[[*Folds]]" 'html) "\\href{*Folds}{\\text{Folds}}"))
+  (should (equal (let ((org-export-current-backend 'md)) (org--math-markup "[[*Folds][f]]" 'html)) "f")))
+
+(deftest "a math block's section links reach the section's anchor once exported, in HTML and LaTeX; an unknown one stays"
+  (let ((org "
+#+begin_math
+[[*Folds][f]] + [[#fold][g]] + [[*Nowhere][h]]
+#+end_math
+* Folds
+:PROPERTIES:
+:CUSTOM_ID: fold
+:END:"))
+    (should (s-contains-p "\\href{#fold}{f} + \\href{#fold}{g} + \\href{*Nowhere}{h}" (org-export-string org 'html)))
+    (let ((latex (org-export-string org 'latex)))
+      (should (string-match "\\\\label{\\([^}]+\\)}" latex))
+      (should (s-contains-p (format "\\hyperref[%s]{f} + \\hyperref[%1$s]{g} + \\hyperref[*Nowhere]{h}" (match-string 1 latex))
+                            latex)))))
+
 ;;; Structure
+
+(deftest "a math block's description items are cases: each term a value, each description its condition, prose as text"
+  (should (equal (org--math-cases "
+n! =
+- 1 :: n = 0
+- n · (n-1)! :: otherwise
++ 1")
+                 "
+n! =
+\\begin{cases} 1 & n = 0 \\\\ n · (n-1)! & \\text{otherwise} \\end{cases}
++ 1")))
+
+(define-org-call-test "a math block's cases are LaTeX's own, whose & aligns no lines of the block"
+  :call (org-block/math 'latex "
+\\lvert x \\rvert =
+- x :: x ≥ 0
+- -x :: otherwise" nil)
+  :returns "#+begin_export latex
+\\[
+\\lvert x \\rvert =
+\\begin{cases} x & x ≥ 0 \\\\ -x & \\text{otherwise} \\end{cases}
+\\]
+#+end_export")
 
 (define-org-call-test "a math block's “# …” lines are Org comments, which TeX would read as a macro's parameter"
   :call (org-block/math 'latex "

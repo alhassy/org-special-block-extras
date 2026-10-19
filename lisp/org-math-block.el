@@ -116,8 +116,10 @@ An unknown TYPE shows its DESC, else its PATH.")
   (let ((s (make-syntax-table)))
     (modify-syntax-entry ?{ "(}" s)
     (modify-syntax-entry ?} "){" s)
+    ;; A $ delimits maths, as in a hint's $red:x$; in the standard table it is a symbol's, whence “$red” would be one.
+    (modify-syntax-entry ?$ "." s)
     s)
-  "Braces are parentheses, so a {group} is a sexp; as in the standard table, \\ escapes, so \\{ is no brace.")
+  "Braces are parentheses, so a {group} is a sexp; as in the standard table, \\ escapes, so \\{ is no brace; a $ delimits.")
 
 (defconst org--math-sizers
   '("big" "Big" "bigg" "Bigg" "bigl" "bigr" "Bigl" "Bigr" "biggl" "biggr" "Biggl" "Biggr" "middle")
@@ -165,17 +167,22 @@ a word, else one character.  E.g., before the [fn::…] of “a + \\frac{x}{y}[f
 
 ;;;; Markup ---Org's footnotes, links, and emphasis, as LaTeX
 
-(defun org--math-footnotes ()
-  "Make each ATOM[fn::TIP], or ATOM[[tooltip:TIP]], in the buffer a hover of TIP over ATOM, as a graph's node footnote
-is its tooltip; e.g., x[fn::the current element].  A [[tooltip:TIP]] sans description has no marker of its own, so
-it marks the ATOM before it."
+(defun org--math-footnotes (origin)
+  "Make each ATOM[fn::TIP], ATOM[fn:NAME], or ATOM[[tooltip:TIP]], in the buffer a hover of TIP over ATOM, as a graph's
+node footnote is its tooltip; e.g., x[fn::the current element].  A [fn:NAME]'s TIP is its definition, “[fn:NAME] TIP”,
+in the ORIGIN buffer, as in prose; so one long tip may serve many atoms.  A [[tooltip:TIP]] sans description has no
+marker of its own, so it marks the ATOM before it."
   (goto-char (point-min))
-  (while (re-search-forward "\\[fn::\\|\\[\\[tooltip:\\([^]]*\\)\\]\\]" nil t)
+  (while (re-search-forward "\\[fn:[^]:[:space:]]*:\\|\\[fn:\\([^]:[:space:]]+\\)\\]\\|\\[\\[tooltip:\\([^]]*\\)\\]\\]" nil t)
     (let* ((fn-start (match-beginning 0))
-           (link-tip (match-string 1))
-           (tip-end (if link-tip (match-end 0)
+           (name (match-string 1))
+           (link-tip (match-string 2))
+           (tip-end (if (or name link-tip) (match-end 0)
                       (save-excursion (goto-char fn-start) (with-syntax-table org--math-syntax (forward-sexp)) (point))))
-           (tip (string-trim (or link-tip (buffer-substring (point) (1- tip-end)))))
+           (tip (string-trim (cond (link-tip)
+                                   (name (or (with-current-buffer origin (nth 3 (org-footnote-get-definition name)))
+                                             (user-error "math: [fn:%s] has no definition" name)))
+                                   (t (buffer-substring (point) (1- tip-end))))))
            (atom-start (save-excursion (goto-char fn-start) (org--math-atom-start))))
       (when atom-start
         (let ((atom (buffer-substring atom-start fn-start)))
@@ -188,7 +195,7 @@ it marks the ATOM before it."
 A web link's path is no maths, so it is only ever bracketed, [[https://…][…]]; whence https:/ is no TYPE:ATOM."
   (let ((types (regexp-opt (--remove (member it '("http" "https")) (mapcar #'car org-math-links))))
         found)
-    (while (and (not found) (re-search-forward (format "\\_<\\(%s\\):" types) limit t))
+    (while (and (not found) (with-syntax-table org--math-syntax (re-search-forward (format "\\_<\\(%s\\):" types) limit t)))
       (-when-let* ((link (list (match-beginning 0) (match-beginning 1) (match-end 1)))
                    (end (org--math-atom-end)))
         (set-match-data (list (nth 0 link) end (nth 1 link) (nth 2 link)))
@@ -208,13 +215,25 @@ A web link's path is no maths, so it is only ever bracketed, [[https://…][…]
           (goto-char start)
           (insert (funcall (cdr (assoc type org-math-links)) atom nil)))))))
 
+(defconst org--math-section-link-re "\\`\\(?:[*#]\\|id:\\)"
+  "A link to a section: [[*Heading]], [[#custom-id]], or [[id:ID]].")
+
+(defun org--math-section-link (link desc)
+  "(LINK, DESC) ↦ DESC, linking to the section LINK names, as a graph's node does; e.g., “*Folds”, “f” ↦ \\href{*Folds}{f}
+in HTML, \\hyperref[*Folds]{f} in LaTeX, which `org--resolve-section-links' points at the section once it lands.  Sans
+DESC, the heading shows, as text; Markdown's maths has no links, so there DESC alone."
+  (let ((desc (or desc (format "\\text{%s}" (replace-regexp-in-string org--math-section-link-re "" link)))))
+    (cond ((org-export-markdown-p) desc)
+          ((eq org--math-backend 'latex) (format "\\hyperref[%s]{%s}" link desc))
+          (t (format "\\href{%s}{%s}" link desc)))))
+
 (defun org--math-markup (math backend)
   "(MATH, BACKEND) ↦ MATH in LaTeX, sans Org's footnotes, links, and emphasis; e.g., “red:x + *y*” ↦ “{\\color{red}x}
 + \\boldsymbol{y}”."
-  (let ((org--math-backend backend))
+  (let ((org--math-backend backend) (origin (current-buffer)))
     (with-temp-buffer
       (insert math)
-      (org--math-footnotes)
+      (org--math-footnotes origin)
       ;; [[TYPE:PATH][DESC]] and [[TYPE:PATH]]; a DESC may itself hold links, so we go innermost first.
       (goto-char (point-max))
       (while (re-search-backward org-link-bracket-re nil t)
@@ -224,7 +243,9 @@ A web link's path is no maths, so it is only ever bracketed, [[https://…][…]
                (render (cdr (assoc type org-math-links))))
           (delete-region start end)
           (goto-char start)
-          (save-excursion (insert (if render (funcall render path desc) (or desc link))))))
+          (save-excursion (insert (cond ((string-match-p org--math-section-link-re link) (org--math-section-link link desc))
+                                        (render (funcall render path desc))
+                                        (t (or desc link)))))))
       (goto-char (point-min))
       (org--math-plain-links)
       ;; Org's own emphasis: a marker hugs its text, and follows a space, (, {, or ', as in Org's prose; so a = b and
@@ -258,6 +279,30 @@ e.g., “| a | b |⏎| c | d |” ↦ “\\begin{pmatrix} a & b \\\\ c & d \\end
                         (mapconcat (lambda (row) (mapconcat #'string-trim (split-string (string-trim row "[ \t]*|" "|?[ \t]*") "|")
                                                             " & "))
                                    rows " \\\\ ")))))
+    (buffer-string)))
+
+(defconst org--math-case-re "[ \t]*[-+][ \t]+\\(.*?\\)[ \t]+::\\(?:[ \t]+\\(.*?\\)\\)?[ \t]*"
+  "A description item, “- VALUE :: CONDITION”, a case of `org--math-cases'; sans anchors, so lines of them may repeat.")
+
+(defun org--math-cases (math)
+  "MATH ↦ MATH whose each run of description items is a cases environment, on one line: each item's term a value, its
+description that value's condition, as prose when it is only words, such as “otherwise”; e.g.,
+“- 1 :: n = 0⏎- n · (n-1)! :: otherwise” ↦ “\\begin{cases} 1 & n = 0 \\\\ n · (n-1)! & \\text{otherwise} \\end{cases}”.
+As an Org table is a matrix; a line that begins “- x” sans “ :: ” stays maths."
+  (with-temp-buffer
+    (insert math)
+    (goto-char (point-min))
+    (while (re-search-forward (concat "^\\(?:" org--math-case-re "\\(?:\n\\|\\'\\)\\)+") nil t)
+      (let* ((start (match-beginning 0))
+             (cases (--map (progn (string-match (concat "\\`" org--math-case-re "\\'") it)
+                                  (let ((condition (or (match-string 2 it) "")))
+                                    (format "%s & %s" (match-string 1 it)
+                                            (if (string-match-p "\\`[a-zA-Z ,]*[a-zA-Z]\\{2,\\}[a-zA-Z ,]*\\'" condition)
+                                                (format "\\text{%s}" condition)
+                                              condition))))
+                           (split-string (match-string 0) "\n" t))))
+        (delete-region start (point))
+        (insert (format "\\begin{cases} %s \\end{cases}\n" (string-join cases " \\\\ ")))))
     (buffer-string)))
 
 (defconst org--math-tag-re ":tag-\\([^: \t\n]+\\):[ \t]*\\(.*?\\)[ \t]*$"
@@ -590,9 +635,10 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
   (let ((org--math-backend backend))
     (pcase-let* ((`(,definitions . ,math)
                   (org--math-split-definitions
-                   (org--math-markup (org--math-tags (org--math-hints (org--math-tables (org--math-uncomment raw) matrix)
-                                                                      (eq hints 'between)))
-                                     backend)))
+                   (org--math-markup
+                    (org--math-tags (org--math-hints (org--math-cases (org--math-tables (org--math-uncomment raw) matrix))
+                                                     (eq hints 'between)))
+                    backend)))
                  ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                  (math (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" math t t))
                  (marks (org--math-top-level-marks math))
@@ -679,9 +725,13 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
   delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
   [[color:#ff0066][…]], highlight:, eqref:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
 + ATOM[fn::TIP], or ATOM[[tooltip:TIP]], is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
-  tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.
+  tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.  ATOM[fn:NAME]'s TIP is its “[fn:NAME] TIP”
+  definition, elsewhere in the buffer; so one long tip may serve many atoms.
++ A section link, [[*Heading][f]], [[#custom-id][f]], or [[id:ID][f]], links f to that section, as a graph's node does.
 + *bold* /italic/ _underline_ +cancel+ =texttt= ~mathtt~, when the markers hug their text, as in Org's prose.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
++ A description list, “- VALUE :: CONDITION” lines, is a cases environment; a CONDITION of mere words, such as
+  otherwise, is prose.
 + A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[eqref:NAME]] cites; NUMBERED numbers the rest.
   A block's “#+name: NAME” labels its last line, so [[eqref:NAME]] cites it too; it is tagged NAME when unnumbered.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
