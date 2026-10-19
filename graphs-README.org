@@ -158,7 +158,7 @@ Lisp -> lam [ label="inspired by" ];
 #+end_src
 
 - Two arcs between the same nodes are just two items: ~server~ above is one node, reached twice.
-- The child may be a link to a node declared elsewhere: ~+ inspired by :: [[lam]]~ arcs to ~λ-calculus~.
+- The child may be a link to a node declared elsewhere: above, ~inspired by~'s child ~[[lam]]~ arcs to ~λ-calculus~.
 - The tag may be marked up, as ~/retry/~ is; it is then an HTML-like label.
 - It is the terse spelling of ~| :edge.label | request |~; an explicit ~:edge.label~ row wins.
 - A top-level item has no arc into it, so a tag there is an error.
