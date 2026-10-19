@@ -576,7 +576,10 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 (deftest "a math block's :hints may be folded, so a page's reader clicks to see each; LaTeX, sans clicks, shows them"
   (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}")
                           (org-block/math 'html "x ={ h } y" nil :hints '(between folded))))
-  (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}{{\\color{teal} \\langle")
+  ;; Folding hides the whole hint, its format's tall bracket too; the fold is the format about a lone “…”.
+  (should (string-match-p (regexp-quote (concat "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}"
+                                                "{\\class{osbe-hint-body}{{\\color{teal} \\langle \\text{h} \\rangle}}"
+                                                "\\class{osbe-hint-fold}{{\\color{teal} \\langle \\text{…} \\rangle}}}"))
                           (org-block/math 'html "x ={ h } y" nil :hints '(between "{\\color{teal} \\langle %s \\rangle}" folded))))
   (should (string-match-p (regexp-quote "\\text{h}") (org-block/math 'latex "x ={ h } y" nil :hints '(between folded)))))
 

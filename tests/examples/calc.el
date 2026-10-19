@@ -22,17 +22,20 @@
 #+end_math"
   :html "\\begin{align*}
 &amp; x
-\\\\ = &amp; \\quad \\class{tooltip osbe-tip-hint osbe-hint}{{\\color[RGB]{128,0,0} \\left[
-\\class{osbe-hint-body}{\\begin{array}{@{}l@{}} \\text{Explanation of why $x \\;=\\; y$.} \\\\
-\\text{Actually, let me explain:} \\\\ \\begin{aligned}[t] &amp; x \\\\ = &amp; \\quad \\class{tooltip
-osbe-tip-hint osbe-hint}{{\\color[RGB]{128,0,0} \\left[ \\class{osbe-hint-body}{\\text{hint
-1}}\\class{osbe-hint-fold}{\\text{…}} \\right.}} \\\\ &amp; x′ \\\\ = &amp; \\quad \\class{tooltip
-osbe-tip-hint osbe-hint}{{\\color[RGB]{128,0,0} \\left[ \\class{osbe-hint-body}{\\text{hint
-2}}\\class{osbe-hint-fold}{\\text{…}} \\right.}} \\\\ &amp; y \\end{aligned} \\\\ \\text{Words may follow a
-nested calculation.} \\end{array}}\\class{osbe-hint-fold}{\\text{…}} \\right.}} \\notag \\\\ &amp; y
-\\\\ ≤ &amp; \\quad \\class{tooltip osbe-tip-hint osbe-hint}{{\\color[RGB]{128,0,0} \\left[
-\\class{osbe-hint-body}{\\text{Explanation of why $y \\;\\leq\\; z$}}\\class{osbe-hint-fold}{\\text{…}}
-\\right.}} \\notag \\\\ &amp; z
+\\\\ = &amp; \\quad \\class{tooltip osbe-tip-hint
+osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\begin{array}{@{}l@{}}
+\\text{Explanation of why $x \\;=\\; y$.} \\\\ \\text{Actually, let me explain:} \\\\ \\begin{aligned}[t]
+&amp; x \\\\ = &amp; \\quad \\class{tooltip osbe-tip-hint
+osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\text{hint 1}
+\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\\\ &amp; x′ \\\\ =
+&amp; \\quad \\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0}
+\\left[ \\text{hint 2} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…}
+\\right.}}} \\\\ &amp; y \\end{aligned} \\\\ \\text{Words may follow a nested calculation.} \\end{array}
+\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\notag \\\\ &amp; y
+\\\\ ≤ &amp; \\quad \\class{tooltip osbe-tip-hint
+osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\text{Explanation of why $y \\;\\leq\\;
+z$} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\notag \\\\
+&amp; z
 \\end{align*}"
   :latex "\\begin{align*}
 & x

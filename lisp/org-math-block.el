@@ -423,13 +423,14 @@ sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,
   (let ((format (format "%s" (or org--math-hint-format
                                  (if between (format "{\\color%s \\left[ %%s \\right.}" (org--math-color "#800000")) "%s")))))
     (cond ((equal format "none") "")
-          ;; In HTML, a click folds the hint to “…”, within its format, as TAB does in Emacs; its tooltip says so.  The
+          ;; In HTML, a click folds the hint to “…”, as TAB does in Emacs; its tooltip says so.  The whole hint folds,
+          ;; its format too, whose tall bracket would else keep its room; the fold is the format about a lone “…”.  The
           ;; page's head, which serves these, the block asks for: we are within a temporary buffer, whose buffer-local
           ;; requests are lost.
           ((and (eq org--math-backend 'html) (not (org-export-markdown-p)))
-           (format "\\class{tooltip osbe-tip-hint osbe-hint%s}{%s}" (if org--math-hint-folded " osbe-folded" "")
-                   (string-replace "%s" (format "\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{\\text{…}}" hint)
-                                   format)))
+           (format "\\class{tooltip osbe-tip-hint osbe-hint%s}{\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{%s}}"
+                   (if org--math-hint-folded " osbe-folded" "")
+                   (string-replace "%s" hint format) (string-replace "%s" "\\text{…}" format)))
           (t (string-replace "%s" hint format)))))
 
 (defun org--math-hints (math &optional between nested)
