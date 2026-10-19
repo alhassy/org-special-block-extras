@@ -142,11 +142,6 @@ LaTeX!
 </tr>
 
 <tr>
-<td class="org-left"><code>octoicon:</code></td>
-<td class="org-left">GitHub-style icons &#x2014; for styling and linking like a pro.</td>
-</tr>
-
-<tr>
 <td class="org-left"><code>&lt;&lt;X&gt;&gt;</code></td>
 <td class="org-left">Permalinks &#x2014; Org&rsquo;s own targets, made a visible 🔗 in HTML.</td>
 </tr>
@@ -261,7 +256,7 @@ The following example showcases the prominent features of this library.
 
     #+html: <br>
     #+begin_box
-    octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+    Note that kbd:C-x_C-e evaluates a Lisp form!
     #+end_box
 
     #+LATEX_HEADER: \usepackage{multicol}

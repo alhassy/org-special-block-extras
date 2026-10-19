@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; Built-in link types: melpa, kbd, octoicon, badge, tweet, reddit, github-*, twitter-follow, doc; the
+;; Built-in link types: melpa, kbd, badge, tweet, reddit, github-*, doc; the
 ;; documentation block; and the #+html_export_style: and #+print_glossary: keywords.  In HTML, each <<X>> exports
 ;; as a permalink to itself, and each mention of a <<<X>>> as a tooltip of X's paragraph.
 ;; Also houses the org-docs-* glossary system and `org--html-tooltip'.
@@ -203,79 +203,6 @@ This always returns nil, so it adds no face itself."
         (remove-text-properties start (min end (point-max)) '(invisible nil)))))
   nil)
 
-;;;;;; Octoicon
-
-(defvar
-  org--supported-octoicons
-  (--map (list (car it) (s-collapse-whitespace (cadr it)))
-   (-partition 2
-              '(
-                home
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0
-   1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12
-   14z\"></path></svg>"
-
-                link
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
-   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
-   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
-   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
-   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
-   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"></path></svg>"
-
-                mail
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
-   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45
-   1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1
-   5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3
-   4-3v6z\"></path></svg>"
-
-                report
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4
-   4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6
-   6h2v2H7V8zm0-5h2v4H7V3z\"></path></svg>"
-
-                tag
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 15
-   16\" width=\"15\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1
-   3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41
-   0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38
-   7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59
-   1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73
-   4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z\"></path></svg>"
-
-                clock
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
-   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56
-   5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7
-   5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14
-   7-7-3.14-7-7-7z\"></path></svg>")))
-
-  "An association list of supported OctoIcons, their SVGs on a single line.
-
-Usage: (cadr (assoc 'ICON org--supported-octoicons))")
-
-(defun org--octoicon (name)
-  "The SVG of the OctoIcon NAME, a symbol; e.g., `link'.  See `org--supported-octoicons'."
-  (cadr (assoc name org--supported-octoicons)))
-
-(org-deflink octoicon
-  "Show an OctoIcon; one of the `org--supported-octoicons', such as home, link, or mail."
-  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-  :export (progn
-            (unless (org--octoicon (intern o-label))
-              (error "octoicon:%s ⇒ This label is not supported; try one of %s" o-label (mapcar #'car org--supported-octoicons)))
-            (if (equal o-backend 'html) (org--octoicon (intern o-label)) "")))
-
 ;;;;;; Targets ---each <<X>> a permalink to itself
 
 (defun org--target-readable-reference (reference datum info &optional named-only)
@@ -285,12 +212,16 @@ as REFERENCE has DATUM's id, under INFO and NAMED-ONLY.  Links to the target ask
       (replace-regexp-in-string "[[:space:]\"]+" "-" (org-element-property :value datum))
     (funcall reference datum info named-only)))
 
+(defconst org--permalink-svg
+  "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\" d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"></path></svg>"
+  "GitHub's “link” OctoIcon, which each <<X>> permalink shows.")
+
 (defun org--target-as-permalink (target _contents info)
   "<<X>> ↦ <a class=\"anchor\" id=\"X\" href=\"#X\">🔗</a>, a permalink to itself, under INFO; Org's own TARGET is a
 bare <a id=\"orgNNNNNNN\"></a>, which a reader can neither see nor click."
   (let ((id (org-html--reference target info)))
     (format "<a class=\"anchor\" id=\"%s\" href=\"#%s\" aria-label=\"Permalink to %s\">%s</a>"
-            id id id (org--octoicon 'link))))
+            id id id org--permalink-svg)))
 
 (defvar org--docs) ;; The glossary, below.
 
@@ -417,8 +348,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
               ("github/stars" "https://github.com/%s")      ; Its Star button; /stars is no page
               ("github/watchers" "https://github.com/%s")   ; Its Watch button; /watchers needs a login
               ("github/followers" "https://www.github.com/%s?tab=followers")
-              ("github/forks" "https://www.github.com/%s/fork")
-              ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
+              ("github/forks" "https://www.github.com/%s/fork"))
          for name′ = (or name (s-replace "/" "-" social))
          do (eval `(org-make-badge ,name′ ,social ,url)))
 
@@ -742,43 +672,6 @@ they are defined; see `org--docs-prepare'."
                 (add-to-list 'org--docs entry))
               ;; Should the special block show something upon export?
               (if show (org--blockcall box name :background-color color raw-contents) ""))
-
-;;;;;; Package docs ---a table of what a package defines
-
-(defun org--package-docs (feature)
-  "FEATURE ↦ ((NAME KIND GIST) …) for its public definitions, alphabetically; public meaning no “--” in NAME.
-KIND is one of macro, command, function, user option, or variable; GIST is the docstring's first line, else nil.
-  \\='org-deflink  ↦  ((org-deflink \"macro\" \"Make a new Org-link NAME that exports using form BODY.\") …)"
-  (require feature)
-  (let ((entries (cdr (--first (member (cons 'provide feature) (cdr it)) load-history)))
-        (gist (lambda (docs) (-some--> docs (car (split-string it "\n")) (unless (string-empty-p it) it)))))
-    (thread-last
-      (cl-loop for entry in entries
-               for name = (if (symbolp entry) entry (and (eq (car-safe entry) 'defun) (cdr entry)))
-               when (and name (not (string-match-p "--" (symbol-name name))))
-               collect (if (symbolp entry)
-                           (list name (if (custom-variable-p name) "user option" "variable")
-                                 (funcall gist (documentation-property name 'variable-documentation t)))
-                         (list name (cond ((macrop name) "macro") ((commandp name) "command") (t "function"))
-                               (funcall gist (ignore-errors (documentation name t))))))
-      (-uniq)
-      (--sort (string< (car it) (car other))))))
-
-(org-defblock package-docs (feature nil :link nil :tag nil :manual "https://alhassy.com/org-special-block-extras#what-does-it-do")
-  "A table of the public functions, macros, and variables that FEATURE defines; each documented name is a doc: link,
-so that its full documentation is a tooltip.
-
-  #+begin_package-docs org-deflink
-  #+end_package-docs"
-  (org-parse
-   (concat "| Name | Kind | Gist |\n|-\n"
-           (mapconcat (-lambda ((name kind gist))
-                        (format "| %s | %s | %s |"
-                                (if gist (format "[[doc:%s][~%s~]]" name name) (format "~%s~" name))
-                                kind
-                                ;; A ‘|’ would end the cell early.
-                                (replace-regexp-in-string "|" "\\\\vert{}" (or gist "") t t)))
-                      (org--package-docs (intern feature)) "\n"))))
 
 (provide 'org-links)
 ;;; org-links.el ends here

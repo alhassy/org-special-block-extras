@@ -170,28 +170,6 @@ Save with the menu, often.")))
     (org--undisplay (point-min) (point-max))
     (should (equal (get-text-property 1 'display) '(space :relative-width 1)))))
 
-;;; package-docs
-
-(deftest "`org--package-docs' lists a feature's public definitions, alphabetically, with their kinds and gists" [package-docs]
-  (should (equal (assoc 'org-callouts (org--package-docs 'org-callout-blocks))
-                 '(org-callouts "variable" "The callout blocks, as (NAME COLOUR ICON PURPOSE) entries; the colours and purposes are GitHub's.")))
-  (should (equal (assoc 'org-deflink (org--package-docs 'org-deflink))
-                 '(org-deflink "macro" "Make a new Org-link NAME that exports using form BODY.")))
-  (should (equal (assoc 'org-this-link-next (org--package-docs 'org-deflink))
-                 '(org-this-link-next "command" "Go to the next Org link that is similar to the link at point.")))
-  ;; Private names, those with “--”, are omitted.
-  (should-not (assoc 'org--callout (org--package-docs 'org-callout-blocks)))
-  (let ((names (mapcar #'car (org--package-docs 'org-deflink))))
-    (should (equal names (sort (copy-sequence names) #'string<)))))
-
-(deftest "a package-docs block exports a table whose names are doc: links to their documentation" [package-docs]
-  (let ((html (org-export-string "
-#+begin_package-docs org-callout-blocks
-#+end_package-docs")))
-    (should (s-contains? "<th scope=\"col\" class=\"org-left\">Name</th>" html))
-    (should (string-match-p "<td class=\"org-left\"><abbr class=\"tooltip\" tabindex=\"0\"><code>org-callouts</code><template><pre>The callout blocks,[^<]*</pre></template></abbr></td>
-<td class=\"org-left\">variable</td>" html))))
-
 (deftest "the tooltips' CSS and JS are inlined in the HTML head, so a page fetches nothing for them; issue #53" [tooltip]
   (should (s-contains-p ".tooltip-box" org--tooltip-html-head))
   (should (s-contains-p "addEventListener('click'" org--tooltip-html-head))

@@ -1057,7 +1057,7 @@ this, we use Org's link mechanism./
   Similarly, Org's own target ~<<usefulness-of-links>>~ becomes:
   <<usefulness-of-links>>. When you click on it, the URL of the webpage
   changes: It is a local anchor to a possibly interesting location in your
-  article. Similarly, ~octoicon:home~ becomes octoicon:home; doc:org-link/octoicon.
+  article.
 
   More aesthetically, =<badge: Emacs | is awesome | blue |
   https://www.google.com/search?q=hello%20world | gnu-emacs>= exports to <badge:
@@ -3444,7 +3444,6 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
   | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
   | =highlight=                 | Colour a paragraph's background, rather than its text.                                |
-  | =package-docs=              | A table of a package's public API, each name a =doc:= tooltip.                        |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
   # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
 
@@ -3461,7 +3460,6 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
     | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                     |
     | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
     | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
-    | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                      |
     | =<<X>>=             | Permalinks --- Org's own targets, made a visible 🔗 in HTML.                                      |
     | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                         |
     
@@ -4215,14 +4213,6 @@ from∘to m = {! try it! }
   A radio target is a term too: in =A <<<monoid>>> is a set with an associative operation
   and a unit.=, the target names the term and its paragraph defines it; so =doc:monoid=
   cites it, in the same file or, from a library, in any other.
-
-  Finally, a package's whole API makes a glossary of its own: the =package-docs= block
-  exports a table of the public functions, macros, and variables that a feature defines,
-  each name a =doc:𝒳= link whose tooltip is its documentation.
-  #+begin_example
-,#+begin_package-docs org-deflink
-,#+end_package-docs
-  #+end_example
 
 ** Parallel ---/Place ideas side-by-side, possibly with a separator/
   :PROPERTIES:
@@ -6114,9 +6104,9 @@ Completely lost one's train of thought…
 
  #+bind: org-hide-editor-comments nil
 
-* Permalinks ---Org's own =<<X>>=, made visible--- & OctoIcons
+* Permalinks ---Org's own =<<X>>=, made visible---
   :PROPERTIES:
-  :CUSTOM_ID: Permalinks-OctoIcons
+  :CUSTOM_ID: Permalinks
   :END:
 
 Sometimes we want to point explicitly at a particular location in an article, such as within a =#+begin_details=
@@ -6129,7 +6119,7 @@ block.  Org already has two kinds of /target/ for this; we merely make the first
   in the buffer becomes a link back to it, sans any =[[⋯]]=.
 
 With =org-special-block-extras-mode= on, in HTML:
-+ =<<X>>= exports as a clickable octoicon:link, a permalink to itself ---it looks and behaves like the links GitHub
++ =<<X>>= exports as a clickable 🔗, a permalink to itself ---it looks and behaves like the links GitHub
   generates for a heading.  Click it, and the URL ends in =#X=, ready for a reader to copy.  The id is =X= itself,
   its whitespace as dashes: =<<Euler's lemma>>= ↦ =#Euler's-lemma=, which =[[Euler's lemma]]= links to as well.
 + =<<<X>>>= looks just as Org renders it; only its id becomes =X= too, so =#monoid= rather than =#orgNNNNNNN=.
@@ -6137,102 +6127,9 @@ With =org-special-block-extras-mode= on, in HTML:
 
 Two targets whose names differ only in whitespace, such as =<<a b>>= and =<<a-b>>=, share an id; we name them apart.
 
-Likewise, get OctoIcons with the syntax =octoicon:𝒳= where =𝒳= is one of =home,
-link, mail, report, tag, clock=: octoicon:home, octoicon:link, octoicon:mail,
-octoicon:report, octoicon:tag, octoicon:clock.
-
-- Within =octoicon:𝒳= the label =𝒳= determines the OctoIcon shown.
-  + Descriptions, as in =[[octoicon:label][description]]=, are ignored.
-- Besides the HTML backend, such links are silently omitted.
-
-#+begin_details Six OctoIcons and Implementation
-The following SVGs are obtained from: https://primer.style/octicons/
-
-#+begin_src emacs-lisp
-(defvar
- org--supported-octoicons
- (-partition 2
- '(
-   home
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M16 9l-3-3V2h-2v2L8 1 0 9h2l1 5c0 .55.45 1 1 1h8c.55 0
-   1-.45 1-1l1-5h2zm-4 5H9v-4H7v4H4L2.81 7.69 8 2.5l5.19 5.19L12
-   14z\"></path></svg>"
-
-   link
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69
-   3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10
-   5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0
-   2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5
-   0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55
-   13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z\"></path></svg>"
-
-   mail
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
-   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M0 4v8c0 .55.45 1 1 1h12c.55 0 1-.45
-   1-1V4c0-.55-.45-1-1-1H1c-.55 0-1 .45-1 1zm13 0L7 9 1 4h12zM1
-   5.5l4 3-4 3v-6zM2 12l3.5-3L7 10.5 8.5 9l3.5 3H2zm11-.5l-4-3
-   4-3v6z\"></path></svg>"
-
-   report
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16
-   16\" width=\"16\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M0 2a1 1 0 011-1h14a1 1 0 011 1v9a1 1 0 01-1 1H7l-4
-   4v-4H1a1 1 0 01-1-1V2zm1 0h14v9H6.5L4 13.5V11H1V2zm6
-   6h2v2H7V8zm0-5h2v4H7V3z\"></path></svg>"
-
-   tag
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 15
-   16\" width=\"15\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M7.73 1.73C7.26 1.26 6.62 1 5.96 1H3.5C2.13 1 1 2.13 1
-   3.5v2.47c0 .66.27 1.3.73 1.77l6.06 6.06c.39.39 1.02.39 1.41
-   0l4.59-4.59a.996.996 0 000-1.41L7.73 1.73zM2.38
-   7.09c-.31-.3-.47-.7-.47-1.13V3.5c0-.88.72-1.59
-   1.59-1.59h2.47c.42 0 .83.16 1.13.47l6.14 6.13-4.73
-   4.73-6.13-6.15zM3.01 3h2v2H3V3h.01z\"></path></svg>"
-
-   clock
-   "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 14
-   16\" width=\"14\" height=\"16\"><path fill-rule=\"evenodd\"
-   d=\"M8 8h3v2H7c-.55 0-1-.45-1-1V4h2v4zM7 2.3c3.14 0 5.7 2.56
-   5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 011.3 8c0-3.14 2.56-5.7
-   5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14
-   7-7-3.14-7-7-7z\"></path></svg>"))
-
-"An association list of supported OctoIcons.
-
-Usage: (cadr (assoc 'ICON org--supported-octoicons))")
-#+end_src
-
-#+begin_src emacs-lisp
-(org-deflink octoicon
-  "Show an OctoIcon: home, link, mail, report, tag, clock"
-  [:help-echo "Show an OctoIcon: home, link, mail, report, tag, clock"]
-  (unless (member (intern o-label) '(home link mail report tag clock))
-    (error "octoicon:%s ⇒ This label is not supported!" o-label))
-  (if (not (equal o-backend 'html))
-      ""
-    (s-collapse-whitespace
-     (cadr (assoc (intern o-label)
-                  org--supported-octoicons)))))
-
-#+end_src
-
-
 # [[color:orange][Going forward,]]
 Going forward, we could give every heading such a permalink too, producing clickable
 org-headings similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
-
-# [[color:orange][Moreover]],
-Moreover, it may be useful to have =octoicon:𝒳|url= so the resulting
-OctoIcon is optionally a link to the given =url=. Another direction
-would be to support more, if not all, the possible OctoIcons.
-
-#+end_details
 
 #+html: <br>
 #+begin_org-demo Example :source-color custard :result-color custard
@@ -6429,8 +6326,6 @@ github-forks:user-name/repository-name
 
 github-followers:user-name
 
-twitter-follow:user-name
-
 tweet:url
 #+end_example
 
@@ -6601,7 +6496,6 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
             ("github/followers"  "https://www.github.com/%s?tab=followers")
             ("github/forks"      "https://www.github.com/%s/fork")
             ("github"            "https://www.github.com/%s")
-            ("twitter/follow"    "https://twitter.com/intent/follow?screen_name=%s")
             ("twitter/url"
              ,(format
                "https://twitter.com/intent/tweet?text=%s:&url=%%s"
@@ -6676,19 +6570,12 @@ A few more in one, convoluted, go.
              ("github/stars" "https://github.com/%s")      ; Its Star button; /stars is no page
              ("github/watchers" "https://github.com/%s")   ; Its Watch button; /watchers needs a login
              ("github/followers" "https://www.github.com/%s?tab=followers")
-             ("github/forks" "https://www.github.com/%s/fork")
-             ("twitter/follow" "https://twitter.com/intent/follow?screen_name=%s"))
+             ("github/forks" "https://www.github.com/%s/fork"))
          for name′ = (or name (s-replace "/" "-" social))
          do (eval `(org-make-badge ,name′ ,social ,url)))
 #+end_src
 :OLD:
 #+begin_src emacs-lisp :tangle no
-(org-make-badge
- "twitter-follow"
- "twitter/follow"
- "https://twitter.com/intent/follow?screen_name=%s")
-
-
 (org-make-badge
  "reddit" "reddit/subreddit-subscribers" "https://www.reddit.com/r/%s")
 
@@ -6738,7 +6625,6 @@ Here are some examples.
 
 + My profile:
   github-followers:alhassy
-  twitter-follow:musa314
 
 ** Example Colours
    :PROPERTIES:
@@ -8362,7 +8248,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Editorial Comments     | [[doc:org-block/remark][remark]]                                 |                     |
 | Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]] |                     |
 | Keystrokes             |                                                                  | ~kbd~                 |
-| OctoIcons & Permalinks |                                                                  | ~octoicon~, ~<<X>>~     |
+| Permalinks             |                                                                  | ~<<X>>~                 |
 | Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~               |
 | Marginal remarks       | [[doc:org-block/margin][margin]]                                 |                     |
 | Badges                 | [[doc:org-make-badge][badge]]                                    |                     |
@@ -8371,7 +8257,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 Other fun stuff: [[doc:org-block/solution][solution]], [[doc:org-block/org-demo][org-demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]], [[doc:org-block/tree][tree]] :grin:
 
 There are also the social badge links:
-=reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars, github-watchers=, =twitter-follow=, and =tweet=.
+=reddit-subscribe-to=, =github-followers=, =github-forks=, =github-stars, github-watchers=, and =tweet=.
 
 # [[color:orange][Going forward,]] it'd be nice to a centralised ‘user manual’ which may be
 # consulted rather than reading the literate implementation above.
@@ -8487,7 +8373,7 @@ That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
 
 #+html: <br>
 ,#+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+Note that kbd:C-x_C-e evaluates a Lisp form!
 ,#+end_box
 
 /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does
@@ -8538,7 +8424,7 @@ That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
 
 ,#+html: <br>
 ,#+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+Note that kbd:C-x_C-e evaluates a Lisp form!
 ,#+end_box
 
 /Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
@@ -8641,15 +8527,13 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
          (* anything)
          "</details>"))
 
-(deftest "It has a title-less green box starting with an octoicon & kbd links have tooltips"
-  [mwe box octoicon kbd]
+(deftest "It has a title-less green box & kbd links have tooltips"
+  [mwe box kbd]
   :expected-result :failed ;; FIXME The MWE has been updated, and more tests need to be written.
   (⇝ mwe
      "<div style=\"padding: 1em;"
      (* anything)
      "<h3></h3>"
-     (* anything)
-     "<svg" ;; octoicon:report
      (* anything)
      "Note that <abbr class=\"tooltip\""
      (* anything)
@@ -8722,7 +8606,7 @@ That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
 
 #+html: <br>
 #+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+Note that kbd:C-x_C-e evaluates a Lisp form!
 #+end_box
 
 /Allah[[margin:][The God of Abraham; known as Elohim in the Bible]] does

@@ -45,7 +45,7 @@ That is, [[color:magenta][we can ((apply)) a function to a list of arguments!]]
 
 #+html: <br>
 #+begin_box
-octoicon:report Note that kbd:C-x_C-e evaluates a Lisp form!
+Note that kbd:C-x_C-e evaluates a Lisp form!
 #+end_box
 
 /Allah [[margin:][The God of Abraham; known as Elohim in the Bible]] does not burden a soul
