@@ -28,8 +28,9 @@
 
 ;;;;;; solution
 (org-defblock solution
-              (title "Solution" reprimand "Did you actually try? Maybe see the ‘hints’ above!"
-                     really "Solution, for real" :manual "#Boxed-Text" &context raw-contents)
+              (&optional (title "Solution")
+               &key (reprimand "Did you actually try? Maybe see the ‘hints’ above!") (really "Solution, for real")
+               &allow-other-keys :manual "#Boxed-Text" &context raw-contents)
               "Show the answers to a problem, but with a reprimand in case no attempt was made."
               (org-thread-blockcall raw-contents
                                     (details really :title-color "red")

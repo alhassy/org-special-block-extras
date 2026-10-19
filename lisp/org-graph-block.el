@@ -399,8 +399,8 @@ linked node's label--- vanish, lest the browser's native tooltips compete.
             (maphash (lambda (key tip) (push (concat "\n" (org--tooltip-template key tip)) templates)) tips)
             (apply #'concat (nreverse templates)))))
 
-(org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode :manual "#Graphs"
-                    &context backend raw-contents args anchor)
+(org-defblock graph (&optional main-arg &key file svg &allow-other-keys :edit-indirect-mode org-graph-edit-mode
+                    :manual "#Graphs" &context backend raw-contents args anchor)
   "Render an Org list + tables as a Graphviz dot graph.
 
 MAIN-ARG is the graph's title, its label.

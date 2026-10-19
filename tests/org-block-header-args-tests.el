@@ -6,12 +6,12 @@
 ;;; ⟨1⟩ org-babel-default-header-args:NAME, in Lisp
 
 (deftest "org-babel-default-header-args:NAME overrides a block's default when no local value is passed" [header-args]
-  (using (org-defblock test-header-args-block (main-arg "" color "black") "" color)
+  (using (org-defblock test-header-args-block (&optional (main-arg "") &key (color "black")) "" color)
     (dlet ((org-babel-default-header-args:test-header-args-block '((:color . "purple"))))
       (should (string-match-p "purple" (org-block/test-header-args-block 'html "" nil))))))
 
 (deftest "`org-defblock' takes its main argument's default, by its name, from org-babel-default-header-args:NAME" [header-args]
-  (using (org-defblock greeting (name "user" punct "!") "Greeting block" (format "Hello, %s%s" name punct))
+  (using (org-defblock greeting (&optional (name "user") &key (punct "!")) "Greeting block" (format "Hello, %s%s" name punct))
     (dlet ((org-babel-default-header-args:greeting '((:name . "dev") (:punct . "!×4"))))
       (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
                        (lf-string "#+begin_export test-backend
@@ -19,7 +19,7 @@
                                    #+end_export"))))))
 
 (deftest "`org-defblock-only' takes its defaults from org-babel-default-header-args:NAME too" [header-args]
-  (using (org-defblock-only greeting (name "user" punct "!") "Greeting block" (format "Hello, %s%s" name punct))
+  (using (org-defblock-only greeting (&optional (name "user") &key (punct "!")) "Greeting block" (format "Hello, %s%s" name punct))
     (dlet ((org-babel-default-header-args:greeting '((:name . "dev") (:punct . "!×4"))))
       (should (string= (org-block/greeting 'test-backend "some content" nil :punct nil)
                        (lf-string "#+begin_export test-backend

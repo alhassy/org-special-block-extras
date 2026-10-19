@@ -131,17 +131,12 @@
     (should (eq #'org-deftag/test-hooked (org-deftag test-hooked () "Do nothing." nil)))
     (should (memq #'org-deftag/test-hooked org-export-before-parsing-functions))))
 
-;;; Arglist styles: cl-defun-style with defaults and &key, and the flattened convenience
+;;; Arglists: cl-defun-style, with defaults and &key
 
 (org-deftag test-cl (&optional (color "pink") size &key (note "none"))
   "Replace the heading with COLOR, SIZE, and NOTE."
   (insert (format "[%s | %s | %s]" color size note)))
 (remove-hook 'org-export-before-parsing-functions #'org-deftag/test-cl)
-
-(org-deftag test-flat (color "pink" size "M")
-  "Replace the heading with COLOR and SIZE."
-  (insert (format "[%s | %s]" color size)))
-(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-flat)
 
 (defun org-test--run-tag (tag input)
   "(TAG, INPUT) ↦ the Org INPUT after running the tag function TAG over it, for HTML."
@@ -164,17 +159,12 @@
   :call (org-test--run-tag #'org-deftag/test-cl "* Heading :test-cl_red_big_ignored:")
   :returns "[red | big | none]")
 
-(define-org-call-test "flattened org-deftag binds name-default pairs positionally, with defaults"
-  :call (org-test--run-tag #'org-deftag/test-flat "* Heading :test-flat_red:")
-  :returns "[red | M]")
-
 (define-org-call-test "org--deftag-parse-args reads cl-defun-style arglists"
   :call (org--deftag-parse-args '(&optional (color "pink") size &key note))
   :returns ((color "pink" t) (size nil t) (note nil nil)))
 
-(define-org-call-test "org--deftag-parse-args reads flattened arglists as positional name-default pairs"
-  :call (org--deftag-parse-args '(color "pink" size nil))
-  :returns ((color "pink" t) (size nil t)))
+(deftest "org--deftag-parse-args rejects a flattened arglist"
+  (should-error (org--deftag-parse-args '(color "pink" size nil))))
 
 (deftest "org--deftag-parse-args rejects arguments before &optional or &key"
   (should-error (org--deftag-parse-args '(color &optional size))))

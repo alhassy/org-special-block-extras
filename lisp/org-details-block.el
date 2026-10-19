@@ -26,8 +26,9 @@
 
 ;;;;;; details
 
-(org-defblock details (title "Details" background-color "#e5f5e5" title-color "green"
-                              :latex-head ("xcolor" "tcolorbox") :manual "#Folded-Details" &context backend contents)
+(org-defblock details (&optional (title "Details") &key (background-color "#e5f5e5") (title-color "green")
+                      &allow-other-keys :latex-head ("xcolor" "tcolorbox") :manual "#Folded-Details"
+                      &context backend contents)
               "Enclose contents in a folded up box, for HTML.
 
 For LaTeX, this is just a boring, but centered, box.
@@ -55,14 +56,14 @@ In HTML, we show folded, details, regions with a nice greenish colour."
 
 ;;;;;; Toggle all details blocks
 
-(org-deflink toggle-details (_label &optional (description "Unfold all details"))
+(org-deflink toggle-details (_label &optional (description "Unfold all details") backend)
   "A button, labelled DESCRIPTION, that unfolds every <details> on the page; pressed again, it folds them all.
 Only for HTML; elsewhere, nothing.
 
   [[toggle-details:][Show me everything]]"
   :face '(:box t)
   :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-  :export (if (not (equal o-backend 'html)) ""
+  :export (if (not (equal backend 'html)) ""
             (format (concat "<button onclick=\"let all = [...document.querySelectorAll('details')], open = all.some(d => !d.open);"
                             " all.forEach(d => d.open = open);\">%s</button>")
                     description)))

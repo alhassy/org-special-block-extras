@@ -2,7 +2,7 @@
 
 For example,
 
-     (org-defblock shout ()
+     (org-defblock shout (&context contents)
         "Say things in uppercase"
         (upcase contents))
 

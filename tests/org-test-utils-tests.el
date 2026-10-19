@@ -10,7 +10,7 @@
   ;; No pollution of global namespace
   ;; (should-not (fboundp 'org-block/shouting))
   ;; (should-not (fboundp 'org-link/shouting))
-  (exporting "shouting:hello" :to ascii :using (org-defblock shouting (wat) "docs" (upcase wat)) :equals "HELLO\n")
+  (exporting "shouting:hello" :to ascii :using (org-defblock shouting (&optional wat) "docs" (upcase wat)) :equals "HELLO\n")
   (should-not (fboundp 'org-block/shouting))
   (should-not (fboundp 'org-link/shouting))
 
@@ -20,14 +20,14 @@
   ;; :using may be a (singleton) list
   (exporting "shouting:hello"
     :to ascii
-    :using ((org-defblock shouting (wat) "docs" (upcase wat)))
+    :using ((org-defblock shouting (&optional wat) "docs" (upcase wat)))
     :equals "HELLO\n")
 
   ;; :using may be a multi-element list
   (exporting "shout:hello quiet:WORLD"
     :to ascii
-    :using ((org-defblock shout (wat) "docs" (upcase wat))
-            (org-defblock quiet (wat) "docs" (downcase wat)))
+    :using ((org-defblock shout (&optional wat) "docs" (upcase wat))
+            (org-defblock quiet (&optional wat) "docs" (downcase wat)))
     :equals "HELLO world\n"))
 
 (deftest "`org-test--fill' breaks a long line at a space, never inside a tag nor a <pre>" [fill]

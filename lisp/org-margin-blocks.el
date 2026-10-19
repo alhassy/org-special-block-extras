@@ -47,15 +47,16 @@ as an argument of \\marginpar."
          (append (list (or step "")) (unless sans-mark (list marker)) (list width color marker contents))))
 
 (org-defblock margin
-              (marker nil
-                      color "gray!80"
-                      counter "footnote"
-                      ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
-                      width "\\marginparwidth"
-                      :latex-head ("xcolor") :manual "#tooltip"
-                      :link [:display 'full
-                             :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")]
-                      &context backend raw-contents contents link?)
+              (&optional marker
+               &key (color "gray!80")
+                    (counter "footnote")
+                    ;; The margin's own width; arithmetic such as “\\paperwidth - \\textwidth” needs the calc package.
+                    (width "\\marginparwidth")
+               &allow-other-keys
+               :latex-head ("xcolor") :manual "#tooltip"
+               :link [:display 'full
+                      :face '(:foreground "grey" :weight bold :underline "orange" :overline "orange")]
+               &context backend raw-contents contents link?)
               "A remark, CONTENTS, on MARKER in the text: in HTML, a tooltip on MARKER, hovered on a desktop, tapped on a
 phone; in LaTeX, MARKER followed by CONTENTS as a margin note, numbered by COUNTER, as footnotes are; in beamer, whose
 slides have no margins, a footnote.  Sans MARKER, the note's number alone in LaTeX, and “°” in HTML.

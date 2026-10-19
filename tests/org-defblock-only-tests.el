@@ -11,7 +11,7 @@
 
 (deftest "`org-defblock-only' returns the name of the defined function"
   (should (equal
-           (org-defblock-only speak (who "dev" signoff "!" &context backend)
+           (org-defblock-only speak (&optional (who "dev") &key (signoff "!") &context backend)
              "Speaking block"
              (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
            'org-block/speak))
@@ -19,7 +19,7 @@
   (org-undefblock speak))
 
 (deftest "`org-defblock-only' defines a function with the correct symbol name"
-  (using (org-defblock-only speak (who "dev" signoff "!" &context backend)
+  (using (org-defblock-only speak (&optional (who "dev") &key (signoff "!") &context backend)
            "Speaking block"
            (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
     (should (fboundp 'org-block/speak))))
@@ -47,7 +47,7 @@ For example, upon LaTeX export, the Org special block
 
 
 (deftest "`org-defblock-only' defines a handler function and evaluates it correctly"
-  (using (org-defblock-only hello (who "world" punct "!") "Greeter block"
+  (using (org-defblock-only hello (&optional (who "world") &key (punct "!")) "Greeter block"
            (format "Hello, %s%s" who punct))
     (should (fboundp 'org-block/hello))
     (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
@@ -61,7 +61,7 @@ For example, upon LaTeX export, the Org special block
               #+begin_aside Warning :style color:orange
               Something **important** here.
               #+end_aside"
-    :using (org-defblock aside (label "Note" style "color:red" &context contents) "Aside block"
+    :using (org-defblock aside (&optional (label "Note") &key (style "color:red") &context contents) "Aside block"
              (format "<div style='%s'><strong>%s:</strong>%s</div>" style label contents))
     :equals  "<p>
             Look:
@@ -77,7 +77,7 @@ For example, upon LaTeX export, the Org special block
               #+begin_aside Warning :style color:orange
               Something **important** here.
               #+end_aside"
-    :using (org-defblock-only aside (label "Note" style "color:red" &context contents) "Aside block"
+    :using (org-defblock-only aside (&optional (label "Note") &key (style "color:red") &context contents) "Aside block"
              (format "<div style='%s'><strong>%s:</strong>%s</div>" style label contents))
     :equals ;; NOTE: The <div>s are different!
     "<p>

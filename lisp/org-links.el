@@ -29,17 +29,17 @@
 ;;;; Links
 ;;;;;; melpa link
 
-(org-deflink melpa
-  "Produce a Melpa badge for a given package O-LABEL, which links to the Melpa page.
-We try to get the package's version from a constant “⟨O-LABEL⟩-version” if it exists."
+(org-deflink melpa (package)
+  "Produce a Melpa badge for PACKAGE, which links to the Melpa page.
+We try to get the package's version from a constant “⟨PACKAGE⟩-version” if it exists."
   :face '(:box "purple" :foreground "purple")
   :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
   :export (format (concat "<a href=\"https://melpa.org/#/%s\">"
                           "<img alt=\"MELPA\" src=\"https://img.shields.io/badge/%s-%s-green?logo=Gnu-Emacs\"></img>"
                           "</a>")
-                  o-label
-                  (s-replace "_" "__" (s-replace "-" "--" o-label)) ;; shields.io conventions
-                  (or (ignore-errors (eval (intern (concat o-label "-version")))) "Melpa")))
+                  package
+                  (s-replace "_" "__" (s-replace "-" "--" package)) ;; shields.io conventions
+                  (or (ignore-errors (eval (intern (concat package "-version")))) "Melpa")))
 
 ;;;;;; #+html_export_style: THEME
 
@@ -114,14 +114,14 @@ The nested export keeps the outer one's glossary, which `org--docs-prepare' woul
     (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
       (string-trim (org-export-string-as text 'html t)))))
 
-(org-deflink kbd
-  "Show keysequence O-LABEL in a nice grey button-like font, along with a tooltip of its documentation, if any.
+(org-deflink kbd (keys &optional description backend)
+  "Show keysequence KEYS in a nice grey button-like font, along with a tooltip of its documentation, if any.
 
 Such links do not get folded in [[bracket]] style, and are rendered as buttons within Emacs; clicking one
 runs its keys, so readers may try them out.  Keys may run any command, so we first ask, as `elisp' links
 do, via `org-link-elisp-confirm-function'.
 
-Moreover, O-LABEL may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
+Moreover, KEYS may use ‘_’ in-lieu of spaces or [[bracket]] link notation.
 
 Examples:
     [[kbd:C-x C-s]]
@@ -129,18 +129,18 @@ Examples:
   ≈ kbd:C-x_C-s"
   :display 'full
   :manual "#nice-keystroke-renditions"
-  :let (the-label  (s-trim (s-replace "_" " " o-label))
+  :let (the-label  (s-trim (s-replace "_" " " keys))
         lisp-func  (ignore-errors (key-binding (kbd the-label)))
-        tooltip    (or o-description (ignore-errors (documentation lisp-func)) "")
+        tooltip    (or description (ignore-errors (documentation lisp-func)) "")
         tooltip?   (not (equal tooltip ""))
         style      (if tooltip? "border-color: red" "")
         keystrokes (progn (org-html-head-require 'org--kbd-html-head)
                           (format "<kbd style=\"%s\">%s</kbd>" style the-label)))
-  ;; o-description is always nil when it comes to deciding the :face.
+  ;; The description is always nil when it comes to deciding the :face.
   :face (list :inherit 'custom-button :box (if tooltip? "red" t))
   :help-echo (format "%s ∷ %s\n%s\n\nClick to run these keys." the-label (or lisp-func "") tooltip)
   :follow (org--kbd-run the-label)
-  :export (cond ((equal o-backend 'latex) (format "\\texttt{%s}" the-label))
+  :export (cond ((equal backend 'latex) (format "\\texttt{%s}" the-label))
                 ;; The style is to remove the underlining caused by <abbr>.
                 (tooltip? (org--html-tooltip (format "%s ∷ %s\n%s" the-label (or lisp-func "") tooltip) keystrokes
                                              :plain "border: none; text-decoration: none;"))
@@ -263,14 +263,14 @@ E.g., to create a badge named “go”:
 Then the following exports nicely from an Org file:
 
      go:key|value|blue||gnu-emacs"
-  `(org-deflink ,(intern name)
+  `(org-deflink ,(intern name) (label &optional _description backend)
      "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
      :display 'full
      :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-     :let (parts (mapcar #'s-trim (s-split "|" o-label))
+     :let (parts (mapcar #'s-trim (s-split "|" label))
            key (nth 0 parts) value (nth 1 parts) color (nth 2 parts) url (nth 3 parts) logo (nth 4 parts))
-     :follow (browse-url (or url o-label))
+     :follow (browse-url (or url label))
      :help-echo
      ;; `format', not `lf-string': the latter sees only dynamic variables, and these are lexical.
      (format (lf-unindent "%s
@@ -306,20 +306,20 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                 https://alhassy.com/org-special-block-extras#Example-Badge-Icons
 
          See also: https://alhassy.com/org-special-block-extras#Common-Project-Badges")
-             o-label key (or value "") (or color "green") (or url "") (or logo ""))
+             label key (or value "") (or color "green") (or url "") (or logo ""))
      :export
-     (if (equal o-backend 'latex) ""
+     (if (equal backend 'latex) ""
        (let ((img ,(if social-shields-name
                        (if social-shields-url
-                           `(format ,social-shields-url o-label)
-                         `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">" ,social-shields-name o-label))
+                           `(format ,social-shields-url label)
+                         `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">" ,social-shields-name label))
                      ;; An omitted, or blank, colour is green; an omitted logo is no logo at all.
                      '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s%s\">"
                               (url-hexify-string (s-replace "-" "--" key))
                               (url-hexify-string (s-replace "-" "--" (or value "")))
                               (or (org-string-nw-p color) "green")
                               (if (org-string-nw-p logo) (format "?logo=%s" logo) ""))))
-             (target ,(if social-shields-name `(format ,social-url o-label) 'url)))
+             (target ,(if social-shields-name `(format ,social-url label) 'url)))
          (pcase target
            ((or "" 'nil) img) ;; e.g., badge:key|value|color||logo or badge:key|value|color
            (_ (format "<a href=\"%s\">%s</a>" target img)))))))
@@ -578,26 +578,26 @@ entry's name, its description a tooltip.  Any other KEYWORD is KEYWORD-TRANSCODE
                          ;; Ignore duplicates; i.e., entries with the same name/title.
                          (cl-remove-duplicates org--docs-actually-used :key #'cl-second :test #'cl-equalp))))))
 
-(org-deflink doc
-  "Export O-LABEL as itself, or as the provided O-DESCRIPTION,
+(org-deflink doc (label &optional description backend)
+  "Export LABEL as itself, or as the provided DESCRIPTION,
  along with a tooltip that shows the user's
- documentation-glossary for o-LABEL and using that entry's name
- when no O-DESCRIPTION is provided."
-  :let (entry (org-docs-get o-label)
+ documentation-glossary for LABEL and using that entry's name
+ when no DESCRIPTION is provided."
+  :let (entry (org-docs-get label)
         name (cl-first entry)
         docs (cl-second entry)
-        display-name (or o-description name))
-  :help-echo (format "[%s] %s :: %s" o-label name docs)
+        display-name (or description name))
+  :help-echo (format "[%s] %s :: %s" label name docs)
   :face '(custom-button)
   :manual "#Glossaries"
   :export (progn
-            (add-to-list 'org--docs-actually-used (list o-label name docs))
-            (pcase o-backend
-              ('html (org--html-tooltip docs display-name (org--docs-plain-p o-label)))
+            (add-to-list 'org--docs-actually-used (list label name docs))
+            (pcase backend
+              ('html (org--html-tooltip docs display-name (org--docs-plain-p label)))
               ;; Make the current word refer to its glossary entry, and declare the location
               ;; that the glossary should refer back to; see `org--docs-glossary'.
               ('latex (format "\\hyperref[o-glossary-%s]{%s}\\label{o-glossary-declaration-site-%s}"
-                              o-label display-name o-label))
+                              label display-name label))
               (_ display-name))))
 
 ;; WHERE ...
@@ -630,10 +630,10 @@ Entries of the buffer, or of `org-docs-libraries', are Org; see `org-docs-get'."
 ;;;;;;; Documentation
 
 (org-defblock documentation
-              (name (error "Documentation block: Name must be provided")
-                    label nil show nil color "green"
-                    ;; A heading tagged :documentation: is an entry in its own right; see `org--docs-read-buffer'.
-                    :tag nil :manual "#Glossaries" &context raw-contents)
+              (&optional (name (error "Documentation block: Name must be provided")) &key label show (color "green")
+               &allow-other-keys
+               ;; A heading tagged :documentation: is an entry in its own right; see `org--docs-read-buffer'.
+               :tag nil :manual "#Glossaries" &context raw-contents)
               "A glossary entry: CONTENTS defines NAME, cited as doc:LABEL; a heading tagged :documentation: is one too.
 
 The entries live in ‘org--docs’.

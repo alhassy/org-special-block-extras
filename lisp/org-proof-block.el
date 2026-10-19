@@ -50,7 +50,7 @@
           (name (format "\\frac{}{%s}[%s]" conclusion name))
           (t conclusion))))
 
-(org-defblock tree (main-arg nil :html-head (mathjax) :manual "#Aligned-equations" &context raw-contents)
+(org-defblock tree (&allow-other-keys :html-head (mathjax) :manual "#Aligned-equations" &context raw-contents)
               "Write a proof tree using Org-lists.
 
 To get

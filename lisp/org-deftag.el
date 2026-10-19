@@ -35,24 +35,20 @@
 (require 'org)
 
 (defun org--deftag-parse-args (args)
-  "ARGS ↦ ((NAME DEFAULT POSITIONAL?) …), for either style of `org-deftag' arglist.
+  "The `cl-defun'-style ARGS ↦ ((NAME DEFAULT POSITIONAL?) …).
 
   (&optional (color \"pink\") size &key note)  ↦  ((color \"pink\" t) (size nil t) (note nil nil))
-  (color \"pink\" size nil)                    ↦  ((color \"pink\" t) (size nil t))
 
 `&optional' names are positional: bound by the tag's underscore-separated items, in order.
-`&key' names are bound only by the section's properties.  The flattened convenience form
-lists NAME DEFAULT pairs, all positional; a missing final DEFAULT is nil."
-  (if (not (or (memq '&optional args) (memq '&key args)))
-      (cl-loop for (name default) on args by #'cddr collect (list name default t))
-    (let (section result)
-      (unless (memq (car args) '(&optional &key))
-        (error "Nothing may precede &optional or &key in an arglist, but saw %S" args))
-      (dolist (it args (nreverse result))
-        (if (memq it '(&optional &key))
-            (setq section it)
-          (push (list (if (consp it) (car it) it) (when (consp it) (cadr it)) (eq section '&optional))
-                result))))))
+`&key' names are bound only by the section's properties."
+  (let (section result)
+    (unless (memq (car args) '(nil &optional &key))
+      (error "Nothing may precede &optional or &key in an arglist, but saw %S" args))
+    (dolist (it args (nreverse result))
+      (if (memq it '(&optional &key))
+          (setq section it)
+        (push (list (if (consp it) (car it) it) (when (consp it) (cadr it)) (eq section '&optional))
+              result)))))
 
 (eval-and-compile ;; `org-deftag' calls this as it expands.
 (defun org--deftag-regexp (name)
@@ -92,9 +88,7 @@ The `&optional' arguments are positional: they are bound to the
 underscore-separated items after NAME in the tag, in order; an item missing
 from the tag falls back to the section's property of the same name ---e.g.,
 :COLOR: teal--- and then to its default.  The `&key' arguments are bound only
-by properties, then defaults.  As a convenience, ARGS may instead be flattened
-into NAME DEFAULT pairs, all positional; the above, sans NOTE, is then
-(color \"pink\" size nil).  See `org--deftag-parse-args'.
+by properties, then defaults.  See `org--deftag-parse-args'.
 
 BODY runs with point at the start of the heading's line, which has been
 erased along with any property drawer beneath it; BODY may anaphorically mention

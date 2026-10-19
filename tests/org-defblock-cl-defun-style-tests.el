@@ -3,15 +3,14 @@
 (unless (fboundp 'define-org-call-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
-;;; `org--defblock-desugar-args': cl-defun-style ↦ flattened
+;;; `org--defblock-desugar-args': cl-defun-style ↦ flat
 
-(define-org-call-test "org--defblock-desugar-args leaves flattened arglists untouched"
-  :call (org--defblock-desugar-args '(title "Details" color "green"))
-  :returns (title "Details" color "green"))
+(deftest "org--defblock-desugar-args rejects a flattened arglist"
+  (should-error (org--defblock-desugar-args '(title "Details" color "green"))))
 
-(define-org-call-test "org--defblock-desugar-args leaves an empty arglist untouched"
+(define-org-call-test "org--defblock-desugar-args reads an empty arglist as no arguments, and no other keys"
   :call (org--defblock-desugar-args '())
-  :returns nil)
+  :returns (main-arg nil :allow-other-keys nil))
 
 (define-org-call-test "org--defblock-desugar-args reads a bare &optional as the main argument without default"
   :call (org--defblock-desugar-args '(&optional title))
@@ -90,15 +89,6 @@ Hello
   :equals "Hello/green: Hello
 ")
 
-(deftest "cl-defun-style and flattened arglists define the same block"
-  (let ((input "#+begin_folded \"Click me\"\nHello\n#+end_folded"))
-    (should (equal (using (org-defblock folded (&optional (title "More") &key (color "green") &context contents)
-                            (format "%s/%s: %s" title color contents))
-                     (org-export-string input 'latex))
-                   (using (org-defblock folded (title "More" color "green" &context contents)
-                            (format "%s/%s: %s" title color contents))
-                     (org-export-string input 'latex))))))
-
 (define-org-call-test "cl-defun-style org-defblock-only handler binds main and keyword arguments"
   :call (using (org-defblock-only folded (&optional (title "More") &key style &context contents)
                  (format "%s|%s|%s" title style contents))
@@ -122,10 +112,9 @@ body
            (format "%s/%s: %s" title color contents))
     (should (s-contains-p "More/green" (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex)))))
 
-(deftest "flattened org-defblock ignores unknown header-line keywords"
-  (using (org-defblock folded (title "More" color "green" &context contents)
-           (format "%s/%s: %s" title color contents))
-    (should (s-contains-p "More/green" (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex)))))
+(deftest "an org-defblock of no arguments refuses every header-line keyword, as cl-defun would"
+  (using (org-defblock folded (&context contents) contents)
+    (should-error (org-export-string "#+begin_folded :colour red\nHello\n#+end_folded" 'latex))))
 
 ;;; &context: what a body asks of the export, by name
 
@@ -133,12 +122,8 @@ body
   :call (org--defblock-desugar-args '(&optional title &key color &context backend ((:contents text))))
   :returns (title nil color nil :allow-other-keys nil :context (backend ((:contents text)))))
 
-(define-org-call-test "org--defblock-desugar-args gives a flat (MAIN) its default, lest :context be taken for it"
-  :call (org--defblock-desugar-args '(greeting &context contents))
-  :returns (greeting nil :context (contents)))
-
 (deftest "a body sees only what its &context asks for; a main argument named contents is just that"
-  (using (org-defblock quip (contents &context ((:raw-contents text)))
+  (using (org-defblock quip (&optional contents &context ((:raw-contents text)))
            (format "%s, said of %s" contents (s-trim text)))
     (should (s-contains-p "Ha!, said of Life" (org-export-string "#+begin_quip Ha!\nLife\n#+end_quip" 'latex)))))
 
@@ -151,7 +136,7 @@ body
   (should (string-match-p "contnets.*not on offer"
                           (cadr (should-error (macroexpand-all '(org-defblock typo (&context contnets) contnets))))))
   (should (string-match-p "contents is both an argument and in &context"
-                          (cadr (should-error (macroexpand-all '(org-defblock twice (contents &context contents) contents)))))))
+                          (cadr (should-error (macroexpand-all '(org-defblock twice (&optional contents &context contents) contents)))))))
 
 (provide 'org-defblock-cl-defun-style-tests)
 ;;; org-defblock-cl-defun-style-tests.el ends here

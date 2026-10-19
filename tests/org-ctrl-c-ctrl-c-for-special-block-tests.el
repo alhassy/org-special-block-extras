@@ -66,8 +66,8 @@ Mind the gap.
   (using (org-defblock shout (&context contents) "Upcase the contents." (upcase contents))
     (unwind-protect
         (progn
-          (org-def-action shout (greeting "Hey" volume 1)
-            "Say the shout's GREETING at VOLUME; the flattened arglist serves, as for `org-defblock'."
+          (org-def-action shout (&optional (greeting "Hey") &key (volume 1))
+            "Say the shout's GREETING at VOLUME."
             (setq org-def-action-tests--said (format "%s at %s" greeting volume)))
           (org-ctrl-c-ctrl-c)
           (should (equal org-def-action-tests--said "Hey at 9")))

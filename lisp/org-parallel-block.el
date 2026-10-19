@@ -26,7 +26,8 @@
 
 ;;;;;; parallel
 
-(org-defblock parallel (cols "2" bar nil :latex-head ("multicol") :manual "#Parallel" &context backend contents)
+(org-defblock parallel (&optional (cols "2") &key bar &allow-other-keys :latex-head ("multicol") :manual "#Parallel"
+                       &context backend contents)
               "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be separated by solid

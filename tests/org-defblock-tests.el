@@ -38,7 +38,7 @@ world
 #+end_export")
 
 (define-org-call-test "Keyword args bind correctly inside the block body."
-  :call (using (org-defblock test-kwdargs (main-arg "" color "red" &context contents) ""
+  :call (using (org-defblock test-kwdargs (&optional (main-arg "") &key (color "red") &context contents) ""
                  (format "%s:%s" color contents))
           (org-block/test-kwdargs 'html "text" nil :color "blue"))
   :returns "#+begin_export html
@@ -50,7 +50,7 @@ text
 #+end_export")
 
 (define-org-call-test "Main arg uses its default when omitted."
-  :call (using (org-defblock test-main-default (label "DEFAULT") ""
+  :call (using (org-defblock test-main-default (&optional (label "DEFAULT")) ""
                  label)
           (org-block/test-main-default 'html "" nil))
   :returns "#+begin_export html
@@ -210,7 +210,7 @@ Tighten this sentence.
 
 (deftest "a block renders for a backend derived from HTML, as org-thtml is, its handler seeing html; issue #33" [derived]
   (org-export-define-derived-backend 'osbe-test-thtml 'html)
-  (using (org-defblock satz (name "" label "" &context backend raw-contents) "A theorem, named NAME." (format "<%s>%s: %s</%s>" backend name raw-contents backend))
+  (using (org-defblock satz (&optional (name "") &key (label "") &context backend raw-contents) "A theorem, named NAME." (format "<%s>%s: %s</%s>" backend name raw-contents backend))
     (should (equal (s-trim (org-export-string-as "
 #+begin_satz Euclid
 There are infinitely many primes.
@@ -233,7 +233,7 @@ There are infinitely many primes.
     (should (s-contains-p "{{% alert %}}some content" (org-export-string "#+begin_myblock\nsome content\n#+end_myblock" 'osbe-test-myhugo)))))
 
 (deftest "a block's main argument may also be given by its own name, as a keyword; issue #47" [main-arg]
-  (using (org-defblock satz (name "" label "" &context contents)
+  (using (org-defblock satz (&optional (name "") &key (label "") &context contents)
            "A labelled sentence, named NAME."
            (format "\\tag{%s}\\label{%s} %s" name label contents))
     (dolist (header '("myname :label mylabel" ":name myname :label mylabel"))

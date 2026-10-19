@@ -80,7 +80,7 @@ Docs · See the manual"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.
   (unwind-protect
-      (progn (org-deflink test-follow "Visit the page named LABEL." :follow (message "%s" o-label) :export o-label)
+      (progn (org-deflink test-follow (label) "Visit the page named LABEL." :follow (message "%s" label) :export label)
              (should (equal (car (org-test--eldoc-at "By [[test-follow:Fold]]." "test-follow:"))
                             "Visit the page named LABEL.\nC-c C-o  Follow it.\nDocs")))
     (setq org-link-parameters (assoc-delete-all "test-follow" org-link-parameters)))

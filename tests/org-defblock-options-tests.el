@@ -31,11 +31,6 @@
           (org-test--made-by 'opt-noblock))
   :returns (:block nil :link t :tag t))
 
-(define-org-call-test "the flattened arglist takes the same options"
-  :call (using (org-defblock opt-flat (x nil :link nil :tag nil) "Echo X." x)
-          (org-test--made-by 'opt-flat))
-  :returns (:block t :link nil :tag nil))
-
 ;;; The global default
 
 (deftest "with org-defblock-links-and-tags nil, org-defblock makes only a block"
@@ -80,11 +75,10 @@ body
 ]
 ")
 
-(deftest "org-defblock's :link [DISPLAY] gives the link that display, in every arglist style"
+(deftest "org-defblock's :link [DISPLAY] gives the link that display, with or without arguments"
   (using ((org-defblock opt-face-cl (&optional x :link [:face '(:foreground "red")]) "Echo X." x)
-          (org-defblock opt-face-flat (x nil :link [:face '(:foreground "red")]) "Echo X." x)
           (org-defblock opt-face-none (:link [:face '(:foreground "red")] &context contents) "Echo." contents))
-    (dolist (name '("opt-face-cl" "opt-face-flat" "opt-face-none"))
+    (dolist (name '("opt-face-cl" "opt-face-none"))
       (should (equal (funcall (org-link-get-parameter name :face) "label") '(:foreground "red"))))))
 
 (deftest "org-defblock rejects the retired display vector after KWDS, naming the :link option instead"

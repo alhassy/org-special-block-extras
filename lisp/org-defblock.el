@@ -97,53 +97,49 @@ links with `org-deflink' and tags with `org-deftag' just where wanted."
 (eval-and-compile ;; `org-defblock' calls these as it expands.
 (defun org--defblock-desugar-args (args)
   "ARGS ↦ `org--defblock-desugar-args-sans-context' of those before any &context, then :context (SPEC …) of those after.
-  (title nil &context backend ((:contents text)))  ↦  (title nil :context (backend ((:contents text))))
+  (&optional title &context backend ((:contents text)))
+    ↦  (title nil :allow-other-keys nil :context (backend ((:contents text))))
 An option, such as :tag nil, may follow &context too, as anywhere else; see `org--block-context-keys'."
   (let ((context (cdr (memq '&context args))) specs options)
     (while context
       (if (keywordp (car context)) (setq options (append options (list (pop context) (pop context))))
         (push (pop context) specs)))
-    (let* ((flat (org--defblock-desugar-args-sans-context
-                  (append (-take-while (lambda (it) (not (eq it '&context))) args) options)))
-           ;; A flat (MAIN) lacks its default, which a :context after it would otherwise be taken for.
-           (names (-take-while (lambda (it) (not (keywordp it))) flat)))
-      (append names (when (cl-oddp (length names)) '(nil)) (-drop (length names) flat)
-              (when specs (list :context (nreverse specs)))))))
+    (append (org--defblock-desugar-args-sans-context
+             (append (-take-while (lambda (it) (not (eq it '&context))) args) options))
+            (when specs (list :context (nreverse specs))))))
 
 (defun org--defblock-desugar-args-sans-context (args)
-  "ARGS ↦ the flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist, when ARGS is `cl-defun'-style; otherwise ARGS.
+  "The `cl-defun'-style ARGS ↦ the flat (MAIN DEFAULT KEY₁ DEFAULT₁ …) arglist.
 
   (&optional (title \"Details\") &key (color \"green\") style)  ↦  (title \"Details\" color \"green\" style nil :allow-other-keys nil)
   (&key style &allow-other-keys)                               ↦  (main-arg nil style nil :allow-other-keys t)
+  ()                                                           ↦  (main-arg nil :allow-other-keys nil)
 
 A block takes at most one positional argument ---its main argument--- so `&optional' binds at most one
 variable, and nothing may precede `&optional' or `&key'.  Options such as `:tag t' may appear anywhere
 ---argument names are never keywords--- and pass through untouched, at the end.  As with `cl-defun',
-unknown keywords are refused unless `&allow-other-keys' is written; the flattened form always allows them."
-  (if (not (or (memq '&optional args) (memq '&key args)))
-      args
-    (let* ((options  (append (cl-loop for (option value) on args
-                                      when (keywordp option) append (list option value))
-                             (list :allow-other-keys (and (memq '&allow-other-keys args) t))))
-           (args     (let ((rest (remq '&allow-other-keys args)) kept)
-                       (while rest
-                         (if (keywordp (car rest)) (setq rest (cddr rest)) (push (pop rest) kept)))
-                       (nreverse kept)))
-           ;; ((NAME DEFAULT POSITIONAL?) …), as for tags; a block's one positional argument is its main argument.
-           (parsed   (org--deftag-parse-args args))
-           (main     (--filter (nth 2 it) parsed)))
-      (when (cdr main)
-        (error "‘org-defblock’: a block takes at most one &optional (main) argument, but saw %S" (mapcar #'car main)))
-      (append (if main (-take 2 (car main)) (list 'main-arg nil))
-              (--mapcat (-take 2 it) (--remove (nth 2 it) parsed))
-              options)))))
+unknown keywords are refused unless `&allow-other-keys' is written."
+  (let* ((options  (append (cl-loop for (option value) on args
+                                    when (keywordp option) append (list option value))
+                           (list :allow-other-keys (and (memq '&allow-other-keys args) t))))
+         (args     (let ((rest (remq '&allow-other-keys args)) kept)
+                     (while rest
+                       (if (keywordp (car rest)) (setq rest (cddr rest)) (push (pop rest) kept)))
+                     (nreverse kept)))
+         ;; ((NAME DEFAULT POSITIONAL?) …), as for tags; a block's one positional argument is its main argument.
+         (parsed   (org--deftag-parse-args args))
+         (main     (--filter (nth 2 it) parsed)))
+    (when (cdr main)
+      (error "‘org-defblock’: a block takes at most one &optional (main) argument, but saw %S" (mapcar #'car main)))
+    (append (if main (-take 2 (car main)) (list 'main-arg nil))
+            (--mapcat (-take 2 it) (--remove (nth 2 it) parsed))
+            options))))
 
 (eval-and-compile ;; `org-defblock' calls these as it expands.
 (defun org--defblock-other-keys-p (args)
-  "The desugared ARGS ↦ whether a header line may carry keywords they do not declare.
-  (title nil :allow-other-keys nil)  ↦  nil      (title nil color nil)  ↦  t
-That is, unless `cl-defun'-style ARGS omit `&allow-other-keys'; see `org--defblock-desugar-args'."
-  (or (not (plist-member args :allow-other-keys)) (plist-get args :allow-other-keys)))
+  "The desugared ARGS ↦ whether a header line may carry keywords they do not declare, as `&allow-other-keys' says.
+  (title nil :allow-other-keys nil)  ↦  nil      (title nil :allow-other-keys t)  ↦  t"
+  (plist-get args :allow-other-keys))
 
 (defun org--defblock-option (kwds option)
   "(KWDS, OPTION) ↦ the desugared KWDS' value for OPTION: as given; else t for :block, else `org-defblock-links-and-tags'.
@@ -156,13 +152,13 @@ That is, unless `cl-defun'-style ARGS omit `&allow-other-keys'; see `org--defblo
   "(NAME, DOCSTRING, LINK option) ↦ the `org-deflink' form whose NAME: links render as NAME blocks.
   [[NAME:LABEL][DESCRIPTION]]  ≈  #+begin_NAME LABEL ⋯ DESCRIPTION ⋯ #+end_NAME
 LINK is t, or a display vector such as [:face …]; see `org-defblock'."
-  `(org-deflink ,name
+  `(org-deflink ,name (label &optional description backend)
                 ,(format "%s\n\nAs a link, [[%s:LABEL][DESCRIPTION]] ≈ #+begin_%s LABEL ⋯ DESCRIPTION ⋯ #+end_%s."
                          (or docstring "") name name name)
-                ,(vconcat `[:help-echo (format "%s:%s\n\n%s" ',name o-label ,(or docstring ""))]
+                ,(vconcat `[:help-echo (format "%s:%s\n\n%s" ',name label ,(or docstring ""))]
                           (and (vectorp link) link))
                 (s-replace-regexp "@@" ""
-                                  (,(intern (format "org-block/%s" name)) o-backend (or o-description o-label) o-label
+                                  (,(intern (format "org-block/%s" name)) backend (or description label) label
                                    :contents-occur-as-link-description t))))
 
 (defun org--defblock-tag-form (name args subsections)
@@ -295,18 +291,16 @@ Together, the main and keyword arguments form KWDS, written as a
    (&optional (title \"Details\") &key (color \"green\") style)
 
 declares main argument TITLE, defaulting to \"Details\", and
-keyword arguments COLOR and STYLE.  As a convenience, KWDS may
-instead be flattened into (main default key₀ value₀ … keyₙ valueₙ);
-the above is then (title \"Details\" color \"green\" style nil).
-As with `cl-defun', a header line's unknown keywords are an export-time
-error unless KWDS writes `&allow-other-keys'; the flattened form always
-allows them.
+keyword arguments COLOR and STYLE.  As with `cl-defun', a header
+line's unknown keywords are an export-time error unless KWDS writes
+`&allow-other-keys'; so, () takes no arguments at all.
 
 KWDS may also carry options, which are not arguments:
 + `:block nil' declines block support: #+begin_NAME is left to Org, yet the
   link and tag still work, through `org-block/NAME'.
 + `:link nil' declines the link type NAME:; `:link t' makes it; and `:link
-  [:face … :display …]' makes it with that `org-deflink' display; e.g.,
+  [:face … :display …]' makes it with that `org-deflink' display, which sees
+  the link's arglist (label &optional description backend); e.g.,
   [:face \='(:foreground \"red\")] shows such links in red.
 + `:tag nil' declines the tag: otherwise a section tagged :NAME: exports as a
   NAME block around its text; the tag's underscore-separated items form the
@@ -371,7 +365,7 @@ item not on offer, such as a misspelt contnets, is an error at once.
 An item may be bound under another name, ((:ITEM VAR)), as when KWDS
 already uses ITEM's name; an item named both ways is an error:
 
-   (org-defblock quip (contents &context ((:contents text)))
+   (org-defblock quip (&optional contents &context ((:contents text)))
      (format \"%s, said of %s\" contents text))  ;; #+begin_quip Ha! ⇒ “Ha!, said of …”
 
 See “Keyword Parameters” in Practical Common Lisp, a gentle tour of
@@ -436,7 +430,8 @@ Three example uses:
   (when (vectorp docstring)
     (error "‘org-defblock %s’: the link display vector now goes among the options, as `:link %S'" name docstring))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
-  (let* ((kwds    (org--defblock-desugar-args kwds))
+  (let* ((source  kwds)
+         (kwds    (org--defblock-desugar-args kwds))
          (handler (intern (format "org-block/%s" name)))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
          ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
@@ -445,8 +440,13 @@ Three example uses:
          (tag?    (org--defblock-option kwds :tag))  ;; nil, t, or [:subsections MODE]
          (fontify (plist-get kwds :fontify))
          ;; The options configure the macro; they are not block arguments.
-         (args    (org-plist-delete-all kwds '(:block :link :tag :edit-indirect-mode :fontify :latex-head :html-head
-                                                   :hover :manual))))
+         (options '(:block :link :tag :edit-indirect-mode :fontify :latex-head :html-head :hover :manual))
+         (args    (org-plist-delete-all kwds options))
+         ;; The arglist sans options, as `org-defblock-only' reads it afresh.
+         (only    (let ((rest source) kept)
+                    (while rest
+                      (if (memq (car rest) options) (setq rest (cddr rest)) (push (pop rest) kept)))
+                    (nreverse kept))))
     `(progn
        ;; NOTE: We register the support at run-time and not earlier at macro-expansion time,
        ;; so that the global variable `org--supported-blocks' can be captured by any `let' clauses
@@ -456,9 +456,9 @@ Three example uses:
        ,@(when (and block? (memq (intern (format "%s-block" name)) org--builtin-block-types))
            `((message "org-defblock: %s overrides Org's own #+begin_%s; a handler may hand some back by `org-builtin-block'"
                       ',name ',name)))
-       (org-defblock-only ,name ,args ,docstring ,@body)
+       (org-defblock-only ,name ,only ,docstring ,@body)
        ;; ⇨ Its definition, whereby `org-defblock-alias' makes another name do as this one does.
-       (put ',handler 'org-defblock-definition '(,kwds ,docstring ,@body))
+       (put ',handler 'org-defblock-definition '(,source ,docstring ,@body))
        ;; ⇨ The LaTeX packages it needs, loaded for it when unloaded; a redefinition sans :latex-head needs none.
        (put ',handler 'org-latex-head ',(plist-get kwds :latex-head))
        ;; ⇨ Likewise, the HTML its pages need in their <head>.
@@ -494,10 +494,8 @@ have their own words for one thing:
 
 - NAME         [Symbol]: The name of the block type.
 - DOCSTRING    [Nullable String]: Documentation of the block.
-- ARGS: A `cl-defun'-style arglist, such as (&optional (title \"Details\") &key (color \"green\") style),
-        or its flattened convenience form (title \"Details\" color \"green\" style nil): the main
-        argument and its default, followed by “keyword default-value” pairs.
-        See `org--defblock-desugar-args'.
+- ARGS: A `cl-defun'-style arglist, such as (&optional (title \"Details\") &key (color \"green\") style);
+        see `org--defblock-desugar-args'.
 - BODY: Code to be executed just before export.
   ⇒ Sees just what ARGS asks for after &context; e.g., &context backend raw-contents.  See `org-defblock'.
 
@@ -619,7 +617,7 @@ with a call to (FUN ⟨matched text⟩)."
 
 For example, if you have
 
-    (org-defblock shout () (upcase contents))
+    (org-defblock shout (&context contents) (upcase contents))
 
 Then, LaTeX export of
 
@@ -666,8 +664,9 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 ;; it takes two arguments: “color” and “signoff”
 ;; with default values being "red" and "".
 (org-defblock rremark
-              (editor "Editor Remark" color "red" signoff "" :latex-head ("xcolor") :manual "#tooltip"
-                      :link [:face '(:foreground "red" :weight bold)] &context backend contents)
+              (&optional (editor "Editor Remark") &key (color "red") (signoff "") &allow-other-keys
+               :latex-head ("xcolor") :manual "#tooltip" :link [:face '(:foreground "red" :weight bold)]
+               &context backend contents)
                                         ; :please-preserve-new-lines
               "Top level (HTML & LaTeX) editorial remarks; in Emacs they're angry red."
               (format (if (equal backend 'html)

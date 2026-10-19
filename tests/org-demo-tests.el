@@ -128,7 +128,7 @@ Inner.
 #+begin_box :demo org-block/box
 Hi
 #+end_box")))
-    (should (string-match-p "﴾How It’s Implemented﴿</summary> <div class=\"org-src-container\">\n<pre class=\"src src-emacs-lisp\"><code>(.*org-defblock.* box (title" html))))
+    (should (string-match-p "﴾How It’s Implemented﴿</summary> <div class=\"org-src-container\">\n<pre class=\"src src-emacs-lisp\"><code>(.*org-defblock.* box (.*&amp;optional.* (title" html))))
 
 (org-deftest "a symbol's definition is found in its file, else in the current buffer; a primitive's, nowhere" [demo]
   :text "

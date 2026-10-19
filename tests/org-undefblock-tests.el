@@ -6,7 +6,7 @@
 ;;; org-defblock and org-undefblock
 
 (deftest "`org-defblock' defines a handler function and evaluates it correctly"
-  (using (org-defblock hello (who "world" punct "!") "Greeter block"
+  (using (org-defblock hello (&optional (who "world") &key (punct "!")) "Greeter block"
                 (format "Hello, %s%s" who punct))
   (should (fboundp 'org-block/hello))
   (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
@@ -27,7 +27,7 @@
           #+begin_aside Warning :style color:orange
           Something **important** here.
           #+end_aside"
-  :using (org-defblock aside (label "Note" style "color:red" &context contents) "Aside block"
+  :using (org-defblock aside (&optional (label "Note") &key (style "color:red") &context contents) "Aside block"
            (format "<div style='%s'><strong>%s:</strong> %s</div>" style label contents))
   :equals "<p>
            Look:

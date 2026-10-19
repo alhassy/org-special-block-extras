@@ -48,7 +48,7 @@
 (defmacro org-def-action (name args &optional docstring &rest body)
   "Make C-c C-c within a NAME block run BODY, with the block's ARGS bound, as `org-defblock' does for export.
   (org-def-action shout (&optional greeting &key (volume 1)) \"Announce it.\" (message \"%s, %s\" greeting volume))
-ARGS take either style of `org-defblock''s; BODY sees them by name, and the block's text as RAW-CONTENTS, with point
+ARGS are as `org-defblock''s; BODY sees them by name, and the block's text as RAW-CONTENTS, with point
 within the block.  The function is `org-action/NAME'.  A non-nil value claims the key press; nil declines it."
   (declare (indent defun) (doc-string 3))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))

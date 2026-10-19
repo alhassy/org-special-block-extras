@@ -4,47 +4,47 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
 (deftest "Test that a simple org-deflink creates an export function."
-  (org-deflink shout
+  (org-deflink shout (label &optional description)
                "Capitalize text"
                [:help-echo "SHOUT!"]
-               (upcase (or o-description o-label)))
+               (upcase (or description label)))
   (should (fboundp 'org-link/shout))
   (should (equal (org-link/shout "hi" nil 'html) "HI"))
   (should (equal (org-link/shout "ho" "yo" 'html) "YO")))
 
 (deftest "Ensure help-echo falls back to default when not explicitly provided."
-  (org-deflink whisper "Lowercase fallback")
+  (org-deflink whisper () "Lowercase fallback")
   (let ((res (org-element-interpret-data
               '(link (:type "whisper" :path "HELLO")))))
     (should (string-match "HELLO" res))))
 
 (deftest "Ensure local bindings work in both display and body."
-  (org-deflink boldwrap
+  (org-deflink boldwrap (label &optional description)
                "Wrap with <b> tag"
                [:let (wraptag "<b>")
                      :help-echo "Boldify!"]
-               (format "%s%s%s" wraptag (or o-description o-label) "</b>"))
+               (format "%s%s%s" wraptag (or description label) "</b>"))
   (should (equal (org-link/boldwrap "yes" nil 'html) "<b>yes</b>")))
 
 (deftest "Test that a custom face is evaluated and returns a plist."
-  (org-deflink greenlink
+  (org-deflink greenlink (label &optional description)
                "Green text"
                [:face '(:foreground "green")]
-               (format "<span style=\"color:green\">%s</span>" (or o-description o-label)))
+               (format "<span style=\"color:green\">%s</span>" (or description label)))
   (let* ((face-fn (plist-get (cdr (assoc "greenlink" org-link-parameters)) :face)))
     (should (equal (funcall face-fn "green-text") '(:foreground "green")))))
 
 (deftest "a link sans a :face of its own looks as Org's links do, so readers see they may click it"
   (unwind-protect
-      (progn (org-deflink test-faceless "A link sans a face." (format "%s" o-label))
+      (progn (org-deflink test-faceless (label) "A link sans a face." (format "%s" label))
              (should (eq (funcall (org-link-get-parameter "test-faceless" :face) "Fold") 'org-link)))
     (setq org-link-parameters (assoc-delete-all "test-faceless" org-link-parameters))))
 
 (deftest "Test that :follow executes correctly and can use prefix arg."
   (let ((followed nil))
-    (org-deflink test-follow
+    (org-deflink test-follow (label)
                  "Follow test"
-                 [:follow (setq followed o-label)]
+                 [:follow (setq followed label)]
                  (format "Ignored"))
     (let* ((follow-fn (plist-get (cdr (assoc "test-follow" org-link-parameters)) :follow)))
       (funcall follow-fn "payload" nil)
@@ -55,7 +55,7 @@
 
 (deftest "Test that keys are bound to the keymap properly."
   (setq org-deflink-test--keymap-actions nil)
-  (org-deflink keymaplink
+  (org-deflink keymaplink ()
                "Test keys"
                [:keymap ("x" (push 'x org-deflink-test--keymap-actions))]
                (format "no-op"))
@@ -94,18 +94,6 @@
 (deftest "org-deflink arglist names reach the :face display form"
   (should (equal '(:foreground "green")
                  (funcall (plist-get (cdr (assoc "test-arg-face" org-link-parameters)) :face) "green"))))
-
-(define-org-call-test "org--deflink-arglist-p recognises an arglist with &optional"
-  :call (and (org--deflink-arglist-p '(label &optional description) '(:export label)) t)
-  :returns t)
-
-(define-org-call-test "org--deflink-arglist-p reads a one-form body as a body, not an arglist"
-  :call (org--deflink-arglist-p '(upcase o-label) nil)
-  :returns nil)
-
-(define-org-call-test "org--deflink-arglist-p reads a function call as a body, even when more forms follow"
-  :call (org--deflink-arglist-p '(identity o-label) '((upcase o-label)))
-  :returns nil)
 
 ;;; Within Emacs: tooltips and navigation
 

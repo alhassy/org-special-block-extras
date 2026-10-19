@@ -42,8 +42,8 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
     (_ (format "<span style=\"color:%s;\">%s</span>" colour text))))
 
 (dolist (colour org--named-colors)
-  (eval `(org-defblock ,colour (:link [:face '(:foreground ,(symbol-name colour))] :latex-head ("xcolor")
-                                 :manual "#Colours-links" &context backend contents)
+  (eval `(org-defblock ,colour (&allow-other-keys :link [:face '(:foreground ,(symbol-name colour))]
+                                 :latex-head ("xcolor") :manual "#Colours-links" &context backend contents)
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents)))
   (org-link-set-parameters (symbol-name colour) :activate-func #'org--color-link-hide-type))
@@ -59,15 +59,16 @@ As with Org's hidden brackets, `org-toggle-link-display' shows it all."
       (org-rear-nonsticky-at (point)))))
 
 (org-defblock color
-              (color "black" :latex-head ("xcolor") :manual "#Colours-links" :link [:face (list :foreground (or (org-string-nw-p o-label) "black"))]
-               &context backend contents)
+              (&optional (color "black") &allow-other-keys :latex-head ("xcolor") :manual "#Colours-links"
+               :link [:face (list :foreground (or (org-string-nw-p label) "black"))] &context backend contents)
               "Format text according to a given COLOR, which is black by default."
               (org--color-text backend color contents))
 
 ;;;;;; Highlight ---colour the background, rather than the text
 
 (org-defblock highlight
-              (color "yellow" :latex-head ("xcolor") :manual "#Highlights" :link [:face (list :background (or (org-string-nw-p o-label) "yellow"))]
+              (&optional (color "yellow") &allow-other-keys :latex-head ("xcolor") :manual "#Highlights"
+               :link [:face (list :background (or (org-string-nw-p label) "yellow"))]
                &context backend raw-contents contents link?)
               "Highlight text with a background of COLOR, which is yellow by default; as a link, it is so highlighted in Emacs too.
 
@@ -98,14 +99,14 @@ In Markdown, the text is <mark>ed, paragraph by paragraph, which GitHub shows ye
     mistyrose beige lightyellow lightcyan white)
   "The pale CSS colour names that a palette: link offers as page backgrounds.")
 
-(org-deflink palette (_label &optional (description "🎨"))
+(org-deflink palette (_label &optional (description "🎨") backend)
   "A button, labelled DESCRIPTION, that unfolds a palette of `org-palette-colors'; clicking one makes it the page's background.
 Only for HTML; elsewhere, nothing.
 
   [[palette:][Pick a background]]"
   :face (list :background (symbol-name (car (last org-palette-colors))) :box t)
   :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-  :export (if (not (equal o-backend 'html)) ""
+  :export (if (not (equal backend 'html)) ""
             (format (concat "<button onclick=\"let p = this.nextElementSibling; p.style.display = p.style.display === 'none' ? 'inline' : 'none';\">%s</button>"
                             "<span style=\"display: none\">%s</span>")
                     description

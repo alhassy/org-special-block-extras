@@ -29,8 +29,9 @@
   "Should editor comments be shown in the output or not.")
 
 (org-defblock remark
-              (editor "Editor Remark" color "black" signoff "" strong nil :latex-head ("xcolor") :manual "#tooltip"
-                      :link [:face '(:foreground "red" :weight bold)] &context backend raw-contents contents link?)
+              (&optional (editor "Editor Remark") &key (color "black") (signoff "") strong &allow-other-keys
+               :latex-head ("xcolor") :manual "#tooltip" :link [:face '(:foreground "red" :weight bold)]
+               &context backend raw-contents contents link?)
               "Format CONTENTS as a first-class editor comment according to BACKEND.
 
 The CONTENTS string has an optional switch: If it contains a line
