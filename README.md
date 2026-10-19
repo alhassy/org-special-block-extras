@@ -157,8 +157,8 @@ LaTeX!
 </tr>
 
 <tr>
-<td class="org-left"><code>link-here:</code></td>
-<td class="org-left">Local anchors &#x2014; create navigable sections anywhere.</td>
+<td class="org-left"><code>&lt;&lt;X&gt;&gt;</code></td>
+<td class="org-left">Permalinks &#x2014; Org&rsquo;s own targets, made a visible 🔗 in HTML.</td>
 </tr>
 
 <tr>
@@ -263,7 +263,7 @@ The following example showcases the prominent features of this library.
     #+end_parallel
 
     #+begin_details Answer
-    link-here:solution
+    <<solution>>
     Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
     [[remark:Musa][Ain't that cool?]]

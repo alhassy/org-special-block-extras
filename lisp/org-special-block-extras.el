@@ -451,6 +451,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
         (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
+        ;; In HTML, <<X>> is a permalink #X to itself; <<<X>>> keeps Org's look, yet is #X too.
+        (advice-add 'org-html--reference :around #'org--target-readable-reference)
+        (advice-add 'org-html-target :override #'org--target-as-permalink)
         (add-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
         (add-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
         (add-hook 'org-export-filter-final-output-functions #'org--load-html-head)
@@ -490,6 +493,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
+    (advice-remove 'org-html--reference #'org--target-readable-reference)
+    (advice-remove 'org-html-target #'org--target-as-permalink)
     (remove-hook 'org-export-filter-options-functions #'org--footnotes-in-margin)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-latex-head)
     (remove-hook 'org-export-filter-final-output-functions #'org--load-html-head)

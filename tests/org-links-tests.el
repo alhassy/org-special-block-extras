@@ -90,10 +90,24 @@ See the subroutine ‘basic-save-buffer’ for more information.
     (should (s-contains-p "Key    : key" tooltip))
     (should (s-contains-p "Colour : blue" tooltip))))
 
-(define-org-call-test "the link-here link's tooltip names its anchor"
-  :call (with-org-test-buffer (:text "Go link-here:top now.")
-          (funcall (org-link-get-parameter "link-here" :help-echo) nil nil 6))
-  :returns "This is a local anchor link named “top”")
+(deftest "in HTML, <<X>> is a visible permalink #X to itself, which [[X]] reaches; sans the mode, it is Org's own" [target]
+  (org-special-block-extras-mode 1)
+  (let ((html (org-export-string "\n<<Euler's lemma>> Shake hands.\n\nSee [[Euler's lemma]]." 'html)))
+    (should (s-contains-p "<a class=\"anchor\" id=\"Euler's-lemma\" href=\"#Euler's-lemma\"" html))
+    (should (s-contains-p "<svg" html))
+    (should (s-contains-p "See <a href=\"#Euler's-lemma\">" html)))
+  (unwind-protect
+      (progn (org-special-block-extras-mode -1)
+             ;; Org's own exporter, as ours turns the mode on.
+             (should-not (s-contains-p "anchor" (org-export-string-as "\n<<lemma>> Shake hands." 'html t))))
+    (org-special-block-extras-mode 1)))
+
+(define-org-export-test "a <<<X>>> radio target keeps Org's look, yet its id, and each mention's href, is X" [target]
+  :input "
+          A <<<monoid>>> is neat; every monoid is."
+  :equals "<p>
+A <a id=\"monoid\">monoid</a> is neat; every <a href=\"#monoid\">monoid</a> is.</p>
+")
 
 (deftest "a LaTeX glossary entry refers back to where its doc link declared it"
   (let ((org--docs '(("cat" "Category Theory" "Typed composition.")))

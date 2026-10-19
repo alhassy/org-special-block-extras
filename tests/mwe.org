@@ -6,7 +6,7 @@ My glossary: show:GLOSSARY
 
 # + [[color:orange][Are you excited to learn some Lisp?]] [[blue:Yes!]]
 # + Pop-quiz: How does doc:apply work?
-# + link-here:solution
+# + <<solution>>
 # + Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 # + [[remark:Musa][Ain't that cool?]]
 #
@@ -30,7 +30,7 @@ Pop-quiz: How does doc:apply work?
 #+end_parallel
 
 #+begin_details Answer
-link-here:solution
+<<solution>>
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]

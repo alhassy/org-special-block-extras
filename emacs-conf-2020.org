@@ -191,7 +191,7 @@ With a bit of Lisp ---and a lot of time--- we obtain
 | Editorial Remarks      | [[doc:org-block/remark][remark]]                          |                     |
 | Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]]                  |                     |
 | Keystrokes             | kbd:C-c_C-e                     | ~kbd~                 |
-| OctoIcons & Link Here  | octoicon:report link-here:Overview      | ~octoicon~, ~link-here~ |
+| OctoIcons & Permalinks | octoicon:report <<Overview>>            | ~octoicon~, ~<<X>>~     |
 | Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~                 |
 
 Other fun stuff: [[doc:org-block/solution][solution]], [[doc:org-block/org-demo][org-demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]] (─‿‿─)

@@ -15,8 +15,8 @@
 
 ;;; Commentary:
 
-;; Built-in link types: melpa, html-export-style, kbd, octoicon, link-here,
-;; badge, tweet, reddit, github-*, twitter-follow, doc, show; and the documentation block.
+;; Built-in link types: melpa, html-export-style, kbd, octoicon, badge, tweet, reddit, github-*,
+;; twitter-follow, doc, show; and the documentation block.  In HTML, each <<X>> exports as a permalink to itself.
 ;; Also houses the org-docs-* glossary system and `org--html-tooltip'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
@@ -298,16 +298,21 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
               (error "octoicon:%s ⇒ This label is not supported; try one of %s" o-label (mapcar #'car org--supported-octoicons)))
             (if (equal o-backend 'html) (org--octoicon (intern o-label)) "")))
 
-;;;;;; Link-Here
+;;;;;; Targets ---each <<X>> a permalink to itself
 
-(org-deflink link-here
-  "Export a link to the current location in an Org file."
-  :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
-  :help-echo (format "This is a local anchor link named “%s”" o-label)
-  :export (if (equal o-backend 'html)
-              (format "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\" href=\"#%s\">%s</a>"
-                      o-label o-label (org--octoicon 'link))
-            ""))
+(defun org--target-readable-reference (reference datum info &optional named-only)
+  "A <<X>>, or <<<X>>>, target's HTML id ↦ X, its whitespace as dashes, rather than Org's random orgNNNNNNN; else
+as REFERENCE has DATUM's id, under INFO and NAMED-ONLY.  Links to the target ask the same, so they stay in step."
+  (if (memq (org-element-type datum) '(target radio-target))
+      (replace-regexp-in-string "[[:space:]\"]+" "-" (org-element-property :value datum))
+    (funcall reference datum info named-only)))
+
+(defun org--target-as-permalink (target _contents info)
+  "<<X>> ↦ <a class=\"anchor\" id=\"X\" href=\"#X\">🔗</a>, a permalink to itself, under INFO; Org's own TARGET is a
+bare <a id=\"orgNNNNNNN\"></a>, which a reader can neither see nor click."
+  (let ((id (org-html--reference target info)))
+    (format "<a class=\"anchor\" id=\"%s\" href=\"#%s\" aria-label=\"Permalink to %s\">%s</a>"
+            id id id (org--octoicon 'link))))
 
 ;;;;;; Badge (org-make-badge)
 
@@ -367,7 +372,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
           ► ‘|color|url|logo’ are optional;
              ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink.
              ⇒ if ‘url’ is ‘here’ then we have a local link;
-                i.e., the resulting badge behaves like ‘link-here:key’.
+                i.e., the resulting badge behaves like <<key>>.
              ⇒ ‘color’ may be: ‘brightgreen’ or ‘success’,
                                ‘red’         or ‘important’,
                                ‘orange’      or ‘critical’,

@@ -8,7 +8,7 @@
 #+property: header-args :eval never-export
 #+options: d:nil toc:nil
 #+export_file_name: index
-#+macro: blurb Forty-six custom blocks and fifty-seven link types for Emacs' Org-mode ^_^
+#+macro: blurb Forty-six custom blocks and fifty-six link types for Emacs' Org-mode ^_^
 #+toc: headlines 2
 # On alhassy.com, each public top-level heading is its own article; see AlBasmala.org §“A REDIRECT to a container”.
 #+article_style: multiple
@@ -1055,8 +1055,8 @@ this, we use Org's link mechanism./
   Al-hassy/ on my machine. Or maybe we want a splash of colour in our lives:
   =*<pink: super neato stuff>*= becomes *<pink: super neato stuff>*.
 
-  Similarly, ~link-here:usefulness-of-links~ becomes:
-  link-here:usefulness-of-links. When you click on it, the URL of the webpage
+  Similarly, Org's own target ~<<usefulness-of-links>>~ becomes:
+  <<usefulness-of-links>>. When you click on it, the URL of the webpage
   changes: It is a local anchor to a possibly interesting location in your
   article. Similarly, ~octoicon:home~ becomes octoicon:home; doc:org-link/octoicon.
 
@@ -1081,7 +1081,7 @@ this, we use Org's link mechanism./
 #+end_box
 
 #+begin_details Example Mini-Article Using The Above Link Types
-( link-here:example-article-via-links ) kbd:C-x_ESC_ESC invokes
+( <<example-article-via-links>> ) kbd:C-x_ESC_ESC invokes
 doc:repeat-complex-command, you will see a Lisp form of the previous /interactive/
 action you performed. You can press kbd:RET to repeat that command, or, more
 likely, to convert your actions to Lisp code for a personal function.
@@ -3465,7 +3465,7 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
     | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
     | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
     | =octoicon:=          | GitHub-style icons --- for styling and linking like a pro.                                      |
-    | =link-here:=         | Local anchors --- create navigable sections anywhere.                                           |
+    | =<<X>>=             | Permalinks --- Org's own targets, made a visible 🔗 in HTML.                                      |
     | =show:=              | Show a variable value --- dynamically insert content like your name or version.                 |
     | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                         |
     
@@ -4443,7 +4443,7 @@ Examples below: “1 + 1 = 2”, calculating a train's length, Euler's Handshaki
 rational root equivales perfect power.
 
 #+begin_details ★ "Proof of “1 + 1 = 2” with source"  :title-color orange
-link-here:1+1=2
+<<1+1=2>>
 #+begin_math
 \def\suc{\mathsf{suc}\,}
 \def\zero{\mathsf{zero}}
@@ -4516,7 +4516,7 @@ link-here:1+1=2
 #+end_src
 #+end_details
 #+begin_details “Calculating” the length of a train
-link-here:calculating-the-length-of-a-train
+<<calculating-the-length-of-a-train>>
 Let us *green:calculate* the length of a train, that is travelling at a speed of
 60 km/hr and, on its way, it crosses a pole in 9 seconds.
 # Implicitly assuming that it is going straight, no turns or curves.
@@ -4562,7 +4562,7 @@ Let us *green:calculate* the length of a train, that is travelling at a speed of
 #+end_details
 #+begin_details "Euler's Handshaking Lemma"
 
-link-here:handshaking-lemma
+<<handshaking-lemma>>
 /At a party of 7 people, is it possible that everybody knows exactly 3 other
 people?/
 
@@ -4646,7 +4646,7 @@ For more on Graph Theory, [[https://ptwiddle.github.io/MAS341-Graph-Theory-2017/
 + [[http://homepage.tudelft.nl/64a8q/papers/handshake.pdf][The power of shaking hands]] has a few non-trivial applications of this lemma.
 #+end_details
 #+begin_details ★ Rational root equivales perfect power :title-color orange
-link-here:rational-root-equivales-perfect-power
+<<rational-root-equivales-perfect-power>>
 #+begin_math
 \def\exp#1#2{\mathsf{exp}_#1\,#2}
 \def\eq{\;=\;}
@@ -4691,7 +4691,7 @@ Possibly Useful links:
 + [[https://www.onemathematicalcat.org/MathJaxDocumentation/TeXSyntax.htm][TeX Commands available in MathJax]]
 
 #+begin_details "★ What if I want to do this in LaTeX (e.g., for math.stackexchange.com)?" :title-color orange
-link-here:equational-proofs-in-LaTeX
+<<equational-proofs-in-LaTeX>>
 Copy-paste the following...
 #+begin_src latex :tangle no :exports code
 $
@@ -6181,24 +6181,35 @@ Completely lost one's train of thought…
 
  #+bind: org-hide-editor-comments nil
 
-*   /“Link Here!”/ & OctoIcons
+* Permalinks ---Org's own =<<X>>=, made visible--- & OctoIcons
   :PROPERTIES:
-  :CUSTOM_ID: Link-Here-OctoIcons
+  :CUSTOM_ID: Permalinks-OctoIcons
   :END:
 
-Use the syntax =link-here:name= to create an anchor link that alters the URL with
-=#name= as in “link-here:name”
----it looks and behaves like the Github generated links for a heading.
-Use case: Sometimes you want to explicitly point to a particular location in an
-article, such as within a =#+begin_details= block, this is a possible way to do so.
+Sometimes we want to point explicitly at a particular location in an article, such as within a =#+begin_details=
+block.  Org already has two kinds of /target/ for this; we merely make the first one visible.
+
++ Org's =<<X>>= ---a /dedicated target/--- names a spot =X=.  Within Emacs, =[[X]]= jumps there by =C-c C-o=.
+  Upon export, the target is an invisible anchor: in HTML, ~<a id="orgNNNNNNN"></a>~, whose id is random unless
+  =org-html-prefer-user-labels= is set; in LaTeX, =\label{orgNNNNNNN}=.  The text =X= itself never shows.
++ Org's =<<<X>>>= ---a /radio target/--- is a definition site: =X= shows as usual, and every mention of =X= elsewhere
+  in the buffer becomes a link back to it, sans any =[[⋯]]=.
+
+With =org-special-block-extras-mode= on, in HTML:
++ =<<X>>= exports as a clickable octoicon:link, a permalink to itself ---it looks and behaves like the links GitHub
+  generates for a heading.  Click it, and the URL ends in =#X=, ready for a reader to copy.  The id is =X= itself,
+  its whitespace as dashes: =<<Euler's lemma>>= ↦ =#Euler's-lemma=, which =[[Euler's lemma]]= links to as well.
++ =<<<X>>>= looks just as Org renders it; only its id becomes =X= too, so =#monoid= rather than =#orgNNNNNNN=.
++ Other backends are untouched; e.g., LaTeX keeps Org's =\label=.
+
+Two targets whose names differ only in whitespace, such as =<<a b>>= and =<<a-b>>=, share an id; we name them apart.
 
 Likewise, get OctoIcons with the syntax =octoicon:𝒳= where =𝒳= is one of =home,
 link, mail, report, tag, clock=: octoicon:home, octoicon:link, octoicon:mail,
 octoicon:report, octoicon:tag, octoicon:clock.
 
-- Within =octoicon:𝒳= and =link-here:𝒳= the label =𝒳= determines the
-  OctoIcon shown and the name of the local link to be created, respectively.
-  + Descriptions, as in =[[link:label][description]]=, are ignored.
+- Within =octoicon:𝒳= the label =𝒳= determines the OctoIcon shown.
+  + Descriptions, as in =[[octoicon:label][description]]=, are ignored.
 - Besides the HTML backend, such links are silently omitted.
 
 #+begin_details Six OctoIcons and Implementation
@@ -6276,24 +6287,12 @@ Usage: (cadr (assoc 'ICON org--supported-octoicons))")
      (cadr (assoc (intern o-label)
                   org--supported-octoicons)))))
 
-(org-deflink link-here
-  "Export a link to the current location in an Org file."
-  [:help-echo (format "This is a local anchor link named “%s”" path)]
-  (if (not (equal o-backend 'html))
-      ""
-    (format (s-collapse-whitespace
-     "<a class=\"anchor\" aria-hidden=\"true\" id=\"%s\"
-          href=\"#%s\">%s</a>")
-    o-label o-label (cadr (assoc 'link
-                             org--supported-octoicons)))))
 #+end_src
 
 
 # [[color:orange][Going forward,]]
-Going forward, it would be desirable to provide a non-whitespace alternative for
-the LaTeX rendition.  More usefully, before the HTML export hook, we could place
-such ‘link-here’ links before every org-title produce clickable org-headings,
-similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
+Going forward, we could give every heading such a permalink too, producing clickable
+org-headings similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
 
 # [[color:orange][Moreover]],
 Moreover, it may be useful to have =octoicon:𝒳|url= so the resulting
@@ -6304,15 +6303,15 @@ would be to support more, if not all, the possible OctoIcons.
 
 #+html: <br>
 #+begin_org-demo Example :source-color custard :result-color custard
-link-here:example-location (Click the icon and see the URL has changed!)
+<<example-location>> (Click the icon and see the URL has changed!)
 #+end_org-demo
 
 #+begin_details Tests
 #+begin_src emacs-lisp :tangle tests.el :comments link
 (deftest "It works as expected: We have an anchor with the given ID, and the default SVG chain icon."
-  [link:here]
-  (⇝ (⟰ "link-here:example-location (Click the icon and see the URL has changed!)")
-     "<a class=\"anchor\" aria-hidden=\"true\" id=\"example-location\" href=\"#example-location\"><svg"
+  [target]
+  (⇝ (⟰ "<<example-location>> (Click the icon and see the URL has changed!)")
+     "<a class=\"anchor\" id=\"example-location\" href=\"#example-location\" aria-label=\"Permalink to example-location\"><svg"
      (* anything)
      "</svg></a> (Click the icon and see the URL has changed!)"
      (* anything)))
@@ -6570,7 +6569,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                     ► ‘|color|url|logo’ are optional;
                        ⇒ If ‘url’ is not present, the resulting badge is not a hyperlink.
                        ⇒ if ‘url’ is ‘here’ then we have a local link;
-                          i.e., the resulting badge behaves like ‘link-here:key’.
+                          i.e., the resulting badge behaves like <<key>>.
                        ⇒ ‘color’ may be: ‘brightgreen’ or ‘success’,
                                          ‘red’         or ‘important’,
                                          ‘orange’      or ‘critical’,
@@ -6641,7 +6640,7 @@ When SOCIAL is provided, we interpret LABEL as an atomic string.
      ⇒ ‘|’ is not a valid substring, but ‘-, %, ?’ are okay.
   - ‘|color|url|logo’ are optional;
      if ‘url’ is ‘|here’ then the resulting badge behaves
-     like ‘link-here:key’.
+     like <<key>>.
   - ‘color’ may be: ‘brightgreen’ or ‘success’,
                     ‘red’         or ‘important’,
                     ‘orange’      or ‘critical’,
@@ -8495,7 +8494,7 @@ It is said that $e^{i \cdot \pi} + 1 = 0$ is the truth.
 The full article may be read as a [[https://github.com/alhassy/org-special-block-extras/blob/master/index.pdf][PDF]] or as [[https://alhassy.com/org-special-block-extras][HTML]] ---or visit the [[https://github.com/alhassy/org-special-block-extras][repo]].
 #+end_quote
 
-link-here:summary
+<<summary>>
 Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=, =gray=, =green=,
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=.
@@ -8507,7 +8506,7 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 | Editorial Comments     | [[doc:org-block/remark][remark]]                                 |                     |
 | Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]] |                     |
 | Keystrokes             |                                                                  | ~kbd~                 |
-| OctoIcons & Link Here  |                                                                  | ~octoicon~, ~link-here~ |
+| OctoIcons & Permalinks |                                                                  | ~octoicon~, ~<<X>>~     |
 | Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~               |
 | Marginal remarks       | [[doc:org-block/margin][margin]]                                 |                     |
 | Badges                 | [[doc:org-make-badge][badge]]                                    |                     |
@@ -8619,7 +8618,7 @@ Pop-quiz: How does doc:apply work?
 ,#+end_parallel
 
 ,#+begin_details Answer
-link-here:solution
+<<solution>>
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]
@@ -8670,7 +8669,7 @@ Pop-quiz: How does doc:apply work?
 ,#+end_parallel
 
 ,#+begin_details Answer
-link-here:solution
+<<solution>>
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]
@@ -8739,12 +8738,13 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
      "Answer"))
 
 (deftest "Its details block begins with an SVG anchor identified as ‘solution’"
-  [mwe link-here]
+  [mwe target]
   (⇝ mwe "<details"
          (* anything) ;; styling
          "<a class=\"anchor\""
          (* anything)
-         "href=\"#solution\">" ;; link-here:solution
+         "href=\"#solution\"" ;; <<solution>>
+         (* anything)
          "<svg"
          (* anything)
          "</svg></a>"
@@ -8853,7 +8853,7 @@ Pop-quiz: How does doc:apply work?
 #+end_parallel
 
 #+begin_details Answer
-link-here:solution
+<<solution>>
 Syntactically, ~(apply f '(x0 ... xN)) = (f x0 ... xN)~.
 
 [[remark:Musa][Ain't that cool?]]
