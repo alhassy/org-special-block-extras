@@ -59,9 +59,23 @@ The same string is then safe both inside a record label's <port> and in an edge'
   "S sans one pair of surrounding double quotes, e.g. \"\\\"Org mode\\\"\" ↦ \"Org mode\"; so both spellings name one node."
   (if (string-match "\\`\"\\(.*\\)\"\\'" s) (match-string 1 s) s))
 
+(defvar org--graph-tips nil
+  "While a graph exports as an inline <svg>, a hash table of its tooltips, key ↦ Org text, for tooltips.js to show;
+else nil.  Then tooltips are Org, not plain text, and dot sees only their keys; see `org--graph-tip-key'.")
+
+(defun org--graph-tip-key (key value)
+  "(KEY, VALUE), an attribute, ↦ its value in dot: a tooltip's VALUE is noted in `org--graph-tips', under a fresh key.
+  \"tooltip\", \"Born /1958/\"  ↦  \"osbe-tip-g1\", noting osbe-tip-g1 ↦ \"Born /1958/\"; else VALUE, unchanged."
+  (let ((tip (org--graph-unquote value)))
+    (if (not (and org--graph-tips (s-ends-with-p "tooltip" key) (not (s-blank-str-p tip))))
+        value
+      (let ((id (format "osbe-tip-%s" (gensym))))
+        (puthash id (substring-no-properties tip) org--graph-tips)
+        id))))
+
 (defun org--graph-attr-pairs (rows)
   "ROWS ↦ \"k₁=v₁ k₂=v₂ …\", each value quoted as needed by `org--graph-dot-id'."
-  (s-join " " (--map (format "%s=%s" (car it) (org--graph-dot-id (cadr it))) rows)))
+  (s-join " " (--map (format "%s=%s" (car it) (org--graph-dot-id (org--graph-tip-key (car it) (cadr it)))) rows)))
 
 (defun org--graph-attrs->dot (rows)
   "ROWS ↦ \" [ k₁=v₁ … ]\", ready to follow a dot id or keyword; \"\" when ROWS is empty."

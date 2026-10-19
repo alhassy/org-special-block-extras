@@ -140,7 +140,7 @@
 (deftest "on the #+begin_graph line, eldoc explains the key at point"
   (dolist (case '((":rankdir"    . "Sets direction of graph layout. dot only.  Default: TB.")
                   (":node.shape" . "Sets the shape of a node.  Default: ellipse.")
-                  (":svg"        . "With t, HTML export embeds an inline <svg>, keeping tooltips; else a base64 PNG.")))
+                  (":svg"        . "HTML export embeds an inline <svg>, its tooltips as prose's; with nil, a base64 PNG.")))
     (with-org-test-buffer (:text (format "
 #+begin_graph Title %s x
 + A

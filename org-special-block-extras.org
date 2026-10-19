@@ -4306,8 +4306,8 @@ p -> q &== \neg p \lor q
 
   The [[doc:org-block/graph][graph]] block is opt-in, so we load it separately with
   ~(require 'org-graph-block)~. Rendering needs the =dot= executable from [[https://graphviz.org][Graphviz]]:
-  HTML export embeds a PNG ---or an inline SVG, with tooltips intact, via =:svg t=--- whereas
-  other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
+  HTML export embeds an inline SVG, whose tooltips hover as any other's do ---or a PNG, sans
+  tooltips, via =:svg nil=--- whereas other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org-block/graph= documents every option.
 
   osbe-example:smartdiagram

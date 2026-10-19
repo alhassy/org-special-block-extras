@@ -39,7 +39,7 @@
 
 (declare-function org-docs-get "org-links")
 (declare-function org--docs-plain-p "org-links")
-(declare-function org--tooltip-html "org-links")
+(declare-function org--tooltip-template "org-links")
 (declare-function org--latex-margin-note "org-margin-blocks")
 (defvar org--docs-actually-used)
 
@@ -59,7 +59,7 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
 + Markdown: MATH alone, as GitHub's maths has no hovers."
   (pcase (if (org-export-markdown-p) 'md org--math-backend)
     ('html (let ((id (format "osbe-tip-%s" (gensym))))
-             (push (format "<template id=\"%s\">%s</template>" id (org--tooltip-html tip plain?)) org--math-tips)
+             (push (org--tooltip-template id tip plain?) org--math-tips)
              (format "\\class{tooltip %s}{%s}" id math)))
     ('latex (let ((note (string-trim (org-export-string-as tip 'latex t))))
               (push (if (org-export-beamer-p) (format "\\stepcounter{footnote}\\footnotetext{%s}" note)

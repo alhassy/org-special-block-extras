@@ -41,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const close = () => { clearTimeout(timer); owner = null; box.hidden = true; };
 
-  // A word's tip is its <template>; else, in maths, which MathJax keeps no <template> within, the one its
-  // osbe-tip-ID class names, beside the maths: \class{tooltip osbe-tip-g1}{x} … <template id="osbe-tip-g1">.
+  // A word's tip is its <template>; else, in maths or a graph's <svg>, which keep no <template> within, the one its
+  // osbe-tip-ID class names, beside them: \class{tooltip osbe-tip-g1}{x} … <template id="osbe-tip-g1">.
   const tipOf = (word) => word.querySelector(':scope > template')
     ?? document.getElementById([...word.classList].find((c) => c.startsWith('osbe-tip-')));
 

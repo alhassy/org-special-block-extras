@@ -384,6 +384,21 @@ Returns t (claiming C-c C-c)."
       (goto-char (match-beginning 0))
       (buffer-substring (point) (point-max)))))
 
+(defun org-graph--svg-tooltips (svg tips)
+  "(SVG, TIPS) ↦ SVG whose tooltips tooltips.js shows, TIPS mapping each key Graphviz wrote as an xlink:title to its Org
+text, which follows the <svg> in a <template>, as an <svg> keeps none within.  Graphviz's own titles ---node ids, and a
+linked node's label--- vanish, lest the browser's native tooltips compete.
+  <a xlink:title=\"osbe-tip-g1\">  ↦  <a class=\"tooltip osbe-tip-g1\" tabindex=\"0\">, then <template id=\"osbe-tip-g1\">…"
+  (concat (replace-regexp-in-string
+           " xlink:title=\"\\([^\"]*\\)\""
+           ;; Graphviz writes a - as &#45;, which decoding, by regexps of its own, would lose our match for.
+           (lambda (title) (let ((key (save-match-data (xml-substitute-special (match-string 1 title)))))
+                             (if (gethash key tips) (format " class=\"tooltip %s\" tabindex=\"0\"" key) "")))
+           (replace-regexp-in-string "<title>[^<]*</title>\n?" "" svg) t t)
+          (let (templates)
+            (maphash (lambda (key tip) (push (concat "\n" (org--tooltip-template key tip)) templates)) tips)
+            (apply #'concat (nreverse templates)))))
+
 (org-defblock graph (main-arg nil file nil svg nil :edit-indirect-mode org-graph-edit-mode :manual "#Graphs")
   "Render an Org list + tables as a Graphviz dot graph.
 
@@ -396,9 +411,8 @@ rather than erring.  Pass :file foo.png on the
 a figure that [[foo]] reaches and #+caption: captions; otherwise the name is graph-HASH.png, HASH being that of the
 dot source, so re-exporting an unchanged graph rewrites one file rather than adding another.
 
-For HTML export: if :svg t is set, embeds an inline <svg> element (tooltips
-are preserved as <title> attributes and appear on hover in browsers).
-Otherwise, renders to an inline base64 PNG.
+For HTML export: embeds an inline <svg> element, whose nodes' and arcs' tooltips hover as prose's do, by tooltips.js;
+under :svg nil, an inline base64 PNG, sans tooltips.
 For Markdown, it writes the image file and links it, as for a named graph.
 For other backends it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
 
@@ -455,6 +469,10 @@ Example:
   #+end_graph"
   (let* ((smart   (plist-get org--handler-args :smartdiagram))
          (raw     (org--graph-expand-macros raw-contents))
+         ;; HTML inlines a graph's <svg>, for its tooltips, unless told :svg nil; `svg' alone cannot tell nil from omitted.
+         (inline-svg (and (eq backend 'html) (not org--handler-anchor) (not (org-export-markdown-p))
+                          (or svg (not (or smart (plist-member org--handler-args :svg))))))
+         (org--graph-tips (and inline-svg (make-hash-table :test #'equal)))
          (dot     (if smart (org--smartdiagram raw main-arg org--handler-args)
                     (org--graph-raw->dot raw main-arg org--handler-args)))
          (render  (if smart
@@ -474,14 +492,17 @@ Example:
        (funcall render (if (s-ends-with-p ".svg" outfile) "svg" "png") outfile)
        (org-parse (format "[[file:%s]]" outfile)))
       (`html
-       (let ((tmp (make-temp-file "org-graph-" nil (if svg ".svg" ".png"))))
+       (let ((tmp (make-temp-file "org-graph-" nil (if inline-svg ".svg" ".png"))))
          (unwind-protect
-             ;; An inline <svg> keeps the tooltips' <title> elements; else, an inline base64 PNG.
-             (or (when (funcall render (if svg "svg" "png") tmp)
-                   (if svg (org-graph--svg-contents tmp)
+             ;; An inline <svg> keeps the tooltips; else, an inline base64 PNG.
+             (or (when (funcall render (if inline-svg "svg" "png") tmp)
+                   (if inline-svg (-some--> (org-graph--svg-contents tmp) (org-graph--svg-tooltips it org--graph-tips))
                      (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />" (org-graph--png-to-base64 tmp))))
-                 ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>
-                 (format "<pre>%s</pre>" (s-replace "<" "&lt;" dot)))
+                 ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>, its tooltips as text.
+                 (format "<pre>%s</pre>" (s-replace "<" "&lt;" (if (and inline-svg (not smart))
+                                                                    (let (org--graph-tips)
+                                                                      (org--graph-raw->dot raw main-arg org--handler-args))
+                                                                  dot))))
            (delete-file tmp))))
       (_
        ;; `org-parse' lets Org export the src block, rather than emit its raw syntax into the output.

@@ -123,7 +123,7 @@ non-nil to suppress the normal `org-return' behaviour."
 
 (defconst org-graph--header-key-docs
   '((":file"     . "The image file C-c C-c and export write; else graph-HASH.png.")
-    (":svg"      . "With t, HTML export embeds an inline <svg>, keeping tooltips; else a base64 PNG.")
+    (":svg"      . "HTML export embeds an inline <svg>, its tooltips as prose's; with nil, a base64 PNG.")
     (":directed" . "With nil, an undirected graph, whose arcs are --; else a digraph.")
     (":wrap"     . "With N, node and arc labels fill to lines of N characters; one broken by \\\\ stays as written.")
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")

@@ -207,12 +207,13 @@ footnotes become the node's tooltip."
 
 (defun org--graph-footnote-text (reference)
   "A footnote REFERENCE ↦ its definition's text, as a tooltip: [fn::NOTE] and [fn:NAME: NOTE] carry it inline, and a
-bare [fn:NAME] finds it in the buffer, by `org-footnote-get-definition'; e.g., [fn::Born /1958/] ↦ \"Born 1958\"."
+bare [fn:NAME] finds it in the buffer, by `org-footnote-get-definition'; e.g., [fn::Born /1958/] ↦ \"Born 1958\",
+or, while `org--graph-tips' collects tooltips, the Org \"Born /1958/\"."
   (-some--> (or (org-element-contents reference)
                 (-some--> (org-element-property :label reference)
                   (nth 3 (org-footnote-get-definition it))
                   (org-element-parse-secondary-string it (org-element-restriction 'paragraph))))
-    (s-trim (org--graph-item-render nil it))))
+    (s-trim (if org--graph-tips (org-element-interpret-data it) (org--graph-item-render nil it)))))
 
 (defun org--graph-item-text-sans-tags (text)
   "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags.
@@ -436,12 +437,15 @@ A repeat occurrence contributes the ATTRS keys not yet set, and warns about thos
                                                                        code verbatim link))))))
 
 (defun org--graph-join-tips (tips)
-  "TIPS, tooltip texts or nils, ↦ one tooltip, a line each; nil sans any.  (\"a\" nil \"b\")  ↦  \"a\\\\nb\""
-  (-some->> (-non-nil tips) (s-join "\\n")))
+  "TIPS, tooltip texts or nils, ↦ one tooltip, a line each, or a paragraph each while `org--graph-tips' collects Org
+tooltips; nil sans any.  (\"a\" nil \"b\")  ↦  \"a\\\\nb\""
+  (-some->> (-non-nil tips) (s-join (if org--graph-tips "\n\n" "\\n"))))
 
 (defun org--graph-notes-tooltip (raws)
-  "Notes' RAWS bodies ↦ one tooltip, sans markup, a line per paragraph or `\\\\' break; nil sans RAWS."
-  (org--graph-join-tips (--map (org--graph-note-render nil it) (-mapcat #'org--graph-note-lines raws))))
+  "Notes' RAWS bodies ↦ one tooltip, sans markup, a line per paragraph or `\\\\' break; nil sans RAWS.
+While `org--graph-tips' collects tooltips, they are Org, so RAWS stay as written."
+  (org--graph-join-tips (if org--graph-tips (--remove (s-blank-str-p it) (--map (s-trim (or it "")) raws))
+                          (--map (org--graph-note-render nil it) (-mapcat #'org--graph-note-lines raws)))))
 
 (defun org--graph-notes-body (raws width)
   "Notes' RAWS bodies ↦ an HTML-like label body: their lines, markup kept, filled to WIDTH and left-aligned;

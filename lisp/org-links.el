@@ -121,6 +121,13 @@ TEXT is Org, exported as such; or PLAIN? text, such as a docstring, shown as is.
   (format "<abbr class=\"tooltip\" tabindex=\"0\"%s>%s<template>%s</template></abbr>"
           (if attributes (concat " " attributes) "") body html))
 
+(defun org--tooltip-template (id text &optional plain?)
+  "(ID, TEXT, PLAIN?) ↦ the <template> tooltips.js shows for an element of class ID, as maths and graphs keep none within.
+  \"osbe-tip-g1\", \"A /typed/ monoid\"  ↦  <template id=\"osbe-tip-g1\"><p>A <i>typed</i> monoid</p></template>"
+  (let ((html (org--tooltip-html text plain?)))
+    (org-html-head-require 'org--tooltip-html-head)
+    (format "<template id=\"%s\">%s</template>" id html)))
+
 (defun org--tooltip-html (text &optional plain?)
   "(TEXT, PLAIN?) ↦ HTML of a tooltip's TEXT: its body-only export as Org; or, when PLAIN?, TEXT escaped in a <pre>.
 The nested export keeps the outer one's glossary, which `org--docs-prepare' would otherwise reset."
