@@ -53,12 +53,22 @@ any other #+begin_𝒳 block, too; see `org--rewrite-any-block-switches'.
   #+begin_src emacs-lisp :folded t                            ;; Folded away, titled by its language
   #+begin_tip :demo t                                         ;; Its source, then what it exports to")
 
-(defmacro org-defswitch (key value docstring &rest body)
+(defmacro org-defswitch (key arglist docstring &rest body)
   "Make KEY a switch that every block understands: a block with KEY VALUE renders as BODY, a string, says.
-  (org-defswitch :shout _ \"Upper-case the block's rendering.\" (upcase (funcall render contents)))
-BODY may mention `render', the rest of the switches and the block itself, as a function of its contents;
-`contents'; `backend'; the block's `name'; and its #+begin_ line's `header', sans switches.  Not calling
-`render' replaces the block; transforming `contents' first, or the result after, wraps it.
+  (org-defswitch :shout (loud? &key render contents)
+    \"Upper-case the block's rendering, when LOUD?.\"
+    (upcase (funcall render contents)))
+ARGLIST names VALUE, then, as `cl-defun' keys, whichever of these BODY needs:
++ :render, the rest of the switches and the block itself, as a function of its contents;
++ :contents; :backend; the block's :name; and its #+begin_ line's :header, sans switches.
+Not calling `render' replaces the block; transforming `contents' first, or the result after, wraps it.
+
+Every switch is offered the whole record, and takes only what it names ---dependency injection, by keyword:
++ Hygiene: BODY sees only the names it lists, so a `let' around the definition keeps its own `name';
+  a switch wanting both renames the key, as in (_ &key ((:name block)) render contents).
++ Growth: a key we offer in due time, such as :anchor, is invisible to the switches that do not ask for it;
+  whereas a new anaphor would shadow each existing switch's variable of that name.
++ Clarity: what BODY depends on is read off its head, not from this docstring.
 
 BODY may open with :depth N, an integer as `add-hook' takes, to place KEY among the other switches: a smaller N
 wraps a larger one, so that :noexport (-90) hides even a :folded (-60) box (-50).  N is 0 by default; i.e.,
@@ -67,10 +77,10 @@ The switch fires only when VALUE is non-nil; e.g., :folded nil leaves a block be
   (declare (indent defun) (doc-string 3))
   (let ((depth (if (eq (car body) :depth) (prog1 (cadr body) (setq body (cddr body))) 0)))
     `(org--add-switch ,key ,depth
-                      (lambda (,value render contents backend name header)
-                        ,docstring
-                        (ignore render contents backend name header)
-                        ,@body))))
+                      (cl-function (lambda (,@arglist ,@(unless (memq '&key arglist) '(&key))
+                                                      ,@(unless (memq '&allow-other-keys arglist) '(&allow-other-keys)))
+                                     ,docstring
+                                     ,@body)))))
 
 (defun org--add-switch (key depth function)
   "(KEY, DEPTH, FUNCTION) ↦ `org-block-switches' with KEY now meaning FUNCTION, at DEPTH; see `org-defswitch'."
@@ -177,53 +187,55 @@ Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RE
 :demo is rendered before any other switch, by `org--rewrite-demos', which hands its showing to us as RENDER."
   (funcall (-reduce-r-from (-lambda ((key _ . switch) render)
                              (-if-let (value (plist-get switches key))
-                                 (lambda (contents) (funcall switch value render contents backend name header))
+                                 (lambda (contents)
+                                   (funcall switch value :render render :contents contents
+                                            :backend backend :name name :header header))
                                render))
                            render org-block-switches)
            contents))
 
-(org-defswitch :noexport _
+(org-defswitch :noexport (_)
   "Nothing at all."
   :depth -90
   "")
 
-(org-defswitch :when form
+(org-defswitch :when (form &key render contents backend)
   "The block when FORM, which may mention `backend', is non-nil; else nothing."
   :depth -80
   (if (org--block-eval form backend) (funcall render contents) ""))
 
-(org-defswitch :folded title
+(org-defswitch :folded (title &key render contents backend name)
   "The result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised."
   :depth -60
   (org-block/details backend (funcall render contents)
                      (if (eq title t) (capitalize (format "%s" name)) (format "%s" title))))
 
-(org-defswitch :boxed title
+(org-defswitch :boxed (title &key render contents backend)
   "The result within a `box' titled TITLE; for :boxed t, untitled.  Within :folded, a folded box."
   :depth -50
   (org-block/box backend (funcall render contents) (if (eq title t) "" (format "%s" title))))
 
-(org-defswitch :let bindings
+(org-defswitch :let (bindings &key render contents backend)
   "Each whole-word VAR in the contents, or operator such as ->, becomes its VALUE, for BINDINGS (VAR VALUE …);
 or for those of the table #+name: BINDINGS, else the variable BINDINGS.  See `org--block-let'."
   :depth -20
   (funcall render (org--block-let bindings contents backend)))
 
-(org-defswitch :verbatim _
+(org-defswitch :verbatim (_ &key contents name header)
   "The block as written, its #+begin_ line's header sans switches, shown as Org source, not rendered.
 Outer switches apply to this showing; e.g., :verbatim t :folded t folds away the block's source."
   :depth 50
   (format "#+begin_src org\n%s\n#+end_src"
           (org-escape-code-in-string (org--block-source name (string-trim-right contents) header))))
 
-(org-defswitch :ignore _
+(org-defswitch :ignore (_ &key contents)
   "The contents as plain Org, bypassing the block's own behaviour."
   :depth 60
   contents)
 
 ;; Both act elsewhere, so upon export they leave the block be.
-(org-defswitch :demo _ "See `org-demo'." :depth 90 (funcall render contents))
-(org-defswitch :C-c_C-c _ "For the block in Emacs, not upon export; see `org--block-cc-switch'." :depth 90
+(org-defswitch :demo (_ &key render contents) "See `org-demo'." :depth 90 (funcall render contents))
+(org-defswitch :C-c_C-c (_ &key render contents) "For the block in Emacs, not upon export; see `org--block-cc-switch'." :depth 90
   (funcall render contents))
 
 ;;;; org--rewrite-any-block-switches

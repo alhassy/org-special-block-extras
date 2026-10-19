@@ -306,7 +306,7 @@ Less is more.
 
 (deftest "`org-defswitch' makes a switch every block understands, placed among the others by its :depth" [switches]
   (let ((org-block-switches org-block-switches))
-    (org-defswitch :shout loud?
+    (org-defswitch :shout (_loud? &key render contents)
       "Upper-case the block's rendering, when LOUD?."
       (upcase (funcall render contents)))
     (should (string-match-p "HELLO" (org-export-string "#+begin_src text :shout t\nhello\n#+end_src")))
@@ -314,6 +314,15 @@ Less is more.
     (should (string-match-p "Peek.*</summary>[^z]*JASIM"
                             (org-export-string "#+begin_example :let (WHO \"jasim\") :folded \"Peek\" :shout t\nWHO\n#+end_example"))))
   (should-not (org--block-switch-p :shout)))
+
+(deftest "`org-defswitch' hands a switch only the keys it names; a `let' around it keeps its own `name'" [switches]
+  (let ((org-block-switches org-block-switches)
+        (name "Jasim"))
+    (org-defswitch :greet (_ &key ((:name block)) render contents)
+      "Greet NAME atop the block, naming it too."
+      (format "Hi %s, from %s\n%s" name block (funcall render contents)))
+    (should (string-match-p "Hi Jasim, from example"
+                            (org-export-string "#+begin_example :greet t\nhello\n#+end_example")))))
 
 (deftest "switches apply before Babel: :let changes the code a src block runs, and :noexport keeps it from running" [switches babel]
   (let ((org-confirm-babel-evaluate nil))
