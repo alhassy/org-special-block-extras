@@ -77,10 +77,13 @@ red:0 < 1" nil)
 
 ;;; Alignment ---lines aligned at a top-level &
 
-(deftest "a math block's top-level marks are its & and \\\\ outside every {group} and \\begin…\\end; an escaped \\& is none"
-  (should (equal (org--math-top-level-marks "a &= b \\\\ c &= d") '("&" "\\\\" "&")))
-  (should (equal (org--math-top-level-marks "\\text{Q\\&A} = \\{ x \\mid x \\} \\cases{1 & n \\cr 0 & m}") nil))
-  (should (equal (org--math-top-level-marks "f &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}") '("&"))))
+(deftest "a math block's top-level marks are its &, \\\\, and { outside every {group} and \\begin…\\end, each with its position"
+  (should (equal (org--math-top-level-marks "a &= b \\\\ c &= d") '(("&" . 2) ("\\\\" . 7) ("&" . 12))))
+  ;; An escaped \\& or \\{ is none; a {group}'s own opening brace is, but nothing within it.
+  (should (equal (org--math-top-level-marks "\\text{Q\\&A} = \\{ x \\} \\cases{1 & n \\cr 0 & m}")
+                 '(("{" . 5) ("{" . 28))))
+  (should (equal (org--math-top-level-marks "f &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}")
+                 '(("&" . 2) ("{" . 46)))))
 
 (define-org-call-test "a math block whose lines have an & is an align; its :tag-COLOUR: NAME a \\tag; its last \\ dropped"
   :call (org-block/math 'latex "x &= x + 0 \\\\
@@ -339,6 +342,153 @@ p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :tag-orange: Golden Rule
   (should (looking-at-p "\\\\begin{equation}"))
   (should-error (funcall (org-link-get-parameter "eqref" :follow) "Nowhere" nil) :type 'user-error))
 
+;;; Names ---Org's own #+name: labels the block
+
+(define-org-export-test "a named math block that is :numbered t is labelled by its #+name:, which eqref: cites"
+  :to latex
+  :input "
+          #+name: Euler
+          #+begin_math :numbered t
+          e^{i\\pi} + 1 = 0
+          #+end_math
+          By [[eqref:Euler]]."
+  :equals "\\begin{equation}
+e^{i\\pi} + 1 = 0 \\label{Euler}
+\\end{equation}
+By \\eqref{Euler}.
+")
+
+(define-org-export-test "a named math block sans numbers is tagged by its #+name:, so eqref: has a name to cite"
+  :to latex
+  :input "
+          #+name: Euler
+          #+begin_math
+          e^{i\\pi} + 1 = 0
+          #+end_math"
+  :equals "\\[
+e^{i\\pi} + 1 = 0 \\tag{Euler} \\label{Euler}
+\\]
+")
+
+(org-deftest "following eqref:NAME visits the math block named NAME"
+  :text "
+By [[eqref:Euler]].
+#+name: Euler
+#+begin_math
+e^{i\\pi} + 1 = 0
+#+end_math"
+  (funcall (org-link-get-parameter "eqref" :follow) "Euler" nil)
+  (should (looking-at-p "#\\+name: Euler")))
+
+;;; Hints ---REL{ HINT } aligns its line at REL, the hint in a column of its own
+
+(define-org-call-test "a math block's “REL{ HINT }” aligns its line at REL, the HINT at the line's end, before its \\\\"
+  :call (org-block/math 'latex "
+(a + b)^2 ={ by expanding } a^2 + 2ab + b^2 \\\\
+≥{ as squares are nonnegative } 2ab" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+(a + b)^2 &= a^2 + 2ab + b^2 && \\text{by expanding} \\\\
+&≥ 2ab && \\text{as squares are nonnegative}
+\\end{align*}
+#+end_export")
+
+(define-org-call-test "a math block's hint comes before its line's tag; a hint may hold {groups} of its own"
+  :call (org-block/math 'latex "
+x ={ by {IH} } y   :tag-blue: Step" nil)
+  :returns "#+begin_export latex
+\\begin{align*}
+x &= y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
+\\end{align*}
+#+end_export")
+
+(define-org-export-test "a math block's hint follows a :let shorthand's relation, as in a calculational proof"
+  :to latex
+  :input "
+          #+begin_math :let (== \"\\\\equiv\")
+          p =={ by definition } q
+          #+end_math"
+  :equals "\\begin{align*}
+p &\\equiv q && \\text{by definition}
+\\end{align*}
+")
+
+(define-org-call-test "a math block's REL{GROUP}, ^{ 2 }, \\frac{ a }{ b }, and a REL{ … } within cases are no hints"
+  :call (org-block/math 'latex "
+x ={a} + \\frac{ a }{ b }^{ 2 } = \\begin{cases} y ={ no } z & p \\end{cases}" nil)
+  :returns "#+begin_export latex
+\\[
+x ={a} + \\frac{ a }{ b }^{ 2 } = \\begin{cases} y ={ no } z & p \\end{cases}
+\\]
+#+end_export")
+
+;;; Numbered once ---many lines, one number
+
+(define-org-export-test "a math block :numbered once whose lines align is one equation, split; its #+name: labels it"
+  :to latex
+  :input "
+          #+name: Square
+          #+begin_math :numbered once
+          (a + b)^2 &= (a + b)(a + b) \\\\
+          &= a^2 + 2ab + b^2
+          #+end_math"
+  :equals "\\begin{equation}
+\\begin{split}
+(a + b)^2 &= (a + b)(a + b) \\\\
+&= a^2 + 2ab + b^2
+\\end{split} \\label{Square}
+\\end{equation}
+")
+
+(define-org-call-test "a math block :numbered once whose lines are gathered is one equation, gathered"
+  :call (org-block/math 'latex "
+a = 1 \\\\
+b = 2" nil :numbered 'once)
+  :returns "#+begin_export latex
+\\begin{equation}
+\\begin{gathered}
+a = 1 \\\\
+b = 2
+\\end{gathered}
+\\end{equation}
+#+end_export")
+
+(define-org-call-test "a math block :numbered once takes its one tag out of the split, onto the whole equation"
+  :call (org-block/math 'latex "
+x &= y   :tag-blue: Sym
+&= z" nil :numbered 'once)
+  :returns "#+begin_export latex
+\\begin{equation}
+\\begin{split}
+x &= y \\\\
+&= z
+\\end{split} \\tag{$\\color{blue}{\\text{Sym}}$} \\label{Sym}
+\\end{equation}
+#+end_export")
+
+(deftest "a math block :numbered once refuses two tags, as one equation has one number"
+  (should-error (org-block/math 'latex "x &= y   :tag-blue: A\n&= z   :tag-red: B" nil :numbered 'once) :type 'user-error))
+
+;;; Inline maths ---$…$ reads our markup too
+
+(define-org-export-test "inline maths, $…$ and \\(…\\), reads our links and Org's emphasis, as a math block does"
+  :to latex
+  :input "We have $red:x + *y*$ and \\(blue:z\\)."
+  :equals "We have \\({\\color{red}x} + \\boldsymbol{y}\\) and \\({\\color{blue}z}\\).
+")
+
+(deftest "inline maths' tooltip is a margin note in LaTeX, after the maths, which holds no \\marginpar"
+  (let ((latex (exporting "Let $x[fn::the current element] = 1$." :to latex)))
+    (should (string-prefix-p "Let \\({x}^{\\textnormal{\\the\\numexpr\\value{footnote}+1\\relax}} = 1\\)\\refstepcounter" latex))
+    (should (string-match-p "\\\\marginpar{.*}.*\\\\(\\\\)\\.\n*\\'" latex))))
+
+(define-org-export-test "inline maths reads our links in HTML too, for MathJax"
+  :to html
+  :input "We have $red:x$."
+  :equals "<p>
+We have \\({\\color{red}x}\\).</p>
+")
+
 ;;; In Emacs
 
 (org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and each tag in its colour" [fontify]
@@ -393,6 +543,27 @@ red:x^2 + y^2 = z^2
     (should image)
     (should (eq (overlay-get image 'org-overlay-type) 'org-latex-overlay)))
   (org-ctrl-c-ctrl-c)
+  (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
+
+(org-deftest "C-c C-x C-l, which previews Org's own maths in a region, previews each math block therein too"
+  :text "
+#+begin_math
+x^2 + y^2 = z^2
+#+end_math
+#+begin_math
+a &= b
+#+end_math"
+  (skip-unless (and (executable-find "latex") (executable-find "dvipng")))
+  (setq-local org-format-latex-options (org-combine-plists org-format-latex-options '(:foreground "Black" :background "White")))
+  ;; Org's own previewing wants a window system, which batch lacks; so we call what it is advised with.
+  (should (advice-member-p #'org--math-preview-region 'org--latex-preview-region))
+  (org--math-preview-region (point-min) (point-max))
+  (should (= 2 (length (--filter (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max))))))
+  ;; Again, the blocks shown are left be, not toggled off.
+  (org--math-preview-region (point-min) (point-max))
+  (should (= 2 (length (--filter (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max))))))
+  ;; And Org's own clearing clears ours, as they are LaTeX overlays to it.
+  (org-clear-latex-preview (point-min) (point-max))
   (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
 
 (org-deftest "a math block's :tag-COLOUR: shows as a tag in that colour, and as a plain tag for a colour Emacs lacks" [fontify]

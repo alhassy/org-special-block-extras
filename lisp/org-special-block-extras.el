@@ -456,6 +456,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-export-filter-final-output-functions #'org--load-html-head)
         (advice-add 'org-fontify-meta-lines-and-blocks :around #'osbe--fontify-blocks-as-org)
         (advice-add 'org-remove-font-lock-display-properties :after #'org--undisplay)
+        ;; C-c C-x C-l, and #+startup: latexpreview, show our math blocks as Org's own maths.
+        (advice-add 'org--latex-preview-region :after #'org--math-preview-region)
+        (add-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
         ;; Prepended, so Org's own fontification lands atop a block's :language.
@@ -482,6 +485,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
+    (advice-remove 'org--latex-preview-region #'org--math-preview-region)
+    (remove-hook 'org-export-filter-latex-fragment-functions #'org--math-inline)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))

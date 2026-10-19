@@ -42,6 +42,7 @@
 (declare-function org--tooltip-template "org-links")
 (declare-function org--latex-margin-note "org-margin-blocks")
 (defvar org--docs-actually-used)
+(defvar org--handler-anchor)
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
@@ -320,33 +321,89 @@ closes its braces; and the remaining lines, trimmed, sans blank ones."
       (cons (nreverse definitions) (string-join (split-string (buffer-string) "\n" t "[ \t]+") "\n")))))
 
 (defun org--math-top-level-marks (math)
-  "MATH ↦ its &s and \\\\s, in order, outside every {group} and \\begin…\\end; e.g., “a &= \\cases{1 & 0} \\\\” ↦ (\"&\"
-\"\\\\\\\\\"), as the cases' & is its own.  An escaped \\& is none."
+  "MATH ↦ its &s, \\\\s, and {s, each (MARK . POSITION), outside every {group} and \\begin…\\end; e.g., “a &= \\cases{1 & 0}”
+↦ ((\"&\" . 2) (\"{\" . 11)), as the cases' & is its own.  An escaped \\& is none."
   (let ((depth 0) (start 0) marks)
     (while (string-match "\\\\[[:alpha:]]+\\|\\\\.\\|[{}&]" math start)
       (setq start (match-end 0))
-      (pcase (match-string 0 math)
-        ((or "{" "\\begin") (cl-incf depth))
-        ((or "}" "\\end") (cl-decf depth))
-        ((and (or "&" "\\\\") mark (guard (zerop depth))) (push mark marks))))
+      (let ((mark (match-string 0 math)))
+        (when (and (zerop depth) (member mark '("&" "\\\\" "{"))) (push (cons mark (match-beginning 0)) marks))
+        (pcase mark
+          ((or "{" "\\begin") (cl-incf depth))
+          ((or "}" "\\end") (cl-decf depth)))))
     (nreverse marks)))
 
-(defun org--math-render (raw backend numbered matrix)
-  "(RAW, BACKEND, NUMBERED, MATRIX) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil sans maths.
-DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as `org--math-top-level-marks' sees them; and
-numbered when NUMBERED.  Each table is a MATRIX environment."
+(defconst org--math-relation-re
+  (concat ":?[=<>≤≥≡≠≈≃≅∼⇒⇐⇔→←↔⟶⟹⟸⟺⊆⊇⊂⊃⊑⊒∈]+\\|\\\\"
+          (regexp-opt '("equiv" "le" "leq" "ge" "geq" "lt" "gt" "ne" "neq" "approx" "sim" "simeq" "cong" "in" "mid"
+                        "Rightarrow" "Leftarrow" "Leftrightarrow" "rightarrow" "leftarrow" "longrightarrow" "to"
+                        "implies" "impliedby" "iff" "subseteq" "supseteq" "subset" "supset" "sqsubseteq" "sqsupseteq")
+                      t))
+  "A relation, which a hint may follow; e.g., =, ≤, \\equiv.")
+
+(defun org--math-hints (math)
+  "MATH ↦ MATH whose each line's first top-level “REL{ HINT }” is “&REL”, its HINT at the line's end, before its tag or
+\\\; e.g., “x ={ by IH } y” ↦ “x &= y && \\text{by IH}”.  The { must hug REL, and a space must follow it; so “x ={a}”,
+“^{ 2 }”, and “\\frac{ a }” are no hints."
+  (with-temp-buffer
+    (insert math)
+    (let (hints lines)
+      (pcase-dolist (`(,mark . ,at) (org--math-top-level-marks math))
+        (goto-char (1+ at))
+        (when (and (equal mark "{") (looking-at "{[ \t]") (not (memq (line-number-at-pos) lines))
+                   (looking-back org--math-relation-re (line-beginning-position)))
+          (push (line-number-at-pos) lines)
+          (push (point) hints)))
+      ;; The last first, lest rewriting a hint move those after it.
+      (dolist (at hints)
+        (goto-char at)
+        (looking-back org--math-relation-re (line-beginning-position) t)
+        (let* ((rel (match-beginning 0))
+               (end (with-syntax-table org--math-syntax (save-excursion (forward-sexp) (point))))
+               (hint (string-trim (buffer-substring (1+ at) (1- end)))))
+          (delete-region at (progn (goto-char end) (skip-chars-forward " \t") (point)))
+          (insert " ")
+          (goto-char rel)
+          (insert "&")
+          (beginning-of-line)
+          (re-search-forward "[ \t]*\\(?::tag-[^: \t\n]+:.*\\|\\\\\\\\[ \t]*\\)?$" (line-end-position))
+          (goto-char (match-beginning 0))
+          (insert (format " && \\text{%s}" hint)))))
+    (buffer-string)))
+
+(defconst org--math-tagged-re "\\(\\\\tag{\\$\\\\color{[^}]*}{\\\\text{[^}]*}}\\$} \\\\label{[^}]*}\\)"
+  "A tag, as `org--math-tags' writes it.")
+
+(defun org--math-render (raw backend numbered matrix &optional name)
+  "(RAW, BACKEND, NUMBERED, MATRIX, NAME) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil sans
+maths.  DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as
+`org--math-top-level-marks' sees them; numbered when NUMBERED, and as one equation when it is `once'; and labelled
+NAME, tagged so when unnumbered.  Each table is a MATRIX environment."
   (pcase-let* ((`(,definitions . ,math)
                 (org--math-split-definitions
-                 (org--math-markup (org--math-tags (org--math-tables (org--math-uncomment raw) matrix)) backend)))
+                 (org--math-markup (org--math-tags (org--math-hints (org--math-tables (org--math-uncomment raw) matrix)))
+                                   backend)))
                ;; A \\ after the last line would begin an empty, and so numbered, line of its own.
                (math (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t\n]*\\'" "" math t t))
                (marks (org--math-top-level-marks math))
-               (environment (concat (cond ((member "&" marks) "align") ((member "\\\\" marks) "gather") (t "equation"))
-                                    (unless numbered "*"))))
+               (lines (cond ((assoc "&" marks) "align") ((assoc "\\\\" marks) "gather"))))
     (cons definitions
-          (unless (equal math "")
-            (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
-              (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math))))))
+          (cond ((equal math "") nil)
+                ;; One equation, one number: the lines split, or gathered, within it; its one tag, else NAME, labels it.
+                ((eq numbered 'once)
+                 (let ((tags (mapcar #'cadr (s-match-strings-all org--math-tagged-re math))))
+                   (when (cdr tags) (user-error "A math block :numbered once has one number, so one tag; not %d" (length tags)))
+                   (format "\\begin{equation}\n%s%s\n\\end{equation}"
+                           (if lines (format "\\begin{%s}\n%s\n\\end{%1$s}" (if (equal lines "align") "split" "gathered")
+                                             (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
+                             (replace-regexp-in-string (concat "[ \t]*" org--math-tagged-re) "" math t t))
+                           (cond (tags (concat " " (car tags))) (name (format " \\label{%s}" name)) (t "")))))
+                (t (let ((math (cond ((not name) math)
+                                     (numbered (format "%s \\label{%s}" math name))
+                                     (t (format "%s \\tag{%s} \\label{%2$s}" math name))))
+                         (environment (concat (or lines "equation") (unless numbered "*"))))
+                     (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
+                       (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math))))))))
 
 ;;;; The block
 
@@ -372,16 +429,24 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + *bold* /italic/ _underline_ +cancel+ =texttt= ~mathtt~, when the markers hug their text, as in Org's prose.
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A line ending “:tag-COLOUR: NAME” is tagged NAME, in COLOUR, which [[eqref:NAME]] cites; NUMBERED numbers the rest.
+  A block's “#+name: NAME” labels its last line, so [[eqref:NAME]] cites it too; it is tagged NAME when unnumbered.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
++ “X ={ HINT } Y” aligns its line at =, and shows HINT at the line's end, as in a calculational proof; so too for any
+  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space follows it, so x ={a} is no hint.
++ NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
+  else its #+name:, labels it.
++ Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
++ Unicode, such as ∀ x ∈ ℕ, typesets in HTML, but in LaTeX only with #+latex_compiler: lualatex and
+  #+latex_header: \\usepackage{unicode-math}; else, its symbols are dropped, silently.
 + A line “# …” is a comment.  A line that begins \\def, \\let, \\newcommand, \\renewcommand, or \\DeclareMathOperator
   begins a definition, through the line that closes its braces: declared, but not shown.  In LaTeX, it goes to the
   preamble; in HTML, MathJax reads it hidden, and then knows it page-wide.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
-  block in `latex-mode'."
+  block in `latex-mode'.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
   (let ((org--math-tips nil))
-    (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix)))
+    (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor)))
       (cond ((org-export-markdown-p)
              ;; A fenced math block is displayed already, so \[…\] would be one display too many.
              (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
@@ -405,10 +470,12 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 ;;;; eqref ---citing a tagged line
 
 (defun org--eqref-visit (name)
-  "NAME ↦ point at the equation tagged NAME: a math block's “:tag-COLOUR: NAME” line, else a \\tag{…NAME…}."
+  "NAME ↦ point at the equation tagged NAME: a math block's “:tag-COLOUR: NAME” line, else the block “#+name: NAME”,
+else a \\tag{…NAME…}."
   (let ((at (save-excursion
               (goto-char (point-min))
               (or (re-search-forward (format ":tag-[^: \t\n]+:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
+                  (re-search-forward (format "^[ \t]*#\\+[nN][aA][mM][eE]:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
                   (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
     (unless at (user-error "No equation is tagged “%s”" name))
     (push-mark)
@@ -451,6 +518,38 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
 (org-def-action math (&key numbered (matrix "pmatrix"))
   "Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'."
   (org--math-preview raw-contents numbered matrix))
+
+(defun org--math-preview-region (beg end)
+  "Show each math block from BEG to END as an image atop it, as Org's C-c C-x C-l shows its own maths there; a block
+shown already is left be.  Org's own images of the maths within a block, such as its \\begin{cases}, are cleared."
+  (save-excursion
+    (goto-char beg)
+    (while (re-search-forward "^[ \t]*#\\+begin_math\\b" end t)
+      (unless (--first (overlay-get it 'org-math-preview) (overlays-at (point)))
+        (let ((block-end (org-element-property :end (org-special-block-at-point))))
+          (org-clear-latex-preview (line-beginning-position) block-end)
+          ;; A block of only definitions shows nothing, which is no reason to stop showing the rest.
+          (ignore-error user-error (org--block-action-call #'org-action/math 'main-arg))
+          (goto-char block-end))))))
+
+;;;; Inline maths ---$…$ reads our markup too
+
+(defun org--math-inline (fragment backend _info)
+  "(FRAGMENT, BACKEND) ↦ the inline maths FRAGMENT, such as $red:x$ or \\(red:x\\), wherein our links and Org's markup
+are LaTeX's, as in a math block; followed by its tooltips' tips, as a math block's are.  Org hands LaTeX's maths over
+sans its delimiters, which it adds afterwards; HTML's, with them."
+  (let* ((delimited? (string-match "\\`\\(\\$\\$?\\|\\\\[[(]\\)\\(\\(?:.\\|\n\\)*\\)\\(\\$\\$?\\|\\\\[])]\\)\\'" fragment))
+         (open (if delimited? (match-string 1 fragment) ""))
+         (close (if delimited? (match-string 3 fragment) ""))
+         (math (if delimited? (match-string 2 fragment) fragment))
+         (backend (if (org-export-derived-backend-p backend 'latex) 'latex 'html))
+         (org--math-tips nil)
+         (math (org--math-markup math backend)))
+    (cond ((null org--math-tips) (concat open math close))
+          ((eq backend 'html) (org-html-head-require 'org--tooltip-html-head)
+           (concat open math close (string-join (reverse org--math-tips))))
+          ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for the notes, then reopen.
+          (t (concat math "\\)" (string-join (reverse org--math-tips)) "\\(")))))
 
 (provide 'org-math-block)
 ;;; org-math-block.el ends here
