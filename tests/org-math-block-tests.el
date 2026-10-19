@@ -45,6 +45,22 @@
   (should (equal (org--math-markup "*f(a)* + /g/ + _h_ + (+i+) + =j= + ~k~" 'latex)
                  "\\boldsymbol{f(a)} + \\mathit{g} + \\underline{h} + (\\cancel{i}) + \\texttt{j} + \\mathtt{k}")))
 
+(deftest "in a hint's prose, Org's emphasis is maths about text, $\\textbf{…}$, which MathJax reads; in $…$, maths'"
+  (should (equal (org--math-markup "\\text{by *induction*, /twice/, on ~n~ and $*x*$}" 'latex)
+                 "\\text{by $\\textbf{induction}$, $\\textit{twice}$, on $\\texttt{n}$ and $\\boldsymbol{x}$}")))
+
+(define-org-call-test "a math block's hint may hold an Org table, a matrix, as a line of maths amid its prose"
+  :call (org-block/math 'latex "
+M ={ as
+     | 1 | 0 |
+     | 0 | 1 |
+   is the identity } I" nil :hints 'beside)
+  :returns "#+begin_export latex
+\\begin{align*}
+M &\\quad = \\quad I && \\begin{array}[t]{@{}l@{}} \\text{as} \\\\ \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix} \\\\ \\text{is the identity} \\end{array}
+\\end{align*}
+#+end_export")
+
 (deftest "in maths, markers that are arithmetic, sub- and superscripts are left be"
   (dolist (math '("a = b = c" "a*b*c" "x_i_j" "a^* b^*" "{a/b/c}" "1 + 2 + 3"))
     (should (equal (org--math-markup math 'latex) math))))

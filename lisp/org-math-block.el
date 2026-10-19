@@ -110,6 +110,21 @@ An unknown TYPE shows its DESC, else its PATH.")
     ("+" . "\\cancel{%s}") ("=" . "\\texttt{%s}") ("~" . "\\mathtt{%s}"))
   "Org's emphasis markers, each ↦ its LaTeX in maths.")
 
+(defconst org--math-text-emphasis
+  '(("*" . "$\\textbf{%s}$") ("/" . "$\\textit{%s}$") ("_" . "$\\underline{\\text{%s}}$")
+    ("+" . "$\\cancel{\\text{%s}}$") ("=" . "$\\texttt{%s}$") ("~" . "$\\texttt{%s}$"))
+  "Org's emphasis markers, each ↦ its LaTeX in a \\text{…}'s prose, such as a hint's, where maths' own is an error.
+Each is maths about text, $\\textbf{…}$, as MathJax reads no macro in \\text{…} sans its textmacros, yet reads $…$.")
+
+(defun org--math-text-p (pos)
+  "Whether POS, in the buffer's maths, is within a \\text{…}'s prose, rather than in maths, or in $…$ within the prose.
+E.g., in “\\text{by *x* and $*y*$}”, at *x* yes, and at *y* no."
+  (save-match-data
+    (with-syntax-table org--math-syntax
+      (-when-let (brace (--last (save-excursion (goto-char it) (looking-back "\\\\text" (line-beginning-position)))
+                                (nth 9 (parse-partial-sexp (point-min) pos))))
+        (cl-evenp (cl-count ?$ (buffer-substring (1+ brace) pos)))))))
+
 ;;;; Atoms ---what red:ATOM colours, and what an ATOM[fn::…] tip hovers over
 
 (defconst org--math-syntax
@@ -248,14 +263,17 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
                                         (t (or desc link)))))))
       (goto-char (point-min))
       (org--math-plain-links)
-      ;; Org's own emphasis: a marker hugs its text, and follows a space, (, {, or ', as in Org's prose; so a = b and
-      ;; a*b*c are left be.
+      ;; Org's own emphasis: a marker hugs its text, and follows a space, (, {, ', or a hint's $, as in Org's prose; so
+      ;; a = b and a*b*c are left be.  In a hint's prose, it is text's emphasis; see `org--math-text-p'.
       (goto-char (point-min))
-      (while (re-search-forward (concat "\\(?:^\\|[-[:space:]('\"{]\\)"
+      (while (re-search-forward (concat "\\(?:^\\|[-[:space:]('\"{$]\\)"
                                         "\\(\\([*/_+=~]\\)\\([^[:space:]]\\|[^[:space:]].*?[^[:space:]]\\)\\2\\)"
-                                        "\\(?:[-[:space:].,:!?;'\")}^_\\[]\\|$\\)")
+                                        "\\(?:[-[:space:].,:!?;'\")}^_\\[$]\\|$\\)")
                                 nil t)
-        (replace-match (format (cdr (assoc (match-string 2) org--math-emphasis)) (match-string 3)) t t nil 1)
+        (replace-match (format (cdr (assoc (match-string 2) (if (org--math-text-p (match-beginning 1)) org--math-text-emphasis
+                                                             org--math-emphasis)))
+                               (match-string 3))
+                       t t nil 1)
         (goto-char (match-beginning 1)))
       (buffer-string))))
 
@@ -425,7 +443,8 @@ ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a spac
 expressions as the block's are; see `org--math-hints'.  A hint of one line is a \\text{…}.
 E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the aligned x &\\quad = \\quad y && \\text{h}."
   (let ((pos 0) rows)
-    (cl-flet ((lines (string) (--map (if (equal it "") "" (format "\\text{%s}" it))
+    ;; A line that is an environment already, as an Org table's matrix is, stays maths; the rest is prose.
+    (cl-flet ((lines (string) (--map (cond ((equal it "") "") ((string-prefix-p "\\begin{" it) it) (t (format "\\text{%s}" it)))
                                      (split-string (string-trim string) "[ \t]*\n[ \t]*"))))
       ;; Each \[ with the \] that closes it, as nested calculations may nest; a \\[ is a line break, not one.
       (while (string-match "\\(?:\\`\\|[^\\]\\)\\(\\\\\\[\\)" text pos)
