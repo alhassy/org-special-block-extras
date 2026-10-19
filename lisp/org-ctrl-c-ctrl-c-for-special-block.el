@@ -100,8 +100,8 @@ in a heading's drawer; see `org--block-header-args'.  The Lisp runs as `org-defb
 
 (defun org--block-cc-dispatcher ()
   "Dispatch C-c C-c to the `org-def-action' of the special block at point; should it decline, to its :C-c_C-c switch.
-Within a table, C-c C-c is Org's own, aligning it and computing its #+TBLFM: formulas, as a table is in any block."
-  (unless (org-at-table-p)
+Within a table, C-c C-c is Org's own, aligning it; on its #+TBLFM: line, computing its formulas, as in any block."
+  (unless (or (org-at-table-p) (org-at-TBLFM-p))
     (or (org--special-block-dispatch org--block-cc-handlers)
         (org--block-cc-switch))))
 

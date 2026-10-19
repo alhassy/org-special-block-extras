@@ -49,6 +49,32 @@
   (should (equal (org--math-markup "\\text{by *induction*, /twice/, on ~n~ and $*x*$}" 'latex)
                  "\\text{by $\\textbf{induction}$, $\\textit{twice}$, on $\\texttt{n}$ and $\\boldsymbol{x}$}")))
 
+(define-org-call-test "a math block's matrix table may compute its entries by #+TBLFM:, which is Org's, not maths"
+  :call (org-block/math 'latex "
+M =
+| 1 | 2 | 3 |
+| 4 | 5 | 9 |
+#+TBLFM: $3=$1+$2" nil)
+  :returns "#+begin_export latex
+\\[
+M =
+\\begin{pmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 9 \\end{pmatrix}
+\\]
+#+end_export")
+
+(org-deftest "C-c C-c on a math block's matrix table computes its #+TBLFM: formulas, as for any Org table"
+  :text "
+#+begin_math
+M =
+| 1 | 2 |   |
+| 4 | 5 |   |
+#+TBLFM: $3=$1+$2
+#+end_math"
+  :at "#+TBLFM"
+  (org-ctrl-c-ctrl-c)
+  (should (string-match-p (regexp-quote "| 1 | 2 | 3 |") (buffer-string)))
+  (should (string-match-p (regexp-quote "| 4 | 5 | 9 |") (buffer-string))))
+
 (define-org-call-test "a math block's hint may hold an Org table, a matrix, as a line of maths amid its prose"
   :call (org-block/math 'latex "
 M ={ as

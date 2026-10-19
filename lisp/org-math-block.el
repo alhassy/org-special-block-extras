@@ -280,8 +280,10 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
 ;;;; Structure ---comments, tables, tags, and definitions
 
 (defun org--math-uncomment (math)
-  "MATH ↦ MATH sans its Org comment lines, “# …”, which TeX would read as a macro's parameter."
-  (replace-regexp-in-string "^[ \t]*#\\(?:[ \t].*\\)?\\(?:\n\\|\\'\\)" "" math t t))
+  "MATH ↦ MATH sans its Org comment lines, “# …”, which TeX would read as a macro's parameter; and sans its tables'
+formula lines, “#+TBLFM: …”, which are Org's, whereby a matrix may compute its entries."
+  (let ((case-fold-search t))
+    (replace-regexp-in-string "^[ \t]*#\\(?:[ \t].*\\|\\+tblfm:.*\\)?\\(?:\n\\|\\'\\)" "" math t t)))
 
 (defun org--math-tables (math environment)
   "(MATH, ENVIRONMENT) ↦ MATH whose each Org table is an ENVIRONMENT, on one line, sans its rules;
