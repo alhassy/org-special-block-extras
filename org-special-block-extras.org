@@ -6873,7 +6873,7 @@ may be useful to colour the =|=-separated fields of a badge link.
    :END:
 
    Sometimes I want to use the same [[doc:org-block/tooltip][tooltip]] multiple times, so I write
-   the tooltip content once in a [[org-block/documentation][documentation]] block and then
+   the tooltip content once in a [[doc:org-block/documentation][documentation]] block and then
    reference it using the the [[doc:org-block/doc][doc]] link type.
 
    # For instance,
