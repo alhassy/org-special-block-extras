@@ -31,6 +31,8 @@
 (require 'org)
 (require 'org-special-block-at-point)
 
+(declare-function org--block-let "org-block-switches")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar org--block-cc-handlers nil
@@ -66,14 +68,17 @@ within the block.  The function is `org-action/NAME'.  A non-nil value claims th
 
 (defun org--block-action-call (function main)
   "(FUNCTION, MAIN) ↦ FUNCTION's value on the block around point: its text, its main argument as MAIN, and the rest.
-The block's keyword arguments include those it inherits; see `org--block-header-args'."
+The block's keyword arguments include those it inherits; see `org--block-header-args'.  Its text has its :let
+shorthands applied, as export renders it; see `org--block-let'."
   (let* ((elem (org-special-block-at-point))
          (block (save-excursion (goto-char (org-element-property :post-affiliated elem))
                                 (org-special-block-after-point (org--block-name elem))))
-         (main-arg (org-string-nw-p (org-special-block-main-arg block))))
+         (main-arg (org-string-nw-p (org-special-block-main-arg block)))
+         (kwdargs (org-special-block-kwdargs block))
+         (contents (org-special-block-contents block)))
     ;; The written main argument first, so it wins over one inherited by its name.
-    (apply function (org-special-block-contents block)
-           (append (when main-arg (list (intern (format ":%s" main)) main-arg)) (org-special-block-kwdargs block)))))
+    (apply function (-if-let (bindings (plist-get kwdargs :let)) (org--block-let bindings contents nil) contents)
+           (append (when main-arg (list (intern (format ":%s" main)) main-arg)) kwdargs))))
 
 (defun org--block-cc-switch ()
   "Run the :C-c_C-c switch of the special block around point; nil when it has none.
@@ -94,9 +99,11 @@ in a heading's drawer; see `org--block-header-args'.  The Lisp runs as `org-defb
     t))
 
 (defun org--block-cc-dispatcher ()
-  "Dispatch C-c C-c to the `org-def-action' of the special block at point; should it decline, to its :C-c_C-c switch."
-  (or (org--special-block-dispatch org--block-cc-handlers)
-      (org--block-cc-switch)))
+  "Dispatch C-c C-c to the `org-def-action' of the special block at point; should it decline, to its :C-c_C-c switch.
+Within a table, C-c C-c is Org's own, aligning it and computing its #+TBLFM: formulas, as a table is in any block."
+  (unless (org-at-table-p)
+    (or (org--special-block-dispatch org--block-cc-handlers)
+        (org--block-cc-switch))))
 
 (add-hook 'org-ctrl-c-ctrl-c-hook #'org--block-cc-dispatcher)
 

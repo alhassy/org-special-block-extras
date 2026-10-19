@@ -22,6 +22,37 @@ Mind the gap.
           (should (equal org-def-action-tests--said "Hello at 11, low: Mind the gap.")))
       (setf (alist-get "shout" org--block-cc-handlers nil 'remove #'equal) nil))))
 
+(org-deftest "C-c C-c hands a block's action its text with :let's shorthands applied, as export renders it" [C-c_C-c]
+  :text "
+#+begin_shout :let (gap \"chasm\" -> \"⇒\")
+Mind the gap -> or else.
+#+end_shout"
+  :at "Mind"
+  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+    (unwind-protect
+        (progn
+          (org-def-action shout () "Say the shout's text." (setq org-def-action-tests--said raw-contents))
+          (org-ctrl-c-ctrl-c)
+          (should (equal org-def-action-tests--said "Mind the chasm ⇒ or else.")))
+      (setf (alist-get "shout" org--block-cc-handlers nil 'remove #'equal) nil))))
+
+(org-deftest "C-c C-c within a table in a block is Org's own, aligning the table, not the block's action" [C-c_C-c]
+  :text "
+#+begin_shout
+| 1 | 2 |
+| 3 |
+#+end_shout"
+  :at "| 3"
+  (using (org-defblock shout () "Upcase the contents." (upcase contents))
+    (unwind-protect
+        (progn
+          (setq org-def-action-tests--said nil)
+          (org-def-action shout () "Say the shout's text." (setq org-def-action-tests--said raw-contents))
+          (org-ctrl-c-ctrl-c)
+          (should-not org-def-action-tests--said)
+          (should (equal (buffer-substring (line-beginning-position) (line-end-position)) "| 3 |   |")))
+      (setf (alist-get "shout" org--block-cc-handlers nil 'remove #'equal) nil))))
+
 (org-deftest "org-def-action's arguments take their defaults as the block's do: inherited header-args, else declared" [C-c_C-c header-args]
   :text "
 * Loud
