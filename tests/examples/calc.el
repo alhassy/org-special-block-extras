@@ -27,15 +27,14 @@ osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\begin{array}
 \\text{Explanation of why $x \\;=\\; y$.} \\\\ \\text{Actually, let me explain:} \\\\ \\begin{aligned}[t]
 &amp; x \\\\ = &amp; \\quad \\class{tooltip osbe-tip-hint
 osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\text{hint 1}
-\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\\\ &amp; x′ \\\\ =
-&amp; \\quad \\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0}
-\\left[ \\text{hint 2} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…}
-\\right.}}} \\\\ &amp; y \\end{aligned} \\\\ \\text{Words may follow a nested calculation.} \\end{array}
-\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\notag \\\\ &amp; y
+\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}} \\\\ &amp; x′ \\\\ = &amp; \\quad
+\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[
+\\text{hint 2} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}} \\\\ &amp; y
+\\end{aligned} \\\\ \\text{Words may follow a nested calculation.} \\end{array}
+\\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}} \\notag \\\\ &amp; y
 \\\\ ≤ &amp; \\quad \\class{tooltip osbe-tip-hint
 osbe-hint}{\\class{osbe-hint-body}{{\\color[RGB]{128,0,0} \\left[ \\text{Explanation of why $y \\;\\leq\\;
-z$} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} \\left[ \\text{…} \\right.}}} \\notag \\\\
-&amp; z
+z$} \\right.}}\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}} \\notag \\\\ &amp; z
 \\end{align*}"
   :latex "\\begin{align*}
 & x

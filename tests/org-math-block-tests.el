@@ -544,8 +544,11 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 
 (deftest "a math block's hint in HTML is clickable, to fold it to …, its tooltip saying so; LaTeX's is no such thing"
   (let ((html (org-block/math 'html "x ={ h } y" nil :hints 'beside)))
-    (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{\\text{h}}\\class{osbe-hint-fold}{\\text{…}}}")
+    (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{\\text{h}}\\class{osbe-hint-fold}{[\\,\\cdots\\,]}}")
                             html)))
+  ;; Between expressions, the fold is a closed bracket in the hint's maroon, not the open bracket of a tall hint.
+  (should (string-match-p (regexp-quote "\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}")
+                          (org-block/math 'html "x ={ h } y" nil)))
   (should-not (string-match-p "class" (org-block/math 'latex "x ={ h } y" nil))))
 
 (deftest "a page whose maths has hints carries their tip and the script by which a click folds them, in its head"
@@ -576,10 +579,10 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 (deftest "a math block's :hints may be folded, so a page's reader clicks to see each; LaTeX, sans clicks, shows them"
   (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}")
                           (org-block/math 'html "x ={ h } y" nil :hints '(between folded))))
-  ;; Folding hides the whole hint, its format's tall bracket too; the fold is the format about a lone “…”.
+  ;; Folding hides the whole hint, its format's tall bracket too; the fold is the format about a lone ⋯.
   (should (string-match-p (regexp-quote (concat "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}"
                                                 "{\\class{osbe-hint-body}{{\\color{teal} \\langle \\text{h} \\rangle}}"
-                                                "\\class{osbe-hint-fold}{{\\color{teal} \\langle \\text{…} \\rangle}}}"))
+                                                "\\class{osbe-hint-fold}{{\\color{teal} \\langle \\cdots \\rangle}}}"))
                           (org-block/math 'html "x ={ h } y" nil :hints '(between "{\\color{teal} \\langle %s \\rangle}" folded))))
   (should (string-match-p (regexp-quote "\\text{h}") (org-block/math 'latex "x ={ h } y" nil :hints '(between folded)))))
 

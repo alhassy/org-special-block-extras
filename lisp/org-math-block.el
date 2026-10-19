@@ -410,7 +410,7 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
   .osbe-hint.osbe-folded .osbe-hint-fold { display: inline-block; }
 </style>
 <script>
-  // A click on a math block's hint folds it to “…”, or unfolds it, as TAB does in Emacs.
+  // A click on a math block's hint folds it to [⋯], or unfolds it, as TAB does in Emacs.
   document.addEventListener('click', (event) => event.target.closest?.('.osbe-hint')?.classList.toggle('osbe-folded'));
 </script>"
   "The tip, style, and script by which a click folds a math block's hint; added to a page whose maths has hints.")
@@ -423,14 +423,18 @@ sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,
   (let ((format (format "%s" (or org--math-hint-format
                                  (if between (format "{\\color%s \\left[ %%s \\right.}" (org--math-color "#800000")) "%s")))))
     (cond ((equal format "none") "")
-          ;; In HTML, a click folds the hint to “…”, as TAB does in Emacs; its tooltip says so.  The whole hint folds,
-          ;; its format too, whose tall bracket would else keep its room; the fold is the format about a lone “…”.  The
+          ;; In HTML, a click folds the hint to [⋯], as TAB folds it to {…} in Emacs; its tooltip says so.  The whole
+          ;; hint folds, its format too, whose tall bracket would else keep its room.  The fold is closed, as folded code
+          ;; is shown, its ⋯ level with the relation; in the hint's colour, or a format of our own about a lone ⋯.  The
           ;; page's head, which serves these, the block asks for: we are within a temporary buffer, whose buffer-local
           ;; requests are lost.
           ((and (eq org--math-backend 'html) (not (org-export-markdown-p)))
            (format "\\class{tooltip osbe-tip-hint osbe-hint%s}{\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{%s}}"
                    (if org--math-hint-folded " osbe-folded" "")
-                   (string-replace "%s" hint format) (string-replace "%s" "\\text{…}" format)))
+                   (string-replace "%s" hint format)
+                   (cond (org--math-hint-format (string-replace "%s" "\\cdots" format))
+                         (between (format "{\\color%s [\\,\\cdots\\,]}" (org--math-color "#800000")))
+                         (t "[\\,\\cdots\\,]"))))
           (t (string-replace "%s" hint format)))))
 
 (defun org--math-hints (math &optional between nested)
@@ -625,7 +629,7 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + HINTS sets each hint between the expressions it relates, maroon, after a bracket that opens it, lest it be mistaken
   for maths; beside, at its step's end, plain, as its column sets it apart; none, hidden from the export; or as a list,
   LAYOUT then FORMAT, LaTeX whose %s is the hint, or folded, or both ---e.g., (beside \"{\\color{teal} %s}\" folded).
-  Folded hints start as … in HTML, so a reader clicks to see each, as a puzzle; LaTeX, sans clicks, shows them.
+  Folded hints start as [⋯] in HTML, so a reader clicks to see each, as a puzzle; LaTeX, sans clicks, shows them.
   To set hints beside throughout a file: #+property: header-args:math :hints beside.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
