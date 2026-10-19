@@ -46,14 +46,12 @@
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
-(defvar org--math-hint-format nil
-  "How a hint shows, its %s the hint, replaced verbatim; e.g., “\\left[ %s \\right.”, a bracket that opens it; or none,
-to show no hints.  A math block binds it by its :hint-format; nil is as the layout has it: see
-`org--math-hint-styled'.")
+(defvar org--math-hint-folded nil
+  "Whether a hint starts folded in HTML, so a reader clicks to see it.  A math block binds it by its :hints.")
 
-(defvar org--math-hint-color nil
-  "The colour of a hint: a name, such as teal; or #RRGGBB, such as maroon's #800000.  A math block binds it by its
-:hint-color; nil is as the layout has it: see `org--math-hint-styled'.")
+(defvar org--math-hint-format nil
+  "How a hint shows, as LaTeX, its %s the hint, replaced verbatim; e.g., “{\\color{teal} \\langle %s \\rangle}”; or none,
+to show no hints.  A math block binds it by its :hints; nil is as the layout has it: see `org--math-hint-styled'.")
 
 (defun org--math-color (colour)
   "COLOUR ↦ the argument of \\color for it, in maths: “#ff0066” ↦ “[RGB]{255,0,102}”, “teal” ↦ “{teal}”.
@@ -406,6 +404,8 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
   "<template id=\"osbe-tip-hint\"><p>Click to hide this hint, or to show it again.</p></template>
 <style>
   .osbe-hint { cursor: pointer; }
+  /* A hint is plainly a hint ---prose, maybe coloured--- so it wears no tooltip's dotted underline. */
+  .tooltip.osbe-hint { border-bottom: none; }
   .osbe-hint-fold, .osbe-hint.osbe-folded .osbe-hint-body { display: none; }
   .osbe-hint.osbe-folded .osbe-hint-fold { display: inline-block; }
 </style>
@@ -416,21 +416,21 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
   "The tip, style, and script by which a click folds a math block's hint; added to a page whose maths has hints.")
 
 (defun org--math-hint-styled (hint between)
-  "(HINT, BETWEEN) ↦ HINT as `org--math-hint-format' and `org--math-hint-color' say; else, as the layout has it: a hint
-BETWEEN expressions is maroon, after a bracket that opens it, lest it be mistaken for maths; a hint beside its step is
-plain, as its column sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,0,0} \\left[ \\text{h}
+  "(HINT, BETWEEN) ↦ HINT as `org--math-hint-format' says; else, as the layout has it: a hint BETWEEN expressions is
+maroon, after a bracket that opens it, lest it be mistaken for maths; a hint beside its step is plain, as its column
+sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,0,0} \\left[ \\text{h}
 \\right.}”.  A format of none shows no hint.  In HTML, a click on the hint folds it; see `org--math-hint-html-head'."
-  (let ((format (format "%s" (or org--math-hint-format (if between "\\left[ %s \\right." "%s"))))
-        (colour (or org--math-hint-color (and between "#800000"))))
-    (if (equal format "none") ""
-      (let ((shown (string-replace "%s" hint format)))
-        ;; In HTML, a click folds the hint to “…”, as TAB does in Emacs; its tooltip says so.
-        (when (and (eq org--math-backend 'html) (not (org-export-markdown-p)))
-          (org-html-head-require 'org--tooltip-html-head)
-          (org-html-head-require 'org--math-hint-html-head)
-          (setq shown (format "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{\\text{…}}}"
-                              shown)))
-        (if colour (format "{\\color%s %s}" (org--math-color (format "%s" colour)) shown) shown)))))
+  (let ((format (format "%s" (or org--math-hint-format
+                                 (if between (format "{\\color%s \\left[ %%s \\right.}" (org--math-color "#800000")) "%s")))))
+    (cond ((equal format "none") "")
+          ;; In HTML, a click folds the hint to “…”, within its format, as TAB does in Emacs; its tooltip says so.  The
+          ;; page's head, which serves these, the block asks for: we are within a temporary buffer, whose buffer-local
+          ;; requests are lost.
+          ((and (eq org--math-backend 'html) (not (org-export-markdown-p)))
+           (format "\\class{tooltip osbe-tip-hint osbe-hint%s}{%s}" (if org--math-hint-folded " osbe-folded" "")
+                   (string-replace "%s" (format "\\class{osbe-hint-body}{%s}\\class{osbe-hint-fold}{\\text{…}}" hint)
+                                   format)))
+          (t (string-replace "%s" hint format)))))
 
 (defun org--math-hints (math &optional between nested)
   "MATH ↦ MATH whose each hint, “REL{ HINT }” of `org--math-hint-spans', is “&\\quad REL \\quad”, its HINT at its step's
@@ -462,7 +462,7 @@ an aligned within maths has no numbers to forgo."
                    (ended (or (string-match org--math-tag-re line) (string-match "\\\\\\\\\\'" line)))
                    (last? (= next (point-max))))
               (when ended (goto-char (+ (line-beginning-position) ended)) (skip-chars-backward " \t"))
-              (insert " && " hint)
+              (unless (equal hint "") (insert " && " hint))
               (unless (or ended last?) (insert " \\\\")))
             ;; A step's relation stands apart, by a quad either side, as in a calculational proof.
             (delete-region (1+ brace) (progn (goto-char (1+ end)) (skip-chars-forward " \t") (point)))
@@ -581,7 +581,16 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
 
 ;;;; The block
 
-(org-defblock math (&key numbered (matrix "pmatrix") hints hint-format hint-color
+(defun org--math-hints-switch (hints)
+  "HINTS, a math block's :hints, ↦ (LAYOUT FORMAT FOLDED): between, beside, or none, as LAYOUT, its FORMAT as the layout
+has it; or a list of LAYOUT, then a FORMAT string, or folded, or both.  E.g., none ↦ (beside \"none\" nil), as hidden
+hints leave a compact chain of steps; (between folded) ↦ (between nil t)."
+  (let ((layout (if (consp hints) (car hints) hints))
+        (rest (and (consp hints) (cdr hints))))
+    (if (eq layout 'none) (list 'beside "none" nil)
+      (list layout (-first #'stringp rest) (and (memq 'folded rest) t)))))
+
+(org-defblock math (&key numbered (matrix "pmatrix") (hints 'between)
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
                          :edit-indirect-mode latex-mode :manual "#math"
                          :fontify [:language "latex" :keywords org--math-fontify-keywords])
@@ -606,16 +615,17 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
   A block's “#+name: NAME” labels its last line, so [[eqref:NAME]] cites it too; it is tagged NAME when unnumbered.
 + Lines with an & are aligned at it, as in LaTeX's align; else, lines that end in \\\\ are gathered, each centred on
   a line of its own.  Only the block's own & and \\\\ count, not those in a {group} or a \\begin{cases}…\\end{cases}.
-+ “X ={ HINT } Y” aligns its line at =, and shows HINT at the line's end, as in a calculational proof; so too for any
-  relation, ≤{ … }, \\equiv{ … }, … The { hugs the relation, and a space or newline follows it, so x ={a} is no hint; in
-  Emacs, a hint shows as a comment does, so we see which {…} is one.  A step runs from its hint to the next, its
-  hint at its end ---in HTML, a click on it folds it, as TAB does in Emacs; so each hint but the first begins a row, wherever the newlines fall, sans our writing \\\\.  With
-  HINTS between, each hint is a row of its own, between the expressions it relates, so wide ones leave it room.  A hint
-  may span lines, and shows on those lines, a blank one a gap; M-q within it fills it alone, as prose, whereas M-q
++ “X ={ HINT } Y” states why the step holds, as in a calculational proof; so too for any relation, ≤{ … }, \\equiv{ … },
+  … The { hugs the relation, and a space or newline follows it, so x ={a} is no hint; in Emacs, a hint shows as a
+  comment does, so we see which {…} is one.  A step runs from its hint to the next, wherever the newlines fall, sans
+  our writing \\\\.  A hint may span lines, and shows on those lines, a blank one a gap; within it, \\[ … \\] is a nested
+  calculation.  TAB on a hint folds it, as a click does in HTML; M-q within it fills it alone, as prose, whereas M-q
   elsewhere in the block leaves the maths be.
-+ A hint shows in HINT-COLOR, a name or #RRGGBB, as HINT-FORMAT says, its %s the hint.  By default, a hint beside
-  its step is plain, as its column sets it apart; one between expressions is maroon, after a bracket that opens it,
-  \\left[ %s \\right., lest it be mistaken for maths.  A HINT-FORMAT of none hides hints from the export.
++ HINTS sets each hint between the expressions it relates, maroon, after a bracket that opens it, lest it be mistaken
+  for maths; beside, at its step's end, plain, as its column sets it apart; none, hidden from the export; or as a list,
+  LAYOUT then FORMAT, LaTeX whose %s is the hint, or folded, or both ---e.g., (beside \"{\\color{teal} %s}\" folded).
+  Folded hints start as … in HTML, so a reader clicks to see each, as a puzzle; LaTeX, sans clicks, shows them.
+  To set hints beside throughout a file: #+property: header-args:math :hints beside.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
@@ -627,28 +637,32 @@ Then [[eqref:Fold]] cites the equation, as (Fold) in teal.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
   block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
-  (let ((org--math-tips nil) (org--math-hint-format hint-format) (org--math-hint-color hint-color))
-    (pcase-let ((`(,definitions . ,shown)
-                 (org--math-render raw-contents backend numbered matrix org--handler-anchor hints)))
-      (cond ((org-export-markdown-p)
-             ;; A fenced math block is displayed already, so \[…\] would be one display too many.
-             (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
-               (format "```math\n%s\n```" (string-join (append definitions (and shown (list shown))) "\n"))))
-            ((equal backend 'latex)
-             (concat (when definitions
-                       (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d))
-                                             definitions "\n")))
-                     shown
-                     ;; The margin notes of the maths' tooltips, after it, as maths holds no \marginpar.
-                     (string-join (reverse org--math-tips))))
-            ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
-            (t (when org--math-tips (org-html-head-require 'org--tooltip-html-head))
+  (pcase-let ((`(,layout ,format ,folded) (org--math-hints-switch hints)))
+    (let ((org--math-tips nil) (org--math-hint-format format) (org--math-hint-folded folded))
+      (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor layout)))
+        (cond ((org-export-markdown-p)
+               ;; A fenced math block is displayed already, so \[…\] would be one display too many.
+               (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
+                 (format "```math\n%s\n```" (string-join (append definitions (and shown (list shown))) "\n"))))
+              ((equal backend 'latex)
                (concat (when definitions
-                         (format "<p style=\"display:none\">\\[%s\\]</p>\n"
-                                 (org-html-encode-plain-text (string-join definitions "\n"))))
-                       (and shown (org-html-encode-plain-text shown))
-                       ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
-                       (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) "")))))))
+                         (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d))
+                                               definitions "\n")))
+                       shown
+                       ;; The margin notes of the maths' tooltips, after it, as maths holds no \marginpar.
+                       (string-join (reverse org--math-tips))))
+              ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
+              (t (when org--math-tips (org-html-head-require 'org--tooltip-html-head))
+                 ;; Hints fold on a click, by their tip and script; see `org--math-hint-styled'.
+                 (when (and shown (string-match-p "osbe-hint" shown))
+                   (org-html-head-require 'org--tooltip-html-head)
+                   (org-html-head-require 'org--math-hint-html-head))
+                 (concat (when definitions
+                           (format "<p style=\"display:none\">\\[%s\\]</p>\n"
+                                   (org-html-encode-plain-text (string-join definitions "\n"))))
+                         (and shown (org-html-encode-plain-text shown))
+                         ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
+                         (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) ""))))))))
 
 ;;;; eqref ---citing a tagged line
 
@@ -698,10 +712,11 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
         (overlay-put overlay 'display (create-image png 'png nil :ascent 'center))))
     t))
 
-(org-def-action math (&key numbered (matrix "pmatrix") hints hint-format hint-color)
+(org-def-action math (&key numbered (matrix "pmatrix") (hints 'between))
   "Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'."
-  (let ((org--math-hint-format hint-format) (org--math-hint-color hint-color))
-    (org--math-preview raw-contents numbered matrix hints)))
+  (pcase-let ((`(,layout ,format) (org--math-hints-switch hints)))
+    (let ((org--math-hint-format format))
+      (org--math-preview raw-contents numbered matrix layout))))
 
 (defun org--math-preview-region (beg end)
   "Show each math block from BEG to END as an image atop it, as Org's C-c C-x C-l shows its own maths there; a block

@@ -385,7 +385,7 @@ e^{i\\pi} + 1 = 0
 (define-org-call-test "a math block's “REL{ HINT }” aligns its line at REL, the HINT at the line's end, before its \\\\"
   :call (org-block/math 'latex "
 (a + b)^2 ={ by expanding } a^2 + 2ab + b^2 \\\\
-≥{ as squares are nonnegative } 2ab" nil)
+≥{ as squares are nonnegative } 2ab" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 (a + b)^2 &\\quad = \\quad a^2 + 2ab + b^2 && \\text{by expanding} \\\\
@@ -397,7 +397,7 @@ e^{i\\pi} + 1 = 0
   :call (org-block/math 'latex "
 p \\land q ={ Golden Rule } p = q = p \\lor q
           ={ by symmetry } q \\land p \\\\
-          ={ by me and my ideas } p \\land q" nil)
+          ={ by me and my ideas } p \\land q" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 p \\land q &\\quad = \\quad p = q = p \\lor q && \\text{Golden Rule} \\\\
@@ -427,7 +427,7 @@ p \\land q ={ Golden Rule } p = q = & p \\lor q
 p \\land q
 ={ Golden Rule }
 p = q   :tag-blue: Step
-={ by symmetry } q = p ={ by reflexivity } q = p" nil)
+={ by symmetry } q = p ={ by reflexivity } q = p" nil :hints 'beside)
   :returns "#+latex_header: \\def\\N{\\mathbb{N}}
 #+begin_export latex
 \\begin{align*}
@@ -441,7 +441,7 @@ p = q && \\text{Golden Rule}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step
 (define-org-call-test "a math block's definition right before a hint's line is left be, as no line of maths"
   :call (org-block/math 'latex "
 \\def\\N{\\mathbb{N}}
-x ={ by definition } \\N" nil)
+x ={ by definition } \\N" nil :hints 'beside)
   :returns "#+latex_header: \\def\\N{\\mathbb{N}}
 #+begin_export latex
 \\begin{align*}
@@ -451,7 +451,7 @@ x &\\quad = \\quad \\N && \\text{by definition}
 
 (define-org-call-test "a math block's hint comes before its line's tag; a hint may hold {groups} of its own"
   :call (org-block/math 'latex "
-x ={ by {IH} } y   :tag-blue: Step" nil)
+x ={ by {IH} } y   :tag-blue: Step" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 x &\\quad = \\quad y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
@@ -461,7 +461,7 @@ x &\\quad = \\quad y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \
 (define-org-export-test "a math block's hint follows a :let shorthand's relation, as in a calculational proof"
   :to latex
   :input "
-          #+begin_math :let (== \"\\\\equiv\")
+          #+begin_math :let (== \"\\\\equiv\") :hints beside
           p =={ by definition } q
           #+end_math"
   :equals "\\begin{align*}
@@ -476,7 +476,7 @@ p &\\quad \\equiv \\quad q && \\text{by definition}
 Addition moves the $\\suc$-s from the left argument to the
   right.
 }
-  \\suc (\\zero + \\zero)" nil)
+  \\suc (\\zero + \\zero)" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 \\zero + \\suc \\zero
@@ -490,7 +490,7 @@ argument to the} \\\\ \\text{right.} \\end{array}
   :call (org-block/math 'latex "
 x ={ First, this.
 
-     Then, that. } y" nil)
+     Then, that. } y" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{First, this.} \\\\  \\\\ \\text{Then, that.}
@@ -505,7 +505,7 @@ x ={ Why? Let me explain:
         ={ hint 1 } x′
         ={ hint 2 } y \\]
      So there.
-   } y" nil)
+   } y" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{Why? Let me explain:} \\\\ \\begin{aligned}[t] x
@@ -516,7 +516,7 @@ there.} \\end{array}
 
 (define-org-call-test "a math block's nested calculation may nest a calculation in turn"
   :call (org-block/math 'latex "
-a ={ \\[ a ={ \\[ a ={ inmost } b \\] } b \\] } b" nil)
+a ={ \\[ a ={ \\[ a ={ inmost } b \\] } b \\] } b" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 a &\\quad = \\quad b && \\begin{aligned}[t] a &\\quad = \\quad b && \\begin{aligned}[t] a &\\quad = \\quad
@@ -543,25 +543,42 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 #+end_export")
 
 (deftest "a math block's hint in HTML is clickable, to fold it to …, its tooltip saying so; LaTeX's is no such thing"
-  (let ((html (org-block/math 'html "x ={ h } y" nil)))
+  (let ((html (org-block/math 'html "x ={ h } y" nil :hints 'beside)))
     (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{\\text{h}}\\class{osbe-hint-fold}{\\text{…}}}")
                             html)))
   (should-not (string-match-p "class" (org-block/math 'latex "x ={ h } y" nil))))
+
+(deftest "a page whose maths has hints carries their tip and the script by which a click folds them, in its head"
+  (let* ((page (org-export-string-as "#+begin_math\nx ={ h } y\n#+end_math" 'html))
+         (head (substring page 0 (string-match "</head>" page))))
+    (should (string-match-p (regexp-quote "<template id=\"osbe-tip-hint\">") head))
+    (should (string-match-p (regexp-quote "classList.toggle('osbe-folded')") head))
+    (should (string-match-p "tooltip-box" head))
+    ;; A hint is plainly a hint, so it wears no tooltip's dotted underline; as two classes, the rule outranks .tooltip.
+    (should (string-match-p (regexp-quote ".tooltip.osbe-hint { border-bottom: none; }") head))))
 
 (deftest "a math block's hint colour is LaTeX's and MathJax's alike: #RRGGBB as RGB, since MathJax has no HTML model"
   (should (equal (org--math-color "#800000") "[RGB]{128,0,0}"))
   (should (equal (org--math-color "teal") "{teal}")))
 
-(deftest "a math block's hint is plain beside its step, maroon and bracketed between expressions; switches restyle it"
-  (should (string-match-p (regexp-quote "&& \\text{h}\n") (org-block/math 'latex "x ={ h } y" nil)))
+(deftest "a math block's :hints sets them between its expressions, maroon and bracketed; or beside, plain; or none"
   (should (string-match-p (regexp-quote "= & \\quad {\\color[RGB]{128,0,0} \\left[ \\text{h} \\right.}")
-                          (org-block/math 'latex "x ={ h } y" nil :hints 'between)))
+                          (org-block/math 'latex "x ={ h } y" nil)))
+  (should (string-match-p (regexp-quote "&& \\text{h}\n") (org-block/math 'latex "x ={ h } y" nil :hints 'beside)))
+  ;; A list gives the layout a format of our own, its %s the hint; a colour is LaTeX's, within it.
   (should (string-match-p (regexp-quote "&& {\\color{teal} \\langle \\text{h} \\rangle}")
-                          (org-block/math 'latex "x ={ h } y" nil :hint-format "\\langle %s \\rangle" :hint-color "teal")))
-  ;; A format of none hides hints from the export; their steps remain.
-  (let ((hidden (org-block/math 'latex "x ={ h } y" nil :hint-format 'none :hints 'between)))
+                          (org-block/math 'latex "x ={ h } y" nil :hints '(beside "{\\color{teal} \\langle %s \\rangle}"))))
+  ;; none hides hints from the export; their steps remain, as a compact chain.
+  (let ((hidden (org-block/math 'latex "x ={ h } y" nil :hints 'none)))
     (should-not (string-match-p "\\\\text{h}" hidden))
-    (should (string-match-p "& y" hidden))))
+    (should (string-match-p (regexp-quote "x &\\quad = \\quad y\n") hidden))))
+
+(deftest "a math block's :hints may be folded, so a page's reader clicks to see each; LaTeX, sans clicks, shows them"
+  (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}")
+                          (org-block/math 'html "x ={ h } y" nil :hints '(between folded))))
+  (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}{{\\color{teal} \\langle")
+                          (org-block/math 'html "x ={ h } y" nil :hints '(between "{\\color{teal} \\langle %s \\rangle}" folded))))
+  (should (string-match-p (regexp-quote "\\text{h}") (org-block/math 'latex "x ={ h } y" nil :hints '(between folded)))))
 
 (define-org-call-test "a math block's REL{GROUP}, ^{ 2 }, \\frac{ a }{ b }, and a REL{ … } within cases are no hints"
   :call (org-block/math 'latex "

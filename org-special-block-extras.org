@@ -4310,15 +4310,14 @@ p -> q &== \neg p \lor q
   :END:
 
   A calculational proof states why each step holds. We write the hint right after the relation,
-  =X ={ HINT } Y=: the line aligns at ===, set apart by a =\quad= either side, and =HINT= shows at its
-  end, in a column of its own. So too for any relation ---=≤{ … }=, =\equiv{ … }=, or a =:let=
-  shorthand's. The ={= hugs the relation and a space or newline follows it, so LaTeX's own =x ={a}=
+  =X ={ HINT } Y=, and it shows on a row of its own, between the two expressions it relates ---as
+  Feijen and Dijkstra set a calculation--- in maroon, after a bracket that opens it, lest it be
+  mistaken for maths. So too for any relation ---=≤{ … }=, =\equiv{ … }=, or a =:let= shorthand's. The ={= hugs the relation and a space or newline follows it, so LaTeX's own =x ={a}=
   and =\frac{ a }{ b }= are left be. So that we need not recall the rule, Emacs shows each hint as a
   comment, by the very reading the export makes; any other ={…}= is LaTeX's own.
 
-  A step runs from its hint to the next, its hint shown at its end; so each hint but the first begins
-  a row, wherever the newlines fall ---we need not write =\\=, and may give each expression and hint a
-  line of its own, in Dijkstra's style.
+  A step runs from its hint to the next, wherever the newlines fall ---we need not write =\\=, and may
+  give each expression and hint a line of its own, in Dijkstra's style, or not.
   #+begin_example
 ,#+begin_math :let (== "\\equiv")
 p \land q =={ Golden Rule } p == q == p \lor q
@@ -4335,12 +4334,18 @@ p \land q =={ Golden Rule } p == q == p \lor q
     elsewhere in the block, or within a nested calculation, leaves the maths be.
   + A line =# …= is a comment, even within a hint: say, an alternative reason, kept in the source
     yet absent from the export.
-  + Hints sit beside their steps; when the expressions are wide, =:hints between= sets each hint on a
-    row of its own, between the expressions it relates, as Feijen and Dijkstra set a calculation
-    ---the train, the Handshaking Lemma, and the rational root, below, are so. There, a hint is maroon,
-    after a bracket that opens it, lest it be mistaken for maths.
-  + =:hint-format= and =:hint-color= restyle hints, the format's =%s= being the hint ---say,
-    =:hint-format "\\langle %s \\rangle" :hint-color teal=; =:hint-format none= hides them from the export.
+  + =:hints= says how hints show:
+    | =:hints between=                                   | On a row of their own, maroon and bracketed: the default.      |
+    | =:hints beside=                                    | At their step's end, plain, as their column sets them apart.   |
+    | =:hints none=                                      | Hidden from the export; the steps remain, a compact chain.     |
+    | =:hints (beside "{\color{teal} \langle %s \rangle}")= | A layout, then a format of our own, LaTeX whose =%s= is the hint. |
+    | =:hints (between folded)=                          | Folded, so a page's reader clicks to see each ---a puzzle!     |
+    A format may join =folded=, as in =(between "{\color{teal} %s}" folded)=. LaTeX, sans clicks, shows
+    folded hints in full. Hints beside read well when the expressions are narrow; to have them so
+    throughout a file, we say it once, as for any block's [[#Switches-for-every-block][header arguments]]:
+    #+begin_example
+,#+property: header-args:math :hints beside
+    #+end_example
 
 #+begin_box "“Programming Comments  ≈  Proof Hints”" :background-color blue
 Let's prove that $x ≤ z$...
@@ -4499,7 +4504,7 @@ link-here:calculating-the-length-of-a-train
 Let us *green:calculate* the length of a train, that is travelling at a speed of
 60 km/hr and, on its way, it crosses a pole in 9 seconds.
 # Implicitly assuming that it is going straight, no turns or curves.
-#+begin_math :hints between
+#+begin_math
 \def\meters{\,\mathsf{meters}\,}
 \def\seconds{\,\mathsf{seconds}\,}
   \text{the length of the train}
@@ -4548,7 +4553,7 @@ people?/
 We could consider all possible cases, which is not particularly enlightening; or
 we could /calculate/...
 
-#+begin_math :hints between
+#+begin_math
 \def\even#1{\mathsf{even}\,\left(#1\right)}
 \def\odd#1{\mathsf{odd}\,\left(#1\right)}
   \begin{array}{l} \text{“Obviously”, the sum of everyone's friendship count} \\
@@ -4626,7 +4631,7 @@ For more on Graph Theory, [[https://ptwiddle.github.io/MAS341-Graph-Theory-2017/
 #+end_details
 #+begin_details ★ Rational root equivales perfect power :title-color orange
 link-here:rational-root-equivales-perfect-power
-#+begin_math :hints between
+#+begin_math
 \def\exp#1#2{\mathsf{exp}_#1\,#2}
 \def\eq{\;=\;}
   \sqrt[n]{k} \text{ is a rational number }
