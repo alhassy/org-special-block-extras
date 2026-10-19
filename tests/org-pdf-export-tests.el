@@ -21,14 +21,20 @@
 (defun org-pdf-test--compile (name export &optional heading-depth)
   "(NAME, EXPORT, HEADING-DEPTH) ↦ the first LaTeX error, else nil, of compiling every example to NAME.pdf via EXPORT,
 such as `org-latex-export-to-latex'; with HEADING-DEPTH stars before each example's heading, and one more on its own."
+  (let ((stars (make-string (or heading-depth 1) ?*)))
+    (org-pdf-test--compile-org
+     name export
+     (concat "#+title: Every example\n#+latex_compiler: lualatex\n#+options: H:1\n"
+             (mapconcat (pcase-lambda (`(,example . ,input))
+                          (format "\n%s %s\n%s\n" stars example (replace-regexp-in-string "^\\*" (concat stars "*") input)))
+                        (org-pdf-test--examples) "")))))
+
+(defun org-pdf-test--compile-org (name export org-text)
+  "(NAME, EXPORT, ORG-TEXT) ↦ the first LaTeX error, else nil, of compiling ORG-TEXT to NAME.pdf via EXPORT."
   (let* ((org-defblock-evaluate-switches t)
          (dir (make-temp-file "osbe-pdf-" t))
-         (org (expand-file-name (concat name ".org") dir))
-         (stars (make-string (or heading-depth 1) ?*)))
-    (with-temp-file org
-      (insert "#+title: Every example\n#+latex_compiler: lualatex\n#+options: H:1\n")
-      (pcase-dolist (`(,example . ,input) (org-pdf-test--examples))
-        (insert (format "\n%s %s\n%s\n" stars example (replace-regexp-in-string "^\\*" (concat stars "*") input)))))
+         (org (expand-file-name (concat name ".org") dir)))
+    (with-temp-file org (insert org-text))
     (with-current-buffer (find-file-noselect org)
       (funcall export)
       (kill-buffer))
@@ -49,6 +55,24 @@ such as `org-latex-export-to-latex'; with HEADING-DEPTH stars before each exampl
   (require 'ox-beamer)
   ;; Each example is a frame, its own headings within it.
   (should-not (org-pdf-test--compile "every-example-slides" #'org-beamer-export-to-latex)))
+
+(deftest "margin notes compile within a box and side-by-side columns, as footnotes there, since the margin is out of reach" [pdf]
+  (skip-unless (and (executable-find "latexmk") (executable-find "lualatex")))
+  (should-not (org-pdf-test--compile-org "margin-notes-within" #'org-latex-export-to-latex "
+#+latex_compiler: lualatex
+#+begin_box
+A [[tooltip:word][with a tip]], and maths with one:
+#+begin_math
+x[fn::the unknown] = 1
+#+end_math
+#+end_box
+#+begin_parallel
+A [[tooltip:word][with a tip]].
+#+columnbreak:
+#+begin_margin
+A note.
+#+end_margin
+#+end_parallel")))
 
 (provide 'org-pdf-export-tests)
 ;;; org-pdf-export-tests.el ends here

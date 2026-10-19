@@ -136,26 +136,38 @@ Note: This function mutates the current buffer."
   "What the blocks this export has rendered need in the LaTeX preamble, by their `:latex-head'; see `org--load-latex-head'.
 Local to the buffer an export works in: each export, nested ones included, works in a copy of its own.")
 
+(defconst org--latex-margin-head
+  '("marginnote"
+    "\\AddToHook{env/tcolorbox/begin}{\\let\\marginpar\\marginnote}"
+    "\\AddToHook{env/minipage/begin}{\\let\\marginpar\\marginnote}"
+    "\\AddToHook{env/multicols/begin}{\\let\\marginpar\\marginnote}")
+  "What a document with margin notes needs: within a box, a minipage, or columns, \\marginpar loses its float, as the
+margin is out of reach of floats there; so there, it is marginnote's \\marginnote, which reaches it all the same.
+Elsewhere, \\marginpar stays, as it moves stacked notes apart.  See `org--latex-margin-note'.")
+
 (defun org--load-latex-head (output backend _info)
   "(OUTPUT, BACKEND) ↦ LaTeX OUTPUT whose preamble holds, once, each item its blocks need, `org--latex-head-used'.
 A package name, \"xcolor\", is \\usepackage{xcolor} unless the preamble loads it already, options and all; any
 other line, \"\\\\newcommand{\\\\QED}{∎}\", is added unless the preamble has it.  They go just before \\begin{document};
-so after the document's own lines.  A body-only export, sans preamble, is left be."
-  (if (not (and (org-export-derived-backend-p backend 'latex) org--latex-head-used
-                (string-match "^\\\\begin{document}" output)))
-      output
-    (let* ((preamble (substring output 0 (match-beginning 0)))
-           (package? (lambda (item) (string-match-p "\\`[[:alnum:]-]+\\'" item)))
-           (present? (lambda (item)
-                       (if (not (funcall package? item)) (s-contains? item preamble)
-                         (string-match-p (format "\\\\\\(?:usepackage\\|RequirePackage\\)\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?[ \t]*%s[ \t]*[,}]"
-                                                 (regexp-quote item))
-                                         preamble))))
-           (missing (-remove present? (reverse org--latex-head-used))))
-      (if (not missing) output
-        (concat preamble
-                (mapconcat (lambda (item) (format (if (funcall package? item) "\\usepackage{%s}\n" "%s\n") item)) missing "")
-                (substring output (length preamble)))))))
+so after the document's own lines.  A body-only export, sans preamble, is left be.  Margin notes, wherever they
+come from, bring `org--latex-margin-head'; by the output itself, as some are made in buffers of their own."
+  (let ((needed (append (reverse org--latex-head-used)
+                        (and (string-match-p "OrgSpecialBlockExtrasMarginBox" output) org--latex-margin-head))))
+    (if (not (and (org-export-derived-backend-p backend 'latex) needed
+                  (string-match "^\\\\begin{document}" output)))
+        output
+      (let* ((preamble (substring output 0 (match-beginning 0)))
+             (package? (lambda (item) (string-match-p "\\`[[:alnum:]-]+\\'" item)))
+             (present? (lambda (item)
+                         (if (not (funcall package? item)) (s-contains? item preamble)
+                           (string-match-p (format "\\\\\\(?:usepackage\\|RequirePackage\\)\\(?:\\[[^]]*\\]\\)?{\\(?:[^}]*,\\)?[ \t]*%s[ \t]*[,}]"
+                                                   (regexp-quote item))
+                                           preamble))))
+             (missing (-remove present? (-uniq needed))))
+        (if (not missing) output
+          (concat preamble
+                  (mapconcat (lambda (item) (format (if (funcall package? item) "\\usepackage{%s}\n" "%s\n") item)) missing "")
+                  (substring output (length preamble))))))))
 
 (defun org--latex-define-color (name colour)
   "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, or a
