@@ -77,7 +77,8 @@ ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a spac
 (defun org--math-hint (text &optional between)
   "(TEXT, BETWEEN) ↦ the LaTeX of a hint: its lines, top-aligned with its step, a blank one a gap; and each
 \\[ CALCULATION \\] within, a nested calculation, whose hints are read alike, so they may nest too, set BETWEEN its
-expressions as the block's are; see `org--math-hints'.  A hint of one line is a \\text{…}.
+expressions as the block's are; see `org--math-hints'; its tags, “:NAME:COLOUR:”, are anchored in place, as an
+aligned has no \\tag; see `org--math-tags'.  A hint of one line is a \\text{…}.
 E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the aligned x &\\quad = \\quad y && \\text{h}."
   (let ((pos 0) rows)
     ;; A line that is an environment already, as an Org table's matrix is, stays maths; the rest is prose.
@@ -93,7 +94,7 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
           (setq rows (append rows (list (format "\\begin{aligned}[t] %s \\end{aligned}"
                                                 (string-trim (replace-regexp-in-string
                                                               "[ \t]*\n[ \t]*" " "
-                                                              (org--math-hints (substring text (+ open 2) (- close 2)) between t)))))))
+                                                              (org--math-tags (org--math-hints (substring text (+ open 2) (- close 2)) between t) t)))))))
           (setq pos close)))
       (unless (string-blank-p (substring text pos)) (setq rows (append rows (lines (substring text pos))))))
     ;; Beside its step, a hint's first line is level with the step's; between steps, its row is its own, so it is centred,

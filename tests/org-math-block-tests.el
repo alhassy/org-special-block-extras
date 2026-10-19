@@ -144,7 +144,7 @@ red:0 < 1" nil)
   :to latex
   :input "
           #+begin_math
-          (p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   :tag-teal: Distributivity of \\meet
+          (p \\join q) \\meet r = (p \\meet r) \\join (q \\meet r)   :Distributivity of \\meet:teal:
           #+end_math
           By [[Distributivity of \\meet]]."
   :equals "\\[
@@ -153,9 +153,9 @@ red:0 < 1" nil)
 By \\eqref{Distributivity of meet}.
 ")
 
-(define-org-call-test "a math block whose lines have an & is an align; its :tag-COLOUR: NAME a \\tag; its last \\ dropped"
+(define-org-call-test "a math block whose lines have an & is an align; its :NAME:COLOUR: a \\tag; its last \\ dropped"
   :call (org-block/math 'latex "x &= x + 0 \\\\
-x + 0 &= 0 + x   :tag-blue: Symmetry" nil)
+x + 0 &= 0 + x   :Symmetry:blue:" nil)
   :returns "#+begin_export latex
 \\begin{align*}
 x &= x + 0 \\\\
@@ -201,7 +201,7 @@ M &=
   :to latex
   :input "
           #+begin_math :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
-          *p* -> q &== red:\\neg p \\lor q   :tag-blue: Implication
+          *p* -> q &== red:\\neg p \\lor q   :Implication:blue:
           #+end_math
           By [[Implication]], p -> p."
   :equals "\\begin{align*}
@@ -238,7 +238,7 @@ n \\cdot (n - 1)! & n > 0
 
 (define-org-call-test "a math block's lines may align at & around cases, whose own & and \\\\ are left be"
   :call (org-block/math 'latex "
-f(n) &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}   :tag-teal: Indicator
+f(n) &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}   :Indicator:teal:
 g(n) &= 1 - f(n)" nil)
   :returns "#+begin_export latex
 \\begin{align*}
@@ -430,16 +430,46 @@ c = d
 \\end{gather}
 #+end_export")
 
-(define-org-call-test "a math block's :tag-COLOUR: NAME is a coloured \\tag, labelled NAME; tagged lines are gathered"
+(define-org-call-test "a math block's :NAME:COLOUR: is a coloured \\tag, labelled NAME; tagged lines are gathered"
   :call (org-block/math 'latex "
-a = b   :tag-blue: One
-c = d   :tag-red: Two" nil)
+a = b   :One:blue:
+c = d   :Two:red:" nil)
   :returns "#+begin_export latex
 \\begin{gather*}
 a = b   \\tag{$\\color{blue}{\\text{One}}$} \\label{One} \\\\
 c = d   \\tag{$\\color{red}{\\text{Two}}$} \\label{Two}
 \\end{gather*}
 #+end_export")
+
+(deftest "a tag's _ is a space, as an Org tag has none: :Base_Case: is :Base Case:, which [[Base_Case]] cites too"
+  (should (equal (org--math-tag-name "Base_Case") "Base Case"))
+  ;; A braced subscript stays maths.
+  (should (equal (org--math-tag-name "Law of x_{0}") "Law of x_{0}"))
+  (let ((html (org-export-string-as "
+#+begin_math
+a = b   :Base_Case:
+#+end_math
+By [[Base Case]] and [[Base_Case]]." 'html t)))
+    (should (string-match-p (regexp-quote "\\tag{Base Case} \\label{Base Case}") html))
+    (should (string-match-p (regexp-quote "By \\eqref{Base Case} and \\eqref{Base Case}.") html))))
+
+(deftest "a math block's :NAME: sans colour is a plain \\tag; its colons delimit it, so a hint's \\[ … \\] may hold one"
+  (should (string-match-p (regexp-quote "a = b   \\tag{One} \\label{One}") (org-block/math 'latex "a = b   :One:" nil)))
+  ;; Within a hint's nested calculation, an aligned, a tag is no \\tag but NAME in brackets, anchored as MathJax's are.
+  (let ((html (org-export-string-as "
+#+begin_math
+  x
+={ as \\[ 0 + n = n   :Base Case:teal: \\] says }
+  y
+={ by the [[Base Case]] }
+  z
+#+end_math" 'html t)))
+    (should (string-match-p (regexp-quote "0 + n = n   \\qquad \\cssId{mjx-eqn:Base_Case}{{\\color{teal}\\text{(Base Case)}}}") html))
+    (should-not (string-match-p (regexp-quote "\\tag{") html))
+    ;; Its citation links to that anchor, as no \\eqref reaches it.
+    (should (string-match-p (regexp-quote "\\text{by the $\\href{#mjx-eqn%3ABase_Case}{\\text{(Base Case)}}$}") html)))
+  (should (string-match-p (regexp-quote "\\hypertarget{Base Case}")
+                          (org-export-string-as "#+begin_math\nx ={ as \\[ 0 + n = n :Base Case: \\] } y\n#+end_math" 'latex t))))
 
 (define-org-call-test "a math block that is :numbered t, of one line, is LaTeX's equation"
   :call (org-block/math 'latex "
@@ -450,15 +480,15 @@ e^{i\\pi} + 1 = 0
 \\end{equation}
 #+end_export")
 
-(org-deftest "C-c C-o on [[NAME]] visits the line tagged :tag-COLOUR: NAME, else a \\tag{…NAME…}; else Org's own search"
+(org-deftest "C-c C-o on [[NAME]] visits the line tagged :NAME:COLOUR:, else a \\tag{…NAME…}; else Org's own search"
   :text "
-By [[Golden Rule]], [[⊑-Definition]], and [[Leibniz]].
+By [[Golden Rule]], [[Golden_Rule]], [[⊑-Definition]], and [[Leibniz]].
 #+begin_math
-p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :tag-orange: Golden Rule
-p ⊑ q &\\equiv p \\land q \\equiv p   :tag-blue: ⊑-Definition
+p \\land q &\\equiv p \\equiv q \\equiv p \\lor q   :Golden Rule:orange:
+p ⊑ q &\\equiv p \\land q \\equiv p   :⊑-Definition:blue:
 #+end_math
 \\begin{equation} x = y \\Rightarrow f(x) = f(y) \\tag{Leibniz} \\end{equation}"
-  (dolist (case '(("[[Golden Rule]]" . "p \\\\land q") ("[[⊑-Definition]]" . "p ⊑ q") ("[[Leibniz]]" . "\\\\begin{equation}")))
+  (dolist (case '(("[[Golden Rule]]" . "p \\\\land q") ("[[Golden_Rule]]" . "p \\\\land q") ("[[⊑-Definition]]" . "p ⊑ q") ("[[Leibniz]]" . "\\\\begin{equation}")))
     (goto-char (point-min))
     (search-forward (car case))
     (backward-char 3)
@@ -508,7 +538,7 @@ e^{i\\pi} + 1 = 0
   :to latex
   :input "
           #+begin_math
-          a = b   :tag-teal: Golden Rule
+          a = b   :Golden Rule:teal:
           #+end_math
           By [[Golden Rule][the /rule/ of thumb]]."
   :equals "\\[
@@ -518,7 +548,7 @@ By \\hyperref[Golden Rule]{the \\emph{rule} of thumb}.
 ")
 
 (deftest "[[NAME]] in HTML is MathJax's \\eqref, and [[NAME][words]] a link to its anchor; in Markdown, (NAME)"
-  (let ((org "#+begin_math\na = b   :tag-teal: Golden Rule\n#+end_math\nBy [[Golden Rule]], or [[Golden Rule][the rule]]."))
+  (let ((org "#+begin_math\na = b   :Golden Rule:teal:\n#+end_math\nBy [[Golden Rule]], or [[Golden Rule][the rule]]."))
     (should (string-match-p (regexp-quote "By \\eqref{Golden Rule}, or <a href=\"#mjx-eqn%3AGolden_Rule\">the rule</a>.")
                             (org-export-string-as org 'html t)))
     (should (string-match-p (regexp-quote "By (Golden Rule), or the rule.") (org-export-string-as org 'md t)))))
@@ -526,7 +556,7 @@ By \\hyperref[Golden Rule]{the \\emph{rule} of thumb}.
 (deftest "[[NAME]] within maths is \\eqref too; a source listing's, and a link to no tag, are Org's as ever"
   (let ((latex (org-export-string-as "
 #+begin_math
-a = b   :tag-teal: Golden Rule
+a = b   :Golden Rule:teal:
 #+end_math
 #+begin_math
 c = d \\quad \\text{by } [[Golden Rule]]
@@ -539,6 +569,17 @@ See [[A heading]]." 'latex t)))
     (should (string-match-p (regexp-quote "c = d \\quad \\text{by } \\eqref{Golden Rule}") latex))
     (should (string-match-p (regexp-quote "By [[Golden Rule]].") latex))
     (should (string-match-p (regexp-quote "See \\ref{sec:") latex))))
+
+(deftest "[[NAME]] within a hint's prose is maths therein, $…$, as MathJax reads no macro in \\text{…}; its words, text"
+  (let ((html (org-export-string-as "
+#+begin_math
+a = b   :Golden Rule:teal:
+#+end_math
+#+begin_math
+c ={ by [[Golden Rule]], or [[Golden Rule][the rule]] } d
+#+end_math" 'html t)))
+    (should (string-match-p (regexp-quote "\\text{by $\\eqref{Golden Rule}$, or $\\href{#mjx-eqn%3AGolden_Rule}{\\text{the rule}}$}")
+                            html))))
 
 ;;; Hints ---REL{ HINT } aligns its line at REL, the hint in a column of its own
 
@@ -586,7 +627,7 @@ p \\land q ={ Golden Rule } p = q = & p \\lor q
 \\def\\N{\\mathbb{N}}
 p \\land q
 ={ Golden Rule }
-p = q   :tag-blue: Step
+p = q   :Step:blue:
 ={ by symmetry } q = p ={ by reflexivity } q = p" nil :hints 'beside)
   :returns "#+latex_header: \\def\\N{\\mathbb{N}}
 #+begin_export latex
@@ -611,7 +652,7 @@ x &\\quad = \\quad \\N && \\text{by definition}
 
 (define-org-call-test "a math block's hint comes before its line's tag; a hint may hold {groups} of its own"
   :call (org-block/math 'latex "
-x ={ by {IH} } y   :tag-blue: Step" nil :hints 'beside)
+x ={ by {IH} } y   :Step:blue:" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
 x &\\quad = \\quad y && \\text{by {IH}}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step}
@@ -688,7 +729,7 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
   :call (org-block/math 'latex "
 \\def\\N{\\mathbb{N}}
   x
-={ why x is y } y   :tag-blue: Step
+={ why x is y } y   :Step:blue:
 ≤{ why y is below z,
    over lines } z" nil :hints 'between)
   :returns "#+latex_header: \\def\\N{\\mathbb{N}}
@@ -716,6 +757,8 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
          (head (substring page 0 (string-match "</head>" page))))
     (should (string-match-p (regexp-quote "<template id=\"osbe-tip-hint\">") head))
     (should (string-match-p (regexp-quote "classList.toggle('osbe-folded')") head))
+    ;; A click on a link within a hint, such as a [[NAME]] citing a tag, follows it, rather than folding the hint.
+    (should (string-match-p (regexp-quote "if (!hint || event.target.closest('a')) return;") head))
     (should (string-match-p "tooltip-box" head))
     ;; A hint is plainly a hint, so it wears no tooltip's dotted underline; as two classes, the rule outranks .tooltip.
     (should (string-match-p (regexp-quote ".tooltip.osbe-hint { border-bottom: none; }") head))
@@ -818,7 +861,7 @@ b = 2
 
 (define-org-call-test "a math block :numbered once takes its one tag out of the split, onto the whole equation"
   :call (org-block/math 'latex "
-x &= y   :tag-blue: Sym
+x &= y   :Sym:blue:
 &= z" nil :numbered 'once)
   :returns "#+begin_export latex
 \\begin{equation}
@@ -830,7 +873,7 @@ x &= y \\\\
 #+end_export")
 
 (deftest "a math block :numbered once refuses two tags, as one equation has one number"
-  (should-error (org-block/math 'latex "x &= y   :tag-blue: A\n&= z   :tag-red: B" nil :numbered 'once) :type 'user-error))
+  (should-error (org-block/math 'latex "x &= y   :A:blue:\n&= z   :B:red:" nil :numbered 'once) :type 'user-error))
 
 ;;; Inline maths ---$…$ reads our markup too
 
@@ -863,7 +906,7 @@ We have \\({\\color{red}x}\\).</p>
 (org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and each tag in its colour" [fontify]
   :text "
 #+begin_math
-teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
+teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :Fold:blue:
 #+end_math"
   (font-lock-ensure)
   (search-forward "red:")
@@ -873,7 +916,7 @@ teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
   (should-not (member '(:foreground "red") (ensure-list (get-text-property (point) 'face))))
   (search-forward "cyan:")
   (should (member '(:foreground "cyan") (ensure-list (get-text-property (point) 'face))))
-  (search-forward ":tag-blue")
+  (search-forward ":Fold")
   (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face)))))
 
 (org-deftest "a math block looks as a #+begin_src latex block does, with our links and Org's emphasis atop" [fontify]
@@ -901,7 +944,7 @@ teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   :tag-blue: Fold
 (org-deftest "C-c ' edits a math block in latex-mode, which shows its hints and tags as the Org buffer does"
   :text "
 #+begin_math
-x ={ by IH } y   :tag-blue: Step
+x ={ by IH } y   :Step:blue:
 ={ by symmetry } z
 #+end_math"
   :at "by IH"
@@ -915,7 +958,7 @@ x ={ by IH } y   :tag-blue: Step
           (search-forward hint)
           (should (memq 'org-math-hint (ensure-list (get-text-property (1- (point)) 'face)))))
         (goto-char (point-min))
-        (search-forward ":tag-blue")
+        (search-forward ":Step")
         (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (1- (point)) 'face)))))
     (org-edit-src-abort)))
 
@@ -956,20 +999,30 @@ a &= b
   (org-clear-latex-preview (point-min) (point-max))
   (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
 
-(org-deftest "a math block's :tag-COLOUR: shows as a tag in that colour, and as a plain tag for a colour Emacs lacks" [fontify]
+(org-deftest "a math block's :NAME:COLOUR: shows as a heading's tags, [NAME][COLOUR], in COLOUR; plain sans one Emacs knows" [fontify]
   :text "
 #+begin_math
-x &= y   :tag-blue: Symmetry
-y &= z   :tag-notacolour: Mystery
+x &= y   :Symmetry:blue:
+y &= z   :Mystery:notacolour:
+z &= w   :Plain:
 #+end_math
-:tag-blue: outside a math block is left be."
+:Symmetry:blue: outside a math block is left be."
   (font-lock-ensure)
-  (search-forward ":tag-blue")
+  (search-forward ":Symmetry")
   (should (member '(:inherit org-tag :foreground "blue") (ensure-list (get-text-property (point) 'face))))
-  (search-forward ":tag-notacolour")
+  ;; Its colons show as brackets; its text is untouched.
+  (should (equal (get-text-property (- (point) 9) 'display) "["))
+  (should (equal (get-text-property (point) 'display) "]["))
+  (search-forward "blue")
+  (should (equal (get-text-property (point) 'display) "]"))
+  (search-forward ":Mystery")
   (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
-  (search-forward ":tag-blue")
-  (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face)))))
+  (search-forward ":Plain")
+  (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))
+  (should (equal (get-text-property (point) 'display) "]"))
+  (search-forward ":Symmetry")
+  (should-not (memq 'org-tag (flatten-tree (get-text-property (point) 'face))))
+  (should-not (get-text-property (point) 'display)))
 
 (org-deftest "a math block's hint, “REL{ HINT }”, shows as a comment, as the export reads it; LaTeX's own groups do not" [fontify]
   :text "
@@ -1007,7 +1060,7 @@ Addition moves the suc-s
 (org-deftest "M-q within a math block's hint fills the hint alone, as prose; the maths around it is left be"
   :text "
 #+begin_math
-\\zero + \\suc \\zero   :tag-blue: Start
+\\zero + \\suc \\zero   :Start:blue:
   ={
 Addition moves the suc-s from the left argument to the
   right, one at a time.
@@ -1019,7 +1072,7 @@ Addition moves the suc-s from the left argument to the
     (fill-paragraph))
   (should (equal (buffer-string) "
 #+begin_math
-\\zero + \\suc \\zero   :tag-blue: Start
+\\zero + \\suc \\zero   :Start:blue:
   ={
 Addition moves the suc-s from
 the left argument to the
@@ -1177,7 +1230,7 @@ x ={ by $y + 1$, of course } z
   :text "
 #+begin_math
 a + b
-  = c   :tag-blue: Start
+  = c   :Start:blue:
 #+end_math"
   :at "a + b"
   (let ((before (buffer-string)) (fill-column 10))

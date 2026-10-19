@@ -15,15 +15,16 @@
 
 ;;; Commentary:
 
-;; A math block's line tagged “:tag-COLOUR: NAME”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
+;; A math block's line tagged “:NAME:COLOUR:”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
 ;; element; by way of example,
 ;;
 ;;     #+begin_math
-;;     p ⊑ q ≡ p ⊓ q = p   :tag-blue: ⊑-Definition
+;;     p ⊑ q ≡ p ⊓ q = p   :⊑-Definition:blue:
 ;;     #+end_math
 ;;     By [[⊑-Definition]], or by [[⊑-Definition][its definition]], …
 ;;
-;; exports as \eqref, which LaTeX and MathJax resolve; a description links its words to the equation.  In Emacs,
+;; exports as \eqref, which LaTeX and MathJax resolve; a description links its words to the equation.  A tag within a
+;; hint's \[ … \] has no \eqref, as an aligned has no \tag, so its citation links to its anchor instead.  In Emacs,
 ;; C-c C-o on the link visits the line.  A NAME may hold maths, as ⊑ or \meet; see `org--math-label'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
@@ -39,13 +40,16 @@
 ;;;; Following a citation ---C-c C-o visits the tagged line
 
 (defun org--math-ref-follow (name)
-  "When NAME is the tag of a math block's line, “:tag-COLOUR: NAME”, or a block's “#+name: NAME”, or a \\tag{…NAME…},
+  "When NAME is the tag of a math block's line, “:NAME:COLOUR:”, or a block's “#+name: NAME”, or a \\tag{…NAME…},
 visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-execute-file-search-functions', so C-c C-o on
 [[NAME]] visits it."
   (when (derived-mode-p 'org-mode)
     (let ((at (save-excursion
                 (goto-char (point-min))
-                (or (re-search-forward (format ":tag-[^: \t\n]+:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
+                (or (re-search-forward (format "[ \t]:%s:\\(?:[^: \t\n]+:\\)?"
+                                               ;; Either spelling, a _ or a space; see `org--math-tag-name'.
+                                               (string-replace " " "[ _]" (regexp-quote (org--math-tag-name name))))
+                                       nil t)
                     (re-search-forward (format "^[ \t]*#\\+[nN][aA][mM][eE]:[ \t]*%s[ \t]*$" (regexp-quote name)) nil t)
                     (re-search-forward (format "\\\\tag{[^}\n]*%s" (regexp-quote name)) nil t)))))
       (when at
@@ -57,7 +61,8 @@ visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-e
 ;;;; Exporting citations ---[[NAME]] as \eqref, before Org parses
 
 (defun org--math-ref-names ()
-  "↦ each name a math block of the buffer gives its maths to cite: its lines' “:tag-COLOUR: NAME”s, and its #+name:."
+  "↦ each name a math block of the buffer gives its maths to cite, as (NAME . NESTED): its tags, “:NAME:COLOUR:”, and its
+#+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag nor \\eqref."
   (save-excursion
     (goto-char (point-min))
     (let ((case-fold-search t) names)
@@ -66,26 +71,34 @@ visit it and ↦ t; else ↦ nil, so Org searches as ever.  A function of `org-e
           (beginning-of-line)
           ;; Its affiliated keywords, #+name: among them, are the lines just above it.
           (while (and (zerop (forward-line -1)) (looking-at "[ \t]*#\\+\\([[:alnum:]_]+\\):[ \t]*\\(.*?\\)[ \t]*$"))
-            (when (equal (downcase (match-string 1)) "name") (push (match-string 2) names))))
-        (let ((end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point)))))
+            (when (equal (downcase (match-string 1)) "name") (push (list (match-string 2)) names))))
+        (let ((start (point)) (end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point)))))
           (while (and end (re-search-forward org--math-tag-re end t))
-            (push (match-string 2) names))))
+            ;; Nested: within a \[ that no \] has closed yet; a \\[ is a line break, not one.
+            (let ((name (org--math-tag-name (match-string 1))) (at (match-beginning 0)))
+              (push (cons name (< (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\]" start at))
+                                  (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\[" start at))))
+                    names)))))
       names)))
 
-(defun org--math-ref (name desc backend in-maths)
-  "(NAME, DESC, BACKEND, IN-MATHS) ↦ a citation of the equation NAME tags, for BACKEND: \\eqref{LABEL}; or, with DESC, its
-words linked to the equation.  Within maths, LaTeX; in prose, export snippets about DESC, which stays Org.  In
-Markdown, (NAME), as GitHub resolves no \\eqref in prose."
+(defun org--math-ref (name desc backend in-maths &optional nested)
+  "(NAME, DESC, BACKEND, IN-MATHS, NESTED) ↦ a citation of the equation NAME tags, for BACKEND: \\eqref{LABEL}; or, with
+DESC, its words linked to the equation.  Within maths, LaTeX; in prose, export snippets about DESC, which stays Org.
+In Markdown, (NAME), as GitHub resolves no \\eqref in prose.  A NESTED tag has no \\eqref, so its DESC defaults to
+“(NAME)”, which links to the tag's anchor; see `org--math-tags'."
   (let* ((label (org--math-label name))
-         ;; MathJax's anchor for a label: “mjx-eqn:” and it, its spaces as _, as a link writes it, percent-encoded.
-         (anchor (url-hexify-string (concat "mjx-eqn:" (replace-regexp-in-string "[ \t]" "_" label))))
+         (desc (or desc (and nested (if in-maths (format "\\text{(%s)}" (org--math-tag-text name)) (format "(%s)" name)))))
+         ;; MathJax's anchor for a label, as a link writes it, percent-encoded.
+         (anchor (url-hexify-string (org--math-tag-anchor name)))
          (latex? (org-export-derived-backend-p backend 'latex))
          (md? (org-export-derived-backend-p backend 'md)))
     (cond (in-maths (cond ((not desc) (format "\\eqref{%s}" label))
-                          (latex? (format "\\hyperref[%s]{%s}" label desc))
+                          (latex? (format (if nested "\\hyperlink{%s}{%s}" "\\hyperref[%s]{%s}") label desc))
                           (t (format "\\href{#%s}{%s}" anchor desc))))
           (md? (or desc (format "(%s)" name)))
-          (latex? (if desc (format "@@latex:\\hyperref[%s]{@@%s@@latex:}@@" label desc) (format "@@latex:\\eqref{%s}@@" label)))
+          (latex? (cond (nested (format "@@latex:\\hyperlink{%s}{@@%s@@latex:}@@" label desc))
+                        (desc (format "@@latex:\\hyperref[%s]{@@%s@@latex:}@@" label desc))
+                        (t (format "@@latex:\\eqref{%s}@@" label))))
           ((org-export-derived-backend-p backend 'html)
            (org-html-head-require 'mathjax)
            (if desc (format "@@html:<a href=\"#%s\">@@%s@@html:</a>@@" anchor desc) (format "@@html:\\eqref{%s}@@" label)))
@@ -101,7 +114,9 @@ verbatim text, such as a src block's or =this=, is left be; so is one to anythin
       (while (re-search-forward org-link-bracket-re nil t)
         (let ((name (match-string-no-properties 1)) (desc (match-string-no-properties 2))
               (start (match-beginning 0)) (end (match-end 0)))
-          (when (and (member name names)
+          ;; A #+name: is cited as written; a tag, its _s spaces too.
+          (setq name (car (or (assoc name names) (assoc (org--math-tag-name name) names) (list name))))
+          (when (and (assoc name names)
                      (save-excursion
                        (goto-char start)
                        (not (or (memq (org-element-type (org-element-at-point))
@@ -113,7 +128,7 @@ verbatim text, such as a src block's or =this=, is left be; so is one to anythin
                                 (and block (equal (downcase (org-element-property :type block)) "math"))))))
               (delete-region start end)
               (goto-char start)
-              (insert (org--math-ref name desc backend in-maths)))))))))
+              (insert (org--math-ref name desc backend in-maths (cdr (assoc name names)))))))))))
 
 (provide 'org-math-refs)
 ;;; org-math-refs.el ends here

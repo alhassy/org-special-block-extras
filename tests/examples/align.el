@@ -8,8 +8,8 @@
 which a link, =[[Golden Rule]]=, cites. Shorthands, such as =->= below, come from the =:let= switch every block has.
 
 #+begin_math :let (-> \"\\\\Rightarrow\" == \"\\\\equiv\")
-p -> q &== \\neg p \\lor q          :tag-blue: Implication
-p \\land q &== p == q == p \\lor q  :tag-orange: Golden Rule
+p -> q &== \\neg p \\lor q          :Implication:blue:
+p \\land q &== p == q == p \\lor q  :Golden Rule:orange:
 #+end_math
 
 By [[Golden Rule]], conjunction is defined by equivalence and disjunction."
