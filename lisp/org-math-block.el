@@ -58,12 +58,13 @@
     (org--math-match-hint 0 org-math-hint))
   "How a math block's tags, TYPE:ATOM links, &s, and hints look in Org buffers; see `org--fontify-blocks'.")
 
-(defun org--math-render (raw backend numbered matrix &optional name hints)
+(defun org--math-render (raw backend numbered matrix &optional name hints environment)
   "(RAW, BACKEND, NUMBERED, MATRIX, NAME, HINTS) ↦ (DEFINITIONS . DISPLAY) of a math block's RAW contents; DISPLAY is nil
 sans maths.  DISPLAY is aligned at & when its lines have one, else gathered when they end in \\\\, as
 `org--math-top-level-marks' sees them; numbered when NUMBERED, and as one equation when it is `once'; and labelled
 NAME, tagged so when unnumbered.  Its hints are set `between' its expressions when HINTS is so, else beside; see
-`org--math-hints'.  Each table is a MATRIX environment."
+`org--math-hints'.  Each table is a MATRIX environment.  An ENVIRONMENT, such as multline* or alignat*{2}, overrules
+all that its lines imply; sans star, it is numbered."
   ;; Bound throughout, so hints know the backend as links do.
   (let ((org--math-backend backend))
     (pcase-let* ((`(,definitions . ,math)
@@ -78,6 +79,16 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
                  (lines (cond ((assoc "&" marks) "align") ((assoc "\\\\" marks) "gather"))))
       (cons definitions
             (cond ((equal math "") nil)
+                  ;; An environment of our own: its name, before any {arguments}, closes it; sans star, it is numbered.
+                  (environment
+                   (let* ((environment (format "%s" environment))
+                          (env-name (car (split-string environment "{")))
+                          (numbered (not (string-suffix-p "*" env-name)))
+                          (math (cond ((not name) math)
+                                      (numbered (format "%s \\label{%s}" math (org--math-label name)))
+                                      (t (format "%s \\tag{%s} \\label{%s}" math (org--math-tag-text name)
+                                                 (org--math-label name))))))
+                     (format "\\begin{%s}%s\n%s\n\\end{%1$s}" env-name (substring environment (length env-name)) math)))
                   ;; One equation, one number: the lines split, or gathered, within it; its one tag, else NAME, labels it.
                   ((eq numbered 'once)
                    (let ((tags (mapcar #'cadr (s-match-strings-all org--math-tagged-re math))))
@@ -96,7 +107,7 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
                        (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
                          (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math)))))))))
 
-(org-defblock math (&key numbered (matrix "pmatrix") (hints 'between)
+(org-defblock math (&key numbered (matrix "pmatrix") (hints 'between) environment
                          :link nil :latex-head ("amsmath" "xcolor" "cancel") :html-head (mathjax)
                          :edit-indirect-mode latex-mode :manual "#math"
                          :fontify [:language "latex" :keywords org--math-fontify-keywords])
@@ -137,6 +148,8 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
   LAYOUT then FORMAT, LaTeX whose %s is the hint, or folded, or both ---e.g., (beside \"{\\color{teal} %s}\" folded).
   Folded hints start as [⋯] in HTML, so a reader clicks to see each, as a puzzle; LaTeX, sans clicks, shows them.
   To set hints beside throughout a file: #+property: header-args:math :hints beside.
++ ENVIRONMENT overrules the environment the lines imply, for a layout we infer not: e.g., multline* for one long
+  equation, or alignat*{2} for columns of a set width.  Sans star, it is numbered; its #+name: labels it.
 + NUMBERED is t, to number each line; or once, to number the lines as one equation, split at their &s; its one tag,
   else its #+name:, labels it.
 + Inline maths, $red:x$ or \\(red:x\\), reads our links and Org's markup too.
@@ -150,7 +163,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
   block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
   (pcase-let ((`(,layout ,format ,folded) (org--math-hints-switch hints)))
     (let ((org--math-tips nil) (org--math-hint-format format) (org--math-hint-folded folded))
-      (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor layout)))
+      (pcase-let ((`(,definitions . ,shown) (org--math-render raw-contents backend numbered matrix org--handler-anchor layout environment)))
         (cond ((org-export-markdown-p)
                ;; A fenced math block is displayed already, so \[…\] would be one display too many.
                (let ((shown (and shown (string-remove-suffix "\n\\]" (string-remove-prefix "\\[\n" shown)))))
@@ -177,7 +190,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
 
 ;;;; C-c C-c ---the maths, as an image atop its block
 
-(defun org--math-preview (raw numbered matrix &optional hints)
+(defun org--math-preview (raw numbered matrix &optional hints environment)
   "Show the RAW maths of the block at point, NUMBERED and with MATRIX tables, as an image atop the block; if one is
 already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes it too."
   (let* ((block (org-special-block-at-point))
@@ -185,7 +198,7 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
          (end (save-excursion (goto-char (org-element-property :end block)) (skip-chars-backward " \t\n") (point)))
          (shown (--first (overlay-get it 'org-math-preview) (overlays-in beg end))))
     (if shown (delete-overlay shown)
-      (pcase-let* ((`(,definitions . ,math) (let (org--math-tips) (org--math-render raw 'latex numbered matrix nil hints)))
+      (pcase-let* ((`(,definitions . ,math) (let (org--math-tips) (org--math-render raw 'latex numbered matrix nil hints environment)))
                    (png (make-temp-file "org-math-" nil ".png"))
                    (org-latex-packages-alist (append '(("" "xcolor") ("" "cancel")) org-latex-packages-alist))
                    (overlay (make-overlay beg end)))
@@ -199,11 +212,11 @@ already shown, remove it instead.  An edit to the block, or C-c C-x C-l, removes
         (overlay-put overlay 'display (create-image png 'png nil :ascent 'center))))
     t))
 
-(org-def-action math (&key numbered (matrix "pmatrix") (hints 'between))
+(org-def-action math (&key numbered (matrix "pmatrix") (hints 'between) environment)
   "Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'."
   (pcase-let ((`(,layout ,format) (org--math-hints-switch hints)))
     (let ((org--math-hint-format format))
-      (org--math-preview raw-contents numbered matrix layout))))
+      (org--math-preview raw-contents numbered matrix layout environment))))
 
 (defun org--math-preview-region (beg end)
   "Show each math block from BEG to END as an image atop it, as Org's C-c C-x C-l shows its own maths there; a block

@@ -776,6 +776,33 @@ x ={a} + \\frac{ a }{ b }^{ 2 } = \\begin{cases} y ={ no } z & p \\end{cases}
 \\end{equation}
 ")
 
+(define-org-call-test "a math block's :environment names its environment, its arguments too, overruling what its lines imply"
+  :call (org-block/math 'latex "
+a &= b & c &= d \\\\
+e &= f & g &= h" nil :environment "alignat*{2}")
+  :returns "#+begin_export latex
+\\begin{alignat*}{2}
+a &= b & c &= d \\\\
+e &= f & g &= h
+\\end{alignat*}
+#+end_export")
+
+(define-org-export-test "a math block's :environment, sans star, is numbered; its #+name: labels it, which [[NAME]] cites"
+  :to latex
+  :input "
+          #+name: Long
+          #+begin_math :environment multline
+          a + b + c \\\\
+          + d + e
+          #+end_math
+          By [[Long]]."
+  :equals "\\begin{multline}
+a + b + c \\\\
++ d + e \\label{Long}
+\\end{multline}
+By \\eqref{Long}.
+")
+
 (define-org-call-test "a math block :numbered once whose lines are gathered is one equation, gathered"
   :call (org-block/math 'latex "
 a = 1 \\\\
