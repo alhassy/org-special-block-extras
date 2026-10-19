@@ -494,16 +494,21 @@ The block begins after its #+begin_math line; or, in its C-c ' buffer, which has
       (set-match-data (list (+ start (nth 1 span)) (+ start (nth 2 span))))
       (goto-char (+ start (nth 2 span))))))
 
+(defvar-local org--math-edit-buffer nil
+  "Whether this buffer is a math block's C-c ' buffer, all of whose text is the block's contents.")
+
 (defun org--math-block-contents-start ()
-  "↦ where the contents of the math block at point start, else nil."
-  (let ((block (org-special-block-at-point)))
-    (and block (equal (downcase (org-element-property :type block)) "math") (org-element-property :contents-begin block))))
+  "↦ where the contents of the math block at point start, else nil; in its C-c ' buffer, at the buffer's start."
+  (if org--math-edit-buffer (point-min)
+    (let ((block (org-special-block-at-point)))
+      (and block (equal (downcase (org-element-property :type block)) "math")
+           (org-element-property :contents-begin block)))))
 
 (defun org--math-hint-at-point ()
   "↦ (REL BRACE END) of the hint at point, “REL{ HINT }” of `org--math-hint-spans', as buffer positions; else nil.
 Point is at the hint when it is on its relation, or within its braces."
   (-when-let (start (org--math-block-contents-start))
-    (let ((end (org-element-property :contents-end (org-special-block-at-point))))
+    (let ((end (if org--math-edit-buffer (point-max) (org-element-property :contents-end (org-special-block-at-point)))))
       (--when-let (--first (and (<= (+ start (car it)) (point)) (< (point) (+ start (nth 2 it))))
                            (org--math-hint-spans (buffer-substring-no-properties start end)))
         (--map (+ start it) it)))))
@@ -583,6 +588,40 @@ NAME, tagged so when unnumbered.  Its hints are set `between' its expressions wh
                            (environment (concat (or lines "equation") (unless numbered "*"))))
                        (if (equal environment "equation*") (format "\\[\n%s\n\\]" math)
                          (format "\\begin{%s}\n%s\n\\end{%1$s}" environment math)))))))))
+
+;;;; In Emacs ---a hint's TAB, M-q, and eldoc, in Org and C-c ' buffers alike
+
+(defun org--math-hint-eldoc (callback &rest _)
+  "Hand eldoc's CALLBACK what a hint is, how it is written, and how it folds, when point is at one; else nil."
+  (when (and (or (derived-mode-p 'org-mode) org--math-edit-buffer) (org--math-hint-at-point))
+    (funcall callback "A proof hint, REL{ REASON }, the { hugging REL, a space after it; TAB folds or unfolds it."
+             :thing "Proof hint" :face 'org-math-hint)))
+
+(defun org--math-tab ()
+  "Fold, or unfold, the hint at point; elsewhere, do as TAB does sans `org--math-edit-mode'."
+  (interactive)
+  (unless (org--math-fold-hint)
+    (let ((org--math-edit-mode nil)) (call-interactively (key-binding (kbd "TAB"))))))
+
+(defun org--math-fill ()
+  "Fill the hint at point, as `org--math-fill-hint' does in Org buffers."
+  (interactive)
+  (org--math-fill-hint))
+
+(define-minor-mode org--math-edit-mode
+  "In a math block's C-c ' buffer: TAB folds a hint, M-q fills it alone, and eldoc tells of it, as in Org buffers."
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "TAB") #'org--math-tab)
+            (define-key map (kbd "M-q") #'org--math-fill)
+            map)
+  (setq org--math-edit-buffer org--math-edit-mode)
+  (if org--math-edit-mode
+      (progn (add-hook 'eldoc-documentation-functions #'org--math-hint-eldoc nil t) (eldoc-mode 1))
+    (remove-hook 'eldoc-documentation-functions #'org--math-hint-eldoc t)))
+
+(defun org--math-edit-setup (name)
+  "In the C-c ' buffer of a NAME block, a math block's, turn on `org--math-edit-mode'."
+  (when (equal (downcase name) "math") (org--math-edit-mode 1)))
 
 ;;;; The block
 

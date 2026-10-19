@@ -4328,8 +4328,9 @@ p \land q =={ Golden Rule } p == q == p \lor q
   A hint may span lines, as a long reason does, and shows on those very lines ---a blank one a gap
   between paragraphs. Within a hint, =\[ … \]= is a nested calculation, whose own hints are read
   alike, so they may nest in turn; one sans hints is a mere displayed formula.
-  + =TAB= on a hint folds it away to ={…}=, and =TAB= again unfolds it ---the proof's outline at a glance.
-    In HTML, a click on a hint does likewise, as its tooltip says.
+  + =TAB= on a hint folds it away to ={…}=, and =TAB= again unfolds it ---the proof's outline at a glance;
+    so too in the block's =C-c '= buffer. In HTML, a click on a hint does likewise, as its tooltip says.
+    With point on a hint, the echo area says what it is, how to write it, and that =TAB= folds it.
   + =M-q= within a hint fills the paragraph at point alone, as prose, and so sets its lines; =M-q=
     elsewhere in the block, or within a nested calculation, leaves the maths be.
   + A line =# …= is a comment, even within a hint: say, an alternative reason, kept in the source

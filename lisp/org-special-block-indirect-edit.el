@@ -39,6 +39,10 @@
 
 (defvar org--block-fontifications)
 
+(defvar org-special-block-edit-functions nil
+  "Functions called with a block's NAME in its C-c ' buffer, once its mode is set; e.g., the math block's
+`org--math-edit-setup', by which TAB folds its hints there too.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Runtime dispatch
 
@@ -73,6 +77,7 @@ and should return non-nil to claim the event."
      (lambda ()
        (funcall (or mode #'org-mode))
        (org--block-fontify-edit-buffer name)
+       (run-hook-with-args 'org-special-block-edit-functions name)
        (setq-local header-line-format
                    (substitute-command-keys (format "%s block ---\\[org-edit-src-exit] to apply & exit." name))))
      t)

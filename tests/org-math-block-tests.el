@@ -876,6 +876,53 @@ x ={ a long reason,
     (org-cycle)
     (should-not (funcall folds))))
 
+(org-deftest "TAB folds a hint in a math block's C-c ' buffer too; elsewhere there, TAB does as latex-mode's"
+  :text "
+#+begin_math
+x ={ a reason } y
+#+end_math"
+  :at "a reason"
+  (org-edit-special)
+  (unwind-protect
+      (let ((folds (lambda () (--filter (overlay-get it 'org-math-hint-fold) (overlays-in (point-min) (point-max))))))
+        (should org--math-edit-mode)
+        (goto-char (point-min))
+        (search-forward "a reason")
+        (call-interactively (key-binding (kbd "TAB")))
+        (should (equal (mapcar (lambda (o) (overlay-get o 'display)) (funcall folds)) '("…")))
+        (call-interactively (key-binding (kbd "TAB")))
+        (should-not (funcall folds))
+        ;; Off a hint, TAB is latex-mode's own.
+        (goto-char (point-min))
+        (should-not (org--math-fold-hint)))
+    (org-edit-src-abort)))
+
+(org-deftest "on a math block's hint, eldoc says what it is, how to write it, and that TAB folds it; off it, nothing"
+  :text "
+#+begin_math
+x ={ a reason } y
+#+end_math"
+  :at "a reason"
+  (let (said)
+    (org--math-hint-eldoc (lambda (doc &rest plist) (setq said (cons doc plist))))
+    (should (string-match-p "TAB" (car said)))
+    (should (string-match-p (regexp-quote "REL{ REASON }") (car said)))
+    (setq said nil)
+    (goto-char (point-min))
+    (search-forward "x =")
+    (backward-char 3)
+    (org--math-hint-eldoc (lambda (doc &rest _) (setq said doc)))
+    (should-not said)
+    ;; So too in its C-c ' buffer.
+    (search-forward "a reason")
+    (org-edit-special)
+    (unwind-protect
+        (progn (goto-char (point-min))
+               (search-forward "a reason")
+               (org--math-hint-eldoc (lambda (doc &rest _) (setq said doc)))
+               (should (string-match-p "TAB" said)))
+      (org-edit-src-abort))))
+
 (org-deftest "M-q within a math block, but not a hint, leaves the maths be, as it is no prose"
   :text "
 #+begin_math
