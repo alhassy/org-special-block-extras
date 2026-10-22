@@ -106,9 +106,16 @@
   (let (kind)
     (cl-letf (((symbol-function 'org-graph--render)
                (lambda (_dot k file) (setq kind k) (with-temp-file file (insert "<svg width=\"1\"></svg>")) file)))
-      (should (s-contains-p "<svg width=\"1\"></svg>" (org-block/graph 'html "
+      (should (s-contains-p "<svg style=\"max-width: 100%; height: auto\" width=\"1\"></svg>" (org-block/graph 'html "
 + A" nil)))
       (should (equal "svg" kind)))))
+
+(deftest "A graph's HTML fits the page's width, a click toggling its full size, which scrolls within its own box"
+  (should (equal (org-graph--fit-width "<img src=\"x.png\" />")
+                 (concat "<div style=\"overflow-x: auto\"><div style=\"cursor: zoom-in\" onclick=\"if (event.target.closest('a')) "
+                         "return; let s = this.firstElementChild.style; s.maxWidth = s.maxWidth ? '' : '100%'; "
+                         "this.style.cursor = s.maxWidth ? 'zoom-in' : 'zoom-out';\">"
+                         "<img style=\"max-width: 100%; height: auto\" src=\"x.png\" /></div></div>"))))
 
 (deftest "Collecting tooltips, a graph's dot holds their keys, and its tooltips stay Org, markup and all"
   (let* ((org--graph-tips (make-hash-table :test #'equal))

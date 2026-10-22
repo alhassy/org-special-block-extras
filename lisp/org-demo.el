@@ -43,7 +43,8 @@
 ;;
 ;; Its value says what else to show: `:demo t' nothing; `:demo org-block/box' the definition of `org-block/box',
 ;; folded away; `:demo (f v)' those of the function f and variable v.  A `live' demo, `:demo live', keeps no
-;; snapshot: its rendering varies by machine, say, so it is rendered afresh each export and checks nothing.
+;; snapshot: its rendering varies by machine, say, so it is rendered afresh each export and checks nothing; so C-c C-c
+;; in it is the block's own, such as a graph's.
 ;; With `:ignore t', the source is just the contents, sans the #+begin_ and #+end_ lines; hence
 ;;
 ;;     #+begin_org :ignore t :demo t
@@ -234,15 +235,14 @@ Every snapshotted backend is checked; a demo sans snapshot, or a `live' one, che
 
 (defun org-demo-refresh ()
   "Snapshot what the :demo block around point renders to, along each of `org-demo-backends', just after it.
-A `live' demo keeps none.  ↦ nil when point is in no :demo block, so that C-c C-c is left to others; with a prefix
-argument, C-c C-c is too, say for the block's own action."
+↦ nil when point is in no :demo block, or a `live' one, which keeps no snapshot, so that C-c C-c is left to others
+---say, a live graph's own rendering; with a prefix argument, C-c C-c is left to them too."
   (interactive)
   (-when-let (site (and (not current-prefix-arg) (derived-mode-p 'org-mode) (org-demo--site-at-point)))
-    (if (org-demo--live-p site)
-        (message "A live demo keeps no snapshot; it renders afresh each export")
+    (unless (org-demo--live-p site)
       (org-demo--refresh-site site)
-      (message "Snapshot taken, along %s" (mapconcat #'symbol-name org-demo-backends " and ")))
-    t))
+      (message "Snapshot taken, along %s" (mapconcat #'symbol-name org-demo-backends " and "))
+      t)))
 
 (defun org-demo-refresh-buffer ()
   "Snapshot every :demo block of the buffer, as C-c C-c on each would; inner ones first, as they are their outer's source."

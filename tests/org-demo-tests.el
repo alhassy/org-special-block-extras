@@ -32,13 +32,13 @@ Hi
   (should (= 1 (s-count-matches "#\\+RESULTS" (buffer-string))))
   (should-not (s-contains? "Ho" (buffer-string))))
 
-(org-deftest "C-c C-c on a live demo takes no snapshot, as it renders afresh each export" [demo]
+(org-deftest "C-c C-c on a live demo takes no snapshot, as it renders afresh each export; C-c C-c is the block's own" [demo]
   :text "
 #+begin_box :demo live
 Hi
 #+end_box"
   :at "Hi"
-  (should (org-ctrl-c-ctrl-c))
+  (should-not (org-demo-refresh))
   (should-not (s-contains? "#+RESULTS" (buffer-string))))
 
 ;;; Upon export: a demonstration, and a test in the small

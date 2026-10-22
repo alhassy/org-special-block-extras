@@ -5850,7 +5850,7 @@ Hi *there*
   ~org-block/box~, below the rendering; =:demo (f v)= those of the function =f= and the
   variable =v=, wherever they are defined ---a library, or this very document. A =live= demo,
   =:demo live=, keeps no snapshot: its rendering varies by machine, say, so it renders afresh
-  each export and checks nothing.
+  each export and checks nothing; so =C-c C-c= in it is the block's own, such as a graph's.
 
   Its other switches apply as ever: =:let= to its source, =:folded= to the whole showing.
   With =:ignore t=, the block is bypassed, so the source is just its contents ---the way to

@@ -399,6 +399,14 @@ linked node's label--- vanish, lest the browser's native tooltips compete.
             (maphash (lambda (key tip) (push (concat "\n" (org--tooltip-template key tip)) templates)) tips)
             (apply #'concat (nreverse templates)))))
 
+(defun org-graph--fit-width (image)
+  "IMAGE, a graph's <svg> or <img>, ↦ it shrunk to the page's width, a click toggling its full size, which scrolls
+within its own box rather than the page.  A click on a node's link, or tooltip, is an <a>'s, so it is left alone."
+  (format (concat "<div style=\"overflow-x: auto\"><div style=\"cursor: zoom-in\" onclick=\"if (event.target.closest('a')) "
+                  "return; let s = this.firstElementChild.style; s.maxWidth = s.maxWidth ? '' : '100%%'; "
+                  "this.style.cursor = s.maxWidth ? 'zoom-in' : 'zoom-out';\">%s</div></div>")
+          (replace-regexp-in-string "\\`<\\(svg\\|img\\)\\_>" "\\& style=\"max-width: 100%; height: auto\"" image t)))
+
 (org-defblock graph (&optional title &key file svg &allow-other-keys :edit-indirect-mode org-graph-edit-mode
                     :manual "#Graphs" &context backend raw-contents args anchor)
   "Render an Org list + tables as a Graphviz dot graph.
@@ -413,7 +421,7 @@ a figure that [[foo]] reaches and #+caption: captions; otherwise the name is gra
 dot source, so re-exporting an unchanged graph rewrites one file rather than adding another.
 
 For HTML export: embeds an inline <svg> element, whose nodes' and arcs' tooltips hover as prose's do, by tooltips.js;
-under :svg nil, an inline base64 PNG, sans tooltips.
+under :svg nil, an inline base64 PNG, sans tooltips.  Either fits the page's width, a click toggling its full size.
 For Markdown, it writes the image file and links it, as for a named graph.
 For other backends it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
 
@@ -499,8 +507,9 @@ Example:
          (unwind-protect
              ;; An inline <svg> keeps the tooltips; else, an inline base64 PNG.
              (or (when (funcall render (if inline-svg "svg" "png") tmp)
-                   (if inline-svg (-some--> (org-graph--svg-contents tmp) (org-graph--svg-tooltips it org--graph-tips))
-                     (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />" (org-graph--png-to-base64 tmp))))
+                   (-some-> (if inline-svg (-some--> (org-graph--svg-contents tmp) (org-graph--svg-tooltips it org--graph-tips))
+                              (format "<img src=\"data:image/png;base64,%s\" alt=\"graph\" />" (org-graph--png-to-base64 tmp)))
+                     org-graph--fit-width))
                  ;; dot unavailable, or its output sans <svg>: emit the raw dot source in a <pre>, its tooltips as text.
                  (format "<pre>%s</pre>" (s-replace "<" "&lt;" (if (and inline-svg (not smart))
                                                                     (let (org--graph-tips)
