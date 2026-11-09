@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.18
+;; Version: 26.11.09
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -303,17 +303,44 @@ set this to nil for pages sans them, whose tooltips then never open."
           </style>"
   "Styling for <kbd> elements, added to a page that uses <kbd>, by `org--load-html-head'.")
 
-(defconst org--tooltip-html-head
-  (let ((here (file-name-directory (or load-file-name buffer-file-name))))
-    ;; A package archive must ship these files too; e.g., MELPA's recipe needs :files (:defaults "tooltips.*").
-    (cl-flet ((slurp (file)
-                (if (file-readable-p (expand-file-name file here))
-                    (with-temp-buffer (insert-file-contents (expand-file-name file here)) (buffer-string))
-                  (display-warning 'org-special-block-extras (format "%s is missing, so tooltips will not open" file))
-                  "")))
-      (format "\n<style>\n%s</style>\n<script>\n%s</script>\n" (slurp "tooltips.css") (slurp "tooltips.js"))))
-  "tooltips.css and tooltips.js, inlined, for “.tooltip” elements; added to a page that has tooltips, by `org--load-html-head'.
-Inlined, so an exported page makes no request for them; see https://github.com/alhassy/org-special-block-extras/issues/53.")
+(defconst org--tooltip-files-directory (file-name-directory (or load-file-name buffer-file-name))
+  "The directory holding this library, and so, when the package archive ships them, tooltips.css and tooltips.js.")
+
+(defcustom org-special-block-tooltip-cache-directory
+  (locate-user-emacs-file "org-special-block-extras/")
+  "Where tooltips.css and tooltips.js are kept when fetched, once, since the package archive lacks them; issue #62."
+  :type 'directory
+  :group 'org-special-block-extras)
+
+(defun org--tooltip-file (file)
+  "Returns FILE's contents: ours, else a copy fetched once, by consent, into `org-special-block-tooltip-cache-directory'.
+Declining warns that tooltips will not open, and yields \"\"; we ask anew next session."
+  ;; TODO: Axe this fetch once MELPA's recipe ships the files: :files (:defaults "lisp/tooltips.*"); issue #62.
+  (let ((ours (expand-file-name file org--tooltip-files-directory))
+        (cached (expand-file-name file org-special-block-tooltip-cache-directory))
+        (url (format "https://raw.githubusercontent.com/alhassy/org-special-block-extras/master/lisp/%s" file)))
+    (cl-flet ((slurp (path) (with-temp-buffer (insert-file-contents path) (buffer-string))))
+      (cond ((file-readable-p ours) (slurp ours))
+            ((file-readable-p cached) (slurp cached))
+            ((and (not noninteractive)
+                  (y-or-n-p (format "Tooltips need %s, which your package lacks; fetch it, once, from %s? " file url)))
+             (make-directory (file-name-directory cached) t)
+             (url-copy-file url cached)
+             (slurp cached))
+            (t (display-warning 'org-special-block-extras (format "%s is missing, so tooltips will not open" file))
+               "")))))
+
+(defvar org--tooltip-html-head-cache nil
+  "The value of `org--tooltip-html-head' this session, so we read, or ask to fetch, the files once.")
+
+(defun org--tooltip-html-head ()
+  "Returns tooltips.css and tooltips.js, inlined, for “.tooltip” elements; added to a page with tooltips by `org--load-html-head'.
+Inlined, so an exported page makes no request for them; see https://github.com/alhassy/org-special-block-extras/issues/53.
+Read when first needed, at export, so a missing file is asked for then ---not whenever the package loads."
+  (or org--tooltip-html-head-cache
+      (setq org--tooltip-html-head-cache
+            (format "\n<style>\n%s</style>\n<script>\n%s</script>\n"
+                    (org--tooltip-file "tooltips.css") (org--tooltip-file "tooltips.js")))))
 
 ;;;;; Glossary libraries
 

@@ -171,9 +171,18 @@ Save with the menu, often.")))
     (should (equal (get-text-property 1 'display) '(space :relative-width 1)))))
 
 (deftest "the tooltips' CSS and JS are inlined in the HTML head, so a page fetches nothing for them; issue #53" [tooltip]
-  (should (s-contains-p ".tooltip-box" org--tooltip-html-head))
-  (should (s-contains-p "addEventListener('click'" org--tooltip-html-head))
-  (should-not (string-match-p "<script[^>]* src=\\|<link " org--tooltip-html-head)))
+  (should (s-contains-p ".tooltip-box" (org--tooltip-html-head)))
+  (should (s-contains-p "addEventListener('click'" (org--tooltip-html-head)))
+  (should-not (string-match-p "<script[^>]* src=\\|<link " (org--tooltip-html-head))))
+
+(deftest "a package lacking the tooltips' files reads them from where we fetched them once, else warns; issue #62" [tooltip]
+  (let* ((empty (make-temp-file "osbe-package" t))
+         (org-special-block-tooltip-cache-directory (file-name-as-directory (make-temp-file "osbe-cache" t)))
+         (org--tooltip-files-directory empty))
+    (with-temp-file (expand-file-name "tooltips.css" org-special-block-tooltip-cache-directory) (insert ".tooltip-box {}"))
+    (should (equal (org--tooltip-file "tooltips.css") ".tooltip-box {}"))
+    ;; A batch Emacs asks nothing; it warns, and the page goes sans script.
+    (should (equal (org--tooltip-file "tooltips.js") ""))))
 
 (deftest "a page's head holds the tooltips' CSS and JS once, however many tooltips, and exports leave org-html-head-extra be; issue #45" [tooltip]
   (let ((head-extra org-html-head-extra)

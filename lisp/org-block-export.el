@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.10.18
+;; Version: 26.11.09
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -191,7 +191,7 @@ COLOUR may be a symbol, as block arguments such as “:color red!5!white” are 
 Local to the buffer an export works in, as `org--latex-head-used' is.")
 
 (defun org-html-head-require (item)
-  "Note that this HTML export's page needs ITEM in its <head>: HTML, a symbol whose value is HTML, or `mathjax'.
+  "Note that this HTML export's page needs ITEM in its <head>: HTML, a function or symbol yielding HTML, or `mathjax'.
 E.g., our tooltips ask for (org-html-head-require \='org--tooltip-html-head); a block asks by its `:html-head'."
   (cl-pushnew item org--html-head-used :test #'equal))
 
@@ -211,6 +211,7 @@ Our own CSS and JS only if `org-special-block-add-html-extra'; MathJax always, e
            (heads (-non-nil
                    (--map (cond ((eq it 'mathjax) (unless (string-match-p "window.MathJax" output) (org--html-mathjax info)))
                                 ((not org-special-block-add-html-extra) nil)
+                                ((functionp it) (funcall it))
                                 ((symbolp it) (symbol-value it))
                                 (t it))
                           (reverse org--html-head-used))))
