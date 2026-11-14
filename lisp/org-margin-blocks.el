@@ -76,7 +76,7 @@ margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For 
 note resized, to 1.3 the margin's width ---requiring \\usepackage{adjustbox}.
 
 `tooltip' is an alias, for when we think in HTML rather than LaTeX."
-              (let ((marker (org-string-nw-p marker)))
+              (let ((marker (org-inline (org-string-nw-p marker))))
                 (pcase backend
                   ((guard (org-export-beamer-p)) (format "%s\\footnote{%s}" (or marker "") (s-trim contents)))
                   (`latex

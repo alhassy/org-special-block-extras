@@ -77,7 +77,7 @@ In Markdown, a remark block is GitHub's “> [!NOTE]” alert, titled EDITOR; as
                                              "\\underline{Replace:}" "&nbsp;<u>Replace:</u>"))
                         (with-keyword    (if tex? "\\underline{With:}" "<u>With:</u>"
                                              ))
-                        (editor (format "[%s:%s" editor
+                        (editor (format "[%s:%s" (org-inline editor)
                                         (if replacement-clause?
                                             replace-keyword
                                           "")))

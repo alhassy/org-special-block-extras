@@ -2912,8 +2912,9 @@ and (indented) child premises of its own.
 
 If there are multiple trees, they are shown one after the other.
 
-The text in this block should be considered LaTeX;
-as such, Org markup is not recognised.
+The text in this block is maths, as a math block's is; so our links,
+such as red:x and [[tooltip:x][a tip]], and Org's *markup* are LaTeX's;
+see `org--math-markup'.
 
 A proof tree, derivation, is then just a deeply nested
 itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
@@ -6192,8 +6193,8 @@ margins, so there our margin notes, tooltips, and Org's footnotes are beamer's o
   "Call out CONTENTS under TITLE, tinted COLOR."
   (pcase backend
     ('html (format "<div style=\"border-left: 4px solid %s; padding-left: 1em\"><b>%s</b>%s</div>"
-                   color title contents))
-    (_     (format "\\textbf{\\color{%s}%s} %s" color title contents))))
+                   color (org-inline title) contents))
+    (_     (format "\\textbf{\\color{%s}%s} %s" color (org-inline title) contents))))
   #+end_src
 
   Now the following binds ~title~ to ="Heads up"= and ~color~ to =red=; omit either, and
@@ -6224,6 +6225,20 @@ Mind the gap.
 
   Every block is also a link, with the label as main argument and the description as
   contents: =[[note:Heads up][Mind the gap.]]=.
+
+  Our markup works in every block, for free: ~contents~ is Org, exported as prose is, so =red:fire=,
+  =[[tooltip:x][a tip]]=, =$\alpha$=, =[[https://orgmode.org][Org]]=, =[[file:notes.org][notes]]=,
+  =[[*Heading]]=, =[[target]]=, and =<<target>>= all render within it. An argument is a different matter:
+  only the block knows whether its ~title~ is prose, or whether its ~color~ is a colour's name; so we
+  hand a prose argument to ~(org-inline title)~, as the ~note~ above does, and its markup renders too
+  ---links to the document's sections and targets included, and its own =<<target>>= joins the document,
+  so a =[[target]]= elsewhere reaches the block. The package's own titles all do so.
+
+  Wherever the output is no prose, the same links mean the same things: in a math block, a proof tree,
+  and inline =$…$=, =red:x= is ={\color{red}x}= and =[[tooltip:x][a tip]]= hovers; in a graph, =red:x=
+  colours its node's label, a =tooltip:= is the node's tooltip, a web link its URL, and =$\lambda_{x}$=
+  shows as λ subscripted x. Each link says what it means once, in ~org-markup-links~; a link of our own
+  joins that list to reach maths and graphs alike.
 
   A block names what its document's head needs, added once, by ~:latex-head~ and ~:html-head~; say,
   ~(org-defblock thm (&optional title :latex-head ("amsthm" "\\newtheorem{theorem}{Theorem}")) …)~. A

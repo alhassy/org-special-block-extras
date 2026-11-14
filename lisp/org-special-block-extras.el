@@ -118,7 +118,8 @@
 ;; org-parallel-block.el, org-proof-block.el, org-margin-blocks.el, org-quote-block.el, org-solution-block.el,
 ;; org-spoiler-block.el, org-remark-block.el, org-substitution-blocks.el, and
 ;; org-math-block.el, whose parts are org-math-markup.el, org-math-structure.el, org-math-hints.el, and org-math-refs.el
-;; ---one file per family of blocks; this file requires them all and defines the mode.  The graph block, org-graph-block.el,
+;; ---one file per family of blocks; org-markup-links.el says what our links mean where the output is no prose, in maths
+;; and graphs alike; this file requires them all and defines the mode.  The graph block, org-graph-block.el,
 ;; needs Graphviz and so is opt-in: (require 'org-graph-block); see graphs-README.org.
 ;;
 ;;

@@ -190,6 +190,54 @@ So, say, a named block's #+name: and #+caption: label what it begins with."
   "(BACKEND, X) ↦ Org text X, escaping the export block for BACKEND that `org--export-wrap' puts it in."
   (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))
 
+(defvar org--inline-targets nil
+  "The <<targets>> of the arguments a block's handler has exported inline, by `org-inline', newest first; the block
+emits them into the document, before itself, so a [[target]] elsewhere reaches them.  See `org--internal-links'.")
+
+(defun org--internal-links (text backend)
+  "Returns TEXT whose internal links ---[[*Heading][words]], [[#custom-id]], [[id:ID]], [[target]]--- are BACKEND's
+export snippets, which `org--resolve-section-links' points at their destination once the outer export lands; for
+HTML, e.g., @@html:<a href=\"osbe-link:*Heading\">@@words@@html:</a>@@.  Its <<targets>> go to
+`org--inline-targets'.  A nested export knows none of the document, so would drop such links and orphan such targets."
+  (let ((html? (org-export-derived-backend-p backend 'html)) (latex? (org-export-derived-backend-p backend 'latex)))
+    (if (not (or html? latex?)) text
+      (--> text
+           (replace-regexp-in-string
+            org-link-bracket-re
+            (lambda (match)
+              (save-match-data
+                (string-match org-link-bracket-re match)
+                (let ((link (match-string 1 match)) (desc (match-string 2 match)))
+                  ;; A link sans scheme, such as [[target]], is internal; else, only these.
+                  (if (and (string-match-p "\\`[[:alpha:]][[:alnum:]+.-]*:" link) (not (string-prefix-p "id:" link)))
+                      match
+                    (format (if html? "@@html:<a href=\"osbe-link:%s\">@@%s@@html:</a>@@"
+                              "@@latex:\\hyperref[osbe-link:%s]{@@%s@@latex:}@@")
+                            link (or desc (replace-regexp-in-string "\\`\\(?:[*#]\\|id:\\)" "" link)))))))
+            it t t)
+           (replace-regexp-in-string
+            "<<\\([^<>\n]+\\)>>[ \t]*"
+            (lambda (match) (push (substring match 2 (string-match-p ">>" match)) org--inline-targets) "")
+            it t t)))))
+
+(defun org--export-nested (text backend)
+  "Returns the body-only export of Org TEXT along BACKEND, within an export already under way.
+The nested export keeps the outer one's glossary, which `org--docs-prepare' would otherwise reset; and its internal
+links, by `org--internal-links'."
+  (let ((org-export-before-parsing-functions (remq 'org--docs-prepare org-export-before-parsing-functions)))
+    (org-export-string-as (org--internal-links text backend) backend t)))
+
+(defun org--export-inline (text backend)
+  "Returns Org TEXT exported along BACKEND as a phrase, sans the paragraph Org wraps it in; e.g., for HTML,
+“red:x & *y*” becomes “<span style=\"color:red;\">x</span> &amp; <b>y</b>”, and for LaTeX, “50% off” becomes
+“50\\% off”.  A block's title, or any argument that it shows as prose, is so exported; text of mere words is left be,
+as is a non-string, such as a number of columns."
+  (if (or (not (stringp text)) (string-match-p "\\`[[:alnum:][:space:],.!?'()-]*\\'" text)) text
+    (let ((exported (string-trim (org--export-nested text backend))))
+      (if (string-match "\\`<p>[ \t\n]*\\(\\(?:.\\|\n\\)*?\\)[ \t\n]*</p>\\'" exported)
+          (match-string 1 exported)
+        exported))))
+
 (defun org--block-refuse-unknown-keys (name handler-args known)
   "(NAME, HANDLER-ARGS, KNOWN) ↦ nil when each key of the plist HANDLER-ARGS is KNOWN; else an error naming the rest."
   (-when-let (unknown (cl-loop for key in handler-args by #'cddr
@@ -353,10 +401,13 @@ already uses ITEM's name; an item named both ways is an error:
 See “Keyword Parameters” in Practical Common Lisp, a gentle tour of
 such renaming: https://gigamonkeys.com/book/functions.html
 
-Finally, this macro exposes two functions:
+Finally, this macro exposes three functions:
 + ORG-EXPORT: Wrap the argument in an export block for the current backend.
 + ORG-PARSE: This should ONLY be called within an ORG-EXPORT call,
              to escape text to Org, and out of the export block.
++ ORG-INLINE: Export an argument shown as prose, such as a title, inline;
+              so a title's red:x, $\\alpha$, and *markup* render as the
+              contents' do.  See `org--export-inline'.
 
 ⇄ We use “@@html:⋯:@@” when altering CONTENTS, but otherwise use raw HTML *around* CONTENTS.
 ⇄ For example: (format \"<div>%s</div>\" (s-replace \"#+columnbreak:\" \"@@html:<hr>@@\" contents))
@@ -536,16 +587,24 @@ Features:
            (cl-flet ((org-export (x) "Wrap X in an export block for the current backend; see `org--export-wrap'."
                        (if org--link? x (org--export-wrap org--backend x)))
                      (org-parse (x) "This should ONLY be called within an ORG-EXPORT call."
-                       (if org--link? x (org--export-escape org--backend x))))
+                       (if org--link? x (org--export-escape org--backend x)))
+                     (org-inline (x) "Returns Org X exported inline along the current backend; see `org--export-inline'."
+                       (org--export-inline x (or org-export-current-backend org--backend))))
              ;; The body must yield a string: otherwise, e.g. the nil of a stray `when',
              ;; would silently export as the text “nil”.
-             (let ((result (cl-destructuring-bind (&key ,@context &allow-other-keys)
+             (let* ((org--inline-targets nil)
+                    (result (cl-destructuring-bind (&key ,@context &allow-other-keys)
                                (list :backend org--backend :raw-contents org--raw-contents
                                      :contents (org-parse org--raw-contents) :args org--handler-args
                                      :link? org--link? :anchor org--handler-anchor)
                              ,@body)))
                ,(macroexpand-all `(lf-assert ',name  t
                                              result (stringp it)))
+               ;; The targets of its arguments, such as a title's <<target>>, join the document just before it.
+               (when (and org--inline-targets (not org--link?))
+                 (setq result (concat (org-parse (mapconcat (lambda (target) (format "<<%s>>" target))
+                                                            (reverse org--inline-targets) ""))
+                                      result)))
                (org--block-note-heads ',defun-name org--backend result)
                (org-export result))))
        ;; The user's docstring, verbatim, for anything that wants it; e.g., custom special blocks

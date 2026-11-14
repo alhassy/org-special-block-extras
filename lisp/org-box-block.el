@@ -92,14 +92,14 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
                                          "colbacktitle=osbe-box-title,coltitle=red!25!black, fonttitle=\\bfseries,"
                                          "subtitle style={boxrule=0.4pt, colback=yellow!50!red!25!white}]"
                                          "%s\\end{tcolorbox}")
-                                 title contents)))
+                                 (org-inline title) contents)))
                 (_ (format "<div style=\"%s\"> <h3>%s</h3> %s </div>"
                            (s-join ";" (list "padding: 1em"
                                              (format "background-color: %s" (org-subtle-colors (format "%s" (or background-color "green"))))
                                              "border-radius: 15px"
                                              "font-size: 0.9em"
                                              (org--box-shadow shadow)))
-                           title contents))))
+                           (org-inline title) contents))))
 
 ;;;;;;; org-subtle-colors
 (defun org-subtle-colors (c)

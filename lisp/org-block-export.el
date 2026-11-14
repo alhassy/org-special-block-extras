@@ -223,8 +223,8 @@ Our own CSS and JS only if `org-special-block-add-html-extra'; MathJax always, e
 
 (defun org--resolve-section-links (output backend info)
   "BACKEND's OUTPUT with each section link our blocks wrote ↦ that section's anchor, as INFO places it; e.g., in HTML,
-a graph's href=\"*Heading\" and a math block's \\href{id:ID} ↦ #ANCHOR; in LaTeX, a math block's \\hyperref[*Heading],
-or [#CUSTOM-ID], ↦ its \\label's.  An unresolvable link stays as it is.  Our blocks render before Org parses the
+a graph's href=\"*Heading\", a math block's \\href{id:ID}, and a title's href=\"osbe-link:target\" ↦ #ANCHOR; in
+LaTeX, a math block's \\hyperref[*Heading], or [#CUSTOM-ID], or a title's [osbe-link:target], ↦ its \\label's.  An unresolvable link stays as it is.  Our blocks render before Org parses the
 buffer, so only now is a section's anchor known.  A \\href{#CUSTOM-ID} needs none: HTML's anchor is the custom id."
   (cl-flet ((resolve (regexp anchor)
               (replace-regexp-in-string
@@ -234,16 +234,17 @@ buffer, so only now is a section's anchor known.  A \\href{#CUSTOM-ID} needs non
                  ;; clobber it.
                  (save-match-data
                    (string-match regexp match)
-                   (let ((open (match-string 1 match)) (link (match-string 2 match)) (close (match-string 3 match)))
+                   (let ((open (match-string 1 match)) (link (string-remove-prefix "osbe-link:" (match-string 2 match)))
+                         (close (match-string 3 match)))
                      (condition-case nil
                          (concat open (funcall anchor (org-export-resolve-link (xml-substitute-special link) info)) close)
                        (error match)))))
                output t t)))
     (cond ((org-export-derived-backend-p backend 'html)
-           (resolve "\\(href=\"\\|\\\\href{\\)\\(\\*[^\"}]*\\|id:[^\"}]*\\)\\([\"}]\\)"
+           (resolve "\\(href=\"\\|\\\\href{\\)\\(\\*[^\"}]*\\|id:[^\"}]*\\|osbe-link:[^\"}]*\\)\\([\"}]\\)"
                     (lambda (datum) (concat "#" (org-html--reference datum info)))))
           ((org-export-derived-backend-p backend 'latex)
-           (resolve "\\(\\\\hyperref\\[\\)\\([*#][^]]*\\|id:[^]]*\\)\\(]\\)"
+           (resolve "\\(\\\\hyperref\\[\\)\\([*#][^]]*\\|id:[^]]*\\|osbe-link:[^]]*\\)\\(]\\)"
                     (lambda (datum) (org-latex--label datum info t))))
           (t output))))
 

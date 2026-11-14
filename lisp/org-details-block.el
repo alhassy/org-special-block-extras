@@ -45,14 +45,14 @@ In HTML, we show folded, details, regions with a nice greenish colour."
                                                 "%s\n"
                                                 "\\end{tcolorbox}\n"
                                                 "\\end{quote}")
-                                        title contents)))
+                                        (org-inline title) contents)))
                 (_ (format (concat "<details class=\"code-details\" style=\"padding: 1em; background-color: %s; "
                                    "border-radius: 15px; color: hsl(157 75%% 20%%); font-size: 0.9em; "
                                    "box-shadow: 0.05em 0.1em 5px 0.01em #00000057;\">\n"
                                    "<summary><strong><font face=\"Courier\" size=\"3\" color=\"%s\">%s</font></strong></summary>\n"
                                    "%s\n"
                                    "</details>")
-                           background-color title-color title contents))))
+                           background-color title-color (org-inline title) contents))))
 
 ;;;;;; Toggle all details blocks
 

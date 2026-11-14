@@ -107,12 +107,10 @@ TEXT is Org, exported as such; or PLAIN? text, such as a docstring, shown as is.
     (format "<template id=\"%s\">%s</template>" id html)))
 
 (defun org--tooltip-html (text &optional plain?)
-  "(TEXT, PLAIN?) ↦ HTML of a tooltip's TEXT: its body-only export as Org; or, when PLAIN?, TEXT escaped in a <pre>.
-The nested export keeps the outer one's glossary, which `org--docs-prepare' would otherwise reset."
+  "(TEXT, PLAIN?) ↦ HTML of a tooltip's TEXT: its body-only export as Org; or, when PLAIN?, TEXT escaped in a <pre>."
   (if plain?
       (format "<pre>%s</pre>" (org-html-encode-plain-text (string-trim text)))
-    (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
-      (string-trim (org-export-string-as text 'html t)))))
+    (string-trim (org--export-nested text 'html))))
 
 (org-deflink kbd (keys &optional description backend)
   "Show keysequence KEYS in a nice grey button-like font, along with a tooltip of its documentation, if any.
@@ -619,8 +617,7 @@ frames break on verbatim text, TEXT with those characters escaped."
    (plain?
       (format "\n\\begin{verbatim}\n%s\n\\end{verbatim}\n" (string-trim text)))
    (t
-    (let ((org-export-before-parsing-functions (remq #'org--docs-prepare org-export-before-parsing-functions)))
-      (string-trim (org-export-string-as text 'latex t))))))
+    (string-trim (org--export-nested text 'latex)))))
 
 (defun org--docs-plain-p (label)
   "LABEL ↦ non-nil when its glossary entry is plain text ---an Elisp docstring, or a WordNet definition--- not Org.

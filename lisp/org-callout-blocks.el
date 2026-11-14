@@ -66,7 +66,7 @@ HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, a
              ,(format "%s\nA callout, titled TITLE, with a %s rule down its left; see `org-callouts'." purpose colour)
              (if (org-export-markdown-p)
                  (org-parse (org--markdown-alert ,(symbol-name name) (unless (equal title ,default-title) title) raw-contents))
-               (org--callout backend ,colour ,icon title contents)))
+               (org--callout backend ,colour ,icon (org-inline title) contents)))
           t)))
 
 (provide 'org-callout-blocks)
