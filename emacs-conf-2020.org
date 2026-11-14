@@ -186,7 +186,7 @@ With a bit of Lisp ---and a lot of time--- we obtain
 #+begin_details (•̀ᴗ•́)و
 | Idea                   | Documentation                   | Link only?          |
 |------------------------+---------------------------------+---------------------|
-| Colours                | [[doc:org-block/latex-definitions][latex-definitions]], [[doc:org-block/color][color]]        |                     |
+| Colours                | [[doc:org-block/math][math]], [[doc:org-block/color][color]]        |                     |
 | Parallel               | [[doc:org-block/parallel][parallel]]                        |                     |
 | Editorial Remarks      | [[doc:org-block/remark][remark]]                          |                     |
 | Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]]                  |                     |
@@ -194,7 +194,7 @@ With a bit of Lisp ---and a lot of time--- we obtain
 | OctoIcons & Permalinks | octoicon:report <<Overview>>            | ~octoicon~, ~<<X>>~     |
 | Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~                 |
 
-Other fun stuff: [[doc:org-block/solution][solution]], [[doc:org-block/org-demo][org-demo]], [[doc:org-block/stutter][stutter]], [[doc:org-block/rename][rename]], [[doc:org-block/spoiler][spoiler]] (─‿‿─)
+Other fun stuff: [[doc:org-block/solution][solution]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]], [[doc:org-block/stutter][stutter]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block][rename]], [[doc:org-block/spoiler][spoiler]] (─‿‿─)
 #+end_details
 #+begin_box Incidentally
 😂 The setup joyously works for org-reveal 😹
@@ -279,7 +279,7 @@ Sacha wrote an Org file and wanted some *feedback*
 
   #+html: <br>
 
-- [[doc:org-block/rename][translate]] in the export
+- [[https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block][translate]] in the export
 
   #+ATTR_REVEAL: :frag (appear)
   … everyone speaks different languages!
@@ -689,7 +689,7 @@ Using a few lines of Lisp …
 
 - enclose text in a pretty [[doc:org-block/box][box]]
 
-- Educational material blocks: [[doc:org-block/spoiler][spolier]], [[doc:org-block/solution][solution]], and [[doc:org-block/org-demo][org-demo]]
+- Educational material blocks: [[doc:org-block/spoiler][spolier]], [[doc:org-block/solution][solution]], and [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]]
 
 #+ATTR_REVEAL: :frag (appear)
 Finally,

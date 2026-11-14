@@ -8115,7 +8115,7 @@ may be useful to colour the =|=-separated fields of a badge link.
 
    Sometimes I want to use the same [[doc:org-block/tooltip][tooltip]] multiple times, so I write
    the tooltip content once in a [[doc:org-block/documentation][documentation]] block and then
-   reference it using the the [[doc:org-block/doc][doc]] link type.
+   reference it using the the [[doc:org-link/doc][doc]] link type.
 
    # For instance,
    
@@ -8156,7 +8156,7 @@ A theory of typed composition; e.g., typed monoids.
    badge:Pretty|HTML|green|https://alhassy.com/personal-glossary
 
    
-   Moreover, the  [[doc:org-block/doc][doc]] link type lets me reference Emacs-documentation such as
+   Moreover, the  [[doc:org-link/doc][doc]] link type lets me reference Emacs-documentation such as
    doc:loop or doc:thread-last, and English-dictionary entries such as
    doc:happiness.
 
