@@ -178,8 +178,6 @@ All articles on the package live under [#org-special-block-extras](https://alhas
 - [Powering-up Special Blocks](https://alhassy.com/emacs-conf-2020) ---our EmacsConf 2020 talk; its
   [slides](emacs-conf-2020.org) are no pictures, just Org: “Look ma, no HTML required!”
 
-![img](images/minimal-working-example-multiforms.png "Write in Emacs using Org-mode, export beautifully to HTML or LaTeX")
-
 <a id="Bye"></a>
 
 # Bye!

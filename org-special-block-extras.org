@@ -729,10 +729,6 @@ and the result looks nice. “Look ma, no HTML required!”
 # That is, *we provide 46 block types and 56 link types*.
 #+end_quote
 
-#+attr_html: :width 1000px
-#+attr_latex: :width 100px
-#+caption: Write in Emacs using Org-mode, export beautifully to HTML or LaTeX
-[[file:images/minimal-working-example-multiforms.png]]
 
 * COMMENT org-tutorial                                               :ignore:
   :PROPERTIES:
