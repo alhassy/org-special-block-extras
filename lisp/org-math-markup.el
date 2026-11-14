@@ -29,7 +29,6 @@
 (require 'cl-lib)
 (require 'dash)
 (require 'org-defblock)
-(require 'org-color-links)
 (require 'org-markup-links)
 
 (declare-function org--tooltip-template "org-links")
@@ -117,7 +116,7 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
     ('html (let ((id (format "osbe-tip-%s" (gensym))))
              (push (org--tooltip-template id tip plain?) org--math-tips)
              (format "\\class{tooltip %s}{%s}" id math)))
-    ('latex (let ((note (string-trim (org-export-string-as tip 'latex t))))
+    ('latex (let ((note (string-trim (org--export-nested tip 'latex))))
               (push (if (org-export-beamer-p) (format "\\stepcounter{footnote}\\footnotetext{%s}" note)
                       (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" note
                                               "\\refstepcounter{footnote}" t))
@@ -137,7 +136,7 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
          (if (and tip (not (and glossary (eq org--math-backend 'latex)))) (org--math-tip it tip plain) it))))
 
 (defun org--math-link (type path desc)
-  "Returns the LaTeX of a TYPE link to PATH, described by DESC, in maths: as `org-markup-links' says, else DESC or PATH."
+  "Returns the LaTeX of a TYPE link of `org-markup-links' to PATH, described by DESC, in maths, as that list says."
   (let ((meaning (org-markup-link-meaning type path desc)))
     (org--math-meaning meaning (or (plist-get meaning :text) desc path))))
 
@@ -188,12 +187,23 @@ marker of its own, so it marks the ATOM before it."
           (goto-char atom-start)
           (insert (org--math-tip atom tip)))))))
 
-(defun org--math-match-plain-link (limit)
-  "Font-lock matcher: up to LIMIT, the next TYPE:ATOM of `org-markup-links', group 1 its TYPE; else nil.
+(defvar org--math-plain-link-cache nil
+  "(LINKS . REGEXP): the regexp `org--math-plain-link-re' last made, and the `org-markup-links' it was made of.")
+
+(defun org--math-plain-link-re ()
+  "Returns the regexp of a TYPE: of `org-markup-links', group 1 its TYPE, made anew only when that list changes.
 A web link's path is no maths, so it is only ever bracketed, [[https://…][…]]; whence https:/ is no TYPE:ATOM."
-  (let ((types (regexp-opt (--remove (member it '("http" "https")) (mapcar #'car org-markup-links))))
-        found)
-    (while (and (not found) (with-syntax-table org--math-syntax (re-search-forward (format "\\_<\\(%s\\):" types) limit t)))
+  (unless (eq (car org--math-plain-link-cache) org-markup-links)
+    (setq org--math-plain-link-cache
+          (cons org-markup-links
+                (format "\\_<\\(%s\\):"
+                        (regexp-opt (--remove (member it '("http" "https")) (mapcar #'car org-markup-links)))))))
+  (cdr org--math-plain-link-cache))
+
+(defun org--math-match-plain-link (limit)
+  "Font-lock matcher: up to LIMIT, the next TYPE:ATOM of `org-markup-links', group 1 its TYPE; else nil."
+  (let ((re (org--math-plain-link-re)) found)
+    (while (and (not found) (with-syntax-table org--math-syntax (re-search-forward re limit t)))
       (-when-let* ((link (list (match-beginning 0) (match-beginning 1) (match-end 1)))
                    (end (org--math-atom-end)))
         (set-match-data (list (nth 0 link) end (nth 1 link) (nth 2 link)))
@@ -213,14 +223,11 @@ A web link's path is no maths, so it is only ever bracketed, [[https://…][…]
           (goto-char start)
           (insert (org--math-link type atom nil)))))))
 
-(defconst org--math-section-link-re "\\`\\(?:[*#]\\|id:\\)"
-  "A link to a section: [[*Heading]], [[#custom-id]], or [[id:ID]].")
-
 (defun org--math-section-link (link desc)
   "(LINK, DESC) ↦ DESC, linking to the section LINK names, as a graph's node does; e.g., “*Folds”, “f” ↦ \\href{*Folds}{f}
 in HTML, \\hyperref[*Folds]{f} in LaTeX, which `org--resolve-section-links' points at the section once it lands.  Sans
 DESC, the heading shows, as text; Markdown's maths has no links, so there DESC alone."
-  (let ((desc (or desc (format "\\text{%s}" (replace-regexp-in-string org--math-section-link-re "" link)))))
+  (let ((desc (or desc (format "\\text{%s}" (replace-regexp-in-string org--section-link-re "" link)))))
     (cond ((org-export-markdown-p) desc)
           ((eq org--math-backend 'latex) (format "\\hyperref[%s]{%s}" link desc))
           (t (format "\\href{%s}{%s}" link desc)))))
@@ -240,7 +247,7 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
                (type (car (split-string link ":"))) (path (string-remove-prefix (concat type ":") link)))
           (delete-region start end)
           (goto-char start)
-          (save-excursion (insert (cond ((string-match-p org--math-section-link-re link) (org--math-section-link link desc))
+          (save-excursion (insert (cond ((string-match-p org--section-link-re link) (org--math-section-link link desc))
                                         ((assoc type org-markup-links) (org--math-link type path desc))
                                         (t (or desc link)))))))
       (goto-char (point-min))
@@ -313,22 +320,27 @@ MathJax keeps none within; in LaTeX, their margin notes, since maths holds no \\
 
 ;;;; Inline maths ---$…$ reads our markup too
 
+(defconst org--math-delimited-re "\\`\\(\\$\\$?\\|\\\\[[(]\\)\\(\\(?:.\\|\n\\)*\\)\\(\\$\\$?\\|\\\\[])]\\)\\'"
+  "Maths with its delimiters: $…$, $$…$$, \\(…\\), or \\[…\\]; group 1 opens it, group 2 is its inside, and group 3
+closes it.  A bare LaTeX command, such as \\ref{x}, Org also calls a fragment, yet matches not.")
+
 (defun org--math-inline (transcode fragment contents info)
   "Advice around a latex-fragment's TRANSCODE, of FRAGMENT, CONTENTS, and INFO: inline maths, such as $red:x$ or
 \\(red:x\\), reads our links and Org's markup, as a math block does, its tooltips' tips following it.  Only maths:
 a bare LaTeX command in prose, such as \\ref{sec:red:x}, Org also calls a fragment, yet is no maths, so is left be.
 Org's LaTeX transcoder strips the delimiters, then adds its own about the result; HTML's keeps them."
   (let ((value (org-element-property :value fragment)))
-    (if (not (string-match "\\`\\(\\$\\$?\\|\\\\[[(]\\)\\(\\(?:.\\|\n\\)*\\)\\(\\$\\$?\\|\\\\[])]\\)\\'" value))
+    (if (not (string-match org--math-delimited-re value))
         (funcall transcode fragment contents info)
       (let* ((open (match-string 1 value)) (math (match-string 2 value)) (close (match-string 3 value))
              (backend (if (org-export-derived-backend-p (plist-get info :back-end) 'latex) 'latex 'html))
              (org--math-tips nil)
              (marked (concat open (org--math-markup math backend) close))
              (out (funcall transcode (org-element-put-property (org-element-copy fragment) :value marked) contents info)))
-        (cond ((or (null org--math-tips) (eq backend 'html)) (concat out (org--math-tips-after backend)))
-              ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for the notes, then reopen.
-              (t (concat out "\\)" (org--math-tips-after backend) "\\(")))))))
+        ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for LaTeX's notes, then
+        ;; reopen.
+        (if (and org--math-tips (eq backend 'latex)) (concat out "\\)" (org--math-tips-after backend) "\\(")
+          (concat out (org--math-tips-after backend)))))))
 
 (provide 'org-math-markup)
 ;;; org-math-markup.el ends here

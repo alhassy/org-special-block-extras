@@ -190,35 +190,39 @@ So, say, a named block's #+name: and #+caption: label what it begins with."
   "(BACKEND, X) ↦ Org text X, escaping the export block for BACKEND that `org--export-wrap' puts it in."
   (format "\n#+end_export\n%s\n#+begin_export %s\n" x backend))
 
-(defvar org--inline-targets nil
-  "The <<targets>> of the arguments a block's handler has exported inline, by `org-inline', newest first; the block
-emits them into the document, before itself, so a [[target]] elsewhere reaches them.  See `org--internal-links'.")
+(defconst org--section-link-re "\\`\\(?:[*#]\\|id:\\)"
+  "A link to a section: [[*Heading]], [[#custom-id]], or [[id:ID]].")
+
+(defvar org--inline-targets t
+  "Within a block's handler, the <<targets>> of the arguments it has exported inline, by `org-inline', newest first;
+the block emits them into the document, before itself, so a [[target]] elsewhere reaches them.  Elsewhere, t: no block
+is there to emit them, so they stay put.  See `org--internal-links'.")
 
 (defun org--internal-links (text backend)
   "Returns TEXT whose internal links ---[[*Heading][words]], [[#custom-id]], [[id:ID]], [[target]]--- are BACKEND's
 export snippets, which `org--resolve-section-links' points at their destination once the outer export lands; for
-HTML, e.g., @@html:<a href=\"osbe-link:*Heading\">@@words@@html:</a>@@.  Its <<targets>> go to
-`org--inline-targets'.  A nested export knows none of the document, so would drop such links and orphan such targets."
+HTML, e.g., @@html:<a href=\"osbe-link:*Heading\">@@words@@html:</a>@@.  Within a block's handler, its <<targets>>
+go to `org--inline-targets'.  A nested export knows none of the document, so would drop such links, and orphan such
+targets."
   (let ((html? (org-export-derived-backend-p backend 'html)) (latex? (org-export-derived-backend-p backend 'latex)))
     (if (not (or html? latex?)) text
-      (--> text
-           (replace-regexp-in-string
-            org-link-bracket-re
-            (lambda (match)
-              (save-match-data
-                (string-match org-link-bracket-re match)
-                (let ((link (match-string 1 match)) (desc (match-string 2 match)))
-                  ;; A link sans scheme, such as [[target]], is internal; else, only these.
-                  (if (and (string-match-p "\\`[[:alpha:]][[:alnum:]+.-]*:" link) (not (string-prefix-p "id:" link)))
-                      match
-                    (format (if html? "@@html:<a href=\"osbe-link:%s\">@@%s@@html:</a>@@"
-                              "@@latex:\\hyperref[osbe-link:%s]{@@%s@@latex:}@@")
-                            link (or desc (replace-regexp-in-string "\\`\\(?:[*#]\\|id:\\)" "" link)))))))
-            it t t)
-           (replace-regexp-in-string
-            "<<\\([^<>\n]+\\)>>[ \t]*"
-            (lambda (match) (push (substring match 2 (string-match-p ">>" match)) org--inline-targets) "")
-            it t t)))))
+      (let ((linked (replace-regexp-in-string
+                     org-link-bracket-re
+                     (lambda (match)
+                       (let ((link (match-string 1 match)) (desc (match-string 2 match)))
+                         ;; A link sans scheme, such as [[target]], is internal; else, only id:.
+                         (if (and (string-match-p "\\`[[:alpha:]][[:alnum:]+.-]*:" link)
+                                  (not (string-prefix-p "id:" link)))
+                             match
+                           (format (if html? "@@html:<a href=\"osbe-link:%s\">@@%s@@html:</a>@@"
+                                     "@@latex:\\hyperref[osbe-link:%s]{@@%s@@latex:}@@")
+                                   link (or desc (save-match-data
+                                                   (replace-regexp-in-string org--section-link-re "" link)))))))
+                     text t t)))
+        (if (eq org--inline-targets t) linked
+          (replace-regexp-in-string (concat org-target-regexp "[ \t]*")
+                                    (lambda (match) (push (match-string 1 match) org--inline-targets) "")
+                                    linked t t))))))
 
 (defun org--export-nested (text backend)
   "Returns the body-only export of Org TEXT along BACKEND, within an export already under way.
@@ -231,8 +235,11 @@ links, by `org--internal-links'."
   "Returns Org TEXT exported along BACKEND as a phrase, sans the paragraph Org wraps it in; e.g., for HTML,
 “red:x & *y*” becomes “<span style=\"color:red;\">x</span> &amp; <b>y</b>”, and for LaTeX, “50% off” becomes
 “50\\% off”.  A block's title, or any argument that it shows as prose, is so exported; text of mere words is left be,
-as is a non-string, such as a number of columns."
-  (if (or (not (stringp text)) (string-match-p "\\`[[:alnum:][:space:],.!?'()-]*\\'" text)) text
+as is a non-string, such as a number of columns.  Words may be punctuated, as “Step 1: Setup; then “go”…” is, sans an
+export: a colon starts a link only when a word follows it at once."
+  (if (or (not (stringp text))
+          (string-match-p "\\`\\(?:[[:alnum:][:space:],.!?'\"“”‘’()…;—–-]\\|:\\(?:[[:space:]]\\|\\'\\)\\)*\\'" text))
+      text
     (let ((exported (string-trim (org--export-nested text backend))))
       (if (string-match "\\`<p>[ \t\n]*\\(\\(?:.\\|\n\\)*?\\)[ \t\n]*</p>\\'" exported)
           (match-string 1 exported)

@@ -59,8 +59,11 @@ it in HTML; PATH joins the glossary that #+print_glossary: lists, as a doc: link
      ("tooltip"   . org--markup-tooltip)
      ("margin"    . org--markup-tooltip)
      ("doc"       . org--markup-doc)
-     ("https"     . ,(lambda (path desc) (list :url (concat "https:" path) :text (unless desc (concat "https:" path)))))
-     ("http"      . ,(lambda (path desc) (list :url (concat "http:" path) :text (unless desc (concat "http:" path)))))))
+     ;; A web link leads to its URL, which shows sans description.
+     ,@(--map (let ((scheme it))
+                (cons scheme (lambda (path desc)
+                               (let ((url (concat scheme ":" path))) (list :url url :text (unless desc url))))))
+              '("https" "http"))))
   "Link types that maths and graph labels know, each TYPE paired with a function of PATH and DESC, the latter nil for
 TYPE:PATH and [[TYPE:PATH]], that returns the link's meaning, a plist:
 + :text        what shows, raw; sans it, the sink's rendering of DESC, else PATH.

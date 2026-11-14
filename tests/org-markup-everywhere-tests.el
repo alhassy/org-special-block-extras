@@ -34,34 +34,31 @@
   (should (string-match-p (if (eq backend 'html) "href=\"#\\([^\"]+\\)\">the folds</a>" "\\\\hyperref\\[sec:[^]]+\\]{the folds}")
                           out)))
 
-(defconst org-markup-tests--own-syntax '(graph tree math documentation quote color)
-  "Blocks whose contents are no prose ---a graph, maths, a glossary--- or that need an argument to show them, such as a
-quote's citation key or a colour's name; each has its own test below.")
+(defun org-markup-tests--check (begin body)
+  "Checks that a block opened by #+begin_BEGIN, holding BODY, renders `org-markup-tests--prose' in HTML and LaTeX."
+  (dolist (backend '(html latex))
+    (ert-info ((format "#+begin_%s, exported to %s" begin backend))
+      (org-markup-tests--rendered-p
+       (org-markup-tests--export (format "
+#+begin_%s
+%s
+#+end_%s" begin body (car (split-string begin))) backend)
+       backend))))
+
+(defconst org-markup-tests--own-syntax '(graph tree math documentation)
+  "Blocks whose contents are no prose ---a graph, maths, a glossary---; each has its own test.")
 
 (deftest "every block's contents render our links, Org's links, its targets, and maths, as prose does"
-  (dolist (block (--remove (memq it org-markup-tests--own-syntax) org--supported-blocks))
-    (dolist (backend '(html latex))
-      (ert-info ((format "#+begin_%s, exported to %s" block backend))
-        (org-markup-tests--rendered-p
-         (org-markup-tests--export (format "
-#+begin_%s
-See %s.
-#+end_%1$s" block org-markup-tests--prose) backend)
-         backend)))))
+  ;; A quote, and a colour block, show their contents only given a citation key, or a colour.
+  (dolist (begin (--map (pcase it ('quote "quote Knuth") ('color "color teal") (_ (symbol-name it)))
+                        (--remove (memq it org-markup-tests--own-syntax) org--supported-blocks)))
+    (org-markup-tests--check begin (format "See %s." org-markup-tests--prose))))
 
 (deftest "a block's title renders our links, Org's links, and maths, as its contents do; quoted, or not"
-  (dolist (header (list (format "%S" org-markup-tests--prose)
-                        ;; Unquoted, a [[link][with words]] is one word of the header, not Lisp's vector.
-                        org-markup-tests--prose))
+  ;; Unquoted, a [[link][with words]] is one word of the header, not Lisp's vector.
+  (dolist (header (list (format "%S" org-markup-tests--prose) org-markup-tests--prose))
     (dolist (block '(box details note remark))
-      (dolist (backend '(html latex))
-        (ert-info ((format "#+begin_%s %s, exported to %s" block header backend))
-          (org-markup-tests--rendered-p
-           (org-markup-tests--export (format "
-#+begin_%s %s
-Body.
-#+end_%1$s" block header) backend)
-           backend))))))
+      (org-markup-tests--check (format "%s %s" block header) "Body."))))
 
 (deftest "a title's <<target>> joins the document, so a [[target]] elsewhere reaches the block"
   (dolist (backend '(html latex))
@@ -96,17 +93,6 @@ See [[qed][the conclusion]]." 'html)))
 (deftest "a header's [[link][with words]] is one word, a string, rather than Lisp's vector"
   (should (equal (org--read-header "[[*Folds][the folds]] :n 2") '("[[*Folds][the folds]]" :n 2)))
   (should (equal (org--read-header "[[https://orgmode.org][Org]], too") '("[[https://orgmode.org][Org]]," too))))
-
-(deftest "a quote's contents, and a colour block's, render our links, Org's links, and maths, as prose does"
-  (dolist (block '("quote Knuth" "color teal"))
-    (dolist (backend '(html latex))
-      (ert-info ((format "#+begin_%s, exported to %s" block backend))
-        (org-markup-tests--rendered-p
-         (org-markup-tests--export (format "
-#+begin_%s
-See %s.
-#+end_%s" block org-markup-tests--prose (car (split-string block))) backend)
-         backend)))))
 
 (deftest "a proof tree's lines are maths, as a math block's: red:x colours, and [[tooltip:x][tip]] hovers"
   (let ((out (org-markup-tests--export "

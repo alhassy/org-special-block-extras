@@ -62,10 +62,13 @@ So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted st
 An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][the folds]] :n 2\" ↦ (\"[[*Folds][the folds]]\" :n 2)."
   (let ((header (or header "")) (pos 0) values)
     (while (string-match "[^ \t\n]+" header pos)
-      (let* ((beg (match-beginning 0)) (word-end (match-end 0))
-             (link? (and (eq beg (string-match (concat "\\(?:" org-link-bracket-re "\\)[^ \t\n]*") header beg))
-                         (setq word-end (match-end 0))))
-             (read (unless link? (condition-case nil (read-from-string header beg) (error nil)))))
+      (let* ((beg (match-beginning 0)) (end (match-end 0))
+             ;; Only a word opening in [[ may be a link, so the rest of the header is searched only then.
+             (link-end (and (eq ?\[ (aref header beg)) (< (1+ beg) (length header)) (eq ?\[ (aref header (1+ beg)))
+                            (eq beg (string-match (concat "\\(?:" org-link-bracket-re "\\)[^ \t\n]*") header beg))
+                            (match-end 0)))
+             (word-end (or link-end end))
+             (read (unless link-end (condition-case nil (read-from-string header beg) (error nil)))))
         ;; A symbol the reader unescaped, such as `\\' read as `\', stays as written.
         (when (and read (symbolp (car read))
                    (not (equal (symbol-name (car read)) (substring header beg (cdr read)))))

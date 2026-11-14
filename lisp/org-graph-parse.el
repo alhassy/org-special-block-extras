@@ -16,6 +16,7 @@
 
 (require 'org-graph-read)
 (require 'org-markup-links)
+(require 'org-math-markup)
 
 (defconst org-graph-reserved-keys '(":id" ":inherit" ":children-rank")
   "Table keys meaningful to the `graph' block itself, rather than to Graphviz; alongside the prefixes `:edge.' and `:edge[TARGET].'.")
@@ -162,16 +163,13 @@ silently contributing nothing."
   (let ((org-target-link-regexp (car org--graph-radio)) (org-target-link-regexps nil))
     (org--graph-splice-maths (org-element-parse-secondary-string text restriction) restriction)))
 
-(defconst org--graph-maths-re "\\`\\(?:\\$\\$?\\|\\\\(\\)\\(\\(?:.\\|\n\\)*?\\)\\(?:\\$\\$?\\|\\\\)\\)\\'"
-  "Inline maths, $…$ or \\(…\\), group 1 its inside.")
-
 (defun org--graph-splice-maths (objs restriction)
-  "Returns OBJS with each $…$, or \\(…\\), spliced as the objects of RESTRICTION its inside parses to, as a label
-holds no maths; so $\\alpha_{1}$ shows as \\alpha_{1} does, an α subscripted 1, and $red:x$ as red:x does."
+  "Returns OBJS with each maths, such as $…$ or \\(…\\), spliced as the objects of RESTRICTION its inside parses to,
+as a label holds no maths; so $\\alpha_{1}$ shows as \\alpha_{1} does, an α subscripted 1, and $red:x$ as red:x does."
   (--mapcat
    (let ((value (and (eq (org-element-type it) 'latex-fragment) (org-element-property :value it))))
-     (cond ((and value (string-match org--graph-maths-re value))
-            (append (org--graph-parse-objects (substring-no-properties (match-string 1 value)) restriction)
+     (cond ((and value (string-match org--math-delimited-re value))
+            (append (org--graph-parse-objects (substring-no-properties (match-string 2 value)) restriction)
                     (-some--> (org-element-property :post-blank it) (and (< 0 it) (list (make-string it ?\s))))))
            (t (unless (or (stringp it) (null (org-element-contents it)))
                 (apply #'org-element-set-contents it (org--graph-splice-maths (org-element-contents it) restriction)))
@@ -179,10 +177,15 @@ holds no maths; so $\\alpha_{1}$ shows as \\alpha_{1} does, an α subscripted 1,
    objs))
 
 (defun org--graph-link-meaning (o)
-  "Returns the meaning of O, a link of `org-markup-links', else nil; e.g., for red:x, (:color \"red\")."
-  (and (eq (org-element-type o) 'link)
-       (org-markup-link-meaning (org-element-property :type o) (org-element-property :path o)
-                                (-some-> (org-element-contents o) org-element-interpret-data substring-no-properties))))
+  "Returns the meaning of O, a link of `org-markup-links', else nil; e.g., for red:x, (:color \"red\").
+It is noted on O, as a label's every reader asks for it, and a doc: link's meaning costs a glossary lookup."
+  (when (and (eq (org-element-type o) 'link) (assoc (org-element-property :type o) org-markup-links))
+    (or (org-element-property :osbe-meaning o)
+        (let ((meaning (org-markup-link-meaning (org-element-property :type o) (org-element-property :path o)
+                                                (-some-> (org-element-contents o) org-element-interpret-data
+                                                         substring-no-properties))))
+          (org-element-put-property o :osbe-meaning meaning)
+          meaning))))
 
 (defun org--graph-meaning-tip (meaning)
   "Returns the tooltip MEANING hovers over a node, if any: Org while `org--graph-tips' collects tooltips, else plain."
@@ -207,10 +210,25 @@ holds no maths; so $\\alpha_{1}$ shows as \\alpha_{1} does, an α subscripted 1,
     ('export-snippet (equal "dot" (org-element-property :back-end o)))
     (_ t)))
 
+(defun org--graph-html-label (objs)
+  "Returns the HTML-like label of OBJS, a parsed item text, when they need one, as *bold* does; else nil."
+  (when (org--graph-html-label-p objs)
+    (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs))))))
+
+(defun org--graph-title-label (title)
+  "Returns the label of a graph's TITLE, which reads as an item's text does: “*Origins* of red:Lisp” gives
+<<B>Origins</B> of <FONT COLOR=\"red\">Lisp</FONT>>; plain words, themselves."
+  (let ((objs (org--graph-parse-objects title org--graph-objects)))
+    (or (org--graph-html-label objs) (s-trim (org--graph-item-render nil objs)))))
+
 (defun org--graph-html-label-p (objs)
   "Returns whether OBJS, a parsed item text, need an HTML-like label; see `org--graph-html-object-p'."
   (org-element-map objs `(line-break export-snippet link ,@(mapcar #'car org--graph-markup-tags))
     #'org--graph-html-object-p nil t '(footnote-reference link)))
+
+(defun org--graph-text (html? s)
+  "Returns S as label text: escaped, by `org--graph-html-escape', when HTML?; else as is."
+  (if html? (org--graph-html-escape s) s))
 
 (defun org--graph-html-escape (s)
   "S with the characters that HTML-like labels reserve escaped, e.g. \"a<b\" ↦ \"a&lt;b\"."
@@ -256,11 +274,16 @@ footnotes become the node's tooltip."
   "An item's parsed TEXT ↦ the tags styling its arc: its term's, and also its trailing ones when it is a reference."
   (append (plist-get text :arc-tags) (when (plist-get text :reference) (plist-get text :tags))))
 
-(defun org--graph-external-link-p (o)
-  "Non-nil when O is a link object to anything but a node: a web page, a file, a section such as [[*Heading]], …"
+(defun org--graph-node-link-p (o)
+  "Returns whether O is a link object to a node: [[target]], or a radio target's mention; [[*Heading]] is a section's."
   (and (eq (org-element-type o) 'link)
-       (or (not (member (org-element-property :type o) `("fuzzy" "radio" ,@(mapcar #'car org-markup-links))))
-           (s-starts-with-p "*" (org-element-property :path o)))))
+       (member (org-element-property :type o) '("fuzzy" "radio"))
+       (not (s-starts-with-p "*" (org-element-property :path o)))))
+
+(defun org--graph-external-link-p (o)
+  "Returns whether O is a link object to neither a node nor of `org-markup-links': a file, a section, such as
+[[*Heading]], or a page of a scheme we know not, such as [[ftp:…]]."
+  (and (eq (org-element-type o) 'link) (not (org--graph-node-link-p o)) (not (org--graph-link-meaning o))))
 
 (defun org--graph-image-link-p (o)
   "Non-nil when O is a description-less [[file:PATH]] link to an image, such as [[file:emacs.png]]."
@@ -268,9 +291,9 @@ footnotes become the node's tooltip."
        (string-match-p (image-file-name-regexp) (org-element-property :path o))))
 
 (defun org--graph-link-url (o)
-  "A link object O ↦ where it points: [[file:a.org]] ↦ \"a.org\", [[https://o.org][O]] ↦ \"https://o.org\", and
+  "A link object O ↦ where it points: [[file:a.org]] ↦ \"a.org\", [[ftp://o.org][O]] ↦ \"ftp://o.org\", and
 [[*Org mode]] ↦ \"*Org mode\", which HTML export resolves to that section's anchor, by
-`org--resolve-section-links'."
+`org--resolve-section-links'.  A web link's is its meaning's :url; see `org-markup-links'."
   (if (equal (org-element-property :type o) "file") (org-element-property :path o) (org-element-property :raw-link o)))
 
 (defun org--graph-footnote-text (reference)
@@ -298,8 +321,6 @@ A web or file link becomes the node's URL, its description staying in the label;
          (tooltip (-some--> (append (org-element-map objs 'footnote-reference #'org--graph-footnote-text)
                                     (org-element-map objs 'link (lambda (o) (org--graph-meaning-tip (org--graph-link-meaning o)))))
                     (s-join " " it)))
-         (edge-link? (lambda (o) (and (eq (org-element-type o) 'link) (not (org--graph-external-link-p o))
-                                      (not (org--graph-link-meaning o)))))
          (target (car (org-element-map objs '(target radio-target) (lambda (o) (org-element-property :value o)))))
          ;; A radio target's mention is an arc sans label; one in its own item, none.
          (links  (--remove (equal (car it) target)
@@ -307,7 +328,7 @@ A web or file link becomes the node's URL, its description staying in the label;
                                       (list (org--graph-radio-target (org-element-property :path it)))
                                     (cons (org-element-property :path it)
                                           (-some->> (org-element-contents it) (org--graph-item-render nil))))
-                                  (-filter edge-link? (org-element-map objs 'link #'identity)))))
+                                  (org-element-map objs 'link (lambda (o) (and (org--graph-node-link-p o) o))))))
          (name   (s-trim (s-collapse-whitespace (org--graph-item-render nil objs)))))
     (append
      (cond
@@ -317,8 +338,7 @@ A web or file link becomes the node's URL, its description staying in the label;
       ;; A lone image is its own name, drawn sans text.
       (t (list :name (if (s-blank-str-p name) (or target image) name)
                ;; Markup in a footnote is the tooltip's, not the label's.
-               :label (cond ((org--graph-html-label-p objs)
-                             (format "<%s>" (s-trim (s-collapse-whitespace (org--graph-item-render t objs)))))
+               :label (cond ((org--graph-html-label objs))
                             ((not (s-blank-str-p name)) name)
                             (target)
                             (t "\"\""))
@@ -337,7 +357,7 @@ label HTML, any other snippet vanishing."
        ;; Org keeps an object's trailing spaces apart, as its :post-blank.
        (concat
         (cond
-         ((stringp o) (if html? (org--graph-html-escape o) o))
+         ((stringp o) (org--graph-text html? o))
          ((memq type '(target footnote-reference)) "")
          ((eq type 'line-break) (if html? "<BR/>" " "))
          ((eq type 'entity) (org-element-property :utf-8 o))
@@ -352,14 +372,14 @@ label HTML, any other snippet vanishing."
          ;; A markup link shows its text, a colour's as <FONT COLOR>; its tip and URL are the node's.
          ((-when-let (meaning (org--graph-link-meaning o))
             (let* ((text (plist-get meaning :text)) (colour (plist-get meaning :color))
-                   (shown (cond (text (if html? (org--graph-html-escape text) text))
+                   (shown (cond (text (org--graph-text html? text))
                                 ((org-element-contents o) (org--graph-item-render html? (org-element-contents o)))
                                 ;; A path such as \\lambda, in $red:\\lambda$, is Org: here, an entity.
                                 (t (org--graph-item-render html? (org--graph-parse-objects (org-element-property :path o)
                                                                                            org--graph-objects))))))
               (if (and html? colour) (format "<FONT COLOR=\"%s\">%s</FONT>" colour shown) shown))))
          ;; Maths not spliced, such as a bare \\frac{a}{b}, is its LaTeX.
-         ((eq type 'latex-fragment) (funcall (if html? #'org--graph-html-escape #'identity) (org-element-property :value o)))
+         ((eq type 'latex-fragment) (org--graph-text html? (org-element-property :value o)))
          ((eq type 'link) (if (or (not (org--graph-external-link-p o)) (org--graph-image-link-p o)) ""
                             ;; A bare [[*Org mode]] shows as the section's title, sans star.
                             (org--graph-item-render html? (or (org-element-contents o)
@@ -367,7 +387,7 @@ label HTML, any other snippet vanishing."
          (t (-let [(open close) (and html? (alist-get type org--graph-markup-tags))]
               (concat open
                       (if (memq type '(code verbatim))
-                          (funcall (if html? #'org--graph-html-escape #'identity) (org-element-property :value o))
+                          (org--graph-text html? (org-element-property :value o))
                         (org--graph-item-render html? (org-element-contents o)))
                       close))))
         (unless (stringp o) (make-string (or (org-element-property :post-blank o) 0) ?\s)))))
