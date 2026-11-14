@@ -1,5 +1,65 @@
-
 # 🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`
+
+<a id="Minimal-working-example"></a>
+
+[![One Org file, exported to PDF (left), in Emacs (middle), and exported to HTML (right)](images/minimal-working-example.png)](https://alhassy.com/org-special-block-extras-mwe)
+
+One Org file ---a tiny Lisp function, a peek at its values, a picture of its loop, and a proof of what it computes---
+exported to PDF (left), as written in Emacs (middle), and exported to HTML (right). Click it for the
+**[live HTML export](https://alhassy.com/org-special-block-extras-mwe)**, where we hover the tooltips, unfold the
+`details`, and click the proof's hints.
+
+<details>
+<summary>The Org source, <a href="minimal-working-example.org"><code>minimal-working-example.org</code></a></summary>
+
+```org
+#+title: Summing odd numbers
+
+* A tiny function
+
+We sum the first =n= [[tooltip:odd][An integer 2i - 1, for some i ≥ 1]] numbers by doc:cl-loop; place the
+cursor after the last parenthesis and press kbd:C-x_C-e to define it.
+#+begin_src emacs-lisp
+(defun sum-odds (n)
+  "Return 1 + 3 + ⋯ + (2n - 1)."
+  (cl-loop for i from 1 to n sum (- (* 2 i) 1)))
+#+end_src
+
+#+begin_details Peek: the first few values :let (N 4)
+=(sum-odds N)= is the sum of the first N odd numbers. In order:
+| =n=            | 1 | 2 | 3 |  4 |
+| =(sum-odds n)= | 1 | 4 | 9 | 16 |
+These are red:squares! <<squares>> We [[*Why squares?][prove it below]].
+#+end_details
+
+* How the loop accumulates
+
+Each step adds the next odd number to the running sum:
+#+begin_graph :rankdir LR
++ 0
+  + add 1 :: 1
+    + add 3 :: 4
+      + add 5 :: 9
+        + add 7 :: 16
+#+end_graph
+
+* Why squares?
+
+The [[squares][squares]] are no coincidence:
+#+begin_math :let (Σ "\\sum_{i=1}^{n}")
+  Σ (2i - 1)
+={ Split the sum }
+  2 · red:{Σ i} - teal:{Σ 1}
+={ Gauss: $red:{Σ i} = n(n+1)/2$; and $n$ ones sum to $teal:n$ }
+  n(n + 1) - teal:n
+={ Distribute, then cancel }
+  n^2   violet:<<Odd>>
+#+end_math
+
+Hence, by [[Odd]], =(sum-odds n)= is $n^2$. badge:sum-odds|n²|teal
+```
+
+</details>
 
 **Use the Org markup you already know ---in any block.** Our new `math`, `graph`, and `details` blocks read
 Org just as prose does: colours `red:hello`, permalinks `<<here>>` cited by `[[here]]`, hoverable docs
@@ -104,65 +164,6 @@ example beside its snapshotted export.
 ```
 Or use `M-x org-special-block-extras-mode` to turn it on or off. Graphs need [Graphviz](https://graphviz.org)'s
 `dot` on our `PATH`.
-
-<a id="Minimal-working-example"></a>
-
-## 🧪 Minimal working example
-
-A tiny Lisp function, a peek at its values, a picture of its loop, and a proof of what it computes. Its source is
-[`minimal-working-example.org`](minimal-working-example.org); its **[live HTML export](https://alhassy.com/org-special-block-extras-mwe)** is where we
-hover the tooltips, unfold the `details`, and click the proof's hints.
-
-```org
-#+title: Summing odd numbers
-
-* A tiny function
-
-We sum the first =n= [[tooltip:odd][An integer 2i - 1, for some i ≥ 1]] numbers by doc:cl-loop; place the
-cursor after the last parenthesis and press kbd:C-x_C-e to define it.
-#+begin_src emacs-lisp
-(defun sum-odds (n)
-  "Return 1 + 3 + ⋯ + (2n - 1)."
-  (cl-loop for i from 1 to n sum (- (* 2 i) 1)))
-#+end_src
-
-#+begin_details Peek: the first few values :let (N 4)
-=(sum-odds N)= is the sum of the first N odd numbers. In order:
-| =n=            | 1 | 2 | 3 |  4 |
-| =(sum-odds n)= | 1 | 4 | 9 | 16 |
-These are red:squares! <<squares>> We [[*Why squares?][prove it below]].
-#+end_details
-
-* How the loop accumulates
-
-Each step adds the next odd number to the running sum:
-#+begin_graph :rankdir LR
-+ 0
-  + add 1 :: 1
-    + add 3 :: 4
-      + add 5 :: 9
-        + add 7 :: 16
-#+end_graph
-
-* Why squares?
-
-The [[squares][squares]] are no coincidence:
-#+begin_math :let (Σ "\\sum_{i=1}^{n}")
-  Σ (2i - 1)
-={ Split the sum }
-  2 · red:{Σ i} - teal:{Σ 1}
-={ Gauss: $red:{Σ i} = n(n+1)/2$; and $n$ ones sum to $teal:n$ }
-  n(n + 1) - teal:n
-={ Distribute, then cancel }
-  n^2   violet:<<Odd>>
-#+end_math
-
-Hence, by [[Odd]], =(sum-odds n)= is $n^2$. badge:sum-odds|n²|teal
-```
-
-Here it is exported to PDF (left), in Emacs (middle), and exported to HTML (right); click it to [interact with it live](https://alhassy.com/org-special-block-extras-mwe):
-
-[![The minimal working example, in Emacs and exported to PDF and HTML](images/minimal-working-example.png)](https://alhassy.com/org-special-block-extras-mwe)
 
 ## 📚 Further reading
 
