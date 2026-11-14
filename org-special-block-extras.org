@@ -5796,8 +5796,9 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   Switches are inherited as a src block's header-args are; e.g., =:header-args:red: :let (N 3)=
   in a heading's drawer gives every =red= block of its subtree that =:let=.
 
-  A section takes switches too, as properties of its own; e.g., the following section appears in
-  the PDF alone, its arrows typeset:
+  A section and a block are two ways to say the same thing; so a section takes every switch too,
+  as a property of its own. By way of example, the following section appears in the PDF alone,
+  its arrows typeset:
   #+begin_src org :tangle no
 ,* Notes for the printed handout
 :PROPERTIES:
@@ -5806,10 +5807,18 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 :END:
 Recall that p -> q.
   #+end_src
-  A heading's =:noexport t=, or a =:when= whose form is nil, axes the whole subtree ---heading
-  and subsections included; =:let= substitutes throughout the subtree, its blocks included; and
-  =:folded= and =:boxed= wrap the section, which then may not have subsections, as no block can
-  hold a heading. A value that is not wholly Lisp is a string, as in =:folded: Peek at the answer=.
+  A section's contents are its text and subsections; its heading stays put, being its title.
+  + =:noexport t=, or a =:when= whose form is nil, axes the whole subtree, heading included.
+  + =:let= substitutes throughout the subtree, its blocks included.
+  + =:folded= and =:boxed= wrap the contents, which then may not have subsections, as no block
+    can hold a heading; =:folded t= is titled by the heading.
+  + =:verbatim t= shows the section as written, heading included, as Org source; and =:demo t=
+    shows that beside its rendering, =C-c C-c= within the section taking its snapshot.
+  + =:ignore t= bypasses the section's own behaviour: its tags that an ~org-deftag~ defines, such
+    as =:details_Hint:=.
+  + =:C-c_C-c ACTION= runs upon =C-c C-c= within the section, or a subsection, wherever Org's own
+    =C-c C-c= has nothing to do; so a table or checkbox in it keeps its own.
+  A value that is not wholly Lisp is a string, as in =:folded: Peek at the answer=.
 
   A block that declares a keyword of the same name keeps it for itself; e.g., a block with
   its own =folded= argument receives =:folded= as usual. Since =:when=, =:let= and =:C-c_C-c=

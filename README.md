@@ -39,7 +39,8 @@ Each block is demoed in [the guide](https://alhassy.com/org-special-block-extras
 
 **🎛 Switch any block**: `:when (eq backend 'html)`, `:noexport t`, `:let (N 7)`, `:boxed "Title"`, `:folded t`,
 `:verbatim t`, and `:C-c_C-c ACTION` work on every block ---ours, yours, or Org's own `src` and `quote` blocks.
-They work on every section too, as properties; e.g., this section is only in the HTML export:
+Sections and blocks are two ways to say the same thing, so every switch works on a section too, as a property;
+e.g., this section is only in the HTML export:
 ```org
 * For readers online
 :PROPERTIES:

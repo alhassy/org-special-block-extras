@@ -36,6 +36,7 @@
 (require 'org-deflink)
 (require 'org-block-header-args)
 (require 'org-special-block-parse)
+(require 'org-deftag)
 
 ;; Blocks of our own, which require us in turn; switches call them only upon export.
 (declare-function org-block/box "org-box-block")
@@ -75,7 +76,8 @@ Hence a misspelt key, such as contnets, is refused as the definition expands, ra
     (upcase (funcall render contents)))
 ARGLIST names VALUE, then, as `cl-defun' keys, whichever of these BODY needs:
 + :render, the rest of the switches and the block itself, as a function of its contents;
-+ :contents; :backend; the block's :name; and its #+begin_ line's :header, sans switches.
++ :contents; :backend; the block's :name; and its #+begin_ line's :header, sans switches;
++ :source, the block ---or section--- as written sans switches, as a function of its contents.
 Not calling `render' replaces the block; transforming `contents' first, or the result after, wraps it.
 
 Every switch is offered the whole record, and takes only what it names ---dependency injection, by keyword:
@@ -94,7 +96,7 @@ The switch fires only when VALUE is non-nil; e.g., :folded nil leaves a block be
   (declare (indent defun) (doc-string 3))
   (org--injected-vars key
                       (-take-while (lambda (it) (not (memq it '(&allow-other-keys &aux)))) (cdr (memq '&key arglist)))
-                      '(:render :contents :backend :name :header))
+                      '(:render :contents :backend :name :header :source))
   (let ((depth (if (eq (car body) :depth) (prog1 (cadr body) (setq body (cddr body))) 0)))
     `(org--add-switch ,key ,depth
                       (cl-function (lambda (,@arglist ,@(unless (memq '&key arglist) '(&key))
@@ -200,8 +202,9 @@ of them, or a variable holding them; see `org--block-let-named'."
 
 ;;;; What each switch does
 
-(defun org--block-with-switches (name switches backend contents render &optional header)
-  "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER, HEADER) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say.
+(defun org--block-with-switches (name switches backend contents render &optional header source)
+  "(NAME, SWITCHES, BACKEND, CONTENTS, RENDER, HEADER, SOURCE) ↦ RENDER's result on CONTENTS, as the plist SWITCHES of block NAME say.
+SOURCE, a function of the contents, gives the block as written sans switches; by default, #+begin_NAME HEADER … #+end_NAME.
 Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RENDER, the outermost first:
   (:boxed \"B\" :folded \"F\")  ↦  details(F, box(B, RENDER(CONTENTS)))
 :demo is rendered before any other switch, by `org--rewrite-demos', which hands its showing to us as RENDER."
@@ -209,7 +212,8 @@ Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RE
                              (-if-let (value (plist-get switches key))
                                  (lambda (contents)
                                    (funcall switch value :render render :contents contents
-                                            :backend backend :name name :header header))
+                                            :backend backend :name name :header header
+                                            :source (or source (lambda (contents) (org--block-source name contents header)))))
                                render))
                            render org-block-switches)
            contents))
@@ -241,12 +245,11 @@ or for those of the table #+name: BINDINGS, else the variable BINDINGS.  See `or
   :depth -20
   (funcall render (org--block-let bindings contents backend)))
 
-(org-defswitch :verbatim (_ &key contents name header)
+(org-defswitch :verbatim (_ &key contents source)
   "The block as written, its #+begin_ line's header sans switches, shown as Org source, not rendered.
 Outer switches apply to this showing; e.g., :verbatim t :folded t folds away the block's source."
   :depth 50
-  (format "#+begin_src org\n%s\n#+end_src"
-          (org-escape-code-in-string (org--block-source name (string-trim-right contents) header))))
+  (format "#+begin_src org\n%s\n#+end_src" (org-escape-code-in-string (funcall source (string-trim-right contents)))))
 
 (org-defswitch :ignore (_ &key contents)
   "The contents as plain Org, bypassing the block's own behaviour."
@@ -283,10 +286,12 @@ line's text sans SWITCHES, the plist of its own switches atop those it inherits;
           (list (copy-marker hash) (copy-marker (org--block-end-point block) t) indent name header switches))))))
 
 (defun org--block-switch-site-contents (site)
-  "SITE, from `org--block-switch-site', ↦ its block's contents, sans the block's own indentation."
-  (pcase-let ((`(,begin ,end ,indent) site))
-    (mapconcat (lambda (line) (if (string-prefix-p (make-string indent ?\s) line) (substring line indent) line))
-               (butlast (cdr (split-string (buffer-substring begin end) "\n"))) "\n")))
+  "SITE, from `org--block-switch-site', ↦ its block's contents, sans the block's own indentation.
+A section's site, from `org-demo--section-site', has as contents its text and subsections, below its drawer."
+  (pcase-let ((`(,begin ,end ,indent ,_ ,_ ,_ ,section? ,body) site))
+    (if (eq section? 'section) (buffer-substring body end)
+     (mapconcat (lambda (line) (if (string-prefix-p (make-string indent ?\s) line) (substring line indent) line))
+               (butlast (cdr (split-string (buffer-substring begin end) "\n"))) "\n"))))
 
 (defun org--rewrite-block-switch-site (site backend)
   "Replace the block at SITE, from `org--block-switch-site', by what its switches make of it for BACKEND."
@@ -330,8 +335,7 @@ after, for the blocks of #+INCLUDE: files."
 
 ;;;; Switches on sections: org--rewrite-heading-switches
 
-(defconst org--heading-switches '(:noexport :when :let :folded :boxed)
-  "The switches a heading's property drawer may give its section; the rest concern a block's own source.")
+;; A section and a block are two ways to say the same thing; so a heading's property drawer takes every switch.
 
 (defun org--heading-switch-value (string)
   "Returns the switch value a property's STRING denotes: the Lisp it reads as, when wholly; else STRING itself.
@@ -343,13 +347,33 @@ By way of example, \"(eq backend \='html)\" reads as a form, \"t\" and \"\" as t
         (_ string)))))
 
 (defun org--heading-switches-at-point ()
-  "Returns the plist of `org--heading-switches' that the property drawer of the heading at point gives, sans inheritance."
-  (cl-loop for key in org--heading-switches
-           for value = (org-entry-get nil (substring (symbol-name key) 1))
-           when value append (list key (org--heading-switch-value value))))
+  "Returns the plist of `org-block-switches' that the drawer of the heading at point gives, sans inheritance.
+A :folded t is titled by the heading, as a src block's is by its language."
+  (let ((switches (cl-loop for (key) in org-block-switches
+                           for value = (org-entry-get nil (substring (symbol-name key) 1))
+                           when value append (list key (org--heading-switch-value value)))))
+    (if (eq (plist-get switches :folded) t) (plist-put switches :folded (org-get-heading t t t t)) switches)))
+
+(defun org--heading-source (heading contents)
+  "Returns the section of HEADING, its line as written, and CONTENTS, as it reads sans its drawer of switches."
+  (concat heading "\n" contents))
+
+(defun org--heading-sans-deftags ()
+  "Axes, from the heading line at point, each tag that an `org-deftag' gives behaviour; e.g., :details_Hint:."
+  (save-excursion
+    (let ((case-fold-search t))
+      (cl-loop for tag in (org-get-tags nil t)
+               for name = (car (split-string tag "_"))
+               when (fboundp (intern (format "org-deftag/%s" name)))
+               do (beginning-of-line)
+                  (when (re-search-forward (org--deftag-regexp name) (line-end-position) t)
+                    (replace-match "" t t nil 1)))
+      ;; A lone colon left behind means no tags remain.
+      (beginning-of-line)
+      (when (re-search-forward "[ \t]+:[ \t]*$" (line-end-position) t) (replace-match "")))))
 
 (defun org--rewrite-heading-switches (backend)
-  "Applies the switches each heading's property drawer gives to its section, as BACKEND exports it; e.g.,
+  "Applies the switches each heading's drawer gives to its section, as BACKEND exports it, as they would to a block:
 
   * Answers                             * Answers
   :PROPERTIES:                   ↦      #+begin_details \"Peek?\"
@@ -358,14 +382,19 @@ By way of example, \"(eq backend \='html)\" reads as a form, \"t\" and \"\" as t
   :END:
   The answer is N.
 
-A heading's :noexport, or a :when whose form is nil, axes its whole subtree, heading included; :let substitutes
-throughout the subtree; :folded and :boxed wrap the section, which then may not have subsections, as a block cannot
-hold a heading.  Each switch is axed from the drawer once applied, lest the pass after #+INCLUDE: apply it again."
+The section's contents are its text and subsections, below its drawer; its heading stays put, being its title.
++ :noexport, or a :when whose form is nil, axes the whole subtree, heading included.
++ :ignore bypasses the section's own behaviour: its tags that an `org-deftag' defines, such as :details_Hint:.
++ :verbatim shows the section as written, heading included, as Org source; :demo too, beside its rendering,
+  by `org--rewrite-demos', which runs first.
++ :folded and :boxed wrap the contents, which then may not have subsections, as a block cannot hold a heading.
++ :C-c_C-c is for C-c C-c within the section, in Emacs; see `org--section-cc-switch'.
+Each switch is axed from the drawer once applied, lest the pass after #+INCLUDE: apply it again."
   (setq backend (org--base-backend backend))
   (when (save-excursion (goto-char (point-min))
                         (let ((case-fold-search t))
-                          (re-search-forward (format "^[ \t]*:%s:" (regexp-opt (--map (substring (symbol-name it) 1)
-                                                                                       org--heading-switches)))
+                          (re-search-forward (format "^[ \t]*:%s:" (regexp-opt (--map (substring (symbol-name (car it)) 1)
+                                                                                       org-block-switches)))
                                              nil t)))
     (let (headings)
       (org-map-entries (lambda () (when (org--heading-switches-at-point) (push (point-marker) headings))))
@@ -374,21 +403,27 @@ hold a heading.  Each switch is axed from the drawer once applied, lest the pass
         (goto-char heading)
         (let ((switches (org--heading-switches-at-point))
               (title (org-get-heading t t t t)))
-          (dolist (key org--heading-switches) (org-entry-delete nil (substring (symbol-name key) 1)))
+          (dolist (it org-block-switches) (org-entry-delete nil (substring (symbol-name (car it)) 1)))
+          (when (plist-get switches :ignore) (org--heading-sans-deftags))
           (if (or (plist-get switches :noexport)
                   (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend))))
               (delete-region (point) (save-excursion (org-end-of-subtree t t) (point)))
-            (let* ((begin (save-excursion (org-end-of-meta-data) (point)))
+            (let* ((line (buffer-substring (line-beginning-position) (line-end-position)))
+                   ;; Shown as source, the heading is part of what is shown; else it stays put, atop its contents.
+                   (shown? (plist-get switches :verbatim))
+                   (begin (if shown? (point) (save-excursion (org-end-of-meta-data) (point))))
                    (end (save-excursion (org-end-of-subtree t t) (point)))
-                   (contents (buffer-substring begin end)))
-              (when (and (or (plist-get switches :folded) (plist-get switches :boxed))
+                   (contents (buffer-substring (save-excursion (org-end-of-meta-data) (point)) end)))
+              (when (and (not shown?) (or (plist-get switches :folded) (plist-get switches :boxed))
                          (string-match (concat "^" org-outline-regexp) contents))
                 (user-error "Section “%s” is :folded or :boxed, as a block, which cannot hold its subsection “%s”"
-                            title (string-trim (substring contents (match-beginning 0) (string-search "\n" contents (match-beginning 0))))))
+                            title (string-trim (substring contents (match-beginning 0)
+                                                          (string-search "\n" contents (match-beginning 0))))))
               (delete-region begin end)
               (goto-char begin)
               (insert (string-trim-right (org--block-with-switches title (org-plist-delete switches :when) backend
-                                                                   contents #'identity))
+                                                                   contents #'identity nil
+                                                                   (lambda (contents) (org--heading-source line contents))))
                       "\n")))
           (set-marker heading nil))))))
 

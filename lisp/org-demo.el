@@ -103,7 +103,26 @@ and so are the snapshots of inner demos, which are our bookkeeping, not what the
                            (replace-regexp-in-string org-demo--snapshot-regexp "" (org--block-switch-site-contents site))))
                (contents (-if-let (bindings (plist-get switches :let)) (org--block-let bindings contents backend) contents)))
     (org-unescape-code-in-string
-     (if (plist-get switches :ignore) contents (org--block-source name (string-trim-right contents) header)))))
+     (cond ((plist-get switches :ignore) contents)
+           ((eq (nth 6 site) 'section) (org--heading-source (org-demo--heading-line site) (string-trim-right contents)))
+           (t (org--block-source name (string-trim-right contents) header))))))
+
+(defun org-demo--heading-line (site)
+  "Returns the heading line, as written, of SITE's section."
+  (save-excursion (goto-char (car site)) (buffer-substring (line-beginning-position) (line-end-position))))
+
+(defun org-demo--section-site ()
+  "Returns the site of the section whose heading point is on, as `org--block-switch-site' does a block's; else nil.
+It is (BEGIN END 0 TITLE nil SWITCHES section BODY): BEGIN at its heading, BODY below its drawer, and END after its
+last subsection's text ---before its snapshot, if any, which C-c C-c leaves just before the next heading."
+  (-when-let (switches (org--heading-switches-at-point))
+    (let* ((begin (line-beginning-position))
+           (body (save-excursion (org-end-of-meta-data) (point)))
+           (end (save-excursion (org-end-of-subtree t t) (skip-chars-backward " \t\n") (max body (point))))
+           (text (buffer-substring body end)))
+      (when (let ((case-fold-search t)) (string-match (concat "\\(?:" org-demo--snapshot-regexp "\\)\\'") text))
+        (setq end (+ body (match-beginning 0))))
+      (list (copy-marker begin) (copy-marker end t) 0 (org-get-heading t t t t) nil switches 'section (copy-marker body)))))
 
 (defvar org-demo--heads nil
   "What the blocks of the last `org-demo--export' need atop the document: (LATEX-HEADS HTML-HEADS).")
@@ -173,12 +192,15 @@ END is the end of its :end: line; RENDERINGS is an alist (BACKEND . TEXT), from 
                    where backend)))))
 
 (defun org-demo--sites (&optional outermost)
-  "↦ the `org--block-switch-site' of each :demo block of the buffer, the last first; if OUTERMOST, sans those within others."
+  "↦ the `org--block-switch-site' of each :demo block, or section, of the buffer, the last first; if OUTERMOST, sans
+those within others."
   (let (sites)
     (org-element-map (org-element-parse-buffer 'element) org--switch-block-types
       (lambda (block)
         (let ((site (org--block-switch-site block)))
           (when (org-demo--site-p site) (push site sites)))))
+    (org-map-entries (lambda () (let ((site (org-demo--section-site))) (when (org-demo--site-p site) (push site sites)))))
+    (setq sites (sort sites (lambda (a b) (> (car a) (car b)))))
     (if (not outermost) sites
       (--remove (let ((inner it)) (--some (and (< (car it) (car inner)) (<= (nth 1 inner) (nth 1 it))) sites)) sites))))
 
@@ -214,6 +236,15 @@ Every snapshotted backend is checked; a demo sans snapshot, or a `live' one, che
            for site = (org--block-switch-site block)
            when (org-demo--site-p site) return site))
 
+(defun org-demo--section-site-at-point ()
+  "Returns the site of the innermost :demo section around point; else nil."
+  (unless (org-before-first-heading-p)
+    (save-excursion
+      (org-back-to-heading t)
+      (let (site)
+        (while (and (not (org-demo--site-p (setq site (org-demo--section-site)))) (org-up-heading-safe)))
+        (and (org-demo--site-p site) site)))))
+
 (defun org-demo--refresh-site (site)
   "Snapshot what SITE's demo renders to, along each of `org-demo-backends', in a #+RESULTS: drawer after it."
   (pcase-let* ((`(,_ ,end ,indent) site)
@@ -243,6 +274,17 @@ Every snapshotted backend is checked; a demo sans snapshot, or a `live' one, che
       (org-demo--refresh-site site)
       (message "Snapshot taken, along %s" (mapconcat #'symbol-name org-demo-backends " and "))
       t)))
+
+(defun org-demo-refresh-section ()
+  "Snapshots what the :demo section around point renders to, as `org-demo-refresh' does a block's; nil sans one.
+It runs only where Org's own C-c C-c has nothing to do, so a table or checkbox within the section keeps its own."
+  (-when-let (site (and (not current-prefix-arg) (derived-mode-p 'org-mode) (org-demo--section-site-at-point)))
+    (unless (org-demo--live-p site)
+      (org-demo--refresh-site site)
+      (message "Snapshot taken, along %s" (mapconcat #'symbol-name org-demo-backends " and "))
+      t)))
+
+(add-hook 'org-ctrl-c-ctrl-c-final-hook #'org-demo-refresh-section)
 
 (defun org-demo-refresh-buffer ()
   "Snapshot every :demo block of the buffer, as C-c C-c on each would; inner ones first, as they are their outer's source."

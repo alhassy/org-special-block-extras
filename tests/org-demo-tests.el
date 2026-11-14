@@ -164,5 +164,30 @@ Bye
 (deftest "every demo of tests/demos.org, those that are tests rather than docs, renders as its snapshot" [demo]
   (should-not (org-demo-failures (expand-file-name "~/org-special-block-extras/tests/demos.org"))))
 
+(org-deftest "a section's :demo shows it as written, beside what it renders to; C-c C-c within it takes its snapshot" [demo sections]
+  :text "
+* Greeting
+:PROPERTIES:
+:demo: t
+:END:
+Hi *there*
+
+* After
+Untouched."
+  :at "Hi"
+  (org-ctrl-c-ctrl-c)
+  (should (re-search-forward "^#\\+RESULTS\\[[[:xdigit:]]\\{10\\}\\]:" nil t))
+  ;; The snapshot sits before the next heading, within the section, yet apart from its source.
+  (should (< (point) (save-excursion (search-forward "* After"))))
+  (should-not (org-demo-failures))
+  (let ((html (org-export-as 'html nil nil t)))
+    (should (string-match-p "What You Write" html))
+    (should (string-match-p "\\* Greeting\nHi \\*there\\*" html))
+    (should (string-match-p "What You Get" html))
+    (should (string-match-p "<b>there</b>" html))
+    (should (string-match-p "Untouched" html)))
+  (search-forward "<b>there</b>") (replace-match "<b>Here</b>")
+  (should (string-match-p "The Greeting :demo on line" (car (org-demo-failures)))))
+
 (provide 'org-demo-tests)
 ;;; org-demo-tests.el ends here

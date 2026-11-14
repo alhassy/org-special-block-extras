@@ -444,5 +444,64 @@ It is 42.
 Douglas Adams.")
                 :type 'user-error))
 
+(deftest "a heading's :verbatim shows its section as written, heading and subsections included, sans its switches" [switches sections]
+  (let ((org-html-htmlize-output-type nil))
+    (should (equal (org-export-string "
+* Answer
+:PROPERTIES:
+:verbatim: t
+:END:
+It is *42*.
+** Why
+Douglas Adams.")
+                   "<div class=\"org-src-container\">
+<pre class=\"src src-org\"><code>* Answer
+It is *42*.
+** Why
+Douglas Adams.
+</code></pre>
+</div>
+"))))
+
+(deftest "a heading's :verbatim and :folded fold away its source, subsections and all, titled by the heading" [switches sections]
+  (let ((html (org-export-string "
+* Answer
+:PROPERTIES:
+:verbatim: t
+:folded: t
+:END:
+It is 42.
+** Why
+Douglas Adams.")))
+    (should (string-match-p "<summary>.*Answer.*</summary>" html))
+    (should (string-match-p "\\*\\* Why" html))))
+
+(deftest "a heading's :ignore bypasses the section's own behaviour: its tags that an org-deftag defines" [switches sections]
+  (should (string-match-p "<details" (org-export-string "
+* Stuck? :details_Hint:
+Try induction.")))
+  (let ((html (org-export-string "
+* Stuck? :details_Hint:
+:PROPERTIES:
+:ignore: t
+:END:
+Try induction.")))
+    (should-not (string-match-p "<details\\|details_Hint" html))
+    (should (string-match-p "Stuck?" html))
+    (should (string-match-p "Try induction." html))))
+
+(org-deftest "C-c C-c within a section runs its :C-c_C-c switch, or an ancestor's, where Org's own has nothing to do" [switches sections]
+  :text "
+* Quiz
+:PROPERTIES:
+:C-c_C-c: (setq org-block-switches-tests--graded t)
+:END:
+** Question
+What is 1 + 1?"
+  :at "What is"
+  (dlet ((org-block-switches-tests--graded nil) (org-defblock-evaluate-switches t))
+    (org-ctrl-c-ctrl-c)
+    (should org-block-switches-tests--graded)))
+
 (provide 'org-block-switches-tests)
 ;;; org-block-switches-tests.el ends here

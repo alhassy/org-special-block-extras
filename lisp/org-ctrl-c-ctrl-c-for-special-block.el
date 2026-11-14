@@ -30,6 +30,7 @@
 (require 'dash)
 (require 'org)
 (require 'org-special-block-at-point)
+(require 'org-block-switches)
 
 (declare-function org--block-let "org-block-switches")
 
@@ -106,6 +107,29 @@ Within a table, C-c C-c is Org's own, aligning it; on its #+TBLFM: line, computi
         (org--block-cc-switch))))
 
 (add-hook 'org-ctrl-c-ctrl-c-hook #'org--block-cc-dispatcher)
+
+(defun org--section-cc-switch ()
+  "Runs the :C-c_C-c switch of the innermost section around point, from its drawer; nil when it has none.
+
+  * Quiz
+  :PROPERTIES:
+  :C-c_C-c: (message \"Score: 3/4\")
+  :END:
+
+As a block's, the action is a function's name or a form; it runs only where Org's own C-c C-c has nothing to do,
+so a table, checkbox, or heading's tags keep theirs.  The Lisp runs as `org-defblock-evaluate-switches' permits."
+  (unless (org-before-first-heading-p)
+    (-when-let (action (save-excursion
+                         (org-back-to-heading t)
+                         (let (value)
+                           (while (and (not (setq value (org-entry-get nil "C-c_C-c"))) (org-up-heading-safe)))
+                           (and value (org--heading-switch-value value)))))
+      (if (and (symbolp action) (fboundp action))
+          (if (commandp action) (call-interactively action) (funcall action))
+        (org--block-eval action nil))
+      t)))
+
+(add-hook 'org-ctrl-c-ctrl-c-final-hook #'org--section-cc-switch)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
