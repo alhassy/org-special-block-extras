@@ -159,9 +159,21 @@
 ;;; Export file names
 
 (deftest "exporting to a non-HTML backend names the image after the dot source, so re-exports reuse one file"
-  (let ((dot (org--graph-raw->dot "
-+ A" nil))
-        (export (lambda () (org-block/graph 'latex "
+  (let* ((default-directory (make-temp-file "org-graph-" t "/"))
+         (hash (substring (md5 (org--graph-raw->dot "
++ A" nil)) 0 12))
+         (export (lambda (backend) (org-block/graph backend "
 + A" nil nil))))
-    (should (equal (funcall export) (funcall export)))
-    (should (s-contains-p (format ":file graph-%s.png" (substring (md5 dot) 0 12)) (funcall export)))))
+    (should (equal (funcall export 'ascii) (funcall export 'ascii)))
+    (should (s-contains-p (format ":file graph-%s.png" hash) (funcall export 'ascii)))
+    (should (s-contains-p (format "\\includegraphics{graph-%s.pdf}" hash) (funcall export 'latex)))))
+
+(deftest "exporting to LaTeX includes the graph as a PDF, by dot, shrunk only when wider than the line"
+  (let* ((default-directory (make-temp-file "org-graph-" t "/"))
+         (latex (org-block/graph 'latex "
++ A
+  + B" nil nil)))
+    (should (string-match "\\\\includegraphics{\\(graph-[0-9a-f]+\\.pdf\\)}" latex))
+    (should (file-exists-p (match-string 1 latex)))
+    (should (s-contains-p "\\ifdim\\wd0>\\linewidth\\resizebox{\\linewidth}{!}{\\box0}" latex))
+    (should-not (s-contains-p "digraph" latex))))

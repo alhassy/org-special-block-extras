@@ -36,6 +36,7 @@ README refines that one sentence, one gap at a time, and every example stays wit
 parsing ~1 * 2 + 3 - 4~, from characters to tokens to trees.
 
 A wide graph shrinks to fit the page; a click on it shows it full size, and another shrinks it back.
+LaTeX export draws it too, as a vector PDF by ~dot~, shrunk likewise to fit the line.
 
 ** Setup
 

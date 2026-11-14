@@ -423,7 +423,8 @@ dot source, so re-exporting an unchanged graph rewrites one file rather than add
 For HTML export: embeds an inline <svg> element, whose nodes' and arcs' tooltips hover as prose's do, by tooltips.js;
 under :svg nil, an inline base64 PNG, sans tooltips.  Either fits the page's width, a click toggling its full size.
 For Markdown, it writes the image file and links it, as for a named graph.
-For other backends it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
+For LaTeX, dot writes a PDF beside the .tex, which \\includegraphics shows, shrunk only to fit the line's width;
+for other backends, or sans dot, it emits a #+begin_src dot block.  In HTML, a node's [[*Section]] link leads to that section.
 
 With :smartdiagram TYPE ---constellation, flow:horizontal, descriptive, and so on--- LaTeX's smartdiagram package
 typesets the list instead, as `org--smartdiagram' says: the #+graph: rows are \\smartdiagramset's, and prose after the
@@ -516,6 +517,12 @@ Example:
                                                                       (org--graph-raw->dot raw title args))
                                                                   dot))))
            (delete-file tmp))))
+      ;; A vector PDF, by dot, beside the .tex; shrunk to the line's width only when wider, as HTML fits the page.
+      ((guard (and (org-export-derived-backend-p backend 'latex)
+                   (funcall render "pdf" (concat (file-name-sans-extension outfile) ".pdf"))))
+       (format (concat "\\begin{center}\\setbox0\\hbox{\\includegraphics{%s}}"
+                       "\\ifdim\\wd0>\\linewidth\\resizebox{\\linewidth}{!}{\\box0}\\else\\box0\\fi\\end{center}")
+               (concat (file-name-sans-extension outfile) ".pdf")))
       (_
        ;; `org-parse' lets Org export the src block, rather than emit its raw syntax into the output.
        (org-parse (if smart (format "#+begin_src latex\n%s\n#+end_src" dot)
