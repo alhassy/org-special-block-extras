@@ -30,12 +30,10 @@
 (require 'dash)
 (require 'org-defblock)
 (require 'org-color-links)
+(require 'org-markup-links)
 
-(declare-function org-docs-get "org-links")
-(declare-function org--docs-plain-p "org-links")
 (declare-function org--tooltip-template "org-links")
 (declare-function org--latex-margin-note "org-margin-blocks")
-(defvar org--docs-actually-used)
 
 ;;;; Atoms ---what red:ATOM colours, and what an ATOM[fn::…] tip hovers over
 
@@ -128,24 +126,20 @@ follow the maths.  TIP is Org, or PLAIN? text, as for `org--html-tooltip'.
               (format "{%s}^{\\textnormal{\\the\\numexpr\\value{footnote}+%d\\relax}}" math (length org--math-tips))))
     (_ math)))
 
-(defvar org-math-links
-  (append
-   (--map (cons (symbol-name it) (lambda (path desc) (format "{\\color{%s}%s}" it (or desc path))))
-          org--named-colors)
-   `(("color" . ,(lambda (path desc) (format "{\\color%s%s}" (org--math-color path) desc)))
-     ("highlight" . ,(lambda (path desc) (format "\\colorbox{%s}{$%s$}" (or (org-string-nw-p path) "yellow") desc)))
-     ;; Sans description, it has no tip; unless it follows an atom, which `org--math-footnotes' sees to.
-     ("tooltip" . ,(lambda (path desc) (if desc (org--math-tip path desc) path)))
-     ("doc" . ,(lambda (path desc)
-                 (-let [(name docs) (org-docs-get path)]
-                   ;; As a doc: link in prose, for the glossary that show:GLOSSARY lists; in LaTeX, that is all.
-                   (add-to-list 'org--docs-actually-used (list path name docs))
-                   (if (eq org--math-backend 'latex) (or desc name)
-                     (org--math-tip (or desc name) docs (org--docs-plain-p path))))))
-     ("https" . ,(lambda (path desc) (format "\\href{https:%s}{%s}" path (or desc path))))
-     ("http" . ,(lambda (path desc) (format "\\href{http:%s}{%s}" path (or desc path))))))
-  "Link types that maths knows, each TYPE ↦ (λ PATH DESC ↦ LaTeX); DESC is nil for [[TYPE:PATH]] and TYPE:PATH.
-An unknown TYPE shows its DESC, else its PATH.")
+(defun org--math-meaning (meaning shown)
+  "Returns SHOWN, LaTeX maths, rendered as MEANING says, a plist of `org-markup-links'; e.g., (:color \"red\") and
+“x” give {\\color{red}x}.  A glossary's tip shows only in HTML, as LaTeX lists the glossary at the end."
+  (-let [(&plist :color :background :url :tip :plain :glossary) meaning]
+    (--> shown
+         (if color (format "{\\color%s%s}" (org--math-color color) it) it)
+         (if background (format "\\colorbox{%s}{$%s$}" background it) it)
+         (if url (format "\\href{%s}{%s}" url it) it)
+         (if (and tip (not (and glossary (eq org--math-backend 'latex)))) (org--math-tip it tip plain) it))))
+
+(defun org--math-link (type path desc)
+  "Returns the LaTeX of a TYPE link to PATH, described by DESC, in maths: as `org-markup-links' says, else DESC or PATH."
+  (let ((meaning (org-markup-link-meaning type path desc)))
+    (org--math-meaning meaning (or (plist-get meaning :text) desc path))))
 
 ;;;; Emphasis ---Org's markers, as maths' commands, or text's within a \text{…}
 
@@ -195,9 +189,9 @@ marker of its own, so it marks the ATOM before it."
           (insert (org--math-tip atom tip)))))))
 
 (defun org--math-match-plain-link (limit)
-  "Font-lock matcher: up to LIMIT, the next TYPE:ATOM of `org-math-links', group 1 its TYPE; else nil.
+  "Font-lock matcher: up to LIMIT, the next TYPE:ATOM of `org-markup-links', group 1 its TYPE; else nil.
 A web link's path is no maths, so it is only ever bracketed, [[https://…][…]]; whence https:/ is no TYPE:ATOM."
-  (let ((types (regexp-opt (--remove (member it '("http" "https")) (mapcar #'car org-math-links))))
+  (let ((types (regexp-opt (--remove (member it '("http" "https")) (mapcar #'car org-markup-links))))
         found)
     (while (and (not found) (with-syntax-table org--math-syntax (re-search-forward (format "\\_<\\(%s\\):" types) limit t)))
       (-when-let* ((link (list (match-beginning 0) (match-beginning 1) (match-end 1)))
@@ -217,7 +211,7 @@ A web link's path is no maths, so it is only ever bracketed, [[https://…][…]
         (let ((atom (buffer-substring (1+ atom-start) (point))))
           (delete-region start (point))
           (goto-char start)
-          (insert (funcall (cdr (assoc type org-math-links)) atom nil)))))))
+          (insert (org--math-link type atom nil)))))))
 
 (defconst org--math-section-link-re "\\`\\(?:[*#]\\|id:\\)"
   "A link to a section: [[*Heading]], [[#custom-id]], or [[id:ID]].")
@@ -243,12 +237,11 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
       (while (re-search-backward org-link-bracket-re nil t)
         (let* ((start (match-beginning 0)) (end (match-end 0))
                (link (match-string 1)) (desc (match-string 2))
-               (type (car (split-string link ":"))) (path (string-remove-prefix (concat type ":") link))
-               (render (cdr (assoc type org-math-links))))
+               (type (car (split-string link ":"))) (path (string-remove-prefix (concat type ":") link)))
           (delete-region start end)
           (goto-char start)
           (save-excursion (insert (cond ((string-match-p org--math-section-link-re link) (org--math-section-link link desc))
-                                        (render (funcall render path desc))
+                                        ((assoc type org-markup-links) (org--math-link type path desc))
                                         (t (or desc link)))))))
       (goto-char (point-min))
       (org--math-plain-links)
@@ -293,10 +286,10 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
 
 (defun org--math-unlink (limit)
   "Font-lock matcher that matches nothing: up to LIMIT, it clears Org's look of each plain TYPE: link of
-`org-math-links', since Org reads red:a}^{cyan:b as one link; `org--math-match-plain-link' then shows the maths' own.
+`org-markup-links', since Org reads red:a}^{cyan:b as one link; `org--math-match-plain-link' then shows the maths' own.
 Org prepended the link's face to those beneath, LaTeX's, which we keep."
   (while (re-search-forward org-link-plain-re limit t)
-    (-when-let* ((type (car (assoc (match-string 1) org-math-links)))
+    (-when-let* ((type (car (assoc (match-string 1) org-markup-links)))
                  (beg (match-beginning 0)) (end (match-end 0))
                  (link-face (org--math-link-type-face type (match-string 2))))
       (remove-text-properties beg end '(mouse-face nil keymap nil help-echo nil htmlize-link nil))
@@ -307,6 +300,16 @@ Org prepended the link's face to those beneath, LaTeX's, which we keep."
                                                   (t faces)))
           (setq beg next)))))
   nil)
+
+;;;; The tips that follow maths
+
+(defun org--math-tips-after (backend)
+  "Returns what follows maths for its tooltips, `org--math-tips', along BACKEND: in HTML, their <template>s, since
+MathJax keeps none within; in LaTeX, their margin notes, since maths holds no \\marginpar."
+  (cond ((null org--math-tips) "")
+        ((eq backend 'latex) (string-join (reverse org--math-tips)))
+        (t (org-html-head-require 'org--tooltip-html-head)
+           (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) ""))))
 
 ;;;; Inline maths ---$…$ reads our markup too
 
@@ -323,12 +326,9 @@ Org's LaTeX transcoder strips the delimiters, then adds its own about the result
              (org--math-tips nil)
              (marked (concat open (org--math-markup math backend) close))
              (out (funcall transcode (org-element-put-property (org-element-copy fragment) :value marked) contents info)))
-        (cond ((null org--math-tips) out)
-              ((eq backend 'html)
-               (org-html-head-require 'org--tooltip-html-head)
-               (concat out (string-join (reverse org--math-tips))))
+        (cond ((or (null org--math-tips) (eq backend 'html)) (concat out (org--math-tips-after backend)))
               ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for the notes, then reopen.
-              (t (concat out "\\)" (string-join (reverse org--math-tips)) "\\(")))))))
+              (t (concat out "\\)" (org--math-tips-after backend) "\\(")))))))
 
 (provide 'org-math-markup)
 ;;; org-math-markup.el ends here

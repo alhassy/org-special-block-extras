@@ -124,7 +124,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
 
 + red:ATOM colours an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
   delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
-  [[color:#ff0066][…]], highlight:, web links, and tooltip: and doc:, which hover in HTML; see `org-math-links'.
+  [[color:#ff0066][…]], highlight:, web links, and tooltip: and doc:, which hover in HTML; see `org-markup-links'.
 + ATOM[fn::TIP], or ATOM[[tooltip:TIP]], is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
   tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.  ATOM[fn:NAME]'s TIP is its “[fn:NAME] TIP”
   definition, elsewhere in the buffer; so one long tip may serve many atoms.
@@ -177,11 +177,9 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
                          (org-parse (mapconcat (lambda (d) (replace-regexp-in-string "^" "#+latex_header: " d))
                                                definitions "\n")))
                        shown
-                       ;; The margin notes of the maths' tooltips, after it, as maths holds no \marginpar.
-                       (string-join (reverse org--math-tips))))
+                       (org--math-tips-after backend)))
               ;; MathJax reads the page's text, wherein a < would begin an HTML tag.
-              (t (when org--math-tips (org-html-head-require 'org--tooltip-html-head))
-                 ;; Hints fold on a click, by their tip and script; see `org--math-hint-styled'.
+              (t ;; Hints fold on a click, by their tip and script; see `org--math-hint-styled'.
                  (when (and shown (string-match-p "osbe-hint" shown))
                    (org-html-head-require 'org--tooltip-html-head)
                    (org-html-head-require 'org--math-hint-html-head))
@@ -189,8 +187,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
                            (format "<p style=\"display:none\">\\[%s\\]</p>\n"
                                    (org-html-encode-plain-text (string-join definitions "\n"))))
                          (and shown (org-html-encode-plain-text shown))
-                         ;; The tips of the maths' tooltips, beside it, since MathJax keeps no <template>.
-                         (mapconcat (lambda (tip) (concat "\n" tip)) (reverse org--math-tips) ""))))))))
+                         (org--math-tips-after backend))))))))
 
 ;;;; In Emacs ---cdlatex reads a math block as maths
 

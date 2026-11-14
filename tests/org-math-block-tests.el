@@ -313,10 +313,12 @@ x[fn::the current element] < 1" nil))
 the current element</p></template>
 #+end_export")
 
-(deftest "in maths, ATOM[[tooltip:TIP]], sans description, is ATOM[fn::TIP]; a lone one is its text, sans tooltip"
+(deftest "in maths, ATOM[[tooltip:TIP]], sans description, is ATOM[fn::TIP]; a lone one hovers over itself, as in prose"
   (should (equal (org-math-tests--tips "violet:x[[tooltip:The current element]] = a" 'html)
                  (org-math-tests--tips "violet:x[fn::The current element] = a" 'html)))
-  (should (equal (org-math-tests--tips "{} + [[tooltip:Alone]]" 'html) '("{} + Alone"))))
+  (should (equal (org-math-tests--tips "{} + [[tooltip:Alone]]" 'html)
+                 (org-math-tests--tips "{} + [[tooltip:Alone][Alone]]" 'html)))
+  (should (equal (org-math-tests--tips "x = tooltip:XXX" 'html) (org-math-tests--tips "x = [[tooltip:XXX][XXX]]" 'html))))
 
 (deftest "in maths, ATOM[fn:NAME] hovers NAME's definition over ATOM, as ATOM[fn::TIP] hovers TIP; one tip serves many"
   (with-temp-buffer

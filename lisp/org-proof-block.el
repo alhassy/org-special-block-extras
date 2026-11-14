@@ -23,6 +23,7 @@
 ;;; Code:
 
 (require 'org-defblock)
+(require 'org-math-markup)
 
 (defun org--parse-plain-list (string block)
   "(STRING, BLOCK) ↦ `org-list-to-lisp' of the Org plain list STRING; else a `user-error' naming the BLOCK."
@@ -50,7 +51,7 @@
           (name (format "\\frac{}{%s}[%s]" conclusion name))
           (t conclusion))))
 
-(org-defblock tree (&allow-other-keys :html-head (mathjax) :manual "#Aligned-equations" &context raw-contents)
+(org-defblock tree (&allow-other-keys :html-head (mathjax) :manual "#Aligned-equations" &context backend raw-contents)
               "Write a proof tree using Org-lists.
 
 To get
@@ -74,8 +75,9 @@ and (indented) child premises of its own.
 
 If there are multiple trees, they are shown one after the other.
 
-The text in this block should be considered LaTeX;
-as such, Org markup is not recognised.
+The text in this block is maths, as a math block's is; so our links,
+such as red:x and [[tooltip:x][a tip]], and Org's *markup* are LaTeX's;
+see `org--math-markup'.
 
 A proof tree, derivation, is then just a deeply nested
 itemisation.  For instance, assuming P = Q(X), X = Y, Q(Y) = R,
@@ -98,10 +100,12 @@ the following proves P = R.
   #+end_tree
 
 In Markdown, each tree is a $$…$$ display, since GitHub's maths knows no \\[…\\]."
-              (-let [md? (org-export-markdown-p)]
-                (mapconcat (lambda (it) (format (if md? "$$%s$$" "\\[%s\\]") (org--list-to-math it)))
-                           (cdr (org--parse-plain-list raw-contents "tree"))
-                           (if md? "\n\n" ""))))
+              (let ((md? (org-export-markdown-p)) (org--math-tips nil))
+                (concat (mapconcat (lambda (it) (format (if md? "$$%s$$" "\\[%s\\]")
+                                                        (org--math-markup (org--list-to-math it) backend)))
+                                   (cdr (org--parse-plain-list raw-contents "tree"))
+                                   (if md? "\n\n" ""))
+                        (org--math-tips-after backend))))
 
 (provide 'org-proof-block)
 ;;; org-proof-block.el ends here

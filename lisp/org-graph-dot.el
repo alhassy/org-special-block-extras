@@ -140,7 +140,9 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
   (-let* (((preamble stmts ctx) (org--graph-parse raw-contents kwdargs))
           (directed (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed)))
           ;; Under `:notes inline', the graph's own notes sit beneath its title.
-          (title    (org--graph-with-body (unless (s-blank-str-p main-arg) main-arg) (plist-get preamble :body)))
+          ;; The title is labelled as an item's text is, its markup, colours, and maths so too.
+          (title    (org--graph-with-body (unless (s-blank-str-p main-arg) (plist-get (org--graph-item-text-sans-tags main-arg) :label))
+                                          (plist-get preamble :body)))
           (header   (org--graph-header-rows kwdargs)))
     (setq header (plist-put header :graph-rows (append (when title `(("label" ,title))) (plist-get header :graph-rows))))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
