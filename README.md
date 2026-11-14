@@ -81,6 +81,12 @@ For instance, the following folds every `src` block into a `<details>` on HTML e
 The [developer's guide](https://alhassy.com/org-special-block-extras-developers-guide) shows that every block and
 link in this package is made with these very tools; so a new one of our own is a `defun` away.
 
+**Basic examples live in the tests**, which pair a block's definition, its Org input, and its expected output:
+each family of blocks has its own file and tests, e.g., [`lisp/org-callout-blocks.el`](lisp/org-callout-blocks.el)
+and [`tests/org-callout-blocks-tests.el`](tests/org-callout-blocks-tests.el); and
+[`tests/demos.org`](tests/demos.org) ---[live](https://alhassy.com/org-special-block-extras-demos)--- shows each
+example beside its snapshotted export.
+
 ## 📦 Installation
 
 ```emacs-lisp
