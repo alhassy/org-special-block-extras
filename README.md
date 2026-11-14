@@ -95,7 +95,9 @@ Or use `M-x org-special-block-extras-mode` to turn it on or off. Graphs need [Gr
 
 ## 🧪 Minimal working example
 
-A tiny Lisp function, a peek at its values, a picture of its loop, and a proof of what it computes:
+A tiny Lisp function, a peek at its values, a picture of its loop, and a proof of what it computes. Its source is
+[`minimal-working-example.org`](minimal-working-example.org); its **[live HTML export](https://alhassy.com/org-special-block-extras-mwe)** is where we
+hover the tooltips, unfold the `details`, and click the proof's hints.
 
 ```org
 #+title: Summing odd numbers
@@ -144,16 +146,16 @@ The [[squares][squares]] are no coincidence:
 Hence, by [[Odd]], =(sum-odds n)= is $n^2$. badge:sum-odds|n²|teal
 ```
 
-Here is its HTML export ---the `details` block unfolded; hover over *odd*, *cl-loop*, or `C-x C-e` for their
-tooltips, and click a hint to fold it:
+Here is its HTML export, with the `details` block unfolded; click it to [interact with it live](https://alhassy.com/org-special-block-extras-mwe):
 
-![The minimal working example, exported to HTML](images/minimal-working-example.png)
+[![The minimal working example, exported to HTML](images/minimal-working-example.png)](https://alhassy.com/org-special-block-extras-mwe)
 
 ## 📚 Further reading
 
 All articles on the package live under [#org-special-block-extras](https://alhassy.com/tag-org-special-block-extras.html):
 - [Write Once, Export Everywhere](https://alhassy.com/org-special-block-extras) ---the package at a glance.
 - [The block and link types](https://alhassy.com/org-special-block-extras-blocks-and-links) ---the guide.
+- [A minimal working example](https://alhassy.com/org-special-block-extras-mwe) ---the one above, live.
 - [Org lists, drawn as Graphviz graphs](https://alhassy.com/org-special-block-extras-graphs) ---the `graph` block, a feature at a time.
 - [Make your own blocks and links](https://alhassy.com/org-special-block-extras-developers-guide) ---the developer's guide.
 - [Tooltips for glossaries, dictionaries, and documentation](https://alhassy.com/tooltips-for-glossaries-dictionaries-and-documentation) ---`doc:` and `documentation`.
