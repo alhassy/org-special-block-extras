@@ -1,4 +1,4 @@
-# 🧙‍♂️ *Write Once, Export Everywhere*: Say Hello to `org-special-block-extras`
+# 🧙‍♂️ `org-special-block-extras`: *Write once, export everywhere*
 
 <a id="Minimal-working-example"></a>
 
