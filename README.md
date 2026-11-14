@@ -160,9 +160,9 @@ The [[squares][squares]] are no coincidence:
 Hence, by [[Odd]], =(sum-odds n)= is $n^2$. badge:sum-odds|n²|teal
 ```
 
-Here it is in Emacs (left) and exported to HTML (right); click it to [interact with it live](https://alhassy.com/org-special-block-extras-mwe):
+Here it is exported to PDF (left), in Emacs (middle), and exported to HTML (right); click it to [interact with it live](https://alhassy.com/org-special-block-extras-mwe):
 
-[![The minimal working example, in Emacs and exported to HTML](images/minimal-working-example.png)](https://alhassy.com/org-special-block-extras-mwe)
+[![The minimal working example, in Emacs and exported to PDF and HTML](images/minimal-working-example.png)](https://alhassy.com/org-special-block-extras-mwe)
 
 ## 📚 Further reading
 
