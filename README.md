@@ -38,8 +38,15 @@ Each block is demoed in [the guide](https://alhassy.com/org-special-block-extras
 | [`org-demo`](https://alhassy.com/org-special-block-extras-blocks-and-links#demos) | Show Org markup alongside its rendered result ---ideal for tutorials. |
 
 **🎛 Switch any block**: `:when (eq backend 'html)`, `:noexport t`, `:let (N 7)`, `:boxed "Title"`, `:folded t`,
-`:verbatim t`, and `:C-c_C-c ACTION` work on every block ---ours, yours, or Org's own `src` and `quote` blocks;
-see [switches](https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block).
+`:verbatim t`, and `:C-c_C-c ACTION` work on every block ---ours, yours, or Org's own `src` and `quote` blocks.
+They work on every section too, as properties; e.g., this section is only in the HTML export:
+```org
+* For readers online
+:PROPERTIES:
+:when: (eq backend 'html)
+:END:
+```
+See [switches](https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block).
 
 ## 🔗 Ready-to-Use Custom Links
 

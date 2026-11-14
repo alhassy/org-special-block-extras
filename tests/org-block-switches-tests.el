@@ -356,5 +356,93 @@ Hi *there*.
 </div>
 "))))
 
+;;; Switches on sections, by property drawer
+
+(deftest "a heading's property value reads as Lisp when wholly Lisp, else stays a string" [switches sections]
+  (should (equal (org--heading-switch-value " (eq backend 'html) ") '(eq backend 'html)))
+  (should (equal (org--heading-switch-value "") t))
+  (should (equal (org--heading-switch-value "t") t))
+  (should (equal (org--heading-switch-value "Peek at it") "Peek at it")))
+
+(deftest "a heading whose :when form is nil axes its whole subtree, heading and subsections included" [switches sections]
+  (let ((html (org-export-string "
+* Kept
+Before.
+* Print only
+:PROPERTIES:
+:when: (eq backend 'latex)
+:END:
+Only in print.
+** Deeper
+Also only in print.
+* After
+Still here.")))
+    (should (string-match-p "Before" html))
+    (should (string-match-p "Still here" html))
+    (should-not (string-match-p "Print only\\|Only in print\\|Deeper" html))))
+
+(deftest "a heading whose :when form is non-nil exports as usual; the form sees `backend', and the key's case is moot" [switches sections]
+  (let ((html (org-export-string "
+* Web only
+:PROPERTIES:
+:WHEN: (string= backend \"html\")
+:END:
+Only online.")))
+    (should (string-match-p "Web only" html))
+    (should (string-match-p "Only online" html))))
+
+(deftest "a heading marked :noexport t axes its subtree" [switches sections]
+  (should-not (string-match-p "draft" (org-export-string "
+* Notes to self
+:PROPERTIES:
+:noexport: t
+:END:
+A draft thought."))))
+
+(deftest "a heading's :let substitutes throughout its subtree: its text, its blocks, and its subsections" [switches sections]
+  (let ((html (org-export-string "
+* Logic
+:PROPERTIES:
+:let: (-> \"⇒\")
+:END:
+p -> q
+#+begin_red
+q -> r
+#+end_red
+** Transitivity
+p -> r")))
+    (should (string-match-p "p ⇒ q" html))
+    (should (string-match-p "q ⇒ r" html))
+    (should (string-match-p "p ⇒ r" html))
+    (should-not (string-match-p "->" html))))
+
+(deftest "a heading's :folded folds its section away, titled by the value, or by the heading for t" [switches sections]
+  (let ((html (org-export-string "
+* Answer
+:PROPERTIES:
+:folded: Peek at it
+:END:
+It is 42.")))
+    (should (string-match-p "<h2[^>]*>.*Answer</h2>" html))
+    (should (string-match-p "<details.*\n.*Peek at it" html))
+    (should (string-match-p "It is 42.\n</p>\n\n</details>" html)))
+  (should (string-match-p "<summary>.*Answer.*</summary>" (org-export-string "
+* Answer
+:PROPERTIES:
+:folded: t
+:END:
+It is 42."))))
+
+(deftest "a heading's :boxed and :folded refuse its subsections, which no block can hold" [switches sections]
+  (should-error (org-export-string "
+* Answer
+:PROPERTIES:
+:boxed: t
+:END:
+It is 42.
+** Why
+Douglas Adams.")
+                :type 'user-error))
+
 (provide 'org-block-switches-tests)
 ;;; org-block-switches-tests.el ends here

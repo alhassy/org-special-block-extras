@@ -3365,8 +3365,8 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
 - *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
 - *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
 - *🎛 Switch any block*: =:when (eq backend 'html)=, =:noexport t=, =:let (N 7)=, =:boxed "Title"=, =:folded t=, and
-  =:verbatim t=, and =:C-c_C-c ACTION= work on every block ---ours, yours, or Org's own src and quote blocks; see
-  [[#switches-for-every-block][switches]].
+  =:verbatim t=, and =:C-c_C-c ACTION= work on every block ---ours, yours, or Org's own src and quote blocks; and,
+  as properties, on every section, e.g., =:when: (eq backend 'html)=; see [[#switches-for-every-block][switches]].
 - badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
 - *🛠 Use =org-defblock=, =org-deflink= and =org-deftag=* ---Org, extended as one extends Lisp:
   each is declared like a ~cl-defun~, with =&optional= and =&key= arguments.
@@ -5694,7 +5694,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
   hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
 
-** Switches for every block: =:when=, =:let=, =:folded=, …
+** Switches for every block and section: =:when=, =:let=, =:folded=, …
   :PROPERTIES:
   :CUSTOM_ID: switches-for-every-block
   :END:
@@ -5795,6 +5795,21 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
   Switches are inherited as a src block's header-args are; e.g., =:header-args:red: :let (N 3)=
   in a heading's drawer gives every =red= block of its subtree that =:let=.
+
+  A section takes switches too, as properties of its own; e.g., the following section appears in
+  the PDF alone, its arrows typeset:
+  #+begin_src org :tangle no
+,* Notes for the printed handout
+:PROPERTIES:
+:when: (eq backend 'latex)
+:let: (-> "⇒")
+:END:
+Recall that p -> q.
+  #+end_src
+  A heading's =:noexport t=, or a =:when= whose form is nil, axes the whole subtree ---heading
+  and subsections included; =:let= substitutes throughout the subtree, its blocks included; and
+  =:folded= and =:boxed= wrap the section, which then may not have subsections, as no block can
+  hold a heading. A value that is not wholly Lisp is a string, as in =:folded: Peek at the answer=.
 
   A block that declares a keyword of the same name keeps it for itself; e.g., a block with
   its own =folded= argument receives =:folded= as usual. Since =:when=, =:let= and =:C-c_C-c=

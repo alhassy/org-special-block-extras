@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.11.09
+;; Version: 26.11.14
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8"))
 ;; Keywords: org, blocks, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -327,6 +327,70 @@ after, for the blocks of #+INCLUDE: files."
       ;; `sites' lists the last block first; inner blocks, beginning later, are so rewritten before outer ones.
       (dolist (site sites)
         (org--rewrite-block-switch-site site backend)))))
+
+;;;; Switches on sections: org--rewrite-heading-switches
+
+(defconst org--heading-switches '(:noexport :when :let :folded :boxed)
+  "The switches a heading's property drawer may give its section; the rest concern a block's own source.")
+
+(defun org--heading-switch-value (string)
+  "Returns the switch value a property's STRING denotes: the Lisp it reads as, when wholly; else STRING itself.
+By way of example, \"(eq backend \='html)\" reads as a form, \"t\" and \"\" as t, yet \"Peek at it\" stays a string."
+  (let ((string (string-trim string)))
+    (if (string-empty-p string) t
+      (pcase (ignore-errors (read-from-string string))
+        (`(,value . ,end) (if (= end (length string)) value string))
+        (_ string)))))
+
+(defun org--heading-switches-at-point ()
+  "Returns the plist of `org--heading-switches' that the property drawer of the heading at point gives, sans inheritance."
+  (cl-loop for key in org--heading-switches
+           for value = (org-entry-get nil (substring (symbol-name key) 1))
+           when value append (list key (org--heading-switch-value value))))
+
+(defun org--rewrite-heading-switches (backend)
+  "Applies the switches each heading's property drawer gives to its section, as BACKEND exports it; e.g.,
+
+  * Answers                             * Answers
+  :PROPERTIES:                   ↦      #+begin_details \"Peek?\"
+  :folded: Peek?                        The answer is 6.
+  :let: (N 6)                           #+end_details
+  :END:
+  The answer is N.
+
+A heading's :noexport, or a :when whose form is nil, axes its whole subtree, heading included; :let substitutes
+throughout the subtree; :folded and :boxed wrap the section, which then may not have subsections, as a block cannot
+hold a heading.  Each switch is axed from the drawer once applied, lest the pass after #+INCLUDE: apply it again."
+  (setq backend (org--base-backend backend))
+  (when (save-excursion (goto-char (point-min))
+                        (let ((case-fold-search t))
+                          (re-search-forward (format "^[ \t]*:%s:" (regexp-opt (--map (substring (symbol-name it) 1)
+                                                                                       org--heading-switches)))
+                                             nil t)))
+    (let (headings)
+      (org-map-entries (lambda () (when (org--heading-switches-at-point) (push (point-marker) headings))))
+      ;; `headings' lists the last heading first; subsections, beginning later, are so rewritten before their parents.
+      (dolist (heading headings)
+        (goto-char heading)
+        (let ((switches (org--heading-switches-at-point))
+              (title (org-get-heading t t t t)))
+          (dolist (key org--heading-switches) (org-entry-delete nil (substring (symbol-name key) 1)))
+          (if (or (plist-get switches :noexport)
+                  (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend))))
+              (delete-region (point) (save-excursion (org-end-of-subtree t t) (point)))
+            (let* ((begin (save-excursion (org-end-of-meta-data) (point)))
+                   (end (save-excursion (org-end-of-subtree t t) (point)))
+                   (contents (buffer-substring begin end)))
+              (when (and (or (plist-get switches :folded) (plist-get switches :boxed))
+                         (string-match (concat "^" org-outline-regexp) contents))
+                (user-error "Section “%s” is :folded or :boxed, as a block, which cannot hold its subsection “%s”"
+                            title (string-trim (substring contents (match-beginning 0) (string-search "\n" contents (match-beginning 0))))))
+              (delete-region begin end)
+              (goto-char begin)
+              (insert (string-trim-right (org--block-with-switches title (org-plist-delete switches :when) backend
+                                                                   contents #'identity))
+                      "\n")))
+          (set-marker heading nil))))))
 
 (provide 'org-block-switches)
 ;;; org-block-switches.el ends here

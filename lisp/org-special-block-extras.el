@@ -3,7 +3,7 @@
 ;; Copyright (c) 2021 Musa Al-hassy
 
 ;; Author: Musa Al-hassy <alhassy@gmail.com>
-;; Version: 26.11.09
+;; Version: 26.11.14
 ;; Package-Requires: ((s "1.13.1") (dash "2.18.1") (emacs "28.2") (org "9.8") (lf "26.10.1") (seq "2.0"))
 ;; Keywords: org, blocks, colors, convenience
 ;; URL: https://alhassy.com/org-special-block-extras
@@ -479,6 +479,9 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         ;; The second pass serves the blocks of #+INCLUDE: files, which expand between the two.
         (add-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches -10)
+        ;; Switches on sections, by property drawer, ere those of the blocks within: a heading's :let reaches them.
+        (add-hook 'org-export-before-processing-functions #'org--rewrite-heading-switches -5)
+        (add-hook 'org-export-before-parsing-functions #'org--rewrite-heading-switches -15)
         ;; Demos before all else: each renders its block as written, in a document of its own; see `org-demo'.
         (add-hook 'org-export-before-processing-functions #'org--rewrite-demos -20)
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-demos -70)
@@ -536,6 +539,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-execute-file-search-functions #'org--math-ref-follow)
     (remove-hook 'org-export-before-processing-functions #'org--rewrite-any-block-switches)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-any-block-switches)
+    (remove-hook 'org-export-before-processing-functions #'org--rewrite-heading-switches)
+    (remove-hook 'org-export-before-parsing-functions #'org--rewrite-heading-switches)
     (remove-hook 'org-export-before-processing-functions #'org--rewrite-demos)
     (remove-hook 'org-export-before-parsing-functions #'org--rewrite-demos)
     (advice-remove 'org-html-footnote-reference #'org--footnote-as-tooltip)
