@@ -82,6 +82,7 @@ Each block is demoed in [the guide](https://alhassy.com/org-special-block-extras
 |-------------------------------|-----------------------------------------------------------------------------------------------|
 | [`math`](https://alhassy.com/org-special-block-extras-blocks-and-links#math) | Display maths wherein `red:𝒳` colours a symbol, Org tables are matrices, and `<<X>>` tags an equation; [calculational proofs](https://alhassy.com/org-special-block-extras-blocks-and-links#equational-proofs), with foldable hints. |
 | [`graph`](https://alhassy.com/org-special-block-extras-graphs) | Draw nested Org lists as Graphviz diagrams ---`C-c C-c` renders a PNG in place. |
+| [`image LANG`](https://alhassy.com/org-special-block-extras-blocks-and-links#images) | LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or a [p5.js](https://p5js.org) sketch: itself where read natively, else a picture ---a TikZ drawing in a web page, an HTML widget in a PDF. `C-c C-c` shows it in place; a p5.js sketch, running. |
 | [`details`](https://alhassy.com/org-special-block-extras-blocks-and-links#folded-details) | Foldable sections ---perfect for hiding spoilers, proofs, or long explanations. |
 | [`parallel`](https://alhassy.com/org-special-block-extras-blocks-and-links#parallel) | Display content in multiple columns ---great for comparisons or saving space. |
 | [`box`](https://alhassy.com/org-special-block-extras-blocks-and-links#boxed-text) | Emphasize content with nicely styled borders ---great for callouts or side notes. |

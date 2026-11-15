@@ -3397,6 +3397,7 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
   | =math=                      | Display maths wherein =red:𝒳= colours a symbol; calculational proofs, with hints.     |
   | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
+  | =image LANG=                | LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or p5.js: itself, else a picture.       |
   | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
   | =highlight=                 | Colour a paragraph's background, rather than its text.                                |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
@@ -3479,6 +3480,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
     + [[#highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
     + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =[[𝒳]]= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
     + [[#graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
+    + [[#images][Images]] \\ image [fn::LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or a p5.js sketch: itself where read natively, else a picture; a sketch runs in the page, and atop the block upon C-c C-c.] :glance_write:
     + [[#glossaries][Glossaries]] \\ documentation [fn::Define a term once ---even as Org's own =<<<radio target>>>=, whose every mention is then a tooltip--- and cite it everywhere with =doc:𝒳=; =#+print_glossary:= lists every citation.] :glance_write:
   + Links to cite :glance_read:
     + [[#glossaries][=doc:𝒳=]] [fn::A term's definition as a tooltip.] :glance_read:
