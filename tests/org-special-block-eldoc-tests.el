@@ -128,8 +128,12 @@ C-c '" doc))
 (deftest "every block we ship has an :example, which exports to HTML sans error"
   (require 'org-graph-block)
   (should-not (--remove (get (intern (format "org--%s-block" it)) 'org-example) org--supported-blocks))
-  (dolist (block org--supported-blocks)
-    (should (stringp (org-export-string-as (get (intern (format "org--%s-block" block)) 'org-example) 'html t)))))
+  ;; Within a directory of its own, as an image block's example writes its renderings.
+  (let ((default-directory (file-name-as-directory (make-temp-file "osbe-examples-" t))))
+    (unwind-protect
+        (dolist (block org--supported-blocks)
+          (should (stringp (org-export-string-as (get (intern (format "org--%s-block" block)) 'org-example) 'html t))))
+      (delete-directory default-directory t))))
 
 (deftest "eldoc stays quiet inside a block's body, so typing there is not interrupted"
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))

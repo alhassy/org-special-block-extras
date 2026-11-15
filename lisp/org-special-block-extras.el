@@ -251,6 +251,7 @@
 (require 'org-solution-block)
 (require 'org-demo)
 (require 'org-display-switches)
+(require 'org-image-block)
 (require 'org-substitution-blocks)
 (require 'org-spoiler-block)
 (require 'org-remark-block)

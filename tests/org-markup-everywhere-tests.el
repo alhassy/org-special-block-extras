@@ -45,8 +45,8 @@
 #+end_%s" begin body (car (split-string begin))) backend)
        backend))))
 
-(defconst org-markup-tests--own-syntax '(graph tree math documentation)
-  "Blocks whose contents are no prose ---a graph, maths, a glossary---; each has its own test.")
+(defconst org-markup-tests--own-syntax '(graph tree math documentation image)
+  "Blocks whose contents are no prose ---a graph, maths, a glossary, an image's code---; each has its own test.")
 
 (deftest "every block's contents render our links, Org's links, its targets, and maths, as prose does"
   ;; A quote, and a colour block, show their contents only given a citation key, or a colour.
