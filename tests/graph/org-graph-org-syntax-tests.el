@@ -458,6 +458,59 @@ x
     (search-forward at)
     (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))))
 
+;;; org-defgraph-tag: tags every graph has, documented; clicking a tag follows it
+
+(deftest "org-defgraph-tag defines a tag every graph has, from a #+name: line's pairs; defining it anew redefines it"
+  (let ((org-graph-builtin-templates org-graph-builtin-templates)
+        (org-graph-builtin-tag-docs org-graph-builtin-tag-docs))
+    (org-defgraph-tag hot "color=red label=\"Now!\"" "Marks what needs attention now.")
+    (should (string-match-p "A \\[ color=red label=\"Now!\" \\]" (org--graph-raw->dot "+ A :hot:" nil nil)))
+    (org-defgraph-tag hot "color=orange" "Marks what needs attention soon.")
+    (should (string-match-p "A \\[ color=orange label=A \\]" (org--graph-raw->dot "+ A :hot:" nil nil)))
+    (should (equal "Marks what needs attention soon." (alist-get "hot" org-graph-builtin-tag-docs nil nil #'equal)))))
+
+(org-deftest "a built-in tag wears its own face, unless a #+name: shadows it; every tag of a group is clickable alone"
+  :text "
+#+begin_graph
+#+name: hot color=red
++ A :hot:state:
+#+end_graph
+#+begin_graph
+#+name: state shape=box
++ B :state:
+#+end_graph"
+  (font-lock-ensure)
+  (goto-char (point-min))
+  (search-forward "hot:")
+  (should (memq 'org-tag (ensure-list (get-text-property (- (point) 2) 'face))))
+  (should (eq org-graph-tag-map (get-text-property (- (point) 2) 'keymap)))
+  (search-forward "state:")
+  (should (memq 'org-graph-builtin-tag (ensure-list (get-text-property (- (point) 2) 'face))))
+  (search-forward "B :")
+  (should-not (memq 'org-graph-builtin-tag (ensure-list (get-text-property (point) 'face)))))
+
+(org-deftest "following a tag jumps to its #+name: line, the graph's own first; a built-in tag's shows its docs"
+  :text "
+#+name: hot color=orange
+
+#+begin_graph
+#+name: hot color=red
++ A :hot:state:
+#+end_graph
+#+begin_graph
++ B :hot:
+#+end_graph"
+  (goto-char (point-min))
+  (search-forward "A :h")
+  (org-graph-follow-tag)
+  (should (looking-at-p "#\\+name: hot color=red"))
+  (search-forward "B :h")
+  (org-graph-follow-tag)
+  (should (looking-at-p "#\\+name: hot color=orange"))
+  (goto-char (point-min))
+  (search-forward "hot:st")
+  (should (string-match-p "rounded box" (org-graph--builtin-tag-doc (org-graph--tag-at-point)))))
+
 ;;; Footnotes are tooltips
 
 (define-graph-test "an inline footnote is the node's tooltip, vanishing from its label; an explicit tooltip row wins"

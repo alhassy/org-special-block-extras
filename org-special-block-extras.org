@@ -5701,7 +5701,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
   Class diagrams, state machines, entity-relationship diagrams, mindmaps, and even sequence
   diagrams are graphs too: tags such as =:inherits:=, =:start:=, and =:one-to-many:= ---templates
-  every graph has, in ~org-graph-builtin-templates~--- and =#+begin_graph :mindmap t= draw them; see
+  every graph has, by ~org-defgraph-tag~--- and =#+begin_graph :mindmap t= draw them; see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#diagrams-we-draw-sequences-classes-states-entities-mindmaps][Diagrams we draw]].
 
 ** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2: itself where read natively, else a picture

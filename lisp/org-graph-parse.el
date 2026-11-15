@@ -29,29 +29,65 @@ A graph's own #+name: template of the same name wins; a checkbox whose template 
   :type '(alist :key-type string :value-type (repeat (list string string)))
   :group 'org-special-block-extras)
 
-(defcustom org-graph-builtin-templates
-  '(;; UML class diagrams: an arc's tag, as in “+ inherits :: [[Animal]]”; the arrow points at what is inherited, owned …
-    ("inherits"   ("arrowhead" "empty"))
-    ("implements" ("arrowhead" "empty") ("style" "dashed"))
-    ("composes"   ("dir" "both") ("arrowtail" "diamond") ("arrowhead" "none"))
-    ("aggregates" ("dir" "both") ("arrowtail" "odiamond") ("arrowhead" "none"))
-    ("depends"    ("arrowhead" "vee") ("style" "dashed"))
-    ;; State machines: a node's tag; composite states are clusters.
-    ("state"      ("shape" "box") ("style" "rounded"))
-    ("start"      ("shape" "point") ("width" "0.2") ("label" ""))
-    ("final"      ("shape" "point") ("width" "0.2") ("peripheries" "2") ("label" ""))
-    ("choice"     ("shape" "diamond") ("width" "0.3") ("height" "0.3") ("fixedsize" "true") ("label" ""))
-    ;; Entity-relationship cardinalities, crow's-foot style: an arc's tag, read from the parent's end to the child's.
-    ("one-to-one"   ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "teetee"))
-    ("one-to-many"  ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "crowtee"))
-    ("many-to-one"  ("dir" "both") ("arrowtail" "crowtee") ("arrowhead" "teetee"))
-    ("many-to-many" ("dir" "both") ("arrowtail" "crowtee") ("arrowhead" "crowtee")))
-  "The #+name: templates every graph has, sans defining them: UML arcs, state-machine nodes, and ER cardinalities.
-  + Dog :state:            ;; a node's tag styles the node
-    + inherits :: [[Animal]] :inherits:   ;; …and a reference's, or a description term's, its arc
-A graph's, or the buffer's, own #+name: template of the same name wins; see `org--graph-parse'."
-  :type '(alist :key-type string :value-type (repeat (list string string)))
-  :group 'org-special-block-extras)
+(defvar org-graph-builtin-templates nil
+  "The (NAME . ROWS) of each template every graph has, sans defining it; `org-defgraph-tag' defines them.
+A graph's, or the buffer's, own #+name: template of the same name wins; see `org--graph-parse'.")
+
+(defvar org-graph-builtin-tag-docs nil
+  "The (NAME . DOCSTRING) of each tag `org-defgraph-tag' defines; clicking such a tag in a graph shows it.")
+
+(defun org--graph-define-tag (name pairs docstring)
+  "Returns NAME, having made it a template every graph has: PAIRS' rows, read as a #+name: line's, documented by
+DOCSTRING; a former definition of NAME is replaced.  See `org-defgraph-tag'."
+  (setf (alist-get name org-graph-builtin-templates nil nil #'equal) (org--graph-keyword-rows 'name pairs)
+        (alist-get name org-graph-builtin-tag-docs nil nil #'equal) docstring)
+  name)
+
+(defmacro org-defgraph-tag (name pairs docstring)
+  "Defines the tag :NAME: of every graph, as the KEY=VALUE PAIRS of a `#+name: NAME' line, documented by DOCSTRING.
+  (org-defgraph-tag hot \"color=red penwidth=2\" \"Marks what needs attention now: red, and bold.\")
+  + Deadline :hot:   ;; in any graph, now a red, bold node
+As with `defvar', the value comes with its docstring; yet, as with `setq', evaluating it anew redefines the tag.
+PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the buffer's, own #+name: NAME wins."
+  (declare (indent defun) (doc-string 3))
+  `(org--graph-define-tag ,(format "%s" name) ,pairs ,docstring))
+
+;; UML class diagrams: an arc's tag, as in “+ inherits :: [[Animal]] :inherits:”; the arrow points at what is inherited.
+(org-defgraph-tag inherits "arrowhead=empty"
+  "Draws an arc as UML inheritance: a hollow triangle at the class inherited from.")
+(org-defgraph-tag implements "arrowhead=empty style=dashed"
+  "Draws an arc as UML realisation: dashed, with a hollow triangle at the interface implemented.")
+(org-defgraph-tag composes "dir=both arrowtail=diamond arrowhead=none"
+  "Draws an arc as UML composition: a filled diamond at the owner, the parent; its parts live and die with it.")
+(org-defgraph-tag aggregates "dir=both arrowtail=odiamond arrowhead=none"
+  "Draws an arc as UML aggregation: a hollow diamond at the owner, the parent; its parts may outlive it.")
+(org-defgraph-tag depends "arrowhead=vee style=dashed"
+  "Draws an arc as UML dependency: dashed, with an open arrow at what is depended upon.")
+
+;; State machines: a node's tag; a composite state is a container.
+(org-defgraph-tag state "shape=box style=rounded"
+  "Draws a node as a state of a state machine: a rounded box.")
+(org-defgraph-tag start "shape=point width=0.2 label=\"\""
+  "Draws a node as a state machine's initial pseudo-state: a small dot, sans label.")
+(org-defgraph-tag final "shape=point width=0.2 peripheries=2 label=\"\""
+  "Draws a node as a state machine's final state: a ringed dot, sans label.")
+(org-defgraph-tag choice "shape=diamond width=0.3 height=0.3 fixedsize=true label=\"\""
+  "Draws a node as a state machine's choice pseudo-state: a small diamond, sans label.")
+
+;; Entity-relationship cardinalities, crow's-foot style: an arc's tag, read from the parent's end to the child's.
+(org-defgraph-tag one-to-one "dir=both arrowtail=teetee arrowhead=teetee"
+  "Draws an arc as an entity-relationship one-to-one: a double bar at either end.")
+(org-defgraph-tag one-to-many "dir=both arrowtail=teetee arrowhead=crowtee"
+  "Draws an arc as an entity-relationship one-to-many: a double bar at the parent, a crow's foot at the child.")
+(org-defgraph-tag many-to-one "dir=both arrowtail=crowtee arrowhead=teetee"
+  "Draws an arc as an entity-relationship many-to-one: a crow's foot at the parent, a double bar at the child.")
+(org-defgraph-tag many-to-many "dir=both arrowtail=crowtee arrowhead=crowtee"
+  "Draws an arc as an entity-relationship many-to-many: a crow's foot at either end.")
+
+;; Layout.
+(org-defgraph-tag container "shape=cluster"
+  "Draws a node as a box around its children, which are its members rather than its arcs' targets; an arc to, or
+from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey |, style the box.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing: Org list ⟶ graph statements

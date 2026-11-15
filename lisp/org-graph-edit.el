@@ -305,7 +305,7 @@ On a #+begin_graph line, complete its keys and values instead; in a smartdiagram
 
 (defun org-graph--eldoc (callback &rest _)
   "Hand eldoc's CALLBACK the description of the #+begin_graph, or #+begin_cluster, key at point, or of the key on this
-graph-table row; on #+begin_cluster itself, what a cluster is; else nil."
+graph-table row, or of the built-in tag at point; on #+begin_cluster itself, what a cluster is; else nil."
   (-if-let ((beg end) (org-graph--header-token-at-point))
       (let ((key (buffer-substring beg end)))
         (cond ((and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
@@ -313,9 +313,11 @@ graph-table row; on #+begin_cluster itself, what a cluster is; else nil."
               ((string-match-p "\\`#\\+begin_cluster\\'" key)
                (funcall callback org-graph--cluster-doc :thing "#+begin_cluster TITLE :KEY V …"
                         :face 'font-lock-function-name-face))))
-    (-when-let* (((_ _ _ key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
-                 (doc (and key (org-graph--key-doc key))))
-      (funcall callback doc :thing key :face 'font-lock-variable-name-face))))
+    (-if-let (doc (and (org-graph--in-graph-p) (-some->> (org-graph--tag-at-point) org-graph--builtin-tag-doc)))
+        (funcall callback doc)
+      (-when-let* (((_ _ _ key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
+                   (doc (and key (org-graph--key-doc key))))
+        (funcall callback doc :thing key :face 'font-lock-variable-name-face)))))
 
 (define-derived-mode org-graph-edit-mode org-mode "Org-Graph"
   "Org mode for a graph block's body, as C-c ' opens it: `completion-at-point' offers attributes, and eldoc explains them.
@@ -347,6 +349,74 @@ A buffer with no graph block pays only one search per fontification, rather than
           (concat "\\]\\][ \t]+" org--graph-tag-group-re "[ \t]*|")))
   "Where a graph's tags sit, each with the tags as group 1: after an item; in its description term; after a
 #+graph:, #+node:, #+edge:, or #+name: keyword; and after a #+record: cell's link.")
+
+(defface org-graph-builtin-tag '((t :inherit (font-lock-builtin-face org-tag)))
+  "The face of a graph's tag naming a template every graph has, from `org-defgraph-tag', which no #+name: shadows."
+  :group 'org-special-block-extras)
+
+(defvar org-graph-tag-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-1] #'org-graph-follow-tag)
+    (define-key map [mouse-2] #'org-graph-follow-tag)
+    (define-key map (kbd "C-c C-o") #'org-graph-follow-tag)
+    map)
+  "The keys on a graph's tag: each follows it, by `org-graph-follow-tag'.")
+
+(defun org-graph--tag-at-point ()
+  "Returns the name of the graph tag at point, sans colons, such as \"state\" amid :start:state:; else nil."
+  (save-excursion
+    (skip-chars-backward "[:alnum:]_@#%-")
+    (and (eq (char-before) ?:)
+         (looking-at "\\([[:alnum:]_@#%-]+\\):")
+         (match-string-no-properties 1))))
+
+(defun org-graph--template-definition (name)
+  "Returns the position of the #+name: NAME line that defines template NAME for the graph at point: the graph's own,
+else one outside every graph; else nil.  Since a graph's own templates win, as `org--graph-parse' says."
+  (let ((re (format "^[ \t]*#\\+name:[ \t]+%s\\(?:[ \t]\\|$\\)" (regexp-quote name)))
+        (bounds (org-graph--graph-bounds))
+        (case-fold-search t))
+    (save-excursion
+      (or (and bounds (progn (goto-char (car bounds)) (re-search-forward re (cdr bounds) t)) (line-beginning-position))
+          (progn (goto-char (point-min))
+                 (cl-loop while (re-search-forward re nil t)
+                          unless (save-excursion (org-graph--graph-bounds))
+                          return (line-beginning-position)))))))
+
+(defun org-graph--builtin-tag-doc (name)
+  "Returns what the built-in tag NAME is about: its docstring, then its rows; else nil."
+  (-when-let (doc (alist-get name org-graph-builtin-tag-docs nil nil #'equal))
+    (format ":%s: is a tag every graph has; see `org-defgraph-tag'.\n%s\n  %s" name doc
+            (s-join " " (--map (format "%s=%s" (car it) (if (string-match-p "\\`[^ \"]+\\'" (cadr it)) (cadr it)
+                                                          (format "%S" (cadr it))))
+                               (alist-get name org-graph-builtin-templates nil nil #'equal))))))
+
+(defun org-graph-follow-tag (&optional event)
+  "Follow the graph tag at point, or at mouse EVENT: jump to the #+name: line defining its template; else, for a tag
+every graph has, show what it is about; else say that it names no template."
+  (interactive (list last-nonmenu-event))
+  (when (mouse-event-p event) (mouse-set-point event))
+  (-if-let (name (org-graph--tag-at-point))
+      (-if-let (definition (org-graph--template-definition name))
+          (progn (push-mark) (goto-char definition))
+        (display-message-or-buffer
+         (or (org-graph--builtin-tag-doc name)
+             (format ":%s: names no template, so a graph makes one up, or errs, as its :unknown-tags says" name))
+         "*Graph tag*"))
+    (user-error "No graph tag at point")))
+
+(defvar org-graph--tags-end nil
+  "Where the group of tags that font-lock last matched in a graph ends; it resumes there, past each tag's own match.")
+
+(defun org-graph--tag-face (name)
+  "Returns the font-lock face, and properties, of the graph tag NAME: clickable, by `org-graph-tag-map'; and wearing
+`org-graph-builtin-tag' when it is one every graph has, which no #+name: shadows."
+  (list 'face (if (and (assoc name org-graph-builtin-templates) (not (org-graph--template-definition name)))
+                  'org-graph-builtin-tag
+                'org-tag)
+        'keymap org-graph-tag-map 'mouse-face 'highlight 'follow-link t
+        'help-echo (or (-some--> (alist-get name org-graph-builtin-tag-docs nil nil #'equal) (car (s-lines it)))
+                       "mouse-1: jump to this template's #+name: line")))
 
 (defun org-graph--match-tags (re limit)
   "Font-lock matcher: the next match of RE up to LIMIT that is in a graph; its group 1 is the tags.
@@ -554,9 +624,17 @@ keys, with C-M-i and eldoc."
                           'append)
   (add-hook 'font-lock-extend-region-functions #'org-graph--extend-to-clusters nil t)
   (font-lock-add-keywords nil (cons '(org-graph--reveal-links)
-                                    (--map `(,(lambda (limit) (org-graph--match-tags it limit)) 1 'org-tag prepend)
+                                    ;; Each tag of a group, such as :start:state:, alone: its own face, and click.
+                                    (--map `(,(lambda (limit) (org-graph--match-tags it limit))
+                                             ("\\([[:alnum:]_@#%-]+\\):"
+                                              (prog1 (setq org-graph--tags-end (match-end 1))
+                                                (goto-char (1+ (match-beginning 1))))
+                                              (goto-char org-graph--tags-end)
+                                              (1 (org-graph--tag-face (match-string-no-properties 1)) prepend)))
                                            org-graph--tag-res))
                           'append)
+  (dolist (prop '(keymap mouse-face follow-link help-echo))
+    (add-to-list (make-local-variable 'font-lock-extra-managed-props) prop))
   (add-hook 'completion-at-point-functions #'org-graph--completion-at-point nil t)
   (add-hook 'eldoc-documentation-functions #'org-graph--eldoc nil t))
 

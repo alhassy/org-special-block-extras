@@ -1103,8 +1103,17 @@ ranks, so the graph is a block rather than a ribbon:
 * Diagrams we draw: sequences, classes, states, entities, mindmaps
 
 Many diagrams are graphs in disguise; they differ only in how their nodes and arcs look. So rather than a
-syntax per kind, every graph has a few templates already, in ~org-graph-builtin-templates~; a tag applies
-one, as with any ~#+name:~ template of our own, and our own of the same name wins.
+syntax per kind, every graph has a few templates already, defined by ~org-defgraph-tag~; a tag applies
+one, as with any ~#+name:~ template of our own, and our own of the same name wins. In Emacs, such a tag
+wears a face of its own, ~org-graph-builtin-tag~, and clicking it says what it does.
+
+~org-defgraph-tag~ is ~defvar~-like, a value with its docstring, yet ~setq~-like, since evaluating it anew
+redefines the tag; so our own tags, used across documents, live in our init file:
+#+begin_src emacs-lisp
+(org-defgraph-tag hot "color=red penwidth=2"
+  "Marks what needs attention now: red, and bold.")
+#+end_src
+Its pairs read as a ~#+name: hot color=red penwidth=2~ line does.
 
 | Diagram          | Node tags                                      | Arc tags                                                                  |
 |------------------+------------------------------------------------+---------------------------------------------------------------------------|
@@ -1494,6 +1503,10 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
 8. In a ~:demo live~ graph, as throughout this README, ~C-c C-c~ still renders the graph: a live demo keeps
    no snapshot to take.
 
+9. A tag is a link to its template: clicking it, or ~C-c C-o~ on it, jumps to its ~#+name:~ line ---the
+   graph's own, else one outside every graph--- as a template's lookup goes. A tag every graph has, from
+   ~org-defgraph-tag~, says what it does instead, as eldoc does with point on it.
+
 * Reference
 
 Once the demo is over, this is the page we keep open.
@@ -1532,7 +1545,7 @@ Once the demo is over, this is the page we keep open.
 | ~+ NAME \\ MORE~                             | node ~NAME MORE~, its label broken over two lines; likewise in table cells      |
 | ~+ NAME [[https://…]]~, ~[[file:x.png]]~     | node NAME, with ~URL="https://…"~, or ~image="x.png"~                           |
 | ~+ [X] NAME~, ~[-]~, ~[ ]~                   | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined       |
-| ~:inherits:~, ~:state:~, ~:one-to-many:~, …  | templates every graph has; see ~org-graph-builtin-templates~                    |
+| ~:inherits:~, ~:state:~, ~:one-to-many:~, …  | templates every graph has; see ~org-defgraph-tag~                               |
 | ~{{{M}}}~, after ~#+macro: M V~              | ~V~, anywhere in the block                                                      |
 | ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=          | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                       |
 | ~∣ key ∣ value ∣~                            | node attribute; values are quoted for you                                       |
