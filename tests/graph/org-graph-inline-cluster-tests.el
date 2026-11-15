@@ -113,3 +113,23 @@
   A -> C [ color=blue style=bold ];
   C [ label=C ];
 }")
+
+(define-graph-test "A member an earlier arc mentions restates its box's #+node: rows, which Graphviz would not apply"
+  :input "
++ Abu Talib
+  + [[ali]]
++ Imams :container:
+  #+node: fillcolor=green
+  + <<ali>> Ali
+    + Hasan"
+  :output "digraph {
+  \"Abu Talib\" [ label=\"Abu Talib\" ];
+  \"Abu Talib\" -> ali;
+  subgraph cluster_Imams {
+    label=Imams
+    node [ fillcolor=green style=filled ]
+    ali [ fillcolor=green label=Ali ];
+    ali -> Hasan;
+    Hasan [ label=Hasan ];
+  }
+}")

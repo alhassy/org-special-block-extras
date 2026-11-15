@@ -79,6 +79,14 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
   "While a container prints, the #+edge: rows of the boxes and scopes enclosing the statement printing, outermost
 first; an arc printed outside them takes these rows along.")
 
+(defvar org--graph-box-node-rows nil
+  "While a container prints, the #+node: rows of the boxes and scopes enclosing the statement printing, outermost
+first; a member that an earlier arc already created takes these rows into its own line.")
+
+(defvar org--graph-mentioned nil
+  "While a graph prints, a table of the nodes its printed lines have mentioned so far, each to a list of the
+#+node: rows in force at its first mention.")
+
 (defvar org--graph-hoisted nil
   "While a container prints, the arcs leaving it, latest first, to be printed after it.")
 
@@ -105,8 +113,16 @@ and those a :container_ID: tag gathers."
 (defun org--graph-stmt->dot (stmt op ctx)
   "STMT, a parsed graph statement, ↦ its dot lines; OP is the edge operator, \"->\" or \"--\"."
   (pcase stmt
+    ;; Graphviz gives a node the defaults in force where it is first mentioned; an arc mentioning a box's member
+    ;; before the box does leaves it the graph's defaults, so the member's own line restates the box's.
     (`(:node ,id)
      (-let [(name . attrs) (gethash id (org--graph-ctx-nodes ctx))]
+       (when org--graph-mentioned
+         (let ((first (gethash id org--graph-mentioned)))
+           (when (and first (not (equal (car first) org--graph-box-node-rows)))
+             (setq attrs (org--graph-replace-rows org--graph-box-node-rows attrs))))
+         (unless (gethash id org--graph-mentioned)
+           (puthash id (list org--graph-box-node-rows) org--graph-mentioned)))
        (list (format "%s%s;" (org--graph-dot-id id)
                      (org--graph-attrs->dot
                       (org--graph-href id (org--graph-person (org--graph-filled (if (assoc "label" attrs) attrs (append attrs `(("label" ,name))))
@@ -118,6 +134,11 @@ and those a :container_ID: tag gathers."
               (not (--all? (member (org--graph-endpoint-node it ctx) org--graph-box-members) (list src dst))))
          (ignore (push `(:edge ,src ,dst ,(org--graph-replace-rows org--graph-box-edge-rows attrs))
                        org--graph-hoisted))
+       (when org--graph-mentioned
+         (dolist (end (list src dst))
+           (let ((node (org--graph-endpoint-node end ctx)))
+             (unless (gethash node org--graph-mentioned)
+               (puthash node (list org--graph-box-node-rows) org--graph-mentioned)))))
        (list (org--graph-edge->dot src dst attrs op ctx))))
     ;; A template that styles arcs is shown as a captioned arc between invisible points; any other, as a captioned node.
     ;; The arc runs along the graph's direction, as a same-rank one may lose its caption; e.g., under splines=curved.
@@ -134,7 +155,8 @@ and those a :container_ID: tag gathers."
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
     (`(:scope ,scope ,stmts)
      (let ((org--graph-filled-by-default (org--graph-filling-kinds scope))
-           (org--graph-box-edge-rows (org--graph-replace-rows org--graph-box-edge-rows (plist-get scope :edge-rows))))
+           (org--graph-box-edge-rows (org--graph-replace-rows org--graph-box-edge-rows (plist-get scope :edge-rows)))
+           (org--graph-box-node-rows (org--graph-replace-rows org--graph-box-node-rows (plist-get scope :node-rows))))
        (list (format "subgraph {\n    %s\n  }"
                      (s-join "\n    " (append (org--graph-scope->dot scope)
                                               (--mapcat (org--graph-stmt->dot it op ctx) stmts)))))))
@@ -152,6 +174,8 @@ and those a :container_ID: tag gathers."
               (org--graph-box-members (org--graph-box-members id (plist-get props :stmts) ctx))
               (org--graph-box-edge-rows (org--graph-replace-rows org--graph-box-edge-rows
                                                                   (plist-get (plist-get props :scope) :edge-rows)))
+              (org--graph-box-node-rows (org--graph-replace-rows org--graph-box-node-rows
+                                                                  (plist-get (plist-get props :scope) :node-rows)))
               (org--graph-hoisted nil))
          (setq subgraph (format "subgraph %s {\n    %s\n  }" (org--graph-cluster-id id)
                                 (s-join "\n    "
@@ -345,6 +369,7 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
                           (org--graph-first-node stmts)))
       (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) `(("root" ,root))))))
     (let* ((org--graph-container-fills fills)
+           (org--graph-mentioned (make-hash-table :test #'equal))
            (org--graph-filled-by-default (org--graph-filling-kinds preamble))
            (org--graph-node-defaults (plist-get preamble :node-rows))
            (body (append (--mapcat (org--graph-stmt->dot it "->" ctx) stmts)
