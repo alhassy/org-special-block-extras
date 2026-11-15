@@ -5691,7 +5691,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
   hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
 
-  Class diagrams, state machines, entity–relationship diagrams, mindmaps, and even sequence
+  Class diagrams, state machines, entity-relationship diagrams, mindmaps, and even sequence
   diagrams are graphs too: tags such as =:inherits:=, =:start:=, and =:one-to-many:= ---templates
   every graph has, in ~org-graph-builtin-templates~--- and =#+begin_graph :mindmap t= draw them; see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#diagrams-we-draw-sequences-classes-states-entities-mindmaps][Diagrams we draw]].

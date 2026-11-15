@@ -41,7 +41,7 @@ A graph's own #+name: template of the same name wins; a checkbox whose template 
     ("start"      ("shape" "point") ("width" "0.2") ("label" ""))
     ("final"      ("shape" "point") ("width" "0.2") ("peripheries" "2") ("label" ""))
     ("choice"     ("shape" "diamond") ("width" "0.3") ("height" "0.3") ("fixedsize" "true") ("label" ""))
-    ;; Entity–relationship cardinalities, crow's-foot style: an arc's tag, read from the parent's end to the child's.
+    ;; Entity-relationship cardinalities, crow's-foot style: an arc's tag, read from the parent's end to the child's.
     ("one-to-one"   ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "teetee"))
     ("one-to-many"  ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "crowtee"))
     ("many-to-one"  ("dir" "both") ("arrowtail" "crowtee") ("arrowhead" "teetee"))

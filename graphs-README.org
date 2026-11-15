@@ -937,7 +937,7 @@ one, as with any ~#+name:~ template of our own, and our own of the same name win
 |------------------+------------------------------------------------+---------------------------------------------------------------------------|
 | Class (UML)      | ---a class is a ~#+record:~ with hlines        | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~       |
 | State machine    | ~:state:~ ~:start:~ ~:final:~ ~:choice:~       | ---a guard is the description term                                        |
-| Entity–relation  | ---an entity is any node                       | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~           |
+| Entity-relation  | ---an entity is any node                       | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~           |
 | Mindmap          | ~#+begin_graph :mindmap t~, sans tags           |                                                                           |
 
 ** A class diagram: records and UML arcs
@@ -987,7 +987,7 @@ to be told apart; a composite state is a [[*Clusters draw boxes][cluster]]:
           + done :: <<end>> :final:
 #+end_graph
 
-** An entity–relationship diagram: cardinalities as tags
+** An entity-relationship diagram: cardinalities as tags
 
 Each relationship is a description term, its cardinality a tag on that term, read from the parent's end
 to the child's: a customer places /many/ orders, each order placed by /one/ customer. Graphviz draws the
