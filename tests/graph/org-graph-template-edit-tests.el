@@ -31,5 +31,5 @@
                                                 (ensure-list (get-text-property (match-beginning 0) 'face)))))))
       (should (equal (funcall background "| filled") "a"))
       (should (equal (funcall background "| bold") "b"))
-      (should (equal (funcall background "red color") "c"))
+      (should (equal (funcall background "color=red") "c"))
       (should-not (funcall background "+ expr")))))

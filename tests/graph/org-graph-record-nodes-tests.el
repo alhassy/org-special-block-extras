@@ -175,15 +175,15 @@ PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
 
 (define-graph-test "a cell's `:edge[T].KEY' rows still win over its tags"
   :input "
-#+name: dashed
-| style | dashed |
+#+name: hot
+| color | red |
 + s
-  | :edge[t].style | bold |
+  | :edge[t].color | blue |
   #+record:
-  | <<p>> [[t]] :dashed: |
+  | <<p>> [[t]] :hot: |
 + t"
   :output "digraph {
-  s:p -> t [ style=bold ];
+  s:p -> t [ color=blue ];
   s [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD
 PORT=\"p\"></TD></TR></TABLE>> ];
   t [ label=t ];

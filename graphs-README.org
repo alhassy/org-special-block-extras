@@ -369,7 +369,7 @@ A reference is styled just the same; this is why an inline link graduates to one
 
 Small graphs deserve no preamble at all. So the header line takes the graph's title and any graph
 attribute; a parse tree laid out left to right, every node boxed, every arc grey:
-#+begin_graph How 1 * 2 + 3 - 4 parses :rankdir LR :node.shape box :edge.color grey :demo live
+#+begin_graph How 1 * 2 + 3 - 4 parses :direction right :node.shape box :edge.color grey :demo live
 + -
   + +
     + *
@@ -381,11 +381,13 @@ attribute; a parse tree laid out left to right, every node boxed, every arc grey
 
 - The title, the words before the first ~:key~, is the graph's ~label~; ~:directed nil~ makes the graph
   undirected, with ~--~ arcs.
+- ~:direction~ says which way arcs flow: ~down~, the default, ~up~, ~right~, or ~left~. It is Graphviz's
+  ~:rankdir~ ---~TB~, ~BT~, ~LR~, ~RL~--- spelled to be read; ~:rankdir~ works too.
 - ~:KEY V~ is a graph attribute; ~:node.KEY V~ and ~:edge.KEY V~ are node and edge defaults ---the same
   ~KEY~, ~node.KEY~, ~edge.KEY~ spelling as table rows.
 - As on Org's own ~#+attr_html:~ lines, values need no quotes: ~:bgcolor #6c7086~,
   ~:fontname Helvetica,Arial~. A value with spaces does: ~:fontname "Helvetica Neue"~.
-- ~:file~, ~:svg~, ~:directed~, ~:wrap~, ~:notes~, ~:unflatten~, ~:unknown-tags~, ~:smartdiagram~, ~:dpi~,
+- ~:file~, ~:svg~, ~:directed~, ~:direction~, ~:theme~, ~:wrap~, ~:notes~, ~:unflatten~, ~:unknown-tags~, ~:smartdiagram~, ~:dpi~,
   and ~:C-c_C-c~ belong to the block itself, never to Graphviz; each is met below. So do the Babel habits
   ~:exports~ and ~:results~, which the block ignores; and ~:demo~, which every block of this package
   understands.
@@ -466,12 +468,11 @@ arc labels. ~:theme NAME~ picks another of ~org-graph-themes~, and ~:theme nil~ 
 #+end_graph
 
 A theme is data, ~#+graph:~, ~#+node:~, and ~#+edge:~ lines' pairs, plus a fill per depth of container; so a
-new one, or a new default, is a ~setq~ away:
+new one is a ~push~ away, and a new default a ~setq~:
 #+begin_src emacs-lisp
-(setq org-graph-themes
-      (cons '(ink :node "shape=box fontname=Helvetica" :edge "color=gray30" :containers "#eeeeee #ffffff")
-            org-graph-themes)
-      org-graph-theme 'ink)
+(push '(ink :node "shape=box fontname=Helvetica" :edge "color=gray30" :containers "#eeeeee #ffffff")
+      org-graph-themes)
+(setq org-graph-theme 'ink)
 #+end_src
 
 * Saying it once: templates
@@ -533,6 +534,29 @@ template could apply to; after a reference, or a description term, a tag styles 
     + factor
       + in parentheses :recursion: :: [[expr]]
 #+end_graph
+
+** Everyday tags every graph has
+
+Some looks are wanted so often that every graph has them, sans a ~#+name:~:
+| Tags                                                          | What they do                                    |
+|---------------------------------------------------------------+-------------------------------------------------|
+| ~:dashed:~ ~:dotted:~ ~:bold:~                                | a node's outline, or an arc, so drawn            |
+| ~:bidirectional:~ ~:undirected:~                              | an arc's arrowheads: at either end, or none      |
+| ~:red:~ ~:orange:~ ~:yellow:~ ~:green:~ ~:teal:~ ~:blue:~     | a node's outline and text, or an arc and its label, so coloured |
+| ~:purple:~ ~:magenta:~ ~:pink:~ ~:brown:~ ~:gray:~ ~:black:~  | likewise                                        |
+| ~:small:~ ~:large:~ ~:size_N:~                                | a label at 10pt, 20pt, or N points              |
+#+begin_graph :direction right :demo live
++ Org :large:green:
+  + exports to :dashed:bidirectional: :: HTML :blue:
+  + [[Org]] :dotted:pink:
++ LaTeX :size_9:
+#+end_graph
+A style is a set of flags, so they join rather than override: ~:dashed:bold:~ is both, and a theme's fill
+survives ~:dashed:~. Every other key overrides, the earlier tag winning, as ever.
+
+In Emacs, each tag wears a colour of its own name's ---the same on its ~#+name:~ line--- boxed as
+org-modern draws tags. So a typo stands out: ~:hott:~ differs in colour from ~:hot:~, as does a
+~#+name: hott~. A tag every graph has wears a face of its own, ~org-graph-builtin-tag~.
 
 ** Tags are sugar for :inherit
 
@@ -1501,7 +1525,8 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
 
 9. A tag is a link to its template: clicking it, or ~C-c C-o~ on it, jumps to its ~#+name:~ line ---the
    graph's own, else one outside every graph--- as a template's lookup goes. A tag every graph has, from
-   ~org-defgraph-tag~, says what it does instead, as eldoc does with point on it.
+   ~org-defgraph-tag~, says what it does instead, as eldoc does with point on it; and an undefined tag says
+   that a template is made up for it, and that ~:unknown-tags error~ forbids that.
 
 * Reference
 
@@ -1514,6 +1539,8 @@ Once the demo is over, this is the page we keep open.
 | ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                         |
 | ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes    |
 | ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                   |
+| ~#+begin_graph :direction right~             | ~graph [ rankdir=LR ]~; likewise ~down~ ~TB~, ~up~ ~BT~, ~left~ ~RL~           |
+| ~:dashed:~ ~:pink:~ ~:large:~ ~:size_N:~, …   | everyday templates every graph has; see [[*Everyday tags every graph has][Everyday tags]]  |
 | ~#+begin_graph :theme NAME~                  | the theme ~NAME~ of ~org-graph-themes~, beneath all else; ~nil~ for Graphviz's look |
 | ~#+begin_graph :mindmap t~                   | an undirected ~twopi~ layout, radiating from the first item, its nodes rounded  |
 | ~#+name: N~ above ~#+begin_graph~            | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions    |

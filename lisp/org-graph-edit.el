@@ -135,6 +135,7 @@ When ARG ---or, when RET runs one of `org-graph--return-commands', which may cal
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
     (":unknown-tags" . "With error, a tag naming no #+name: template is an error; by default, it gets a made-up one.")
+    (":direction" . "Which way arcs flow: down, up, right, or left; a readable :rankdir, TB, BT, LR, or RL.  Default: down.")
     (":theme"    . "With NAME, the graph wears that theme of org-graph-themes; with nil, Graphviz's look.  Default: org-graph-theme.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
     (":smartdiagram" . "With TYPE, such as constellation, LaTeX's smartdiagram typesets the list, rather than Graphviz.")
@@ -146,6 +147,7 @@ When ARG ---or, when RET runs one of `org-graph--return-commands', which may cal
 (defconst org-graph--header-key-values
   `((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
     (":notes" "tooltip" "inline") (":unknown-tags" "random-templates" "error")
+    (":direction" "down" "right" "up" "left")
     (":theme" "nil" ,@(--map (symbol-name (car it)) org-graph-themes))
     (":smartdiagram" ,@(mapcar #'car org-graph-smartdiagram-types)))
   "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
@@ -336,9 +338,20 @@ A buffer with no graph block pays only one search per fontification, rather than
   "Where a graph's tags sit, each with the tags as group 1: after an item; in its description term; after a
 #+graph:, #+node:, #+edge:, or #+name: keyword; and after a #+record: cell's link.")
 
-(defface org-graph-builtin-tag '((t :inherit (font-lock-builtin-face org-tag)))
+(defface org-graph-builtin-tag '((t :inherit (font-lock-builtin-face org-tag) :box (:line-width (1 . -1))))
   "The face of a graph's tag naming a template every graph has, from `org-defgraph-tag', which no #+name: shadows."
   :group 'org-special-block-extras)
+
+(defun org-graph--tag-colour-face (name)
+  "Returns the face of the graph tag, or template, NAME: a box in a colour of NAME's own, as org-modern draws tags.
+The colour comes from NAME's very spelling, so every :hot: matches its #+name: hot line, whereas a typo, :hott:, or
+#+name: hott, stands out in a colour of its own: colours as type checking."
+  (require 'color)
+  (let* ((hue (/ (mod (string-to-number (substring (md5 name) 0 6) 16) 360) 360.0))
+         (dark (eq (frame-parameter nil 'background-mode) 'dark))
+         (hex (lambda (lightness) (apply #'color-rgb-to-hex (append (color-hsl-to-rgb hue 0.65 lightness) '(2)))))
+         (fg (funcall hex (if dark 0.75 0.35))))
+    `(:foreground ,fg :background ,(funcall hex (if dark 0.2 0.92)) :box (:line-width (1 . -1) :color ,fg))))
 
 (defvar org-graph-tag-map
   (let ((map (make-sparse-keymap)))
@@ -370,12 +383,26 @@ else one outside every graph; else nil.  Since a graph's own templates win, as `
                           return (line-beginning-position)))))))
 
 (defun org-graph--builtin-tag-doc (name)
-  "Returns what the built-in tag NAME is about: its docstring, then its rows; else nil."
-  (-when-let (doc (alist-get name org-graph-builtin-tag-docs nil nil #'equal))
+  "Returns what the built-in tag NAME is about: its docstring, then its rows; else nil.  A :size_N: is one too."
+  (-when-let (doc (or (alist-get name org-graph-builtin-tag-docs nil nil #'equal)
+                      (and (org--graph-pattern-template name)
+                           "Writes a node's, or an arc's, label at the size its name says, in points.")))
     (format ":%s: is a tag every graph has; see `org-defgraph-tag'.\n%s\n  %s" name doc
             (s-join " " (--map (format "%s=%s" (car it) (if (string-match-p "\\`[^ \"]+\\'" (cadr it)) (cadr it)
                                                           (format "%S" (cadr it))))
-                               (alist-get name org-graph-builtin-templates nil nil #'equal))))))
+                               (or (alist-get name org-graph-builtin-templates nil nil #'equal)
+                                   (org--graph-pattern-template name)))))))
+
+(defun org-graph--unknown-tag-doc (name)
+  "Returns what the tag NAME means when no template of that name exists: one made up for it."
+  (format ":%s: names no #+name: template, nor one every graph has; so the graph makes one up: the Nth unknown tag
+gets the Nth colour, shape, and font, and every :%s: of the graph alike.
+
+So we may sketch first and name later: tag what belongs together, see the groups at once, and a legend,
+- :%s: :: MEANING, explains them; define #+name: %s only once the look matters.
+
+Was it a typo?  Its colour here differs from the tag meant, as each name has its own.  To make an unknown tag an
+error instead, give the block `:unknown-tags error'." name name name name))
 
 (defun org-graph-follow-tag (&optional event)
   "Follow the graph tag at point, or at mouse EVENT: jump to the #+name: line defining its template; else, for a tag
@@ -385,24 +412,32 @@ every graph has, show what it is about; else say that it names no template."
   (-if-let (name (org-graph--tag-at-point))
       (-if-let (definition (org-graph--template-definition name))
           (progn (push-mark) (goto-char definition))
-        (display-message-or-buffer
-         (or (org-graph--builtin-tag-doc name)
-             (format ":%s: names no template, so a graph makes one up, or errs, as its :unknown-tags says" name))
-         "*Graph tag*"))
+        (display-message-or-buffer (or (org-graph--builtin-tag-doc name) (org-graph--unknown-tag-doc name))
+                                   "*Graph tag*"))
     (user-error "No graph tag at point")))
 
 (defvar org-graph--tags-end nil
   "Where the group of tags that font-lock last matched in a graph ends; it resumes there, past each tag's own match.")
 
 (defun org-graph--tag-face (name)
-  "Returns the font-lock face, and properties, of the graph tag NAME: clickable, by `org-graph-tag-map'; and wearing
-`org-graph-builtin-tag' when it is one every graph has, which no #+name: shadows."
-  (list 'face (if (and (assoc name org-graph-builtin-templates) (not (org-graph--template-definition name)))
+  "Returns the font-lock face, and properties, of the graph tag NAME: clickable, by `org-graph-tag-map'; wearing
+`org-graph-builtin-tag' when it is one every graph has, which no #+name: shadows; else a colour of its own, by
+`org-graph--tag-colour-face'."
+  (list 'face (if (and (or (assoc name org-graph-builtin-templates) (org--graph-pattern-template name))
+                       (not (org-graph--template-definition name)))
                   'org-graph-builtin-tag
-                'org-tag)
+                (list (org-graph--tag-colour-face name) 'org-tag))
         'keymap org-graph-tag-map 'mouse-face 'highlight 'follow-link t
-        'help-echo (or (-some--> (alist-get name org-graph-builtin-tag-docs nil nil #'equal) (car (s-lines it)))
-                       "mouse-1: jump to this template's #+name: line")))
+        'help-echo (or (-some--> (org-graph--builtin-tag-doc name) (cadr (s-lines it)))
+                       "mouse-1: jump to this template's #+name: line, or say what an undefined tag means")))
+
+(defun org-graph--match-template-name (limit)
+  "Font-lock matcher: the next #+name: line's name up to LIMIT, in a graph, as group 1; it wears its tags' colour."
+  (let (found)
+    (while (and (not found) (re-search-forward "^[ \t]*#\\+name:[ \t]+\\([^ \t\n]+\\)" limit t))
+      (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p)))
+        (setq found t)))
+    found))
 
 (defun org-graph--match-tags (re limit)
   "Font-lock matcher: the next match of RE up to LIMIT that is in a graph; its group 1 is the tags.
@@ -544,6 +579,9 @@ complete and explain keys, with C-M-i and eldoc."
                                               (goto-char org-graph--tags-end)
                                               (1 (org-graph--tag-face (match-string-no-properties 1)) prepend)))
                                            org-graph--tag-res))
+                          'append)
+  (font-lock-add-keywords nil '((org-graph--match-template-name
+                                 (1 (list (org-graph--tag-colour-face (match-string-no-properties 1))) prepend)))
                           'append)
   (dolist (prop '(keymap mouse-face follow-link help-echo))
     (add-to-list (make-local-variable 'font-lock-extra-managed-props) prop))

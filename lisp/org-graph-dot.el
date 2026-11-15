@@ -207,8 +207,8 @@ Each PAIRS is a #+graph:, #+node:, or #+edge: line's KEY=VALUE pairs; the graph'
 The :graph pairs style containers too, since a Graphviz cluster inherits the graph's attributes; the root graph
 draws only its bgcolor.  FILLS, colours apart by spaces, fill containers by depth: the outermost the first, a
 container within it the second, and so on, cycling.  `creamsicle' follows D2's theme 101, Orange Creamsicle: cream boxes, orange containers.
-A theme is data, so a new one is a `setq' away:
-  (setq org-graph-themes (cons \='(ink :node \"shape=box\" :edge \"color=gray30\") org-graph-themes))"
+A theme is data, so a new one is a `push' away:
+  (push \='(ink :node \"shape=box\" :edge \"color=gray30\") org-graph-themes)"
   :type '(alist :key-type symbol :value-type (plist :key-type (choice (const :graph) (const :node) (const :edge)
                                                                      (const :containers))
                                                     :value-type string))

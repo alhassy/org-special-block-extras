@@ -275,15 +275,24 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                                          :contents-occur-as-link-description :exports :results)
   "Header keywords the `graph' block consumes itself, or Babel habits such as :exports, rather than handing to Graphviz.")
 
+(defconst org--graph-directions '(("down" . "TB") ("up" . "BT") ("right" . "LR") ("left" . "RL"))
+  "The values of `:direction', a readable `:rankdir', and the rankdir each means: which way the arcs flow.")
+
 (defun org--graph-header-rows (kwdargs)
   "KWDARGS, from the #+begin_graph line, ↦ (:graph-rows :node-rows :edge-rows); keys in `org--graph-header-keys' are skipped.
+`:direction right' is `:rankdir LR', and so on, as `org--graph-directions' says.
 
   (:rankdir LR :node.shape box :edge.color \"#f00\")  ↦  (:graph-rows ((\"rankdir\" \"LR\")) :node-rows ((\"shape\" \"box\")) :edge-rows ((\"color\" \"#f00\")))"
   (let (graph node edge)
     (pcase-dolist (`(,key ,val) (-partition 2 kwdargs))
       (unless (memq key org--graph-header-keys)
         (let ((key (substring (symbol-name key) 1)) (val (format "%s" val)))
-          (cond ((s-starts-with-p "node." key) (push (list (substring key 5) val) node))
+          (cond ((equal key "direction")
+                 (push (list "rankdir" (or (cdr (assoc val org--graph-directions))
+                                           (user-error "graph: `:direction %s' should be one of %s" val
+                                                       (s-join ", " (mapcar #'car org--graph-directions)))))
+                       graph))
+                ((s-starts-with-p "node." key) (push (list (substring key 5) val) node))
                 ((s-starts-with-p "edge." key) (push (list (substring key 5) val) edge))
                 (t (push (list key val) graph))))))
     (list :graph-rows (nreverse graph) :node-rows (nreverse node) :edge-rows (nreverse edge))))

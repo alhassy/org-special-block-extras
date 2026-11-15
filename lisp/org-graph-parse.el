@@ -84,6 +84,50 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 (org-defgraph-tag many-to-many "dir=both arrowtail=crowtee arrowhead=crowtee"
   "Draws an arc as an entity-relationship many-to-many: a crow's foot at either end.")
 
+;; Lines: a node's outline, or an arc.  A style's flags join, so :dashed:bold: is both, and a theme's fill survives.
+(org-defgraph-tag dashed "style=dashed"
+  "Draws a node's outline, or an arc, dashed.")
+(org-defgraph-tag dotted "style=dotted"
+  "Draws a node's outline, or an arc, dotted.")
+(org-defgraph-tag bold "style=bold"
+  "Draws a node's outline, or an arc, thick.")
+(org-defgraph-tag bidirectional "dir=both"
+  "Draws an arc with an arrowhead at either end.")
+(org-defgraph-tag undirected "dir=none"
+  "Draws an arc with no arrowhead, in a directed graph.")
+
+;; Colours: Catppuccin Latte's accents, legible on light backgrounds, a theme's included.
+(org-defgraph-tag red "color=\"#d20f39\" fontcolor=\"#d20f39\""
+  "Colours a node's outline and text, or an arc and its label, red: #d20f39.")
+(org-defgraph-tag orange "color=\"#fe640b\" fontcolor=\"#fe640b\""
+  "Colours a node's outline and text, or an arc and its label, orange: #fe640b.")
+(org-defgraph-tag yellow "color=\"#df8e1d\" fontcolor=\"#df8e1d\""
+  "Colours a node's outline and text, or an arc and its label, yellow: #df8e1d.")
+(org-defgraph-tag green "color=\"#40a02b\" fontcolor=\"#40a02b\""
+  "Colours a node's outline and text, or an arc and its label, green: #40a02b.")
+(org-defgraph-tag teal "color=\"#179299\" fontcolor=\"#179299\""
+  "Colours a node's outline and text, or an arc and its label, teal: #179299.")
+(org-defgraph-tag blue "color=\"#1e66f5\" fontcolor=\"#1e66f5\""
+  "Colours a node's outline and text, or an arc and its label, blue: #1e66f5.")
+(org-defgraph-tag purple "color=\"#8839ef\" fontcolor=\"#8839ef\""
+  "Colours a node's outline and text, or an arc and its label, purple: #8839ef.")
+(org-defgraph-tag magenta "color=\"#c2148e\" fontcolor=\"#c2148e\""
+  "Colours a node's outline and text, or an arc and its label, magenta: #c2148e.")
+(org-defgraph-tag pink "color=\"#ea76cb\" fontcolor=\"#ea76cb\""
+  "Colours a node's outline and text, or an arc and its label, pink: #ea76cb.")
+(org-defgraph-tag brown "color=\"#8b4513\" fontcolor=\"#8b4513\""
+  "Colours a node's outline and text, or an arc and its label, brown: #8b4513.")
+(org-defgraph-tag gray "color=\"#7c7f93\" fontcolor=\"#7c7f93\""
+  "Colours a node's outline and text, or an arc and its label, gray: #7c7f93.")
+(org-defgraph-tag black "color=\"#000000\" fontcolor=\"#000000\""
+  "Colours a node's outline and text, or an arc and its label, black: #000000.")
+
+;; Sizes; :size_N: is any size, by `org--graph-pattern-template'.
+(org-defgraph-tag small "fontsize=10"
+  "Writes a node's, or an arc's, label small: 10pt.  :size_N: writes it at N points.")
+(org-defgraph-tag large "fontsize=20"
+  "Writes a node's, or an arc's, label large: 20pt.  :size_N: writes it at N points.")
+
 ;; Layout.
 (org-defgraph-tag container "shape=cluster"
   "Draws a node as a box around its children, which are its members rather than its arcs' targets; an arc to, or
@@ -145,9 +189,16 @@ of NAME ---a legend entry's too--- looks alike; else nil.  The Nth unknown name 
                       ("fontname" ,(funcall pick org-graph-random-template-fonts)))
                name-tables))))
 
+(defun org--graph-pattern-template (name)
+  "Returns the rows of a template that NAME's very spelling defines, else nil: size_N writes labels at N points.
+  \"size_24\"  ⇒  ((\"fontsize\" \"24\"))"
+  (when (string-match "\\`size_\\([0-9]+\\(?:\\.[0-9]+\\)?\\)\\'" name)
+    `(("fontsize" ,(match-string 1 name)))))
+
 (defun org--graph-expand-inherit (rows name-tables &optional seen)
   "ROWS with each | :inherit N₁ … Nₖ | row replaced by templates N₁ … Nₖ's rows, sans keys ROWS sets explicitly ---wherever
-:inherit sits.  As with Emacs faces, an earlier template's key wins over a later one's.  Templates may themselves inherit;
+:inherit sits.  As with Emacs faces, an earlier template's key wins over a later one's; save a style, whose flags all
+join, as `org--graph-style-union' says, so :dashed:bold: is both.  Templates may themselves inherit;
 one already being expanded, as listed in SEEN, contributes nothing; one that no #+name: defines is an error, rather than
 silently contributing nothing."
   (let ((explicit (--remove (equal (car it) ":inherit") rows)) inherited)
@@ -155,13 +206,20 @@ silently contributing nothing."
       (unless (member name seen)
         (dolist (row (org--graph-expand-inherit
                       (or (gethash name name-tables)
+                          (org--graph-pattern-template name)
                           (org--graph-random-template name name-tables)
                           (user-error "graph: `%s' names no #+name: template, as `:unknown-tags error' requires; for literal text \
 ending in `:%s:', write =:%s:= or a | label | row" name name name))
                       name-tables (cons name seen)))
-          (unless (or (assoc (car row) explicit) (assoc (car row) inherited))
-            (push row inherited)))))
-    (append (nreverse inherited) explicit)))
+          (cond ((equal (car row) "style")
+                 (setq inherited (cons (list "style" (org--graph-style-union (cadr (assoc "style" inherited)) (cadr row)))
+                                       (--remove (equal (car it) "style") inherited))))
+                ((not (or (assoc (car row) explicit) (assoc (car row) inherited)))
+                 (push row inherited))))))
+    (let ((style (and (assoc "style" inherited) (assoc "style" explicit)
+                      (org--graph-style-union (cadr (assoc "style" inherited)) (cadr (assoc "style" explicit))))))
+      (append (nreverse (if style (--remove (equal (car it) "style") inherited) inherited))
+              (--map (if (and style (equal (car it) "style")) (list "style" style) it) explicit)))))
 
 (defun org--graph-expand-scope (scope name-tables)
   "SCOPE, a preamble plist, with :inherit rows expanded in its #+graph:, #+node:, and #+edge: tables."
@@ -198,9 +256,18 @@ ending in `:%s:', write =:%s:= or a | label | row" name name name))
           :edge (org--graph-expand-inherit edge name-tables)
           :targeted (--map (cons (car it) (org--graph-expand-inherit (cdr it) name-tables)) (nreverse targeted)))))
 
+(defun org--graph-style-union (&rest styles)
+  "Returns the union of STYLES' flags, in order, as one Graphviz style; else nil.  Since a style is a set of flags,
+\"filled\" and \"dashed,bold\" give \"filled,dashed,bold\": a theme's fill survives a :dashed: tag, and tags compose."
+  (-some--> (-uniq (--mapcat (and it (split-string it "[ \t]*,[ \t]*" t)) styles)) (s-join "," it)))
+
 (defun org--graph-override (rows over)
-  "ROWS with OVER's rows replacing those of the same key, e.g. ((a 1) (b 2)) and ((a 3)) ↦ ((b 2) (a 3))."
-  (append (--remove (assoc (car it) over) rows) over))
+  "Returns ROWS with OVER's rows replacing those of the same key, e.g. ((a 1) (b 2)) and ((a 3)) give ((b 2) (a 3));
+save a style, whose flags join those of ROWS', as `org--graph-style-union' says."
+  (let ((style (and (assoc "style" rows) (assoc "style" over)
+                    (org--graph-style-union (cadr (assoc "style" rows)) (cadr (assoc "style" over))))))
+    (--map (if (and style (equal (car it) "style")) (list "style" style) it)
+           (append (--remove (assoc (car it) over) rows) over))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Item text: <<targets>>, [[links]], and *markup*

@@ -510,6 +510,54 @@ x
   (search-forward "hot:st")
   (should (string-match-p "rounded box" (org-graph--builtin-tag-doc (org-graph--tag-at-point)))))
 
+;;; Everyday tags: lines, colours, sizes; and :direction
+
+(define-graph-test "everyday tags every graph has: lines, arrowheads, colours, and sizes, :size_N: any size; style flags join"
+  :input "
++ A :pink:dashed:bold:size_24:
+  + B :large:
+  + uses :bidirectional:dotted: :: C"
+  :output "digraph {
+  A [ color=\"#ea76cb\" fontcolor=\"#ea76cb\" style=\"dashed,bold\" fontsize=24 label=A ];
+  A -> B;
+  B [ fontsize=20 label=B ];
+  A -> C [ label=uses dir=both style=dotted ];
+  C [ label=C ];
+}")
+
+(deftest "a style's flags join across templates, an item's own row, and the theme; other keys still override" [graph]
+  (should (equal (org--graph-override '(("style" "filled") ("color" "red")) '(("style" "dashed") ("color" "blue")))
+                 '(("style" "filled,dashed") ("color" "blue"))))
+  (should (string-match-p "A \\[ style=\"dashed,rounded\" label=A \\]"
+                          (org--graph-raw->dot "
++ A :dashed:
+  | style | rounded |" nil nil))))
+
+(deftest ":direction is a readable :rankdir: down, up, right, or left; anything else is a user error" [graph]
+  (should (string-match-p "rankdir=LR" (org--graph-raw->dot "+ A" nil '(:direction right))))
+  (should (string-match-p "rankdir=BT" (org--graph-raw->dot "+ A" nil '(:direction up))))
+  (should (string-match-p "rankdir=RL" (org--graph-raw->dot "+ A" nil '(:rankdir RL))))
+  (should-error (org--graph-raw->dot "+ A" nil '(:direction sideways)) :type 'user-error))
+
+(org-deftest "each tag wears a colour of its name's own, as does its #+name: line; so a typo stands out"
+  :text "
+#+begin_graph
+#+name: hot color=red
++ A :hot:hott:
+#+end_graph"
+  (font-lock-ensure)
+  (let ((colour (lambda (needle)
+                  (goto-char (point-min)) (search-forward needle)
+                  (--some (and (listp it) (plist-get it :foreground))
+                          (ensure-list (get-text-property (match-beginning 0) 'face))))))
+    (should (funcall colour "hot color"))
+    (should (equal (funcall colour "hot color") (funcall colour "hot:hott")))
+    (should-not (equal (funcall colour "hot:hott") (funcall colour "hott:")))))
+
+(deftest "an undefined tag's docs say a template is made up for it, and how to forbid that"
+  (should (string-match-p ":unknown-tags error" (org-graph--unknown-tag-doc "hott")))
+  (should (string-match-p "points" (org-graph--builtin-tag-doc "size_9"))))
+
 ;;; Containers: an item whose children are its members
 
 (define-graph-test "a :container: item is a box around its children; a reference in it is an arc from the box"
