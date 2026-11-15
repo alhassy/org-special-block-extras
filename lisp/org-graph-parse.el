@@ -148,6 +148,12 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 (org-defgraph-tag text "shape=plaintext"
   "Draws a node as its label alone, sans outline.")
 
+;; People: Graphviz has no such shape, so `org--graph-person' draws one, from a stick figure of its own.
+(org-defgraph-tag person "shape=person"
+  "Draws a node as a person: a stick figure, in the node's colour, above its name.")
+(org-defgraph-tag actor "shape=person"
+  "Draws a node as a UML actor: a stick figure, in the node's colour, above its name; as :person: does.")
+
 ;; Sizes; :size_N: is any size, by `org--graph-pattern-template'.
 (org-defgraph-tag small "fontsize=10"
   "Writes a node's, or an arc's, label small: 10pt.  :size_N: writes it at N points.")
@@ -497,12 +503,22 @@ or, while `org--graph-tips' collects tooltips, the Org \"Born /1958/\"."
                   (org-element-parse-secondary-string it (org-element-restriction 'paragraph))))
     (s-trim (if org--graph-tips (org-element-interpret-data it) (org--graph-item-render nil it)))))
 
+(defun org--graph-image-path (path)
+  "Returns PATH, an image link's, as Graphviz can open it: ~ and $VARIABLES expanded, since Graphviz expands neither,
+and would silently draw no image; a relative path stays relative, to the document's directory, as Org's links are.
+An image that does not exist is a user error, rather than a node silently sans its image."
+  (let ((path (substitute-in-file-name path)))
+    (when (string-prefix-p "~" path) (setq path (expand-file-name path)))
+    (unless (file-exists-p path)
+      (user-error "graph: the image ‘%s’ does not exist" path))
+    path))
+
 (defun org--graph-item-text-sans-tags (text)
   "An item's TEXT, sans description tag and trailing tags, ↦ the plist of `org--graph-item-text', bar :arc-label and :tags.
 A web or file link becomes the node's URL, its description staying in the label; an image link, its image."
   (let* ((objs (org--graph-parse-objects text org--graph-objects))
          (image  (-some--> (org-element-map objs 'link (lambda (o) (and (org--graph-image-link-p o) o)) nil t)
-                   (org-element-property :path it)))
+                   (org--graph-image-path (org-element-property :path it))))
          ;; A markup link may lead somewhere too, as [[https://o.org][Org]] does.
          (urls   (org-element-map objs 'link (lambda (o) (if (org--graph-external-link-p o)
                                                              (and (not (org--graph-image-link-p o)) (org--graph-link-url o))

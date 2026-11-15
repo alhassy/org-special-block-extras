@@ -545,10 +545,12 @@ Some looks are wanted so often that every graph has them, sans a ~#+name:~:
 | ~:small:~ ~:large:~ ~:size_N:~                                | a label at 10pt, 20pt, or N points              |
 | ~:database:~ ~:note:~ ~:folder:~ ~:component:~ ~:tab:~         | a node drawn as a cylinder, a dog-eared page, a folder, a UML component, a tab |
 | ~:circle:~ ~:diamond:~ ~:hexagon:~ ~:star:~ ~:oval:~ ~:rectangle:~ ~:text:~ | a node so shaped; ~:text:~ is its label alone, sans outline |
+| ~:person:~ ~:actor:~                                           | a stick figure, in the node's colour, above its label |
 #+begin_graph :direction right :demo live
-+ Org :large:green:
-  + exports to :dashed:bidirectional: :: HTML :blue:
-  + [[Org]] :dotted:pink:
++ Musa :person:
+  + writes :: Org :large:green:
+    + exports to :dashed:bidirectional: :: HTML :blue:
+    + [[Musa]] :dotted:pink:
 + LaTeX :size_9:
 #+end_graph
 A style is a set of flags, so they join rather than override: ~:dashed:bold:~ is both, and a theme's fill
@@ -866,7 +868,9 @@ picture of the rules it follows:
 #+end_graph
 
 A node has one ~URL~, so an item with two web links is an error. Graphviz finds the image relative to the
-Org file, as Org does; an explicit ~URL~ or ~image~ row wins. A lone image is its own node, drawn sans
+Org file, as Org does; ~~/~ and ~$VARIABLES~ expand, and an image that does not exist is an error, rather
+than a node silently sans its picture. An HTML export holds each image within the page, as a ~data:~ URI,
+so a published page needs no image files beside it. An explicit ~URL~ or ~image~ row wins. A lone image is its own node, drawn sans
 text, so the arc into it carries the words; for a tour of screenshots, ~:node.imagescale true~, with a
 fixed ~width~ and ~height~, fits each picture to its node.
 

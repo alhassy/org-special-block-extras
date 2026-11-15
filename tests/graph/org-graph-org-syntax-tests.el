@@ -93,14 +93,41 @@
   :input "
 + see [[https://example.org][site]]
 + notes [[file:notes.org]]
-+ <<emacs>> Emacs [[file:emacs.png]]
-+ [[file:gnu.png]]"
++ <<emacs>> Emacs [[file:images/inference-rules.png]]
++ [[file:images/inference-rules.png]]"
   :output "digraph {
   \"see site\" [ URL=\"https://example.org\" label=\"see site\" ];
   \"notes notes.org\" [ URL=\"notes.org\" label=\"notes notes.org\" ];
-  emacs [ image=\"emacs.png\" label=Emacs ];
-  \"gnu.png\" [ image=\"gnu.png\" label=\"\" ];
+  emacs [ image=\"images/inference-rules.png\" label=Emacs ];
+  \"images/inference-rules.png\" [ image=\"images/inference-rules.png\" label=\"\" ];
 }")
+
+(deftest "an image link's ~ expands, as Graphviz would not; an image that does not exist is a user error"
+  (let ((home (file-name-as-directory (make-temp-file "org-graph-home-" t)))
+        ;; Before HOME moves, since `default-directory' may itself be spelled with a ~.
+        (image (expand-file-name "images/inference-rules.png")))
+    (unwind-protect
+        (let ((process-environment (cons (concat "HOME=" home) process-environment)))
+          (copy-file image (concat home "me.png"))
+          (should (string-search (format "image=\"%sme.png\"" (expand-file-name home))
+                                 (org--graph-raw->dot "+ Me [[file:~/me.png]]" nil nil)))
+          (should-error (org--graph-raw->dot "+ Me [[file:~/nope.png]]" nil nil) :type 'user-error))
+      (delete-directory home t))))
+
+(deftest "a :person:, or :actor:, is a stick figure in its colour above its label, as Graphviz has no such shape"
+  (let ((dot (org--graph-raw->dot "+ Alice :person:pink:" nil nil)))
+    (should (string-match-p "Alice \\[ color=\"#ea76cb\" fontcolor=\"#ea76cb\" shape=none" dot))
+    (string-match "IMG SRC=\"\\([^\"]+\\)\"" dot)
+    (let ((icon (match-string 1 dot)))
+      (should (file-exists-p icon))
+      (should (string-search "stroke=\"#ea76cb\"" (with-temp-buffer (insert-file-contents icon) (buffer-string)))))
+    (should (string-match-p "<TD>Alice</TD>" dot)))
+  (should (string-match-p "<TD><B>Bob</B></TD>" (org--graph-raw->dot "+ *Bob* :actor:" nil nil))))
+
+(deftest "an exported SVG holds its images as data: URIs, since a published page cannot reach their files"
+  (let ((svg (org-graph--inline-images "<image width=\"9px\" xlink:href=\"images/inference-rules.png\"/><image xlink:href=\"gone.png\"/>")))
+    (should (string-match-p "<image width=\"9px\" xlink:href=\"data:image/png;base64,iVBOR" svg))
+    (should (string-search "xlink:href=\"gone.png\"" svg))))
 
 (deftest "a node has one URL, so an item with two web links is a user error"
   (should-error (org--graph-raw->dot "

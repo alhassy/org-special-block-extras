@@ -374,13 +374,32 @@ Returns t (claiming C-c C-c)."
    t))
 
 (defun org-graph--svg-contents (svgfile)
-  "Return the <svg>…</svg> string from SVGFILE, stripping the XML preamble."
+  "Return the <svg>…</svg> string from SVGFILE, stripping the XML preamble; its images inlined, by
+`org-graph--inline-images', since a web page cannot reach the files they name."
   (with-temp-buffer
     (insert-file-contents svgfile)
     (goto-char (point-min))
     (when (re-search-forward "<svg[ \t\n]" nil t)
       (goto-char (match-beginning 0))
-      (buffer-substring (point) (point-max)))))
+      (org-graph--inline-images (buffer-substring (point) (point-max))))))
+
+(defun org-graph--inline-images (svg)
+  "Returns SVG with each <image> of a local file, as Graphviz writes a node's image, holding it as a data: URI instead.
+  <image xlink:href=\"/home/me/alhassy.png\" …/>  ↦  <image xlink:href=\"data:image/png;base64,iVBOR…\" …/>
+Graphviz reads an image only from a file, to size its node; but a page published elsewhere has no such file."
+  (replace-regexp-in-string
+   "<image\\([^>]*?\\)xlink:href=\"\\([^\"]+\\)\""
+   (lambda (match)
+     (let ((file (save-match-data (xml-substitute-special (match-string 2 match)))))
+       (if (or (string-prefix-p "data:" file) (not (file-exists-p file)))
+           match
+         (format "<image%sxlink:href=\"data:%s;base64,%s\"" (match-string 1 match)
+                 (pcase (downcase (or (file-name-extension file) ""))
+                   ("svg" "image/svg+xml") ((or "jpg" "jpeg") "image/jpeg") ("gif" "image/gif") (_ "image/png"))
+                 (base64-encode-string (with-temp-buffer (set-buffer-multibyte nil)
+                                                         (insert-file-contents-literally file) (buffer-string))
+                                       t)))))
+   svg t t))
 
 (defun org-graph--svg-tooltips (svg tips)
   "(SVG, TIPS) ↦ SVG whose tooltips tooltips.js shows, TIPS mapping each key Graphviz wrote as an xlink:title to its Org

@@ -88,7 +88,8 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
      (-let [(name . attrs) (gethash id (org--graph-ctx-nodes ctx))]
        (list (format "%s%s;" (org--graph-dot-id id)
                      (org--graph-attrs->dot
-                      (org--graph-href id (org--graph-filled (if (assoc "label" attrs) attrs (append attrs `(("label" ,name)))) 'node)
+                      (org--graph-href id (org--graph-person (org--graph-filled (if (assoc "label" attrs) attrs (append attrs `(("label" ,name))))
+                                                                           'node))
                                        ctx))))))
     (`(:edge ,src ,dst ,attrs)
      (list (org--graph-edge->dot src dst attrs op ctx)))
@@ -194,6 +195,39 @@ that a `+ TITLE :container:' item declares is the same subgraph, which Graphviz 
              (org--graph-ctx-tag-clusters ctx))
     (nreverse subgraphs)))
 
+(defvar org--graph-node-defaults nil
+  "While a graph prints, its graph-wide node defaults: the rows of its node [ … ] line, a theme's included.")
+
+(defun org--graph-person-icon (colour)
+  "Returns the file of a stick figure drawn in COLOUR, written once, to a directory of the system's temporary files;
+for Graphviz reads an image only from a file.  The SVG opens with an XML declaration, sans which Graphviz misses it."
+  (let* ((dir (expand-file-name "org-graph-icons" temporary-file-directory))
+         (file (expand-file-name (format "person-%s.svg" (replace-regexp-in-string "[^[:alnum:]]" "" colour)) dir)))
+    (unless (file-exists-p file)
+      (make-directory dir t)
+      (with-temp-file file
+        (insert "<?xml version=\"1.0\"?>\n"
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"30\" height=\"45\" viewBox=\"0 0 36 54\">\n"
+                (format "  <g fill=\"none\" stroke=\"%s\" stroke-width=\"3\" stroke-linecap=\"round\">\n" colour)
+                "    <circle cx=\"18\" cy=\"9\" r=\"7\"/><path d=\"M18 16v18M4 23h28M18 34 7 52M18 34l11 18\"/>\n"
+                "  </g>\n</svg>\n")))
+    file))
+
+(defun org--graph-person (attrs)
+  "Returns ATTRS, a node's, drawn as a person when their shape is person, which Graphviz lacks: a stick figure in the
+node's colour, else its defaults', above its label, in an HTML-like table; else ATTRS as they are.
+  ((\"shape\" \"person\") (\"label\" \"Alice\"))  ↦  ((\"shape\" \"none\") (\"label\" \"<<TABLE …><IMG SRC=…/>…Alice…>\"))"
+  (if (not (equal (cadr (assoc "shape" attrs)) "person"))
+      attrs
+    (let* ((colour (or (cadr (assoc "color" attrs)) (cadr (assoc "color" org--graph-node-defaults)) "black"))
+           (label (or (cadr (assoc "label" attrs)) ""))
+           (body (if (string-match "\\`<\\(.*\\)>\\'" label) (match-string 1 label) (org--graph-html-escape label))))
+      (append (--remove (member (car it) '("shape" "label" "style")) attrs)
+              `(("shape" "none") ("style" "solid") ("margin" "0")
+                ("label" ,(format (concat "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"1\">"
+                                          "<TR><TD><IMG SRC=\"%s\"/></TD></TR><TR><TD>%s</TD></TR></TABLE>>")
+                                  (org--graph-person-icon colour) body)))))))
+
 (defvar org--graph-container-fills nil
   "While a themed graph prints, its theme's :containers fills, one per depth of nesting, outermost first; else nil.")
 
@@ -276,6 +310,7 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
       (org--graph-note-ranks ctx preamble stmts))
     (let* ((org--graph-container-fills fills)
            (org--graph-filled-by-default (org--graph-filling-kinds preamble))
+           (org--graph-node-defaults (plist-get preamble :node-rows))
            (body (append (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)
                         (org--graph-tag-clusters->dot ctx)
                         ;; A legend is a column: top-down, its entries are chained; left-right, they share a rank already.
