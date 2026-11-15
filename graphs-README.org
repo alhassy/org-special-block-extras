@@ -379,7 +379,9 @@ the node:
 A short template fits on its name's line, as ~KEY=VALUE~ pairs ---as [[*When the preamble outgrows the line][#+edge: lines]] take them--- so the
 two above are, tersely, ~#+name: token shape=box style=filled fillcolor=lightblue~ and
 ~#+name: rule style=bold~. Several such lines in a row are several templates, and a table below one adds
-rows to it.
+rows to it. In Emacs, each template of a graph ---its name's line, and the table below it--- wears
+a background of its own, from ~org-graph-template-backgrounds~, so where one ends and the next begins
+shows at a glance, as a [[*Clusters draw boxes][cluster]]'s does.
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
 ~:token:rule:~, each a template, the earlier winning on a clash ---save colours: when the tags' templates
@@ -1324,7 +1326,8 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
 
 2. A directive's line validates itself as we type: ~#+graph:~, ~#+node:~, ~#+edge:~, and ~#+name:~
    stand out, and so does each ~KEY~ of a ~KEY=VALUE~ pair that Graphviz knows on that line. A key left
-   plain is a typo, or a misplaced key; see [[*When the preamble outgrows the line][When the preamble outgrows the line]].
+   plain is a typo, or a misplaced key; see [[*When the preamble outgrows the line][When the preamble outgrows the line]]. Each ~#+name:~ template,
+   and each cluster, wears a background of its own.
 
 3. When we would rather pick than type, ~C-u RET~ on any table row inside a graph inserts a new
    ~| key | value |~ row interactively: a completion menu for the key, then one for the value ---or a

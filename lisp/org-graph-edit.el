@@ -478,13 +478,62 @@ nesting counted; `org-graph--cluster-index' then holds its index, for `org-graph
         (goto-char (save-excursion (goto-char begin) (line-end-position)))
         t))))
 
+(defcustom org-graph-template-backgrounds
+  '((light "#fff4c2" "#fde0ea" "#d9f3ee" "#e9e1fb")
+    (dark  "#3a3416" "#3a1f29" "#163330" "#2a2340"))
+  "The backgrounds that a graph's #+name: templates wear in Emacs, in turn, by the frame's background mode: each
+template, its name's line and the table below it, wears its own; apart from `org-graph-cluster-backgrounds', so a
+template within a cluster reads apart from it."
+  :type '(alist :key-type (choice (const light) (const dark)) :value-type (repeat color))
+  :group 'org-special-block-extras)
+
+(defun org-graph--templates (bounds)
+  "Returns the (BEGIN END INDEX) of each #+name: template within BOUNDS, a graph's: BEGIN starts its name's line, END
+ends the table right below it, else that line; INDEX counts the templates before it."
+  (save-excursion
+    (goto-char (car bounds))
+    (let ((case-fold-search t) (index 0) templates)
+      (while (re-search-forward "^[ \t]*#\\+name:" (cdr bounds) t)
+        (let ((begin (line-beginning-position)))
+          (forward-line 1)
+          (while (and (< (point) (cdr bounds)) (looking-at-p "[ \t]*|")) (forward-line 1))
+          (push (list begin (1- (point)) index) templates)
+          (cl-incf index)))
+      (nreverse templates))))
+
+(defun org-graph--template-face (index)
+  "Returns the face of a graph's INDEXth template: its background, from `org-graph-template-backgrounds', to the
+line's end."
+  (let ((colours (alist-get (if (eq (frame-parameter nil 'background-mode) 'dark) 'dark 'light)
+                            org-graph-template-backgrounds)))
+    (list :background (nth (mod index (length colours)) colours) :extend t)))
+
+(defvar org-graph--template-index 0
+  "The index of the template `org-graph--match-template' last matched.")
+
+(defun org-graph--match-template (limit)
+  "Font-lock matcher: the next #+name: template up to LIMIT, in a graph, matched from its name's line through the
+table below it; `org-graph--template-index' then holds its index, for `org-graph--template-face'."
+  (let (found)
+    (while (and (not found) (re-search-forward "^[ \t]*#\\+name:" limit t))
+      (let ((line (line-beginning-position)))
+        (save-match-data
+          (-when-let (bounds (org-graph--graph-bounds))
+            (setq found (--first (= (car it) line) (org-graph--templates bounds)))))))
+    (when found
+      (-let [(begin end index) found]
+        (setq org-graph--template-index index)
+        (set-match-data (list begin (min (point-max) (1+ end))))
+        (goto-char (save-excursion (goto-char begin) (line-end-position)))
+        t))))
+
 (defun org-graph--extend-to-clusters ()
-  "Widen font-lock's region to the clusters it cuts through, so each is painted whole; for
+  "Widen font-lock's region to the clusters, and templates, it cuts through, so each is painted whole; for
 `font-lock-extend-region-functions'."
   (defvar font-lock-beg) (defvar font-lock-end)
   (let ((changed nil))
     (-when-let (bounds (save-excursion (goto-char font-lock-beg) (org-graph--graph-bounds)))
-      (pcase-dolist (`(,begin ,end ,_) (org-graph--clusters bounds))
+      (pcase-dolist (`(,begin ,end ,_) (append (org-graph--clusters bounds) (org-graph--templates bounds)))
         (when (and (< begin font-lock-beg) (> end font-lock-beg))
           (setq font-lock-beg begin changed t))))
     changed))
@@ -496,6 +545,9 @@ nesting counted; `org-graph--cluster-index' then holds its index, for `org-graph
   "In this Org buffer's graph blocks: show links verbatim, paint each cluster's background, and complete and explain
 keys, with C-M-i and eldoc."
   (font-lock-add-keywords nil '((org-graph--match-cluster 0 (org-graph--cluster-face org-graph--cluster-index) prepend)) 'append)
+  ;; After the clusters', so a template within a cluster wears its own background.
+  (font-lock-add-keywords nil '((org-graph--match-template 0 (org-graph--template-face org-graph--template-index) prepend))
+                          'append)
   (font-lock-add-keywords nil '((org-graph--match-directive
                                  (1 'org-graph-directive prepend)
                                  ("[ \t]\\([^ \t=:\"]+\\)=" (line-end-position) nil (1 (org-graph--pair-key-face) prepend t))))
