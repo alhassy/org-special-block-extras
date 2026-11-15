@@ -33,9 +33,8 @@
 (require 'dash)
 (require 'org-color-links)
 
-(declare-function org-docs-get "org-links")
+(declare-function org--docs-cite "org-links")
 (declare-function org--docs-plain-p "org-links")
-(defvar org--docs-actually-used)
 
 (defun org--markup-tooltip (path desc)
   "Returns the meaning of [[tooltip:PATH][DESC]]: PATH shown, DESC hovering over it; sans DESC, PATH hovers over
@@ -45,8 +44,7 @@ itself, as in prose."
 (defun org--markup-doc (path desc)
   "Returns the meaning of [[doc:PATH][DESC]]: DESC, else PATH's glossary name, shown, its documentation hovering over
 it in HTML; PATH joins the glossary that #+print_glossary: lists, as a doc: link in prose does."
-  (-let [(name docs) (org-docs-get path)]
-    (add-to-list 'org--docs-actually-used (list path name docs))
+  (-let [(name docs) (org--docs-cite path)]
     (list :text (unless desc name) :tip docs :plain (org--docs-plain-p path) :glossary t)))
 
 (defvar org-markup-links

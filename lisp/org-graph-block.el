@@ -242,7 +242,7 @@ web, file, or [[*Heading]] link; else to its item in the #+begin_graph block."
       (org-reveal))
      ;; Graphviz knows a file link only by its path; a bare path is a file: link again.
      (t (org-link-open-from-string
-         (org-link-make-string (if (string-match-p "\\`\\(?:[*#]\\|[[:alpha:]][[:alnum:]+.-]*:\\)" href) href
+         (org-link-make-string (if (or (string-match-p org--section-link-re href) (string-match-p org--link-scheme-re href)) href
                                  (concat "file:" href))))))))
 
 ;; A hot spot's click arrives as [org-graph-area mouse-1], ahead of the image's own overlay keymap.

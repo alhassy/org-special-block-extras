@@ -26,9 +26,9 @@
   (dolist (rendered (pcase backend
                       ('html '("<span style=\"color:red;\">fire</span>" "\\(\\alpha\\)" "class=\"tooltip\""
                                "<a href=\"https://orgmode.org\">Org</a>" "<a href=\"notes.html\">notes</a>"
-                               "the folds</a>" "<a href=\"#Lemma\">the lemma</a>"))
+                               "<a href=\"#Lemma\">the lemma</a>"))
                       ('latex '("\\color{red}fire" "\\(\\alpha\\)" "\\marginpar" "\\href{https://orgmode.org}{Org}"
-                                "\\href{notes.org}{notes}" "{the folds}" "{the lemma}"))))
+                                "\\href{notes.org}{notes}" "{the lemma}"))))
     (should (string-search rendered out)))
   ;; The section link reaches the section's own anchor.
   (should (string-match-p (if (eq backend 'html) "href=\"#\\([^\"]+\\)\">the folds</a>" "\\\\hyperref\\[sec:[^]]+\\]{the folds}")

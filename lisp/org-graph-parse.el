@@ -383,7 +383,7 @@ label HTML, any other snippet vanishing."
          ((eq type 'link) (if (or (not (org--graph-external-link-p o)) (org--graph-image-link-p o)) ""
                             ;; A bare [[*Org mode]] shows as the section's title, sans star.
                             (org--graph-item-render html? (or (org-element-contents o)
-                                                              (list (string-remove-prefix "*" (org--graph-link-url o)))))))
+                                                              (list (org--section-link-title (org--graph-link-url o)))))))
          (t (-let [(open close) (and html? (alist-get type org--graph-markup-tags))]
               (concat open
                       (if (memq type '(code verbatim))

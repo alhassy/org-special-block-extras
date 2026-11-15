@@ -193,6 +193,13 @@ So, say, a named block's #+name: and #+caption: label what it begins with."
 (defconst org--section-link-re "\\`\\(?:[*#]\\|id:\\)"
   "A link to a section: [[*Heading]], [[#custom-id]], or [[id:ID]].")
 
+(defconst org--link-scheme-re "\\`[[:alpha:]][[:alnum:]+.-]*:"
+  "A link's URI scheme, such as https: or id:; a link sans one, such as [[target]], is internal.")
+
+(defun org--section-link-title (link)
+  "Returns the section LINK names, sans its prefix; e.g., “Folds” for *Folds, #folds, or id:folds."
+  (save-match-data (replace-regexp-in-string org--section-link-re "" link)))
+
 (defvar org--inline-targets t
   "Within a block's handler, the <<targets>> of the arguments it has exported inline, by `org-inline', newest first;
 the block emits them into the document, before itself, so a [[target]] elsewhere reaches them.  Elsewhere, t: no block
@@ -205,19 +212,18 @@ HTML, e.g., @@html:<a href=\"osbe-link:*Heading\">@@words@@html:</a>@@.  Within 
 go to `org--inline-targets'.  A nested export knows none of the document, so would drop such links, and orphan such
 targets."
   (let ((html? (org-export-derived-backend-p backend 'html)) (latex? (org-export-derived-backend-p backend 'latex)))
-    (if (not (or html? latex?)) text
+    (if (not (and (or html? latex?) (or (string-search "[[" text) (string-search "<<" text)))) text
       (let ((linked (replace-regexp-in-string
                      org-link-bracket-re
                      (lambda (match)
                        (let ((link (match-string 1 match)) (desc (match-string 2 match)))
                          ;; A link sans scheme, such as [[target]], is internal; else, only id:.
-                         (if (and (string-match-p "\\`[[:alpha:]][[:alnum:]+.-]*:" link)
+                         (if (and (string-match-p org--link-scheme-re link)
                                   (not (string-prefix-p "id:" link)))
                              match
                            (format (if html? "@@html:<a href=\"osbe-link:%s\">@@%s@@html:</a>@@"
                                      "@@latex:\\hyperref[osbe-link:%s]{@@%s@@latex:}@@")
-                                   link (or desc (save-match-data
-                                                   (replace-regexp-in-string org--section-link-re "" link)))))))
+                                   link (or desc (org--section-link-title link))))))
                      text t t)))
         (if (eq org--inline-targets t) linked
           (replace-regexp-in-string (concat org-target-regexp "[ \t]*")

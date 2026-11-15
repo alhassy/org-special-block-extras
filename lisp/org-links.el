@@ -539,6 +539,12 @@ Later entries come first, so they win when labels clash; as when the blocks were
 (defvar org--docs-actually-used nil
   "The (LABEL NAME DESCRIPTION) glossary entries the current export cites, which “#+print_glossary:” lists.")
 
+(defun org--docs-cite (label &optional entry)
+  "Returns LABEL's glossary ENTRY, (NAME DOCS), looked up when not given, recording that the export cites it."
+  (let ((entry (or entry (org-docs-get label))))
+    (add-to-list 'org--docs-actually-used (cons label entry))
+    entry))
+
 (defun org--docs-prepare (&rest _)
   "Before each export: reset the glossary to the buffer's own entries, and its citations to the buffer's doc: links.
 Citations are gathered up front, so “#+print_glossary:” lists them all in one export, wherever it sits;
@@ -556,8 +562,7 @@ are not counted, since those blocks do not export their contents."
             (when (and (equal (org-element-property :type link) "doc")
                        (not (and block (equal "documentation" (downcase (org-element-property :type block))))))
               ;; An unknown label is reported by the export itself, so we skip it here.
-              (-when-let (entry (ignore-errors (org-docs-get label)))
-                (add-to-list 'org--docs-actually-used (cons label entry))))))))))
+              (ignore-errors (org--docs-cite label)))))))))
 
 (defun org--docs-glossary (keyword-transcoder keyword contents info)
   "“#+print_glossary:” ↦ the cited entries, `org--docs-actually-used', as #+print_bibliography: lists the cited works:
@@ -589,7 +594,7 @@ entry's name, its description a tooltip.  Any other KEYWORD is KEYWORD-TRANSCODE
   :face '(custom-button)
   :manual "#Glossaries"
   :export (progn
-            (add-to-list 'org--docs-actually-used (list label name docs))
+            (org--docs-cite label entry)
             (pcase backend
               ('html (org--html-tooltip docs display-name (org--docs-plain-p label)))
               ;; Make the current word refer to its glossary entry, and declare the location

@@ -227,7 +227,7 @@ A web link's path is no maths, so it is only ever bracketed, [[https://…][…]
   "(LINK, DESC) ↦ DESC, linking to the section LINK names, as a graph's node does; e.g., “*Folds”, “f” ↦ \\href{*Folds}{f}
 in HTML, \\hyperref[*Folds]{f} in LaTeX, which `org--resolve-section-links' points at the section once it lands.  Sans
 DESC, the heading shows, as text; Markdown's maths has no links, so there DESC alone."
-  (let ((desc (or desc (format "\\text{%s}" (replace-regexp-in-string org--section-link-re "" link)))))
+  (let ((desc (or desc (format "\\text{%s}" (org--section-link-title link)))))
     (cond ((org-export-markdown-p) desc)
           ((eq org--math-backend 'latex) (format "\\hyperref[%s]{%s}" link desc))
           (t (format "\\href{%s}{%s}" link desc)))))
@@ -339,8 +339,8 @@ Org's LaTeX transcoder strips the delimiters, then adds its own about the result
              (out (funcall transcode (org-element-put-property (org-element-copy fragment) :value marked) contents info)))
         ;; Maths holds no \\marginpar, and Org closes these maths itself; so we close them for LaTeX's notes, then
         ;; reopen.
-        (if (and org--math-tips (eq backend 'latex)) (concat out "\\)" (org--math-tips-after backend) "\\(")
-          (concat out (org--math-tips-after backend)))))))
+        (let ((reopen? (and org--math-tips (eq backend 'latex))))
+          (concat out (if reopen? "\\)" "") (org--math-tips-after backend) (if reopen? "\\(" "")))))))
 
 (provide 'org-math-markup)
 ;;; org-math-markup.el ends here
