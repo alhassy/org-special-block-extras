@@ -475,7 +475,6 @@ x
 + Muhammad
   + wed :married: :: Khadija :wife:
 + s
-  #+record:
   | <<p>> [[Muhammad]] :faint: |
 #+end_graph"
   (font-lock-ensure)
@@ -1069,7 +1068,6 @@ Languages, by influence.
     | :edge.label | Church– \\\\ Turing thesis |
     | :edge.color | <<B>red</B>> |
 + s
-  #+record:
   | hello \\\\ world | <<p>> b |"
   :output "digraph {
   Monad [ label=Monad ];

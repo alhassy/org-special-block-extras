@@ -98,7 +98,7 @@ click it for its section below:
   + layout :: [[*Containers draw boxes][+ TITLE :container:]] :topic:
 
     A container draws a box around its children, its members; its table styles the box.
-    + records :: [[*Records: a #+record: table][#+record:]] :syntax:
+    + records :: [[*Records: a table of fields][| a | table |]] :syntax:
 
       A table under an item is its label, a record of fields; a <<P>> cell is a port, which =[[node::P]]= reaches.
     + mind maps :: [[*Mind maps: :layout twopi][:layout twopi]] :syntax:
@@ -743,7 +743,7 @@ HTML-like one, while its id stays the plain text:
 #+end_graph
 
 We escape ~&~, ~<~, ~>~, and ~"~ for you. Graphviz has no way to tell ~=code=~ from =~pre~=, so both are
-monospace. A ~#+record:~ table's cells keep their markup too. Names such as ~a_b~, ~C++~, and
+monospace. A record's cells keep their markup too. Names such as ~a_b~, ~C++~, and
 ~org-graph.el~ are not mistaken for markup.
 
 ** Entities, scripts, and snippets
@@ -779,7 +779,7 @@ mid-line too, so a two-line node stays one terse line:
 The label becomes an HTML-like one, as with markup; the id joins the lines with a space, so a node reached
 by a link usually wants a ~<<target>>~, as ~err~ above. It is the one line break wherever a label is
 written: a description term, as above; a table value, ~| :edge.label | consumes \\ tokens |~; a
-~#+record:~ cell.
+record's cell.
 
 Breaking every long label by hand is tedious, though. ~#+begin_graph :wrap N~ fills node and arc labels to
 lines of ~N~ characters, so long item text needs no ~\\~ at all; a label already broken by ~\\~ stays as
@@ -996,23 +996,20 @@ tags of other kinds colour the node in stripes, as above:
 + John :container_Gospels:
 #+end_graph
 
-** Records: a #+record: table
+** Records: a table of fields
 
 Some nodes have insides: an AST node has a left operand, an operator, and a right operand, and each arc
-should leave from its own field. A record is a node drawn as a table, and Org already has tables: under
-~#+record:~, an item's table is its label, laid out exactly as written ---just as ~#+graph:~, ~#+node:~,
-and ~#+edge:~ name what the table below them is. A cell's ~<<target>>~ is its /port/, a cell's ~[[link]]~
+should leave from its own field. A record is a node drawn as a table, and Org already has tables: an
+item's table is its label, laid out exactly as written ---unless it is the ~| key | value |~ rows of
+[[*A node's table, and two kinds of keys][a node's table]]. A cell's ~<<target>>~ is its /port/, a cell's ~[[link]]~
 is an arc from that port, and an arc reaches a port by ~record::port~ ---just as Org's
 ~[[file:notes.org::target]]~ reaches into a file:
 #+begin_graph Our expression, as an AST :demo live
 + minus
-  #+record:
   | <<l>> left [[plus]] | - | <<r>> right [[four]] |
 + plus
-  #+record:
   | <<l>> left [[times]] | + | <<r>> right [[three]] |
 + times
-  #+record:
   | <<l>> left [[one]] | * | <<r>> right [[two]] |
 + <<one>> 1
 + <<two>> 2
@@ -1028,12 +1025,10 @@ any layout that Graphviz's old ~{ }~ nesting could. A grammar rule with three al
 over three rows; a token's heading spans its two fields:
 #+begin_graph :demo live
 + expr
-  #+record:
   | expr \\ ::= | term =+= expr |
   | ^           | term =-= expr |
   | ^           | term          |
 + token
-  #+record:
   | Token  |        |
   | <<kind>> kind | lexeme |
   | NUMBER | ="42"= |
@@ -1045,7 +1040,6 @@ we would write anyway. A row of ~<l>~, ~<c>~, and ~<r>~ cookies aligns its colum
 markup:
 #+begin_graph :demo live
 + Parser
-  #+record:
   | <l>                  |
   | *Parser*             |
   |----------------------|
@@ -1056,9 +1050,12 @@ markup:
   | peek(): =Token=      |
 #+end_graph
 
+- A table is ~| key | value |~ rows when each row is two cells, its key a Graphviz attribute or a
+  ~:key~ of ours; any other table is a record. So a misspelt ~| colour | red |~ shows itself, drawn as a
+  record, rather than vanishing; and a record whose first field names an attribute writes it ~=label=~.
 - A record is otherwise an ordinary node: its children are nodes of their own, and its attributes, tags,
-  and templates apply as usual; ~color~, ~fillcolor~, and ~fontcolor~ colour the table. Its attribute
-  table goes /above/ ~#+record:~, since rows right below the record table are part of it.
+  and templates apply as usual; ~color~, ~fillcolor~, and ~fontcolor~ colour the table. An item may carry
+  both tables, a blank line between, since Org reads adjacent rows as one table.
 - A record is ~shape=plain~, the table being its whole outline; an explicit ~shape~ row wins.
 - A cell with a link but no target is ported by its text, spaces as underscores; ~<<left operand>>~ is
   likewise reached as ~[[minus::left operand]]~.
@@ -1141,19 +1138,18 @@ Its pairs read as a ~#+name: hot color=red penwidth=2~ line does.
 
 | Diagram          | Node tags                                      | Arc tags                                                                  |
 |------------------+------------------------------------------------+---------------------------------------------------------------------------|
-| Class (UML)      | ---a class is a ~#+record:~ with hlines        | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~       |
+| Class (UML)      | ---a class is a record table with hlines      | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~       |
 | State machine    | ~:state:~ ~:start:~ ~:final:~ ~:choice:~       | ---a guard is the description term                                        |
 | Entity-relation  | ---an entity is any node                       | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~           |
 | Mindmap          | ~#+begin_graph :mindmap t~, sans tags           |                                                                           |
 
 ** A class diagram: records and UML arcs
 
-A class is the table we would write anyway, as in [[*Records: a #+record: table][Records]]; its relations are references, each tagged
+A class is the table we would write anyway, as in [[*Records: a table of fields][Records]]; its relations are references, each tagged
 with its kind. The arrow points at what is inherited, implemented, or depended on; a diamond sits at the
 owner's end:
 #+begin_graph :rankdir BT :demo live
 + <<Animal>> Animal
-  #+record:
   | <l>               |
   | *Animal*          |
   |-------------------|
@@ -1161,7 +1157,6 @@ owner's end:
   |-------------------|
   | speak(): =String= |
 + Dog
-  #+record:
   | <l>             |
   | *Dog*           |
   |-----------------|
@@ -1585,7 +1580,7 @@ Once the demo is over, this is the page we keep open.
 | ~∣ :inherit ∣ T ∣~, ~∣ :edge.:inherit ∣ T ∣~ | inherit template ~T~'s rows; explicit rows win                                  |
 | ~∣ :children-rank ∣ same ∣~                  | ~{ rank=same; <immediate children> }~                                           |
 | ~∣ shape ∣ cluster ∣~                        | ~subgraph cluster_ID { … }~ around the children; see Strictly tables            |
-| ~#+record:~ table under ~+ NAME~             | node NAME, labelled by that table; ~<<P>>~ in a cell is port ~P~                |
+| any other table under ~+ NAME~               | node NAME, labelled by that table, a record; ~<<P>>~ in a cell is port ~P~      |
 
 ** Strictly tables: :edge[T].KEY and | shape | cluster |
 
@@ -1698,7 +1693,6 @@ Records are the place to play: change a ~<<port>>~, add a ~^~, and press ~C-c C-
 reached by its words, and a reference's ~:edge.KEY~ rows style the arc into it:
 #+begin_graph :demo live
 + struct3
-  #+record:
   | hello \\ world | b |                        |   | g | h |
   | ^              | c | <<x marks the spot>> d | e | ^ | ^ |
   | ^              | f |                        |   | ^ | ^ |

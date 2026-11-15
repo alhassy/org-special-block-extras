@@ -19,6 +19,7 @@
 (require 'cl-lib)
 (require 'org)
 (require 'org-defblock)
+(require 'org-graph-attributes)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing helpers
@@ -92,7 +93,7 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
 ;;; Reading: a graph's body ⟶ plain data, via `org-element'
 ;;
 ;; Org parses the body once; we read its elements into plain data, so nothing after this section needs a buffer:
-;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :ranks :attr-rows :record :notes :items :kind)
+;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :ranks :attr-rows :table :notes :items :kind)
 ;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND :line LINE)
 ;; An item's TEXT is its raw first paragraph, bullet aside; its SCOPE, its directives and tables; its ITEMS, its
 ;; sub-items; its KIND, its sub-list's type: `ordered', `unordered', or `descriptive';
@@ -163,6 +164,17 @@ line, which a node's click leads back to, is unchanged.
             (-map #'s-trim (s-lines (buffer-substring-no-properties (org-element-property :post-affiliated table)
                                                                     (org-element-property :end table))))))
 
+(defun org--graph-attribute-table-p (lines)
+  "Returns whether a table's LINES are | key | value | rows: two cells apiece, each key a Graphviz attribute, as
+`org-graph-attributes' lists them, or a :key of ours.  Any other table is a record: one column, or three; an hline; or
+an unknown key, such as | left | right |.  So a record whose first cell names an attribute writes it =label=."
+  (--all? (let ((cells (cdr (s-split "|" it))))
+            (when (s-blank-str-p (car (last cells))) (setq cells (butlast cells)))
+            (and (= (length cells) 2)
+                 (let ((key (s-trim (car cells))))
+                   (or (s-starts-with-p ":" key) (--any? (equal (plist-get it :name) key) org-graph-attributes)))))
+          lines))
+
 (defun org--graph-table-rows (table)
   "A TABLE element, in the current buffer, ↦ its rows as `org--graph-parse-row' reads them, sans hlines."
   (-keep #'org--graph-parse-row (org--graph-table-lines table)))
@@ -177,8 +189,10 @@ line, which a node's click leads back to, is unchanged.
 (defun org--graph-read-scope (elements templates)
   "Sibling ELEMENTS ↦ their SCOPE; #+name: tables, wherever they sit, go to TEMPLATES rather than to the scope.
 
-A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, #+record:, or #+name:
----Org's own affiliated keyword---; else, it holds the item's own | key | value | rows.  #+rank: lines are id groups.
+A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, or #+name: ---Org's
+own affiliated keyword---; else, it holds the item's own | key | value | rows, or, when it holds anything else, it
+is a record, drawn as written: its lines are the item's :table; see `org--graph-attribute-table-p'.
+#+rank: lines are id groups.
 A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see `org--graph-keyword-rows'."
   (let (rows ranks notes items kind owner)
     (dolist (el (org--graph-elements elements))
@@ -190,7 +204,6 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
              ((or 'graph 'node 'edge)
               (setq owner key)
               (dolist (row (org--graph-keyword-rows key value)) (push row (alist-get key rows))))
-             ('record (setq owner 'record))
              ('rank (unless (s-blank-str-p value) (push (s-trim value) ranks)))
              ((or 'name 'template) (setq owner (org--graph-add-template templates value nil)))
              (_ (org--graph-stray el (format "#+%s:" key))))))
@@ -198,8 +211,11 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
          (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil)))
          (pcase owner
            (`(template . ,id) (puthash id (append (gethash id templates) (org--graph-table-rows el)) templates))
-           ('record (dolist (line (org--graph-table-lines el)) (push line (alist-get 'record rows))))
-           (_ (dolist (row (org--graph-table-rows el)) (push row (alist-get (or owner 'attr) rows))))))
+           ('nil (let ((lines (org--graph-table-lines el)))
+                   (if (org--graph-attribute-table-p lines)
+                       (dolist (row (org--graph-table-rows el)) (push row (alist-get 'attr rows)))
+                     (dolist (line lines) (push line (alist-get 'table rows))))))
+           (_ (dolist (row (org--graph-table-rows el)) (push row (alist-get owner rows))))))
         ('plain-list
          (setq owner nil kind (or kind (org-element-property :type el)))
          (dolist (item (org-element-contents el)) (push (org--graph-read-item item templates) items)))
@@ -220,7 +236,7 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
           :edge-rows  (nreverse (alist-get 'edge rows))
           :ranks      (nreverse ranks)
           :attr-rows  (nreverse (alist-get 'attr rows))
-          :record     (nreverse (alist-get 'record rows))
+          :table      (nreverse (alist-get 'table rows))
           :notes      (nreverse notes)
           :items      (nreverse items)
           :kind       kind)))

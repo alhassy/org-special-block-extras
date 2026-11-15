@@ -24,18 +24,33 @@
 
 (defun org-graph--table-context ()
   "The table at point ↦ what its rows describe, by the directive above it, past any tables between, as
-`org--graph-read-scope' reads it: `graphs' under #+graph:, `edges' under #+edge:, `record' under #+record: ---cells,
-not keys---, else `nodes': under #+node:, an item, or a #+name: template."
+`org--graph-read-scope' reads it: `graphs' under #+graph:, `edges' under #+edge:, `nodes' under #+node: or a #+name:
+template; under an item, `nodes' too, unless its other rows make it a record ---cells, not keys---, then `record'.
+The row at point does not count, so a key half typed is still a key."
   (save-excursion
     ;; At a row, Org's element at point is that row; we want its table.
-    (let ((el (org-element-lineage (org-element-at-point) '(table) t)))
+    (let* ((here (org-element-lineage (org-element-at-point) '(table) t))
+           (row (line-number-at-pos))
+           (el here))
       (while (and (eq (org-element-type el) 'table) (not (org-element-property :name el))
                   (progn (goto-char (org-element-property :begin el))
                          (skip-chars-backward " \t\n")
                          (not (bobp))))
         (setq el (let ((at (org-element-at-point))) (or (org-element-lineage at '(table) t) at))))
       (pcase (and (eq (org-element-type el) 'keyword) (downcase (org-element-property :key el)))
-        ("graph" 'graphs) ("edge" 'edges) ("record" 'record) (_ 'nodes)))))
+        ("graph" 'graphs) ("edge" 'edges)
+        ((guard (and here (not (org-element-property :name here)) (not (eq (org-element-type el) 'keyword))
+                     (not (org--graph-attribute-table-p (org-graph--table-lines-sans here row)))))
+         'record)
+        (_ 'nodes)))))
+
+(defun org-graph--table-lines-sans (table line)
+  "Returns TABLE's trimmed row lines, sans the one on buffer LINE."
+  (let ((first (line-number-at-pos (org-element-property :post-affiliated table))))
+    (--remove (s-blank-str-p it)
+              (-map-indexed (lambda (i l) (if (= (+ first i) line) "" (s-trim l)))
+                            (s-lines (buffer-substring-no-properties (org-element-property :post-affiliated table)
+                                                                     (org-element-property :end table)))))))
 
 (defun org-graph--pick-color ()
   "Launch a helm color picker; RET selects the color immediately.
@@ -181,7 +196,7 @@ its #+begin_graph line; so completion and eldoc offer smartdiagram's keys, not G
   (or (derived-mode-p 'org-graph-edit-mode) (org-graph--block-at-point)))
 
 (defun org-graph--at-key-table-p ()
-  "Non-nil when point is on a graph table of | key | value | rows; not on a #+record: table, whose rows are cells."
+  "Non-nil when point is on a graph table of | key | value | rows; not on a record table, whose rows are cells."
   ;; The cheap table check first: asking whether we are in a graph parses.
   (and (org-at-table-p) (org-graph--in-graph-p) (not (eq (org-graph--table-context) 'record))))
 
@@ -336,7 +351,7 @@ A buffer with no graph block pays only one search per fontification, rather than
           (concat "^[ \t]*#\\+\\(?:graph\\|node\\|edge\\|name\\):.*?[ \t]" org--graph-tag-group-re "[ \t]*$")
           (concat "\\]\\][ \t]+" org--graph-tag-group-re "[ \t]*|")))
   "Where a graph's tags sit, each with the tags as group 1: after an item; in its description term; after a
-#+graph:, #+node:, #+edge:, or #+name: keyword; and after a #+record: cell's link.")
+#+graph:, #+node:, #+edge:, or #+name: keyword; and after a record cell's link.")
 
 (defface org-graph-builtin-tag '((t :inherit (font-lock-builtin-face org-tag) :box (:line-width (1 . -1))))
   "The face of a graph's tag naming a template every graph has, from `org-defgraph-tag', which no #+name: shadows."

@@ -176,7 +176,7 @@ A src block is a centred box as wide as its widest line; a rule spans the diagra
 (defun org--smartdiagram-item (item tables descriptive)
   "(ITEM, TABLES of #+name: templates, DESCRIPTIVE?) ↦ (CELL . COLOR): its smartdiagram argument, and its | color | row.
 The item's text, then its notes ---later paragraphs--- beneath; in the item's fontcolor and fontsize.  A descriptive
-item's CELL is {{TERM},{DESCRIPTION}}.  Graph-only syntax, such as a #+record: table or an :edge row, is an error."
+item's CELL is {{TERM},{DESCRIPTION}}.  Graph-only syntax, such as a record table or an :edge row, is an error."
   (-let* (((text . tags) (org--graph-split-tags (plist-get item :text)))
           (pre   (plist-get item :pre))
           (rows  (org--graph-expand-inherit (append (plist-get pre :attr-rows)
@@ -187,7 +187,8 @@ item's CELL is {{TERM},{DESCRIPTION}}.  Graph-only syntax, such as a #+record: t
     (-each rows (-lambda ((key)) (unless (assoc key org-graph-smartdiagram-item-keys)
                                    (user-error "graph: `%s' means nothing to a smartdiagram item; it takes %s" key
                                                (s-join ", " (butlast (mapcar #'car org-graph-smartdiagram-item-keys)))))))
-    (when (plist-get pre :record) (user-error "graph: a smartdiagram item has no #+record: table"))
+    (when (plist-get pre :table)
+      (user-error "graph: a smartdiagram item has no record table; its table is | key | value | rows"))
     (when (--any (plist-get it :edge) (plist-get pre :notes))
       (user-error "graph: a smartdiagram draws no labelled arcs, so a `#+begin_note :edge' has nothing to describe"))
     (cond ((and descriptive (not term))

@@ -1,17 +1,15 @@
-;;; org-graph-record-nodes-tests.el --- Records: a #+record: table is a node's <TABLE> label  -*- lexical-binding: t; -*-
+;;; org-graph-record-nodes-tests.el --- Records: a table, unless | key | value | rows, is a node's <TABLE> label  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-graph-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/graph/org-graph-test-utils.el")))
 
 ;;; Records
 
-(define-graph-test "a #+record: table is the node's <TABLE> label: a cell's <<target>> is its port, and its [[link]] an arc from there"
+(define-graph-test "an item's table, unless | key | value | rows, is the node's <TABLE> label: a cell's <<target>> is its port, and its [[link]] an arc from there"
   :input "
 + struct1
-  #+record:
   | left | <<mid>> middle [[struct2::one]] | right |
 + struct2
-  #+record:
   | <<one>> one | two |
 + reader
   + [[struct1::mid]]"
@@ -28,7 +26,6 @@ PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
 (define-graph-test "`^' continues the cell above; an empty cell continues the one to its left, or, in the first column, the one above"
   :input "
 + struct3
-  #+record:
   | hello \\\\ world | b |            |   | g | h |
   | ^              | c | <<here>> d | e | ^ | ^ |
   |                | f |            |   | ^ | ^ |
@@ -46,7 +43,6 @@ COLSPAN=\"3\">f</TD></TR></TABLE>> ];
 (define-graph-test "hlines draw rules, the table then having one outer border; a <l> cookie row aligns its column; cells keep markup"
   :input "
 + Person
-  #+record:
   | <l>            |
   | *Person*       |
   |----------------|
@@ -62,14 +58,14 @@ FACE=\"monospace\">Int</FONT></TD></TR><HR/><TR><TD ALIGN=\"LEFT\"
 BALIGN=\"LEFT\">greet()</TD></TR></TABLE>> ];
 }")
 
-(define-graph-test "a record's own attributes, and a template's, sit beside its table; a user's shape beats `plain'"
+(define-graph-test "a record's own attribute table, and a template's, sit beside its table; a user's shape beats `plain'"
   :input "
 #+name: faint
 | color | grey |
 
 + Point :faint:
   | shape | box |
-  #+record:
+
   | x | y |"
   :output "digraph {
   Point [ label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
@@ -81,7 +77,7 @@ CELLSPACING=\"0\"><TR><TD>x</TD><TD>y</TD></TR></TABLE>> color=grey shape=box ];
 + <<lam>> λ-calculus
 + Lisp
   | :edge[lam].style | dotted |
-  #+record:
+
   | car | cdr | eval apply [[lam][inspired by]] |"
   :output "digraph {
   lam [ label=\"λ-calculus\" ];
@@ -93,10 +89,8 @@ CELLSPACING=\"0\"><TR><TD>car</TD><TD>cdr</TD><TD PORT=\"eval_apply\">eval apply
 (define-graph-test "ports are scoped per record, record and port names may contain dots, and `::' after a non-record is text"
   :input "
 + r1
-  #+record:
   | <<head>> head | tail |
 + org.el
-  #+record:
   | <<head>> head | <<v1.2>> v1.2 |
 + z [[r1::head]] [[org.el::v1.2]] [[std::vector]]"
   :output "digraph {
@@ -113,7 +107,6 @@ PORT=\"head\">head</TD><TD PORT=\"v1.2\">v1.2</TD></TR></TABLE>> ];
 (define-graph-test "a record's children are ordinary nodes, its arcs leaving the record as a whole"
   :input "
 + Stack
-  #+record:
   | <<top>> 3 | 2 | 1 |
   + push
   + pop"
@@ -129,21 +122,55 @@ PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
 (deftest "a `^' in the first row, or an empty first cell, continues nothing: a user error"
   (should-error (org--graph-raw->dot "
 + r
-  #+record:
   | ^ | a |" nil) :type 'user-error)
   (should-error (org--graph-raw->dot "
 + r
-  #+record:
   |   | a |" nil) :type 'user-error))
 
-(org-deftest "in a #+record: table, completion offers no keys: its rows are cells"
+(org-deftest "in a record table, completion offers no keys: its rows are cells"
   :mode #'org-graph-edit-mode
   :text "
 + r
-  #+record:
+  | left | <<mid>> middle | right |
   | sha |"
   :at "sha"
   (should-not (org-graph--completion-at-point)))
+
+(org-deftest "in an item's table of keys, the key half typed is still completed, though it names no attribute yet"
+  :mode #'org-graph-edit-mode
+  :text "
++ r
+  | color | red |
+  | sha |"
+  :at "sha"
+  (should (org-graph--completion-at-point)))
+
+;;; Which tables are records
+
+(define-graph-test "a table is | key | value | rows only when each row is two cells keyed by an attribute or a :key; \
+else a record: so a misspelt key shows, and =label= writes an attribute's name as a field"
+  :input "
++ a
+  | colour | red |
++ b
+  | =label= | color |
++ c
+  | label | C |
+  | :id   | see |"
+  :output "digraph {
+  a [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
+CELLSPACING=\"0\"><TR><TD>colour</TD><TD>red</TD></TR></TABLE>> ];
+  b [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD><FONT
+FACE=\"monospace\">label</FONT></TD><TD>color</TD></TR></TABLE>> ];
+  see [ label=C ];
+}")
+
+(deftest "a container with a record table is an error: a box of nodes cannot also be a table"
+  (should-error (org--graph-raw->dot "
++ Box :container:
+  | left | right |
+  + x" nil)
+                :type 'user-error))
 
 ;;; Tags on a cell style its arcs
 
@@ -152,10 +179,8 @@ PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
 #+name: dashed
 | style | dashed |
 + struct1
-  #+record:
   | left | <<mid>> middle [[struct2::one][calls]] :dashed: | right |
 + struct2
-  #+record:
   | <<one>> one | two |
 + Legend :container:
   - :dashed: :: borrows"
@@ -179,7 +204,7 @@ PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
 | color | red |
 + s
   | :edge[t].color | blue |
-  #+record:
+
   | <<p>> [[t]] :hot: |
 + t"
   :output "digraph {
@@ -194,7 +219,6 @@ PORT=\"p\"></TD></TR></TABLE>> ];
 #+name: x
 | a | b |
 + s
-  #+record:
   | Vim's :x: |" nil)
                 :type 'user-error))
 

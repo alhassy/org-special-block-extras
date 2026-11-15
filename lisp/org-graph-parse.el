@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; Part of org-graph-block.el: items, their text, and #+record: tables ⟶ the statements that
+;; Part of org-graph-block.el: items, their text, and their record tables ⟶ the statements that
 ;; org-graph-dot.el prints.
 
 ;;; Code:
@@ -164,6 +164,7 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 (org-defgraph-tag container "shape=cluster"
   "Draws a node as a box around its children, which are its members rather than its arcs' targets; an arc to, or
 from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey |, style the box.")
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing: Org list ⟶ graph statements
@@ -601,7 +602,7 @@ label HTML, any other snippet vanishing."
    objs "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Records: a #+record: table ⟶ an HTML-like <TABLE> label
+;;; Records: an item's table, unless | key | value | rows ⟶ an HTML-like <TABLE> label
 
 (defun org--graph-cell-html (cell)
   "A record CELL's text ↦ its HTML-like label body: markup as tags, a `\\\\' as <BR/>; targets and links vanish."
@@ -613,7 +614,7 @@ label HTML, any other snippet vanishing."
   (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t]*" "\\\\\\\\\n" text))
 
 (defun org--graph-table-label (lines)
-  "A #+record: table's LINES ↦ (LABEL . LINKS), its <TABLE> label and its cells' arcs, each (PORT TARGET DESCRIPTION TAGS);
+  "A record table's LINES ↦ (LABEL . LINKS), its <TABLE> label and its cells' arcs, each (PORT TARGET DESCRIPTION TAGS);
 nil sans LINES.
 
   | left | <<mid>> middle [[b]] :faint: |  ↦  (\"<<TABLE …><TR><TD>left</TD><TD PORT=\\\"mid\\\">middle</TD></TR></TABLE>>\"
@@ -650,7 +651,7 @@ aligns its columns.  Hlines draw rules between rows; a table with them has one o
                            ((and (s-blank-str-p text) (> c 0)) (gethash (cons r (1- c)) owner))
                            ((and (s-blank-str-p text) (> r 0)) (gethash (cons (1- r) c) owner))
                            ((member text '("" "^"))
-                            (user-error "graph: a #+record: table's `%s' cell, in row %d, column %d, continues nothing"
+                            (user-error "graph: a record table's `%s' cell, in row %d, column %d, continues nothing"
                                         text (1+ r) (1+ c)))
                            (t (cons r c))))
                    owner)))
@@ -673,7 +674,7 @@ aligns its columns.  Hlines draw rules between rows; a table with them has one o
                                                           (colspan (1+ (- (-max (-map #'cdr mine)) c)))
                                                           (align (nth c aligns)))
                                                     (when (and tags (not (plist-get parts :links)))
-                                                      (user-error "graph: a #+record: cell's tags style its arcs, but `%s' \
+                                                      (user-error "graph: a record cell's tags style its arcs, but `%s' \
 has no [[link]]; for literal text ending in `:%s:', write =:%s:=" text (car tags) (car tags)))
                                                     (--each (plist-get parts :links)
                                                       (push (list port (car it) (cdr it) tags) links))
@@ -925,7 +926,8 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (rank-stmts (-if-let (rank (plist-get rows :children-rank))
                           (list (list :rank rank (-map #'org--graph-item-id children)))
                         ranked))
-          (table    (org--graph-table-label (plist-get pre :record)))
+          ;; A record: Graphviz's nest { } fields; ours is an HTML-like <TABLE>, which a plain node wears as its outline.
+          (table    (org--graph-table-label (plist-get pre :table)))
           (attrs    (if table (org--graph-override `(("shape" "plain") ("label" ,(car table))) attrs) attrs))
           (arcs     (append (when parent
                               (list (list :edge parent id
@@ -973,6 +975,9 @@ just tags: `- :T: :: %s', or, in a container titled Legend, `- %s :T:'" id id id
       (append arcs (org--graph-subtree pre tables (append (--mapcat (org--graph-parse-item it id ctx) children)
                                                           rank-stmts))))
      ((and fresh (equal shape "cluster"))
+      (when table
+        (user-error "graph: container `%s' has a table that is no | key | value | rows; a box of nodes cannot also be a \
+record; if each key names an attribute, check its spelling" id))
       (org--graph-declare ctx id name nil)
       ;; Its children are its members; but a reference, `+ [[T]]', is an arc from the box, drawn outside it, lest T,
       ;; first met there, be drawn inside it.

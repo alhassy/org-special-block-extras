@@ -471,7 +471,7 @@ an inline footnote, [fn::NOTE], is the node's tooltip, as is a note: a paragraph
 #+begin_note block ---with `#+begin_note :edge', the arc's---, shown beneath the label instead under :notes inline;
 a web, file, or [[*Section]] link, its URL; an [[file:IMAGE.png]], its image;
 a checkbox, [X], [-], or [ ], applies the template checked, partial, or unchecked, when one exists; and a `\\\\'
-breaks the label's line ---in a table value or #+record: cell, too.
+breaks the label's line ---in a table value or record cell, too.
 Org's {{{macros}}} expand, by the buffer's #+macro: lines.
 A two-column inline table on a list item supplies node attributes.
 
@@ -486,8 +486,9 @@ A two-column inline table on a list item supplies node attributes.
                             also accepts min, max, source, sink.
   | shape | cluster |      ↦ make this node an inline subgraph cluster_ID { … }, its children its members; as does the
                             :container: tag; a :container_TITLE: tag puts a node in the box TITLE.
-  #+record: table       ↦ the node's <TABLE> label, as laid out: a cell's <<p>> is port p, its [[T]] an arc from there;
-                            ^ or an empty cell spans, a <l>/<c>/<r> row aligns, and hlines rule.
+  | any | other | table | ↦ a record: the node's <TABLE> label, as laid out; a cell's <<p>> is port p, its [[T]] an
+                            arc from there; ^ or an empty cell spans, a <l>/<c>/<r> row aligns, and hlines rule.  A
+                            table is a record unless each row is two cells, its key an attribute or a :key.
 
 Example:
 
