@@ -5662,6 +5662,11 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   tooltips, via =:svg nil=--- whereas other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org--graph-block= documents every option.
 
+  A graph of many clusters ---boxes within boxes--- may read better as [[#images][=#+begin_image d2=]]:
+  D2 draws a box by braces alone, =Emacs { Org -> HTML }=, where a graph needs a
+  =#+begin_cluster= block for each. D2's syntax is absolutely lovely; a graph is the better
+  fit when its nodes are Org list items already, with links and markup of their own.
+
   #+begin_org :ignore t :demo live
   Some lists want a picture rather than a graph: a centre and what orbits it, or a flow of steps.
   ~:smartdiagram TYPE~ hands the very same list to LaTeX's smartdiagram package instead of Graphviz:
@@ -5778,14 +5783,23 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
     Mermaid itself, from a CDN; in Markdown, a fenced =mermaid= block is drawn by GitHub. So a
     Mermaid diagram stays live, and needs no tool at all, in a web page or a README.
   + [[https://d2lang.com][D2]], by =d2=, to SVG, then =rsvg-convert=; =:layout elk= chooses its layout engine, =:theme 200=
-    its theme, and =:sketch t= its hand-drawn look.
-    By way of example, a sketched diagram in theme 101:
+    its theme, and =:sketch t= its hand-drawn look. D2's syntax is the simplest of the lot, and
+    I love it: =a -> b : label= is an edge, =a { b; c }= is a box holding =b= and =c=, and edges
+    chain, in either direction. By way of example, a sketched diagram in theme 101:
     #+begin_src org :tangle no
-,#+begin_image d2 :file flags :theme 101 :sketch t
-High Mem Instance -> EC2 <- High CPU Instance: Hosted By
+,#+begin_image d2 :theme 101 :sketch t
+me { family; taekwondo; islam }
+
+me -> Emacs : brings me joy
+
+Emacs {
+ HTML <- Org -> LaTeX : exports to
+ HTML -> My blog
+}
 ,#+end_image
     #+end_src
-    ---=flags.{svg,pdf,png}= within ~org-image-block-directory~, each backend taking its own.
+    Two boxes, =me= and =Emacs=, and four edges, in nine lines, with no ceremony beyond what
+    the picture says.
   None of SVG, dot, PlantUML, Mermaid, or D2 has a preamble, so a line of dashes in one is an error.
 
   =C-c C-c=, and export, need each language's tools; a missing one is an error saying how to
