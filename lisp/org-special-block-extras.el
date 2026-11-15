@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- *bold*, [[links]], red:text work inside details, graph, math  -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Org's *bold*, [[links]], red:text work in details, graph, math  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
