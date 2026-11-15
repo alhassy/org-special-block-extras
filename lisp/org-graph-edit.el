@@ -159,13 +159,15 @@ KEY=VALUE pairs, or a | key | value | table follows it; so a named data table ke
   "Advice for `org-return': intercept C-u RET inside graph block tables.
 
 When ARG ---or, when RET runs one of `org-graph--return-commands', which may call `org-return' sans it,
-`current-prefix-arg'--- is non-nil and point is on a graph's key table, or on a #+graph:, #+node:, #+edge:, or
-#+name: line, as `org-graph--directive-at-point' says, run
+`current-prefix-arg'--- is non-nil and point is on a graph's tag, run `org-graph--insert-tag'; on a graph's key
+table, or on a #+graph:, #+node:, #+edge:, or #+name: line, as `org-graph--directive-at-point' says, run
 `org-graph--insert-attribute-row' and return non-nil to suppress the normal `org-return' behaviour."
   (let ((arg (or arg (and (memq this-command org-graph--return-commands) current-prefix-arg))))
-    (when (and arg (or (org-graph--at-key-table-p) (org-graph--directive-at-point)))
-      (org-graph--insert-attribute-row arg)
-      t)))
+    (when arg
+      (cond ((org-graph--graph-tag-at-point) (org-graph--insert-tag) t)
+            ((or (org-graph--at-key-table-p) (org-graph--directive-at-point))
+             (org-graph--insert-attribute-row arg)
+             t)))))
 
 (advice-add 'org-return :before-until #'org-graph--maybe-insert-attribute-row)
 
@@ -358,8 +360,10 @@ on such a line, the hint that C-u RET adds an attribute; else nil."
       (let ((key (buffer-substring beg end)))
         (when (and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
           (funcall callback (org-graph--header-key-doc key) :thing key :face 'font-lock-variable-name-face)))
-    (-if-let (doc (and (org-graph--in-graph-p) (-some->> (org-graph--tag-at-point) org-graph--builtin-tag-doc)))
-        (funcall callback doc)
+    (-if-let (tag (org-graph--graph-tag-at-point))
+        (funcall callback (concat (-some--> (org-graph--builtin-tag-doc tag) (concat it "\n"))
+                                  (format "C-u RET inserts another tag beside :%s:, from this graph's, this buffer's, \
+or every graph's templates." tag)))
       (-if-let (context (org-graph--directive-at-point))
           (-if-let* ((key (org-graph--pair-key-at-point)) (doc (org-graph--key-doc key)))
               (funcall callback doc :thing key :face 'font-lock-variable-name-face)
@@ -492,6 +496,67 @@ every graph has, show what it is about; else say that it names no template."
         (display-message-or-buffer (or (org-graph--builtin-tag-doc name) (org-graph--unknown-tag-doc name))
                                    "*Graph tag*"))
     (user-error "No graph tag at point")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; C-u RET on a tag: insert another
+
+(defun org-graph--graph-tag-at-point ()
+  "Returns the name of the tag at point when it is a graph's: on an item, a description term, a directive line, or a
+record cell, as `org-graph--tag-res' place them, in a graph; else nil."
+  (-when-let (name (org-graph--tag-at-point))
+    (and (org-graph--in-graph-p)
+         (save-excursion (beginning-of-line)
+                         (--any? (save-excursion (re-search-forward it (line-end-position) t)) org-graph--tag-res))
+         name)))
+
+(defun org-graph--rows-summary (rows)
+  "Returns ROWS as a #+name: line's KEY=VALUE pairs, such as \"color=red style=\\\"bold,dashed\\\"\"."
+  (s-join " " (--map (format "%s=%s" (car it) (org-graph--pair-value (format "%s" (cadr it)))) rows)))
+
+(defun org-graph--local-templates ()
+  "Returns the #+name: templates of the graph at point, as (NAME . SUMMARY): its line's pairs, else its table's rows."
+  (-when-let (bounds (org-graph--graph-bounds))
+    (save-excursion
+      (goto-char (car bounds))
+      (let ((case-fold-search t) templates)
+        (while (re-search-forward "^[ \t]*#\\+name:[ \t]+\\([^ \t\n]+\\)\\(.*\\)$" (cdr bounds) t)
+          (let ((name (match-string-no-properties 1)) (rest (s-trim (match-string-no-properties 2))) rows)
+            (save-excursion
+              (forward-line 1)
+              (while (looking-at "[ \t]*\\(|.*\\)$")
+                (-some--> (org--graph-parse-row (match-string 1)) (push it rows))
+                (forward-line 1)))
+            (push (cons name (s-trim (concat rest " " (org-graph--rows-summary (nreverse rows))))) templates)))
+        (nreverse templates)))))
+
+(defun org-graph--tag-candidates ()
+  "Returns every tag the graph at point may use, as (NAME . WHENCE): its own #+name: templates, then the buffer's, then
+those every graph has, by `org-defgraph-tag'; a nearer definition shadows a farther one of the same name."
+  (let ((buffer (unless (derived-mode-p 'org-graph-edit-mode) (org--graph-buffer-templates))) candidates)
+    (dolist (it (org-graph--local-templates))
+      (push (cons (car it) (format "this graph's: %s" (cdr it))) candidates))
+    (when buffer
+      (maphash (lambda (name rows) (push (cons name (format "this buffer's: %s" (org-graph--rows-summary rows)))
+                                         candidates))
+               buffer))
+    (dolist (it org-graph-builtin-templates)
+      (push (cons (car it) (format "every graph's: %s"
+                                   (car (s-lines (alist-get (car it) org-graph-builtin-tag-docs "" nil #'equal)))))
+            candidates))
+    (cl-remove-duplicates (nreverse candidates) :key #'car :test #'equal :from-end t)))
+
+(defun org-graph--insert-tag ()
+  "Prompts for a tag the graph may use, by `org-graph--tag-candidates', and inserts it right after the tag at point:
+:a: becomes :a:new:.  Tags already in the group are not offered."
+  (let* ((group (save-excursion
+                  (skip-chars-backward "[:alnum:]_@#%:-")
+                  (and (looking-at "\\(:[[:alnum:]_@#%:-]+:\\)") (s-split ":" (match-string 1) t))))
+         (choices (--map (format "%s — %s" (car it) (cdr it))
+                         (--remove (member (car it) group) (org-graph--tag-candidates))))
+         (name (car (s-split " — " (completing-read "Tag: " choices nil t)))))
+    (skip-chars-forward "[:alnum:]_@#%-")
+    (forward-char 1)
+    (insert name ":")))
 
 (defvar org-graph--tags-end nil
   "Where the group of tags that font-lock last matched in a graph ends; it resumes there, past each tag's own match.")

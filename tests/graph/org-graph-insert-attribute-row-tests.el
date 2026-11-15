@@ -252,3 +252,47 @@
 #+end_graph"
   :at "| shape"
   (should (eq (org-graph--table-context) 'containers)))
+
+;;; C-u RET on a tag
+
+(org-deftest "C-u RET on a tag offers the graph's, the buffer's, and every graph's templates, nearest first, sans the
+group's own; it inserts the pick beside the tag"
+  :text "
+#+name: hot color=red
+
+#+begin_graph
+#+name: faint
+| color | grey |
+#+name: dashed style=bold
++ a :faint:
+#+end_graph"
+  :at "+ a :fai"
+  (let (offered)
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (_prompt choices &rest _)
+                 (setq offered choices)
+                 (--first (string-prefix-p "hot " it) choices))))
+      (should (org-graph--maybe-insert-attribute-row nil '(4) t)))
+    (should (--any? (string-prefix-p "dashed — this graph's: style=bold" it) offered))
+    (should-not (--any? (string-prefix-p "dashed — every graph's" it) offered))
+    (should (--any? (string-prefix-p "hot — this buffer's: color=red" it) offered))
+    (should (--any? (string-prefix-p "pink — every graph's" it) offered))
+    (should-not (--any? (string-prefix-p "faint " it) offered)))
+  (should (s-contains-p "+ a :faint:hot:\n" (buffer-string))))
+
+(org-deftest "outside a graph, a colon word is no graph tag: C-u RET stays Org's"
+  :text "
++ a :faint:"
+  :at "faint"
+  (should-not (org-graph--graph-tag-at-point)))
+
+(org-deftest "eldoc on a tag hints that C-u RET inserts another, after a built-in's own doc"
+  :text "
+#+begin_graph
++ a :pink:
+#+end_graph"
+  :at "pink"
+  (let (doc)
+    (org-graph--eldoc (lambda (d &rest _) (setq doc d)))
+    (should (s-contains-p "every graph has" doc))
+    (should (s-contains-p "C-u RET inserts another tag beside :pink:" doc))))
