@@ -5662,10 +5662,11 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   tooltips, via =:svg nil=--- whereas other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org--graph-block= documents every option.
 
-  A graph of many clusters ---boxes within boxes--- may read better as [[#images][=#+begin_image d2=]]:
-  D2 draws a box by braces alone, =Emacs { Org -> HTML }=, where a graph needs a
-  =#+begin_cluster= block for each. D2's syntax is absolutely lovely; a graph is the better
-  fit when its nodes are Org list items already, with links and markup of their own.
+  A graph of many boxes, whose arcs mostly run among their members, may read better as
+  [[#images][=#+begin_image d2=]]: D2 draws a box by braces, =Emacs { HTML <- Org -> LaTeX }=, its arcs
+  chained on one line, where a graph's box is an item tagged =:container:= whose members link to
+  each other. D2's syntax is absolutely lovely; a graph is the better fit when its nodes are Org
+  list items already, with links and markup of their own.
 
   #+begin_org :ignore t :demo live
   Some lists want a picture rather than a graph: a centre and what orbits it, or a flow of steps.

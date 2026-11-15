@@ -23,9 +23,8 @@
 + Lisp
   + Scheme
   + [[https://common-lisp.net][Common Lisp]]
-#+begin_cluster JVM
-+ Clojure
-#+end_cluster" nil)))))
++ JVM :container:
+  + Clojure" nil)))))
 
 (deftest "exporting, unlike rendering for the buffer, adds no hrefs"
   (should-not (s-contains-p "href" (org--graph-raw->dot "

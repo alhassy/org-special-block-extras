@@ -368,14 +368,13 @@ x
   (should-error (org--graph-raw->dot "
 + a :typo:" nil '(:unknown-tags error)) :type 'user-error))
 
-(org-deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside clusters too, but not elsewhere"
+(org-deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside containers too, but not elsewhere"
   :text "
 + outside :wife:
 #+begin_graph
 + Emacs :wife:
-  #+begin_cluster Packages
-  + Org :a:b:
-  #+end_cluster
+  + Packages :container:
+    + Org :a:b:
 #+end_graph"
   (font-lock-ensure)
   (goto-char (point-min))
@@ -622,18 +621,17 @@ x
   Clojure -> Scheme [ tooltip=\"Rich Hickey cites it.\" ];
 }")
 
-(define-graph-test "a #+begin_note outside every item is the graph's tooltip; in a #+begin_cluster, the box's"
+(define-graph-test "a #+begin_note outside every item is the graph's tooltip; in a container, the box's"
   :input "
 #+begin_note
 Languages, by influence.
 #+end_note
-#+begin_cluster JVM
-#+begin_note
-Run on the Java virtual machine.
-#+end_note
-+ Clojure
-+ Scala
-#+end_cluster"
++ JVM :container:
+  #+begin_note
+  Run on the Java virtual machine.
+  #+end_note
+  + Clojure
+  + Scala"
   :output "digraph {
   graph [ tooltip=\"Languages, by influence.\" ]
   subgraph cluster_JVM {
@@ -830,20 +828,20 @@ Languages, by influence.
   b [ label=b ];
 }")
 
-;;; #+begin_cluster
+;;; Containers, styled and nested
 
-(define-graph-test "`#+begin_cluster TITLE :KEY V' is the `| shape | cluster |' item: nested, anonymous, and colons in titles all work"
+(define-graph-test "a container's table styles its box, its #+node: its members; containers nest, untitled or titled with colons"
   :input "
 + Emacs
-  #+begin_cluster Packages :bgcolor lightgrey :node.shape box
-  + Org
-    #+begin_cluster
-    + agenda
-    #+end_cluster
-  #+end_cluster
-#+begin_cluster Time 12:30
-+ lunch
-#+end_cluster"
+  + Packages :container:
+    | bgcolor | lightgrey |
+    #+node:
+    | shape | box |
+    + Org
+      + :container:
+        + agenda
++ Time 12:30 :container:
+  + lunch"
   :output "digraph {
   graph [ compound=true ]
   Emacs [ label=Emacs ];
@@ -852,11 +850,11 @@ Languages, by influence.
     bgcolor=lightgrey
     node [ shape=box ]
     Org [ label=Org ];
-    subgraph cluster_anonymous_1 {
+    subgraph cluster_anonymous_8 {
     label=\"\"
     agenda [ label=agenda ];
   }
-    Org -> agenda [ lhead=cluster_anonymous_1 ];
+    Org -> agenda [ lhead=cluster_anonymous_8 ];
   }
   Emacs -> Org [ lhead=cluster_Packages ];
   subgraph \"cluster_Time_12:30\" {
@@ -864,26 +862,6 @@ Languages, by influence.
     lunch [ label=lunch ];
   }
 }")
-
-(deftest "a `#+begin_cluster' with no `#+end_cluster' is a user error"
-  (should-error (org--graph-raw->dot "
-#+begin_cluster P
-+ a" nil) :type 'user-error))
-
-(org-deftest "inside a graph's #+begin_cluster, we are still in the graph; a lone #+begin_cluster is none of ours"
-  :text "
-#+begin_graph
-#+begin_cluster P
-+ a
-#+end_cluster
-#+end_graph
-#+begin_cluster Q
-+ b
-#+end_cluster"
-  :at "+ a"
-  (should (org-graph--in-graph-p))
-  (search-forward "+ b")
-  (should-not (org-graph--in-graph-p)))
 
 ;;; \\ breaks a label's line
 
@@ -1012,10 +990,9 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 + Muhammad
 + Khadija :wife:
   + [[Muhammad]] :married:
-#+begin_cluster Legend
-- :married: :: marriage
-- :wife: :: /wife/
-#+end_cluster"
++ Legend :container:
+  - :married: :: marriage
+  - :wife: :: /wife/"
   :output "digraph {
   Muhammad [ label=Muhammad ];
   Khadija [ shape=box label=Khadija ];
@@ -1093,7 +1070,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 
 (provide 'org-graph-org-syntax-tests)
 
-;;; Several tags, several colours; and :cluster_TITLE: tags
+;;; Several tags, several colours; and :container_TITLE: tags
 
 (deftest "a node's tags of several colours show them all, as tinted stripes; an arc's, as parallel lines" [graph tags]
   (let ((dot (org--graph-raw->dot "
@@ -1121,22 +1098,21 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
     (should (string-search "single [ color=\"#ff0000\" label=single ];" dot))
     (should (string-match-p "chosen \\[ color=\"#ff0000\" fillcolor=gold label=chosen \\]" dot))))
 
-(deftest "a :cluster_TITLE: tag puts its node in the cluster TITLE, its underscores spaces; a block of that title is the same box" [graph tags cluster]
-  (should (equal (org--graph-cluster-tag "Cluster_Holy_Land") "Holy Land"))
-  (should-not (org--graph-cluster-tag "prophet"))
+(deftest "a :container_TITLE: tag puts its node in the box TITLE, its underscores spaces; a container of that title is the same box" [graph tags]
+  (should (equal (org--graph-container-tag "Container_Holy_Land") "Holy Land"))
+  (should-not (org--graph-container-tag "prophet"))
   (let ((dot (org--graph-raw->dot "
-#+begin_cluster Islam
-+ Ali
-#+end_cluster
-+ Mohammad :cluster_Islam:
-+ Jesus :Cluster_Holy_Land:" nil)))
++ Islam :container:
+  + Ali
++ Mohammad :container_Islam:
++ Jesus :Container_Holy_Land:" nil)))
     (should (string-search "subgraph cluster_Islam {\n    label=Islam;\n    Mohammad;\n  }" dot))
     (should (string-search "subgraph cluster_Holy_Land {\n    label=\"Holy Land\";\n    Jesus;\n  }" dot))
     (should (string-search "Mohammad [ label=Mohammad ];" dot))))
 
-;;; Legends, in prose: a Legend cluster's `- MEANING :T:'
+;;; Legends, in prose: a Legend container's `- MEANING :T:'
 
-(define-graph-test "in a cluster titled Legend, `- MEANING :T:' is a legend entry, as `- :T: :: MEANING' is anywhere"
+(define-graph-test "in a container titled Legend, `- MEANING :T:' is a legend entry, as `- :T: :: MEANING' is anywhere"
   :input "
 #+name: married
 | color | pink |
@@ -1146,10 +1122,9 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 + Muhammad
 + Khadija :wife:
   + [[Muhammad]] :married:
-#+begin_cluster Legend
-- marriage :married:
-- /wife/ :wife:
-#+end_cluster"
++ Legend :container:
+  - marriage :married:
+  - /wife/ :wife:"
   :output "digraph {
   Muhammad [ label=Muhammad ];
   Khadija [ shape=box label=Khadija ];
@@ -1164,20 +1139,18 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
   legend_1_end -> legend_2 [ style=invis ];
 }")
 
-(deftest "outside a cluster titled Legend, `- MEANING :T:' is a node styled T, as ever" [graph]
+(deftest "outside a container titled Legend, `- MEANING :T:' is a node styled T, as ever" [graph]
   (should (string-search "\"a token\" [ shape=box label=\"a token\" ];"
                          (org--graph-raw->dot "
 #+name: token
 | shape | box |
-#+begin_cluster Glossary
-- a token :token:
-#+end_cluster" nil))))
++ Glossary :container:
+  - a token :token:" nil))))
 
 (deftest "a legend stacks as a column: top-down, its entries are chained invisibly; left-right, they share a rank" [graph]
   (let ((legend "
-#+begin_cluster Legend
-- a :x:
-- b :y:
-#+end_cluster"))
++ Legend :container:
+  - a :x:
+  - b :y:"))
     (should (string-search "legend_1 -> legend_2 [ style=invis ];" (org--graph-raw->dot legend nil)))
     (should-not (string-search "style=invis" (org--graph-raw->dot legend nil '(:rankdir LR))))))

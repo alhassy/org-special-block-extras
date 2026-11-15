@@ -157,9 +157,8 @@ PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
 + struct2
   #+record:
   | <<one>> one | two |
-#+begin_cluster Legend
-- :dashed: :: borrows
-#+end_cluster"
++ Legend :container:
+  - :dashed: :: borrows"
   :output "digraph {
   struct1:mid -> struct2:one [ label=calls style=dashed ];
   struct1 [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"

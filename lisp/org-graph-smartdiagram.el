@@ -215,7 +215,7 @@ and the list itself aside.  \"Intro\\n+ a\\n-----\"  ↦  (\"Intro\\n\" . \"----
         (pcase (org-element-type el)
           ('plain-list (setq seen-list t))
           ((or 'table 'keyword) nil)
-          ((and 'special-block (guard (member (downcase (org-element-property :type el)) '("cluster" "note")))) nil)
+          ((and 'special-block (guard (equal (downcase (org-element-property :type el)) "note"))) nil)
           (_ (let ((text (buffer-substring-no-properties (org-element-property :begin el) (org-element-property :end el))))
                (if seen-list (push text below) (push text above))))))
       (cons (s-join "" (nreverse above)) (s-join "" (nreverse below))))))

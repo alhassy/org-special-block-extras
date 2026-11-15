@@ -71,7 +71,7 @@ click it for its section below:
       A trailing tag applies template T; explicit rows win. This very node wears :syntax:, defined above.
     + explained by :: [[*Legends: a glossary of templates][- MEANING :T:]] :syntax:
 
-      In a cluster titled Legend, an item is a sample of T, captioned MEANING; see the legend here.
+      In a container titled Legend, an item is a sample of T, captioned MEANING; see the legend here.
     + [-] progress :: [[*Checkboxes are templates][checkboxes]] :syntax:
       | label | [X] [-] [ ] |
 
@@ -95,9 +95,9 @@ click it for its section below:
       | label | [[https://…]] |
 
       A web or section link makes the node clickable, as every node here is; an image link draws the image.
-  + layout :: [[*Clusters draw boxes][#+begin_cluster TITLE]] :topic:
+  + layout :: [[*Containers draw boxes][+ TITLE :container:]] :topic:
 
-    A cluster block draws a box around its nodes, styled by :KEY V as a graph is.
+    A container draws a box around its children, its members; its table styles the box.
     + records :: [[*Records: a #+record: table][#+record:]] :syntax:
 
       A table under an item is its label, a record of fields; a <<P>> cell is a port, which =[[node::P]]= reaches.
@@ -108,10 +108,9 @@ click it for its section below:
 
     Above the block, it makes a figure that =[[N]]= reaches, and #+caption: captions it; a :graph: tag on a
     heading makes its whole section a graph.
-#+begin_cluster Legend
-- a family of constructs :topic:
-- a construct             :syntax:
-#+end_cluster
++ Legend :container:
+  - a family of constructs :topic:
+  - a construct             :syntax:
 #+end_graph
 #+end_org
 
@@ -243,7 +242,7 @@ description term labels it, exactly as for any other child:
   item comes later. Node attributes on a reference are an error; they belong on the target's item.
 - ~+ [[expr][in parentheses]]~ is a reference too, its arc labelled ~in parentheses~.
 - Two references to one target are two parallel arcs, each styled on its own.
-- A reference may name a record's port, ~[[node::left]]~, or a cluster; both are met [[*Layout: ranks, boxes, and records][below]].
+- A reference may name a record's port, ~[[node::left]]~, or a container; both are met [[*Layout: ranks, boxes, and records][below]].
 
 ** Radio targets: arcs from every mention
 
@@ -486,7 +485,7 @@ two above are, tersely, ~#+name: token shape=box style=filled fillcolor=lightblu
 ~#+name: rule style=bold~. Several such lines in a row are several templates, and a table below one adds
 rows to it. In Emacs, each template of a graph ---its name's line, and the table below it--- wears
 a background of its own, from ~org-graph-template-backgrounds~, so where one ends and the next begins
-shows at a glance, as a [[*Clusters draw boxes][cluster]]'s does.
+shows at a glance.
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
 ~:token:rule:~, each a template, the earlier winning on a clash ---save colours: when the tags' templates
@@ -581,11 +580,10 @@ While prototyping, we want shapes before names. So a tag naming no template gets
 colour, a shape, a font--- the same at every use, so the tags read at a glance. A legend entry gives each
 its meaning; when the design settles, ~#+name:~ tables replace the made-up templates, one tag at a time:
 #+begin_graph Prototype first, name later :demo live
-#+begin_cluster Legend
-- a grammar rule :rule:
-- a token        :token:
-- a literal      :literal:
-#+end_cluster
++ Legend :container:
+  - a grammar rule :rule:
+  - a token        :token:
+  - a literal      :literal:
 + expr :rule:
   + term :rule:
     + NUMBER :token:
@@ -600,7 +598,7 @@ renders are stable, and the first eight tags differ in every way.
 ** Legends: a glossary of templates
 
 A reader meeting blue boxes and red dashes asks what they mean. A legend answers: a glossary of
-templates. Within a cluster titled ~Legend~, an item ~- MEANING :T:~ is a legend entry ---a sample styled
+templates. Within a container titled ~Legend~, an item ~- MEANING :T:~ is a legend entry ---a sample styled
 by template ~T~, captioned ~MEANING~--- rather than a node; it reads as prose, a caption tagged with what it
 explains:
 #+begin_graph :demo live
@@ -617,10 +615,9 @@ explains:
     + factor
       + NUMBER :token:
       + [[expr]] :recursion:
-#+begin_cluster Legend
-- a token, from the lexer         :token:
-- /back/ to an enclosing rule     :recursion:
-#+end_cluster
++ Legend :container:
+  - a token, from the lexer         :token:
+  - /back/ to an enclosing rule     :recursion:
 #+end_graph
 
 Equally, ~- :T: :: MEANING~ is a legend entry anywhere in a graph, boxed or not. Org's own glossary is the
@@ -629,10 +626,9 @@ means. An arc's label is a term too ---~+ calls :: f~ labels the arc from the pa
 item has no parent to arc from; so its term, being just tags, can only name templates, and the item is a
 legend entry. The two legends below are one and the same:
 #+begin_src org :tangle no
-,#+begin_cluster Legend           ,#+begin_cluster Legend
-- a token        :token:          - :token: :: a token
-- a literal      :literal:        - :literal: :: a literal
-,#+end_cluster                    ,#+end_cluster
++ Legend :container:             + Legend :container:
+  - a token        :token:          - :token: :: a token
+  - a literal      :literal:        - :literal: :: a literal
 #+end_src
 
 - The legend can never drift from the graph: change ~recursion~, and its sample changes too.
@@ -641,7 +637,7 @@ legend entry. The two legends below are one and the same:
 - Several tags, ~- … :token:faint:~ or ~- :token:faint: :: …~, sample their templates together.
 - The sample drops ~constraint~, which shapes the layout rather than the arc.
 - A legend stacks as a column: in a top-down graph its entries are chained by invisible arcs, and in a
-  left-right one they share a rank already. Graphviz's ~rankdir~ is the whole graph's, so a cluster
+  left-right one they share a rank already. Graphviz's ~rankdir~ is the whole graph's, so a container
   cannot have one of its own; the chain does that job for a legend.
 
 ** Checkboxes are templates
@@ -668,7 +664,7 @@ nothing.
 ** Macros name single values
 
 Templates name whole bundles of rows; sometimes we want to name one value. A palette repeats itself, and
-Org's ~#+macro:~ names a value once, so ~{{{name}}}~ uses it ---in a table, an item, a cluster's header,
+Org's ~#+macro:~ names a value once, so ~{{{name}}}~ uses it ---in a table, an item, a container's title,
 anywhere in the block:
 #+begin_org :ignore t :demo live
 #+macro: token-colour #a6e3a1
@@ -771,7 +767,7 @@ definition sits elsewhere in the buffer ---say, below the graph. An explicit ~| 
 
 A footnote is awkward for more than a line. An item's text is its first paragraph, as in Org; every
 paragraph after it is a note, the tooltip of whatever its item's line describes: a node, or ---under a
-reference--- an arc. ~#+begin_note :edge~, sitting in an item as a ~#+begin_cluster~ may, describes the
+reference--- an arc. ~#+begin_note :edge~, sitting in an item, describes the
 arc into the item instead; it is the one place we need the block:
 #+begin_graph :demo live
 + parser [fn::Recursive descent.]
@@ -809,7 +805,7 @@ note beneath its label instead, in a smaller font, its markup kept and its lines
 - A note follows the item's footnotes, which stay tooltips; an explicit ~tooltip~, ~:edge.tooltip~, or
   ~label~ row wins.
 - A note outside every item is the graph's: its tooltip, or ---inline--- the text beneath its title. One
-  directly in a ~#+begin_cluster~ is the box's.
+  directly in a container is the box's.
 - Within a graph, ~#+begin_note~ is never the callout of the same name, and ~C-c C-c~ in it renders the graph.
 
 ** Web links are URLs, image links are images
@@ -879,7 +875,7 @@ in the order written ---Graphviz no longer reshuffles them to save a crossing:
   2. 4
 #+end_graph
 
-- An ordered top-level list, or one inside a cluster, shares a rank too.
+- An ordered top-level list, or one inside a container, shares a rank too.
 - An explicit ~| :children-rank | min |~ wins over the ~rank=same~; a lone ordered child gets no rank at
   all.
 - For one rank /without/ the fixed order, use ~| :children-rank | same |~ with ~+~ bullets.
@@ -900,76 +896,57 @@ multi-word id its quotes. Every token is a leaf, so we line them all up, as the 
 Under ~splines=curved~, Graphviz drops the label of an arc between two nodes on one rank; so there, such an
 arc's label becomes an ~xlabel~, which it still draws.
 
-** Clusters draw boxes
+** Containers draw boxes
 
-Some nodes belong together ---a compiler's front end, say--- and a box around them says so. A cluster is
-a /subgraph/, so it gets the graph's own spelling: a ~#+begin_cluster~ block takes a title and ~:KEY V~
-attributes, ~:node.KEY~ and ~:edge.KEY~ defaults included, exactly as the ~#+begin_graph~ line does; and,
-being a block, it folds with ~TAB~:
+Some nodes belong together ---a compiler's front end, say--- and a box around them says so. An item tagged
+~:container:~ is such a box: its children are its /members/, inside it, rather than the targets of its
+arcs. Indentation says what is in the box, as D2's braces do, and an item folds with ~TAB~, as ever. Its
+table styles the box, and its ~#+node:~ and ~#+edge:~ set defaults within it:
 #+begin_graph :rankdir LR :demo live
 + compiler
-  #+begin_cluster Front end :bgcolor lightgrey :node.shape box
-  + lexer
-    + parser
-      #+begin_cluster
-      + syntax tree
-      + symbol table
-      #+end_cluster
-  #+end_cluster
-  #+begin_cluster Back end :style dashed
-  + code generator
-  #+end_cluster
+  + Front end :container:
+    | bgcolor | lightgrey |
+    #+node: shape=box
+    + lexer
+      + parser
+        + :container:
+          + syntax tree
+          + symbol table
+  + Back end :container:
+    | style | dashed |
+    + code generator
 #+end_graph
 
-- A cluster block inside an item is that item's child: above, ~compiler~ has an arc to ~Front end~. An arc
-  to or from a cluster lands on the cluster's first node, clipped at its border.
-- An untitled cluster is an anonymous box, with no label and no name to draw arcs to.
-- The title runs up to the first ~:KEY~; ~#+begin_cluster Time 12:30~ is titled ~Time 12:30~.
-- When the attributes outgrow the line, a table opening the block styles the box, as an item's table styles
-  its node; ~#+node:~ and ~#+edge:~ tables set defaults inside it, as usual:
-#+begin_graph :rankdir LR :demo live
-#+begin_cluster Tokens
-| style     | filled  |
-| fillcolor | #ddeeff |
-#+node:
-| shape | box |
-+ NUMBER
-+ PLUS
-+ STAR
-#+end_cluster
-#+end_graph
-- ~C-c C-c~, ~C-M-i~, and eldoc work inside a cluster block just as anywhere else in the graph; on the
-  ~#+begin_cluster~ line, ~C-M-i~ completes a cluster's attributes, and eldoc explains it.
+- A container is a child of its parent: above, ~compiler~ has an arc to ~Front end~. An arc to or from a
+  container lands on its first member, clipped at its border.
+- A reference among its children, ~+ uses :: [[T]]~, is an arc from the box, rather than a member.
+- An item of tags alone, ~+ :container:~, is an untitled box, with no label and no name to draw arcs to.
+- A container is a Graphviz /cluster/; ~| shape | cluster |~ is the same thing, spelled as a row.
 
-Clusters nest, each in the one around it. Org pairs a block with the first end of its name, so we pair
-nested clusters ourselves: ~TAB~ folds each down to its /own/ ~#+end_cluster~, and in Emacs each cluster
-wears a background of its own ---from ~org-graph-cluster-backgrounds~--- so where it begins and ends shows
-at a glance. Unknown tags such as ~:Prophet:~ get made-up templates, as in [[*Prototype first, name later][Prototype first, name later]]:
+Containers nest, each in the one around it. Unknown tags such as ~:Prophet:~ get made-up templates, as in
+[[*Prototype first, name later][Prototype first, name later]]:
 #+begin_graph :demo live
-#+begin_cluster Islam
-#+begin_cluster Christianity
-+ Jesus :Prophet:
-  + Simon :Heir:
-#+begin_cluster Judaism
-+ Moses :Prophet:
-  + Aaron :Heir:
-#+end_cluster
-#+end_cluster
-+ Mohammad :Prophet:
-  + Ali :Heir:
-#+end_cluster
++ Islam :container:
+  + Christianity :container:
+    + Jesus :Prophet:
+      + Simon :Heir:
+    + Judaism :container:
+      + Moses :Prophet:
+        + Aaron :Heir:
+  + Mohammad :Prophet:
+    + Ali :Heir:
 #+end_graph
 
-A node may also join a cluster by a tag: ~:cluster_TITLE:~ puts it in the cluster ~TITLE~, its
-underscores spaces, so ~:cluster_Holy_Land:~ is ~Holy Land~. A ~#+begin_cluster~ of that title is the same
-box, so the tag adds a node to it from anywhere in the graph; else the tags alone make the box. Several
+A node may also join a container by a tag: ~:container_TITLE:~ puts it in the box ~TITLE~, its underscores
+spaces, so ~:container_Holy_Land:~ is ~Holy Land~. A ~+ TITLE :container:~ item is the same box, so the
+tag adds a node to it from anywhere in the graph; else the tags alone make the box. Several
 tags of other kinds colour the node in stripes, as above:
 #+begin_graph :demo live
 + Moses :Prophet:Judaism:Christianity:Islam:
-+ Jesus :Prophet:Christianity:Islam:cluster_Gospels:
++ Jesus :Prophet:Christianity:Islam:container_Gospels:
 + Mohammad :Prophet:Islam:
-+ Mark :cluster_Gospels:
-+ John :cluster_Gospels:
++ Mark :container_Gospels:
++ John :container_Gospels:
 #+end_graph
 
 ** Records: a #+record: table
@@ -1157,7 +1134,7 @@ owner's end:
 
 A state machine is an outline of what follows what; the description term is the event, or the guard,
 that takes us along the arc. An unnamed ~:start:~, ~:final:~, or ~:choice:~ item needs a ~<<target>>~ only
-to be told apart; a composite state is a [[*Clusters draw boxes][cluster]]:
+to be told apart; a composite state is a [[*Containers draw boxes][container]]:
 #+begin_graph :rankdir LR :demo live
 + <<start>> :start:
   + <<idle>> Idle :state:
@@ -1455,8 +1432,8 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
 
 2. A directive's line validates itself as we type: ~#+graph:~, ~#+node:~, ~#+edge:~, and ~#+name:~
    stand out, and so does each ~KEY~ of a ~KEY=VALUE~ pair that Graphviz knows on that line. A key left
-   plain is a typo, or a misplaced key; see [[*When the preamble outgrows the line][When the preamble outgrows the line]]. Each ~#+name:~ template,
-   and each cluster, wears a background of its own.
+   plain is a typo, or a misplaced key; see [[*When the preamble outgrows the line][When the preamble outgrows the line]]. Each ~#+name:~ template
+   wears a background of its own.
 
 3. When we would rather pick than type, ~C-u RET~ on any table row inside a graph inserts a new
    ~| key | value |~ row interactively: a completion menu for the key, then one for the value ---or a
@@ -1530,8 +1507,9 @@ Once the demo is over, this is the page we keep open.
 | ~#+name: T~ + table                          | style template ~T~, used via ~:T:~ tags or ~:inherit~ rows; in or out of graphs |
 | ~#+name: T color=red shape=box~              | template ~T~ on one line, of ~KEY=VALUE~ pairs; with or without a table below   |
 | top-level ~- :T: :: MEANING~                 | a legend entry: a sample of template ~T~, captioned ~MEANING~                   |
-| ~- MEANING :T:~ in a ~Legend~ cluster         | the same legend entry, in prose                                                 |
-| ~#+begin_cluster TITLE :KEY V~               | ~subgraph cluster_TITLE { label=TITLE KEY=V … }~                                |
+| ~- MEANING :T:~ in a ~Legend~ container       | the same legend entry, in prose                                                 |
+| ~+ TITLE :container:~, then children         | ~subgraph cluster_TITLE { label=TITLE … }~, the children inside; its table styles it |
+| ~+ NAME :container_TITLE:~                   | node NAME, inside the box ~TITLE~                                               |
 | ~+ NAME~ list item                           | node ~NAME~ declaration                                                         |
 | indent ~+ CHILD~ under ~+ PARENT~            | edge PARENT → CHILD                                                             |
 | ~+ L :: CHILD~ under ~+ PARENT~              | edge PARENT → CHILD, labelled ~L~                                               |
@@ -1573,7 +1551,7 @@ applies a template to it. A row with no ~[[T]]~ link in the item's text is an er
       | :edge[expr].color | red    |
 #+end_graph
 
-A ~| shape | cluster |~ row makes an item a cluster, as ~#+begin_cluster~ does. Its children are then its
+A ~| shape | cluster |~ row makes an item a container, as the ~:container:~ tag does. Its children are then its
 members rather than arc targets, so arcs out of them are inline links, styled as above:
 #+begin_graph :rankdir LR :demo live
 + compiler
@@ -1699,7 +1677,7 @@ own, lest the prose become part of the graph.
 ** From λ-calculus to Emacs Lisp
 
 Now everything at once: ~#+graph:~, ~#+node:~, and ~#+edge:~ tables; ~#+rank:~ lines; arc templates by
-tags, sampled in a legend; clusters; and labels broken by ~\\~. Its palette is Catppuccin's; the colours
+tags, sampled in a legend; containers; and labels broken by ~\\~. Its palette is Catppuccin's; the colours
 it repeats are named once, by Org's own macros:
 #+begin_org :ignore t :demo live
 #+macro: yellow #f9e2af
@@ -1794,31 +1772,39 @@ it repeats are named once, by Org's own macros:
     | :edge.dir   | both         |
     | :edge.color | {{{yellow}}} |
 
-#+begin_cluster Emacs Concepts :fontcolor #a6e3a1 :color #313244 :style dashed
-+ <<macros>> Macros \\ (code-as-data)
-+ <<closures>> Closures \\ (lexical scope)
-+ <<advice>> Advice \\ (open recursion)
-#+end_cluster
++ Emacs Concepts :container:
+  | fontcolor | #a6e3a1 |
+  | color     | #313244 |
+  | style     | dashed  |
+  + <<macros>> Macros \\ (code-as-data)
+  + <<closures>> Closures \\ (lexical scope)
+  + <<advice>> Advice \\ (open recursion)
 
-#+begin_cluster Category Theory :fontcolor {{{yellow}}} :color {{{surface}}} :style dashed
-+ <<monad>> Monad \\ η · μ · associativity
-  | shape | parallelogram |
-  + <<adjoint>> Adjunction \\ F ⊣ G
-    | :edge.label     | every monad \\ is an adjunction |
-    | :edge.color     | {{{yellow}}}                    |
-    | :edge.fontcolor | {{{yellow}}}                    |
-    | shape           | parallelogram                   |
-  + models :equivalence: :: [[closures]]
-+ <<functor>> Functor \\ F : C → D
-  | shape | parallelogram |
-  + F∘F with η,μ :: [[monad]]
-#+end_cluster
++ Category Theory :container:
+  | fontcolor | {{{yellow}}}  |
+  | color     | {{{surface}}} |
+  | style     | dashed        |
+  + <<monad>> Monad \\ η · μ · associativity
+    | shape | parallelogram |
+    + <<adjoint>> Adjunction \\ F ⊣ G
+      | :edge.label     | every monad \\ is an adjunction |
+      | :edge.color     | {{{yellow}}}                    |
+      | :edge.fontcolor | {{{yellow}}}                    |
+      | shape           | parallelogram                   |
+    + models :equivalence: :: [[closures]]
+  + <<functor>> Functor \\ F : C → D
+    | shape | parallelogram |
+    + F∘F with η,μ :: [[monad]]
 
-#+begin_cluster Legend :fontcolor #cdd6f4 :color {{{surface}}} :style filled :fillcolor #181825 :fontsize 11
-- :lineage: :: direct lineage
-- :inspiration: :: inspiration
-- :equivalence: :: equivalence
-#+end_cluster
++ Legend :container:
+  | fontcolor | #cdd6f4       |
+  | color     | {{{surface}}} |
+  | style     | filled        |
+  | fillcolor | #181825       |
+  | fontsize  | 11            |
+  - :lineage: :: direct lineage
+  - :inspiration: :: inspiration
+  - :equivalence: :: equivalence
 #+end_graph
 #+end_org
 
@@ -1913,41 +1899,45 @@ of plain-text nodes. Comparing the two is demonstrative of what each feature sav
   + equivalent :: [[lambda]]
     | :edge.dir   | both    |
     | :edge.color | #f9e2af |
-#+begin_cluster Emacs Concepts :fontcolor #a6e3a1 :color #313244 :style dashed
-+ <<advice>> Advice \\ (open recursion)
-+ <<closures>> Closures \\ (lexical scope)
-+ <<macros>> Macros \\ (code-as-data)
-#+end_cluster
-#+begin_cluster Category Theory :fontcolor #f9e2af :color #45475a :style dashed :fontsize 28
++ Emacs Concepts :container:
+  | fontcolor | #a6e3a1 |
+  | color     | #313244 |
+  | style     | dashed  |
+  + <<advice>> Advice \\ (open recursion)
+  + <<closures>> Closures \\ (lexical scope)
+  + <<macros>> Macros \\ (code-as-data)
++ Category Theory :container:
+  | fontcolor | #f9e2af |
+  | color     | #45475a |
+  | style     | dashed  |
+  | fontsize  | 28      |
 
-+ Functor \\ F : C → D
-  | shape | parallelogram |
-  + F∘F with η,μ :: [[monad]]
+  + Functor \\ F : C → D
+    | shape | parallelogram |
+    + F∘F with η,μ :: [[monad]]
 
-+ <<monad>> Monad \\ η · μ · associativity
-  | shape | parallelogram |
-  + [[adjoint]]
-    | :edge.label     | every monad \\ is an adjunction |
-    | :edge.color     | #f9e2af                         |
-    | :edge.fontcolor | #f9e2af                         |
-  + [[closures]]
+  + <<monad>> Monad \\ η · μ · associativity
+    | shape | parallelogram |
+    + [[adjoint]]
+      | :edge.label     | every monad \\ is an adjunction |
+      | :edge.color     | #f9e2af                         |
+      | :edge.fontcolor | #f9e2af                         |
+    + [[closures]]
 
-+ <<adjoint>> Adjunction \\ F ⊣ G
-  | shape | parallelogram |
-#+end_cluster
-#+begin_cluster Legend
-| fontcolor | #8b008b |
-| color     | #45475a |
-| style     | filled  |
-| fillcolor | #181825 |
-| fontsize  | 11      |
-#+node:
-| shape     | plaintext |
-| fontcolor | #6c7086   |
-+ Solid = Direct Lineage
-+ Dashed = Inspiration
-+ Dotted = Equivalence
-#+end_cluster
+  + <<adjoint>> Adjunction \\ F ⊣ G
+    | shape | parallelogram |
++ Legend :container:
+  | fontcolor | #8b008b |
+  | color     | #45475a |
+  | style     | filled  |
+  | fillcolor | #181825 |
+  | fontsize  | 11      |
+  #+node:
+  | shape     | plaintext |
+  | fontcolor | #6c7086   |
+  + Solid = Direct Lineage
+  + Dashed = Inspiration
+  + Dotted = Equivalence
 #+end_graph
 
 ** Karbala ---the family of the Prophet
@@ -1957,8 +1947,8 @@ of plain-text nodes. Comparing the two is demonstrative of what each feature sav
 
 A genealogy of the prophetic lineage (Adam → Noah → Ibrahim → … → Muhammad ﷺ) and the family of Imam
 Hussain ibn Ali at Karbala: his wives, his children, the antagonists (Muawiya, Yazid, Ibn Ziyad, Shimr),
-and a legend. It is demonstrative of most of this README at once: a ~:SETTINGS:~ drawer, ~#+begin_cluster~
-blocks with scoped ~#+node:~ overrides, ~#+rank:~ groupings, diamond shapes for key Karbala actors, ~\\~
+and a legend. It is demonstrative of most of this README at once: a ~:SETTINGS:~ drawer, ~:container:~
+items with scoped ~#+node:~ overrides, ~#+rank:~ groupings, diamond shapes for key Karbala actors, ~\\~
 multi-line labels, footnote tooltips, and templates for the pink marriage arcs and red martyrdom arrows
 ---all without a single line of raw dot. It is a big graph: click it to see it full size.
 
@@ -2015,105 +2005,107 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 | color | #cc6600 |
 | style | dashed  |
 
-#+begin_cluster Prophets (عليهم السلام)
-| style     | filled  |
-| fillcolor | #ddeeff |
-| color     | #3355aa |
-| fontcolor | #003388 |
-#+node:
-| fillcolor | #aaccff |
-| color     | #3355aa |
-+ <<idris>> Idris \\ (إدريس)
-  [fn::Idris — mentioned in Quran (19:56-57). Raised to a high station. Often identified with the biblical Enoch.]
-+ <<hud>> Hud \\ (هود)
-  [fn::Hud — sent to the ʿĀd people (southern Arabia). They rejected him; destroyed by a violent wind.]
-+ <<salih>> Salih \\ (صالح)
-  [fn::Salih — sent to the Thamud people. Brought a she-camel as a divine sign; they killed it and were destroyed.]
-+ <<adam>> Adam \\ (آدم)
-  [fn::Adam — first human and first prophet. Created from clay; placed in Paradise then sent to Earth.]
-+ <<noah>> Noah \\ (نوح)
-  [fn::Noah (Nuh) — preached for 950 years. Built the Ark; the Flood destroyed those who rejected him.]
-  + [[adam]] :ancestry:
-+ <<ibrahim>> Ibrahim \\ (إبراهيم)
-  [fn::Ibrahim (Abraham) — Friend of God (Khalilullah). Destroyed idols, survived fire. Father of Ismail and Ishaaq; built the Kaaba.]
-  + [[noah]] :ancestry:
-+ <<lut>> Lut \\ (لوط)
-  [fn::Lut (Lot) — nephew of Ibrahim. Sent to the people of Sodom; they were destroyed for their transgressions.]
-  + [[ibrahim]] :ancestry:
-+ <<ismail>> Ismail \\ (إسماعيل)
-  [fn::Ismail (Ishmael) — eldest son of Ibrahim; ancestor of the Arab peoples and of Muhammad ﷺ. He and Ibrahim built the Kaaba in Mecca.]
-  + [[ibrahim]] :ancestry:
-+ <<ishaaq>> Ishaaq \\ (إسحاق)
-  [fn::Ishaaq (Isaac) — son of Ibrahim and Sarah. Father of Yaqub; ancestor of the Israelite prophets.]
-  + [[ibrahim]] :ancestry:
-+ <<yaqub>> Yaqub \\ (يعقوب)
-  [fn::Yaqub (Jacob / Israel) — son of Ishaaq. Father of the twelve tribes of Israel, including Yusuf.]
-  + [[ishaaq]] :ancestry:
-+ <<yusuf>> Yusuf \\ (يوسف)
-  [fn::Yusuf (Joseph) — son of Yaqub. Sold into slavery by brothers; rose to power in Egypt. His beauty is legendary — Layla invoked it at Karbala.]
-  + [[yaqub]] :ancestry:
-+ <<ayyub>> Ayyub \\ (أيوب)
-  [fn::Ayyub (Job) — prophet of patience. Afflicted with severe trials for years; restored after steadfast faith.]
-+ <<shuayb>> Shuayb \\ (شعيب)
-  [fn::Shuayb (Jethro) — sent to the people of Midian; warned against dishonest trade. Some traditions identify him as father-in-law of Moses.]
-+ <<yunus>> Yunus \\ (يونس)
-  [fn::Yunus (Jonah) — swallowed by a whale after leaving his people without permission. Remembered for his repentance (Dhul-Nun).]
-+ <<moses>> Moses \\ (موسى)
-  [fn::Moses (Musa) — the prophet most mentioned in the Quran. Led the Exodus; received the Torah on Mount Sinai. Lineage traced through Ismail's descendants.]
-  + [[ismail]] :ancestry:
-+ <<aaron>> Aaron \\ (هارون)
-  [fn::Aaron (Harun) — brother of Moses; assisted him in the mission to Pharaoh.]
-+ <<dawood>> Dawood \\ (داود)
-  [fn::Dawood (David) — king and prophet of Israel. Slew Goliath; given the Psalms (Zabur). Father of Sulayman.]
-+ <<sulayman>> Sulayman \\ (سليمان)
-  [fn::Sulayman (Solomon) — son of Dawood; given extraordinary wisdom, control over jinn and wind, and speech with animals.]
-  + [[dawood]] :ancestry:
-+ <<ilyas>> Ilyas \\ (إلياس)
-  [fn::Ilyas (Elias) — prophet of Israel; called his people to abandon the idol Baal.]
-+ <<alyasa>> Al-Yasa \\ (اليسع)
-  [fn::Al-Yasa (Elisha) — successor of Ilyas; praised in the Quran among the best.]
-  + [[ilyas]] :ancestry:
-+ <<zakariya>> Zakariya \\ (زكريا)
-  [fn::Zakariya (Zechariah) — prayed for a son in old age; miraculously given Yahya as a gift from God.]
-+ <<yahya>> Yahya \\ (يحيى)
-  [fn::Yahya (John the Baptist) — son of Zakariya; forerunner to Jesus. Praised in the Quran as wise from childhood.]
-  + [[zakariya]] :ancestry:
-+ <<jesus>> Jesus \\ (عيسى)
-  [fn::Jesus (Isa) — born miraculously to Maryam; given the Gospel (Injil). Performed miracles; raised to heaven; will return before the Day of Judgment.]
-+ <<dhulkifl>> Dhul-Kifl \\ (ذو الكفل)
-  [fn::Dhul-Kifl — mentioned twice in the Quran among the patient and righteous. Identity debated; some identify with Ezekiel or another prophet.]
-# Pre-Ibrahim tribal prophets — sent to regional peoples (ʿĀd, Thamud)
-#+rank: hud salih
-# Contemporaries of Ibrahim's immediate family
-#+rank: lut ismail ishaaq
-# Next generation: Yaqub, and roughly contemporary regional prophets
-#+rank: yaqub ayyub shuayb yunus
-# Moses and Aaron — the Exodus era
-#+rank: moses aaron
-# Israelite king-prophets
-#+rank: dawood ilyas
-# Sulayman (son of Dawood), Al-Yasa (successor of Ilyas), Zakariya
-#+rank: sulayman alyasa zakariya
-# Late Israelite prophets — Yahya (John the Baptist), Jesus, and Dhul-Kifl
-#+rank: yahya jesus dhulkifl
-#+end_cluster
++ Prophets (عليهم السلام) :container:
+  | style     | filled  |
+  | fillcolor | #ddeeff |
+  | color     | #3355aa |
+  | fontcolor | #003388 |
+  #+node:
+  | fillcolor | #aaccff |
+  | color     | #3355aa |
+  + <<idris>> Idris \\ (إدريس)
+    [fn::Idris — mentioned in Quran (19:56-57). Raised to a high station. Often identified with the biblical Enoch.]
+  + <<hud>> Hud \\ (هود)
+    [fn::Hud — sent to the ʿĀd people (southern Arabia). They rejected him; destroyed by a violent wind.]
+  + <<salih>> Salih \\ (صالح)
+    [fn::Salih — sent to the Thamud people. Brought a she-camel as a divine sign; they killed it and were destroyed.]
+  + <<adam>> Adam \\ (آدم)
+    [fn::Adam — first human and first prophet. Created from clay; placed in Paradise then sent to Earth.]
+  + <<noah>> Noah \\ (نوح)
+    [fn::Noah (Nuh) — preached for 950 years. Built the Ark; the Flood destroyed those who rejected him.]
+    + [[adam]] :ancestry:
+  + <<ibrahim>> Ibrahim \\ (إبراهيم)
+    [fn::Ibrahim (Abraham) — Friend of God (Khalilullah). Destroyed idols, survived fire. Father of Ismail and Ishaaq; built the Kaaba.]
+    + [[noah]] :ancestry:
+  + <<lut>> Lut \\ (لوط)
+    [fn::Lut (Lot) — nephew of Ibrahim. Sent to the people of Sodom; they were destroyed for their transgressions.]
+    + [[ibrahim]] :ancestry:
+  + <<ismail>> Ismail \\ (إسماعيل)
+    [fn::Ismail (Ishmael) — eldest son of Ibrahim; ancestor of the Arab peoples and of Muhammad ﷺ. He and Ibrahim built the Kaaba in Mecca.]
+    + [[ibrahim]] :ancestry:
+  + <<ishaaq>> Ishaaq \\ (إسحاق)
+    [fn::Ishaaq (Isaac) — son of Ibrahim and Sarah. Father of Yaqub; ancestor of the Israelite prophets.]
+    + [[ibrahim]] :ancestry:
+  + <<yaqub>> Yaqub \\ (يعقوب)
+    [fn::Yaqub (Jacob / Israel) — son of Ishaaq. Father of the twelve tribes of Israel, including Yusuf.]
+    + [[ishaaq]] :ancestry:
+  + <<yusuf>> Yusuf \\ (يوسف)
+    [fn::Yusuf (Joseph) — son of Yaqub. Sold into slavery by brothers; rose to power in Egypt. His beauty is legendary — Layla invoked it at Karbala.]
+    + [[yaqub]] :ancestry:
+  + <<ayyub>> Ayyub \\ (أيوب)
+    [fn::Ayyub (Job) — prophet of patience. Afflicted with severe trials for years; restored after steadfast faith.]
+  + <<shuayb>> Shuayb \\ (شعيب)
+    [fn::Shuayb (Jethro) — sent to the people of Midian; warned against dishonest trade. Some traditions identify him as father-in-law of Moses.]
+  + <<yunus>> Yunus \\ (يونس)
+    [fn::Yunus (Jonah) — swallowed by a whale after leaving his people without permission. Remembered for his repentance (Dhul-Nun).]
+  + <<moses>> Moses \\ (موسى)
+    [fn::Moses (Musa) — the prophet most mentioned in the Quran. Led the Exodus; received the Torah on Mount Sinai. Lineage traced through Ismail's descendants.]
+    + [[ismail]] :ancestry:
+  + <<aaron>> Aaron \\ (هارون)
+    [fn::Aaron (Harun) — brother of Moses; assisted him in the mission to Pharaoh.]
+  + <<dawood>> Dawood \\ (داود)
+    [fn::Dawood (David) — king and prophet of Israel. Slew Goliath; given the Psalms (Zabur). Father of Sulayman.]
+  + <<sulayman>> Sulayman \\ (سليمان)
+    [fn::Sulayman (Solomon) — son of Dawood; given extraordinary wisdom, control over jinn and wind, and speech with animals.]
+    + [[dawood]] :ancestry:
+  + <<ilyas>> Ilyas \\ (إلياس)
+    [fn::Ilyas (Elias) — prophet of Israel; called his people to abandon the idol Baal.]
+  + <<alyasa>> Al-Yasa \\ (اليسع)
+    [fn::Al-Yasa (Elisha) — successor of Ilyas; praised in the Quran among the best.]
+    + [[ilyas]] :ancestry:
+  + <<zakariya>> Zakariya \\ (زكريا)
+    [fn::Zakariya (Zechariah) — prayed for a son in old age; miraculously given Yahya as a gift from God.]
+  + <<yahya>> Yahya \\ (يحيى)
+    [fn::Yahya (John the Baptist) — son of Zakariya; forerunner to Jesus. Praised in the Quran as wise from childhood.]
+    + [[zakariya]] :ancestry:
+  + <<jesus>> Jesus \\ (عيسى)
+    [fn::Jesus (Isa) — born miraculously to Maryam; given the Gospel (Injil). Performed miracles; raised to heaven; will return before the Day of Judgment.]
+  + <<dhulkifl>> Dhul-Kifl \\ (ذو الكفل)
+    [fn::Dhul-Kifl — mentioned twice in the Quran among the patient and righteous. Identity debated; some identify with Ezekiel or another prophet.]
+  # Pre-Ibrahim tribal prophets — sent to regional peoples (ʿĀd, Thamud)
+  #+rank: hud salih
+  # Contemporaries of Ibrahim's immediate family
+  #+rank: lut ismail ishaaq
+  # Next generation: Yaqub, and roughly contemporary regional prophets
+  #+rank: yaqub ayyub shuayb yunus
+  # Moses and Aaron — the Exodus era
+  #+rank: moses aaron
+  # Israelite king-prophets
+  #+rank: dawood ilyas
+  # Sulayman (son of Dawood), Al-Yasa (successor of Ilyas), Zakariya
+  #+rank: sulayman alyasa zakariya
+  # Late Israelite prophets — Yahya (John the Baptist), Jesus, and Dhul-Kifl
+  #+rank: yahya jesus dhulkifl
 
 # Hadith: the four greatest women of paradise — Khadija, Fatimah, Maryam, Asiya
-#+begin_cluster Ladies of Heaven (سيدات الجنة) :style filled :fillcolor #fff0f5 :color #aa3366 :fontcolor #660033
-+ <<khadija>> Khadija \\ (خديجة) \\ First wife of Muhammad
-  [fn::Khadija bint Khuwaylid — the first Muslim and the Prophet's most beloved wife. A wealthy merchant; she proposed to Muhammad ﷺ. He took no other wife while she lived.]
-  + [[muhammad]] :married:
-+ <<fatimah>> Fatimah \\ (فاطمة) \\ Daughter of Muhammad
-  [fn::Fatimah al-Zahra ('the Radiant') — daughter of Muhammad ﷺ and Khadija; wife of Ali; mother of Hasan, Hussain, and Zaynab. The Prophet said: 'Fatimah is a part of me — whoever angers her angers me.' In Shia tradition: after Abu Bakr's succession, Umar led a party to her house to force Ali's pledge of allegiance; the door was set alight or forced open, Fatimah was struck, and she miscarried her unborn son Muhsin (the fifth child of Ali and Fatimah). She died ~75–95 days after the Prophet — at most 18 years old — and was buried secretly at night, her grave kept hidden from the new government. Fadak (a fertile estate the Prophet had gifted her) was confiscated by Abu Bakr on the grounds that prophets leave no inheritance, a hadith Shia scholars hold as fabricated. She never spoke to Abu Bakr again until her death.]
-  + [[muhammad]]
-  + Fadak / Muhsin :: [[abubakr]] :killed-by:
-  + door incident :: [[umar]] :killed-by:
-+ <<maryam>> Maryam \\ (مريم) \\ Mother of Jesus
-  [fn::Maryam (Mary) — the only woman named directly in the Quran, with a full chapter (Sura 19) devoted to her. Gave birth to Jesus without a father; a virgin chosen above all women.]
-  + [[jesus]] :motherhood:
-+ <<asiya>> Asiya \\ (آسية) \\ Wife of Pharaoh
-  [fn::Asiya bint Muzahim — wife of Pharaoh who adopted Moses as an infant. Believed in God and was tortured to death by Pharaoh; her prayer for a house in Paradise is in Quran 66:11.]
-#+end_cluster
++ Ladies of Heaven (سيدات الجنة) :container:
+  | style     | filled  |
+  | fillcolor | #fff0f5 |
+  | color     | #aa3366 |
+  | fontcolor | #660033 |
+  + <<khadija>> Khadija \\ (خديجة) \\ First wife of Muhammad
+    [fn::Khadija bint Khuwaylid — the first Muslim and the Prophet's most beloved wife. A wealthy merchant; she proposed to Muhammad ﷺ. He took no other wife while she lived.]
+    + [[muhammad]] :married:
+  + <<fatimah>> Fatimah \\ (فاطمة) \\ Daughter of Muhammad
+    [fn::Fatimah al-Zahra ('the Radiant') — daughter of Muhammad ﷺ and Khadija; wife of Ali; mother of Hasan, Hussain, and Zaynab. The Prophet said: 'Fatimah is a part of me — whoever angers her angers me.' In Shia tradition: after Abu Bakr's succession, Umar led a party to her house to force Ali's pledge of allegiance; the door was set alight or forced open, Fatimah was struck, and she miscarried her unborn son Muhsin (the fifth child of Ali and Fatimah). She died ~75–95 days after the Prophet — at most 18 years old — and was buried secretly at night, her grave kept hidden from the new government. Fadak (a fertile estate the Prophet had gifted her) was confiscated by Abu Bakr on the grounds that prophets leave no inheritance, a hadith Shia scholars hold as fabricated. She never spoke to Abu Bakr again until her death.]
+    + [[muhammad]]
+    + Fadak / Muhsin :: [[abubakr]] :killed-by:
+    + door incident :: [[umar]] :killed-by:
+  + <<maryam>> Maryam \\ (مريم) \\ Mother of Jesus
+    [fn::Maryam (Mary) — the only woman named directly in the Quran, with a full chapter (Sura 19) devoted to her. Gave birth to Jesus without a father; a virgin chosen above all women.]
+    + [[jesus]] :motherhood:
+  + <<asiya>> Asiya \\ (آسية) \\ Wife of Pharaoh
+    [fn::Asiya bint Muzahim — wife of Pharaoh who adopted Moses as an infant. Believed in God and was tortured to death by Pharaoh; her prayer for a house in Paradise is in Quran 66:11.]
 
 + <<hashim>> Hashim \\ (هاشم)
   [fn::Hashim ibn Abd Manaf — great-grandfather of Muhammad ﷺ; ancestor of the Hashimite clan of Quraysh. Known for feeding pilgrims in Mecca.]
@@ -2247,39 +2239,38 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # The first 4 Imams (Ali, Hasan, Hussain, Sajjad) are declared above as standalone
 # nodes; this cluster adds Imams 5–12 as a chain descending from Ali Al-Sajjad.
 # All 12 are descendants of Ali ibn Abi Talib through the line of Hussain.
-#+begin_cluster The Twelve Imams (عليهم السلام)
-| style     | filled  |
-| fillcolor | #eeffee |
-| color     | #006600 |
-| fontcolor | #004400 |
-#+node:
-| fillcolor | #ccffcc |
-| color     | #006600 |
-+ <<baqir>> Muhammad al-Baqir \\ (محمد الباقر) \\ 5th Imam
-  [fn::Muhammad al-Baqir ('the one who opens up knowledge') — son of Sajjad; 5th Imam. Renowned for expansive religious scholarship; established the foundations of Shia jurisprudence in Medina.]
-  + [[sajjad]]
-+ <<sadiq>> Jafar al-Sadiq \\ (جعفر الصادق) \\ 6th Imam
-  [fn::Jafar al-Sadiq ('the truthful') — son of Baqir; 6th Imam. The most prolific scholarly Imam; his students included Abu Hanifa and Malik ibn Anas. Shia fiqh is called the Ja'fari school in his honor.]
-  + [[baqir]]
-+ <<kadhim>> Musa al-Kadhim \\ (موسى الكاظم) \\ 7th Imam
-  [fn::Musa al-Kadhim ('the forbearing') — son of Sadiq; 7th Imam. Imprisoned repeatedly by the Abbasid caliphs Mahdi and Harun al-Rashid; died in prison in Baghdad, 799 CE.]
-  + [[sadiq]]
-+ <<ridha>> Ali al-Ridha \\ (علي الرضا) \\ 8th Imam
-  [fn::Ali al-Ridha ('the pleased one') — son of Kadhim; 8th Imam. Appointed heir-apparent by Abbasid Caliph al-Ma'mun (a political move). His shrine in Mashhad, Iran is one of the largest mosques in the world.]
-  + [[kadhim]]
-+ <<taqi>> Muhammad al-Taqi \\ (محمد التقي) \\ 9th Imam
-  [fn::Muhammad al-Taqi ('the pious') — son of Ridha; 9th Imam. Became Imam at age 8 after his father's death. Married a daughter of the Abbasid caliph al-Ma'mun. Died aged ~25, reportedly poisoned.]
-  + [[ridha]]
-+ <<hadi>> Ali al-Hadi \\ (علي الهادي) \\ 10th Imam
-  [fn::Ali al-Hadi ('the guide') — son of Taqi; 10th Imam. Placed under house arrest in Samarra by Abbasid authorities for most of his life. Father of Hasan al-Askari.]
-  + [[taqi]]
-+ <<askari>> Hasan al-Askari \\ (الحسن العسكري) \\ 11th Imam
-  [fn::Hasan al-Askari — son of Hadi; 11th Imam. Named 'al-Askari' for the military garrison city of Samarra where he was confined. Father of the 12th Imam. Died 874 CE, reportedly poisoned.]
-  + [[hadi]]
-+ <<mahdi>> Muhammad al-Mahdi \\ (محمد المهدي) \\ 12th Imam
-  [fn::Muhammad al-Mahdi — son of Askari; 12th and final Imam. Believed to be in 'occultation' (ghayba) since 874 CE — hidden from sight but alive, to return at the end of times as the Mahdi who establishes justice.]
-  + [[askari]]
-#+end_cluster
++ The Twelve Imams (عليهم السلام) :container:
+  | style     | filled  |
+  | fillcolor | #eeffee |
+  | color     | #006600 |
+  | fontcolor | #004400 |
+  #+node:
+  | fillcolor | #ccffcc |
+  | color     | #006600 |
+  + <<baqir>> Muhammad al-Baqir \\ (محمد الباقر) \\ 5th Imam
+    [fn::Muhammad al-Baqir ('the one who opens up knowledge') — son of Sajjad; 5th Imam. Renowned for expansive religious scholarship; established the foundations of Shia jurisprudence in Medina.]
+    + [[sajjad]]
+  + <<sadiq>> Jafar al-Sadiq \\ (جعفر الصادق) \\ 6th Imam
+    [fn::Jafar al-Sadiq ('the truthful') — son of Baqir; 6th Imam. The most prolific scholarly Imam; his students included Abu Hanifa and Malik ibn Anas. Shia fiqh is called the Ja'fari school in his honor.]
+    + [[baqir]]
+  + <<kadhim>> Musa al-Kadhim \\ (موسى الكاظم) \\ 7th Imam
+    [fn::Musa al-Kadhim ('the forbearing') — son of Sadiq; 7th Imam. Imprisoned repeatedly by the Abbasid caliphs Mahdi and Harun al-Rashid; died in prison in Baghdad, 799 CE.]
+    + [[sadiq]]
+  + <<ridha>> Ali al-Ridha \\ (علي الرضا) \\ 8th Imam
+    [fn::Ali al-Ridha ('the pleased one') — son of Kadhim; 8th Imam. Appointed heir-apparent by Abbasid Caliph al-Ma'mun (a political move). His shrine in Mashhad, Iran is one of the largest mosques in the world.]
+    + [[kadhim]]
+  + <<taqi>> Muhammad al-Taqi \\ (محمد التقي) \\ 9th Imam
+    [fn::Muhammad al-Taqi ('the pious') — son of Ridha; 9th Imam. Became Imam at age 8 after his father's death. Married a daughter of the Abbasid caliph al-Ma'mun. Died aged ~25, reportedly poisoned.]
+    + [[ridha]]
+  + <<hadi>> Ali al-Hadi \\ (علي الهادي) \\ 10th Imam
+    [fn::Ali al-Hadi ('the guide') — son of Taqi; 10th Imam. Placed under house arrest in Samarra by Abbasid authorities for most of his life. Father of Hasan al-Askari.]
+    + [[taqi]]
+  + <<askari>> Hasan al-Askari \\ (الحسن العسكري) \\ 11th Imam
+    [fn::Hasan al-Askari — son of Hadi; 11th Imam. Named 'al-Askari' for the military garrison city of Samarra where he was confined. Father of the 12th Imam. Died 874 CE, reportedly poisoned.]
+    + [[hadi]]
+  + <<mahdi>> Muhammad al-Mahdi \\ (محمد المهدي) \\ 12th Imam
+    [fn::Muhammad al-Mahdi — son of Askari; 12th and final Imam. Believed to be in 'occultation' (ghayba) since 874 CE — hidden from sight but alive, to return at the end of times as the Mahdi who establishes justice.]
+    + [[askari]]
 
 # Narjis Khatun is theologically indispensable — as mother of the 12th Imam, she anchors the eschatological
 # narrative of the Major Occultation. Her Byzantine origin and conversion are part of the tradition's telling.
@@ -2291,111 +2282,107 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # Companions of Ali — figures whose loyalty to the Ahl al-Bayt defined early Shia social identity.
 # Salman's hadith ("Salman is from us, Ahl al-Bayt"), Ammar's martyrdom at Siffin, and
 # Malik al-Ashtar's generalship are cornerstones of Shia historical memory.
-#+begin_cluster Companions of Ali
-| style     | filled  |
-| fillcolor | #fef3c7 |
-| color     | #92400e |
-| fontcolor | #78350f |
-#+node:
-| fillcolor | #fde68a |
-| color     | #92400e |
-+ <<salman>> Salman al-Farisi \\ (سلمان الفارسي) \\ Persian Companion
-  [fn::Salman al-Farisi — Persian companion of the Prophet; converted from Zoroastrianism after a long spiritual quest. The Prophet declared: 'Salman is from us, Ahl al-Bayt.' Became a close companion of Ali and later Governor of Ctesiphon (al-Madain) under him. Considered the first Persian Muslim of note.]
-  + [[muhammad]] :ancestry:
-  + [[ali]] :ancestry:
-+ <<ammar>> Ammar ibn Yasir \\ (عمار بن ياسر) \\ Martyr of Siffin
-  [fn::Ammar ibn Yasir — one of the earliest Muslims; his mother Sumayyah was the first martyr of Islam. The Prophet foretold: 'Ammar will be killed by the transgressing group.' Fought for Ali at the Battle of Siffin (657 CE) and was killed by Muawiya's forces — fulfilling the prophecy and cementing Ali's legitimacy in Shia eyes.]
-  + [[ali]] :ancestry:
-  + [[muawiya]] :killed-by:
-+ <<malikashtar>> Malik al-Ashtar \\ (مالك الأشتر) \\ Ali's Foremost General
-  [fn::Malik ibn al-Harith al-Ashtar — Ali's most trusted and capable general; appointed Governor of Egypt by Ali. Reportedly poisoned by Muawiya's agents (via honey laced with poison) before he could take up his Egyptian post. Ali mourned him: 'Malik was to me as I was to the Prophet.' An unrivalled figure in Shia military and moral tradition.]
-  + [[ali]] :ancestry:
-  + [[muawiya]] :killed-by:
-#+end_cluster
++ Companions of Ali :container:
+  | style     | filled  |
+  | fillcolor | #fef3c7 |
+  | color     | #92400e |
+  | fontcolor | #78350f |
+  #+node:
+  | fillcolor | #fde68a |
+  | color     | #92400e |
+  + <<salman>> Salman al-Farisi \\ (سلمان الفارسي) \\ Persian Companion
+    [fn::Salman al-Farisi — Persian companion of the Prophet; converted from Zoroastrianism after a long spiritual quest. The Prophet declared: 'Salman is from us, Ahl al-Bayt.' Became a close companion of Ali and later Governor of Ctesiphon (al-Madain) under him. Considered the first Persian Muslim of note.]
+    + [[muhammad]] :ancestry:
+    + [[ali]] :ancestry:
+  + <<ammar>> Ammar ibn Yasir \\ (عمار بن ياسر) \\ Martyr of Siffin
+    [fn::Ammar ibn Yasir — one of the earliest Muslims; his mother Sumayyah was the first martyr of Islam. The Prophet foretold: 'Ammar will be killed by the transgressing group.' Fought for Ali at the Battle of Siffin (657 CE) and was killed by Muawiya's forces — fulfilling the prophecy and cementing Ali's legitimacy in Shia eyes.]
+    + [[ali]] :ancestry:
+    + [[muawiya]] :killed-by:
+  + <<malikashtar>> Malik al-Ashtar \\ (مالك الأشتر) \\ Ali's Foremost General
+    [fn::Malik ibn al-Harith al-Ashtar — Ali's most trusted and capable general; appointed Governor of Egypt by Ali. Reportedly poisoned by Muawiya's agents (via honey laced with poison) before he could take up his Egyptian post. Ali mourned him: 'Malik was to me as I was to the Prophet.' An unrivalled figure in Shia military and moral tradition.]
+    + [[ali]] :ancestry:
+    + [[muawiya]] :killed-by:
 
 # The Rashidun (Rightly Guided) Caliphs — Sunni Islam's first four successors to Muhammad.
 # Ali (4th Caliph) is already in the graph above; Muawiya (1st Umayyad) is in Antagonists.
 # Aisha (daughter of Abu Bakr, wife of Muhammad) was a major hadith transmitter and
 # political figure — she led opposition to Ali at the Battle of the Camel (656 CE).
-#+begin_cluster Rashidun Caliphs (الخلفاء الراشدون)
-| style     | filled  |
-| fillcolor | #fff8e1 |
-| color     | #aa7700 |
-| fontcolor | #664400 |
-#+node:
-| fillcolor | #ffe082 |
-| color     | #aa7700 |
-+ <<abubakr>> Abu Bakr \\ (أبو بكر) \\ 1st Caliph
-  [fn::Abu Bakr al-Siddiq — 1st Caliph (632–634 CE). Sunni tradition venerates him as the Prophet's closest companion and first successor. In Shia tradition: the Saqifa assembly that chose him convened while Ali was still washing and shrouding Muhammad ﷺ for burial — bypassing the Prophet's explicit designation of Ali at Ghadir Khumm (18 Dhul-Hijja 10 AH). He confiscated Fadak from Fatimah, citing a solitary hadith ('prophets leave no inheritance') that Shia scholars hold as fabricated. Fatimah never reconciled with him; she died unreconciled and was buried secretly.]
-+ <<umar>> Umar ibn al-Khattab \\ (عمر) \\ 2nd Caliph
-  [fn::Umar ibn al-Khattab — 2nd Caliph (634–644 CE). Sunni tradition credits him with vast Islamic expansion into Persia, Syria, and Egypt, and with administrative reform. In Shia tradition: Umar was the driving force behind the Saqifa succession that sidelined Ali. He led the party to Fatimah's house to compel Ali's pledge of allegiance — in Shia narrations, the door was forced or set alight, Fatimah was struck by the door or directly, and she miscarried Muhsin. He also enforced the confiscation of Fadak. These events are among the deepest grievances in Shia historical memory.]
-+ <<uthman>> Uthman ibn Affan \\ (عثمان) \\ 3rd Caliph
-  [fn::Uthman ibn Affan — 3rd Caliph (644–656 CE). Compiled the standard Quran text (Uthmanic codex). His favoritism toward Umayyad relatives bred rebellion; he was assassinated in his home in Medina.]
-+ <<aisha>> Aisha \\ (عائشة) \\ wife of Muhammad
-  [fn::Aisha bint Abi Bakr — youngest and most prominent wife of Muhammad ﷺ; 'Mother of the Believers.' The primary transmitter of thousands of hadith. Led the Battle of the Camel (656 CE) against Ali — a defining Sunni-Shia fault line.]
-  + daughter :: [[abubakr]]
-  + [[muhammad]] :married:
-#+end_cluster
++ Rashidun Caliphs (الخلفاء الراشدون) :container:
+  | style     | filled  |
+  | fillcolor | #fff8e1 |
+  | color     | #aa7700 |
+  | fontcolor | #664400 |
+  #+node:
+  | fillcolor | #ffe082 |
+  | color     | #aa7700 |
+  + <<abubakr>> Abu Bakr \\ (أبو بكر) \\ 1st Caliph
+    [fn::Abu Bakr al-Siddiq — 1st Caliph (632–634 CE). Sunni tradition venerates him as the Prophet's closest companion and first successor. In Shia tradition: the Saqifa assembly that chose him convened while Ali was still washing and shrouding Muhammad ﷺ for burial — bypassing the Prophet's explicit designation of Ali at Ghadir Khumm (18 Dhul-Hijja 10 AH). He confiscated Fadak from Fatimah, citing a solitary hadith ('prophets leave no inheritance') that Shia scholars hold as fabricated. Fatimah never reconciled with him; she died unreconciled and was buried secretly.]
+  + <<umar>> Umar ibn al-Khattab \\ (عمر) \\ 2nd Caliph
+    [fn::Umar ibn al-Khattab — 2nd Caliph (634–644 CE). Sunni tradition credits him with vast Islamic expansion into Persia, Syria, and Egypt, and with administrative reform. In Shia tradition: Umar was the driving force behind the Saqifa succession that sidelined Ali. He led the party to Fatimah's house to compel Ali's pledge of allegiance — in Shia narrations, the door was forced or set alight, Fatimah was struck by the door or directly, and she miscarried Muhsin. He also enforced the confiscation of Fadak. These events are among the deepest grievances in Shia historical memory.]
+  + <<uthman>> Uthman ibn Affan \\ (عثمان) \\ 3rd Caliph
+    [fn::Uthman ibn Affan — 3rd Caliph (644–656 CE). Compiled the standard Quran text (Uthmanic codex). His favoritism toward Umayyad relatives bred rebellion; he was assassinated in his home in Medina.]
+  + <<aisha>> Aisha \\ (عائشة) \\ wife of Muhammad
+    [fn::Aisha bint Abi Bakr — youngest and most prominent wife of Muhammad ﷺ; 'Mother of the Believers.' The primary transmitter of thousands of hadith. Led the Battle of the Camel (656 CE) against Ali — a defining Sunni-Shia fault line.]
+    + daughter :: [[abubakr]]
+    + [[muhammad]] :married:
 
 # Umayyad caliphs who oppressed the early Imams after the Karbala period.
 # The Umayyad dynasty (661–750 CE) persecuted Imams 4–6.
-#+begin_cluster Umayyad Caliphs (الأمويون)
-| style     | filled  |
-| fillcolor | #fff3e0 |
-| color     | #b34700 |
-| fontcolor | #7a2e00 |
-#+node:
-| fillcolor | #ffe0b2 |
-| color     | #b34700 |
-+ <<abdmalik>> Abd al-Malik \\ (عبد الملك) \\ Umayyad Caliph
-  [fn::Abd al-Malik ibn Marwan — 5th Umayyad Caliph (685–705 CE). The dominant caliph during Imam Sajjad's era; sent al-Hajjaj ibn Yusuf to crush Iraqi uprisings. Centralised power and Arabised the administration.]
-  + oppressed :: [[sajjad]] :imprisoned:
-+ <<walid1>> al-Walid I \\ (الوليد الأول) \\ Umayyad Caliph
-  [fn::al-Walid ibn Abd al-Malik — 6th Umayyad Caliph (705–715 CE). Son of Abd al-Malik; continued his father's oppressive policies. Imam Sajjad died during his reign, reportedly at his instigation.]
-  + [[abdmalik]]
-  + [[sajjad]] :killed-by:
-+ <<hisham>> Hisham \\ (هشام) \\ Umayyad Caliph
-  [fn::Hisham ibn Abd al-Malik — 10th Umayyad Caliph (724–743 CE). The main political oppressor of Imams Baqir and Sadiq; summoned both Imams to Damascus and subjected them to interrogation. Reportedly had Imam Baqir poisoned.]
-  + [[abdmalik]] :ancestry:
-  + [[baqir]] :killed-by:
-  + oppressed :: [[sadiq]] :imprisoned:
-#+end_cluster
++ Umayyad Caliphs (الأمويون) :container:
+  | style     | filled  |
+  | fillcolor | #fff3e0 |
+  | color     | #b34700 |
+  | fontcolor | #7a2e00 |
+  #+node:
+  | fillcolor | #ffe0b2 |
+  | color     | #b34700 |
+  + <<abdmalik>> Abd al-Malik \\ (عبد الملك) \\ Umayyad Caliph
+    [fn::Abd al-Malik ibn Marwan — 5th Umayyad Caliph (685–705 CE). The dominant caliph during Imam Sajjad's era; sent al-Hajjaj ibn Yusuf to crush Iraqi uprisings. Centralised power and Arabised the administration.]
+    + oppressed :: [[sajjad]] :imprisoned:
+  + <<walid1>> al-Walid I \\ (الوليد الأول) \\ Umayyad Caliph
+    [fn::al-Walid ibn Abd al-Malik — 6th Umayyad Caliph (705–715 CE). Son of Abd al-Malik; continued his father's oppressive policies. Imam Sajjad died during his reign, reportedly at his instigation.]
+    + [[abdmalik]]
+    + [[sajjad]] :killed-by:
+  + <<hisham>> Hisham \\ (هشام) \\ Umayyad Caliph
+    [fn::Hisham ibn Abd al-Malik — 10th Umayyad Caliph (724–743 CE). The main political oppressor of Imams Baqir and Sadiq; summoned both Imams to Damascus and subjected them to interrogation. Reportedly had Imam Baqir poisoned.]
+    + [[abdmalik]] :ancestry:
+    + [[baqir]] :killed-by:
+    + oppressed :: [[sadiq]] :imprisoned:
 
 # The Abbasids overthrew the Umayyads in 750 CE but continued — and intensified —
 # persecution of the Imams, shifting from open warfare to imprisonment and poisoning.
 # Each node here is the primary oppressor of the corresponding Imam.
-#+begin_cluster Abbasid Caliphs (العباسيون)
-| style     | filled  |
-| fillcolor | #f3e5f5 |
-| color     | #6a0dad |
-| fontcolor | #3d0066 |
-#+node:
-| fillcolor | #e1bee7 |
-| color     | #6a0dad |
-+ <<almansur>> al-Mansur \\ (المنصور) \\ 2nd Abbasid
-  [fn::Abu Ja'far al-Mansur — 2nd Abbasid Caliph (754–775 CE). Founded Baghdad. Repeatedly summoned and interrogated Imam Sadiq; according to most Shia sources, had him poisoned in 765 CE.]
-  + [[sadiq]] :killed-by:
-+ <<harun>> Harun al-Rashid \\ (هارون الرشيد) \\ 5th Abbasid
-  [fn::Harun al-Rashid — 5th Abbasid Caliph (786–809 CE). Famous for the tales of 1001 Nights. Imprisoned Imam Kadhim repeatedly in Baghdad; the Imam died in prison in 799 CE, most likely by Harun's order.]
-  + [[almansur]] :ancestry:
-  + [[kadhim]] :killed-by:
-+ <<mamun>> al-Ma'mun \\ (المأمون) \\ 7th Abbasid
-  [fn::al-Ma'mun — 7th Abbasid Caliph (813–833 CE). Son of Harun. Appointed Imam Ridha as heir-apparent (a political manoeuvre to co-opt Shia support), then likely had him poisoned in 818 CE in Khurasan.]
-  + [[harun]] :ancestry:
-  + [[ridha]] :killed-by:
-+ <<mutasim>> al-Mu'tasim \\ (المعتصم) \\ 8th Abbasid
-  [fn::al-Mu'tasim — 8th Abbasid Caliph (833–842 CE). Brother of al-Ma'mun. Summoned Imam Taqi to Baghdad and reportedly had him poisoned; Imam Taqi died aged ~25 in 835 CE.]
-  + [[mamun]] :ancestry:
-  + [[taqi]] :killed-by:
-+ <<mutawakkil>> al-Mutawakkil \\ (المتوكل) \\ 10th Abbasid
-  [fn::al-Mutawakkil — 10th Abbasid Caliph (847–861 CE). Notorious for anti-Shia policies: demolished the Karbala shrine, forbade pilgrimage, and forcibly relocated Imam Hadi to the garrison city of Samarra under house arrest.]
-  + [[mutasim]] :ancestry:
-  + imprisoned :: [[hadi]] :imprisoned:
-+ <<mutamid>> al-Mu'tamid \\ (المعتمد) \\ 15th Abbasid
-  [fn::al-Mu'tamid — 15th Abbasid Caliph (870–892 CE). Kept Imam Askari under strict house arrest in Samarra; the Imam died under suspicious circumstances in 874 CE during his reign, triggering the Major Occultation of the 12th Imam.]
-  + [[mutawakkil]] :ancestry:
-  + [[askari]] :killed-by:
-#+end_cluster
++ Abbasid Caliphs (العباسيون) :container:
+  | style     | filled  |
+  | fillcolor | #f3e5f5 |
+  | color     | #6a0dad |
+  | fontcolor | #3d0066 |
+  #+node:
+  | fillcolor | #e1bee7 |
+  | color     | #6a0dad |
+  + <<almansur>> al-Mansur \\ (المنصور) \\ 2nd Abbasid
+    [fn::Abu Ja'far al-Mansur — 2nd Abbasid Caliph (754–775 CE). Founded Baghdad. Repeatedly summoned and interrogated Imam Sadiq; according to most Shia sources, had him poisoned in 765 CE.]
+    + [[sadiq]] :killed-by:
+  + <<harun>> Harun al-Rashid \\ (هارون الرشيد) \\ 5th Abbasid
+    [fn::Harun al-Rashid — 5th Abbasid Caliph (786–809 CE). Famous for the tales of 1001 Nights. Imprisoned Imam Kadhim repeatedly in Baghdad; the Imam died in prison in 799 CE, most likely by Harun's order.]
+    + [[almansur]] :ancestry:
+    + [[kadhim]] :killed-by:
+  + <<mamun>> al-Ma'mun \\ (المأمون) \\ 7th Abbasid
+    [fn::al-Ma'mun — 7th Abbasid Caliph (813–833 CE). Son of Harun. Appointed Imam Ridha as heir-apparent (a political manoeuvre to co-opt Shia support), then likely had him poisoned in 818 CE in Khurasan.]
+    + [[harun]] :ancestry:
+    + [[ridha]] :killed-by:
+  + <<mutasim>> al-Mu'tasim \\ (المعتصم) \\ 8th Abbasid
+    [fn::al-Mu'tasim — 8th Abbasid Caliph (833–842 CE). Brother of al-Ma'mun. Summoned Imam Taqi to Baghdad and reportedly had him poisoned; Imam Taqi died aged ~25 in 835 CE.]
+    + [[mamun]] :ancestry:
+    + [[taqi]] :killed-by:
+  + <<mutawakkil>> al-Mutawakkil \\ (المتوكل) \\ 10th Abbasid
+    [fn::al-Mutawakkil — 10th Abbasid Caliph (847–861 CE). Notorious for anti-Shia policies: demolished the Karbala shrine, forbade pilgrimage, and forcibly relocated Imam Hadi to the garrison city of Samarra under house arrest.]
+    + [[mutasim]] :ancestry:
+    + imprisoned :: [[hadi]] :imprisoned:
+  + <<mutamid>> al-Mu'tamid \\ (المعتمد) \\ 15th Abbasid
+    [fn::al-Mu'tamid — 15th Abbasid Caliph (870–892 CE). Kept Imam Askari under strict house arrest in Samarra; the Imam died under suspicious circumstances in 874 CE during his reign, triggering the Major Occultation of the 12th Imam.]
+    + [[mutawakkil]] :ancestry:
+    + [[askari]] :killed-by:
 
 # Hamza is Muhammad's paternal uncle — a son of Abd al-Muttalib, same as Abu Talib.
 # Green fill marks him as a hero; his martyrdom at Uhud is mourned alongside Hussain in Shia tradition.
@@ -2417,78 +2404,76 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 
 # The four key battles of the Prophet's life — each a turning point in the narrative arc from
 # persecuted minority in Mecca to unified force that transformed the Arabian peninsula.
-#+begin_cluster Battles of the Prophet
-| style     | filled  |
-| fillcolor | #f0f4ff |
-| color     | #334499 |
-| fontcolor | #1a2266 |
-#+node:
-| fillcolor | #dce8ff |
-| color     | #334499 |
-+ <<badr>> Battle of Badr \\ (غزوة بدر) \\ 624 CE
-  [fn::Battle of Badr — first major battle of Islam (17 Ramadan 2 AH / 624 CE). ~313 Muslims vs. ~1,000 Quraysh; decisive Muslim victory. Abu Jahl killed here. The Quran calls it 'the Day of Distinction' (يوم الفرقان). This victory established the Muslim community as a political and military force.]
-  + [[muhammad]] :ancestry:
-+ <<uhud>> Battle of Uhud \\ (غزوة أحد) \\ 625 CE
-  [fn::Battle of Uhud — Quraysh retaliation for Badr (7 Shawwal 3 AH / 625 CE). Initial Muslim advantage reversed when archers abandoned their post for plunder. Hamza martyred; Muhammad ﷺ wounded. Khalid ibn al-Walid's flanking maneuver decided the day. A Quranic lesson in discipline and the cost of disobedience.]
-  + [[muhammad]] :ancestry:
-+ <<khandaq>> Battle of Khandaq \\ (غزوة الخندق) \\ 627 CE
-  [fn::Battle of Khandaq ('the Trench', also Ahzab) — Quraysh-led coalition of ~10,000 besieged Medina (5 AH / 627 CE). Salman al-Farisi proposed the Persian tactic of digging a defensive trench. The siege collapsed after ~20 days; a turning point that ended Quraysh's ability to threaten Medina.]
-  + [[muhammad]] :ancestry:
-  + Salman's idea :: [[salman]] :ancestry:
-+ <<fath>> Conquest of Mecca \\ (فتح مكة) \\ 630 CE
-  [fn::Conquest of Mecca (فتح مكة) — 20 Ramadan 8 AH / January 630 CE. 10,000-strong Muslim force entered Mecca with near-zero bloodshed. Muhammad ﷺ granted general amnesty; Abu Sufyan converted at the last moment. The Kaaba was purified of idols. Khalid ibn al-Walid commanded the right flank.]
-  + [[muhammad]] :ancestry:
-  + surrendered :: [[abusufyan]] :ancestry:
-#+end_cluster
++ Battles of the Prophet :container:
+  | style     | filled  |
+  | fillcolor | #f0f4ff |
+  | color     | #334499 |
+  | fontcolor | #1a2266 |
+  #+node:
+  | fillcolor | #dce8ff |
+  | color     | #334499 |
+  + <<badr>> Battle of Badr \\ (غزوة بدر) \\ 624 CE
+    [fn::Battle of Badr — first major battle of Islam (17 Ramadan 2 AH / 624 CE). ~313 Muslims vs. ~1,000 Quraysh; decisive Muslim victory. Abu Jahl killed here. The Quran calls it 'the Day of Distinction' (يوم الفرقان). This victory established the Muslim community as a political and military force.]
+    + [[muhammad]] :ancestry:
+  + <<uhud>> Battle of Uhud \\ (غزوة أحد) \\ 625 CE
+    [fn::Battle of Uhud — Quraysh retaliation for Badr (7 Shawwal 3 AH / 625 CE). Initial Muslim advantage reversed when archers abandoned their post for plunder. Hamza martyred; Muhammad ﷺ wounded. Khalid ibn al-Walid's flanking maneuver decided the day. A Quranic lesson in discipline and the cost of disobedience.]
+    + [[muhammad]] :ancestry:
+  + <<khandaq>> Battle of Khandaq \\ (غزوة الخندق) \\ 627 CE
+    [fn::Battle of Khandaq ('the Trench', also Ahzab) — Quraysh-led coalition of ~10,000 besieged Medina (5 AH / 627 CE). Salman al-Farisi proposed the Persian tactic of digging a defensive trench. The siege collapsed after ~20 days; a turning point that ended Quraysh's ability to threaten Medina.]
+    + [[muhammad]] :ancestry:
+    + Salman's idea :: [[salman]] :ancestry:
+  + <<fath>> Conquest of Mecca \\ (فتح مكة) \\ 630 CE
+    [fn::Conquest of Mecca (فتح مكة) — 20 Ramadan 8 AH / January 630 CE. 10,000-strong Muslim force entered Mecca with near-zero bloodshed. Muhammad ﷺ granted general amnesty; Abu Sufyan converted at the last moment. The Kaaba was purified of idols. Khalid ibn al-Walid commanded the right flank.]
+    + [[muhammad]] :ancestry:
+    + surrendered :: [[abusufyan]] :ancestry:
 #+rank: badr uhud khandaq fath
 
-#+begin_cluster Antagonists
-| style     | filled  |
-| fillcolor | #ffeeee |
-| color     | #cc0000 |
-| fontcolor | #990000 |
-#+node:
-| fillcolor | #ff9999 |
-| color     | #cc0000 |
-| fontcolor | #660000 |
-+ <<abusufyan>> Abu Sufyan \\ (أبو سفيان)
-  [fn::Abu Sufyan ibn Harb — leader of the Quraysh and chief opponent of Muhammad ﷺ for two decades. Accepted Islam only at the conquest of Mecca (630 CE). Father of Muawiya; progenitor of the Umayyad dynasty.]
-+ <<muawiya>> Muawiya \\ (معاوية)
-  [fn::Muawiya ibn Abi Sufyan — 1st Umayyad Caliph (661–680 CE). Fought Ali at the Battle of Siffin; gained control through the arbitration. His decision to appoint his son Yazid as successor broke the principle of the Shura and set up the Karbala tragedy.]
-  + [[abusufyan]]
-+ <<yazid>> Yazid \\ (يزيد)
-  [fn::Yazid ibn Muawiya — 2nd Umayyad Caliph. His demand that Hussain pledge allegiance triggered the march to Karbala. His forces massacred Hussain and his companions on Ashura, 680 CE — an act condemned even by many Sunni scholars.]
-  + [[muawiya]]
-+ <<ziyad>> Ziyad ibn Abih \\ (زياد بن أبيه)
-  [fn::Ziyad ibn Abih ('son of his father' — his paternity disputed) — powerful governor under Muawiya; claimed as a half-brother by Muawiya's decree. Father of Ibn Ziyad; notorious for harsh governance of Iraq.]
-  + claimed half-brother :: [[muawiya]]
-    | :edge.style | dashed |
-+ <<ibnziyad>> Ibn Ziyad \\ (عبيد الله بن زياد) \\ Governor of Kufa
-  [fn::Ubayd Allah ibn Ziyad — Governor of Kufa at the time of Karbala; the logistical architect of the massacre. He sent Muslim ibn Aqil (Hussain's envoy) to execution, then dispatched the army that surrounded Karbala.]
-  | shape | diamond |
-  + [[ziyad]]
-  + [[yazid]] :ancestry:
-+ <<amribnsaad>> Amr ibn Sa'd \\ (عمر بن سعد) \\ Commander at Karbala
-  [fn::Amr ibn Sa'd ibn Abi Waqqas — field commander of the Umayyad army at Karbala; son of a revered companion. He wavered before obeying Ibn Ziyad's orders; his complicity haunted him. He was later killed by Mukhtar al-Thaqafi in revenge.]
-  | shape | diamond |
-  + [[ibnziyad]]
-+ <<shimr>> Shimr \\ (شمر) \\ Killed Hussain
-  [fn::Shimr ibn Dhi al-Jawshan — the man who delivered the killing blow to Hussain at Karbala, severing his head. Reviled across Islamic traditions; killed in revenge by Mukhtar al-Thaqafi shortly after.]
-  | shape | diamond |
-  + [[amribnsaad]]
-+ <<ibnmuljam>> Ibn Muljam \\ (ابن ملجم) \\ Assassin of Ali
-  [fn::Abd al-Rahman ibn Muljam al-Muradi — Kharijite assassin who struck Ali with a poisoned sword in the mosque of Kufa on 19 Ramadan 40 AH (661 CE). Ali died two days later. His act split the caliphate and deepened the Sunni-Shia divide permanently.]
-  | shape | diamond |
-  + [[ali]] :killed-by:
-+ <<abujahl>> Abu Jahl \\ (أبو جهل) \\ Pharaoh of the Nation
-  [fn::Abu Jahl ibn Hisham al-Makhzumi — chief persecutor of early Muslims in Mecca; Muhammad ﷺ called him 'the Pharaoh of this nation.' Led Quraysh forces at Badr; killed there (624 CE) — his death was a pivotal blow to Qurayshi leadership. Of the rival Makhzum clan, not the Umayyad line.]
-  + [[badr]] :killed-by:
-+ <<hind>> Hind bint Utbah \\ (هند بنت عتبة)
-  [fn::Hind bint Utbah — wife of Abu Sufyan; mother of Muawiya. Her father was killed at Badr, fuelling her hatred. At Uhud she hired Wahshi ibn Harb to kill Hamza (personal revenge), then mutilated his body and bit into his liver. Accepted Islam at the Conquest of Mecca. Her conversion, and Muawiya's parentage through her, are a recurrent irony in Shia historical memory.]
-  + wife :: [[abusufyan]] :ancestry:
-  + [[muawiya]] :motherhood:
-  + [[uhud]] :mention:
-#+end_cluster
++ Antagonists :container:
+  | style     | filled  |
+  | fillcolor | #ffeeee |
+  | color     | #cc0000 |
+  | fontcolor | #990000 |
+  #+node:
+  | fillcolor | #ff9999 |
+  | color     | #cc0000 |
+  | fontcolor | #660000 |
+  + <<abusufyan>> Abu Sufyan \\ (أبو سفيان)
+    [fn::Abu Sufyan ibn Harb — leader of the Quraysh and chief opponent of Muhammad ﷺ for two decades. Accepted Islam only at the conquest of Mecca (630 CE). Father of Muawiya; progenitor of the Umayyad dynasty.]
+  + <<muawiya>> Muawiya \\ (معاوية)
+    [fn::Muawiya ibn Abi Sufyan — 1st Umayyad Caliph (661–680 CE). Fought Ali at the Battle of Siffin; gained control through the arbitration. His decision to appoint his son Yazid as successor broke the principle of the Shura and set up the Karbala tragedy.]
+    + [[abusufyan]]
+  + <<yazid>> Yazid \\ (يزيد)
+    [fn::Yazid ibn Muawiya — 2nd Umayyad Caliph. His demand that Hussain pledge allegiance triggered the march to Karbala. His forces massacred Hussain and his companions on Ashura, 680 CE — an act condemned even by many Sunni scholars.]
+    + [[muawiya]]
+  + <<ziyad>> Ziyad ibn Abih \\ (زياد بن أبيه)
+    [fn::Ziyad ibn Abih ('son of his father' — his paternity disputed) — powerful governor under Muawiya; claimed as a half-brother by Muawiya's decree. Father of Ibn Ziyad; notorious for harsh governance of Iraq.]
+    + claimed half-brother :: [[muawiya]]
+      | :edge.style | dashed |
+  + <<ibnziyad>> Ibn Ziyad \\ (عبيد الله بن زياد) \\ Governor of Kufa
+    [fn::Ubayd Allah ibn Ziyad — Governor of Kufa at the time of Karbala; the logistical architect of the massacre. He sent Muslim ibn Aqil (Hussain's envoy) to execution, then dispatched the army that surrounded Karbala.]
+    | shape | diamond |
+    + [[ziyad]]
+    + [[yazid]] :ancestry:
+  + <<amribnsaad>> Amr ibn Sa'd \\ (عمر بن سعد) \\ Commander at Karbala
+    [fn::Amr ibn Sa'd ibn Abi Waqqas — field commander of the Umayyad army at Karbala; son of a revered companion. He wavered before obeying Ibn Ziyad's orders; his complicity haunted him. He was later killed by Mukhtar al-Thaqafi in revenge.]
+    | shape | diamond |
+    + [[ibnziyad]]
+  + <<shimr>> Shimr \\ (شمر) \\ Killed Hussain
+    [fn::Shimr ibn Dhi al-Jawshan — the man who delivered the killing blow to Hussain at Karbala, severing his head. Reviled across Islamic traditions; killed in revenge by Mukhtar al-Thaqafi shortly after.]
+    | shape | diamond |
+    + [[amribnsaad]]
+  + <<ibnmuljam>> Ibn Muljam \\ (ابن ملجم) \\ Assassin of Ali
+    [fn::Abd al-Rahman ibn Muljam al-Muradi — Kharijite assassin who struck Ali with a poisoned sword in the mosque of Kufa on 19 Ramadan 40 AH (661 CE). Ali died two days later. His act split the caliphate and deepened the Sunni-Shia divide permanently.]
+    | shape | diamond |
+    + [[ali]] :killed-by:
+  + <<abujahl>> Abu Jahl \\ (أبو جهل) \\ Pharaoh of the Nation
+    [fn::Abu Jahl ibn Hisham al-Makhzumi — chief persecutor of early Muslims in Mecca; Muhammad ﷺ called him 'the Pharaoh of this nation.' Led Quraysh forces at Badr; killed there (624 CE) — his death was a pivotal blow to Qurayshi leadership. Of the rival Makhzum clan, not the Umayyad line.]
+    + [[badr]] :killed-by:
+  + <<hind>> Hind bint Utbah \\ (هند بنت عتبة)
+    [fn::Hind bint Utbah — wife of Abu Sufyan; mother of Muawiya. Her father was killed at Badr, fuelling her hatred. At Uhud she hired Wahshi ibn Harb to kill Hamza (personal revenge), then mutilated his body and bit into his liver. Accepted Islam at the Conquest of Mecca. Her conversion, and Muawiya's parentage through her, are a recurrent irony in Shia historical memory.]
+    + wife :: [[abusufyan]] :ancestry:
+    + [[muawiya]] :motherhood:
+    + [[uhud]] :mention:
 #+rank: muawiya ali
 
 # Mukhtar al-Thaqafi is the avenger of Karbala — the man who hunted down and killed the architects
@@ -2506,23 +2491,22 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
     | :edge.style     | bold |
     | :edge.arrowhead | dot  |
 
-#+begin_cluster Legend — Edge Types
-| style     | filled  |
-| fillcolor | #f5f5dc |
-| color     | #555555 |
-| fontsize  | 11      |
-#+node:
-| shape     | plaintext |
-| style     | filled    |
-| fillcolor | #f5f5dc   |
-+ <<leg-marriage>> Pink bidirectional arrow = Marriage
-+ <<leg-mother>> Green arrow = Motherhood
-+ <<leg-killed>> Red bold dot-arrow = Killed by / ordered
-+ <<leg-ancestry>> Dashed grey = Ancestry / descent
-+ <<leg-parent>> Brown solid = Direct parentage
-+ <<leg-mention>> Purple dashed = Historical mention
-+ <<leg-imprisoned>> Orange dashed = Imprisoned / politically oppressed
-#+end_cluster
++ Legend — Edge Types :container:
+  | style     | filled  |
+  | fillcolor | #f5f5dc |
+  | color     | #555555 |
+  | fontsize  | 11      |
+  #+node:
+  | shape     | plaintext |
+  | style     | filled    |
+  | fillcolor | #f5f5dc   |
+  + <<leg-marriage>> Pink bidirectional arrow = Marriage
+  + <<leg-mother>> Green arrow = Motherhood
+  + <<leg-killed>> Red bold dot-arrow = Killed by / ordered
+  + <<leg-ancestry>> Dashed grey = Ancestry / descent
+  + <<leg-parent>> Brown solid = Direct parentage
+  + <<leg-mention>> Purple dashed = Historical mention
+  + <<leg-imprisoned>> Orange dashed = Imprisoned / politically oppressed
 # Rank hints to reduce cross-cluster edge chaos
 #+rank: abdmalik almansur
 #+rank: hisham harun

@@ -95,11 +95,8 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
 ;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :ranks :attr-rows :record :notes :items :kind)
 ;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND :line LINE)
 ;; An item's TEXT is its raw first paragraph, bullet aside; its SCOPE, its directives and tables; its ITEMS, its
-;; sub-items and #+begin_cluster blocks; its KIND, its sub-list's type: `ordered', `unordered', or `descriptive';
+;; sub-items; its KIND, its sub-list's type: `ordered', `unordered', or `descriptive';
 ;; and its LINE, where it starts in the body, so a click on its node in the rendered image leads back to it.
-
-(defvar org--graph-anonymous-clusters 0
-  "How many untitled #+begin_cluster blocks the graph being read has had so far; each is named by its count.")
 
 (defvar org--graph-strict nil
   "Non-nil while a Graphviz graph is read: then Org syntax that means nothing in a graph, such as a headline or a
@@ -209,7 +206,6 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
         ('special-block
          (setq owner nil)
          (pcase (downcase (org-element-property :type el))
-           ((pred (string-match-p "\\`cluster\\(?:-[0-9]+\\)?\\'")) (push (org--graph-read-cluster el templates) items))
            ("note" (push (org--graph-read-note el) notes))
            (type (org--graph-stray el (format "#+begin_%s" type)))))
         ;; Prose past an item's first paragraph ---its text--- is a note, as a #+begin_note block's body is.
@@ -258,49 +254,6 @@ included.  #+name: tables within it go to TEMPLATES."
           :text (-some--> (org-element-property :contents-begin block)
                   (buffer-substring-no-properties it (org-element-property :contents-end block))))))
 
-(defun org--graph-read-cluster (block templates)
-  "A #+begin_cluster BLOCK ↦ the ITEM it abbreviates: one styled | shape | cluster |, whose sub-items are the block's.
-
-  #+begin_cluster Packages :bgcolor grey :node.shape box      + Packages
-  + Org                                                  ≈     | shape   | cluster |
-  #+end_cluster                                                | bgcolor | grey    |
-                                                               #+node:
-                                                               | shape | box |
-                                                               + Org
-
-The header reads as the #+begin_graph one does: a title, then :KEY graph attributes, :node.KEY and :edge.KEY defaults;
-a table opening the block styles the box, as an item's table styles its node.  An untitled cluster is an anonymous box:
-it has no label, and no name to draw arcs to.  #+name: tables within it go to TEMPLATES."
-  (-let* (;; The title runs up to the first whitespace-then-colon; `Time 12:30' stays whole.
-          ((_ title kwds) (s-match "\\`\\(.*?\\)\\(?:\\(?:\\`\\|[ \t]+\\)\\(:.*\\)\\)?\\'"
-                                   (s-trim (or (org-element-property :parameters block) ""))))
-          ((&plist :graph-rows graph :node-rows node :edge-rows edge) (org--graph-header-rows (org--read-header kwds)))
-          (scope (org--graph-read-scope (org-element-contents block) templates)))
-    (when (s-blank-str-p title)
-      (setq title (format "anonymous %d" (cl-incf org--graph-anonymous-clusters))
-            graph (cons '("label" "\"\"") graph)))
-    (list :text title
-          :pre (org-combine-plists scope (list :attr-rows (append '(("shape" "cluster")) graph
-                                                                  (plist-get scope :attr-rows))
-                                               :node-rows (append node (plist-get scope :node-rows))
-                                               :edge-rows (append edge (plist-get scope :edge-rows))))
-          :children (plist-get scope :items) :kind (plist-get scope :kind)
-          :line (line-number-at-pos (org-element-property :begin block)))))
-
-(defun org--graph-number-clusters (raw)
-  "RAW with each #+begin_cluster … #+end_cluster pair nested at depth d > 1 renamed cluster-d; since Org pairs a block
-with the first end of its name, only then do nested clusters parse as nested blocks.
-  \"#+begin_cluster A\\n#+begin_cluster B\\n#+end_cluster\\n#+end_cluster\"
-    ↦  \"#+begin_cluster A\\n#+begin_cluster-2 B\\n#+end_cluster-2\\n#+end_cluster\""
-  (let ((depth 0) (case-fold-search t))
-    (s-join "\n" (--map (cond ((string-match "\\`[ \t]*#\\+begin_cluster\\_>" it)
-                               (if (> (cl-incf depth) 1) (replace-match (format "\\&-%d" depth) t nil it) it))
-                              ((string-match "\\`[ \t]*#\\+end_cluster\\_>" it)
-                               (prog1 (if (> depth 1) (replace-match (format "\\&-%d" depth) t nil it) it)
-                                 (setq depth (max 0 (1- depth)))))
-                              (t it))
-                        (s-lines raw)))))
-
 (defun org--graph-read (raw)
   "A graph's RAW body ↦ its top-level SCOPE, plus :name-tables, its #+name: templates wherever they sit, and :radio,
 its <<<radio targets>>> as `org--graph-radio' holds them.
@@ -308,15 +261,9 @@ its <<<radio targets>>> as `org--graph-radio' holds them.
 Org parses RAW in a buffer of its own, so the elements' positions are those of RAW."
   (with-temp-buffer
     (delay-mode-hooks (org-mode))
-    (insert (org--graph-unaffiliate-names (org--graph-number-clusters raw)))
+    (insert (org--graph-unaffiliate-names raw))
     (let ((tree (org-element-parse-buffer))
-          (templates (make-hash-table :test #'equal))
-          (org--graph-anonymous-clusters 0))
-      ;; Org reads an unclosed block as mere text.
-      (org-element-map tree 'paragraph
-        (lambda (p) (let ((text (buffer-substring (org-element-property :begin p) (org-element-property :end p))))
-                      (when (string-match "^[ \t]*#\\+begin_cluster\\(?:-[0-9]+\\)?\\_>[ \t]*\\(.*\\)" text)
-                        (user-error "graph: `#+begin_cluster %s' has no #+end_cluster" (match-string 1 text))))))
+          (templates (make-hash-table :test #'equal)))
       (org-update-radio-target-regexp)
       (append (list :name-tables templates
                     :radio (when org-target-link-regexp

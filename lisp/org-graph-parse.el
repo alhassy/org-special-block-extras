@@ -113,10 +113,10 @@ from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey
   wrap                                       ; the width labels fill to, from `#+begin_graph :wrap N'; else nil
   inline                                     ; non-nil under `:notes inline': notes show in labels, not tooltips
   compound                                   ; non-nil once an arc is clipped at a cluster
-  (tag-clusters (make-hash-table :test #'equal))) ; cluster title ↦ the ids its :cluster_TITLE: tag gathers, last first
+  (tag-clusters (make-hash-table :test #'equal))) ; container title ↦ the ids its :container_TITLE: tag gathers, last first
 
 (defvar org--graph-legend nil
-  "Non-nil while reading the items of a cluster titled Legend, wherein `- MEANING :T:' is a legend entry, not a node.")
+  "Non-nil while reading the items of a container titled Legend, wherein `- MEANING :T:' is a legend entry, not a node.")
 
 (defvar org--graph-random-templates nil
   "While a graph reads `:unknown-tags random-templates', how many templates it has made up so far; else nil.")
@@ -577,11 +577,11 @@ its id made of its line, so `+ :container:' is an untitled box."
         (plist-get text :target)
         (org--graph-unquote (plist-get text :name)))))
 
-(defun org--graph-cluster-tag (tag)
-  "Returns the cluster title TAG names, when it is :cluster_TITLE:, its underscores spaces; else nil.
-  \"cluster_Holy_Land\"  ⇒  \"Holy Land\";  \"Cluster_Islam\"  ⇒  \"Islam\";  \"prophet\"  ⇒  nil"
+(defun org--graph-container-tag (tag)
+  "Returns the container title TAG names, when it is :container_TITLE:, its underscores spaces; else nil.
+  \"container_Holy_Land\"  ⇒  \"Holy Land\";  \"Container_Islam\"  ⇒  \"Islam\";  \"prophet\"  ⇒  nil"
   (let ((case-fold-search t))
-    (and (string-match "\\`cluster_\\(.+\\)\\'" tag) (s-replace "_" " " (match-string 1 tag)))))
+    (and (string-match "\\`container_\\(.+\\)\\'" tag) (s-replace "_" " " (match-string 1 tag)))))
 
 (defun org--graph-tint (colour)
   "Returns COLOUR, a #RRGGBB, blended three parts in four with white, so text stays legible atop it; else COLOUR."
@@ -612,11 +612,11 @@ several of one colour, or a node's own fillcolor or style, needs none; the earli
 (defun org--graph-item-table (text pre name-tables)
   "An item's parsed TEXT and PREAMBLE ↦ its `org--graph-item-rows', its tags inheriting their #+name: templates.
 A tag applies a template to whatever its line describes: after an item, its node; after a reference, or in a
-description term, its arc.  Explicit rows still win.  A :cluster_TITLE: tag is no template, but a cluster to join;
-see `org--graph-cluster-tag'.  Several tags of several colours show them all; see `org--graph-several-colours'."
+description term, its arc.  Explicit rows still win.  A :container_TITLE: tag is no template, but a box to join;
+see `org--graph-container-tag'.  Several tags of several colours show them all; see `org--graph-several-colours'."
   (let* ((arc-tags (org--graph-arc-tags text))
          (node-tags (unless (plist-get text :reference)
-                      (append (-remove #'org--graph-cluster-tag (plist-get text :tags))
+                      (append (-remove #'org--graph-container-tag (plist-get text :tags))
                               (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it))))))
          (explicit (plist-get pre :attr-rows)))
     (org--graph-item-rows (append (when node-tags (list (list ":inherit" (s-join " " node-tags))))
@@ -763,7 +763,7 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (id       (or (plist-get rows :id) (plist-get text :target) name))
           (reference (plist-get text :reference))
           (_        (unless reference
-                      (dolist (title (-keep #'org--graph-cluster-tag (plist-get text :tags)))
+                      (dolist (title (-keep #'org--graph-container-tag (plist-get text :tags)))
                         (push id (gethash title (org--graph-ctx-tag-clusters ctx))))))
           ((node-notes . arc-notes) (org--graph-item-notes pre reference))
           (wrap     (org--graph-ctx-wrap ctx))
@@ -784,7 +784,7 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (targeted (plist-get rows :targeted))
           (to-arc   (lambda (target attrs)
                       (list :edge id target (org--graph-override attrs (alist-get target targeted nil nil #'equal)))))
-          ;; A legend entry: a top-level `- :T: :: MEANING', Org's glossary; or, in a cluster titled Legend, `- MEANING :T:'.
+          ;; A legend entry: a top-level `- :T: :: MEANING', Org's glossary; or, in a container titled Legend, `- MEANING :T:'.
           (legend-tags (cond ((and (not parent) (plist-get text :arc-tags)))
                              ((and org--graph-legend (not parent) (not reference) (not (plist-get text :arc-label)))
                               (plist-get text :tags))))
@@ -819,7 +819,7 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
       (user-error "graph: a note on `%s' describes the arc from a parent, but there is none" id))
     (when (and (not parent) (plist-get text :arc-label))
       (user-error "graph: a `TERM ::' describes the arc from a parent, but `%s' has none; for a legend entry, the TERM is \
-just tags: `- :T: :: %s', or, in a cluster titled Legend, `- %s :T:'" id id id))
+just tags: `- :T: :: %s', or, in a container titled Legend, `- %s :T:'" id id id))
     ;; A legend entry's tags style its sample, not the graph's arcs.
     (unless legend?
       (org--graph-note-arc-templates ctx (append (org--graph-arc-tags text) (-mapcat #'cadddr (cdr table)))
@@ -832,7 +832,7 @@ just tags: `- :T: :: %s', or, in a cluster titled Legend, `- %s :T:'" id id id))
     (when (and (plist-get text :reference) (or attrs (plist-get rows :id)))
       (user-error "graph: `[[%s]]' refers to a node declared elsewhere; give it node attributes there, not here" id))
     (cond
-     ;; `- :married: :: marriage', with no parent to arc from, is a legend entry; so is a Legend cluster's `- marriage :married:'.
+     ;; `- :married: :: marriage', with no parent to arc from, is a legend entry; so is a Legend container's `- marriage :married:'.
      (legend?
       (list (list :legend (format "legend_%d" (cl-incf (org--graph-ctx-legends ctx)))
                   (org--graph-template-rows legend-tags tables)

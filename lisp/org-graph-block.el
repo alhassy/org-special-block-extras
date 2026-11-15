@@ -65,9 +65,9 @@
 ;;   + combinatory
 ;;     1. S                         ; ordered children: one rank, in the order written
 ;;     2. K
-;;   #+begin_cluster Tools :bgcolor grey  ; a box around its items; titled, with attributes, as #+begin_graph is
-;;   + emacs
-;;   #+end_cluster
+;;   + Tools :container:            ; a box around its children, which are its members rather than arcs' targets
+;;     | bgcolor | grey |           ; the box's own attributes
+;;     + emacs
 ;;   #+end_graph
 ;;
 ;; Pressing C-c C-c anywhere inside the block renders a PNG immediately; hovering over a node shows its tooltip,
@@ -151,7 +151,7 @@ appends a structured debug footer."
 
 (defun org--graph-expand-macros (raw)
   "RAW with each {{{NAME(ARGS)}}} ↦ its expansion by this buffer's #+macro: lines; e.g. {{{gold}}} ↦ \"#f9e2af\".
-Textually, so that #+begin_cluster lines, which Org parses no objects in, expand too."
+Textually, so that they expand in table cells and #+name: lines too."
   (if (not (s-contains-p "{{{" raw))
       raw
     (require 'org-macro)
@@ -274,7 +274,7 @@ back to PNG.  On a checkbox, it first toggles it, as Org's C-c C-c would.
 Returns t (claiming C-c C-c)."
   (when (org-at-item-checkbox-p) (org-toggle-checkbox))
   (save-excursion
-    ;; The graph around point ---past any #+begin_cluster within it--- not merely the nearest #+begin_graph above it.
+    ;; The graph around point ---past any #+begin_note within it--- not merely the nearest #+begin_graph above it.
     (-some--> (org-graph--block-at-point) (org-element-property :post-affiliated it) (goto-char it))
     (let* ((origin     (org-graph--body-origin))
            (block      (org-special-block-after-point "graph"))
@@ -330,10 +330,6 @@ Returns t (claiming C-c C-c)."
 (org-def-action graph ()
   "Render the graph at point, or show its dot source; see `org-graph--cc-handler'."
   (org-graph--cc-handler))
-
-(org-def-action cluster ()
-  "Within a graph's #+begin_cluster, render the graph; elsewhere, a cluster block is none of ours."
-  (and (org-graph--block-at-point) (org-graph--cc-handler)))
 
 (org-def-action note ()
   "Within a graph, a #+begin_note is a tooltip, so render the graph; elsewhere, a note keeps its :C-c_C-c switch."
@@ -440,7 +436,6 @@ Within the block body:
   #+edge:  table  ↦ default edge[ ] attributes
   #+rank:  n1 n2  ↦ { rank=same; n1; n2 } for nodes without a common parent; ids may be [[links]]
   Under an item, #+graph:, #+node:, #+edge:, and #+rank: reach its whole subtree, as Org's inherited properties do.
-  #+begin_cluster TITLE :KEY V … #+end_cluster  ↦ subgraph cluster_TITLE { … }; nests, and may sit in an item
   :NAME: … :END:  ↦ a drawer of any name, folding such directives away
   - :T: :: MEANING  ↦ at the top, a legend entry: a sample of template T, captioned MEANING
 
@@ -470,7 +465,8 @@ A two-column inline table on a list item supplies node attributes.
   A child item that is a lone [[T]] link is a reference to T: an arc to it, styled by the child's :edge.KEY rows.
   | :children-rank | same | ↦ constrain immediate children to the same rank;
                             also accepts min, max, source, sink.
-  | shape | cluster |      ↦ make this node an inline subgraph cluster_ID { … }.
+  | shape | cluster |      ↦ make this node an inline subgraph cluster_ID { … }, its children its members; as does the
+                            :container: tag; a :container_TITLE: tag puts a node in the box TITLE.
   #+record: table       ↦ the node's <TABLE> label, as laid out: a cell's <<p>> is port p, its [[T]] an arc from there;
                             ^ or an empty cell spans, a <l>/<c>/<r> row aligns, and hlines rule.
 

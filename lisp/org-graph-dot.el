@@ -174,9 +174,9 @@ An entry sampling an arc template ends at its sample's far point, legend_N_end; 
     (nreverse chain)))
 
 (defun org--graph-tag-clusters->dot (ctx)
-  "Returns a subgraph per cluster that :cluster_TITLE: tags gather in CTX, naming its nodes; one of the same title
-that a #+begin_cluster declares is the same subgraph, which Graphviz merges, so the tagged nodes join it.
-  + Jesus :cluster_Christianity:  ⇒  subgraph cluster_Christianity { label=Christianity; Jesus; }"
+  "Returns a subgraph per box that :container_TITLE: tags gather in CTX, naming its nodes; one of the same title
+that a `+ TITLE :container:' item declares is the same subgraph, which Graphviz merges, so the tagged nodes join it.
+  + Jesus :container_Christianity:  ⇒  subgraph cluster_Christianity { label=Christianity; Jesus; }"
   (let (subgraphs)
     (maphash (lambda (title ids)
                (push (format "subgraph %s {\n    label=%s;\n    %s\n  }" (org--graph-cluster-id title)
