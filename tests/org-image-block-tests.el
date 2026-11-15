@@ -83,3 +83,38 @@
     (should (--some (overlay-get it 'org-image-preview) (overlays-in (point-min) (point-max))))
     (should (org--block-cc-dispatcher))
     (should-not (--some (overlay-get it 'org-image-preview) (overlays-in (point-min) (point-max))))))
+
+;;; The preamble, compiler, :css, and :width reach the renderers
+
+(deftest "a latex image is rendered with `org-image-block-latex-preamble', then the document's #+latex_header: lines, by its #+latex_compiler:" [image]
+  (let (program tex)
+    (cl-letf (((symbol-function 'org--image-run)
+               (lambda (prog &rest args)
+                 (setq program prog
+                       tex (with-temp-buffer (insert-file-contents (expand-file-name (car (last args)))) (buffer-string)))
+                 (write-region "" nil (expand-file-name "image.pdf")))))
+      (with-temp-buffer
+        (insert "#+latex_compiler: xelatex\n#+latex_header: \\newcommand{\\Ring}{\\mathcal{R}}\n")
+        (org-mode)
+        (let ((pdf (make-temp-file "osbe-image-" nil ".pdf")))
+          (org--image-latex-pdf "$\\Ring$" nil pdf)
+          (delete-file pdf))))
+    (should (equal program "xelatex"))
+    (should (string-match-p "\\`\\\\documentclass\\[border=2pt,varwidth\\]{standalone}\n\\\\usepackage{amsmath,amssymb}\n\\\\usepackage{tikz}\n\\\\newcommand{\\\\Ring}{\\\\mathcal{R}}\n\\\\begin{document}\n\\$\\\\Ring\\$" tex))))
+
+(deftest "an html image is rendered with its :css, and :width, atop a transparent page sans margins" [image]
+  (let (html)
+    (cl-letf (((symbol-function 'org--image-run)
+               (lambda (_prog &rest args)
+                 (-when-let (page (--first (string-prefix-p "file://" it) args))
+                   (setq html (with-temp-buffer (insert-file-contents (string-remove-prefix "file://" page)) (buffer-string))))))
+              (org-image-block-browser "chrome"))
+      (org--image-html-pdf "<b>Hi</b>" '(:css "b { color: red }" :width "600px") (make-temp-file "osbe-image-" nil ".pdf")))
+    (should (string-match-p "@page { margin: 0 }" html))
+    (should (string-match-p "body { display: inline-block; padding: 4px; width: 600px }b { color: red }</style>" html))
+    (should (string-match-p "<body>\n<b>Hi</b>\n</body>" html))))
+
+(deftest "a latex image's hash covers the document's #+latex_header: lines, so a new header renders it afresh" [image]
+  (let ((plain (with-temp-buffer (org-mode) (org--image-hash 'latex "x" nil)))
+        (headed (with-temp-buffer (insert "#+latex_header: \\usepackage{xcolor}\n") (org-mode) (org--image-hash 'latex "x" nil))))
+    (should-not (equal plain headed))))
