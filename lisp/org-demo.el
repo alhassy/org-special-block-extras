@@ -320,7 +320,8 @@ A primitive, written in C, has none for us; nor does a symbol that is defined no
 
 (defun org-demo--show (backend source rendering symbols)
   "↦ Org showing SOURCE, then its BACKEND RENDERING, then the definition of each of SYMBOLS, folded away.
-In HTML, ﴾What You Write﴿ and ﴾What You Get﴿ are coloured panels; in Markdown, bold labels; else, boxes."
+In HTML, ﴾What You Write﴿ and ﴾What You Get﴿ are coloured panels, side by side when the source is thin enough to leave
+the rendering 20em, else one above the other; in Markdown, bold labels; else, boxes."
   (let ((definitions (-non-nil (mapcar #'org-demo--definition symbols))))
     (cond
      ((org-export-markdown-p)
@@ -328,16 +329,20 @@ In HTML, ﴾What You Write﴿ and ﴾What You Get﴿ are coloured panels; in Mar
               (org-escape-code-in-string source) (org-escape-code-in-string rendering)))
      ((eq backend 'html)
       (let ((title (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
-            (panel (lambda (colour body)
-                     (format "<div style=\"padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>"
-                             (org-subtle-colors colour) body))))
+            ;; A flex row that wraps: the source is as wide as its longest line; the rendering, at least 20em, takes
+            ;; the rest, its huge grow factor leaving the source no more than it needs; else it wraps beneath.
+            (panel (lambda (colour flex body)
+                     (format "<div style=\"flex: %s; min-width: 0; overflow-x: auto; \
+padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>"
+                             flex (org-subtle-colors colour) body))))
         (format "#+begin_export html\n%s\n#+end_export"
                 (org-escape-code-in-string
                  (concat
-                  "<div>"
-                  (funcall panel "lime" (format "%s <pre class=\"src src-org\">%s</pre>" (funcall title "What You Write")
-                                                (org-html-encode-plain-text source)))
-                  (funcall panel "peach" (format "%s %s" (funcall title "What You Get") rendering))
+                  "<div style=\"display: flex; flex-wrap: wrap; gap: 1em; align-items: flex-start;\">"
+                  (funcall panel "lime" "1 1 auto" (format "%s <pre class=\"src src-org\">%s</pre>"
+                                                           (funcall title "What You Write")
+                                                           (org-html-encode-plain-text source)))
+                  (funcall panel "peach" "999 1 20em" (format "%s %s" (funcall title "What You Get") rendering))
                   "</div>"
                   (when definitions
                     (format "<br> <details style=\"background-color: %s\"><summary style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0; cursor: pointer;\">﴾How It’s Implemented﴿</summary> %s </details>"

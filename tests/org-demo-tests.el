@@ -111,7 +111,7 @@ Hi
 #+begin_box :demo t :let (WHO \"Jasim\") :folded \"Peek\"
 Hi WHO
 #+end_box")))
-    (should (string-match-p "<summary>.*Peek.*</summary>\n<div><div[^>]*> <h6[^>]*> ﴾What You Write﴿ </h6> <pre class=\"src src-org\">#\\+begin_box\nHi Jasim\n" html))))
+    (should (string-match-p "<summary>.*Peek.*</summary>\n<div[^>]*><div[^>]*> <h6[^>]*> ﴾What You Write﴿ </h6> <pre class=\"src src-org\">#\\+begin_box\nHi Jasim\n" html))))
 
 (deftest "an inner demo's snapshot is not part of its outer's source, nor shown in it" [demo]
   (let ((html (org-export-string (org-demo-tests--snapshotted "
