@@ -6530,16 +6530,28 @@ Two.
   #+end_example
   This needs no setup beyond =org-special-block-extras-mode=, and works for our own blocks too.
 
-  A multi-line display, such as eldoc-box, shows more beneath that line: the keys that act on the
-  block ---e.g., a math block's =C-c C-c= preview and =C-c '= edit--- and two buttons: /Docs/,
-  for the full story, =C-h o org-block/NAME=; and /See the manual/, for the section of this
-  manual that documents it. Our own blocks declare these as =org-defblock= options:
+  A multi-line display, such as eldoc-box, shows more beneath that line: a representative example
+  of the block, fontified as Org, its =#= comments explaining each feature ---enough for the common
+  uses, sans the manual---; the keys that act on the block ---e.g., a math block's =C-c C-c= preview
+  and =C-c '= edit---; the switches every block understands, =:when=, =:folded=, =:let=, and the
+  rest; and two buttons: /Docs/, for the full story, =C-h o org-block/NAME=; and /See the manual/,
+  for the section of this manual that documents it. Our own blocks declare these as =org-defblock=
+  options:
   #+begin_example
 (org-defblock shy (:hover "Prose that eldoc shows beneath the docstring's first line."
                    :manual "https://example.com/shy") ; or "#ANCHOR", a section of this manual
   "Be shy."
   contents)
+
+;; A long option reads best set apart, after the definition.
+(org-defblock-attribute shy :example "
+# Shy text is still Org: *bold* stays bold.
+#+begin_shy
+Hush, *now*.
+#+end_shy")
   #+end_example
+  Since =org-defblock-attribute= sets any option, after the fact, it serves us for blocks we did not
+  write too; e.g., =(org-defblock-attribute graph :manual "https://example.com/my-notes")=.
   An =org-deflink= takes =:hover= and =:manual= too.
 
   Likewise, completing on a =#+begin_= line ---=M-TAB=, or any completion popup--- offers every

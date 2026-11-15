@@ -100,5 +100,16 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                                 concat (format "@@html:</div>%s@@%s" column chunk))
                                        "</div>")))))))
 
+(org-defblock-attribute parallel :example "
+# Two columns, by default; :bar rules them apart, in a colour; #+columnbreak: ends a column.
+#+begin_parallel 2 :bar green
+*Lisp:* code is data.
+
+#+columnbreak:
+*Haskell:* types are propositions.
+#+end_parallel
+
+# Widths, rather than a count, fix each column's width: #+begin_parallel 30% 70%.")
+
 (provide 'org-parallel-block)
 ;;; org-parallel-block.el ends here

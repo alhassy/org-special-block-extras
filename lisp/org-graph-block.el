@@ -528,6 +528,38 @@ Example:
        (org-parse (if smart (format "#+begin_src latex\n%s\n#+end_src" dot)
                     (format "#+begin_src dot :file %s\n%s\n#+end_src" outfile dot)))))))
 
+(org-defblock-attribute graph :hover (concat
+  "No need for Graphviz's manual: in a table, C-M-i completes each attribute it may set, beside what it does,\n"
+  "then its value; C-u RET on a row asks for a new row, by completing-read ---a colour, by a picker.  On the\n"
+  "#+begin_graph line, C-M-i completes :KEYs alike; and eldoc explains the key at point."))
+
+(org-defblock-attribute graph :example "
+#+begin_graph How Org exports :rankdir LR
+# A #+node: table sets every node's defaults; #+edge:, every arc's; #+graph:, the graph's.
+#+node:
+| shape | box |
+
+# Each item is a node; nesting draws an arc, parent → child.
++ <<buffer>> Org buffer
+  # “LABEL ::” labels the arc into the child.
+  + parsed into :: Syntax tree
+    # A table beneath an item styles its node; :edge.KEY, the arc into it.
+    | style       | filled    |
+    | fillcolor   | lightblue |
+    | :edge.color | blue      |
+    # Ordered children share a rank, in the order written; a :T: tag splices template T.
+    1. HTML :output:
+    2. LaTeX[fn::A footnote is the node's tooltip, in HTML.] :output:
+# <<target>> names a node; a child that is a lone [[target]] is an arc to it.
++ Babel
+  + inserts results into :: [[buffer]]
+    | :edge.style | dotted |
+
+# A #+name: table is a template, which :T: tags splice.
+#+name: output
+| shape | note |
+#+end_graph")
+
 ;; A graph's body is its own syntax ---its #+begin_note blocks are tooltips, not callouts--- so export rewrites it
 ;; first.
 (setq org--supported-blocks (cons 'graph (delq 'graph org--supported-blocks)))

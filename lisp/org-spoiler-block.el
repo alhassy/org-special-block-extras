@@ -62,5 +62,13 @@ blanks with the answers folded away beneath them."
                     (format "@@html:<span class=\"%s\"> \\1 </span>@@" class)
                     contents))))))
 
+(org-defblock-attribute spoiler :example "
+# In HTML, ((text)) is hidden until hovered; in LaTeX, a blank, its answer in a footnote.
+#+begin_spoiler
+The capital of Canada is ((Ottawa)); of Australia, ((Canberra)).
+#+end_spoiler
+
+# :left and :right change the delimiters, :left \"[[\" :right \"]]\"; COLOR is the hiding colour.")
+
 (provide 'org-spoiler-block)
 ;;; org-spoiler-block.el ends here

@@ -54,6 +54,12 @@ In HTML, we show folded, details, regions with a nice greenish colour."
                                    "</details>")
                            background-color title-color (org-inline title) contents))))
 
+(org-defblock-attribute details :example "
+# In HTML, the contents stay folded beneath TITLE until a click; in LaTeX, a centred box.
+#+begin_details Why does this terminate? :title-color purple
+Each step shrinks the list, and no list is shorter than the empty one.
+#+end_details")
+
 ;;;;;; Toggle all details blocks
 
 (org-deflink toggle-details (_label &optional (description "Unfold all details") backend)

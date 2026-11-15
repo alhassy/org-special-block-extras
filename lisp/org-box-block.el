@@ -101,6 +101,17 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
                                              (org--box-shadow shadow)))
                            (org-inline title) contents))))
 
+(org-defblock-attribute box :example "
+# TITLE is optional; :background-color tints the box.
+#+begin_box Lemma :background-color pink
+Any Org goes in a box: *markup*, lists, src blocks.
+#+end_box
+
+# :shadow is another look: a centred box, its shadows coloured; an “inset” one falls within.
+#+begin_box Mind the invariant :shadow (cyan \"inset pink\")
+It holds before and after every iteration.
+#+end_box")
+
 ;;;;;;; org-subtle-colors
 (defun org-subtle-colors (c)
   "HTML codes for common colours.

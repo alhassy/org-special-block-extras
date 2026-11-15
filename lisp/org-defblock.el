@@ -378,6 +378,12 @@ KWDS may also carry options, which are not arguments:
   first line; e.g., a tip too long for that line.  See `org--special-block-eldoc'.
 + `:manual URL' is where the block is documented, which eldoc offers as “See the manual”; a URL of #ANCHOR is
   that section of `org-special-block-extras-manual'; e.g., :manual \"#math\".
++ `:example STRING' is Org text that eldoc shows, fontified as Org shows it, beneath the `:hover' prose: a
+  representative use of the block, its #-comments explaining each feature.  A long one reads best set apart, by
+  `org-defblock-attribute', after the block's definition.  See `org--hover-example'.
+
+Any option may be set afresh, after the fact, by `org-defblock-attribute'; e.g., to point a block of ours at our
+own notes, (org-defblock-attribute graph :manual \"https://example.com/my-graph-notes\").
 
 After that is an optional DOCSTRING, a familar feature of DEFUN.
 The docstring is displayed as part of the tooltip for the
@@ -506,6 +512,7 @@ Three example uses:
        ;; ⇨ What eldoc says of it beyond its docstring: more prose, and where its manual is.
        (put ',handler 'org-hover ,(plist-get options :hover))
        (put ',handler 'org-manual ,(plist-get options :manual))
+       (put ',handler 'org-example ,(plist-get options :example))
        ;; ⇨ The link type support, unless declined via `:link nil'
        ,@(when link (list (org--defblock-link-form name docstring link)))
        ;; ⇨ Auto-generate C-c ' handler when :edit-indirect-mode is specified.
@@ -525,6 +532,28 @@ have their own words for one thing:
                 (or (get ',(intern (format "org-block/%s" name)) 'org-defblock-definition)
                     (error "‘org-defblock-alias %s’: %s is no org-defblock" ',alias ',name))))
      (eval `(org-defblock ,',alias ,kwds ,(format "%s\n\nAn alias of `org-block/%s'." (or docstring "") ',name) ,@body) t)))
+
+(defun org--defblock-set-option (kwds key value)
+  "Returns the `org-defblock' arglist KWDS with its option KEY set to VALUE, a form; e.g., for KWDS
+(&optional title :manual \"#a\"), KEY :manual and VALUE \"#b\", it is (:manual \"#b\" &optional title)."
+  (let (rest)
+    (while kwds
+      (if (eq (car kwds) key) (setq kwds (cddr kwds))
+        (push (pop kwds) rest)
+        ;; An option's value may be a keyword, or KEY itself, which is no option.
+        (when (keywordp (car rest)) (push (pop kwds) rest))))
+    (append (list key value) (nreverse rest))))
+
+(defmacro org-defblock-attribute (name key value)
+  "Sets the option KEY of the `org-defblock' NAME to VALUE, a form, as though its definition had said so; e.g.,
+  (org-defblock-attribute details :hover \"Click the title to unfold it.\")
+Any option serves: :manual, :latex-head, :link, :tag, and so on.  It redefines NAME, so a later call sees the earlier;
+whence long values, such as an `:example', are set apart from the definition they would otherwise swamp."
+  (declare (indent defun))
+  `(pcase-let ((`(,kwds ,docstring . ,body)
+                (or (get ',(intern (format "org-block/%s" name)) 'org-defblock-definition)
+                    (error "‘org-defblock-attribute %s’: %s is no org-defblock" ',name ',name))))
+     (eval `(org-defblock ,',name ,(org--defblock-set-option kwds ,key ',value) ,docstring ,@body) t)))
 
 (cl-defmacro org-defblock-only (name args &optional docstring &rest body)
   "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
@@ -717,6 +746,12 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
                           "<strong style=\"color: %s;\">⟦%s: %s%s⟧</strong>"
                         "{\\color{%s}\\bfseries %s:  %s%s}")
                       color editor contents signoff))
+
+(org-defblock-attribute rremark :example "
+# Bold red, in HTML and LaTeX alike; org-babel-default-header-args:rremark sets its defaults.
+#+begin_rremark
+Cite the source of this claim.
+#+end_rremark")
 
 ;; I don't want to change the definition, but I'd like to have the following as personalised defaults for the
 ;; “rremark” block, as Babel's are for a src block; links, which have no header line, take them too.

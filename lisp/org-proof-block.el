@@ -107,5 +107,15 @@ In Markdown, each tree is a $$…$$ display, since GitHub's maths knows no \\[�
                                    (if md? "\n\n" ""))
                         (org--math-tips-after backend))))
 
+(org-defblock-attribute tree :example "
+# Each item is a step, “REASON :: CONCLUSION”; its sub-items are its premises, each a tree too.
+#+begin_tree
++ Modus Ponens :: q
+  - Assumption :: p
+  - Assumption :: p ⇒ q
+#+end_tree
+
+# The text is maths, as a math block's is: red:p colours p.")
+
 (provide 'org-proof-block)
 ;;; org-proof-block.el ends here

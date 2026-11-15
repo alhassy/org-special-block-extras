@@ -20,30 +20,53 @@
                  "#+begin_box TITLE=\"\" :background-color :shadow :frame-color :title-background-color"))
   (should-not (org-block-signature "no-such-block")))
 
-(deftest "eldoc on a #+begin_ or #+end_ line shows the block's signature, its docstring's first line, and its keys"
-  (let ((text "#+begin_details Hi\nbody\n#+end_details\n"))
+(deftest "eldoc on a #+begin_ or #+end_ line shows the block's signature, gist, example, keys, and switches"
+  (let ((text "
+#+begin_details Hi
+body
+#+end_details"))
     (dolist (needle '("#+begin_details" "#+end_details"))
       (should (equal (org-test--eldoc-at text needle)
-                     (list "Enclose contents in a folded up box, for HTML.
-C-c '    Edit the block in `org-mode'; C-c ' again writes it back.
-Docs · See the manual"
+                     (list (string-join (append (list "Enclose contents in a folded up box, for HTML."
+                                                      (concat "\n" (org--hover-example 'org-block/details) "\n")
+                                                      "C-c '    Edit the block in `org-mode'; C-c ' again writes it back.")
+                                                (org--block-switch-lines "details")
+                                                '("Docs · See the manual"))
+                                        "\n")
                            :thing (org-block-signature "details")
                            :face 'font-lock-function-name-face))))))
 
 (deftest "eldoc's keys are those the block declares: math's C-c C-c previews it, and its C-c ' edits in latex-mode"
-  (should (equal (car (org-test--eldoc-at "#+begin_math\nx\n#+end_math\n" "#+begin_math"))
-                 "Display maths, wherein our links ---e.g., red:x, [[doc:fold][f]]--- and Org's *markup* are LaTeX's.
+  (let ((doc (car (org-test--eldoc-at "
+#+begin_math
+x
+#+end_math" "#+begin_math"))))
+    (should (s-contains-p "
 C-c C-c  Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'.
 C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.
-Docs · See the manual")))
+Switches, which every block understands:" doc))))
+
+(deftest "eldoc lists the switches every block understands, save those a block shadows by a keyword of its own"
+  (should (member "  :folded TITLE     The result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised."
+                  (org--block-switch-lines "details")))
+  (should (member "  :C-c_C-c ACTION   What C-c C-c on the block runs, in Emacs: ACTION, a form or a command; export ignores it.  See `org--block-cc-switch'."
+                  (org--block-switch-lines "details")))
+  (using (org-defblock tucked (&key folded &context contents) "Fold, its own way." contents)
+    (should-not (--first (string-prefix-p "  :folded " it) (org--block-switch-lines "tucked")))
+    (should (--first (string-prefix-p "  :boxed " it) (org--block-switch-lines "tucked")))))
 
 (deftest "eldoc shows a block's :hover prose beneath its gist, and closes with buttons to its Docs and :manual"
   (using (org-defblock shy (:hover "Some prose too long for one line." :manual "https://example.com/shy" &context contents) "Be shy." contents)
-    (let ((doc (car (org-test--eldoc-at "#+begin_shy\nhi\n#+end_shy\n" "#+begin_shy"))))
-      (should (equal doc "Be shy.
-Some prose too long for one line.
-C-c '    Edit the block in `org-mode'; C-c ' again writes it back.
-Docs · See the manual"))
+    (let ((doc (car (org-test--eldoc-at "
+#+begin_shy
+hi
+#+end_shy" "#+begin_shy"))))
+      (should (equal doc (string-join (append '("Be shy."
+                                                "Some prose too long for one line."
+                                                "C-c '    Edit the block in `org-mode'; C-c ' again writes it back.")
+                                              (org--block-switch-lines "shy")
+                                              '("Docs · See the manual"))
+                                      "\n")))
       ;; “Docs” describes the block's function; “See the manual” browses its :manual.
       (let ((push (lambda (label) (button-activate (button-at (1+ (string-match label doc))))))
             described browsed)
@@ -71,11 +94,44 @@ Docs · See the manual"))
                         (not (get symbol 'org-manual)))
               collect symbol))))
 
+(deftest "eldoc shows a block's :example as Org shows it, set apart by blank lines, its #-comments as comments"
+  (using (org-defblock shy (&context contents) "Be shy." contents)
+    (org-defblock-attribute shy :example "
+# Bold words stay *bold*; links show their brackets.
+#+begin_shy
+Hush, *now*; see [[https://example.com][there]].
+#+end_shy")
+    (let* ((doc (car (org-test--eldoc-at "
+#+begin_shy
+hi
+#+end_shy" "#+begin_shy")))
+           (face-at (lambda (needle) (get-text-property (string-match (regexp-quote needle) doc) 'face doc))))
+      (should (s-contains-p "Be shy.
+
+# Bold words stay *bold*; links show their brackets.
+#+begin_shy
+Hush, *now*; see [[https://example.com][there]].
+#+end_shy
+
+C-c '" doc))
+      (should (eq (funcall face-at "# Bold") 'font-lock-comment-face))
+      (should (memq 'bold (ensure-list (funcall face-at "*now*"))))
+      ;; Org hides a link's brackets; an example, which teaches the syntax, shows them.
+      (should-not (text-property-not-all 0 (length doc) 'invisible nil doc)))))
+
+(deftest "every block we ship has an :example, which exports to HTML sans error"
+  (require 'org-graph-block)
+  (should-not (--remove (get (intern (format "org-block/%s" it)) 'org-example) org--supported-blocks))
+  (dolist (block org--supported-blocks)
+    (should (stringp (org-export-string-as (get (intern (format "org-block/%s" block)) 'org-example) 'html t)))))
+
 (deftest "eldoc stays quiet inside a block's body, so typing there is not interrupted"
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))
 
 (deftest "eldoc on a link shows its block's signature, else its `org-deflink' docstring"
-  (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:")) "Show text in red color.\nDocs · See the manual"))
+  ;; A colour's example shows its link too.
+  (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:"))
+                 (format "Show text in red color.\n\n%s\n\nDocs · See the manual" (org--hover-example 'org-block/red))))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.

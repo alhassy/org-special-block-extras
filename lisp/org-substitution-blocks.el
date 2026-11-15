@@ -31,5 +31,11 @@
               (-let [num (if (numberp reps) reps (string-to-number reps))]
                 (s-repeat num contents)))
 
+(org-defblock-attribute stutter :example "
+# The contents, REPS times over; a toy that shows how little a block takes to define.
+#+begin_stutter 3
+Are we there yet?
+#+end_stutter")
+
 (provide 'org-substitution-blocks)
 ;;; org-substitution-blocks.el ends here

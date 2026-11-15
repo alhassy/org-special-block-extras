@@ -85,5 +85,24 @@ body
   (should (string-match-p ":link \\[:face"
                           (cadr (should-error (macroexpand '(org-defblock opt-old (&context contents) [:face bold] "Doc." contents)))))))
 
+;;; org-defblock-attribute ---an option set after the fact
+
+(deftest "`org--defblock-set-option' replaces an option's value, else adds it; argument names are left be"
+  (should (equal (org--defblock-set-option '(&optional title :manual "#a" &context contents) :manual "#b")
+                 '(:manual "#b" &optional title &context contents)))
+  (should (equal (org--defblock-set-option '(&key color :tag nil) :hover "Hi.")
+                 '(:hover "Hi." &key color :tag nil))))
+
+(deftest "`org-defblock-attribute' sets any option of a block after its definition; a later call keeps the earlier"
+  (using (org-defblock late (&optional (who "you") &context contents) "Greet WHO." (format "Hi %s: %s" who contents))
+    (org-defblock-attribute late :hover "Say hi.")
+    (org-defblock-attribute late :manual "https://example.com/late")
+    (should (equal (get 'org-block/late 'org-hover) "Say hi."))
+    (should (equal (get 'org-block/late 'org-manual) "https://example.com/late"))
+    ;; The block itself, its main argument's default and all, is as it was.
+    (should (s-contains-p "Hi you: " (org-block/late 'html "there"))))
+  (should (string-match-p "no org-defblock"
+                          (cadr (should-error (org-defblock-attribute no-such-block :hover "Hi."))))))
+
 (provide 'org-defblock-options-tests)
 ;;; org-defblock-options-tests.el ends here

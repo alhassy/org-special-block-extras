@@ -95,6 +95,16 @@ note resized, to 1.3 the margin's width ---requiring \\usepackage{adjustbox}.
                   ;; HTML has no margin per se, so the note is a tooltip on its marker.
                   (_ (concat (org--html-tooltip raw-contents (or marker "°")) "&emsp13;")))))
 
+(org-defblock-attribute margin :example "
+# In HTML, MARKER shows CONTENTS as a tooltip; in LaTeX, MARKER is followed by a margin note.
+Euclid proved there are infinitely many
+#+begin_margin primes
+Suppose there are finitely many; their product, plus one, has a prime factor none of them is.
+#+end_margin
+by contradiction.
+
+# As a link, a short note needs no block: Euclid[[margin:][c. 300 BCE]] wrote the Elements.")
+
 (org-defblock-alias tooltip margin)
 
 ;;;;;; Footnotes, as tooltips

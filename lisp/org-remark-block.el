@@ -97,5 +97,15 @@ In Markdown, a remark block is GitHub's “> [!NOTE]” alert, titled EDITOR; as
                                  (_ (format "<%s style=\"color: %%s;\">%%s %%s %%s %%s</%s>" (if strong "strong" "p") (if strong "strong" "p"))))
                                color edcomm-begin contents′ signoff edcomm-end)))))
 
+(org-defblock-attribute remark :example "
+# An editor's note to the author; text after #+replacewith: is proposed in place of the text before it.
+#+begin_remark Reviewer
+The proof is by induction on n.
+#+replacewith:
+The proof is by structural induction on the list.
+#+end_remark
+
+# Setting org-hide-editor-comments to t hides every remark from the export.")
+
 (provide 'org-remark-block)
 ;;; org-remark-block.el ends here

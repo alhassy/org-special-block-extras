@@ -376,6 +376,18 @@ Read when first needed, at export, so a missing file is asked for then ---not wh
                                  ;; Every special block is so edited, by `org-special-block-edit'.
                                  "Edit the block in `org-mode'; C-c ' again writes it back."))))))
 
+(defun org--block-switch-lines (name)
+  "Returns a heading, then a line per switch of `org-block-switches' that block NAME does not shadow by a keyword of
+its own, each beside the gist of what it does; e.g., \":folded TITLE      The result within a `details' titled …\"."
+  (let ((own (--map (intern (format ":%s" (car it)))
+                    (plist-get (get (intern-soft (format "org-block/%s" name)) 'org-defblock-args) :keys))))
+    (cons "Switches, which every block understands:"
+          (cl-loop for (key _ . switch) in org-block-switches
+                   for arg = (symbol-name (car (help-function-arglist switch t)))
+                   unless (memq key own)
+                   collect (format "  %-17s %s" (format "%s %s" key (if (equal arg "_") "t" (upcase (string-remove-prefix "_" arg))))
+                                   (car (split-string (documentation switch t) "\n")))))))
+
 (defcustom org-special-block-extras-manual "https://alhassy.com/org-special-block-extras-blocks-and-links"
   "The manual of our blocks and links, whose sections a block's, or link's, `:manual' of #ANCHOR names; see
 `org--hover-footer'."
@@ -392,11 +404,37 @@ https://alhassy.com/org-special-block-extras-blocks-and-links#math."
     (concat (funcall button "Docs" (lambda (_) (describe-function symbol)) (format "Describe `%s'" symbol))
             (when manual (concat " · " (funcall button "See the manual" (lambda (_) (browse-url manual)) manual))))))
 
+(defun org--fontify-as-org (text)
+  "Returns TEXT with the faces an Org buffer gives it, sans the invisibility and display strings that hide its syntax;
+its “# …” lines are comments even within a block, where Org leaves them unfontified, since they explain the rest."
+  (with-temp-buffer
+    (let ((org-inhibit-startup t)) (org-mode))
+    (insert text)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (while (re-search-forward "^[ \t]*# .*" nil t)
+      (put-text-property (match-beginning 0) (match-end 0) 'face 'font-lock-comment-face))
+    (let ((plain (buffer-substring-no-properties (point-min) (point-max))))
+      (cl-loop for pos = (point-min) then next while (< pos (point-max))
+               for next = (next-single-property-change pos 'face nil (point-max))
+               for face = (get-text-property pos 'face)
+               when face do (put-text-property (1- pos) (1- next) 'face face plain))
+      plain)))
+
+(defun org--hover-example (symbol)
+  "Returns the `:example' of SYMBOL's block, fontified as Org, its #-comments in `font-lock-comment-face'; else nil.
+Each is fontified once, until its text changes; see `org-defblock-attribute'."
+  (-when-let (example (-some--> (get symbol 'org-example) (string-trim it)))
+    (let ((cached (get symbol 'org-example-fontified)))
+      (if (equal (car cached) example) (cdr cached)
+        (cdr (put symbol 'org-example-fontified (cons example (org--fontify-as-org example))))))))
+
 (defun org--special-block-eldoc (callback &rest _)
   "Hand eldoc's CALLBACK the signature and gist of the block, or link, at point, and more; else nil.
 On a #+begin_NAME or #+end_NAME line, that is the NAME block; on a NAME: link, the NAME block, else its `org-deflink'.
 The gist is the first line, which the echo area shows; for a multi-line display, such as eldoc-box, there follow its
-`:hover' prose, the keys that act on it, and its “Docs · See the manual” buttons; see `org--hover-footer'."
+`:hover' prose, its `:example', the keys that act on it, the switches it understands, and its “Docs · See the
+manual” buttons; see `org--hover-footer'."
   (when (derived-mode-p 'org-mode)
     (let* ((delimiter? (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+\\(begin\\|end\\)_")))
            (name  (if delimiter? (org-special-block-name-at-point)
@@ -405,12 +443,15 @@ The gist is the first line, which the echo area shows; for a multi-line display,
            (link  (and name (not delimiter?) (intern-soft (format "org-link/%s" name))))
            (gist  (lambda (docstring) (car (split-string (or docstring "") "\n"))))
            (hover (lambda (symbol gist keys)
-                    (string-join (-non-nil (append (list gist (get symbol 'org-hover)) keys
+                    (string-join (-non-nil (append (list gist (get symbol 'org-hover)
+                                                         ;; Set apart by blank lines, as a code block in prose is.
+                                                         (-some--> (org--hover-example symbol) (concat "\n" it "\n")))
+                                                   keys
                                                    (list (org--hover-footer symbol))))
                                  "\n"))))
       (cond ((get block 'org-defblock-args)
              (funcall callback (funcall hover block (funcall gist (get block 'variable-documentation))
-                                        (and delimiter? (org--block-keys name)))
+                                        (and delimiter? (append (org--block-keys name) (org--block-switch-lines name))))
                       :thing (org-block-signature name) :face 'font-lock-function-name-face))
             ((fboundp link)
              (funcall callback (funcall hover link (funcall gist (documentation link t))

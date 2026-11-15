@@ -52,5 +52,13 @@ quotation needs no link: Org's own \"to be\" [cite:@KEY] serves.  A section tagg
       (format "\\blockcquote%s{%s}{%s}" (if (org-string-nw-p pages) (format "[%s]" pages) "") key contents))
      (t (format "<blockquote>%s<footer>%s</footer></blockquote>" contents (org-parse (concat "@@html:&mdash; @@" citation)))))))
 
+(org-defblock-attribute quote :example "
+# KEY names a work in the #+bibliography: file; :pages, where in it the words are.
+#+begin_quote knuth1984 :pages 97
+Let us change our traditional attitude to the construction of programs: …
+#+end_quote
+
+# Sans KEY, it is Org's own quote block.")
+
 (provide 'org-quote-block)
 ;;; org-quote-block.el ends here

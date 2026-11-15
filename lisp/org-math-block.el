@@ -189,6 +189,27 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
                          (and shown (org-html-encode-plain-text shown))
                          (org--math-tips-after backend))))))))
 
+(org-defblock-attribute math :example "
+# C-c C-c shows the block as an image atop it, until C-c C-c again; C-c ' edits it in latex-mode.
+#+begin_math
+# A line “# …” is a comment; a \\def is declared, page-wide, yet not shown.
+\\def\\Sn{\\mathcal{S}_n}
+# red:ATOM colours an atom, a {group} or a \\command; ATOM[fn::TIP] hovers TIP over it.
+  red:{(1 - r)} · \\Sn[fn::the first $n$ powers of $r$, summed]
+# “={ HINT }” says why a step holds; TAB folds it here, as a click does in HTML.
+={ Distribute $red:{(1 - r)}$; all but the first and last terms cancel }
+  1 - r^n   teal:<<Geometric>>
+#+end_math
+
+# Lines align at their &, each but the last ending in \\\\, as in LaTeX's align; an Org table is a pmatrix.
+#+begin_math
+(x + 1)^2 &= (x + 1)(x + 1) \\\\
+          &= x^2 + 2x + 1
+#+end_math
+
+# teal:<<Geometric>> tags its line, in teal; [[Geometric]] cites it, as Org cites any target.
+By [[Geometric]], $\\Sn = {1 - r^n \\over 1 - r}$ whenever $red:r ≠ 1$.")
+
 ;;;; In Emacs ---cdlatex reads a math block as maths
 
 (defvar texmathp-why)

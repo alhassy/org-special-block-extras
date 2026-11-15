@@ -67,6 +67,15 @@ HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, a
              (if (org-export-markdown-p)
                  (org-parse (org--markdown-alert ,(symbol-name name) (unless (equal title ,default-title) title) raw-contents))
                (org--callout backend ,colour ,icon (org-inline title) contents)))
+          t)
+    (eval `(org-defblock-attribute ,name :example ,(format "
+# The title is optional; sans one, it is “%2$s”.
+#+begin_%1$s Before we begin
+%3$s
+It holds any Org: *markup*, lists, even src blocks.
+#+end_%1$s
+
+# In Markdown, it is GitHub's own “> [!%4$s]” alert." name default-title purpose (upcase (symbol-name name))))
           t)))
 
 (provide 'org-callout-blocks)

@@ -240,8 +240,8 @@ Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RE
   (org-block/box backend (funcall render contents) (if (eq title t) "" (format "%s" title))))
 
 (org-defswitch :let (bindings &key render contents backend)
-  "Each whole-word VAR in the contents, or operator such as ->, becomes its VALUE, for BINDINGS (VAR VALUE …);
-or for those of the table #+name: BINDINGS, else the variable BINDINGS.  See `org--block-let'."
+  "Each whole-word VAR in the contents, or operator such as ->, becomes its VALUE, for BINDINGS (VAR VALUE …).
+BINDINGS may instead name a #+name: table of them, else a variable holding them.  See `org--block-let'."
   :depth -20
   (funcall render (org--block-let bindings contents backend)))
 
@@ -257,8 +257,10 @@ Outer switches apply to this showing; e.g., :verbatim t :folded t folds away the
   contents)
 
 ;; Both act elsewhere, so upon export they leave the block be.
-(org-defswitch :demo (_ &key render contents) "See `org-demo'." :depth 90 (funcall render contents))
-(org-defswitch :C-c_C-c (_ &key render contents) "For the block in Emacs, not upon export; see `org--block-cc-switch'." :depth 90
+(org-defswitch :demo (_ &key render contents) "The block's source, then what it exports to; see `org-demo'." :depth 90 (funcall render contents))
+(org-defswitch :C-c_C-c (_action &key render contents)
+  "What C-c C-c on the block runs, in Emacs: ACTION, a form or a command; export ignores it.  See `org--block-cc-switch'."
+  :depth 90
   (funcall render contents))
 
 ;;;; org--rewrite-any-block-switches

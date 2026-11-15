@@ -46,6 +46,14 @@ In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or n
                                  :latex-head ("xcolor") :manual "#Colours-links" &context backend contents)
            ,(format "Show text in %s color." colour)
            (org--color-text backend ',colour contents)))
+  (eval `(org-defblock-attribute ,colour :example ,(format "
+# A block colours its every paragraph, *markup* and all.
+#+begin_%1$s
+Lo, a %1$s paragraph.
+#+end_%1$s
+
+# A link colours a word, %1$s:word; or a phrase, as [[%1$s:][these few words]].
+Only the %1$s:key words are %1$s; Emacs hides “%1$s:”, until point is in the link." colour)))
   (org-link-set-parameters (symbol-name colour) :activate-func #'org--color-link-hide-type))
 
 (defun org--color-link-hide-type (start end _path _bracket?)
@@ -63,6 +71,14 @@ As with Org's hidden brackets, `org-toggle-link-display' shows it all."
                :link [:face (list :foreground (or (org-string-nw-p label) "black"))] &context backend contents)
               "Format text according to a given COLOR, which is black by default."
               (org--color-text backend color contents))
+
+(org-defblock-attribute color :example "
+# COLOR is any colour HTML and LaTeX know by name, or a hex #RRGGBB.
+#+begin_color #ff0066
+A paragraph in hot pink.
+#+end_color
+
+# As a link, the colour is its path, shown so in Emacs too: [[color:navy][in navy]].")
 
 ;;;;;; Highlight ---colour the background, rather than the text
 
@@ -90,6 +106,14 @@ In Markdown, the text is <mark>ed, paragraph by paragraph, which GitHub shows ye
                                "<span style=\"background-color:%s;\">%s</span>"
                              "<div style=\"background-color:%s;\">%s</div>")
                            color contents))))
+
+(org-defblock-attribute highlight :example "
+# Sans COLOR, the background is yellow; here, a pale green.
+#+begin_highlight #e5f5e5
+A paragraph we should not miss.
+#+end_highlight
+
+# As a link, it highlights a phrase, in Emacs too: [[highlight:pink][Read this twice.]]")
 
 ;;;;;; Palette ---let readers pick the page's background colour
 

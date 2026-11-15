@@ -37,5 +37,13 @@
                                     (box reprimand :background-color "blue")
                                     (details title)))
 
+(org-defblock-attribute solution :example "
+# The answer hides, folded, beneath a reprimand asking whether the reader really tried.
+#+begin_solution
+$2 + 2 = 4$, by counting on our fingers.
+#+end_solution
+
+# :reprimand and :really reword the inner folds.")
+
 (provide 'org-solution-block)
 ;;; org-solution-block.el ends here

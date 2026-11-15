@@ -675,5 +675,13 @@ they are defined; see `org--docs-prepare'."
               ;; Should the special block show something upon export?
               (if show (org--blockcall box name :background-color color raw-contents) ""))
 
+(org-defblock-attribute documentation :example "
+# Define a term once; doc:LABEL cites it anywhere, its definition hovering over it in HTML.
+#+begin_documentation Monoid :label monoid
+A set with an associative operation that has a unit; e.g., (ℕ, +, 0).
+#+end_documentation
+
+Every doc:monoid is a category with one object.")
+
 (provide 'org-links)
 ;;; org-links.el ends here
