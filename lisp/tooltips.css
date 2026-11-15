@@ -8,6 +8,9 @@ mjx-container .tooltip { color: inherit; }
 .tooltip-box {
   position: absolute; z-index: 1000;
   max-width: min(40em, calc(100vw - 16px)); /* A phone's screen, less the margins `place' keeps. */
+  /* Beside a word scrolled far right ---in a graph wider than the screen--- an absolute box would shrink to the
+     sliver of the screen left of its `left'; so it takes its content's width, up to the max-width. */
+  width: max-content;
   padding: 8px 16px; border-radius: 5px; border-bottom: 3px solid #f71169;
   background: #2a2a2a; color: #fff; font-size: 0.9em; line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); overflow-wrap: anywhere;
