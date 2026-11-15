@@ -28,3 +28,9 @@
 (deftest "`org--graph-dot-id' escapes interior quotes"
   (should (equal "\"say \\\"hi\\\"\""
                  (org--graph-dot-id "say \"hi\""))))
+
+(deftest "`org--graph-dot-id' quotes dot's keywords, which are no identifiers"
+  (should (equal "\"graph\""  (org--graph-dot-id "graph")))
+  (should (equal "\"Node\""   (org--graph-dot-id "Node")))
+  (should (equal "\"strict\"" (org--graph-dot-id "strict")))
+  (should (equal "graphs"     (org--graph-dot-id "graphs"))))

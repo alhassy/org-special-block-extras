@@ -41,12 +41,14 @@ A `\\\\' in a value breaks its line, as in an item: \"| label | a \\\\ b |\" ↦
 (defun org--graph-dot-id (name)
   "Return NAME as a valid dot identifier or value, quoting if necessary.
 Already-quoted strings, HTML-like labels <…>, pure identifiers (letters, digits,
-underscore), and bare numbers are returned as-is.  Everything else is wrapped in
+underscore) other than dot's keywords, such as graph, and bare numbers are returned as-is.  Everything else is wrapped in
 double quotes with any interior double-quotes escaped."
   (cond
    ((and (s-starts-with-p "\"" name) (s-ends-with-p "\"" name) (> (length name) 1)) name)
    ((and (s-starts-with-p "<" name) (s-ends-with-p ">" name)) name)
-   ((s-matches-p "^[a-zA-Z_][a-zA-Z_0-9]*$" name) name)
+   ((and (s-matches-p "^[a-zA-Z_][a-zA-Z_0-9]*$" name)
+         (not (member (downcase name) '("node" "edge" "graph" "digraph" "subgraph" "strict"))))
+    name)
    ((s-matches-p "^-?[0-9]+\\.?[0-9]*$" name) name)
    (t (format "\"%s\"" (s-replace "\"" "\\\"" name)))))
 
