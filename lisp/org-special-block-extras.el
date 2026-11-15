@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- Org markup all the way down: details, graph, math, callouts…  -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- *bold*, [[links]], red:text work inside details, graph, math  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -24,8 +24,9 @@
 
 ;;; Commentary:
 
-;; Folds, graphs, maths, and callouts that read *bold*, [[links]], and red:text, as the rest of our Org does.
-;; We offer 42 block types and 48 link types, and `org-defblock', a `cl-defun' for making our own.
+;; Org markup all the way down: details, graph, math, callouts, and more.  Graphs from lists, folds from blocks,
+;; colours from red:links.  We offer 42 block types and 48 link types, and `org-defblock', a `cl-defun' for making
+;; our own.
 ;;
 ;; Some text is tangential: a run of import statements, the gory steps of a proof, a worked solution to an
 ;; exercise.  We want it folded away until the reader asks for it; so we declare a block that does so, as we would
