@@ -29,8 +29,8 @@ Or can be solved by ...
 1. [ ] I am aware of the extensive documentation at https://alhassy.com/org-special-block-extras
 2. [ ] I have read the documentation of doc:org-defblock
 3. [ ] I have checked some boxes without reading them.
-4. [ ] I am aware that `(org-defblock X ⋯)` gives me a Lisp function `org-block/X`
-       that I can play with; e.g., `C-h o org-block/shout` shows a function with its
+4. [ ] I am aware that `(org-defblock X ⋯)` gives me a Lisp function `org--X-block`
+       that I can play with; e.g., `C-h o org--shout-block` shows a function with its
        docstring and arguments. We can press `C-u C-x C-e` at the end of the
-       closing parens of `(org-block/shout 'html  "*Hello*, /world/!")` to see
+       closing parens of `(org--shout-block 'html  "*Hello*, /world/!")` to see
        what _Org sees_ when it rewrites a `shout` block with the given string as its contents.

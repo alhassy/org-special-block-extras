@@ -234,9 +234,15 @@ targets."
 (defun org--export-nested (text backend)
   "Returns the body-only export of Org TEXT along BACKEND, within an export already under way.
 The nested export keeps the outer one's glossary, which `org--docs-prepare' would otherwise reset; and its internal
-links, by `org--internal-links'."
-  (let ((org-export-before-parsing-functions (remq 'org--docs-prepare org-export-before-parsing-functions)))
-    (org-export-string-as (org--internal-links text backend) backend t)))
+links, by `org--internal-links'.  A derived BACKEND, such as a blog's, may need what only the outer export has, such as
+its :input-file, which a string's export lacks; should it fail so, its base backend, html or latex, renders TEXT."
+  (let ((org-export-before-parsing-functions (remq 'org--docs-prepare org-export-before-parsing-functions))
+        (base (org--base-backend backend)))
+    (if (eq base backend)
+        (org-export-string-as (org--internal-links text backend) backend t)
+      (condition-case nil
+          (org-export-string-as (org--internal-links text backend) backend t)
+        (error (org-export-string-as (org--internal-links text base) base t))))))
 
 (defun org--export-inline (text backend)
   "Returns Org TEXT exported along BACKEND as a phrase, sans the paragraph Org wraps it in; e.g., for HTML,

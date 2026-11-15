@@ -7,7 +7,7 @@ Everything is ERT underneath, written with [[https://github.com/alhassy/snap][sn
     =:at=; =:mode= picks another mode, such as =org-graph-edit-mode=. For many such buffers in one test, say in a
     loop, =with-org-test-buffer= takes the same keys.
   - =define-org-block-parse-test= :: Org text ↦ how its first block parses: =:name=, =:main-arg=, =:kwdargs=, =:contents=.
-  - =define-org-call-test= :: a handler call ↦ its exact output; e.g., =:call (org-block/box 'html "hi" nil)=.
+  - =define-org-call-test= :: a handler call ↦ its exact output; e.g., =:call (org--box-block 'html "hi" nil)=.
   - =define-org-export-test= :: an Org string ↦ its export; e.g., =:input "#+begin_shout …" :to latex=.
   - Shared machinery ---=deftest=, =org-deftest=, =using=, =exporting=, and the relations--- lives in =org-test-utils.el=;
     a test's temporary =org-defblock= may not reuse a built-in block's name, since its cleanup would undefine it.
@@ -54,7 +54,7 @@ All of a file's demos: =M-x org-demo-refresh-buffer=.
 
 * Add an example
 
-Write a =:demo= block in the manual ---say, =#+begin_org :ignore t :demo org-block/NAME=--- then =C-c C-c= within it.
+Write a =:demo= block in the manual ---say, =#+begin_org :ignore t :demo org--NAME-block=--- then =C-c C-c= within it.
 
 * Notes
 

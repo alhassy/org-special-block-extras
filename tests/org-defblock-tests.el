@@ -293,3 +293,16 @@ Inner.
 
 (provide 'org-defblock-tests)
 ;;; org-defblock-tests.el ends here
+
+(deftest "a block's title renders along a derived backend; should that backend fail on a mere string, along its base" [defblock]
+  (org-export-define-derived-backend 'osbe-test-strict 'html
+    :filters-alist `((:filter-options . ,(lambda (info _) (if (plist-get info :input-file) info (error "No input file"))))))
+  (unwind-protect
+      (should (string-search "<h3>Case endings: <i>a</i> or the</h3>"
+                             (with-temp-buffer
+                               (insert "#+begin_box Case endings: /a/ or the\nHi\n#+end_box")
+                               (org-mode) (org-special-block-extras-mode 1)
+                               (let ((buffer-file-name "/tmp/osbe-strict.org"))
+                                 (org-export-as 'osbe-test-strict nil nil t)))))
+    (setq org-export-registered-backends
+          (--remove (eq (org-export-backend-name it) 'osbe-test-strict) org-export-registered-backends))))

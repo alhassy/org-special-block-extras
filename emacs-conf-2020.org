@@ -186,15 +186,15 @@ With a bit of Lisp ---and a lot of time--- we obtain
 #+begin_details (•̀ᴗ•́)و
 | Idea                   | Documentation                   | Link only?          |
 |------------------------+---------------------------------+---------------------|
-| Colours                | [[doc:org-block/math][math]], [[doc:org-block/color][color]]        |                     |
-| Parallel               | [[doc:org-block/parallel][parallel]]                        |                     |
-| Editorial Remarks      | [[doc:org-block/remark][remark]]                          |                     |
-| Folded Details         | [[doc:org-block/details][details]] ,  [[doc:org-block/box][box]]                  |                     |
+| Colours                | [[doc:org--math-block][math]], [[doc:org--color-block][color]]        |                     |
+| Parallel               | [[doc:org--parallel-block][parallel]]                        |                     |
+| Editorial Remarks      | [[doc:org--remark-block][remark]]                          |                     |
+| Folded Details         | [[doc:org--details-block][details]] ,  [[doc:org--box-block][box]]                  |                     |
 | Keystrokes             | kbd:C-c_C-e                     | ~kbd~                 |
 | OctoIcons & Permalinks | octoicon:report <<Overview>>            | ~octoicon~, ~<<X>>~     |
-| Documentation-Glossary | [[doc:org-block/documentation][documentation]]                   | ~doc~                 |
+| Documentation-Glossary | [[doc:org--documentation-block][documentation]]                   | ~doc~                 |
 
-Other fun stuff: [[doc:org-block/solution][solution]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]], [[doc:org-block/stutter][stutter]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block][rename]], [[doc:org-block/spoiler][spoiler]] (─‿‿─)
+Other fun stuff: [[doc:org--solution-block][solution]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]], [[doc:org--stutter-block][stutter]], [[https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block][rename]], [[doc:org--spoiler-block][spoiler]] (─‿‿─)
 #+end_details
 #+begin_box Incidentally
 😂 The setup joyously works for org-reveal 😹
@@ -269,7 +269,7 @@ Sacha wrote an Org file and wanted some *feedback*
 ** What /kind/ of feedback?
 
 #+ATTR_REVEAL: :frag (appear)
-- top-level [[doc:org-block/remark][remarks]] /visible in the export/
+- top-level [[doc:org--remark-block][remarks]] /visible in the export/
 
   #+ATTR_REVEAL: :frag (appear)
   … suggest red:replacement text
@@ -681,15 +681,15 @@ I think we should do …
 Using a few lines of Lisp …
 
 #+ATTR_REVEAL: :frag (appear)
-- write text in [[doc:org-block/parallel][parallel]] columns
+- write text in [[doc:org--parallel-block][parallel]] columns
 
   … to save on vertical whitespace
 
-- hide away technical [[doc:org-block/details][details]] for the interested reader only
+- hide away technical [[doc:org--details-block][details]] for the interested reader only
 
-- enclose text in a pretty [[doc:org-block/box][box]]
+- enclose text in a pretty [[doc:org--box-block][box]]
 
-- Educational material blocks: [[doc:org-block/spoiler][spolier]], [[doc:org-block/solution][solution]], and [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]]
+- Educational material blocks: [[doc:org--spoiler-block][spolier]], [[doc:org--solution-block][solution]], and [[https://alhassy.com/org-special-block-extras-blocks-and-links#demos][org-demo]]
 
 #+ATTR_REVEAL: :frag (appear)
 Finally,

@@ -3,7 +3,7 @@
 # tests/org-demo-tests.el checks every one still renders so, by `org-demo-failures'.  See the manual's “Demos”.
 
 * badge
-#+begin_org :ignore t :demo org-link/badge
+#+begin_org :ignore t :demo org--badge-link
 1. It works when all 5 arguments are provided
 
    badge:Let_me_google_that|for_you!|orange|https://lmgtfy.app/?q=badge+shields.io&iie=1|Elixir
@@ -202,7 +202,7 @@ asterisks are passed unaltered into the first argument
 :end:
 
 * kbd
-#+begin_org :ignore t :demo org-link/kbd
+#+begin_org :ignore t :demo org--kbd-link
 1. It becomes <kbd> tags, but final symbol non-ascii *may* be ignored
 
    kbd:C-u_80_-∀
@@ -292,7 +292,7 @@ the major mode specifies support for Font Lock.</pre></template></abbr>
 :end:
 
 * solution
-#+begin_org :ignore t :demo org-block/solution
+#+begin_org :ignore t :demo org--solution-block
 What is the name of Prophet Yusuf's father?
 
 Hint: The father's name also starts with `y`.
@@ -349,7 +349,7 @@ Yacoub
 :end:
 
 * spoiler
-#+begin_org :ignore t :demo org-block/spoiler
+#+begin_org :ignore t :demo org--spoiler-block
 The ~spoiler~ block is for “fill in the blanks” or “guess, and hover
 to see the results” style of exposition.
 
@@ -410,7 +410,7 @@ and the color of the hidden item. These default to \texttt{grey, ((, ))} respect
 :end:
 
 * tree
-#+begin_org :ignore t :demo org-block/tree
+#+begin_org :ignore t :demo org--tree-block
 #+begin_box Programming ≈ Proving
 #+begin_tree
 + Function Application :: f(a) : B
