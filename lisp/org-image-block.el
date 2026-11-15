@@ -1,4 +1,4 @@
-;;; org-image-block.el --- #+begin_image LANG: LaTeX or HTML, as itself along its own backend, else as an image  -*- lexical-binding: t; -*-
+;;; org-image-block.el --- #+begin_image LANG: LaTeX, HTML, SVG, dot; itself where read natively, else an image  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; A TikZ picture in a web page, or an HTML widget in a PDF:
+;; A TikZ picture in a web page, or an HTML widget in a PDF; an SVG, or a Graphviz graph, in either:
 ;;
 ;;     #+begin_image latex                     #+begin_image html :css "button { padding: 1em }"
 ;;     \begin{tikzpicture}                     <button>Click me</button>
@@ -26,7 +26,8 @@
 ;; Along its own backend, a block is itself, raw; along any other, it is an image of itself: an SVG in
 ;; HTML, inlined so the page needs no image files; a PDF in LaTeX, so it stays vector; else a PNG.
 ;; Each language is made into a cropped PDF ---LaTeX by pdflatex and the standalone class, HTML by a
-;; headless Chrome--- whence pdftocairo makes the SVG and PNG; see `org-image-block-languages'.
+;; headless Chrome, SVG by rsvg-convert, dot by Graphviz--- whence pdftocairo makes the SVG and PNG; see
+;; `org-image-block-languages'.  An SVG is itself in HTML; a dot graph is an image everywhere.
 ;;
 ;; Above a line of five dashes is the block's own preamble: LaTeX's, before \begin{document}; or HTML's
 ;; <head>.  C-c C-c renders the images, and shows one atop the block; export uses them.  Their names
@@ -77,11 +78,13 @@ Off by default: -shell-escape lets the LaTeX run any shell command, so a strange
   :group 'org-special-block-extras)
 
 (defvar org-image-block-languages
-  '((latex . org--image-latex-pdf)
-    (html . org--image-html-pdf))
-  "Each (LANGUAGE . RENDER) of #+begin_image: RENDER writes the block's PREAMBLE and BODY, see `org--image-split', as
-a cropped PDF, by (RENDER PREAMBLE BODY ARGS PDF), ARGS being the block's keyword arguments; whence the SVG and PNG
-are made.  A new language is one entry.")
+  '((latex :render org--image-latex-pdf :native (latex))
+    (html  :render org--image-html-pdf  :native (html))
+    (svg   :render org--image-svg-pdf   :native (html))
+    (dot   :render org--image-dot-pdf))
+  "Each (LANGUAGE :render RENDER :native BACKENDS) of #+begin_image: along one of BACKENDS, the block is itself, raw;
+else RENDER writes its PREAMBLE and BODY, see `org--image-split', as a cropped PDF, by (RENDER PREAMBLE BODY ARGS
+PDF), ARGS being the block's keyword arguments; whence the SVG and PNG are made.  A new language is one entry.")
 
 ;;;; A block's preamble: what is above its first line of dashes
 
@@ -153,6 +156,33 @@ margins, its colours printed as shown."
     (org--image-run "pdfcrop" "--margins" "0" printed pdf)
     (delete-directory dir t)))
 
+(defun org--image-sans-preamble (language preamble)
+  "Refuses a PREAMBLE for LANGUAGE, which has no place for one; e.g., an SVG's or a dot graph's whole is its body."
+  (unless (string-empty-p preamble)
+    (user-error "A #+begin_image %s block has no preamble; axe its line of dashes, -----, and what is above it"
+                language)))
+
+(defun org--image-svg-pdf (preamble body _args pdf)
+  "Writes SVG BODY as PDF, by rsvg-convert, its page the SVG's own size; it has no PREAMBLE."
+  (org--image-sans-preamble 'svg preamble)
+  (let ((svg (make-temp-file "org-image-" nil ".svg" body)))
+    (org--image-run "rsvg-convert" "--format" "pdf" "--output" pdf svg)
+    (delete-file svg)))
+
+(defun org--image-dot-pdf (preamble body args pdf)
+  "Writes Graphviz BODY, such as digraph { a -> b }, as PDF, by dot, cropped by pdfcrop; ARGS' :layout,
+such as neato or circo, chooses the layout engine.  It has no PREAMBLE."
+  (org--image-sans-preamble 'dot preamble)
+  (let ((dot (make-temp-file "org-image-" nil ".dot" body))
+        (drawn (make-temp-file "org-image-" nil ".pdf")))
+    ;; Transparent, as the other languages' renderings; the graph's own attributes override these defaults.  Graphviz's
+    ;; PDF has a margin of its own, which pdfcrop trims.
+    (apply #'org--image-run "dot" `(,@(-some->> (plist-get args :layout) (format "-K%s") list)
+                                    "-Gbgcolor=transparent" "-Gpad=0.05" "-Tpdf" "-o" ,drawn ,dot))
+    (org--image-run "pdfcrop" "--margins" "2" drawn pdf)
+    (delete-file dot)
+    (delete-file drawn)))
+
 (defun org--image-hash (language source args)
   "Returns the hash that names the renderings of a LANGUAGE block of SOURCE and ARGS; for LaTeX, of its preamble too."
   (substring (secure-hash 'sha1 (prin1-to-string (list language source (org-plist-delete (copy-sequence args) :file)
@@ -173,8 +203,9 @@ within `org-image-block-directory', unless the name has a directory of its own:
   "Renders a LANGUAGE block of SOURCE and ARGS as BASE.pdf, .svg, and .png; the PNG at ARGS' :resolution, else
 `org-image-block-png-resolution'.  Sans :file, the renderings of its former selves ---BASE with another hash--- are
 axed, so edits leave no stale files behind."
-  (let ((render (or (alist-get language org-image-block-languages)
-                    (user-error "#+begin_image knows no %s; see `org-image-block-languages'" language)))
+  (let ((render (plist-get (or (alist-get language org-image-block-languages)
+                               (user-error "#+begin_image knows no %s; see `org-image-block-languages'" language))
+                           :render))
         (pdf (expand-file-name (concat base ".pdf"))))
     (make-directory (file-name-directory pdf) t)
     (unless (plist-get args :file)
@@ -211,7 +242,7 @@ document's preamble; in HTML, PREAMBLE then BODY, as a <style> or <script> works
              body)
     (string-trim (concat preamble "\n" body))))
 
-(org-defblock image (&optional (language "latex") &key file css width alt resolution as-image
+(org-defblock image (&optional (language "latex") &key file css width layout alt resolution as-image
                      :latex-head ("graphicx") :manual "#images"
                      :hover "Above a line of five dashes, -----, is the block's preamble: LaTeX's, or HTML's <head>.
 Naming its renderings, images/NAME.{svg,pdf,png}:
@@ -224,19 +255,19 @@ of the document's; yet a PDF picture's text is not searchable, nor in the docume
 HTML one is not interactive.  :resolution 300 sharpens its PNG; `org-image-block-shell-escape' allows
 minted and the like, at the price of letting the LaTeX run shell commands."
                      &context backend raw-contents anchor)
-  "LaTeX, or HTML, LANGUAGE: itself, raw, along its own backend; else an image of itself.
+  "LaTeX, HTML, SVG, or Graphviz dot, LANGUAGE: itself, raw, along a backend that reads it; else an image of itself.
 In HTML, an SVG, inlined; in LaTeX, a PDF; in Markdown, and elsewhere, a PNG.  C-c C-c renders them, else export
 does, within `org-image-block-directory'; see `org--image-base'.  Above a line of dashes is the block's preamble,
 see `org--image-split'.  For HTML, CSS styles it and WIDTH, such as 600px, fixes its width; ALT describes the image,
 for screen readers; RESOLUTION, in pixels per inch, sharpens its PNG; AS-IMAGE t makes it an image along its own
-backend too."
+backend too.  For dot, LAYOUT, such as neato, chooses the layout engine.  See `org-image-block-languages'."
   (let* ((language (intern (downcase (format "%s" language))))
          (source (string-trim raw-contents))
-         (args (list :file file :css css :width width :resolution resolution))
+         (args (list :file file :css css :width width :layout layout :resolution resolution))
          (markdown? (org-export-markdown-p))
-         (alt (or alt (format "%s" (or anchor (format "Rendered %s" (if (eq language 'latex) "LaTeX" (upcase (symbol-name language))))))))
+         (alt (or alt (format "%s" (or anchor (format "Rendered %s" (pcase language ('latex "LaTeX") ('dot "Graphviz") (_ (upcase (symbol-name language)))))))))
          (extension (cond (markdown? "png") ((eq backend 'html) "svg") ((eq backend 'latex) "pdf") (t "png"))))
-    (if (and (eq language backend) (not markdown?) (not as-image))
+    (if (and (memq backend (plist-get (alist-get language org-image-block-languages) :native)) (not markdown?) (not as-image))
         (pcase-let ((`(,preamble . ,body) (org--image-split source)))
           (org--image-raw language preamble body))
       (-if-let (path (org--image-file language source args anchor extension))
@@ -278,10 +309,10 @@ is shown already, remove it instead.  An edit to the block removes it too."
         (message "Rendered %s.{svg,pdf,png}" (file-relative-name base))))
     t))
 
-(org-def-action image (&optional (language "latex") &key file css width resolution)
+(org-def-action image (&optional (language "latex") &key file css width layout resolution)
   "Render the block as SVG, PDF, and PNG; show the PNG atop it; again, to remove it.  See `org--image-preview'."
   (org--image-preview (intern (downcase (format "%s" language))) (string-trim raw-contents)
-                      (list :file file :css css :width width :resolution resolution)
+                      (list :file file :css css :width width :layout layout :resolution resolution)
                       (org-element-property :name (org-special-block-at-point))))
 
 (provide 'org-image-block)

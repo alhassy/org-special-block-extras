@@ -173,3 +173,41 @@
           (with-temp-buffer (org-mode) (org--image-latex-pdf "" "x" nil pdf))
           (delete-file pdf)))
       (should (eq escape (and (member "-shell-escape" args) t))))))
+
+;;; svg and dot ---prose first: an HTML export that opens with <svg is put in `image-mode' by Org, which batch Emacs lacks
+
+(defconst org-image-test--svg "
+A gold bar:
+#+begin_image svg
+<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"20\"><rect width=\"40\" height=\"20\" fill=\"gold\"/></svg>
+#+end_image")
+
+(deftest "an svg image block, along HTML, is its SVG, raw; it is native there, as LaTeX is in LaTeX" [image]
+  (should (string-match-p "^<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"20\"><rect[^>]*/></svg>$"
+                          (org-export-string org-image-test--svg)))
+  (should (equal '(html) (plist-get (alist-get 'svg org-image-block-languages) :native)))
+  (should-not (plist-get (alist-get 'dot org-image-block-languages) :native)))
+
+(deftest "an svg image block, along LaTeX, is a PDF of itself, by rsvg-convert" [image]
+  (skip-unless (and (executable-find "rsvg-convert") (executable-find "pdftocairo")))
+  (org-image-test--in-temp-directory
+    (should (string-match-p "^\\\\includegraphics{images/image-[0-9a-f]\\{10\\}\\.pdf}$"
+                            (org-export-string org-image-test--svg 'latex)))))
+
+(deftest "a dot image block is an image everywhere: an SVG, inlined, in HTML; a PDF, in LaTeX" [image]
+  (skip-unless (and (executable-find "dot") (executable-find "pdftocairo")))
+  (org-image-test--in-temp-directory
+    (let ((dot "#+begin_image dot\ndigraph { Org -> HTML; Org -> LaTeX }\n#+end_image"))
+      (should (string-match-p "<img class=\"osbe-image\" alt=\"Rendered Graphviz\" src=\"data:image/svg\\+xml;base64,"
+                              (org-export-string dot)))
+      (should (string-match-p "^\\\\includegraphics{images/image-[0-9a-f]\\{10\\}\\.pdf}$" (org-export-string dot 'latex))))))
+
+(deftest "a dot image block's :layout chooses Graphviz's layout engine" [image]
+  (let (args)
+    (cl-letf (((symbol-function 'org--image-run) (lambda (prog &rest given) (when (equal prog "dot") (setq args given)))))
+      (org--image-dot-pdf "" "graph { a -- b }" '(:layout neato) "out.pdf"))
+    (should (equal (-take 4 args) '("-Kneato" "-Gbgcolor=transparent" "-Gpad=0.05" "-Tpdf")))))
+
+(deftest "an svg, or dot, image block has no preamble; a line of dashes in one is an error" [image]
+  (should-error (org--image-svg-pdf "<defs/>" "<svg/>" nil "out.pdf") :type 'user-error)
+  (should-error (org--image-dot-pdf "rankdir=LR" "digraph {}" nil "out.pdf") :type 'user-error))
