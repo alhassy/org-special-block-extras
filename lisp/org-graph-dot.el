@@ -130,11 +130,38 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
                                   (org--graph-all-stmts stmts)))))
     (--each-indexed groups (dolist (id it) (puthash id it-index (org--graph-ctx-ranks ctx))))))
 
+(defcustom org-graph-mindmap-palette '("#c9a7f5" "#f78fc4" "#8be9fd" "#69f07a" "#ffb86c" "#ff7b7b" "#a8e6a3")
+  "The fill colours of a `:mindmap t' graph's nodes, by depth: the root the first, its children the second, …; the
+palette repeats past its end.  A node's own fillcolor wins."
+  :type '(repeat color)
+  :group 'org-special-block-extras)
+
+(defun org--graph-mindmap-paint (ctx stmts)
+  "Fills each node CTX declares by its depth in STMTS' arcs, from `org-graph-mindmap-palette', save one with a fillcolor
+of its own.  A node no arc enters is a root, of depth 0; else its depth is one more than its shallowest parent's."
+  (let* ((nodes (org--graph-ctx-nodes ctx))
+         (arcs (--keep (pcase it (`(:edge ,src ,dst ,_) (cons (car (org--graph-endpoint src ctx))
+                                                             (car (org--graph-endpoint dst ctx)))))
+                       (org--graph-all-stmts stmts)))
+         (depths (make-hash-table :test #'equal))
+         (frontier (--remove (rassoc it arcs) (hash-table-keys nodes))))
+    (cl-loop for depth from 0 while frontier
+             do (dolist (id frontier) (puthash id depth depths))
+                (setq frontier (-uniq (--keep (and (member (car it) frontier) (not (gethash (cdr it) depths)) (cdr it))
+                                              arcs))))
+    (maphash (lambda (id entry)
+               (-when-let (depth (gethash id depths))
+                 (unless (assoc "fillcolor" (cdr entry))
+                   (puthash id (append entry `(("fillcolor" ,(nth (mod depth (length org-graph-mindmap-palette))
+                                                                   org-graph-mindmap-palette))))
+                            nodes))))
+             nodes)))
+
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
   "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
 
 It is a digraph, unless KWDARGS has `:directed nil', or `:mindmap t': an undirected graph, radiating from its first
-item, by Graphviz's twopi layout, its nodes rounded boxes.  `:wrap', `:notes', and `:unknown-tags' are as
+item, by Graphviz's twopi layout, its nodes rounded boxes filled by depth, see `org--graph-mindmap-paint'.  `:wrap', `:notes', and `:unknown-tags' are as
 `org--graph-parse' reads them; and `:unflatten N' staggers leaves, see `org-graph--unflatten'.
 MAIN-ARG is the graph's title, its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
 Header attributes come before the block's own #+graph:, #+node:, and #+edge: tables, so those tables win."
@@ -154,7 +181,11 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
                                                      ,@(-some--> (org--graph-first-node stmts) `(("root" ,it))))
                                                    (plist-get header :graph-rows))))
       (setq header (plist-put header :node-rows
-                              (org--graph-override '(("shape" "box") ("style" "rounded")) (plist-get header :node-rows)))))
+                              (org--graph-override '(("shape" "box") ("style" "rounded,filled") ("color" "gray40"))
+                                                   (plist-get header :node-rows))))
+      (setq header (plist-put header :edge-rows
+                              (org--graph-override '(("color" "gray50")) (plist-get header :edge-rows))))
+      (org--graph-mindmap-paint ctx stmts))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
       (setq preamble (plist-put preamble key (org--graph-override (plist-get header key) (plist-get preamble key)))))
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))

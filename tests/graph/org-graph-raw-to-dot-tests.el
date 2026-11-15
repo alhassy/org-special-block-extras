@@ -261,7 +261,7 @@
   + [[Animal]] :inherits:
 + <<Animal>> Animal" nil))))
 
-(deftest "a :mindmap t graph is undirected, by twopi, rooted at its first item, its nodes rounded; the header wins" [graph]
+(deftest "a :mindmap t graph is undirected, by twopi, rooted at its first item, its nodes rounded and filled; the header wins" [graph]
   (let ((dot (org--graph-raw->dot "
 + Org mode
   + Tables
@@ -269,4 +269,20 @@
     (should (string-prefix-p "graph {" dot))
     (should (string-search "Org -- Tables" (s-replace "\"Org mode\"" "Org" dot)))
     (should (string-search "layout=twopi overlap=false root=\"Org mode\" ranksep=2" dot))
-    (should (string-search "node [ shape=box style=rounded ]" dot))))
+    (should (string-search "node [ shape=box style=\"rounded,filled\" color=gray40 ]" dot))))
+
+(deftest "a :mindmap t graph fills each node by its depth, from `org-graph-mindmap-palette'; a node's own fillcolor wins" [graph]
+  (let* ((org-graph-mindmap-palette '("red" "green" "blue"))
+         (dot (org--graph-raw->dot "
++ Root
+  + Child
+    + Grandchild
+      + Great
+  + Own
+    | fillcolor | gold |" nil '(:mindmap t))))
+    (should (string-match-p "Root \\[ fillcolor=red label=Root \\]" dot))
+    (should (string-match-p "Child \\[ fillcolor=green label=Child \\]" dot))
+    (should (string-match-p "Grandchild \\[ fillcolor=blue label=Grandchild \\]" dot))
+    (should (string-match-p "Great \\[ fillcolor=red label=Great \\]" dot))
+    (should (string-match-p "Own \\[ fillcolor=gold label=Own \\]" dot))
+    (should (string-search "node [ shape=box style=\"rounded,filled\" color=gray40 ]" dot))))

@@ -1003,8 +1003,8 @@ crow's foot for “many” and the bar for “one”:
 ** A mindmap: an outline, radiating
 
 An Org outline already is a mindmap; ~:mindmap t~ merely draws it so: undirected, its first item at the
-centre, the rest radiating out by Graphviz's ~twopi~ layout, every node a rounded box. The header's own
-attributes still win; e.g., ~:ranksep 2~ spreads it out:
+centre, the rest radiating out by Graphviz's ~twopi~ layout, every node a rounded box filled by its depth,
+from ~org-graph-mindmap-palette~. The header's own attributes still win; e.g., ~:ranksep 2~ spreads it out:
 #+begin_graph :mindmap t :demo live
 + Org mode
   + Outlines
@@ -1018,6 +1018,39 @@ attributes still win; e.g., ~:ranksep 2~ spreads it out:
   + Export
     + HTML
     + LaTeX
+#+end_graph
+
+A mindmap may instead grow one way, as a tree: ~:layout dot :rankdir LR~ overrides the radial layout,
+~:splines curved~ softens its arcs, and ~:wrap 40~ keeps long thoughts narrow. Each depth keeps its colour,
+and a label's Org markup is shown as markup:
+#+begin_graph :mindmap t :layout dot :rankdir LR :splines curved :wrap 40 :demo live
++ Projects
+  + Defined as:
+    + Anything that can
+      + Be finished in 1 year
+      + Requires more than 1 step
+  + *Note:* A lot of what I list as tasks should be projects
+  + Project support material
+    + Best kept out of sight
+    + Next Action categories
+      + Next Action list
+        + Non-actionable items
+          + Trash
+            + Keeping trash will undermine system
+          + Incubate
+            + Someday/Maybe list
+            + Tickler file
+      + Waiting For list
+    + Calendar
+      + For tracking
+        + Time-specific actions
+          + Appointments
+        + Day-specific actions
+          + Things I need to do but don't have a set time
+        + Day-specific information
+          + Information useful for a certain date but not necessarily an action
+      + *Important:* /Don't keep to-do lists on the calendar!/
+        + If things that don't need to get done that day get tracked on the calendar, it will clutter and prevent getting done the things that do need to get done that day.
 #+end_graph
 
 ** A sequence diagram: lifelines, ranks, and a turned arrow

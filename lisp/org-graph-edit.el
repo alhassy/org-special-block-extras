@@ -125,7 +125,7 @@ non-nil to suppress the normal `org-return' behaviour."
   '((":file"     . "The image file C-c C-c and export write; else graph-HASH.png.")
     (":svg"      . "HTML export embeds an inline <svg>, its tooltips as prose's; with nil, a base64 PNG.")
     (":directed" . "With nil, an undirected graph, whose arcs are --; else a digraph.")
-    (":mindmap"  . "With t, a mindmap: undirected, radiating from the first item, by twopi; its nodes rounded boxes.")
+    (":mindmap"  . "With t, a mindmap: undirected, radiating from the first item, by twopi; its nodes coloured by depth.")
     (":wrap"     . "With N, node and arc labels fill to lines of N characters; one broken by \\\\ stays as written.")
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
