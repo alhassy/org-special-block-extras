@@ -87,43 +87,82 @@ Other backends, Markdown included, have no buttons, so they get the block as eve
 
 ;;;; :tab
 
-(defconst org--tab-style
-  (concat ".osbe-tabs { display: flex; flex-wrap: wrap; gap: 0.25em; margin-top: 1em;"
-          " border-bottom: 1px solid rgba(127,127,127,0.45); }"
-          " .osbe-tabs [role=tab] { font: inherit; padding: 0.35em 1em; margin-bottom: -1px; cursor: pointer;"
-          " border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0;"
-          " background: rgba(127,127,127,0.12); color: inherit; opacity: 0.75; }"
-          " .osbe-tabs [role=tab]:hover { opacity: 1; background: rgba(127,127,127,0.2); }"
-          " .osbe-tabs [role=tab]:focus-visible { outline: 2px solid Highlight; outline-offset: -2px; }"
-          " .osbe-tabs [role=tab][aria-selected=true] { opacity: 1; font-weight: bold; background: Canvas;"
-          " border-color: rgba(127,127,127,0.45); border-bottom: 1px solid Canvas; }"
-          " .osbe-tab[role=tabpanel] { border: 1px solid rgba(127,127,127,0.45); border-top: none;"
-          " border-radius: 0 0 6px 6px; padding: 0.25em 0.75em; margin-bottom: 1em; }"
-          " .osbe-tab[role=tabpanel] pre { margin: 0.5em 0; }")
+(defconst org--tab-style "
+.osbe-tabs {
+  display: flex; flex-wrap: wrap; gap: 0.25em; margin-top: 1em;
+  border-bottom: 1px solid rgba(127,127,127,0.45);
+}
+.osbe-tabs [role=tab] {
+  font: inherit; padding: 0.35em 1em; margin-bottom: -1px; cursor: pointer;
+  border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0;
+  background: rgba(127,127,127,0.12); color: inherit; opacity: 0.75;
+}
+.osbe-tabs [role=tab]:hover { opacity: 1; background: rgba(127,127,127,0.2); }
+.osbe-tabs [role=tab]:focus-visible { outline: 2px solid Highlight; outline-offset: -2px; }
+.osbe-tabs [role=tab][aria-selected=true] {
+  opacity: 1; font-weight: bold; background: Canvas;
+  border-color: rgba(127,127,127,0.45); border-bottom: 1px solid Canvas;
+}
+.osbe-tab[role=tabpanel] {
+  border: 1px solid rgba(127,127,127,0.45); border-top: none;
+  border-radius: 0 0 6px 6px; padding: 0.25em 0.75em; margin-bottom: 1em;
+}
+.osbe-tab[role=tabpanel] pre { margin: 0.5em 0; }
+"
   "The CSS of a tabset: tabs atop a rule, the selected one raised and joined to its bordered panel, as tabs look
 everywhere; in the page's own colours, `Canvas' and translucent greys, so a dark page suits it too.")
 
 (defconst org--tab-script
-  (concat "<script>(function () { if (window.osbeTabs) return; window.osbeTabs = true;"
-          " var style = document.createElement('style'); style.textContent = " (json-encode org--tab-style) ";"
-          " document.head.appendChild(style);"
-          " function tabs () { document.querySelectorAll('.osbe-tab').forEach(function (t) {"
-          " if (t.osbeTabbed) return; var group = [t], n = t.nextElementSibling;"
-          " while (n && n.classList.contains('osbe-tab')) { group.push(n); n = n.nextElementSibling; }"
-          " var bar = document.createElement('div'); bar.className = 'osbe-tabs'; bar.setAttribute('role', 'tablist');"
-          " t.parentNode.insertBefore(bar, t);"
-          " function select (i) { group.forEach(function (p, j) { p.hidden = i !== j;"
-          " bar.children[j].setAttribute('aria-selected', i === j); bar.children[j].tabIndex = i === j ? 0 : -1; }); }"
-          " group.forEach(function (panel, i) { panel.osbeTabbed = true; panel.setAttribute('role', 'tabpanel');"
-          " var title = panel.querySelector('.osbe-tab-title'); title.style.display = 'none';"
-          " var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');"
-          " b.innerHTML = (title.querySelector('strong') || title).innerHTML; b.onclick = function () { select(i); };"
-          ;; The arrow keys move between tabs, Home and End to the first and last, as the WAI-ARIA tabs pattern says.
-          " b.onkeydown = function (e) { var k = {ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: group.length - 1}[e.key];"
-          " if (k === undefined) return; e.preventDefault(); k = (k + group.length) % group.length;"
-          " select(k); bar.children[k].focus(); };"
-          " bar.appendChild(b); }); select(0); }); }"
-          " if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tabs); else tabs(); })();</script>")
+  (format "<script>
+(function () {
+  if (window.osbeTabs) return;
+  window.osbeTabs = true;
+  var style = document.createElement('style');
+  style.textContent = %s;
+  document.head.appendChild(style);
+  function tabs () {
+    document.querySelectorAll('.osbe-tab').forEach(function (t) {
+      if (t.osbeTabbed) return;
+      var group = [t], n = t.nextElementSibling;
+      while (n && n.classList.contains('osbe-tab')) { group.push(n); n = n.nextElementSibling; }
+      var bar = document.createElement('div');
+      bar.className = 'osbe-tabs';
+      bar.setAttribute('role', 'tablist');
+      t.parentNode.insertBefore(bar, t);
+      function select (i) {
+        group.forEach(function (p, j) {
+          p.hidden = i !== j;
+          bar.children[j].setAttribute('aria-selected', i === j);
+          bar.children[j].tabIndex = i === j ? 0 : -1;
+        });
+      }
+      group.forEach(function (panel, i) {
+        panel.osbeTabbed = true;
+        panel.setAttribute('role', 'tabpanel');
+        var title = panel.querySelector('.osbe-tab-title');
+        title.style.display = 'none';
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.innerHTML = (title.querySelector('strong') || title).innerHTML;
+        b.onclick = function () { select(i); };
+        // The arrow keys move between tabs, Home and End to the first and last, as the WAI-ARIA tabs pattern says.
+        b.onkeydown = function (e) {
+          var k = {ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: group.length - 1}[e.key];
+          if (k === undefined) return;
+          e.preventDefault();
+          k = (k + group.length) %% group.length;
+          select(k);
+          bar.children[k].focus();
+        };
+        bar.appendChild(b);
+      });
+      select(0);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tabs); else tabs();
+})();
+</script>" (json-encode org--tab-style))
   "The JavaScript that gathers each run of adjacent :tab blocks into one tabset, styled by `org--tab-style'; sans it,
 each is shown titled.")
 
