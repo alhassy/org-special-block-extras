@@ -72,6 +72,36 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
              (concat kind (org--graph-attrs->dot (if (equal kind "edge") rows (org--graph-filled rows))))))
          '(("graph" . :graph-rows) ("node" . :node-rows) ("edge" . :edge-rows))))
 
+(defvar org--graph-box-members nil
+  "While a container prints, the nodes inside it, nested boxes' included; else nil.")
+
+(defvar org--graph-box-edge-rows nil
+  "While a container prints, the #+edge: rows of the boxes and scopes enclosing the statement printing, outermost
+first; an arc printed outside them takes these rows along.")
+
+(defvar org--graph-hoisted nil
+  "While a container prints, the arcs leaving it, latest first, to be printed after it.")
+
+(defun org--graph-replace-rows (rows over)
+  "Returns ROWS with OVER's rows replacing those of the same key, as an inner edge [ … ] line replaces an outer's;
+unlike `org--graph-override', styles do not join, e.g. ((style dashed) (color red)) and ((style bold)) give
+((color red) (style bold))."
+  (append (--remove (assoc (car it) over) rows) over))
+
+(defun org--graph-endpoint-node (raw ctx)
+  "Returns the node an arc's endpoint RAW is drawn at, in CTX: a box's first node, else RAW's node, sans its port."
+  (let ((node (car (org--graph-endpoint raw ctx))))
+    (gethash node (org--graph-ctx-clusters ctx) node)))
+
+(defun org--graph-box-members (id stmts ctx)
+  "Returns the nodes inside box ID, whose statements are STMTS, in CTX: those STMTS declare, nested boxes' included,
+and those a :container_ID: tag gathers."
+  (append (--mapcat (pcase it
+                      (`(:node ,node) (list node))
+                      (`(:legend ,node . ,_) (list node (concat node "_end"))))
+                    (org--graph-all-stmts stmts))
+          (gethash id (org--graph-ctx-tag-clusters ctx))))
+
 (defun org--graph-stmt->dot (stmt op ctx)
   "STMT, a parsed graph statement, ↦ its dot lines; OP is the edge operator, \"->\" or \"--\"."
   (pcase stmt
@@ -82,8 +112,13 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
                       (org--graph-href id (org--graph-person (org--graph-filled (if (assoc "label" attrs) attrs (append attrs `(("label" ,name))))
                                                                            'node))
                                        ctx))))))
+    ;; Graphviz draws a node in the first box mentioning it, so an arc leaving the box is printed outside it.
     (`(:edge ,src ,dst ,attrs)
-     (list (org--graph-edge->dot src dst attrs op ctx)))
+     (if (and org--graph-box-members
+              (not (--all? (member (org--graph-endpoint-node it ctx) org--graph-box-members) (list src dst))))
+         (ignore (push `(:edge ,src ,dst ,(org--graph-replace-rows org--graph-box-edge-rows attrs))
+                       org--graph-hoisted))
+       (list (org--graph-edge->dot src dst attrs op ctx))))
     ;; A template that styles arcs is shown as a captioned arc between invisible points; any other, as a captioned node.
     ;; The arc runs along the graph's direction, as a same-rank one may lose its caption; e.g., under splines=curved.
     (`(:legend ,id ,rows ,label ,templates)
@@ -98,26 +133,36 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
     (`(:rank ,kind ,ids)
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
     (`(:scope ,scope ,stmts)
-     (let ((org--graph-filled-by-default (org--graph-filling-kinds scope)))
+     (let ((org--graph-filled-by-default (org--graph-filling-kinds scope))
+           (org--graph-box-edge-rows (org--graph-replace-rows org--graph-box-edge-rows (plist-get scope :edge-rows))))
        (list (format "subgraph {\n    %s\n  }"
                      (s-join "\n    " (append (org--graph-scope->dot scope)
                                               (--mapcat (org--graph-stmt->dot it op ctx) stmts)))))))
     (`(:cluster ,id . ,props)
      ;; A theme's container fills shade each depth apart, outermost first; the container's own fillcolor wins.
-     (let* ((fill (and org--graph-container-fills
-                       (nth (mod org--graph-container-depth (length org--graph-container-fills)) org--graph-container-fills)))
-            (attrs (org--graph-filled (if fill (org--graph-override `(("fillcolor" ,fill)) (plist-get props :attrs))
-                                        (plist-get props :attrs))
-                                      'graph))
-            (org--graph-container-depth (1+ org--graph-container-depth))
-            (org--graph-filled-by-default (org--graph-filling-kinds (plist-get props :scope))))
-       (list (format "subgraph %s {\n    %s\n  }" (org--graph-cluster-id id)
-                     (s-join "\n    "
-                             (append (list (concat "label=" (org--graph-dot-id (plist-get props :label))))
-                                     (-some--> (org--graph-href id attrs ctx)
-                                       (list (org--graph-attr-pairs it)))
-                                     (org--graph-scope->dot (plist-get props :scope))
-                                     (--mapcat (org--graph-stmt->dot it op ctx) (plist-get props :stmts))))))))))
+     (let (subgraph hoisted)
+       (let* ((fill (and org--graph-container-fills
+                         (nth (mod org--graph-container-depth (length org--graph-container-fills))
+                              org--graph-container-fills)))
+              (attrs (org--graph-filled (if fill (org--graph-override `(("fillcolor" ,fill)) (plist-get props :attrs))
+                                          (plist-get props :attrs))
+                                        'graph))
+              (org--graph-container-depth (1+ org--graph-container-depth))
+              (org--graph-filled-by-default (org--graph-filling-kinds (plist-get props :scope)))
+              (org--graph-box-members (org--graph-box-members id (plist-get props :stmts) ctx))
+              (org--graph-box-edge-rows (org--graph-replace-rows org--graph-box-edge-rows
+                                                                  (plist-get (plist-get props :scope) :edge-rows)))
+              (org--graph-hoisted nil))
+         (setq subgraph (format "subgraph %s {\n    %s\n  }" (org--graph-cluster-id id)
+                                (s-join "\n    "
+                                        (append (list (concat "label=" (org--graph-dot-id (plist-get props :label))))
+                                                (-some--> (org--graph-href id attrs ctx)
+                                                  (list (org--graph-attr-pairs it)))
+                                                (org--graph-scope->dot (plist-get props :scope))
+                                                (--mapcat (org--graph-stmt->dot it op ctx) (plist-get props :stmts)))))
+               hoisted org--graph-hoisted))
+       ;; Printed in the enclosing box, an arc leaving it too leaves that box in turn.
+       (cons subgraph (--mapcat (org--graph-stmt->dot it op ctx) (reverse hoisted)))))))
 
 (defun org--graph-note-ranks (ctx stmts)
   "Record in CTX each node's rank group, from STMTS' ranks, clusters' included.

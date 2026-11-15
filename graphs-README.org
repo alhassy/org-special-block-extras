@@ -967,6 +967,8 @@ table styles the box, and its ~#+node:~ and ~#+edge:~ set defaults within it:
   container lands on its first member, clipped at its border.
 - A reference among its children is an arc from the box, rather than a member; by way of example,
   ~+ uses :: [[T]]~.
+- A box holds only the nodes declared within it: a member's reference to a node elsewhere draws the arc
+  without pulling that node inside, though Graphviz would draw a node in the first box mentioning it.
 - An item of tags alone, ~+ :container:~, is an untitled box, with no label and no name to draw arcs to.
 - A container is a Graphviz /cluster/; ~| shape | cluster |~ is the same thing, spelled as a row.
 
