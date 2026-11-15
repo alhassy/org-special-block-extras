@@ -156,7 +156,7 @@ By (Symmetry).
 ;;; Bugs found en route
 
 (define-org-call-test "a badge sans colour is green, and sans logo asks for none"
-  :call (org-link/badge "key|value" nil 'html)
+  :call (org--badge-link "key|value" nil 'html)
   :returns "<img src=\"https://img.shields.io/badge/key-value-green\">")
 
 (deftest "a tooltip's Org is exported by Org, and a docstring is shown as written: (* 25) and /etc/ stay as is" [tooltip]

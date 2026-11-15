@@ -91,7 +91,7 @@ Have you noticed how blessed we are?
 "
            (format "🗣️ %s\n👀 %s\n🗯️ %s 👋" pleasantry to raw-contents))
 
-    (should (equal (documentation-property 'org-block/emoji-greet 'variable-documentation)
+    (should (equal (documentation-property 'org--emoji-greet-block 'variable-documentation)
 
                    "Greet someone, with a flair of emojis.
 
@@ -117,7 +117,7 @@ Have you noticed how blessed we are?
 "
            (format "🗣️ %s\n👀 %s\n🗯️ %s 👋" pleasantry to raw-contents))
 
-    (should (equal (documentation #'org-block/emoji-greet)
+    (should (equal (documentation #'org--emoji-greet-block)
 
                    "Greet someone, with a flair of emojis.
 
@@ -150,16 +150,16 @@ For example, upon LaTeX export, the Org special block
 
  is rewritten to the result of the call
 
-     (org-block/emoji-greet ‘latex \"Hello, world\")"))))
+     (org--emoji-greet-block ‘latex \"Hello, world\")"))))
 
 (deftest "a block's doc: link shows its docstring, in Emacs and as an HTML tooltip; issue #54" [docs]
   (using (org-defblock admonition (&optional type &key title &context contents)
            "Enclose text in a box denoting an admonition of TYPE, titled TITLE."
            (format "<section class=\"admonition-%s\"><h3>%s</h3>%s</section>" type (or title type) contents))
     (should (string-prefix-p "Enclose text in a box denoting an admonition"
-                             (cadr (org-docs-get "org-block/admonition"))))
+                             (cadr (org-docs-get "org--admonition-block"))))
     (should (string-match-p "<template><pre>Enclose text in a box denoting an admonition"
-                            (org-export-string "doc:org-block/admonition" 'html)))))
+                            (org-export-string "doc:org--admonition-block" 'html)))))
 
 (deftest "a block docstring's closing (fn …) line stays last, so C-h f shows it as the signature; issue #54" [docs]
   (using (org-defblock admonition (&optional type &key title &context contents)
@@ -167,8 +167,8 @@ For example, upon LaTeX export, the Org special block
 
 \(fn TYPE [:title TITLE])"
            contents)
-    (should (equal (help-split-fundoc (documentation 'org-block/admonition t) 'org-block/admonition)
-                   (cons "(org-block/admonition TYPE [:title TITLE])"
+    (should (equal (help-split-fundoc (documentation 'org--admonition-block t) 'org--admonition-block)
+                   (cons "(org--admonition-block TYPE [:title TITLE])"
                          "Enclose text in a box denoting an admonition.
 
 Regarding the Lisp function:
@@ -185,4 +185,4 @@ For example, upon LaTeX export, the Org special block
 
  is rewritten to the result of the call
 
-     (org-block/admonition `latex \"Hello, world\")")))))
+     (org--admonition-block `latex \"Hello, world\")")))))

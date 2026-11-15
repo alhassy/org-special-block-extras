@@ -93,7 +93,7 @@ Hello
 (define-org-call-test "cl-defun-style org-defblock-only handler binds main and keyword arguments"
   :call (using (org-defblock-only folded (&optional (title "More") &key style &context contents)
                  (format "%s|%s|%s" title style contents))
-          (org-block/folded 'html "body" nil :style "bold"))
+          (org--folded-block 'html "body" nil :style "bold"))
   :returns "#+begin_export html
 More|bold|
 #+end_export

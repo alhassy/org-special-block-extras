@@ -27,7 +27,7 @@
 ;; equation is tagged “(Fold)”, in teal, which [[Fold]] cites.  The \def line is a definition, declared but not
 ;; shown: in LaTeX, in the preamble; in HTML, for MathJax, hidden.  An Org table is a matrix; lines that end in \\ are
 ;; gathered; lines with an & are aligned at it, as in a textbook derivation.  In Emacs, C-c C-c shows the maths as an
-;; image atop the block, and C-c ' edits it in `latex-mode'.  See `org-block/math'.
+;; image atop the block, and C-c ' edits it in `latex-mode'.  See `org--math-block'.
 ;;
 ;; The block is assembled here from its parts: org-math-markup.el reads our links and Org's markup; org-math-structure.el
 ;; its comments, matrices, cases, tags, and definitions; org-math-hints.el a calculation's hints; and org-math-refs.el
@@ -274,7 +274,7 @@ shown already is left be.  Org's own images of the maths within a block, such as
         (let ((block-end (org-element-property :end (org-special-block-at-point))))
           (org-clear-latex-preview (line-beginning-position) block-end)
           ;; A block of only definitions shows nothing, which is no reason to stop showing the rest.
-          (ignore-error user-error (org--block-action-call #'org-action/math 'main-arg))
+          (ignore-error user-error (org--block-action-call #'org--math-action 'main-arg))
           (goto-char block-end))))))
 
 (provide 'org-math-block)

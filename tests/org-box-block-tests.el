@@ -4,7 +4,7 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
 (define-org-call-test "box block wraps content in a styled <div> for HTML."
-  :call (org-block/box 'html "inner text" nil)
+  :call (org--box-block 'html "inner text" nil)
   :returns "#+begin_export html
 <div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3></h3> 
 #+end_export
@@ -14,7 +14,7 @@ inner text
 #+end_export")
 
 (define-org-call-test "box block renders the title in an <h3> for HTML."
-  :call (org-block/box 'html "content" "My Box")
+  :call (org--box-block 'html "content" "My Box")
   :returns "#+begin_export html
 <div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\"> <h3>My Box</h3> 
 #+end_export
@@ -24,7 +24,7 @@ content
 #+end_export")
 
 (define-org-call-test "box block passes background-color to the HTML div style."
-  :call (org-block/box 'html "text" nil :background-color "blue")
+  :call (org--box-block 'html "text" nil :background-color "blue")
   :returns "#+begin_export html
 <div style=\"padding: 1em;background-color: #CCFFFF;border-radius: 15px;font-size: 0.9em;\"> <h3></h3> 
 #+end_export
@@ -34,7 +34,7 @@ text
 #+end_export")
 
 (define-org-call-test "box block uses tcolorbox for LaTeX."
-  :call (org-block/box 'latex "content" nil)
+  :call (org--box-block 'latex "content" nil)
   :returns "#+begin_export latex
 \\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}
 \\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={},colback=osbe-box-back,
@@ -47,7 +47,7 @@ content
 #+end_export")
 
 (define-org-call-test "box block passes the title to tcolorbox in LaTeX."
-  :call (org-block/box 'latex "content" "Title")
+  :call (org--box-block 'latex "content" "Title")
   :returns "#+begin_export latex
 \\colorlet{osbe-box-back}{red!5!white}\\colorlet{osbe-box-frame}{red!75!black}
 \\colorlet{osbe-box-title}{yellow!50!red}\\begin{tcolorbox}[title={Title},colback=osbe-box-back,
@@ -60,7 +60,7 @@ content
 #+end_export")
 
 (deftest "box block names hex colours via \\definecolor in LaTeX, since tcolorbox options reject #RRGGBB."
-  (let ((latex (org-block/box 'latex "content" nil :background-color "#CCFFCC" :frame-color 'blue)))
+  (let ((latex (org--box-block 'latex "content" nil :background-color "#CCFFCC" :frame-color 'blue)))
     (should (s-contains? "\\definecolor{osbe-box-back}{HTML}{CCFFCC}" latex))
     (should (s-contains? "\\colorlet{osbe-box-frame}{blue}" latex))
     (should-not (s-contains? "#CCFFCC" latex))))

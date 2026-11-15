@@ -131,7 +131,7 @@ a whole symbol; e.g., \"kbd:\" but not \"xkbd:\"."
   (let ((link (s-chop-suffix ":" (or (org-link-at-point) (user-error "Not on an Org link")))))
     (with-help-window (format "*Help: Org Link “%s”*" link)
       (princ (concat
-              (documentation (intern (format "org-link/%s" link)))
+              (documentation (intern (format "org--%s-link" link)))
               "\nKEY BINDINGS:\n"
               "\nUnless indicated below otherwise..."
               "\n\tC-h: Shows this helpful message buffer"
@@ -174,10 +174,10 @@ An argument written (NAME DEFAULT) falls back to DEFAULT when absent; e.g.,
 has the ARGLIST ().
 
 Since Org links are essentially string-valued functions,
-a function ‘org-link/NAME’ is created.
+a function ‘org--NAME-link’ is created.
 
 DOCSTRING is optional; it is visible with
-   (documentation 'org-link/NAME)
+   (documentation 'org--NAME-link)
 
 BODY is a string-valued expression, that may make use of ARGLIST's names.
 The backend is, e.g., \='html or \='latex; the label and description are
@@ -244,7 +244,7 @@ style, they form a vector DISPLAY between the docstring and BODY, such as
   know what/how the link exports, and actually see the HTML export.
 
   That is to say, for the ‘shout’ example above, the default display is essentially:
-  :help-echo (org-link/shout o-label o-description 'html)
+  :help-echo (org--shout-link o-label o-description 'html)
 
   You may want to add the following to your Emacs init file:
 
@@ -308,7 +308,7 @@ flat top-level plist with no enclosing vector:
     ;; Supported for now; will be removed in a future release. Use the flat
     ;; plist style with :export instead.
     (setq display (append display nil))
-    (let* ((org-link/NAME (intern (format "org-link/%s" name)))
+    (let* ((org--NAME-link (intern (format "org--%s-link" name)))
            (navigation "Press “C-h” to see possible actions on this link type.")
            ;; The ARGLIST's names, each paired with the anaphor it names; e.g., (o-label label o-label).
            (arg-lets (cl-loop for (arg anaphor default) in (org--deflink-parse-arglist arglist)
@@ -325,14 +325,14 @@ flat top-level plist with no enclosing vector:
                      ,(symbol-name name)
                      (or o-description o-label)
                      ,(concat (or docstring "") "\n\n" navigation "\n")
-                     (,org-link/NAME o-label o-description 'html))))
+                     (,org--NAME-link o-label o-description 'html))))
       (cl-flet ((scoped (form)
                   ;; FORM, seeing the :let names when it mentions them; so a constant :face, say, costs no :let
                   ;; on each redisplay.  The :let names come as a whole, since each may refer to the ones before.
                   (if (org--deflink-mentions-p form (mapcar #'car lets)) `(let* ,lets ,form) form)))
         `(progn
            ;; The underlying function, of label, description, and backend.
-           (defun ,org-link/NAME (o-label o-description o-backend)
+           (defun ,org--NAME-link (o-label o-description o-backend)
              ,docstring
              (let* ((o-backend (org--base-backend o-backend)) ,@backend-lets ,@lets)
                ,@body))
@@ -342,12 +342,12 @@ flat top-level plist with no enclosing vector:
                        ',keymap)))
            ;; Whether following these links does anything, and what more to say of them, for eldoc; see
            ;; `org--special-block-eldoc'.
-           (put ',org-link/NAME 'org-deflink-follows ,(and (plist-get display :follow) t))
-           (put ',org-link/NAME 'org-hover ,(plist-get display :hover))
-           (put ',org-link/NAME 'org-manual ,(plist-get display :manual))
+           (put ',org--NAME-link 'org-deflink-follows ,(and (plist-get display :follow) t))
+           (put ',org--NAME-link 'org-hover ,(plist-get display :hover))
+           (put ',org--NAME-link 'org-manual ,(plist-get display :manual))
            (org-link-set-parameters
             ,(symbol-name name)
-            :export #',org-link/NAME
+            :export #',org--NAME-link
             ;; How these links look, and what clicking them does, within Emacs; there is no description here.
             ;; Sans a :face of their own, they look as Org's links do, lest readers miss that they are clickable.
             :face (lambda (o-label) (let ((o-description nil)) (or ,(scoped (plist-get display :face)) 'org-link)))
@@ -378,7 +378,7 @@ flat top-level plist with no enclosing vector:
                                   `(or ,(scoped (plist-get display :help-echo)) ,help-echo-default)
                                 help-echo-default)))))
            ;; Return value is the name of the underlying function, as with `defun'.
-           ',org-link/NAME)))))
+           ',org--NAME-link)))))
 
 (provide 'org-deflink)
 ;;; org-deflink.el ends here

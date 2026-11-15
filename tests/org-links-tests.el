@@ -4,12 +4,12 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
 (define-org-call-test "melpa link produces an <a> pointing to melpa.org."
-  :call (org-link/melpa "some-pkg" nil 'html)
+  :call (org--melpa-link "some-pkg" nil 'html)
   :returns "<a href=\"https://melpa.org/#/some-pkg\"><img alt=\"MELPA\"
 src=\"https://img.shields.io/badge/some--pkg-Melpa-green?logo=Gnu-Emacs\"></img></a>")
 
 (define-org-call-test "kbd link wraps the label in <kbd> for HTML."
-  :call (org-link/kbd "C-x C-s" nil 'html)
+  :call (org--kbd-link "C-x C-s" nil 'html)
   :returns "<abbr class=\"tooltip\" tabindex=\"0\" style=\"border: none; text-decoration: none;\"><kbd
 style=\"border-color: red\">C-x C-s</kbd><template><pre>C-x C-s ∷ save-buffer
 Save current buffer in visited file if modified.
@@ -57,15 +57,15 @@ See the subroutine ‘basic-save-buffer’ for more information.
 (fn &amp;optional ARG)</pre></template></abbr>")
 
 (define-org-call-test "kbd link uses \\texttt for LaTeX."
-  :call (org-link/kbd "C-x_C-s" nil 'latex)
+  :call (org--kbd-link "C-x_C-s" nil 'latex)
   :returns "\\texttt{C-x C-s}")
 
 (define-org-call-test "badge link produces a shields.io img tag for HTML."
-  :call (org-link/badge "key|value|blue" nil 'html)
+  :call (org--badge-link "key|value|blue" nil 'html)
   :returns "<img src=\"https://img.shields.io/badge/key-value-blue\">")
 
 (define-org-call-test "badge link returns empty string for LaTeX."
-  :call (org-link/badge "key|value|blue" nil 'latex)
+  :call (org--badge-link "key|value|blue" nil 'latex)
   :returns "")
 
 (deftest "doc link wraps the label in an <abbr> tooltip for HTML."
@@ -73,7 +73,7 @@ See the subroutine ‘basic-save-buffer’ for more information.
         (org--docs-from-libraries nil)
         (org--docs-actually-used nil))
     (org-docs-set "testword" "Test Word" "A made-up glossary entry.")
-    (let ((result (org-link/doc "testword" nil 'html)))
+    (let ((result (org--doc-link "testword" nil 'html)))
       (should (string-match-p "<abbr" result))
       (should (string-match-p "Test Word" result)))))
 
@@ -113,7 +113,7 @@ A <a id=\"monoid\">monoid</a> is neat; every <a href=\"#monoid\">monoid</a> is.<
   (let ((org--docs '(("cat" "Category Theory" "Typed composition.")))
         (org--docs-from-libraries nil)
         (org--docs-actually-used nil))
-    (let ((citation (org-link/doc "cat" nil 'latex))
+    (let ((citation (org--doc-link "cat" nil 'latex))
           (glossary (org--docs-glossary #'ignore '(keyword (:key "PRINT_GLOSSARY")) nil
                                         (list :back-end (org-export-get-backend 'latex)))))
       (should (s-contains-p "\\label{o-glossary-declaration-site-cat}" citation))

@@ -8,9 +8,9 @@
                "Capitalize text"
                [:help-echo "SHOUT!"]
                (upcase (or description label)))
-  (should (fboundp 'org-link/shout))
-  (should (equal (org-link/shout "hi" nil 'html) "HI"))
-  (should (equal (org-link/shout "ho" "yo" 'html) "YO")))
+  (should (fboundp 'org--shout-link))
+  (should (equal (org--shout-link "hi" nil 'html) "HI"))
+  (should (equal (org--shout-link "ho" "yo" 'html) "YO")))
 
 (deftest "Ensure help-echo falls back to default when not explicitly provided."
   (org-deflink whisper () "Lowercase fallback")
@@ -24,7 +24,7 @@
                [:let (wraptag "<b>")
                      :help-echo "Boldify!"]
                (format "%s%s%s" wraptag (or description label) "</b>"))
-  (should (equal (org-link/boldwrap "yes" nil 'html) "<b>yes</b>")))
+  (should (equal (org--boldwrap-link "yes" nil 'html) "<b>yes</b>")))
 
 (deftest "Test that a custom face is evaluated and returns a plist."
   (org-deflink greenlink (label &optional description)
@@ -80,15 +80,15 @@
   :export label)
 
 (define-org-call-test "org-deflink binds the arglist's first name to the label"
-  :call (org-link/test-arg-shout "hi" nil 'html)
+  :call (org--test-arg-shout-link "hi" nil 'html)
   :returns "HI")
 
 (define-org-call-test "org-deflink binds the arglist's second name to the description"
-  :call (org-link/test-arg-shout "hi" "yo" 'html)
+  :call (org--test-arg-shout-link "hi" "yo" 'html)
   :returns "YO")
 
 (define-org-call-test "org-deflink falls back to an arglist default, and binds the third name to the backend"
-  :call (org-link/test-arg-whisper "HI" nil 'latex)
+  :call (org--test-arg-whisper-link "HI" nil 'latex)
   :returns "hi/psst/latex")
 
 (deftest "org-deflink arglist names reach the :face display form"

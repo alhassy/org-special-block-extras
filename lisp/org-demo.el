@@ -41,7 +41,7 @@
 ;; + In the large, a test suite: `org-demo-failures' checks every demo of a file, along every snapshotted backend:
 ;;       (ert-deftest manual () (should-not (org-demo-failures "manual.org")))
 ;;
-;; Its value says what else to show: `:demo t' nothing; `:demo org-block/box' the definition of `org-block/box',
+;; Its value says what else to show: `:demo t' nothing; `:demo org--box-block' the definition of `org--box-block',
 ;; folded away; `:demo (f v)' those of the function f and variable v.  A `live' demo, `:demo live', keeps no
 ;; snapshot: its rendering varies by machine, say, so it is rendered afresh each export and checks nothing; so C-c C-c
 ;; in it is the block's own, such as a graph's.

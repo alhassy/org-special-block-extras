@@ -16,7 +16,7 @@
 ;;; Commentary:
 
 ;; The `tree' block draws a natural-deduction inference tree from an Org list.  Calculational proofs
-;; are a math block's hints, “X ={ HINT } Y”; see `org-block/math'.
+;; are a math block's hints, “X ={ HINT } Y”; see `org--math-block'.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 

@@ -28,7 +28,7 @@ body
     (dolist (needle '("#+begin_details" "#+end_details"))
       (should (equal (org-test--eldoc-at text needle)
                      (list (string-join (append (list "Enclose contents in a folded up box, for HTML."
-                                                      (concat "\n" (org--hover-example 'org-block/details) "\n")
+                                                      (concat "\n" (org--hover-example 'org--details-block) "\n")
                                                       "C-c '    Edit the block in `org-mode'; C-c ' again writes it back.")
                                                 (org--block-switch-lines "details")
                                                 '("Docs · See the manual"))
@@ -76,21 +76,21 @@ hi
             (insert doc)
             (funcall push "Docs")
             (funcall push "See the manual")))
-        (should (eq described 'org-block/shy))
+        (should (eq described 'org--shy-block))
         (should (equal browsed "https://example.com/shy"))))))
 
 (deftest "a :manual of #ANCHOR is that section of our manual; and every block and link we ship has a :manual"
   (should (string-suffix-p "org-special-block-extras-blocks-and-links#math"
-                           (get-text-property 0 'help-echo (car (last (split-string (org--hover-footer 'org-block/math)
+                           (get-text-property 0 'help-echo (car (last (split-string (org--hover-footer 'org--math-block)
                                                                                     " · "))))))
   (let ((ours (expand-file-name "lisp/" "~/org-special-block-extras/")))
     (should-not
-     (cl-loop for symbol in (append (--map (intern (format "org-block/%s" it)) org--supported-blocks)
-                                    (--map (intern (format "org-link/%s" (car it))) org-link-parameters))
+     (cl-loop for symbol in (append (--map (intern (format "org--%s-block" it)) org--supported-blocks)
+                                    (--map (intern (format "org--%s-link" (car it))) org-link-parameters))
               when (and (fboundp symbol)
                         (string-prefix-p ours (or (symbol-file symbol 'defun) ""))
                         ;; A block's link shares its block's manual.
-                        (not (get (intern (string-replace "org-link/" "org-block/" (symbol-name symbol))) 'org-manual))
+                        (not (get (intern (concat (string-remove-suffix "-link" (symbol-name symbol)) "-block")) 'org-manual))
                         (not (get symbol 'org-manual)))
               collect symbol))))
 
@@ -121,9 +121,9 @@ C-c '" doc))
 
 (deftest "every block we ship has an :example, which exports to HTML sans error"
   (require 'org-graph-block)
-  (should-not (--remove (get (intern (format "org-block/%s" it)) 'org-example) org--supported-blocks))
+  (should-not (--remove (get (intern (format "org--%s-block" it)) 'org-example) org--supported-blocks))
   (dolist (block org--supported-blocks)
-    (should (stringp (org-export-string-as (get (intern (format "org-block/%s" block)) 'org-example) 'html t)))))
+    (should (stringp (org-export-string-as (get (intern (format "org--%s-block" block)) 'org-example) 'html t)))))
 
 (deftest "eldoc stays quiet inside a block's body, so typing there is not interrupted"
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))
@@ -131,7 +131,7 @@ C-c '" doc))
 (deftest "eldoc on a link shows its block's signature, else its `org-deflink' docstring"
   ;; A colour's example shows its link too.
   (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:"))
-                 (format "Show text in red color.\n\n%s\n\nDocs · See the manual" (org--hover-example 'org-block/red))))
+                 (format "Show text in red color.\n\n%s\n\nDocs · See the manual" (org--hover-example 'org--red-block))))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))
   (should (equal (plist-get (cdr (org-test--eldoc-at "See kbd:C-x here" "kbd:")) :thing) "kbd:"))
   ;; A link that does something when followed says so.

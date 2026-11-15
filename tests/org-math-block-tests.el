@@ -50,7 +50,7 @@
                  "\\text{by $\\textbf{induction}$, $\\textit{twice}$, on $\\texttt{n}$ and $\\boldsymbol{x}$}")))
 
 (define-org-call-test "a math block's matrix table may compute its entries by #+TBLFM:, which is Org's, not maths"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 M =
 | 1 | 2 | 3 |
 | 4 | 5 | 9 |
@@ -76,7 +76,7 @@ M =
   (should (string-match-p (regexp-quote "| 4 | 5 | 9 |") (buffer-string))))
 
 (define-org-call-test "a math block's hint may hold an Org table, a matrix, as a line of maths amid its prose"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 M ={ as
      | 1 | 0 |
      | 0 | 1 |
@@ -94,7 +94,7 @@ M &\\quad = \\quad I && \\begin{array}[t]{@{}l@{}} \\text{as} \\\\ \\begin{pmatr
 ;;; The block
 
 (define-org-call-test "a math block is display maths; in HTML, a < is escaped, lest it begin a tag"
-  :call (org-block/math 'html "
+  :call (org--math-block 'html "
 red:0 < 1" nil)
   :returns "#+begin_export html
 \\[
@@ -103,7 +103,7 @@ red:0 < 1" nil)
 #+end_export")
 
 (define-org-call-test "a math block's definitions are hidden in HTML, wherein MathJax reads them page-wide"
-  :call (org-block/math 'html "
+  :call (org--math-block 'html "
 \\def\\N{blue:\\mathbb{N}}
 0 \\in \\N" nil)
   :returns "#+begin_export html
@@ -114,7 +114,7 @@ red:0 < 1" nil)
 #+end_export")
 
 (define-org-call-test "a math block's definitions go to the LaTeX preamble; a block of only definitions shows nothing"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\newcommand{\\N}{\\mathbb{N}}" nil)
   :returns "#+latex_header: \\newcommand{\\N}{\\mathbb{N}}
 #+begin_export latex
@@ -154,7 +154,7 @@ By \\eqref{Distributivity of meet}.
 ")
 
 (define-org-call-test "a math block whose lines have an & is an align; its COLOUR:<<NAME>> a \\tag; its last \\ dropped"
-  :call (org-block/math 'latex "x &= x + 0 \\\\
+  :call (org--math-block 'latex "x &= x + 0 \\\\
 x + 0 &= 0 + x   blue:<<Symmetry>>" nil)
   :returns "#+begin_export latex
 \\begin{align*}
@@ -164,7 +164,7 @@ x + 0 &= 0 + x   \\tag{$\\color{blue}{\\text{Symmetry}}$} \\label{Symmetry}
 #+end_export")
 
 (define-org-call-test "an aligned math block that is :numbered t is LaTeX's align, sans a trailing \\ that would number an empty line"
-  :call (org-block/math 'latex "a &= b \\\\
+  :call (org--math-block 'latex "a &= b \\\\
 c &= d \\\\
 " nil :numbered t)
   :returns "#+begin_export latex
@@ -175,7 +175,7 @@ c &= d
 #+end_export")
 
 (define-org-call-test "an aligned math block escapes & and < in HTML, which MathJax then reads as LaTeX"
-  :call (org-block/math 'html "0 &< 1" nil)
+  :call (org--math-block 'html "0 &< 1" nil)
   :returns "#+begin_export html
 \\begin{align*}
 0 &amp;&lt; 1
@@ -183,7 +183,7 @@ c &= d
 #+end_export")
 
 (define-org-call-test "an aligned math block keeps its definitions and tables, as any math block does"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\def\\N{\\mathbb{N}}
 M &=
 | 1 & 0 |
@@ -213,7 +213,7 @@ By \\eqref{Implication}, p -> p.
 ;;; Cases ---whose & and \\ are their own, not the block's
 
 (define-org-call-test "a math block's \\begin{cases} keeps its & and \\\\, so the block is one equation, neither aligned nor gathered"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 n! = \\begin{cases}
 1 & n = 0 \\\\
 n \\cdot (n - 1)! & n > 0
@@ -228,7 +228,7 @@ n \\cdot (n - 1)! & n > 0
 #+end_export")
 
 (define-org-call-test "a math block's plain-TeX \\cases{…} keeps its &, so the block is one equation"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\lvert x \\rvert = \\cases{x & x \\geq 0 \\cr -x & x < 0}" nil :numbered t)
   :returns "#+begin_export latex
 \\begin{equation}
@@ -237,7 +237,7 @@ n \\cdot (n - 1)! & n > 0
 #+end_export")
 
 (define-org-call-test "a math block's lines may align at & around cases, whose own & and \\\\ are left be"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 f(n) &= \\begin{cases} 1 & n = 0 \\\\ 0 & n > 0 \\end{cases}   teal:<<Indicator>>
 g(n) &= 1 - f(n)" nil)
   :returns "#+begin_export latex
@@ -248,7 +248,7 @@ g(n) &= 1 - f(n)
 #+end_export")
 
 (define-org-call-test "a math block's lines that end in \\\\ around cases are gathered, by their own \\\\ alone"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a = \\begin{cases} 1 & p \\\\ 0 & q \\end{cases} \\\\
 b = 2" nil)
   :returns "#+begin_export latex
@@ -303,7 +303,7 @@ x[fn::the current element]
 
 (define-org-call-test "a math block's tooltips' <template>s follow its display, outside the maths MathJax reads"
   :call (cl-letf (((symbol-function 'gensym) (lambda (&rest _) "g1")))
-          (org-block/math 'html "
+          (org--math-block 'html "
 x[fn::the current element] < 1" nil))
   :returns "#+begin_export html
 \\[
@@ -364,7 +364,7 @@ n! =
 + 1")))
 
 (define-org-call-test "a math block's cases are LaTeX's own, whose & aligns no lines of the block"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\lvert x \\rvert =
 - x :: x ≥ 0
 - -x :: otherwise" nil)
@@ -376,7 +376,7 @@ n! =
 #+end_export")
 
 (define-org-call-test "a math block's “# …” lines are Org comments, which TeX would read as a macro's parameter"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 # The identity, for one.
 x = x" nil)
   :returns "#+begin_export latex
@@ -386,7 +386,7 @@ x = x
 #+end_export")
 
 (define-org-call-test "a math block's definition runs through the line that closes its braces; in HTML, it is escaped"
-  :call (org-block/math 'html "
+  :call (org--math-block 'html "
 \\newcommand{\\lt}[2]{
   #1 < #2}
 \\lt{a}{b}" nil)
@@ -399,7 +399,7 @@ x = x
 #+end_export")
 
 (define-org-call-test "a math block's multiline definition is one #+latex_header: line per line"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\newcommand{\\pair}[2]{
   \\langle #1, #2 \\rangle}" nil)
   :returns "#+latex_header: \\newcommand{\\pair}[2]{
@@ -409,7 +409,7 @@ x = x
 #+end_export")
 
 (define-org-call-test "a math block's Org table is a matrix, sans its rules; :matrix names its environment"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 I =
 | red:1 | 0 |
 |-------+---|
@@ -422,7 +422,7 @@ I =
 #+end_export")
 
 (define-org-call-test "a math block's lines that end in \\\\ are gathered; :numbered t numbers them"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a = b \\\\
 c = d" nil :numbered t)
   :returns "#+begin_export latex
@@ -433,7 +433,7 @@ c = d
 #+end_export")
 
 (define-org-call-test "a math block's COLOUR:<<NAME>> is a coloured \\tag, labelled NAME; tagged lines are gathered"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a = b   blue:<<One>>
 c = d   red:<<Two>>" nil)
   :returns "#+begin_export latex
@@ -453,7 +453,7 @@ By [[Base Case_1]]." 'html t)))
     (should (string-match-p (regexp-quote "By \\eqref{Base Caseu005f1}.") html))))
 
 (deftest "a math block's <<NAME>> sans colour is a plain \\tag; its brackets delimit it, so a hint's \\[ … \\] may hold one"
-  (should (string-match-p (regexp-quote "a = b   \\tag{One} \\label{One}") (org-block/math 'latex "a = b   <<One>>" nil)))
+  (should (string-match-p (regexp-quote "a = b   \\tag{One} \\label{One}") (org--math-block 'latex "a = b   <<One>>" nil)))
   ;; Within a hint's nested calculation, an aligned, a tag is no \\tag but NAME in brackets, anchored as MathJax's are.
   (let ((html (org-export-string-as "
 #+begin_math
@@ -471,7 +471,7 @@ By [[Base Case_1]]." 'html t)))
                           (org-export-string-as "#+begin_math\nx ={ as \\[ 0 + n = n <<Base Case>> \\] } y\n#+end_math" 'latex t))))
 
 (define-org-call-test "a math block that is :numbered t, of one line, is LaTeX's equation"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 e^{i\\pi} + 1 = 0" nil :numbered t)
   :returns "#+begin_export latex
 \\begin{equation}
@@ -583,7 +583,7 @@ c ={ by [[Golden Rule]], or [[Golden Rule][the rule]] } d
 ;;; Hints ---REL{ HINT } aligns its line at REL, the hint in a column of its own
 
 (define-org-call-test "a math block's “REL{ HINT }” aligns its line at REL, the HINT at the line's end, before its \\\\"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 (a + b)^2 ={ by expanding } a^2 + 2ab + b^2 \\\\
 ≥{ as squares are nonnegative } 2ab" nil :hints 'beside)
   :returns "#+begin_export latex
@@ -594,7 +594,7 @@ c ={ by [[Golden Rule]], or [[Golden Rule][the rule]] } d
 #+end_export")
 
 (define-org-call-test "a math block's line before a hint's ends there, since a hint begins a step; so it needs no \\\\"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 p \\land q ={ Golden Rule } p = q = p \\lor q
           ={ by symmetry } q \\land p \\\\
           ={ by me and my ideas } p \\land q" nil :hints 'beside)
@@ -608,11 +608,11 @@ p \\land q &\\quad = \\quad p = q = p \\lor q && \\text{Golden Rule} \\\\
 
 (deftest "a math block's step runs from one hint to the next, wherever its newlines fall; as LaTeX reads them, they are spaces"
   (let ((squeeze (lambda (s) (replace-regexp-in-string "[ \t\n]+" " " s))))
-    (should (equal (funcall squeeze (org-block/math 'latex "
+    (should (equal (funcall squeeze (org--math-block 'latex "
 p \\land q ={ Golden Rule } p = q = & p \\lor q
           ={ by symmetry } q \\land & p
           ={ by me and my ideas } & p \\land q" nil))
-                   (funcall squeeze (org-block/math 'latex "
+                   (funcall squeeze (org--math-block 'latex "
   p \\land q
 ={ Golden Rule }
   p = q = & p \\lor q
@@ -622,7 +622,7 @@ p \\land q ={ Golden Rule } p = q = & p \\lor q
 & p \\land q" nil))))))
 
 (define-org-call-test "a math block's hint goes at its step's end, before the tag there; a step may begin a line's middle"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\def\\N{\\mathbb{N}}
 p \\land q
 ={ Golden Rule }
@@ -639,7 +639,7 @@ p = q && \\text{Golden Rule}   \\tag{$\\color{blue}{\\text{Step}}$} \\label{Step
 #+end_export")
 
 (define-org-call-test "a math block's definition right before a hint's line is left be, as no line of maths"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\def\\N{\\mathbb{N}}
 x ={ by definition } \\N" nil :hints 'beside)
   :returns "#+latex_header: \\def\\N{\\mathbb{N}}
@@ -650,7 +650,7 @@ x &\\quad = \\quad \\N && \\text{by definition}
 #+end_export")
 
 (define-org-call-test "a math block's hint comes before its line's tag; a hint may hold {groups} of its own"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 x ={ by {IH} } y   blue:<<Step>>" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
@@ -670,7 +670,7 @@ p &\\quad \\equiv \\quad q && \\text{by definition}
 ")
 
 (define-org-call-test "a math block's hint may span lines, its { followed by a newline; it shows on those lines"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\zero + \\suc \\zero
   ={
 Addition moves the $\\suc$-s from the left argument to the
@@ -687,7 +687,7 @@ argument to the} \\\\ \\text{right.} \\end{array}
 #+end_export")
 
 (define-org-call-test "a math block's hint keeps its blank lines, as gaps between its paragraphs"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 x ={ First, this.
 
      Then, that. } y" nil :hints 'beside)
@@ -699,7 +699,7 @@ x &\\quad = \\quad y && \\begin{array}[t]{@{}l@{}} \\text{First, this.} \\\\  \\
 #+end_export")
 
 (define-org-call-test "a math block's hint may hold a nested calculation, \\[ … \\], its own hints read alike"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 x ={ Why? Let me explain:
      \\[    x
         ={ hint 1 } x′
@@ -715,7 +715,7 @@ there.} \\end{array}
 #+end_export")
 
 (define-org-call-test "a math block's nested calculation may nest a calculation in turn"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a ={ \\[ a ={ \\[ a ={ inmost } b \\] } b \\] } b" nil :hints 'beside)
   :returns "#+begin_export latex
 \\begin{align*}
@@ -725,7 +725,7 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 #+end_export")
 
 (define-org-call-test "a math block :hints between sets each hint on a row of its own, between the expressions it relates"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 \\def\\N{\\mathbb{N}}
   x
 ={ why x is y } y   blue:<<Step>>
@@ -743,13 +743,13 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 #+end_export")
 
 (deftest "a math block's hint in HTML is clickable, to fold it to …, its tooltip saying so; LaTeX's is no such thing"
-  (let ((html (org-block/math 'html "x ={ h } y" nil :hints 'beside)))
+  (let ((html (org--math-block 'html "x ={ h } y" nil :hints 'beside)))
     (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint}{\\class{osbe-hint-body}{\\text{h}}\\class{osbe-hint-fold}{[\\,\\cdots\\,]}}")
                             html)))
   ;; Between expressions, the fold is a closed bracket in the hint's maroon, not the open bracket of a tall hint.
   (should (string-match-p (regexp-quote "\\class{osbe-hint-fold}{{\\color[RGB]{128,0,0} [\\,\\cdots\\,]}}")
-                          (org-block/math 'html "x ={ h } y" nil)))
-  (should-not (string-match-p "class" (org-block/math 'latex "x ={ h } y" nil))))
+                          (org--math-block 'html "x ={ h } y" nil)))
+  (should-not (string-match-p "class" (org--math-block 'latex "x ={ h } y" nil))))
 
 (deftest "a page whose maths has hints carries their tip and the script by which a click folds them, in its head"
   (let* ((page (org-export-string-as "#+begin_math\nx ={ h } y\n#+end_math" 'html))
@@ -771,28 +771,28 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
 
 (deftest "a math block's :hints sets them between its expressions, maroon and bracketed; or beside, plain; or none"
   (should (string-match-p (regexp-quote "= & \\quad {\\color[RGB]{128,0,0} \\left[ \\text{h} \\right.}")
-                          (org-block/math 'latex "x ={ h } y" nil)))
-  (should (string-match-p (regexp-quote "&& \\text{h}\n") (org-block/math 'latex "x ={ h } y" nil :hints 'beside)))
+                          (org--math-block 'latex "x ={ h } y" nil)))
+  (should (string-match-p (regexp-quote "&& \\text{h}\n") (org--math-block 'latex "x ={ h } y" nil :hints 'beside)))
   ;; A list gives the layout a format of our own, its %s the hint; a colour is LaTeX's, within it.
   (should (string-match-p (regexp-quote "&& {\\color{teal} \\langle \\text{h} \\rangle}")
-                          (org-block/math 'latex "x ={ h } y" nil :hints '(beside "{\\color{teal} \\langle %s \\rangle}"))))
+                          (org--math-block 'latex "x ={ h } y" nil :hints '(beside "{\\color{teal} \\langle %s \\rangle}"))))
   ;; none hides hints from the export; their steps remain, as a compact chain.
-  (let ((hidden (org-block/math 'latex "x ={ h } y" nil :hints 'none)))
+  (let ((hidden (org--math-block 'latex "x ={ h } y" nil :hints 'none)))
     (should-not (string-match-p "\\\\text{h}" hidden))
     (should (string-match-p (regexp-quote "x &\\quad = \\quad y\n") hidden))))
 
 (deftest "a math block's :hints may be folded, so a page's reader clicks to see each; LaTeX, sans clicks, shows them"
   (should (string-match-p (regexp-quote "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}")
-                          (org-block/math 'html "x ={ h } y" nil :hints '(between folded))))
+                          (org--math-block 'html "x ={ h } y" nil :hints '(between folded))))
   ;; Folding hides the whole hint, its format's tall bracket too; the fold is the format about a lone ⋯.
   (should (string-match-p (regexp-quote (concat "\\class{tooltip osbe-tip-hint osbe-hint osbe-folded}"
                                                 "{\\class{osbe-hint-body}{{\\color{teal} \\langle \\text{h} \\rangle}}"
                                                 "\\class{osbe-hint-fold}{{\\color{teal} \\langle \\cdots \\rangle}}}"))
-                          (org-block/math 'html "x ={ h } y" nil :hints '(between "{\\color{teal} \\langle %s \\rangle}" folded))))
-  (should (string-match-p (regexp-quote "\\text{h}") (org-block/math 'latex "x ={ h } y" nil :hints '(between folded)))))
+                          (org--math-block 'html "x ={ h } y" nil :hints '(between "{\\color{teal} \\langle %s \\rangle}" folded))))
+  (should (string-match-p (regexp-quote "\\text{h}") (org--math-block 'latex "x ={ h } y" nil :hints '(between folded)))))
 
 (define-org-call-test "a math block's REL{GROUP}, ^{ 2 }, \\frac{ a }{ b }, and a REL{ … } within cases are no hints"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 x ={a} + \\frac{ a }{ b }^{ 2 } = \\begin{cases} y ={ no } z & p \\end{cases}" nil)
   :returns "#+begin_export latex
 \\[
@@ -819,7 +819,7 @@ x ={a} + \\frac{ a }{ b }^{ 2 } = \\begin{cases} y ={ no } z & p \\end{cases}
 ")
 
 (define-org-call-test "a math block's :environment names its environment, its arguments too, overruling what its lines imply"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a &= b & c &= d \\\\
 e &= f & g &= h" nil :environment "alignat*{2}")
   :returns "#+begin_export latex
@@ -846,7 +846,7 @@ By \\eqref{Long}.
 ")
 
 (define-org-call-test "a math block :numbered once whose lines are gathered is one equation, gathered"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 a = 1 \\\\
 b = 2" nil :numbered 'once)
   :returns "#+begin_export latex
@@ -859,7 +859,7 @@ b = 2
 #+end_export")
 
 (define-org-call-test "a math block :numbered once takes its one tag out of the split, onto the whole equation"
-  :call (org-block/math 'latex "
+  :call (org--math-block 'latex "
 x &= y   blue:<<Sym>>
 &= z" nil :numbered 'once)
   :returns "#+begin_export latex
@@ -872,7 +872,7 @@ x &= y \\\\
 #+end_export")
 
 (deftest "a math block :numbered once refuses two tags, as one equation has one number"
-  (should-error (org-block/math 'latex "x &= y   blue:<<A>>\n&= z   red:<<B>>" nil :numbered 'once) :type 'user-error))
+  (should-error (org--math-block 'latex "x &= y   blue:<<A>>\n&= z   red:<<B>>" nil :numbered 'once) :type 'user-error))
 
 ;;; Inline maths ---$…$ reads our markup too
 

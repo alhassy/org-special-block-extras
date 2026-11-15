@@ -162,7 +162,7 @@
   (let* ((default-directory (make-temp-file "org-graph-" t "/"))
          (hash (substring (md5 (org--graph-raw->dot "
 + A" nil)) 0 12))
-         (export (lambda (backend) (org-block/graph backend "
+         (export (lambda (backend) (org--graph-block backend "
 + A" nil nil))))
     (should (equal (funcall export 'ascii) (funcall export 'ascii)))
     (should (s-contains-p (format ":file graph-%s.png" hash) (funcall export 'ascii)))
@@ -170,7 +170,7 @@
 
 (deftest "exporting to LaTeX includes the graph as a PDF, by dot, shrunk only when wider than the line"
   (let* ((default-directory (make-temp-file "org-graph-" t "/"))
-         (latex (org-block/graph 'latex "
+         (latex (org--graph-block 'latex "
 + A
   + B" nil nil)))
     (should (string-match "\\\\includegraphics{\\(graph-[0-9a-f]+\\.pdf\\)}" latex))

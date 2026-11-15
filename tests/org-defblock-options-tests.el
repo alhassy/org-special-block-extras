@@ -6,8 +6,8 @@
 (defun org-test--made-by (name)
   "NAME ↦ which of a block, link, and tag `org-defblock' made for NAME; e.g., (:block t :link t :tag nil)."
   (list :block (and (memq name org--supported-blocks) t)
-        :link  (fboundp (intern (format "org-link/%s" name)))
-        :tag   (fboundp (intern (format "org-deftag/%s" name)))))
+        :link  (fboundp (intern (format "org--%s-link" name)))
+        :tag   (fboundp (intern (format "org--%s-tag" name)))))
 
 ;;; Which of block, link, and tag get made
 
@@ -97,10 +97,10 @@ body
   (using (org-defblock late (&optional (who "you") &context contents) "Greet WHO." (format "Hi %s: %s" who contents))
     (org-defblock-attribute late :hover "Say hi.")
     (org-defblock-attribute late :manual "https://example.com/late")
-    (should (equal (get 'org-block/late 'org-hover) "Say hi."))
-    (should (equal (get 'org-block/late 'org-manual) "https://example.com/late"))
+    (should (equal (get 'org--late-block 'org-hover) "Say hi."))
+    (should (equal (get 'org--late-block 'org-manual) "https://example.com/late"))
     ;; The block itself, its main argument's default and all, is as it was.
-    (should (s-contains-p "Hi you: " (org-block/late 'html "there"))))
+    (should (s-contains-p "Hi you: " (org--late-block 'html "there"))))
   (should (string-match-p "no org-defblock"
                           (cadr (should-error (org-defblock-attribute no-such-block :hover "Hi."))))))
 

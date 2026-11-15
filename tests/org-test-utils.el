@@ -8,12 +8,6 @@
 ;; 2015-04-08 Emacs Lisp Development Tips with John Wiegley
 ;; https://sachachua.com/blog/2015/04/2015-04-08-emacs-lisp-development-tips-with-john-wiegley/
 
-;; TODO: Follow “Emacs Lisp Coding Conventions”, e.g., use “org-block--𝒮” not
-;; “org-block/𝒮”! Why? Because the defun is an internal implementation detail
-;; and so its name should reflect that intent.
-;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Coding-Conventions.html
-
-
 ;; TODO: See ~/html.el/html.el
 
 
@@ -156,7 +150,7 @@ This is a poor-man's `cl-letf'."
   "Error when one of DEFS, (org-defblock NAME …) forms, names an existing block; e.g., the built-in `note'.
 A test's cleanup undefines its blocks, which would take the built-in with it, for every later test."
   (dolist (def defs)
-    (when (fboundp (intern (format "org-block/%s" (cadr def))))
+    (when (fboundp (intern (format "org--%s-block" (cadr def))))
       (error "A test's temporary block “%s” would clobber an existing one; pick another name" (cadr def)))))
 
 ;;; Org's random ids, sanitised
@@ -307,7 +301,7 @@ both sides are filled by `org-test--fill', so EQUALS is stored, and read, at the
 ;;; define-org-call-test — relational test fixture for handler calls
 
 (snap-define-relation org-call (call returns)
-  "Evaluating CALL ---e.g., (org-block/box 'html \"hi\" nil)--- yields RETURNS, modulo trailing whitespace per line.
+  "Evaluating CALL ---e.g., (org--box-block 'html \"hi\" nil)--- yields RETURNS, modulo trailing whitespace per line.
 A string is compared, and stored, filled by `org-test--fill' and sans text properties, which `equal' ignores anyway."
   (let ((actual (eval call t))
         ;; A string with a \command{ is LaTeX, which `org-test--fill' may also break at commas and between } and \.

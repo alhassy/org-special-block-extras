@@ -125,7 +125,7 @@ Inner.
 
 (deftest "a demo naming a symbol folds away its definition, wherever it is defined" [demo]
   (let ((html (org-export-string "
-#+begin_box :demo org-block/box
+#+begin_box :demo org--box-block
 Hi
 #+end_box")))
     (should (string-match-p "﴾How It’s Implemented﴿</summary> <div class=\"org-src-container\">\n<pre class=\"src src-emacs-lisp\"><code>(.*org-defblock.* box (.*&amp;optional.* (title" html))))

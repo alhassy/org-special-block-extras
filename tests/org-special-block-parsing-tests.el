@@ -66,7 +66,7 @@
                     #+end_foo
                     End")
   :at "#+begin_foo"
-  (cl-letf (((symbol-function 'org-block/foo)
+  (cl-letf (((symbol-function 'org--foo-block)
              (lambda (backend contents arg &rest args)
                (format "REPLACED: %s | %s | %s | %s" backend contents arg args))))
     ;; Identify the block boundaries, manually
@@ -98,7 +98,7 @@
                     2. Why we ask ‘why’?
 
                     Take care!")
-  (cl-letf (((symbol-function 'org-block/foo)
+  (cl-letf (((symbol-function 'org--foo-block)
              (lambda (backend contents arg &rest args)
                (format "+ Args: %s %s\n+ Contents: %s" arg args (s-trim contents)))))
     (-let* ((block (org-special-block-after-point))

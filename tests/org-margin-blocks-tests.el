@@ -4,21 +4,21 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
 (define-org-call-test "tooltip block produces an <abbr> tooltip in HTML."
-  :call (org-block/tooltip 'html "tip text" "°")
+  :call (org--tooltip-block 'html "tip text" "°")
   :returns "#+begin_export html
 <abbr class=\"tooltip\" tabindex=\"0\">°<template><p>
 tip text</p></template></abbr>&emsp13;
 #+end_export")
 
 (define-org-call-test "margin block produces an <abbr> tooltip for HTML."
-  :call (org-block/margin 'html "note text" nil :marker "†" :counter "footnote")
+  :call (org--margin-block 'html "note text" nil :marker "†" :counter "footnote")
   :returns "#+begin_export html
 <abbr class=\"tooltip\" tabindex=\"0\">†<template><p>
 note text</p></template></abbr>&emsp13;
 #+end_export")
 
 (define-org-call-test "margin block, in LaTeX, is its marker followed by a \\marginpar numbered as footnotes are."
-  :call (org-block/margin 'latex "note" nil :marker "†" :counter "footnote")
+  :call (org--margin-block 'latex "note" nil :marker "†" :counter "footnote")
   :returns "#+begin_export latex
 †\\refstepcounter{footnote}${}^{\\textnormal{{\\thefootnote}}}$\\newsavebox{\\OrgSpecialBlockExtrasMarginBox}\\begin{lrbox}{\\OrgSpecialBlockExtrasMarginBox}\\begin{minipage}{\\marginparwidth}
 \\raggedright\\footnotesize\\ifdefined\\setminted\\setminted{fontsize=\\footnotesize, breaklines}
@@ -33,10 +33,10 @@ note
 #+end_export")
 
 (deftest "tooltip is an alias of margin: the same block, link, and tag, under the name HTML thinks in" [alias]
-  (should (equal (org-block/tooltip 'latex "note" "word") (org-block/margin 'latex "note" "word")))
+  (should (equal (org--tooltip-block 'latex "note" "word") (org--margin-block 'latex "note" "word")))
   (should (memq 'tooltip org--supported-blocks))
   (should (org-link-get-parameter "tooltip" :export))
-  (should (s-contains-p "An alias of" (documentation 'org-block/tooltip t))))
+  (should (s-contains-p "An alias of" (documentation 'org--tooltip-block t))))
 
 (deftest "a footnote reference is a tooltip of its definition, exported as the rest of the page is; the id stays" [footnote]
   (let ((html (org-export-string "

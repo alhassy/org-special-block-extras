@@ -118,7 +118,7 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
 (deftest "LaTeX export typesets a smartdiagram in place, and asks for smartdiagram in the preamble"
   (with-temp-buffer
     (let ((org--latex-head-used nil))
-      (should (s-contains-p "\\begin{center}\n{" (org-block/graph 'latex "\n+ A\n+ B" nil :smartdiagram 'flow)))
+      (should (s-contains-p "\\begin{center}\n{" (org--graph-block 'latex "\n+ A\n+ B" nil :smartdiagram 'flow)))
       (should (member "smartdiagram" org--latex-head-used)))))
 
 ;;; Completion and eldoc

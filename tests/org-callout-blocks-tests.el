@@ -64,7 +64,7 @@ Use \\texttt{C-h k} to learn what a key does.
   (pcase-dolist (`(,name . ,_) org-callouts)
     (should (equal (org-block-signature name) (format "#+begin_%s TITLE=%S" name (capitalize (symbol-name name)))))
     (should-not (org-link-get-parameter (symbol-name name) :export))
-    (should-not (fboundp (intern (format "org-deftag/%s" name))))))
+    (should-not (fboundp (intern (format "org--%s-tag" name))))))
 
 (provide 'org-callout-blocks-tests)
 ;;; org-callout-blocks-tests.el ends here

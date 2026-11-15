@@ -8,11 +8,11 @@
   (exporting "A B C D" :to ascii :equals "A P C T" :modulo ("P" "T"))
 
   ;; No pollution of global namespace
-  ;; (should-not (fboundp 'org-block/shouting))
-  ;; (should-not (fboundp 'org-link/shouting))
+  ;; (should-not (fboundp 'org--shouting-block))
+  ;; (should-not (fboundp 'org--shouting-link))
   (exporting "shouting:hello" :to ascii :using (org-defblock shouting (&optional wat) "docs" (upcase wat)) :equals "HELLO\n")
-  (should-not (fboundp 'org-block/shouting))
-  (should-not (fboundp 'org-link/shouting))
+  (should-not (fboundp 'org--shouting-block))
+  (should-not (fboundp 'org--shouting-link))
 
   ;; :using may be omitted
   (exporting "shouting:hello" :to ascii :equals "<shouting:hello>\n")

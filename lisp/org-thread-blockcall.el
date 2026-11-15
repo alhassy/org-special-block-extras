@@ -36,12 +36,12 @@
 ;; org-defblock.el, is to blocks what `funcall' is to functions.
 ;;
 ;; Why not simply compose the handlers?  Every (org-defblock B …) gives rise to
-;; a function `org-block/B' : backend × raw-contents × main-arg × keys → String,
+;; a function `org--B-block' : backend × raw-contents × main-arg × keys → String,
 ;; so it seems the body above could just be
 ;;
-;;     (org-block/details backend
-;;       (org-block/box backend
-;;         (org-block/details backend raw-contents really :title-color "red")
+;;     (org--details-block backend
+;;       (org--box-block backend
+;;         (org--details-block backend raw-contents really :title-color "red")
 ;;         reprimand :background-color "blue")
 ;;       title)
 ;;

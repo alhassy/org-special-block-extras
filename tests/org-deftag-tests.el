@@ -8,12 +8,12 @@
 (org-deftag test-shout (&optional color size)
   "Replace the heading with what the tag received."
   (insert (format "[%s | %s | %s | %s]" o-heading color size o-backend)))
-(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-shout)
+(remove-hook 'org-export-before-parsing-functions #'org--test-shout-tag)
 
 (snap-define-relation org-deftag (input output)
-  "Running `org-deftag/test-shout' over the Org INPUT yields OUTPUT, modulo trailing whitespace per line."
+  "Running `org--test-shout-tag' over the Org INPUT yields OUTPUT, modulo trailing whitespace per line."
   (let ((actual (with-org-test-buffer (:text (lf-string input))
-                  (org-deftag/test-shout 'html)
+                  (org--test-shout-tag 'html)
                   (buffer-string)))
         (trim (lambda (s) (replace-regexp-in-string "[ \t]+$" "" s))))
     (should (equal (funcall trim output) (funcall trim actual)))
@@ -111,10 +111,10 @@
 :Custom_Id: x
 :END:
 ")
-        (org-deftag/test-props 'html)
+        (org--test-props-tag 'html)
         (should (equal "blue" (plist-get (car (read-from-string (buffer-string))) :color)))
         (should (equal "x" (plist-get (car (read-from-string (buffer-string))) :custom_id))))
-    (remove-hook 'org-export-before-parsing-functions #'org-deftag/test-props)))
+    (remove-hook 'org-export-before-parsing-functions #'org--test-props-tag)))
 
 (deftest "org-deftag runs during export, receiving the export backend as o-backend"
   (org-deftag test-backend ()
@@ -124,19 +124,19 @@
       (progn
         (should (s-contains-p "Exported to latex." (org-export-string "* Heading :test-backend:" 'latex)))
         (should (s-contains-p "Exported to html." (org-export-string "* Heading :test-backend:" 'html))))
-    (remove-hook 'org-export-before-parsing-functions #'org-deftag/test-backend)))
+    (remove-hook 'org-export-before-parsing-functions #'org--test-backend-tag)))
 
 (deftest "org-deftag returns its function and hooks it into export"
   (let ((org-export-before-parsing-functions nil))
-    (should (eq #'org-deftag/test-hooked (org-deftag test-hooked () "Do nothing." nil)))
-    (should (memq #'org-deftag/test-hooked org-export-before-parsing-functions))))
+    (should (eq #'org--test-hooked-tag (org-deftag test-hooked () "Do nothing." nil)))
+    (should (memq #'org--test-hooked-tag org-export-before-parsing-functions))))
 
 ;;; Arglists: cl-defun-style, with defaults and &key
 
 (org-deftag test-cl (&optional (color "pink") size &key (note "none"))
   "Replace the heading with COLOR, SIZE, and NOTE."
   (insert (format "[%s | %s | %s]" color size note)))
-(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-cl)
+(remove-hook 'org-export-before-parsing-functions #'org--test-cl-tag)
 
 (defun org-test--run-tag (tag input)
   "(TAG, INPUT) ↦ the Org INPUT after running the tag function TAG over it, for HTML."
@@ -145,18 +145,18 @@
     (s-trim (buffer-string))))
 
 (define-org-call-test "cl-defun-style org-deftag falls back to &optional defaults"
-  :call (org-test--run-tag #'org-deftag/test-cl "* Heading :test-cl:")
+  :call (org-test--run-tag #'org--test-cl-tag "* Heading :test-cl:")
   :returns "[pink | nil | none]")
 
 (define-org-call-test "cl-defun-style org-deftag binds &key arguments from properties only, never from tag items"
-  :call (org-test--run-tag #'org-deftag/test-cl "* Heading :test-cl_red_big_ignored:
+  :call (org-test--run-tag #'org--test-cl-tag "* Heading :test-cl_red_big_ignored:
                                                  :PROPERTIES:
                                                  :NOTE: from the drawer
                                                  :END:")
   :returns "[red | big | from the drawer]")
 
 (define-org-call-test "cl-defun-style org-deftag falls back to an &key default when the property is absent"
-  :call (org-test--run-tag #'org-deftag/test-cl "* Heading :test-cl_red_big_ignored:")
+  :call (org-test--run-tag #'org--test-cl-tag "* Heading :test-cl_red_big_ignored:")
   :returns "[red | big | none]")
 
 (define-org-call-test "org--deftag-parse-args reads cl-defun-style arglists"
@@ -174,10 +174,10 @@
 (org-deftag test-special (&key file tags)
   "Replace the heading with FILE and TAGS, which only properties may give."
   (insert (format "[%s | %s]" file tags)))
-(remove-hook 'org-export-before-parsing-functions #'org-deftag/test-special)
+(remove-hook 'org-export-before-parsing-functions #'org--test-special-tag)
 
 (deftest "org-deftag removes a section's property drawer even beneath a planning line"
-  (let ((result (org-test--run-tag #'org-deftag/test-shout "* Heading :test-shout_red:
+  (let ((result (org-test--run-tag #'org--test-shout-tag "* Heading :test-shout_red:
                                                             SCHEDULED: <2026-10-13 Tue>
                                                             :PROPERTIES:
                                                             :SIZE: big
@@ -187,11 +187,11 @@
     (should-not (s-contains-p ":PROPERTIES:" result))))
 
 (define-org-call-test "org-deftag ignores its name within a heading's title, outside its trailing tags"
-  :call (org-test--run-tag #'org-deftag/test-shout "* Ratio a:test-shout:b")
+  :call (org-test--run-tag #'org--test-shout-tag "* Ratio a:test-shout:b")
   :returns "* Ratio a:test-shout:b")
 
 (define-org-call-test "org-deftag binds &key arguments named after Org's special properties, such as FILE, only from the drawer"
-  :call (org-test--run-tag #'org-deftag/test-special "* Heading :test-special:")
+  :call (org-test--run-tag #'org--test-special-tag "* Heading :test-special:")
   :returns "[nil | nil]")
 
 (provide 'org-deftag-tests)

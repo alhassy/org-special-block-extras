@@ -140,7 +140,7 @@ LINK is t, or a display vector such as [:face …]; see `org-defblock'."
                 ,(vconcat `[:help-echo (format "%s:%s\n\n%s" ',name label ,(or docstring ""))]
                           (and (vectorp link) link))
                 (s-replace-regexp "@@" ""
-                                  (,(intern (format "org-block/%s" name)) backend (or description label) label
+                                  (,(intern (format "org--%s-block" name)) backend (or description label) label
                                    :contents-occur-as-link-description t))))
 
 (defun org--defblock-tag-form (name spec subsections)
@@ -271,7 +271,7 @@ export: a colon starts a link only when a word follows it at once."
             (indent (org-export-string example (or backend 'html))))))
 
 (defun org--defblock-lisp-docs (name)
-  "NAME ↦ how the Lisp function `org-block/NAME' reads its arguments, for its docstring."
+  "NAME ↦ how the Lisp function `org--NAME-block' reads its arguments, for its docstring."
   (concat
    "\nRegarding the Lisp function:"
    "\n+ BACKEND refers to the current export backend."
@@ -286,13 +286,13 @@ export: a colon starts a link only when a word follows it at once."
    "\n"
    "\n is rewritten to the result of the call"
    "\n"
-   (format "\n     (org-block/%s `latex \"Hello, world\")" name)))
+   (format "\n     (org--%s-block `latex \"Hello, world\")" name)))
 
 (defun org--defblock-documentation (name)
-  "NAME ↦ the docstring C-h f shows for `org-block/NAME': the user's, its examples exported, then `org--defblock-lisp-docs'.
+  "NAME ↦ the docstring C-h f shows for `org--NAME-block': the user's, its examples exported, then `org--defblock-lisp-docs'.
 A closing “(fn ARGS)” line is the signature C-h f shows, but only while it closes the docstring; so it stays last."
   (let ((user-docs (org--replace-examples-in-string
-                    (or (documentation-property (intern (format "org-block/%s" name)) 'variable-documentation) "")
+                    (or (documentation-property (intern (format "org--%s-block" name)) 'variable-documentation) "")
                     #'org--docstring-example))
         usage)
     (when (string-match "\n*\\((fn .*)\\)[ \t\n]*\\'" user-docs)
@@ -340,7 +340,7 @@ line's unknown keywords are an export-time error unless KWDS writes
 
 KWDS may also carry options, which are not arguments:
 + `:block nil' declines block support: #+begin_NAME is left to Org, yet the
-  link and tag still work, through `org-block/NAME'.
+  link and tag still work, through `org--NAME-block'.
 + `:link nil' declines the link type NAME:; `:link t' makes it; and `:link
   [:face … :display …]' makes it with that `org-deflink' display, which sees
   the link's arglist (label &optional description backend); e.g.,
@@ -485,7 +485,7 @@ Three example uses:
   (let* ((spec    (org--defblock-parse-args kwds))
          ;; The options configure the macro; they are not block arguments.
          (options (plist-get spec :options))
-         (handler (intern (format "org-block/%s" name)))
+         (handler (intern (format "org--%s-block" name)))
          ;; The block is on unless declined via `:block nil'; the link and tag follow
          ;; `org-defblock-links-and-tags' unless the block says otherwise; e.g., `:tag nil'.
          (block?  (org--defblock-option options :block))
@@ -529,9 +529,9 @@ have their own words for one thing:
   (org-defblock-alias tooltip margin)  ⇒  #+begin_tooltip ≡ #+begin_margin, and [[tooltip:x][…]] ≡ [[margin:x][…]]"
   (declare (indent defun))
   `(pcase-let ((`(,kwds ,docstring . ,body)
-                (or (get ',(intern (format "org-block/%s" name)) 'org-defblock-definition)
+                (or (get ',(intern (format "org--%s-block" name)) 'org-defblock-definition)
                     (error "‘org-defblock-alias %s’: %s is no org-defblock" ',alias ',name))))
-     (eval `(org-defblock ,',alias ,kwds ,(format "%s\n\nAn alias of `org-block/%s'." (or docstring "") ',name) ,@body) t)))
+     (eval `(org-defblock ,',alias ,kwds ,(format "%s\n\nAn alias of `org--%s-block'." (or docstring "") ',name) ,@body) t)))
 
 (defun org--defblock-set-option (kwds key value)
   "Returns the `org-defblock' arglist KWDS with its option KEY set to VALUE, a form; e.g., for KWDS
@@ -551,12 +551,12 @@ Any option serves: :manual, :latex-head, :link, :tag, and so on.  It redefines N
 whence long values, such as an `:example', are set apart from the definition they would otherwise swamp."
   (declare (indent defun))
   `(pcase-let ((`(,kwds ,docstring . ,body)
-                (or (get ',(intern (format "org-block/%s" name)) 'org-defblock-definition)
+                (or (get ',(intern (format "org--%s-block" name)) 'org-defblock-definition)
                     (error "‘org-defblock-attribute %s’: %s is no org-defblock" ',name ',name))))
      (eval `(org-defblock ,',name ,(org--defblock-set-option kwds ,key ',value) ,docstring ,@body) t)))
 
 (cl-defmacro org-defblock-only (name args &optional docstring &rest body)
-  "Generate a Lisp `org-block/NAME' export function from a `org-defblock' definition.
+  "Generate a Lisp `org--NAME-block' export function from a `org-defblock' definition.
 
 ★ Like `org-defblock' but only supports blocks, not links. ★
 
@@ -581,7 +581,7 @@ Features:
    ((not (stringp docstring)) (setq body (cons docstring body)) (setq docstring "")))
   (let* ((spec (org--defblock-parse-args args))
          (context (plist-get spec :context))
-         (defun-name (intern (format "org-block/%s" name)))
+         (defun-name (intern (format "org--%s-block" name)))
          (main-arg-name (or (car (plist-get spec :main)) 'main-arg))
          (main-arg-default-value (cadr (plist-get spec :main)))
          (keyword-names (org--block-declared-keywords spec)))
@@ -721,12 +721,12 @@ no longer LaTeX-exports to “HELLO, WORLD” but instead exports to
 \"\\\\url{shout: hello, world}\".
 "
   (declare (indent defun))
-  `(progn (fmakunbound ',(intern (format "org-block/%s" name)))
+  `(progn (fmakunbound ',(intern (format "org--%s-block" name)))
           (setq org--supported-blocks (cl-remove ',name org--supported-blocks))
           (setf (alist-get ,(downcase (format "%s" name)) org--block-fontifications nil 'remove #'equal) nil)
-          (fmakunbound  ',(intern (format "org-link/%s" name)))
-          (remove-hook 'org-export-before-parsing-functions #',(intern (format "org-deftag/%s" name)))
-          (fmakunbound ',(intern (format "org-deftag/%s" name)))
+          (fmakunbound  ',(intern (format "org--%s-link" name)))
+          (remove-hook 'org-export-before-parsing-functions #',(intern (format "org--%s-tag" name)))
+          (fmakunbound ',(intern (format "org--%s-tag" name)))
           (-when-let (link-params (org-link-set-parameters ,(format "%s" name)))
             (--each '(:export :face :follow :display :keymap :help-echo)
               (setf (plist-get link-params it) nil)))
@@ -768,7 +768,7 @@ Usage: (org--blockcall blk-name main-arg even-many:key-values raw-contents)
 One should rarely use this directly; instead use
 `org-thread-blockcall'.
 "
-  `(concat "#+end_export\n" (,(intern (format "org-block/%s" blk))
+  `(concat "#+end_export\n" (,(intern (format "org--%s-block" blk))
                              org--backend ;; The enclosing handler's own, which no binding in its body can shadow
                              ,@(last keyword-args-then-contents) ;; contents
                              ,main-arg

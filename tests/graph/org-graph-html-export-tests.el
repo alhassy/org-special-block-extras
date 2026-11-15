@@ -18,7 +18,7 @@
 \x89PNG\r
 \x1a"))
                t)))
-    (let ((html (org-block/graph 'html "
+    (let ((html (org--graph-block 'html "
 + A
   + B
     | :edge.label | calls |"
@@ -49,7 +49,7 @@
 <!DOCTYPE svg>
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g><title>A</title></g></svg>"))
                svgfile)))
-    (let ((html (org-block/graph 'html "
+    (let ((html (org--graph-block 'html "
 + A" nil :svg t)))
       (should (s-contains-p "<svg" html))
       ;; Graphviz's <title>s would hover natively, competing with our tooltips.
@@ -68,7 +68,7 @@
 <!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"\">
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g/></svg>"))
                svgfile)))
-    (let ((html (org-block/graph 'html "
+    (let ((html (org--graph-block 'html "
 + A" nil :svg t)))
       (should-not (s-contains-p "<?xml" html))
       (should-not (s-contains-p "<!DOCTYPE" html))
@@ -79,7 +79,7 @@
   ;; handler must fall back to a <pre> block with escaped dot source.
   (cl-letf (((symbol-function 'org-graph--render)
              (lambda (_dot _kind _svgfile) nil)))
-    (let ((html (org-block/graph 'html "
+    (let ((html (org--graph-block 'html "
 + A
   + B" nil :svg t)))
       (should (s-contains-p "<pre>" html))
@@ -94,7 +94,7 @@
 \x89PNG\r
 \x1a"))
                t)))
-    (let ((html (org-block/graph 'html "
+    (let ((html (org--graph-block 'html "
 + A" nil :svg nil)))
       (should (s-contains-p "<img" html))
       (should (s-contains-p "base64" html))
@@ -106,7 +106,7 @@
   (let (kind)
     (cl-letf (((symbol-function 'org-graph--render)
                (lambda (_dot k file) (setq kind k) (with-temp-file file (insert "<svg width=\"1\"></svg>")) file)))
-      (should (s-contains-p "<svg style=\"max-width: 100%; height: auto\" width=\"1\"></svg>" (org-block/graph 'html "
+      (should (s-contains-p "<svg style=\"max-width: 100%; height: auto\" width=\"1\"></svg>" (org--graph-block 'html "
 + A" nil)))
       (should (equal "svg" kind)))))
 
@@ -153,7 +153,7 @@ Born <i>1903</i></p></template>"))))
     (cl-letf (((symbol-function 'org-graph--render) (lambda (_dot _kind file) (setq written file) t)))
       ;; The header reads :file foo.png as the symbol foo.png.
       (let* ((org-export-current-backend 'md)
-             (md (org-block/graph 'html "
+             (md (org--graph-block 'html "
 + A" nil :file 'foo.png)))
         (should (equal written "foo.png"))
         (should (s-contains-p "[[file:foo.png]]" md))))))

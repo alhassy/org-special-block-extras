@@ -280,13 +280,13 @@ Plain text.
 
 ;;; Lifecycle
 
-(deftest "org-defblock with :tag t defines org-deftag/NAME, and org-undefblock removes it"
+(deftest "org-defblock with :tag t defines org--NAME-tag, and org-undefblock removes it"
   (eval '(org-defblock memo-lifecycle (&optional (title "Memo") :tag t) "Show TITLE." title))
-  (should (fboundp 'org-deftag/memo-lifecycle))
-  (should (memq #'org-deftag/memo-lifecycle org-export-before-parsing-functions))
+  (should (fboundp 'org--memo-lifecycle-tag))
+  (should (memq #'org--memo-lifecycle-tag org-export-before-parsing-functions))
   (eval '(org-undefblock memo-lifecycle))
-  (should-not (fboundp 'org-deftag/memo-lifecycle))
-  (should-not (memq #'org-deftag/memo-lifecycle org-export-before-parsing-functions)))
+  (should-not (fboundp 'org--memo-lifecycle-tag))
+  (should-not (memq #'org--memo-lifecycle-tag org-export-before-parsing-functions)))
 
 (deftest "tags run before special blocks are rewritten, whatever the order they were hooked in"
   (using (org-defblock memo (&optional (title "Memo") :tag t &context contents) "Show TITLE." (format "[%s: %s]" title contents))
@@ -312,7 +312,7 @@ Plain text.
 
 (deftest "details, box, spoiler, solution, and parallel are also tags"
   (dolist (name '(details box spoiler solution parallel))
-    (should (fboundp (intern (format "org-deftag/%s" name))))))
+    (should (fboundp (intern (format "org--%s-tag" name))))))
 
 (define-org-export-test "a section tagged :details_Hint: exports as a details block titled Hint"
   :input "* Stuck? :details_Hint:

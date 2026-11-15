@@ -4,7 +4,7 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 
 (define-org-call-test "stutter block repeats the content the given number of times."
-  :call (org-block/stutter 'html "ha " "3")
+  :call (org--stutter-block 'html "ha " "3")
   :returns "ha
 #+begin_export html
 

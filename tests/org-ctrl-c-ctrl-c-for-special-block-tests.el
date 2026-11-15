@@ -88,14 +88,14 @@ Mind the gap.
           (should (equal org-def-action-tests--said "the switch")))
       (setf (alist-get "shout" org--block-cc-handlers nil 'remove #'equal) nil))))
 
-(deftest "org-def-action defines org-action/NAME, documented by its docstring" [C-c_C-c]
+(deftest "org-def-action defines org--NAME-action, documented by its docstring" [C-c_C-c]
   (unwind-protect
       (progn
         (org-def-action shout () "Say the shout." t)
-        (should (fboundp 'org-action/shout))
-        (should (string-prefix-p "Say the shout." (documentation 'org-action/shout))))
+        (should (fboundp 'org--shout-action))
+        (should (string-prefix-p "Say the shout." (documentation 'org--shout-action))))
     (setf (alist-get "shout" org--block-cc-handlers nil 'remove #'equal) nil)
-    (fmakunbound 'org-action/shout)))
+    (fmakunbound 'org--shout-action)))
 
 (provide 'org-ctrl-c-ctrl-c-for-special-block-tests)
 ;;; org-ctrl-c-ctrl-c-for-special-block-tests.el ends here

@@ -8,8 +8,8 @@
 (deftest "`org-defblock' defines a handler function and evaluates it correctly"
   (using (org-defblock hello (&optional (who "world") &key (punct "!")) "Greeter block"
                 (format "Hello, %s%s" who punct))
-  (should (fboundp 'org-block/hello))
-  (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
+  (should (fboundp 'org--hello-block))
+  (should (string= (org--hello-block 'test-backend "ignored" "Emacs" :punct "!!")
                    (lf-string "#+begin_export test-backend
                                Hello, Emacs!!
                                #+end_export")))))
@@ -17,9 +17,9 @@
 (deftest "`org-defblock' defines associated link functions that evaluate correctly"
   (using (org-defblock notice (:link [:face 'italic] &context contents) "Example."
                 (format "NOTICE: %s" contents))
-  (should (fboundp 'org-block/notice))
-  (should (fboundp 'org-link/notice))
-  (should (equal (org-link/notice "Some note here" nil 'test-backend)
+  (should (fboundp 'org--notice-block))
+  (should (fboundp 'org--notice-link))
+  (should (equal (org--notice-link "Some note here" nil 'test-backend)
                  "NOTICE: Some note here"))))
 
 (define-org-export-test "`org-defblock' exports a custom block to HTML with content formatting"
@@ -44,8 +44,8 @@
   (-let (org--supported-blocks)
     (org-defblock shout (&context contents) (upcase contents))
     (should (-contains? org--supported-blocks 'shout))
-    (should (fboundp 'org-block/shout))
-    (should (fboundp 'org-link/shout))
+    (should (fboundp 'org--shout-block))
+    (should (fboundp 'org--shout-link))
     (exporting "#+begin_shout
   hello, world
   #+end_shout"
@@ -60,8 +60,8 @@
     ;; Stick “un” after the “-” in “org-defblock” to remove support for it.
     (org-undefblock shout () (upcase contents))
     (should-not (-contains? org--supported-blocks 'shout))
-    (should-not (fboundp 'org-block/shout))
-    (should-not (fboundp 'org-link/shout))
+    (should-not (fboundp 'org--shout-block))
+    (should-not (fboundp 'org--shout-link))
     (--all-p (should-not (plist-get (org-link-set-parameters "shout") it))
              '(:export :face :follow :display :keymap :help-echo))
     (exporting "#+begin_shout

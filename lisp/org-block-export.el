@@ -18,7 +18,7 @@
 ;; Before Org parses a buffer for export, each block that `org-defblock' declares is replaced by
 ;; its handler's result:
 ;;
-;;     #+begin_foo mainarg :x 1        ↦   (org-block/foo backend "block content" "mainarg" :x 1)
+;;     #+begin_foo mainarg :x 1        ↦   (org--foo-block backend "block content" "mainarg" :x 1)
 ;;     block content
 ;;     #+end_foo
 ;;
@@ -55,7 +55,7 @@
 
 This function replaces the region from START-POINT to END-POINT of BLOCK
 with the result of evaluating the corresponding handler function:
-  `org-block/NAME'
+  `org--NAME-block'
 
 Here, NAME is the `name' slot of the BLOCK (i.e., the name used in the
 #+begin_NAME / #+end_NAME delimiters).
@@ -65,9 +65,9 @@ Each special block can include:
 - *Keyword arguments*: Zero or more “:key value” pairs.
 - A *body*: The content between the begin and end block markers.
 
-The corresponding handler function must be named `org-block/NAME' with signature:
+The corresponding handler function must be named `org--NAME-block' with signature:
 
-  (org-block/NAME BACKEND CONTENTS MAIN-ARG &rest KWDARGS)
+  (org--NAME-block BACKEND CONTENTS MAIN-ARG &rest KWDARGS)
 
 Example:
 
@@ -77,7 +77,7 @@ Example:
 
 Will be replaced with the result of evaluating:
 
-  (org-block/foo BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
+  (org--foo-block BACKEND \"block content\" \"mainarg\" '(:x . 1) '(:y . 2))
 
 The handler’s return value is inserted in place of the original block.
 Indentation is preserved via `org-replace-text-while-preserving-indentation'.
@@ -86,7 +86,7 @@ This method is part of the Org export pipeline that processes supported
 blocks listed in `org--supported-blocks', typically triggered during export
 pre-processing steps."
   (-let* (((&org-special-block 'name 'main-arg 'kwdargs 'parameters 'contents 'start-point 'end-point 'anchor) block)
-          (handler (intern (format "org-block/%s" name)))
+          (handler (intern (format "org--%s-block" name)))
           ;; A block's own keyword of a switch's name wins; e.g., a block declaring `folded' gets :folded itself.
           (declared (--map (intern (format ":%s" it)) (org--block-declared-keywords (get handler 'org-defblock-args))))
           (switch? (lambda (key) (and (org--block-switch-p key) (not (memq key declared)))))

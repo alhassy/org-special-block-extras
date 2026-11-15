@@ -50,12 +50,12 @@
   "Make C-c C-c within a NAME block run BODY, with the block's ARGS bound, as `org-defblock' does for export.
   (org-def-action shout (&optional greeting &key (volume 1)) \"Announce it.\" (message \"%s, %s\" greeting volume))
 ARGS are as `org-defblock''s; BODY sees them by name, and the block's text as RAW-CONTENTS, with point
-within the block.  The function is `org-action/NAME'.  A non-nil value claims the key press; nil declines it."
+within the block.  The function is `org--NAME-action'.  A non-nil value claims the key press; nil declines it."
   (declare (indent defun) (doc-string 3))
   (unless (stringp docstring) (setq body (cons docstring body) docstring nil))
   (let* ((spec (org--defblock-parse-args args))
          (main (or (car (plist-get spec :main)) 'main-arg))
-         (function (intern (format "org-action/%s" name))))
+         (function (intern (format "org--%s-action" name))))
     `(progn
        ;; All arguments by keyword, the main one too: so an absent one takes its default, as a block's does.
        (cl-defun ,function (raw-contents &key (,main ,(cadr (plist-get spec :main))) ,@(plist-get spec :keys)
@@ -85,9 +85,9 @@ shorthands applied, as export renders it; see `org--block-let'."
   "Run the :C-c_C-c switch of the special block around point; nil when it has none.
 
   #+begin_quiz :C-c_C-c (message \"Score: 3/4\")     ;; A form is evaluated
-  #+begin_quiz :C-c_C-c my/check-answers           ;; A function is called; interactively, if a command
+  #+begin_quiz :C-c_C-c my-check-answers           ;; A function is called; interactively, if a command
 
-The switch may be inherited, as a src block's header-args are; e.g., :header-args:quiz: :C-c_C-c my/check-answers
+The switch may be inherited, as a src block's header-args are; e.g., :header-args:quiz: :C-c_C-c my-check-answers
 in a heading's drawer; see `org--block-header-args'.  The Lisp runs as `org-defblock-evaluate-switches' permits."
   (-when-let* ((blk (org-special-block-at-point))
                (action (plist-get (org--plist-merge (org--block-header-args blk (downcase (org--block-name blk)))

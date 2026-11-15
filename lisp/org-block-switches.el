@@ -39,8 +39,8 @@
 (require 'org-deftag)
 
 ;; Blocks of our own, which require us in turn; switches call them only upon export.
-(declare-function org-block/box "org-box-block")
-(declare-function org-block/details "org-details-block")
+(declare-function org--box-block "org-box-block")
+(declare-function org--details-block "org-details-block")
 
 (defvar org-block-switches nil
   "The (KEY DEPTH . FUNCTION) of each header argument that every block understands, outermost first; see `org-defswitch'.
@@ -231,13 +231,13 @@ Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RE
 (org-defswitch :folded (title &key render contents backend name)
   "The result within a `details' titled TITLE; for :folded t, the block's NAME, capitalised."
   :depth -60
-  (org-block/details backend (funcall render contents)
+  (org--details-block backend (funcall render contents)
                      (if (eq title t) (capitalize (format "%s" name)) (format "%s" title))))
 
 (org-defswitch :boxed (title &key render contents backend)
   "The result within a `box' titled TITLE; for :boxed t, untitled.  Within :folded, a folded box."
   :depth -50
-  (org-block/box backend (funcall render contents) (if (eq title t) "" (format "%s" title))))
+  (org--box-block backend (funcall render contents) (if (eq title t) "" (format "%s" title))))
 
 (org-defswitch :let (bindings &key render contents backend)
   "Each whole-word VAR in the contents, or operator such as ->, becomes its VALUE, for BINDINGS (VAR VALUE …).
@@ -366,7 +366,7 @@ A :folded t is titled by the heading, as a src block's is by its language."
     (let ((case-fold-search t))
       (cl-loop for tag in (org-get-tags nil t)
                for name = (car (split-string tag "_"))
-               when (fboundp (intern (format "org-deftag/%s" name)))
+               when (fboundp (intern (format "org--%s-tag" name)))
                do (beginning-of-line)
                   (when (re-search-forward (org--deftag-regexp name) (line-end-position) t)
                     (replace-match "" t t nil 1)))

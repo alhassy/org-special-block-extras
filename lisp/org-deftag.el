@@ -99,11 +99,11 @@ erased along with any property drawer beneath it; BODY may anaphorically mention
 - O-DRAWER:     the erased property drawer, as text, or nil; reinsert it with
                 O-HEADING to keep the section's properties, such as CUSTOM_ID.
 
-The result is the function `org-deftag/NAME', added to
+The result is the function `org--NAME-tag', added to
 `org-export-before-parsing-functions' at depth -50, so that tags run before
 special blocks are rewritten; a tag may thereby produce special blocks."
   (declare (indent defun) (doc-string 3))
-  (let ((func-name (intern (format "org-deftag/%s" name)))
+  (let ((func-name (intern (format "org--%s-tag" name)))
         (tag-re (org--deftag-regexp name)))
     `(progn
        (defun ,func-name (o-backend)

@@ -153,14 +153,14 @@
 ;; compiled code (see below). Functions with type declarations are shown by C-h
 ;; C-f as having a “declared type”.
 ;;
-;; (defun my/positive-p (x)
+;; (defun my-positive-p (x)
 ;;   (declare (ftype (function (number) boolean)))
 ;;   (when (> x 0)
 ;;     t))
 ;;
 ;; HAS DOCS:
 ;;
-;;     (my/positive-p X)
+;;     (my-positive-p X)
 ;;     
 ;;     Declared type: (function (number) boolean)
 ;;     
@@ -352,7 +352,7 @@ Read when first needed, at export, so a missing file is asked for then ---not wh
 
 (defun org-block-signature (name)
   "NAME ↦ how its block is called, with defaults; e.g., #+begin_details TITLE=\"Details\" :title-color \"green\"; else nil."
-  (-when-let (args (get (intern-soft (format "org-block/%s" name)) 'org-defblock-args))
+  (-when-let (args (get (intern-soft (format "org--%s-block" name)) 'org-defblock-args))
     (-let [(&plist :main (main default) :keys keys) args]
       (concat (format "#+begin_%s" name)
               ;; A block sans main argument shows none.
@@ -369,7 +369,7 @@ Read when first needed, at export, so a missing file is asked for then ---not wh
   ;; Raw, lest C-c ' read as C-c ’.
   (let ((gist (lambda (f) (car (split-string (or (documentation f t) "") "\n")))))
     (-non-nil
-     (list (-some--> (intern-soft (format "org-action/%s" name))
+     (list (-some--> (intern-soft (format "org--%s-action" name))
              (and (fboundp it) (concat "C-c C-c  " (funcall gist it))))
            (concat "C-c '    " (-if-let (edit (alist-get name org--block-edit-special-handlers nil nil #'equal))
                                    (funcall gist edit)
@@ -380,7 +380,7 @@ Read when first needed, at export, so a missing file is asked for then ---not wh
   "Returns a heading, then a line per switch of `org-block-switches' that block NAME does not shadow by a keyword of
 its own, each beside the gist of what it does; e.g., \":folded TITLE      The result within a `details' titled …\"."
   (let ((own (--map (intern (format ":%s" (car it)))
-                    (plist-get (get (intern-soft (format "org-block/%s" name)) 'org-defblock-args) :keys))))
+                    (plist-get (get (intern-soft (format "org--%s-block" name)) 'org-defblock-args) :keys))))
     (cons "Switches, which every block understands:"
           (cl-loop for (key _ . switch) in org-block-switches
                    for arg = (symbol-name (car (help-function-arglist switch t)))
@@ -395,7 +395,7 @@ its own, each beside the gist of what it does; e.g., \":folded TITLE      The re
 
 (defun org--hover-footer (symbol)
   "SYMBOL ↦ the buttons that close eldoc's word on it: “Docs”, describing SYMBOL; and, given its `:manual', “See the
-manual”, browsing there.  E.g., for `org-block/math', “Docs · See the manual”, the latter leading to
+manual”, browsing there.  E.g., for `org--math-block', “Docs · See the manual”, the latter leading to
 https://alhassy.com/org-special-block-extras-blocks-and-links#math."
   (let ((manual (-some--> (get symbol 'org-manual)
                   (if (string-prefix-p "#" it) (concat org-special-block-extras-manual it) it)))
@@ -439,8 +439,8 @@ manual” buttons; see `org--hover-footer'."
     (let* ((delimiter? (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+\\(begin\\|end\\)_")))
            (name  (if delimiter? (org-special-block-name-at-point)
                     (-some->> (org--link-at-point) (org-element-property :type))))
-           (block (and name (intern-soft (format "org-block/%s" name))))
-           (link  (and name (not delimiter?) (intern-soft (format "org-link/%s" name))))
+           (block (and name (intern-soft (format "org--%s-block" name))))
+           (link  (and name (not delimiter?) (intern-soft (format "org--%s-link" name))))
            (gist  (lambda (docstring) (car (split-string (or docstring "") "\n"))))
            (hover (lambda (symbol gist keys)
                     (string-join (-non-nil (append (list gist (get symbol 'org-hover)
@@ -465,7 +465,7 @@ manual” buttons; see `org--hover-footer'."
 
 (defun org--block-gist (name)
   "NAME ↦ the first line of the docstring of our block NAME; e.g., \"tip\" ↦ \"Helpful advice for doing things better…\"."
-  (-some--> (intern-soft (format "org-block/%s" name)) (get it 'variable-documentation) (car (split-string it "\n"))))
+  (-some--> (intern-soft (format "org--%s-block" name)) (get it 'variable-documentation) (car (split-string it "\n"))))
 
 (defun org--special-block-capf ()
   "On a #+begin_ line, complete the block's name, each of ours annotated by its gist; e.g., #+begin_ti ↦ tip, tooltip.
@@ -480,7 +480,7 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
             :company-kind (lambda (_) 'keyword)
             :company-doc-buffer
             (lambda (name)
-              (-when-let (doc (-some--> (intern-soft (format "org-block/%s" name)) (get it 'variable-documentation)))
+              (-when-let (doc (-some--> (intern-soft (format "org--%s-block" name)) (get it 'variable-documentation)))
                 (with-current-buffer (get-buffer-create " *org-block-doc*")
                   (erase-buffer)
                   (insert (org-block-signature name) "\n\n" doc)
@@ -629,7 +629,7 @@ otherwise export, silently, as Org's own \\begin{rremark}, while rremark:foo is 
     (let ((case-fold-search t))
       (save-excursion
         (goto-char (point-min))
-        ;; A plain #+begin_quote is Org's own, as only a quote with arguments is ours; see `org-block/quote'.
+        ;; A plain #+begin_quote is Org's own, as only a quote with arguments is ours; see `org--quote-block'.
         (when (re-search-forward (format "^[ \t]*#\\+begin_\\(%s\\_>\\|quote[ \t]+[^ \t\n]\\)"
                                          (regexp-opt (--remove (equal it "quote") (--map (format "%s" it) org--supported-blocks))))
                                  nil t)

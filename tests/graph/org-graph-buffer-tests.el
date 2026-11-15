@@ -59,11 +59,11 @@
     (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot kind file) (setq rendered (list kind file)) '(0 . ""))))
       ;; It opens with the link, so the #+name: above the block labels the link rather than an empty export block.
       (should (s-starts-with-p "[[file:lineage.png]]\n"
-                               (let ((org--handler-anchor "lineage")) (org-block/graph 'latex "+ λ" nil))))
+                               (let ((org--handler-anchor "lineage")) (org--graph-block 'latex "+ λ" nil))))
       (should (equal '("png" "lineage.png") rendered))
-      (let ((org--handler-anchor "lineage")) (org-block/graph 'html "+ λ" nil :svg t))
+      (let ((org--handler-anchor "lineage")) (org--graph-block 'html "+ λ" nil :svg t))
       (should (equal '("svg" "lineage.svg") rendered))
-      (let ((org--handler-anchor "lineage")) (org-block/graph 'html "+ λ" nil :file "elsewhere.png"))
+      (let ((org--handler-anchor "lineage")) (org--graph-block 'html "+ λ" nil :file "elsewhere.png"))
       (should (equal '("png" "elsewhere.png") rendered)))))
 
 (org-deftest "C-c C-c on a named graph renders to NAME.png, unless :file says otherwise"

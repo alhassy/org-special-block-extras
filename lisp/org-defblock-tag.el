@@ -148,7 +148,7 @@ becomes of the section's subsections:
 + `recurse': each subsection's own text, at any depth, is wrapped likewise ---same arguments---
   in a NAME block of its own; a subsection tagged :NAME: itself is left to its own tag.
 
-The block is then at once replaced by the result of `org-block/NAME' for BACKEND; so a tag works even
+The block is then at once replaced by the result of `org--NAME-block' for BACKEND; so a tag works even
 when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
   (let* ((main-arg (if tag-args (string-join tag-args " ") (org--section-property properties main)))
          (header (org--section-block-header properties main-arg

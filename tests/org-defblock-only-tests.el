@@ -14,7 +14,7 @@
            (org-defblock-only speak (&optional (who "dev") &key (signoff "!") &context backend)
              "Speaking block"
              (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-           'org-block/speak))
+           'org--speak-block))
   ;; clean-up
   (org-undefblock speak))
 
@@ -22,11 +22,11 @@
   (using (org-defblock-only speak (&optional (who "dev") &key (signoff "!") &context backend)
            "Speaking block"
            (format "%s says hi%s%s" who signoff (if (equal backend 'latex) "~LaTeX~" "")))
-    (should (fboundp 'org-block/speak))))
+    (should (fboundp 'org--speak-block))))
 
 (deftest "`org-defblock-only' attaches a docstring to the generated function"
   (using (org-defblock-only speak nil "Speaking block!" nil)
-    (should (equal (documentation 'org-block/speak)
+    (should (equal (documentation 'org--speak-block)
                    "Speaking block!
 
 Regarding the Lisp function:
@@ -43,14 +43,14 @@ For example, upon LaTeX export, the Org special block
 
  is rewritten to the result of the call
 
-     (org-block/speak ‘latex \"Hello, world\")"))))
+     (org--speak-block ‘latex \"Hello, world\")"))))
 
 
 (deftest "`org-defblock-only' defines a handler function and evaluates it correctly"
   (using (org-defblock-only hello (&optional (who "world") &key (punct "!")) "Greeter block"
            (format "Hello, %s%s" who punct))
-    (should (fboundp 'org-block/hello))
-    (should (string= (org-block/hello 'test-backend "ignored" "Emacs" :punct "!!")
+    (should (fboundp 'org--hello-block))
+    (should (string= (org--hello-block 'test-backend "ignored" "Emacs" :punct "!!")
                      (lf-string "#+begin_export test-backend
                                Hello, Emacs!!
                                #+end_export")))))

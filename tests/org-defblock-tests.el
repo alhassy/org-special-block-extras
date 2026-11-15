@@ -8,15 +8,15 @@
     (org-defblock test-basic-reg () "")
     (should (member 'test-basic-reg org--supported-blocks))))
 
-(deftest "org-defblock creates an org-block/NAME function."
+(deftest "org-defblock creates an org--NAME-block function."
   (org-defblock test-handler-fn (&context contents) "handler body"
     (upcase contents))
-  (should (fboundp 'org-block/test-handler-fn)))
+  (should (fboundp 'org--test-handler-fn-block)))
 
 (define-org-call-test "Block handler output contains the HTML markup and the content."
   :call (using (org-defblock test-html-export (&context contents) ""
                  (format "<b>%s</b>" contents))
-          (org-block/test-html-export 'html "hello" nil))
+          (org--test-html-export-block 'html "hello" nil))
   :returns "#+begin_export html
 <b>
 #+end_export
@@ -28,7 +28,7 @@ hello
 (define-org-call-test "Block handler output contains the LaTeX markup and the content."
   :call (using (org-defblock test-latex-export (&context contents) ""
                  (format "\\textbf{%s}" contents))
-          (org-block/test-latex-export 'latex "world" nil))
+          (org--test-latex-export-block 'latex "world" nil))
   :returns "#+begin_export latex
 \\textbf{%
 #+end_export
@@ -40,7 +40,7 @@ world
 (define-org-call-test "Keyword args bind correctly inside the block body."
   :call (using (org-defblock test-kwdargs (&optional (main-arg "") &key (color "red") &context contents) ""
                  (format "%s:%s" color contents))
-          (org-block/test-kwdargs 'html "text" nil :color "blue"))
+          (org--test-kwdargs-block 'html "text" nil :color "blue"))
   :returns "#+begin_export html
 blue:
 #+end_export
@@ -52,16 +52,16 @@ text
 (define-org-call-test "Main arg uses its default when omitted."
   :call (using (org-defblock test-main-default (&optional (label "DEFAULT")) ""
                  label)
-          (org-block/test-main-default 'html "" nil))
+          (org--test-main-default-block 'html "" nil))
   :returns "#+begin_export html
 DEFAULT
 #+end_export")
 
-(deftest "org-defblock-only does NOT create an org-link/NAME function."
+(deftest "org-defblock-only does NOT create an org--NAME-link function."
   (org-defblock-only test-only-block (&context contents) ""
     contents)
-  (should (fboundp 'org-block/test-only-block))
-  (should-not (fboundp 'org-link/test-only-block)))
+  (should (fboundp 'org--test-only-block-block))
+  (should-not (fboundp 'org--test-only-block-link)))
 
 (deftest "org-undefblock removes a block from org--supported-blocks."
   (let ((org--supported-blocks nil))
@@ -99,7 +99,7 @@ DEFAULT
 
 (deftest "a block handler rejects a non-symbol backend"
   (using (org-defblock test-backend-check (&context contents) "Echo." contents)
-    (should-error (org-block/test-backend-check "html" "body"))))
+    (should-error (org--test-backend-check-block "html" "body"))))
 
 ;;; A block's #+name:
 
