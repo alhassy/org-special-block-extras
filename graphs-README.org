@@ -16,7 +16,7 @@ click it for its section below:
 #+macro: tint lightyellow
 
 #+begin_graph =#+begin_graph=, at a glance ---hover a node for how, click it for more :direction right
-#+name: syntax shape=box style="rounded,filled" fillcolor={{{tint}}}
+#+name: syntax style="rounded,filled" fillcolor={{{tint}}}
 #+name: topic penwidth=2 :syntax:
 #+node: fontname=Courier
 #+edge: color=gray40 fontsize=10
@@ -290,34 +290,36 @@ gives the label:
   + [[term]]
 #+end_graph
 
-- The id is the ~<<target>>~, else the text ---sans markup, links, footnotes, and tags.
+- The id is the ~<<target>>~, else the text ---sans markup, links, footnotes, and tags. So ~[[1]]~ reaches
+  ~+ 1~, and ~C-c C-o~ on it jumps there, sans a ~<<1>>~; a target earns its place only when the id should
+  differ from the text, or the text is long.
 - The label is the ~label~ row, else the text; markup makes it an HTML-like one.
 - Two items with one id are one node, so an item may appear twice to gain more children.
 
 * Styling: one key-value syntax
 
-Out of the box, Graphviz draws black ellipses; soon we want our tokens boxed and our rules round. Graphviz's
-attributes are key-value pairs, and Org's key-value syntax is the two-column table. So a table beneath an
+Out of the box, every node wears the same cream box; soon we want our tokens to read apart from our rules.
+Graphviz's attributes are key-value pairs, and Org's key-value syntax is the two-column table. So a table beneath an
 item styles that item: one syntax, from a single node up to the whole graph.
 
 ** A node's table, and two kinds of keys
 
-In a parse tree, the leaves are tokens, straight from the lexer; we box them, so they read apart from the
+In a parse tree, the leaves are tokens, straight from the lexer; we tint them, so they read apart from the
 grammar's rules:
 #+begin_graph :demo live
 + term
   + factor
-    + <<one>> NUMBER 1
-      | shape | box   |
+    + NUMBER 1
+      | fillcolor | lightblue |
   + STAR
-    | shape | box |
-    | label | *   |
+    | fillcolor | lightblue |
+    | label     | *         |
   + factor
     + NUMBER 2
-      | shape | box |
+      | fillcolor | lightblue |
 #+end_graph
 
-A /plain/ key, such as ~shape~, is a Graphviz attribute of the node, passed straight through. We quote its
+A /plain/ key, such as ~fillcolor~, is a Graphviz attribute of the node, passed straight through. We quote its
 value for you, so ~NUMBER 1~, ~#00ff00~, and ~x -> y~ all need no quotes; already-quoted values, and ~<…>~
 HTML labels, are left alone.
 
@@ -364,8 +366,8 @@ A reference is styled just the same; this is why an inline link graduates to one
 ** The whole graph: the #+begin_graph line
 
 Small graphs deserve no preamble at all. So the header line takes the graph's title and any graph
-attribute; a parse tree laid out left to right, every node boxed, every arc grey:
-#+begin_graph How 1 * 2 + 3 - 4 parses :direction right :node.shape box :edge.color grey :demo live
+attribute; a parse tree laid out left to right, every node a circle, every arc grey:
+#+begin_graph How 1 * 2 + 3 - 4 parses :direction right :node.shape circle :edge.color grey :demo live
 + -
   + +
     + *
@@ -391,34 +393,29 @@ attribute; a parse tree laid out left to right, every node boxed, every arc grey
 
 ** When the preamble outgrows the line
 
-A real graph's settings outgrow one line. Then ~#+graph:~, ~#+node:~, and ~#+edge:~ name what the table
-below them styles ---the graph, every node, every arc--- and they override the header. A drawer of any
-name, ~:SETTINGS:~ or ~:PALETTE:~, folds them away with ~TAB~, along with ~#+name:~ lines:
+A real graph's settings outgrow one line. Then ~#+graph:~, ~#+node:~, and ~#+edge:~ lines style the graph,
+every node, every arc ---by ~KEY=VALUE~ pairs, as Graphviz's own ~edge [fontsize=10 color=gray]~ writes
+them, a value with spaces in double quotes, beside any ~:tags:~--- and they override the header. A drawer
+of any name, ~:SETTINGS:~ or ~:PALETTE:~, folds them away with ~TAB~, along with ~#+name:~ lines:
 #+begin_graph A compiler's front end :demo live
 :SETTINGS:
-#+graph:
-| rankdir  | LR        |
-| fontname | Helvetica |
-#+node:
-| shape    | box       |
-| style    | rounded   |
-| fontname | Helvetica |
-#+edge:
-| fontsize | 10   |
-| color    | gray |
+#+graph: rankdir=LR fontname=Helvetica
+#+node: style=rounded fontname=Helvetica
+#+edge: fontsize=10 color=gray
 :END:
 + characters
   + lexer :: tokens
     + parser :: syntax tree
 #+end_graph
 
-A short table may instead be written on its keyword's line, as Graphviz's own ~edge [fontsize=10
-color=gray]~ writes it: ~KEY=VALUE~ pairs, a value with spaces in double quotes, beside any ~:tags:~.
-The ~:SETTINGS:~ above is then three lines:
+When the pairs outgrow their line, a two-column table below the keyword holds them instead, a row a key,
+as a node's table does; a line's pairs and a table below it join:
 #+begin_src org :tangle no
-,#+graph: rankdir=LR fontname=Helvetica
-,#+node: shape=box style=rounded fontname=Helvetica
-,#+edge: fontsize=10 color=gray
+,#+node:
+| style     | rounded,filled |
+| fillcolor | white          |
+| fontname  | Helvetica      |
+| fontcolor | gray30         |
 #+end_src
 Anything else on such a line is an error, rather than silently ignored. In Emacs, the keyword stands out,
 and so does each key that means something on its line ---a graph's attribute on ~#+graph:~, a node's on
@@ -431,17 +428,15 @@ so a mistake shows before we export: a typo, as ~colour=red~, or a misplaced key
 Sometimes a style belongs to one branch, not the whole graph. A compiler folds constants: ~1 * 2~ is
 known before the program runs, so its whole subtree collapses to ~2~. We want that subtree shaded. Org's
 properties are inherited: a ~:PROPERTIES:~ drawer on a heading reaches its subheadings. So it is with an
-item's ~#+node:~ and ~#+edge:~ tables: they style every node and arc beneath the item, while the item
+item's ~#+node:~ and ~#+edge:~ lines: they style every node and arc beneath the item, while the item
 itself keeps its own ~| key | value |~ rows:
 #+begin_graph Constant folding :demo live
 + -
   + +
     + *
       | xlabel | folds to 2 |
-      #+node:
-      | fillcolor | lightgrey |
-      #+edge:
-      | style | dotted |
+      #+node: fillcolor=lightgrey
+      #+edge: style=dotted
       + 1
       + 2
     + 3
@@ -450,7 +445,7 @@ itself keeps its own ~| key | value |~ rows:
 
 Above, ~*~ keeps its plain look ---only what lies /beneath/ it is shaded--- just as a heading's own
 properties drawer is not one of its subheadings'. Graphviz scopes such defaults by an anonymous
-~subgraph~, which draws no box. A deeper item's tables override a shallower one's, as nested
+~subgraph~, which draws no box. A deeper item's lines override a shallower one's, as nested
 ~:PROPERTIES:~ do; a node first declared elsewhere keeps the defaults of where it was declared.
 
 ** Themes: a look for every graph
@@ -473,34 +468,28 @@ container; so a new one is a ~push~ away, and a new default a ~setq~:
 
 * Saying it once: templates
 
-A parse tree repeats itself: every token the same box, every rule the same ellipse. Restating those rows
-at each leaf is how styles drift apart. So we name them once: a ~#+name:~ table is a reusable bundle of
-rows, and a tag applies it. On a headline, ~:work:urgent:~ classifies the entry; on an item, tags classify
-the node:
+A parse tree repeats itself: every token the same tint, every rule the same outline. Restating those rows
+at each leaf is how styles drift apart. So we name them once: a ~#+name:~ line is a reusable bundle of
+~KEY=VALUE~ pairs ---as [[*When the preamble outgrows the line][#+edge: lines]] take them--- and a tag applies it. On a headline,
+~:work:urgent:~ classifies the entry; on an item, tags classify the node:
 #+begin_graph :demo live
-#+name: token
-| shape     | box       |
-| fillcolor | lightblue |
-#+name: rule
-| style | bold |
+#+name: token fillcolor=lightblue
+#+name: rule style=bold
 
 + expr :rule:
   + term :rule:
     + NUMBER 1 :token:
-    + STAR :token:
-      | label | * |
+    + * :token:
     + NUMBER 2 :token:
   + PLUS :token:
     | fillcolor | pink |
   + NUMBER 3 :token:
 #+end_graph
 
-A short template fits on its name's line, as ~KEY=VALUE~ pairs ---as [[*When the preamble outgrows the line][#+edge: lines]] take them--- so the
-two above are, tersely, ~#+name: token shape=box fillcolor=lightblue~ and
-~#+name: rule style=bold~. Several such lines in a row are several templates, and a table below one adds
-rows to it. In Emacs, each template of a graph ---its name's line, and the table below it--- wears
-a background of its own, from ~org-graph-template-backgrounds~, so where one ends and the next begins
-shows at a glance.
+Several such lines in a row are several templates. A long template holds its rows in a table below its
+name instead, as a ~#+node:~ line may; a line's pairs and a table below it join. In Emacs, each template
+of a graph ---its name's line, and the table below it--- wears a background of its own, from
+~org-graph-template-backgrounds~, so where one ends and the next begins shows at a glance.
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
 ~:token:rule:~, each a template, the earlier winning on a clash ---save colors: when the tags' templates
@@ -517,11 +506,8 @@ template could apply to; in a link's description, or a description term, a tag s
 | ~#+name: keyword :token:~                | the template ~keyword~, which inherits ~token~                |
 
 #+begin_graph :demo live
-#+name: recursion
-| color | red    |
-| style | dashed |
-#+name: keyword
-| fontname | Courier |
+#+name: recursion color=red style=dashed
+#+name: keyword fontname=Courier
 #+node: :keyword:
 
 + <<expr>> expression
@@ -564,12 +550,10 @@ A template inherits others by the tags on its name's line, as an item does: ~#+n
 ~token~, set in Courier. Its own rows win over those it inherits, as an item's explicit rows win over its
 tags':
 #+begin_graph :demo live
-#+name: token
-| shape | box |
-#+name: keyword :token:
-| fontname | Courier |
+#+name: token fillcolor=lightblue
+#+name: keyword :token: fontname=Courier
 
-+ <<expr>> expression
++ expression
   + if :keyword:
   + NUMBER :token:
 #+end_graph
@@ -583,8 +567,7 @@ As with Babel's named tables, a ~#+name:~ table anywhere in the buffer, outside 
 every graph in the buffer may use; so a house style is named once per file rather than once per graph.
 A graph's own template of the same name wins, and a template inside one graph stays that graph's own:
 #+begin_org :ignore t :demo live
-#+name: token
-| shape | box |
+#+name: token fillcolor=lightblue
 
 #+begin_graph Lexing
 + 1 * 2 :token:
@@ -601,8 +584,7 @@ face, so they do not read as part of the label. Colons anywhere else are just te
 trailing ~:word:~ of its own ---Smalltalk's ~at:put:~ selector, say--- puts it in ~=verbatim=~, or in a
 ~| label |~ row:
 #+begin_graph Colons that are just text :demo live
-#+name: faint
-| style | dotted |
+#+name: faint style=dotted
 
 + Python's xs[1:2]
 + C++'s std::vector
@@ -642,12 +624,8 @@ templates. Within a container titled ~Legend~, an item ~- MEANING :T:~ is a lege
 by template ~T~, captioned ~MEANING~--- rather than a node; it reads as prose, a caption tagged with what it
 explains:
 #+begin_graph :demo live
-#+name: token
-| shape     | box       |
-| fillcolor | lightblue |
-#+name: recursion
-| color | red    |
-| style | dashed |
+#+name: token fillcolor=lightblue
+#+name: recursion color=red style=dashed
 
 + <<expr>> expression
   + term
@@ -686,8 +664,7 @@ compiler is half built. ~[X]~, ~[-]~, and ~[ ]~ apply the templates ~checked~, ~
 as a ~:checked:~ tag would; and ~C-c C-c~ on a checkbox toggles it, as Org's own does, then renders the
 graph:
 #+begin_graph Our calculator, so far :demo live
-#+name: unchecked
-| style | dashed |
+#+name: unchecked style=dashed
 
 + [-] compiler
   + [X] lexer
@@ -764,14 +741,14 @@ line break; in a graph, it breaks the node's label. Since a label seldom wants a
 mid-line too, so a two-line node stays one terse line:
 #+begin_graph :demo live
 + parser
-  + reports :: <<err>> Unexpected token =)= \\ at line 3, column 7
+  + reports :: Unexpected token =)= \\ at line 3, column 7
   + *Recursive descent* \\
     one function per rule
   + every grammar \\ needs a lexer :: lexer
 #+end_graph
 
 The label becomes an HTML-like one, as with markup; the id joins the lines with a space, so a node reached
-by a link usually wants a ~<<target>>~, as ~err~ above. It is the one line break wherever a label is
+by a link usually wants a terse ~<<target>>~. It is the one line break wherever a label is
 written: a description term, as above; a table value, ~| :edge.label | consumes \\ tokens |~; a
 record's cell.
 
@@ -858,7 +835,6 @@ picture of the rules it follows:
   + [[https://en.wikipedia.org/wiki/Recursive_descent_parser][Recursive descent]]
   + [[https://en.wikipedia.org/wiki/LR_parser][LR]] parsing
   + then, typing by :: [[file:images/inference-rules.png]]
-    | shape  | box |
 #+end_graph
 
 A node has one ~URL~, so an item with two web links is an error. Graphviz finds the image relative to the
@@ -952,7 +928,7 @@ table styles the box, and its ~#+node:~ and ~#+edge:~ set defaults within it:
 + compiler
   + Front end :container:
     | bgcolor | lightgrey |
-    #+node: shape=box
+    #+node: fillcolor=white
     + lexer
       + parser
         + :container:
@@ -1003,22 +979,22 @@ tags of other kinds color the node in stripes, as above:
 Some nodes have insides: an AST node has a left operand, an operator, and a right operand, and each arc
 should leave from its own field. A record is a node drawn as a table, and Org already has tables: an
 item's table is its label, laid out exactly as written ---unless it is the ~| key | value |~ rows of
-[[*A node's table, and two kinds of keys][a node's table]]. A cell's ~<<target>>~ is its /port/, a cell's ~[[link]]~
-is an arc from that port, and an arc reaches a port by ~record::port~ ---just as Org's
-~[[file:notes.org::target]]~ reaches into a file:
+[[*A node's table, and two kinds of keys][a node's table]]. A cell's ~[[link]]~ is an arc from that cell, its
+/port/, named by its text; a ~<<target>>~ makes any cell a port; and an arc reaches a port by
+~record::port~ ---just as Org's ~[[file:notes.org::target]]~ reaches into a file:
 #+begin_graph Our expression, as an AST :demo live
 + minus
-  | <<l>> left [[plus]] | - | <<r>> right [[four]] |
+  | left [[plus]] | - | right [[4]] |
 + plus
-  | <<l>> left [[times]] | + | <<r>> right [[three]] |
+  | left [[times]] | + | right [[3]] |
 + times
-  | <<l>> left [[one]] | * | <<r>> right [[two]] |
-+ <<one>> 1
-+ <<two>> 2
-+ <<three>> 3
-+ <<four>> 4
+  | left [[1]] | * | right [[2]] |
++ 1
++ 2
++ 3
++ 4
 + evaluator
-  + starts at :: [[minus::l]]
+  + starts at :: [[minus::left]]
 #+end_graph
 
 Org tables have no merged cells, so two markers stand in for them: ~^~ continues the cell above, and an
@@ -1032,7 +1008,7 @@ over three rows; a token's heading spans its two fields:
   | ^           | term          |
 + token
   | Token  |        |
-  | <<kind>> kind | lexeme |
+  | kind   | lexeme |
   | NUMBER | ="42"= |
 #+end_graph
 
@@ -1059,10 +1035,11 @@ markup:
   and templates apply as usual; ~color~, ~fillcolor~, and ~fontcolor~ color the table. An item may carry
   both tables, a blank line between, since Org reads adjacent rows as one table.
 - A record is ~shape=plain~, the table being its whole outline; an explicit ~shape~ row wins.
-- A cell with a link but no target is ported by its text, spaces as underscores; ~<<left operand>>~ is
-  likewise reached as ~[[minus::left operand]]~.
-- Ports belong to their record, so all three records above have an ~l~ port: ~minus::l~, ~plus::l~.
-- A link's tags style its arc, as in an item's text: ~| <<l>> left [[plus][:dashed:]] |~ draws a dashed
+- A port's name is its cell's text sans links, spaces as underscores: ~[[minus::left operand]]~ reaches
+  ~| left operand [[plus]] |~. A ~<<target>>~ names a cell sans link, or gives a long one a terse name:
+  ~| <<x>> where the parse resumes |~ is ~[[rec::x]]~.
+- Ports belong to their record, so all three records above have a ~left~ port: ~minus::left~, ~plus::left~.
+- A link's tags style its arc, as in an item's text: ~| left [[plus][:dashed:]] |~ draws a dashed
   arc. A cell's trailing tags are an error; write ~=:x:=~ for literal text.
 - ~a::b~ names a port only when ~a~ names a record; otherwise it is an ordinary node, such as
   ~std::vector~. Record and port names may contain dots: ~[[org.el::v1.2]]~.
@@ -1073,7 +1050,7 @@ markup:
 Every graph so far flows top to bottom; a mind map grows outward from its centre. Graphviz's ~layout~
 attribute picks its engine, so the header line turns a tree into a mind map: ~twopi~ places ~root~ in the
 middle and each generation on a ring around it. With ~:wrap~, long labels stay compact:
-#+begin_graph Parsing, radially :layout twopi :root Parsing :wrap 12 :node.shape box :node.style rounded :demo live
+#+begin_graph Parsing, radially :layout twopi :root Parsing :wrap 12 :node.style rounded :demo live
 #+edge: :undirected:
 + Parsing
   + Top-down
@@ -1151,7 +1128,7 @@ A class is the table we would write anyway, as in [[*Records: a table of fields]
 tagged with its kind. The arrow points at what is inherited, implemented, or depended on; a diamond sits at the
 owner's end:
 #+begin_graph :direction up :demo live
-+ <<Animal>> Animal
++ Animal
   | <l>               |
   | *Animal*          |
   |-------------------|
@@ -1169,25 +1146,25 @@ owner's end:
   + [[Owner][:aggregates:]]
   + [[Bone][:depends:]]
 + <<Pet>> «interface» Pet
-+ <<Tail>> Tail
-+ <<Owner>> Owner
-+ <<Bone>> Bone
++ Tail
++ Owner
++ Bone
 #+end_graph
 
 ** A state machine: pseudo-states as tags
 
 A state machine is an outline of what follows what; the description term is the event, or the guard,
-that takes us along the arc. An unnamed ~:start:~, ~:final:~, or ~:choice:~ item needs a ~<<target>>~ only
-to be told apart; a composite state is a [[*Containers draw boxes][container]]:
+that takes us along the arc. A ~:start:~, ~:final:~, or ~:choice:~ item of tags alone is a node of its
+own, apart from every other; a composite state is a [[*Containers draw boxes][container]]:
 #+begin_graph :direction right :demo live
-+ <<start>> :start:
-  + <<idle>> Idle :state:
++ :start:
+  + Idle :state:
     + coin :: Paid :state:
-      + push :: <<check>> :choice:
+      + push :: :choice:
         + [stock] :: Vending :state:
-          + done :: [[idle]]
+          + done :: [[Idle]]
         + [empty] :: Refunding :state:
-          + done :: <<end>> :final:
+          + done :: :final:
 #+end_graph
 
 ** An entity-relationship diagram: cardinalities as tags
@@ -1195,7 +1172,7 @@ to be told apart; a composite state is a [[*Containers draw boxes][container]]:
 Each relationship is a description term, its cardinality a tag on that term, read from the parent's end
 to the child's: a customer places /many/ orders, each order placed by /one/ customer. Graphviz draws the
 crow's foot for “many” and the bar for “one”:
-#+begin_graph :direction right :node.shape box :demo live
+#+begin_graph :direction right :demo live
 + Customer
   + places :one-to-many: :: Order
     + contains :one-to-many: :: Line item
@@ -1265,9 +1242,7 @@ straight. An ~:@X:~ tag puts the moments of one instant side by side, and a mess
 from one moment to another. Graphviz orders a rank's nodes by its arcs' direction, so every message hangs
 off the left lifeline, and a ~reply~ template turns its arrow back:
 #+begin_graph Ordering a latte :labelloc t :demo live
-#+name: actor
-| shape | box     |
-| style | rounded |
+#+name: actor style=rounded
 
 #+name: moment
 | shape           | point  |
@@ -1277,18 +1252,16 @@ off the left lifeline, and a ~reply~ template turns its arrow back:
 | :edge.color     | gray   |
 | :edge.weight    | 100    |
 
-#+name: reply
-| dir   | back   |
-| style | dashed |
+#+name: reply dir=back style=dashed
 
 + Customer :actor:@actors:
-  + <<c1>> :moment:@t1:
+  + :moment:@t1:
     + order a latte :: [[b1]]
-    + <<c2>> :moment:@t2:
+    + :moment:@t2:
       + “that’s $5” :reply: :: [[b2]]
-      + <<c3>> :moment:@t3:
+      + :moment:@t3:
         + pay :: [[b3]]
-        + <<c4>> :moment:@t4:
+        + :moment:@t4:
           + here you go :reply: :: [[b4]]
 + Barista :actor:@actors:
   + <<b1>> :moment:@t1:
@@ -1336,15 +1309,15 @@ As [[parse-tree]] shows, =*= binds tighter than =+=.
 Sometimes a whole section is nothing but the outline we want drawn; wrapping it in a block is ceremony.
 A ~#+begin_graph~ block is a function on a region; a ~:graph:~ tag is the same function on a section. The
 section's text is the graph, and its ~:PROPERTIES:~ drawer ---Org's own home for key-value settings--- is
-the ~#+begin_graph~ line: ~:DIRECTION: right~ is ~:direction right~, ~:NODE.SHAPE: box~ is ~:node.shape box~, and
+the ~#+begin_graph~ line: ~:DIRECTION: right~ is ~:direction right~, ~:NODE.SHAPE: oval~ is ~:node.shape oval~, and
 ~:FILE:~ is ~:file~:
 #+begin_org :ignore t :demo live
 ,* Our grammar :graph_The_Grammar:
 :PROPERTIES:
 :DIRECTION: right
-:NODE.SHAPE: box
+:NODE.SHAPE: oval
 :END:
-+ <<expr>> expr
++ expr
   + term
     + factor
       + NUMBER
@@ -1604,7 +1577,7 @@ members rather than arc targets, so arcs out of them are inline links, styled as
   + Front end
     | shape | cluster |
     + lexer [[parser]]
-    + <<parser>> parser
+    + parser
 #+end_graph
 
 * Gallery
@@ -1618,64 +1591,62 @@ A decision tree is a tree whose nodes come in kinds: decisions we make (boxes), 
 and outcomes (bare text), with each chance's arcs labelled by how likely it is. Templates name the kinds,
 description terms label the arcs, and an item's ~#+edge:~ dashes every arc of chance beneath it:
 #+begin_graph Should our package go lexical? :direction right :demo live
-#+name: decision
-| shape | box |
-#+name: chance
-| shape | circle |
-| label | ""     |
-| width | 0.3    |
-#+name: outcome
-| shape | plaintext |
+#+name: decision shape=box
+#+name: chance shape=circle label="" width=0.3
+#+name: outcome shape=plaintext
 
 + Enable =lexical-binding=? :decision:
-  + yes :: <<specials>> :chance:
-    #+edge:
-    | style | dashed |
+  + yes :: :chance:
+    #+edge: style=dashed
     + 80% :: Closures capture \\ their environment :outcome:
     + 20% :: An undeclared special \\ breaks; we =defvar= it :outcome:
   + no :: Dynamic scope; \\ the byte-compiler warns :outcome:
 #+end_graph
 
-The chance node is all target: ~<<specials>>~ names it, and its template's empty ~label~ leaves a dot.
+The chance node is tags alone, so it needs no name, and its template's empty ~label~ leaves a dot.
 
 ** A mind map from a book: /How to Take Smart Notes/
 
 A chapter of Sönke Ahrens' /How to Take Smart Notes/, as we would outline it while reading. Each
-connective, such as “is an aid for”, sits on its arc, as a description term; ordered steps are numbered
-arcs; ~:smart_kind:~ marks the three kinds of note; and ~[[fleeting]]~ arcs back to a note met earlier:
-#+begin_graph How to Take Smart Notes ---Sönke Ahrens :direction right :wrap 24 :fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :node.fontname Helvetica :edge.fontname Helvetica :edge.fontsize 10 :edge.fontcolor gray30 :edge.color gray60 :demo live
-#+edge: :undirected:
-#+name: smart_kind
-| shape     | note      |
-| fillcolor | "#fff5cc" |
+connective, such as “is an aid for”, sits on its arc, as a description term; when every child of an item
+shares one, an ~#+edge:~ line beneath the item says it once, and a child's own term still wins. Ordered
+steps are numbered arcs; ~:smart_kind:~ marks the three kinds of note; and ~[[Fleeting]]~ arcs back to a
+note met earlier:
+#+begin_graph How to Take Smart Notes ---Sönke Ahrens :direction right :wrap 24 :demo live
+#+graph: fontname=Helvetica
+#+node: style="rounded,filled" fillcolor=white fontname=Helvetica
+#+edge: :undirected: fontname=Helvetica fontsize=10 fontcolor=gray30 color=gray60
+#+name: smart_kind :note: fillcolor="#fff5cc"
 
-+ <<notes>> *Smart notes*
++ *Smart notes*
   + Writing
-    + is an aid for :: thinking
-    + is an aid for :: studying
-    + is an aid for :: generating ideas
-    + is an aid for :: reading
-    + is an aid for :: understanding
+    #+edge: label="is an aid for"
+    + thinking
+    + studying
+    + generating ideas
+    + reading
+    + understanding
   + Thinking
     + happens :: on paper
   + Rule
     + keep a pen at hand
   + Process
     + 1 :: collect notes
-      + <<fleeting>> Fleeting :smart_kind:
+      + Fleeting :smart_kind:
         + reminders of thoughts
           + put in one place
           + process later
-      + <<literature>> Literature :smart_kind:
-        + taken :: when reading
-        + taken :: briefly
-        + taken :: selectively, for your own topics
-        + taken :: in your own words
-        + taken :: with bibliographic data
+      + Literature :smart_kind:
+        #+edge: label=taken
+        + when reading
+        + briefly
+        + selectively, for your own topics
+        + in your own words
+        + with bibliographic data
         + kept :: in the reference system
       + Permanent :smart_kind:
-        + review :: [[fleeting]]
-        + review :: [[literature]]
+        + review :: [[Fleeting]]
+        + review :: [[Literature]]
         + review :: once a day
         + think :: how they relate to your research, reflections, interests
         + one note for each idea
@@ -1712,7 +1683,6 @@ own, lest the prose become part of the graph.
 ** A section is a graph :graph_Lineage:
 :PROPERTIES:
 :DIRECTION: right
-:NODE.SHAPE: box
 :EDGE.COLOR: grey
 :END:
 + λ-calculus
@@ -1759,13 +1729,14 @@ it repeats are named once, by Org's own macros:
 | color     | #6c7086   |
 | arrowhead | vee       |
 
-#+name: lineage
-| style | solid |
-#+name: inspiration
-| style | dashed |
+#+name: lineage style=solid
+#+name: inspiration style=dashed
 #+name: equivalence
-| style      | dotted |
-| constraint | false  |
+| style      | dotted       |
+| constraint | false        |
+| color      | {{{yellow}}} |
+| fontcolor  | {{{yellow}}} |
+#+name: typed fillcolor=#2a1e3f color={{{mauve}}} fontcolor={{{mauve}}}
 
 + <<lambda>> λ-Calculus \\ (Church, 1930s) :@origins:
   | shape     | ellipse       |
@@ -1773,16 +1744,14 @@ it repeats are named once, by Org's own macros:
   | color     | #f38ba8       |
   | fontcolor | #f38ba8       |
   | penwidth  | 2             |
-  + encodes :: <<church>> Church Encoding \\ ℕ, Bool, Pairs :@models:
-    + Church– \\ Turing thesis :equivalence: :: <<turing>> Turing Machines \\ (equivalent power) :@models:
-      | :edge.color     | {{{yellow}}} |
-      | :edge.fontcolor | {{{yellow}}} |
-  + inspired :inspiration: :: <<lisp>> Lisp \\ (McCarthy, 1958) \\ car · cdr · cons :@languages:
+  + encodes :: Church Encoding \\ ℕ, Bool, Pairs :@models:
+    + Church– \\ Turing thesis :equivalence: :: Turing Machines \\ (equivalent power) :@models:
+  + inspired :inspiration: :: Lisp \\ (McCarthy, 1958) \\ car · cdr · cons :@languages:
     | fillcolor | #1e3a5f   |
     | color     | {{{sky}}} |
     | fontcolor | {{{sky}}} |
     | penwidth  | 2         |
-    + subset of :: <<emacs>> Emacs Lisp \\ buffers · modes · hooks :@runtimes:
+    + subset of :: Emacs Lisp \\ buffers · modes · hooks :@runtimes:
       | :edge.penwidth | 2             |
       | :edge.color    | {{{sky}}}     |
       | shape          | doubleoctagon |
@@ -1794,24 +1763,16 @@ it repeats are named once, by Org's own macros:
       + implements :: [[advice]]
     + enables :: [[macros]]
     + provides :: [[closures]]
-  + formalises :inspiration: :: <<haskell>> Haskell \\ pure · lazy · typed :@languages:
-    | fillcolor | #2a1e3f     |
-    | color     | {{{mauve}}} |
-    | fontcolor | {{{mauve}}} |
-    + <<ghc>> GHC \\ Core → STG → Cmm :@runtimes:
-      | fillcolor | #2a1e3f     |
-      | color     | {{{mauve}}} |
-      | fontcolor | {{{mauve}}} |
+  + formalises :inspiration: :: Haskell \\ pure · lazy · typed :typed:@languages:
+    + GHC \\ Core → STG → Cmm :typed:@runtimes:
     + uses :inspiration: :: [[monad]]
 
-+ <<combinatory>> Combinatory Logic \\ (Schönfinkel/Curry) :@origins:
++ Combinatory Logic \\ (Schönfinkel/Curry) :@origins:
   | shape     | ellipse       |
   | fillcolor | {{{surface}}} |
   | color     | #fab387       |
   | fontcolor | #fab387       |
-  + equivalent :: [[lambda]]
-    | :edge.dir   | both         |
-    | :edge.color | {{{yellow}}} |
+  + equivalent :equivalence:bidirectional: :: [[lambda]]
 
 + Emacs Concepts :container:
   | fontcolor | #a6e3a1 |
@@ -1827,13 +1788,13 @@ it repeats are named once, by Org's own macros:
   | style     | dashed        |
   + <<monad>> Monad \\ η · μ · associativity
     | shape | parallelogram |
-    + <<adjoint>> Adjunction \\ F ⊣ G
+    + Adjunction \\ F ⊣ G
       | :edge.label     | every monad \\ is an adjunction |
       | :edge.color     | {{{yellow}}}                    |
       | :edge.fontcolor | {{{yellow}}}                    |
       | shape           | parallelogram                   |
     + models :equivalence: :: [[closures]]
-  + <<functor>> Functor \\ F : C → D
+  + Functor \\ F : C → D
     | shape | parallelogram |
     + F∘F with η,μ :: [[monad]]
 

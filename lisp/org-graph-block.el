@@ -229,6 +229,33 @@ web, file, or [[*Heading]] link; else to its item in the #+begin_graph block."
 (define-key org-mode-map [org-graph-area mouse-1] #'org-graph-follow-area)
 (define-key org-mode-map [org-graph-area down-mouse-1] #'ignore)
 
+(defun org-graph-open-node-link ()
+  "Jumps to the item declaring the node that the link at point names, when point is in a #+begin_graph block; returns
+t then, else nil, leaving the link to Org.  An id needs no <<target>>: [[1]] reaches + 1, which Org's own search cannot
+find; [[rec::port]] reaches the record rec."
+  (-when-let* ((link  (org-element-lineage (org-element-context) '(link) t))
+               (_     (member (org-element-property :type link) '("fuzzy" "radio")))
+               (graph (org-graph--block-at-point))
+               (_     (equal "graph" (downcase (org-element-property :type graph))))
+               (line  (save-excursion
+                        (goto-char (org-element-property :post-affiliated graph))
+                        (let* ((block (org-special-block-after-point "graph"))
+                               (raw   (org--graph-expand-macros (org-special-block-contents block)))
+                               (lines (-some->> (ignore-errors (org--graph-parse raw (org-special-block-kwdargs block)))
+                                        (nth 2) org--graph-ctx-lines))
+                               (id    (org-element-property :path link)))
+                          (and lines (or (gethash id lines)
+                                         (and (string-match "\\`\\(.+?\\)::" id) (gethash (match-string 1 id) lines))))))))
+    (let ((origin (save-excursion (goto-char (org-element-property :post-affiliated graph)) (org-graph--body-origin))))
+      (org-mark-ring-push)
+      (goto-char origin)
+      (forward-line (1- line))
+      (back-to-indentation)
+      (org-reveal)
+      t)))
+
+(add-hook 'org-open-at-point-functions #'org-graph-open-node-link)
+
 (defun org-graph--body-origin ()
   "Point on a #+begin_graph line ↦ a marker at its body's first non-blank line: line 1, as `org--graph-read' counts the
 trimmed body that `org-special-block-contents' yields."

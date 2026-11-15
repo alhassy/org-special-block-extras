@@ -70,6 +70,41 @@
   (org-graph-follow-area (tests-graph--click "org-graph:2"))
   (should (looking-at-p "\\+ Scheme")))
 
+;;; C-c C-o on a link to a node leads to its item, target or not
+
+(org-deftest "C-c C-o on [[1]] leads to the item + 1, which declares no <<1>>"
+  :text "
+#+begin_graph
++ times
+  | left [[1]] | * |
++ 1
+#+end_graph"
+  :at "[[1"
+  (org-open-at-point)
+  (should (looking-at-p "\\+ 1$")))
+
+(org-deftest "C-c C-o on [[rec::port]] leads to the record rec"
+  :text "
+#+begin_graph
++ evaluator
+  + starts at :: [[minus::left]]
++ minus
+  | left [[plus]] | - |
+#+end_graph"
+  :at "[[minus"
+  (org-open-at-point)
+  (should (looking-at-p "\\+ minus$")))
+
+(org-deftest "C-c C-o on a link naming no node of its graph leaves it to Org, which finds the <<target>>"
+  :text "
+#+begin_graph
++ a [[zero]]
+#+end_graph
+<<zero>> is here"
+  :at "[[zero"
+  (org-open-at-point)
+  (should (looking-at-p "<<zero>>")))
+
 (org-deftest "a click on a node with a [[*Heading]] link leads to that section"
   :text "
 #+begin_graph
