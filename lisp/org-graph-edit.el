@@ -14,7 +14,7 @@
 
 ;;; Code:
 
-(require 'org-graph-read)
+(require 'org-graph-dot)
 (require 'org-graph-attributes)
 (require 'org-graph-smartdiagram)
 (require 'org-special-block-at-point)
@@ -135,6 +135,7 @@ When ARG ---or, when RET runs one of `org-graph--return-commands', which may cal
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
     (":unknown-tags" . "With error, a tag naming no #+name: template is an error; by default, it gets a made-up one.")
+    (":theme"    . "With NAME, the graph wears that theme of org-graph-themes; with nil, Graphviz's look.  Default: org-graph-theme.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
     (":smartdiagram" . "With TYPE, such as constellation, LaTeX's smartdiagram typesets the list, rather than Graphviz.")
     (":dpi"      . "Under :smartdiagram, the dots per inch of the PNG; 300 by default.")
@@ -145,6 +146,7 @@ When ARG ---or, when RET runs one of `org-graph--return-commands', which may cal
 (defconst org-graph--header-key-values
   `((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
     (":notes" "tooltip" "inline") (":unknown-tags" "random-templates" "error")
+    (":theme" "nil" ,@(--map (symbol-name (car it)) org-graph-themes))
     (":smartdiagram" ,@(mapcar #'car org-graph-smartdiagram-types)))
   "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
 

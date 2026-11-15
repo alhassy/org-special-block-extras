@@ -271,7 +271,7 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                                    (org-element-map tree 'radio-target (lambda (o) (org-element-property :value o))))))
               (org--graph-read-scope (org-element-contents tree) templates)))))
 
-(defconst org--graph-header-keys '(:file :svg :directed :mindmap :wrap :notes :unflatten :unknown-tags :C-c_C-c
+(defconst org--graph-header-keys '(:file :svg :directed :mindmap :wrap :notes :unflatten :unknown-tags :theme :C-c_C-c
                                          :contents-occur-as-link-description :exports :results)
   "Header keywords the `graph' block consumes itself, or Babel habits such as :exports, rather than handing to Graphviz.")
 

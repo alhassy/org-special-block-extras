@@ -12,6 +12,8 @@
 (unless (fboundp 'org-deftest)
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 (load-file (expand-file-name "~/org-special-block-extras/lisp/org-graph-block.el"))
+;; Graphs here are checked for their structure, so they wear Graphviz's own look; the theme has tests of its own.
+(setq org-graph-theme nil)
 
 ;; Tests stub primitives such as `call-process' via `cl-letf'; under native-comp, that compiles a
 ;; trampoline per primitive, which fails in batch.  Our code loads as source, so stubs work without them.

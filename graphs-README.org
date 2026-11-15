@@ -455,6 +455,25 @@ properties drawer is not one of its subheadings'. Graphviz scopes such defaults 
 ~subgraph~, which draws no box. A deeper item's tables override a shallower one's, as nested
 ~:PROPERTIES:~ do; a node first declared elsewhere keeps the defaults of where it was declared.
 
+** Themes: a look for every graph
+
+Every graph wears a theme, beneath all its own attributes: by default ~creamsicle~, after D2's theme 101,
+Orange Creamsicle ---cream boxes, orange containers lightening as they nest, dark brown lines, and italic
+arc labels. ~:theme NAME~ picks another of ~org-graph-themes~, and ~:theme nil~ wears Graphviz's own look:
+#+begin_graph :theme nil :demo live
++ Org
+  + exports to :: HTML
+#+end_graph
+
+A theme is data, ~#+graph:~, ~#+node:~, and ~#+edge:~ lines' pairs, plus a fill per depth of container; so a
+new one, or a new default, is a ~setq~ away:
+#+begin_src emacs-lisp
+(setq org-graph-themes
+      (cons '(ink :node "shape=box fontname=Helvetica" :edge "color=gray30" :containers "#eeeeee #ffffff")
+            org-graph-themes)
+      org-graph-theme 'ink)
+#+end_src
+
 * Saying it once: templates
 
 A parse tree repeats itself: every token the same box, every rule the same ellipse. Restating those rows
@@ -1495,6 +1514,7 @@ Once the demo is over, this is the page we keep open.
 | ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                         |
 | ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes    |
 | ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                   |
+| ~#+begin_graph :theme NAME~                  | the theme ~NAME~ of ~org-graph-themes~, beneath all else; ~nil~ for Graphviz's look |
 | ~#+begin_graph :mindmap t~                   | an undirected ~twopi~ layout, radiating from the first item, its nodes rounded  |
 | ~#+name: N~ above ~#+begin_graph~            | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions    |
 | ~* HEADING :graph:~, with ~:PROPERTIES:~     | the section's text is a graph; ~:RANKDIR: LR~ is ~:rankdir LR~, and so on       |
