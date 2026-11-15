@@ -113,7 +113,7 @@
 (define-org-export-test "enumerations are preserved when they contain special blocks, for HTML" [issue♯8]
   :input "
           1. builtin source block
-             #+begin_src latex
+             #+begin_src latex :copy nil
              \\uline{content 1}
              #+end_src
           2. custom (unregistered) block

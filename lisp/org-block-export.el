@@ -101,7 +101,7 @@ pre-processing steps."
       (lambda (contents)
         (let ((org--handler-anchor anchor))
           (apply handler backend contents main-arg kwdargs)))
-      header))))
+      header nil anchor))))
 
 ;;;; org--rewrite-special-blocks-by-handlers
 

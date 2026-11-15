@@ -102,13 +102,14 @@ An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][th
 (defun org--block-header-args (elem name)
   "(ELEM, NAME) ↦ the keyword arguments block ELEM inherits as a src block of language NAME would; see the Commentary.
   :header-args:details: :title-color red, on an enclosing heading  ↦  (:title-color red)
-The line's own arguments are not among them; they win over these."
-  (let ((defaults (intern (format "org-babel-default-header-args:%s" name)))
+For a nil NAME, those every src block inherits: Babel's language-agnostic `org-babel-default-header-args' and
+header-args.  The line's own arguments are not among them; they win over these."
+  (let ((defaults (if name (intern (format "org-babel-default-header-args:%s" name)) 'org-babel-default-header-args))
         (keywords (lambda (header) (-drop-while (-not #'keywordp) (org--read-header header)))))
     (apply #'org--plist-merge
            (and (boundp defaults) (--mapcat (list (car it) (cdr it)) (symbol-value defaults)))
            ;; Org's inheritance gives #+PROPERTY: lines, then each enclosing heading's, a `+' adding rather than replacing.
-           (funcall keywords (org-entry-get (org-element-property :begin elem) (format "header-args:%s" name) 'inherit))
+           (funcall keywords (org-entry-get (org-element-property :begin elem) (if name (format "header-args:%s" name) "header-args") 'inherit))
            (mapcar keywords (org-element-property :header elem)))))
 
 (provide 'org-block-header-args)

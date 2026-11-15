@@ -250,6 +250,7 @@
 (require 'org-quote-block)
 (require 'org-solution-block)
 (require 'org-demo)
+(require 'org-display-switches)
 (require 'org-substitution-blocks)
 (require 'org-spoiler-block)
 (require 'org-remark-block)
@@ -374,7 +375,10 @@ Read when first needed, at export, so a missing file is asked for then ---not wh
            (concat "C-c '    " (-if-let (edit (alist-get name org--block-edit-special-handlers nil nil #'equal))
                                    (funcall gist edit)
                                  ;; Every special block is so edited, by `org-special-block-edit'.
-                                 "Edit the block in `org-mode'; C-c ' again writes it back."))))))
+                                 "Edit the block in `org-mode'; C-c ' again writes it back."))
+           ;; As for a src block; see `org-special-block-split' and `org-special-block-insert-arg'.
+           "C-c C-v C-d  Split the block in two at point; around the region, in three."
+           "C-c C-v C-j  Insert an argument, or a switch, completing its name, on the #+begin_ line."))))
 
 (defun org--block-switch-lines (name)
   "Returns a heading, then a line per switch of `org-block-switches' that block NAME does not shadow by a keyword of
@@ -501,7 +505,7 @@ All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
 On a #+begin_NAME line, or a NAME: link, eldoc shows the block's arguments and gist;
 C-c ' edits any special block's contents in an Org buffer, or one of its `:edit-indirect-mode';
-C-c C-v C-d splits any special block in two at point;
+C-c C-v C-d splits any special block in two at point; C-c C-v C-j inserts one of its arguments;
 and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
 
 HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add-html-extra'.
@@ -528,6 +532,11 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (add-hook 'org-export-before-processing-functions #'org--rewrite-demos -20)
         (add-hook 'org-export-before-parsing-functions #'org--rewrite-demos -70)
         (add-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
+        ;; A block's :highlight lights its lines; a [[(name)]] link lights its coderef's line, on hover.
+        (advice-add 'org-html-src-block :around #'org--highlight-src-block)
+        (advice-add 'org-html-example-block :around #'org--highlight-src-block)
+        (advice-add 'org-export-format-code :around #'org--highlight-code-line)
+        (add-hook 'org-export-filter-final-output-functions #'org--coderef-script)
         (advice-add 'org-html-footnote-reference :around #'org--footnote-as-tooltip)
         ;; In HTML, <<X>> is a permalink #X to itself; <<<X>>> keeps Org's look, yet is #X too.
         (advice-add 'org-html--reference :around #'org--target-readable-reference)
@@ -596,6 +605,10 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'org-export-filter-final-output-functions #'org--load-html-head)
     (remove-hook 'org-export-filter-final-output-functions #'org--resolve-section-links)
     (remove-hook 'org-export-before-processing-functions #'org--html-export-style-setup)
+    (advice-remove 'org-html-src-block #'org--highlight-src-block)
+    (advice-remove 'org-html-example-block #'org--highlight-src-block)
+    (advice-remove 'org-export-format-code #'org--highlight-code-line)
+    (remove-hook 'org-export-filter-final-output-functions #'org--coderef-script)
     (advice-remove 'org-fontify-meta-lines-and-blocks #'osbe--fontify-blocks-as-org)
     (advice-remove 'org-remove-font-lock-display-properties #'org--undisplay)
     (advice-remove 'org--latex-preview-region #'org--math-preview-region)

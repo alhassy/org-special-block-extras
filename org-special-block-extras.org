@@ -5711,6 +5711,15 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   | =:folded TITLE=  | The result, folded within [[doc:org--details-block][details]] titled =TITLE=; =t= for the block's name |
   | =:verbatim t=    | The block as written, sans its switches, shown as Org source                  |
   | =:demo t=        | That source, then what it exports to; and a test that it still does; see [[#demos][Demos]] |
+  | =:backend B=     | Nothing at all, unless we export along =B=, or one of a list such as =(html latex)=, or a backend deriving from one |
+  | =:tags T=        | Nothing at all, when the tag =T=, or one of a list, is among =#+exclude_tags:=; see [[#two-editions][Two editions]] |
+  | =:within B=      | The result, within the block =B=, or =(B ARG :KEY VAL …)=, or within each of a list of them, outermost first |
+  | =:permalink ID=  | The result, after a 🔗 whose URL ends in =#ID=; =t= for its =#+name:=, else its title; see [[#permalinks][Permalinks]] |
+  | =:filename F=    | The result, beneath its file name =F=; for a src block, =t= is the file it =:tangle=-s to |
+  | =:copy t=        | The result, with a button copying its text, in HTML; every src and example block has one by default |
+  | =:tab T=         | The result as the tab =T= of the tabset that adjacent =:tab= blocks make, in HTML; =t= for a src block's language |
+  | =:highlight L=   | The lines =L=, such as ="2,4-6"=, or coderef labels, such as =(loop)=, lit up, in HTML |
+  | =:log t=         | The result, as ever; and what it transpiles to, in the buffer =*Org Block Log*=; or in the file =:log FILE= |
 
   #+begin_org :ignore t :demo t
   #+begin_box Exercise :let (N 7)
@@ -5821,6 +5830,126 @@ Recall that p -> q.
   its own =folded= argument receives =:folded= as usual. Since =:when=, =:let= and =:C-c_C-c=
   run Lisp written in the document, Emacs asks once before running each distinct form;
   ~org-defblock-evaluate-switches~ may instead allow them freely, or never.
+
+*** Two editions of one document: =:tags=
+  :PROPERTIES:
+  :CUSTOM_ID: two-editions
+  :END:
+
+  A course's notes come in two editions: the students' and the instructor's. Org already
+  writes both from one file, for sections: a heading tagged =:solution:= is not exported
+  when =#+exclude_tags: solution= says so. The =:tags= switch brings the same to blocks,
+  sans a heading per answer:
+  #+begin_src org :tangle no
+,#+exclude_tags: solution instructor
+
+,#+begin_box Exercise
+What do the first =N= odd numbers sum to?
+,#+end_box
+
+,#+begin_box Answer :tags solution
+=N²=, by induction on =N=.
+,#+end_box
+
+,#+begin_remark :tags instructor
+Most students guess =2N=; ask for a counterexample.
+,#+end_remark
+  #+end_src
+  So the students' edition is the file as is; the instructor's is the file sans its
+  =#+exclude_tags:= line. A block's tags are a symbol, a string of words, or a list of
+  them: =:tags solution=, =:tags "solution hard"=, =:tags (solution hard)=. Sans any
+  =#+exclude_tags:=, Org's own ~org-export-exclude-tags~ applies, which is =noexport=; so
+  =:tags noexport= is =:noexport t=. A heading inherits =:header-args:box: :tags solution=
+  for each box of its subtree, as with any other switch.
+
+  =:tags= is sugar for a =:when=, sans the Lisp, and so sans the question before running
+  it. The answer above is, longhand,
+  #+begin_src org :tangle no
+,#+begin_box Answer :when (not (member "solution" (split-string (or (cadar (org-collect-keywords '("EXCLUDE_TAGS"))) ""))))
+  #+end_src
+  In similar spirit, =:backend html= is =:when (eq backend 'html)=, save that it also
+  matches a backend deriving from =html=, such as Markdown or a blog's own.
+
+*** Wrap a block in others: =:within=
+
+  =:folded T= and =:boxed T= wrap a block in a [[doc:org--details-block][details]] and a [[doc:org--box-block][box]]; =:within= wraps it in any
+  block, with any arguments, as written on its =#+begin_= line:
+  | =:within (details "Hint")=                 | ≡ =:folded "Hint"=                        |
+  | =:within ((details "Hint") (box "Lemma"))= | ≡ =:folded "Hint" :boxed "Lemma"=         |
+  | =:within (box "Aside" :shadow t)=          | A box with a shadow, which =:boxed= lacks |
+  | =:within center=                           | Org's own =#+begin_center=                |
+  | =:within (margin "see")=                   | A margin note on the word “see”, holding the block |
+  A block that ~org-defblock~ made is called by its handler; any other, such as =quote=,
+  =center=, or a special block of no declaration, is left to Org. The first of a list is
+  outermost. Since a heading's drawer takes every switch, =:within: (details "Proof")=
+  folds a section's text away.
+
+  Why not =:wrap=? Babel has it already: =#+begin_src python :wrap example= wraps the
+  block's /results/, not the block. A src block's language keeps every header argument
+  Babel declares for it ---its common ones, such as =:wrap=, and those of
+  =org-babel-header-args:LANG=--- just as a block of ours keeps a keyword it declares;
+  so =ob-elvish='s own =:log=, say, stays its own.
+
+*** Code: =:filename=, =:copy=, =:highlight=, =:tab=
+
+  Literate configurations name the file each block tangles to; =:filename t= shows it atop
+  the block, from its =:tangle=, as inherited. Then =#+PROPERTY: header-args:emacs-lisp
+  :tangle init.el :filename t= titles every block of the file, sans repeating ourselves.
+  #+begin_src org :tangle no
+,#+begin_src emacs-lisp :tangle init.el :filename t :highlight "2"
+(use-package org
+  :custom (org-hide-emphasis-markers t))
+,#+end_src
+  #+end_src
+
+  Every src and example block has a copy button in HTML, by =:copy t=, which each
+  inherits from ~org-babel-default-header-args:src~ and ~org-babel-default-header-args:example~.
+  The button copies the code sans its =-n= line numbers. To turn it off, write =:copy nil=
+  for a block, =#+PROPERTY: header-args:haskell :copy nil= for a language, or
+  =#+PROPERTY: header-args:src :copy nil= for every src block of the file; =header-args:src=
+  is weaker than a language's own, as Babel's language-agnostic =header-args= is weaker still.
+  A src block whose code is not exported, by =:exports results= or =none=, has neither a
+  button nor a file name.
+
+  =:highlight= lights lines up, by number ---as =-n= shows them, else counting from 1--- or
+  by Org's own coderef labels. In the following, the second line is lit by its label, and
+  hovering over the link lights it too, as Org's own manual promises:
+  #+begin_src org :tangle no
+,#+begin_src C -n :highlight (loop)
+int tot = 1;
+for (int i = 0; i != 10; i++)   (ref:loop)
+   tot *= i;
+,#+end_src
+
+The loop on line [[(loop)]] multiplies.
+  #+end_src
+  Org writes the hover's script only when ~org-html-head-include-scripts~ is on, which is
+  off by default; we add the script whenever a page has a =[[(label)]]= link.
+
+  Adjacent =:tab= blocks are one tabset, in HTML; =:tab t= is titled by a src block's
+  language. One algorithm in three languages takes the room of one:
+  #+begin_src org :tangle no
+,#+begin_src haskell :tab t
+sum [1 .. 10]
+,#+end_src
+,#+begin_src python :tab Python3
+sum(range(1, 11))
+,#+end_src
+,#+begin_src emacs-lisp :tab "Emacs Lisp"
+(apply #'+ (number-sequence 1 10))
+,#+end_src
+  #+end_src
+  Elsewhere ---LaTeX, Markdown, or a page sans JavaScript--- each block appears in turn,
+  beneath its title.
+
+*** What does a block transpile to?: =:log=
+
+  Every block becomes HTML, or LaTeX, in place of what it holds. To see that rendering apart
+  from the page ---when debugging a block of our own, say--- we mark it =:log t=: each export
+  then appends the block's rendering to the buffer =*Org Block Log*=, its other switches
+  applied; =:log FILE= writes it to =FILE= instead. Moreover, =C-c C-c= within a =:log=
+  block shows its rendering at once, along each of ~org-demo-backends~, sans exporting
+  the document; save within a src block, whose =C-c C-c= stays Babel's.
 
 ** Demos ---a block, then what it exports to, and a test that it still does
   :PROPERTIES:
@@ -6462,6 +6591,47 @@ Mind the gap.
   The dispatcher itself ---a single function on ~org-ctrl-c-ctrl-c-hook~--- lives in
   [[https://github.com/alhassy/org-special-block-extras/blob/master/lisp/org-ctrl-c-ctrl-c-for-special-block.el][org-ctrl-c-ctrl-c-for-special-block.el]].
 
+** Your own Babel: a block, and its =C-c C-c=
+  :PROPERTIES:
+  :CUSTOM_ID: your-own-babel
+  :END:
+
+  Each =ob-LANG= package teaches Babel to run a language: =C-c C-c= evaluates the block and
+  writes its =#+RESULTS:= below; export shows the code, its results, or both. We have both
+  halves already: ~org-defblock~ says what a block exports to, and ~org-def-action~ what
+  =C-c C-c= does within it. By way of example, a =calc= block whose every line is maths for
+  Emacs's own calculator:
+  #+begin_src emacs-lisp :tangle no
+(org-defblock calc (&context raw-contents)
+  "Each line of maths, beside its value by Emacs's calc."
+  (org-parse (format "#+begin_example\n%s\n#+end_example"
+                     (mapconcat (lambda (line) (format "%s  =  %s" line (calc-eval line)))
+                                (split-string raw-contents "\n" t) "\n"))))
+
+(org-def-action calc ()
+  "Write each line's value below the block, as Babel writes a src block's results."
+  (let ((results (mapconcat (lambda (line) (concat ": " (calc-eval line))) (split-string raw-contents "\n" t) "\n")))
+    (re-search-forward "^[ \t]*#\\+end_calc")
+    (forward-line)
+    (when (looking-at-p "[ \t]*#\\+RESULTS:")
+      (delete-region (point) (org-element-property :end (org-element-at-point))))
+    (insert "#+RESULTS:\n" results "\n")
+    t))
+  #+end_src
+  Then =C-c C-c= within
+  #+begin_src org :tangle no
+,#+begin_calc
+2^10
+sqrt(2)
+,#+end_calc
+  #+end_src
+  writes =: 1024= and =: 1.41421356237= below it; export shows each line beside its value.
+  That is the whole of an =ob-calc=: a language's evaluator is a function of the block's
+  text, so the block's arguments are its header arguments ---=#+begin_calc :precision 3=---
+  inherited by =:header-args:calc:= as ever, and every switch, such as =:folded= or =:tags=,
+  applies for free. For a single block, rather than a kind, the =:C-c_C-c= switch suffices;
+  and =:log t= shows what a block exports to, when the export half is the one in doubt.
+
 ** =C-c '= to edit a block in its own buffer
   :PROPERTIES:
   :CUSTOM_ID: c-c-quote-for-your-own-blocks
@@ -6516,6 +6686,22 @@ Two.
   its own; and =C-u C-c C-v C-d= puts a heading between the pieces. In a src block within a
   special block, it is the src block that is split, as ever. The command is
   ~org-special-block-split~, should you want it on a key of its own.
+
+** =C-c C-v C-j= to insert a block's argument
+  :PROPERTIES:
+  :CUSTOM_ID: c-c-c-v-c-j-to-insert-an-argument
+  :END:
+
+  In a src block, =C-c C-v C-j= completes a header argument, then its value, and appends both
+  to the =#+begin_src= line. Within a special block, it does the same for the block's own
+  keywords, as ~org-defblock~ declares them ---offering each one's default--- and for every
+  switch, such as =:folded= or =:tags=; an empty value, as for =:folded=, means =t=:
+  #+begin_src org :tangle no
+,#+begin_details Hint                         C-c C-v C-j :title-color ⏎ red ⏎
+body                                     ↦    #+begin_details Hint :title-color red
+,#+end_details
+  #+end_src
+  In a src block, our switches join Babel's own header arguments among those it completes.
 
 ** Hover for a block's arguments: =eldoc=
   :PROPERTIES:
@@ -7319,9 +7505,12 @@ With =org-special-block-extras-mode= on, in HTML:
 
 Two targets whose names differ only in whitespace, such as =<<a b>>= and =<<a-b>>=, share an id; we name them apart.
 
-# [[color:orange][Going forward,]]
-Going forward, we could give every heading such a permalink too, producing clickable
-org-headings similar to Github's ---the necessary ingredients are likely [[https://github.com/alhassy/emacs.d#ensuring-useful-html-anchors][here]].
+The =:permalink= switch gives a block, or a section, a permalink sans writing =<<X>>= ourselves:
++ =#+begin_box Lemma :permalink t= puts =<<Lemma>>= atop the box: =t= names it by the block's =#+name:=, else its
+  title; =:permalink euclid= names it =euclid=.  A src block has no title, so =t= needs its =#+name:=.
++ A heading's =:permalink: t= puts the 🔗 beside the heading, as GitHub does, linking to its =CUSTOM_ID=; sans one,
+  the heading's text, with dashes for spaces, becomes it.  The table of contents shows the heading sans 🔗.
++ A =#+PROPERTY: header-args:box :permalink t= gives every titled box one, as with any other switch.
 
 #+html: <br>
 #+begin_org :ignore t :demo t

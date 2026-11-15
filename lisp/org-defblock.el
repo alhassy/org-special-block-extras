@@ -50,6 +50,7 @@
 (require 'lf)
 (require 'org-special-block-indirect-edit)
 (require 'org-special-block-split)
+(require 'org-special-block-insert-arg)
 (require 'org-deftag)
 (require 'org-deflink)
 (require 'org-block-header-args)

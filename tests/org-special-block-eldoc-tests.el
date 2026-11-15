@@ -29,7 +29,9 @@ body
       (should (equal (org-test--eldoc-at text needle)
                      (list (string-join (append (list "Enclose contents in a folded up box, for HTML."
                                                       (concat "\n" (org--hover-example 'org--details-block) "\n")
-                                                      "C-c '    Edit the block in `org-mode'; C-c ' again writes it back.")
+                                                      "C-c '    Edit the block in `org-mode'; C-c ' again writes it back."
+                                                      "C-c C-v C-d  Split the block in two at point; around the region, in three."
+                                                      "C-c C-v C-j  Insert an argument, or a switch, completing its name, on the #+begin_ line.")
                                                 (org--block-switch-lines "details")
                                                 '("Docs · See the manual"))
                                         "\n")
@@ -44,6 +46,8 @@ x
     (should (s-contains-p "
 C-c C-c  Show the maths as an image atop the block; again, to remove it.  See `org--math-preview'.
 C-c '    Edit the block in `latex-mode'; C-c ' again writes it back.
+C-c C-v C-d  Split the block in two at point; around the region, in three.
+C-c C-v C-j  Insert an argument, or a switch, completing its name, on the #+begin_ line.
 Switches, which every block understands:" doc))))
 
 (deftest "eldoc lists the switches every block understands, save those a block shadows by a keyword of its own"
@@ -63,7 +67,9 @@ hi
 #+end_shy" "#+begin_shy"))))
       (should (equal doc (string-join (append '("Be shy."
                                                 "Some prose too long for one line."
-                                                "C-c '    Edit the block in `org-mode'; C-c ' again writes it back.")
+                                                "C-c '    Edit the block in `org-mode'; C-c ' again writes it back."
+                                                      "C-c C-v C-d  Split the block in two at point; around the region, in three."
+                                                      "C-c C-v C-j  Insert an argument, or a switch, completing its name, on the #+begin_ line.")
                                               (org--block-switch-lines "shy")
                                               '("Docs · See the manual"))
                                       "\n")))
@@ -167,3 +173,19 @@ C-c '" doc))
   :text "Some prose."
   :at "prose"
   (should-not (org--special-block-capf)))
+
+(org-deftest "C-c C-v C-j within a special block appends an argument, and its value, to its #+begin_ line" [eldoc insert-arg]
+  :text "
+#+begin_details Hint
+body
+#+end_details"
+  :at "body"
+  (org-babel-insert-header-arg :title-color "red")
+  (org-babel-insert-header-arg :folded "")
+  (should (string-match-p "^#\\+begin_details Hint :title-color red :folded$" (buffer-string))))
+
+(deftest "C-c C-v C-j offers a block's own keywords, with their defaults, then the switches it does not shadow" [eldoc insert-arg]
+  (let ((candidates (org--block-arg-candidates "details")))
+    (should (equal (assq :title-color candidates) '(:title-color . "green")))
+    (should (assq :folded candidates))
+    (should (assq :copy candidates))))

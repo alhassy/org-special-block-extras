@@ -279,7 +279,7 @@ Less is more.
 
 (define-org-export-test "switches work on src blocks: :boxed, the code still exported by Org" [switches any-block]
   :input "
-          #+begin_src emacs-lisp :boxed t :exports code
+          #+begin_src emacs-lisp :boxed t :exports code :copy nil
           (+ 1 2)
           #+end_src"
   :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
@@ -311,7 +311,7 @@ Less is more.
       (upcase (funcall render contents)))
     (should (string-match-p "HELLO" (org-export-string "#+begin_src text :shout t\nhello\n#+end_src")))
     ;; Within :let, at depth 0: it shouts the substitution; within :folded, too, which titles the details.
-    (should (string-match-p "Peek.*</summary>[^z]*JASIM"
+    (should (string-match-p "Peek.*</summary>\\(?:.\\|\n\\)*JASIM"
                             (org-export-string "#+begin_example :let (WHO \"jasim\") :folded \"Peek\" :shout t\nWHO\n#+end_example"))))
   (should-not (org--block-switch-p :shout)))
 
@@ -447,6 +447,7 @@ Douglas Adams.")
 (deftest "a heading's :verbatim shows its section as written, heading and subsections included, sans its switches" [switches sections]
   (let ((org-html-htmlize-output-type nil))
     (should (equal (org-export-string "
+#+PROPERTY: header-args:src :copy nil
 * Answer
 :PROPERTIES:
 :verbatim: t
@@ -505,3 +506,131 @@ What is 1 + 1?"
 
 (provide 'org-block-switches-tests)
 ;;; org-block-switches-tests.el ends here
+
+;;; :backend, :tags, :within, :permalink
+
+(define-org-export-test "a block's :backend names the backends it exports along; others get nothing" [switches backend]
+  :input "
+          #+begin_red :backend latex
+          Only in print.
+          #+end_red
+          #+begin_blue :backend (html latex)
+          Everywhere we care for.
+          #+end_blue"
+  :equals "<span style=\"color:blue;\">
+<p>
+Everywhere we care for.
+</p>
+</span>
+")
+
+(deftest "a block's :backend matches a backend that derives from it, so md is html, and asks nothing before it runs" [switches backend]
+  (let ((org-defblock-evaluate-switches nil))
+    (should (string-match-p "Web" (org-export-string "#+begin_red :backend html\nWeb\n#+end_red" 'md)))
+    (should-not (string-match-p "Markdown" (org-export-string "#+begin_red :backend md\nMarkdown\n#+end_red" 'html)))))
+
+(define-org-export-test "a block whose :tags meet #+exclude_tags is not exported, as a section so tagged is not" [switches tags]
+  :input "
+          #+exclude_tags: solution draft
+          #+begin_box Exercise
+          What is 6 × 7?
+          #+end_box
+          #+begin_box Answer :tags solution
+          42
+          #+end_box
+          #+begin_red :tags (aside draft)
+          Rethink this.
+          #+end_red
+          #+begin_blue :tags \"aside hint\"
+          Think of a towel.
+          #+end_blue"
+  :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
+<h3>Exercise</h3>
+<p>
+What is 6 × 7?
+</p>
+</div>
+
+
+<span style=\"color:blue;\">
+<p>
+Think of a towel.
+</p>
+</span>
+")
+
+(deftest "sans #+exclude_tags, a block's :tags meet Org's `org-export-exclude-tags', noexport by default" [switches tags]
+  (should-not (string-match-p "Hidden" (org-export-string "#+begin_red :tags noexport\nHidden\n#+end_red")))
+  (should (string-match-p "Shown" (org-export-string "#+begin_red :tags solution\nShown\n#+end_red"))))
+
+(deftest "`org--wrap-specs' reads one block, or a list of them, outermost first" [switches within]
+  (should (equal (org--wrap-specs 'box) '((box))))
+  (should (equal (org--wrap-specs '(box "T" :shadow t)) '((box "T" :shadow t))))
+  (should (equal (org--wrap-specs '((details "Hint") box)) '((details "Hint") (box)))))
+
+(deftest "a block's :within (details T) is its :folded T, and a list of blocks is its :folded and :boxed" [switches within]
+  (let ((org-src-preserve-indentation t))
+    (should (equal (org-export-string "#+begin_red :within (details \"Hint\")\nHi\n#+end_red")
+                   (org-export-string "#+begin_red :folded \"Hint\"\nHi\n#+end_red")))
+    (should (equal (org-export-string "#+begin_quote :within ((details \"Hint\") (box \"Lemma\"))\nHi\n#+end_quote")
+                   (org-export-string "#+begin_quote :folded \"Hint\" :boxed \"Lemma\"\nHi\n#+end_quote")))))
+
+(define-org-export-test "a block's :within passes each block its arguments; one no org-defblock declares is left to Org" [switches within]
+  :input "
+          #+begin_red :within ((box \"Aside\" :background-color pink) center)
+          Hi
+          #+end_red"
+  :equals "<div style=\"padding: 1em;background-color: #FFCCFF;border-radius: 15px;font-size: 0.9em;\">
+<h3>Aside</h3>
+<div class=\"org-center\">
+<span style=\"color:red;\">
+<p>
+Hi
+</p>
+</span>
+</div>
+</div>
+")
+
+(deftest "a block's :permalink ID puts <<ID>> atop it; for t, its #+name:, else its title; [[ID]] links to it" [switches permalink]
+  (let ((html (org-export-string "#+begin_box Exercise :permalink t\nHi\n#+end_box\nSee [[Exercise]].")))
+    (should (string-match-p "<a class=\"anchor\" id=\"Exercise\" href=\"#Exercise\"" html))
+    (should (string-match-p "<a href=\"#Exercise\">" html)))
+  (should (string-match-p "id=\"fact\" href=\"#fact\""
+                          (org-export-string "#+name: fact\n#+begin_box Factorial :permalink t\nHi\n#+end_box")))
+  (should (string-match-p "id=\"here\" href=\"#here\""
+                          (org-export-string "#+begin_src emacs-lisp :permalink here\n(+ 1 2)\n#+end_src")))
+  (should-error (org-export-string "#+begin_src emacs-lisp :permalink t\n(+ 1 2)\n#+end_src") :type 'user-error))
+
+(deftest "a section's :permalink puts its 🔗 beside the heading, by CUSTOM_ID; the table of contents shows the title alone" [switches permalink]
+  (let ((html (org-export-string "* Lemmas\n:PROPERTIES:\n:permalink: t\n:END:\nBody.")))
+    (should (string-match-p "<h2 id=\"Lemmas\">.*Lemmas <a class=\"anchor\" href=\"#Lemmas\"" html))
+    (should (string-match-p "<li><a href=\"#Lemmas\">1\\. Lemmas</a></li>" html))))
+
+;;; Rewriting a block once, its #+name: with it
+
+(deftest "a src block's inherited switch applies once, though switches are applied both before and after #+INCLUDE:" [switches]
+  (should (equal 1 (s-count-matches "<h3>Hi</h3>"
+                                    (org-export-string "* H
+:PROPERTIES:
+:header-args:emacs-lisp: :boxed Hi
+:END:
+#+begin_src emacs-lisp
+(+ 1 2)
+#+end_src")))))
+
+(deftest "a rewritten src block keeps its #+name:, so Babel still finds it; :noexport takes the name along" [switches]
+  (let ((org-confirm-babel-evaluate nil))
+    (should (string-match-p "<pre class=\"src src-emacs-lisp\" id="
+                            (org-export-string "#+name: three\n#+begin_src emacs-lisp :boxed t\n(+ 1 2)\n#+end_src")))
+    (should (string-match-p "<pre class=\"example\"[^>]*>\n3\n</pre>"
+                            (org-export-string "#+name: three\n#+begin_src emacs-lisp :permalink here :exports none\n(+ 1 2)\n#+end_src\n\n#+call: three()")))
+    (should-not (string-match-p "id=\"lost\""
+                                (org-export-string "#+name: lost\n#+begin_red :noexport t\nHi\n#+end_red\n\nNext.")))))
+
+(deftest "a src block's language keeps its own header arguments: Babel's :wrap wraps its results, not the block" [switches within]
+  (let ((org-confirm-babel-evaluate nil))
+    (should (string-match-p "<div class=\"aside\"[^>]*>\n<p>\n3"
+                            (org-export-string "#+begin_src emacs-lisp :wrap aside :exports results\n(+ 1 2)\n#+end_src")))
+    (should (org--babel-declares-p "emacs-lisp" :wrap))
+    (should-not (org--babel-declares-p "emacs-lisp" :folded))))
