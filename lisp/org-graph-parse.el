@@ -813,7 +813,8 @@ So a legend draws such a template as an arc, rather than as a node."
 (defun org--graph-buffer-templates ()
   "The current buffer's #+name: tables, outside graph blocks, ↦ templates, name ↦ rows; so, as with Babel's
 named tables, a house style is named once per file rather than once per graph.
-`#+name: wife :base:' inherits, as in a graph; and, as #+name: is Org's affiliated keyword, a #+caption: may sit by it."
+`#+name: wife :base:' inherits, as in a graph; and, as #+name: is Org's affiliated keyword, a #+caption: may sit by it.
+`#+name: red color=red' is a template on one line, as `org--graph-keyword-rows' reads its pairs."
   (let ((templates (make-hash-table :test #'equal)))
     (when (derived-mode-p 'org-mode)
       (save-excursion
@@ -824,9 +825,12 @@ named tables, a house style is named once per file rather than once per graph.
                 ;; A graph's own templates are its own.
                 (re-search-forward "^[ \t]*#\\+end_graph" nil 'move)
               (let ((table (save-match-data (org-element-at-point))))
-                (when (eq (org-element-type table) 'table)
-                  (org--graph-add-template templates (org-element-property :name table)
-                                           (org--graph-table-rows table)))))))))
+                (cond ((eq (org-element-type table) 'table)
+                       (org--graph-add-template templates (org-element-property :name table)
+                                                (org--graph-table-rows table)))
+                      ;; A template on one line, `#+name: red color=red', above whatever it may be.
+                      ((save-excursion (beginning-of-line) (looking-at org--graph-name-pairs-re))
+                       (org--graph-add-template templates (string-trim (match-string 2)) nil)))))))))
     templates))
 
 (defun org--graph-option (kwdargs key default choices)

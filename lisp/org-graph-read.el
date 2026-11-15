@@ -117,12 +117,46 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
   (when (string-match (concat "\\`[ \t]*" org--graph-tag-group-re "[ \t]*\\'") value)
     (list ":inherit" (s-join " " (s-split ":" (match-string 1 value) t)))))
 
+(defun org--graph-keyword-rows (key value)
+  "A #+graph:, #+node:, or #+edge: keyword KEY's VALUE ↦ its rows: its tags, as an :inherit row, and each KEY=VALUE pair,
+as Graphviz's own edge [fontsize=10 color=gray] writes them; a value with spaces is \"quoted\".
+  \"fontsize=10 color=gray\"            ↦  ((\"fontsize\" \"10\") (\"color\" \"gray\"))
+  \":faint: label=\\\"a b\\\" style=dashed\"  ↦  ((\":inherit\" \"faint\") (\"label\" \"a b\") (\"style\" \"dashed\"))
+So a line may say what a two-column table below it would; anything else on it is an error."
+  (let ((pos 0) rows)
+    (while (string-match "[ \t]*\\([^ \t]\\)" value pos)
+      (setq pos (match-beginning 1))
+      (cond ((eq pos (string-match (concat org--graph-tag-group-re "\\(?:[ \t]\\|\\'\\)") value pos))
+             (push (list ":inherit" (s-join " " (s-split ":" (match-string 1 value) t))) rows)
+             (setq pos (match-end 1)))
+            ((eq pos (string-match "\\([^ \t=:\"]+\\)=\\(?:\"\\(\\(?:[^\"\\\\]\\|\\\\.\\)*\\)\"\\|\\([^ \t]+\\)\\)" value pos))
+             (push (list (match-string 1 value)
+                         (or (-some->> (match-string 2 value) (replace-regexp-in-string "\\\\\\(.\\)" "\\1"))
+                             (match-string 3 value)))
+                   rows)
+             (setq pos (match-end 0)))
+            (t (user-error "graph: ‘#+%s: %s’ holds ‘%s’, which is neither a :tag: nor a KEY=VALUE pair"
+                           key (s-trim value) (car (split-string (substring value pos)))))))
+    (nreverse rows)))
+
 (defun org--graph-add-template (templates name rows)
   "(TEMPLATES, NAME, ROWS) ↦ (template . ID), having appended ROWS to template ID in TEMPLATES; from a `#+name: NAME'.
-  \"wife :base:\"  ↦  (template . \"wife\"), template wife now inheriting template base"
-  (-let [(_ id tags) (s-match "\\`[ \t]*\\([^ \t]*\\)\\(.*\\)\\'" name)]
-    (puthash id (append (gethash id templates) (-some--> (org--graph-keyword-tags tags) (list it)) rows) templates)
+  \"wife :base:\"           ↦  (template . \"wife\"), template wife now inheriting template base
+  \"red color=red :base:\"  ↦  (template . \"red\"), its rows color=red, then base's; as a table below would say"
+  (-let [(_ id rest) (s-match "\\`[ \t]*\\([^ \t]*\\)\\(.*\\)\\'" name)]
+    (puthash id (append (gethash id templates) (org--graph-keyword-rows 'name rest) rows) templates)
     (cons 'template id)))
+
+(defconst org--graph-name-pairs-re "^\\([ \t]*\\)#\\+name:\\([ \t]+[^ \t\n]+[^\n]*?[^ \t\n=:\"]=[^\n]*\\)$"
+  "A #+name: line holding KEY=VALUE pairs, a template on one line: group 1, its indentation; 2, all after the colon.")
+
+(defun org--graph-unaffiliate-names (raw)
+  "RAW with each #+name: line of KEY=VALUE pairs as a #+template: line, which Org affiliates with nothing; so several
+such lines in a row are several templates, rather than Org's names of one element.  Lines stay put, so an item's
+line, which a node's click leads back to, is unchanged.
+  \"#+name: red color=red\\n#+name: blue color=blue\"  ↦  \"#+template: red color=red\\n#+template: blue color=blue\""
+  (let ((case-fold-search t))
+    (replace-regexp-in-string org--graph-name-pairs-re "\\1#+template:\\2" raw t)))
 
 (defun org--graph-table-lines (table)
   "A TABLE element, in the current buffer, ↦ its rows' lines, trimmed; hlines included, e.g. (\"| a | b |\" \"|---|\")."
@@ -145,7 +179,8 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
   "Sibling ELEMENTS ↦ their SCOPE; #+name: tables, wherever they sit, go to TEMPLATES rather than to the scope.
 
 A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, #+record:, or #+name:
----Org's own affiliated keyword---; else, it holds the item's own | key | value | rows.  #+rank: lines are id groups."
+---Org's own affiliated keyword---; else, it holds the item's own | key | value | rows.  #+rank: lines are id groups.
+A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see `org--graph-keyword-rows'."
   (let (rows ranks notes items kind owner)
     (dolist (el (org--graph-elements elements))
       (pcase (org-element-type el)
@@ -155,10 +190,10 @@ A table belongs to the directive above it, past any tables between: #+graph:, #+
            (pcase key
              ((or 'graph 'node 'edge)
               (setq owner key)
-              (-some--> (org--graph-keyword-tags value) (push it (alist-get key rows))))
+              (dolist (row (org--graph-keyword-rows key value)) (push row (alist-get key rows))))
              ('record (setq owner 'record))
              ('rank (unless (s-blank-str-p value) (push (s-trim value) ranks)))
-             ('name (setq owner (org--graph-add-template templates value nil)))
+             ((or 'name 'template) (setq owner (org--graph-add-template templates value nil)))
              (_ (org--graph-stray el (format "#+%s:" key))))))
         ('table
          (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil)))
@@ -271,7 +306,7 @@ its <<<radio targets>>> as `org--graph-radio' holds them.
 Org parses RAW in a buffer of its own, so the elements' positions are those of RAW."
   (with-temp-buffer
     (delay-mode-hooks (org-mode))
-    (insert (org--graph-number-clusters raw))
+    (insert (org--graph-unaffiliate-names (org--graph-number-clusters raw)))
     (let ((tree (org-element-parse-buffer))
           (templates (make-hash-table :test #'equal))
           (org--graph-anonymous-clusters 0))

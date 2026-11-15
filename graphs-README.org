@@ -309,6 +309,16 @@ name, ~:SETTINGS:~ or ~:PALETTE:~, folds them away with ~TAB~, along with ~#+ran
     + parser :: syntax tree
 #+end_graph
 
+A short table may instead be written on its keyword's line, as Graphviz's own ~edge [fontsize=10
+color=gray]~ writes it: ~KEY=VALUE~ pairs, a value with spaces in double quotes, beside any ~:tags:~.
+The ~:SETTINGS:~ above is then three lines:
+#+begin_src org :tangle no
+,#+graph: rankdir=LR fontname=Helvetica
+,#+node: shape=box style=rounded fontname=Helvetica
+,#+edge: fontsize=10 color=gray
+#+end_src
+Anything else on such a line is an error, rather than silently ignored.
+
 ** Subtrees inherit #+node:, #+edge:, and #+rank:
 
 Sometimes a style belongs to one branch, not the whole graph. A compiler folds constants: ~1 * 2~ is
@@ -361,6 +371,11 @@ the node:
     | fillcolor | pink |
   + NUMBER 3 :token:
 #+end_graph
+
+A short template fits on its name's line, as ~KEY=VALUE~ pairs ---as [[*When the preamble outgrows the line][#+edge: lines]] take them--- so the
+two above are, tersely, ~#+name: token shape=box style=filled fillcolor=lightblue~ and
+~#+name: rule style=bold~. Several such lines in a row are several templates, and a table below one adds
+rows to it.
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
 ~:token:rule:~, each a template, the earlier winning on a clash ---save colours: when the tags' templates
@@ -1366,8 +1381,10 @@ Once the demo is over, this is the page we keep open.
 | ~#+graph:~ table                             | ~graph [ … ]~                                                                   |
 | ~#+node:~ table                              | ~node [ … ]~                                                                    |
 | ~#+edge:~ table                              | ~edge [ … ]~                                                                    |
+| ~#+edge: fontsize=10 color=gray :T:~         | ~edge [ fontsize=10 color=gray … ]~, with template ~T~; likewise ~#+graph:~, ~#+node:~ |
 | ~#+rank: n1 [[n 2]]~                         | ~{ rank=same; n1; "n 2" }~                                                      |
 | ~#+name: T~ + table                          | style template ~T~, used via ~:T:~ tags or ~:inherit~ rows; in or out of graphs |
+| ~#+name: T color=red shape=box~              | template ~T~ on one line, of ~KEY=VALUE~ pairs; with or without a table below   |
 | top-level ~- :T: :: MEANING~                 | a legend entry: a sample of template ~T~, captioned ~MEANING~                   |
 | ~#+begin_cluster TITLE :KEY V~               | ~subgraph cluster_TITLE { label=TITLE KEY=V … }~                                |
 | ~+ NAME~ list item                           | node ~NAME~ declaration                                                         |

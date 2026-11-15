@@ -36,6 +36,8 @@
 ;;   #+edge:                       ; default edge[ ] attrs
 ;;   | color | #6c7086 |
 ;;
+;;   #+edge: color=#6c7086 penwidth=2   ; the same, tersely, as KEY=VALUE pairs; likewise #+graph:, #+node:
+;;
 ;;   #+rank: lam [[combinatory]]   ; { rank=same; lam; combinatory }
 ;;
 ;;   #+name: faint                 ; a style template, for :faint: tags and :inherit rows; also outside graphs

@@ -148,3 +148,53 @@
 
 + A
   | :inherit | typo |" nil '(:unknown-tags error)) :type 'user-error))
+
+(deftest "a #+graph:, #+node:, or #+edge: line may hold KEY=VALUE pairs, as Graphviz's own edge [ … ] does, beside tags" [graph]
+  (should (equal (org--graph-keyword-rows 'edge "fontsize=10 color=gray") '(("fontsize" "10") ("color" "gray"))))
+  (should (equal (org--graph-keyword-rows 'node ":faint: label=\"a b\" style=dashed")
+                 '((":inherit" "faint") ("label" "a b") ("style" "dashed"))))
+  (should (equal (org--graph-raw->dot "
+#+graph: rankdir=LR
+#+node: shape=box
+| style | rounded |
+#+edge: color=gray
++ a
+  + b" nil)
+                 "digraph {
+  graph [ rankdir=LR ]
+  node [ shape=box style=rounded ]
+  edge [ color=gray ]
+  a [ label=a ];
+  a -> b;
+  b [ label=b ];
+}")))
+
+(deftest "a #+edge: line holding anything but tags and KEY=VALUE pairs is an error, naming the stray word" [graph]
+  (should (string-match-p "‘#\\+edge: fontsize=10 oops’ holds ‘oops’"
+                          (cadr (should-error (org--graph-raw->dot "
+#+edge: fontsize=10 oops
++ a" nil) :type 'user-error)))))
+
+(deftest "a #+name: line may be a whole template, of KEY=VALUE pairs; several in a row are several, as tables would be" [graph]
+  (should (equal (org--graph-raw->dot "
+#+name: red color=red
+#+name: blue color=blue style=dashed :red:
+#+name: tall height=1
+| shape | box |
++ a :red:
++ b :blue:
++ c :tall:" nil)
+                 "digraph {
+  a [ color=red label=a ];
+  b [ color=blue style=dashed label=b ];
+  c [ height=1 shape=box label=c ];
+}")))
+
+(deftest "a one-line #+name: template outside any graph is every graph's, as a table one is" [graph]
+  (should (string-search "d [ color=navy shape=box label=d ];"
+                         (with-org-test-buffer (:text "#+name: house color=navy shape=box\n")
+                           (org--graph-raw->dot "\n+ d :house:" nil)))))
+
+(deftest "a #+name: line is a template's only when it holds a KEY=VALUE pair; Org's names of other things are left be" [graph]
+  (should (equal (org--graph-unaffiliate-names "#+name: fig-1\n#+NAME: red color=red :base:")
+                 "#+name: fig-1\n#+template: red color=red :base:")))
