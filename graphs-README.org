@@ -10,6 +10,111 @@
 (require 'org-graph-block)
 #+end_src
 
+Every construct of a ~#+begin_graph~ block, on one page ---itself a graph. Hover a node for how it reads, and
+click it for its section below:
+#+begin_org :ignore t :demo live
+#+macro: tint lightyellow
+
+#+begin_graph =#+begin_graph=, at a glance ---hover a node for how, click it for more :rankdir LR
+#+name: syntax shape=box style="rounded,filled" fillcolor={{{tint}}}
+#+name: topic penwidth=2 :syntax:
+#+node: fontname=Courier
+#+edge: color=gray40 fontsize=10
+
++ [[*An outline is already a graph][#+begin_graph TITLE :KEY V]]
+
+  An outline is already a graph: every item is a node, and nesting is an arc. The words before the first
+  :KEY title the graph; each :KEY V is a Graphviz graph attribute, and :node.KEY V or :edge.KEY V a default.
+  C-c C-c renders the block beneath it; C-u C-c C-c shows the dot it compiles to.
+  + arcs :: [[*Arcs that speak: description lists][+ child]] :topic:
+
+    Indenting an item under another draws an arc from the parent to the child.
+    + labelled :: [[*Arcs that speak: description lists][a labelled arc]] :syntax:
+      | label | + L :: child |
+
+      A description term labels the arc into its item.
+    + up the tree :: [[*Arcs that leave the tree: targets and links][an inline link]] :syntax:
+      | label | [[T][L]] |
+
+      A link to a node's id is an arc to it, labelled L; C-c C-o jumps to that node.
+    + as a child :: [[*A child that is just a link: references][a reference]] :syntax:
+      | label | + [[T]] |
+
+      A child that is nothing but a link is a reference: an arc to T, declared elsewhere, that may be
+      styled on its own.
+    + from every mention :: [[*Radio targets: arcs from every mention][a radio target]] :syntax:
+      | label | <<<NUMBER>>>, … |
+
+      A radio target is a node, and every item mentioning NUMBER, in any case, has an arc to it.
+  + names :: [[*Ids and labels][+ <<id>> label]] :topic:
+
+    A target gives the node an id, for links to name, apart from its drawn label; so does an :id row.
+  + styles :: [[*Styling: one key-value syntax][| key | value |]] :topic:
+
+    A two-column table beneath an item sets the node's Graphviz attributes; values need no quotes.
+    + the arc in :: [[*An arc's table: :edge.KEY][| :edge.KEY | V |]] :syntax:
+
+      An :edge.KEY row styles the arc from the parent, rather than the node.
+    + everything :: [[*When the preamble outgrows the line][#+node: shape=box]] :syntax:
+
+      The lines #+graph:, #+node:, and #+edge: style the graph, every node, every arc; by a table below,
+      or KEY=VALUE pairs on the line. Within a subtree, they reach only that subtree.
+    + side by side :: [[*Ordered lists keep their order][#+rank: a b]] :syntax:
+
+      Nodes with no common parent share a rank; ordered children, 1. 2. 3., share one in the order written.
+  + templates :: [[*Saying it once: templates][#+name: T k=v]] :topic:
+
+    A named bundle of rows, on its name's line or in a table below; one outside every graph serves the
+    whole buffer.
+    + applied by :: [[*Saying it once: templates][+ node :T:]] :syntax:
+
+      A trailing tag applies template T; explicit rows win. This very node wears :syntax:, defined above.
+    + explained by :: [[*Legends: a glossary of templates][- MEANING :T:]] :syntax:
+
+      In a cluster titled Legend, an item is a sample of T, captioned MEANING; see the legend here.
+    + [-] progress :: [[*Checkboxes are templates][checkboxes]] :syntax:
+      | label | [X] [-] [ ] |
+
+      A checkbox applies template checked, partial, or unchecked; C-c C-c on it toggles it.
+    + single values :: [[*Macros name single values][#+macro: M V]] :syntax:
+
+      Names a single value; M in triple braces is V, anywhere in the block, as this graph's tint is.
+  + labels :: [[*Markup makes rich labels][*bold* /italic/ =code=]] :topic:
+
+    Org's markup, entities, and sub- and superscripts make a rich label; the id stays plain text.
+    + lines :: [[*\\ breaks a line, :wrap fills][a label,]] \\ broken in two :syntax:
+
+      A \\ breaks a label, mid-line too; :wrap N fills every label to N characters.
+  + asides :: [[*Footnotes are tooltips][footnotes]] [fn::A footnote leaves the label and becomes the node's tooltip, as this one does.] :topic:
+    | label | [fn::NOTE] |
+    + longer :: [[*Notes are longer tooltips][a later paragraph]] :syntax:
+
+      Every paragraph after an item's first is a note: its tooltip, as this one is. :notes inline draws
+      notes beneath their labels instead.
+    + clickable :: [[*Web links are URLs, image links are images][a web link]] :syntax:
+      | label | [[https://…]] |
+
+      A web or section link makes the node clickable, as every node here is; an image link draws the image.
+  + layout :: [[*Clusters draw boxes][#+begin_cluster TITLE]] :topic:
+
+    A cluster block draws a box around its nodes, styled by :KEY V as a graph is.
+    + records :: [[*Records: a #+record: table][#+record:]] :syntax:
+
+      A table under an item is its label, a record of fields; a <<P>> cell is a port, which =[[node::P]]= reaches.
+    + mind maps :: [[*Mind maps: :layout twopi][:layout twopi]] :syntax:
+
+      A radial layout; :mindmap t gives an undirected one, radiating from the first item.
+  + documents :: [[*#+name: and #+caption: make a figure][#+name: N]] :topic:
+
+    Above the block, it makes a figure that =[[N]]= reaches, and #+caption: captions it; a :graph: tag on a
+    heading makes its whole section a graph.
+#+begin_cluster Legend
+- a family of constructs :topic:
+- a construct             :syntax:
+#+end_cluster
+#+end_graph
+#+end_org
+
 * An outline is already a graph
 
 Say we are showing a friend how ~1 * 2 + 3 - 4~ parses. On paper, we would draw a tree. In Org, we would
