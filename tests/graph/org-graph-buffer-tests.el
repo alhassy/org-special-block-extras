@@ -41,16 +41,16 @@
 + Khadija :wife:
 + Fatima :daughter:"))))
 
-(deftest "a template inside another graph stays that graph's own"
-  (should-error (tests-graph--dot-in-buffer "
+(deftest "a template inside another graph stays that graph's own; here, the tag gets a made-up template instead"
+  (should (string-search "Sawda [ color=\"#d20f39\""
+                         (tests-graph--dot-in-buffer "
 #+begin_graph
 #+name: wife
-| shape | box |
+| color | pink |
 + Khadija :wife:
 #+end_graph
 " "
-+ Sawda :wife:")
-                :type 'user-error))
++ Sawda :wife:"))))
 
 ;;; A #+name: on the block: a figure that [[links]] reach
 

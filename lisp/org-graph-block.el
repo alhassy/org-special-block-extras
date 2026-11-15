@@ -24,7 +24,7 @@
 ;;   #+begin_graph Title :rankdir LR :node.shape box :bgcolor #1e1e2e :wrap 20
 ;;                                 ; title = graph label; :KEY graph attrs; :directed nil ⇒ undirected; labels fill to 20
 ;;                                 ; :notes inline ⇒ notes beneath labels; :unflatten 3 ⇒ leaves stagger over 3 ranks;
-;;                                 ; :unknown-tags random-templates ⇒ an unknown :tag: gets a made-up template
+;;                                 ; an unknown :tag: gets a made-up template; :unknown-tags error ⇒ it errs
 ;;                                 ; :smartdiagram constellation ⇒ LaTeX's smartdiagram typesets the list instead
 ;;   #+graph:                      ; global graph[ ] attrs
 ;;   | rankdir | TB      |
@@ -414,8 +414,8 @@ within its own box rather than the page.  A click on a node's link, or tooltip, 
 TITLE is the graph's label.
 The header's other keys are graph attributes, such as :rankdir LR; :node.KEY and :edge.KEY set node and edge defaults;
 :directed nil makes an undirected graph; :wrap N fills labels to N characters a line; :unflatten N staggers
-wide rows of leaves over N ranks; and :unknown-tags random-templates gives an unknown tag a made-up template,
-rather than erring.  Pass :file foo.png on the
+wide rows of leaves over N ranks; and an unknown tag gets a made-up template, unless :unknown-tags error makes it
+an error.  Pass :file foo.png on the
 #+begin_graph line to fix the output filename; else a #+name: foo line above the block makes it foo.png, and the graph
 a figure that [[foo]] reaches and #+caption: captions; otherwise the name is graph-HASH.png, HASH being that of the
 dot source, so re-exporting an unchanged graph rewrites one file rather than adding another.

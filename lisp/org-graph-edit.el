@@ -129,7 +129,7 @@ non-nil to suppress the normal `org-return' behaviour."
     (":wrap"     . "With N, node and arc labels fill to lines of N characters; one broken by \\\\ stays as written.")
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
-    (":unknown-tags" . "With random-templates, a tag naming no #+name: template gets a made-up one; else an error.")
+    (":unknown-tags" . "With error, a tag naming no #+name: template is an error; by default, it gets a made-up one.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
     (":smartdiagram" . "With TYPE, such as constellation, LaTeX's smartdiagram typesets the list, rather than Graphviz.")
     (":dpi"      . "Under :smartdiagram, the dots per inch of the PNG; 300 by default.")
@@ -139,7 +139,7 @@ non-nil to suppress the normal `org-return' behaviour."
 
 (defconst org-graph--header-key-values
   `((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
-    (":notes" "tooltip" "inline") (":unknown-tags" "error" "random-templates")
+    (":notes" "tooltip" "inline") (":unknown-tags" "random-templates" "error")
     (":smartdiagram" ,@(mapcar #'car org-graph-smartdiagram-types)))
   "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
 
@@ -217,8 +217,9 @@ smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's,
       (org-graph--graphviz-key-doc (org-graph--header->table-key key))))
 
 (defun org-graph--header-token-at-point ()
-  "On a #+begin_graph line ↦ (BEG END PREVIOUS): the bounds of the word at point, and the word before it; else nil."
-  (when (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+begin_graph\\_>"))
+  "On a #+begin_graph, or #+begin_cluster, line ↦ (BEG END PREVIOUS): the bounds of the word at point, and the word
+before it; else nil."
+  (when (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+begin_\\(?:graph\\|cluster\\)\\_>"))
     (let* ((bol (line-beginning-position))
            (beg (save-excursion (skip-chars-backward "^ \t" bol) (point)))
            (end (save-excursion (skip-chars-forward "^ \t" (line-end-position)) (point))))
@@ -231,12 +232,18 @@ smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's,
     (cond
      ((eq (char-after beg) ?:)
       (list beg end
-            (if (org-graph--smartdiagram-p)
-                org-graph--smartdiagram-header-keys
+            (cond
+             ;; A cluster's line takes the attributes of a cluster, and node and arc defaults; none of the block's own keys.
+             ((org-graph--cluster-line-p)
+              (append (--map (concat ":" (plist-get it :name)) (org-graph--attributes-on 'clusters))
+                      (--map (concat ":node." (plist-get it :name)) (org-graph--attributes-on 'nodes))
+                      (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges))))
+             ((org-graph--smartdiagram-p) org-graph--smartdiagram-header-keys)
+             (t
               (append (--remove (s-ends-with-p "." it) (mapcar #'car org-graph--header-key-docs))
                       (--map (concat ":" (plist-get it :name)) (org-graph--attributes-on 'graphs))
                       (--map (concat ":node." (plist-get it :name)) (org-graph--attributes-on 'nodes))
-                      (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges))))
+                      (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges)))))
             :annotation-function (lambda (candidate) (-some->> (org-graph--header-key-doc candidate) (concat "  ")))
             :exclusive 'no))
      ((s-starts-with-p ":" previous)
@@ -285,12 +292,22 @@ On a #+begin_graph line, complete its keys and values instead; in a smartdiagram
                :exclusive 'no)))
     (2 (-some--> (plist-get (org-graph--smartdiagram-key key) :values) (list beg end it :exclusive 'no)))))
 
+(defconst org-graph--cluster-doc
+  (concat "A box around the items within: a subgraph of the graph, its title the label, then :KEY V cluster attributes,\n"
+          "and :node.KEY and :edge.KEY defaults within it; a table opening the block styles the box.  Clusters nest;\n"
+          "an arc to one lands on its first node, clipped at its border.  An untitled cluster is an anonymous box.")
+  "What eldoc says of a #+begin_cluster line, beside its signature.")
+
 (defun org-graph--eldoc (callback &rest _)
-  "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, or of the key on this graph-table row; else nil."
+  "Hand eldoc's CALLBACK the description of the #+begin_graph, or #+begin_cluster, key at point, or of the key on this
+graph-table row; on #+begin_cluster itself, what a cluster is; else nil."
   (-if-let ((beg end) (org-graph--header-token-at-point))
       (let ((key (buffer-substring beg end)))
-        (-some--> (and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
-          (funcall callback it :thing key :face 'font-lock-variable-name-face)))
+        (cond ((and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
+               (funcall callback (org-graph--header-key-doc key) :thing key :face 'font-lock-variable-name-face))
+              ((string-match-p "\\`#\\+begin_cluster\\'" key)
+               (funcall callback org-graph--cluster-doc :thing "#+begin_cluster TITLE :KEY V …"
+                        :face 'font-lock-function-name-face))))
     (-when-let* (((_ _ _ key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
                  (doc (and key (org-graph--key-doc key))))
       (funcall callback doc :thing key :face 'font-lock-variable-name-face))))
@@ -337,10 +354,108 @@ Org gives tags their `org-tag' face only on headlines; in a graph, tags name tem
     found))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Nested clusters: Org pairs a block with the first end of its name, so we pair them ourselves
+;;
+;; Within one graph, #+begin_cluster … #+end_cluster blocks nest; Org's own TAB, and its parser, would end the outer
+;; block at the inner one's end.  `org--graph-number-clusters' already reads them aright; here, TAB folds each down to
+;; its own end, and each wears a background of its own, so where a cluster begins and ends shows at a glance.
+
+(defcustom org-graph-cluster-backgrounds
+  '((light "#eaf2fd" "#fdf0e0" "#e8f6ea" "#f4e9fb")
+    (dark  "#1d2a38" "#33291a" "#1c2e21" "#2c2036"))
+  "The backgrounds that #+begin_cluster blocks wear in Emacs, in turn, by the frame's background mode; the Nth cluster
+of a graph wears the Nth, so a nested cluster differs from its parent."
+  :type '(alist :key-type (choice (const light) (const dark)) :value-type (repeat color))
+  :group 'org-special-block-extras)
+
+(defun org-graph--cluster-line-p ()
+  "Returns whether point is on a #+begin_cluster line."
+  (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+begin_cluster\\_>")))
+
+(defun org-graph--graph-bounds ()
+  "Returns (BEGIN . END), the starts of the #+begin_graph and #+end_graph lines around point; else nil."
+  (save-excursion
+    (let ((at (point)) (case-fold-search t))
+      (end-of-line)
+      (when (re-search-backward "^[ \t]*#\\+begin_graph\\_>" nil t)
+        (let ((begin (line-beginning-position)))
+          (when (re-search-forward "^[ \t]*#\\+end_graph\\_>" nil t)
+            (and (<= at (line-end-position)) (cons begin (line-beginning-position)))))))))
+
+(defun org-graph--clusters (bounds)
+  "Returns the (BEGIN END INDEX) of each cluster within BOUNDS, a graph's, in order: BEGIN and END start its #+begin_
+and #+end_cluster lines, paired counting the clusters nested within; INDEX counts the clusters before it."
+  (save-excursion
+    (goto-char (car bounds))
+    (let ((case-fold-search t) (index 0) open clusters)
+      (while (re-search-forward "^[ \t]*#\\+\\(begin\\|end\\)_cluster\\_>" (cdr bounds) t)
+        (if (equal (downcase (match-string 1)) "begin")
+            (push (cons (line-beginning-position) (prog1 index (cl-incf index))) open)
+          (-when-let ((begin . n) (pop open))
+            (push (list begin (line-beginning-position) n) clusters))))
+      (sort clusters (lambda (a b) (< (car a) (car b)))))))
+
+(defun org-graph--cluster-at-line ()
+  "Returns the (BEGIN END INDEX) of the cluster whose #+begin_ or #+end_cluster line point is on; else nil."
+  (-when-let (bounds (org-graph--graph-bounds))
+    (let ((line (line-beginning-position)))
+      (--first (or (= (car it) line) (= (cadr it) line)) (org-graph--clusters bounds)))))
+
+(defun org-graph--cycle-cluster ()
+  "On a #+begin_ or #+end_cluster line of a graph, fold or unfold the cluster down to its own end, nested clusters
+counted, as TAB does any block; for `org-cycle-tab-first-hook'."
+  (-when-let ((begin end) (org-graph--cluster-at-line))
+    (let ((from (save-excursion (goto-char begin) (line-end-position)))
+          (to (save-excursion (goto-char end) (line-end-position))))
+      (org-fold-region from to (not (org-fold-folded-p from 'block)) 'block)
+      (when (invisible-p (max (1- (point)) (point-min))) (goto-char begin))
+      t)))
+
+(add-hook 'org-cycle-tab-first-hook #'org-graph--cycle-cluster)
+
+(defun org-graph--cluster-face (index)
+  "Returns the face of a graph's INDEXth cluster: its background, from `org-graph-cluster-backgrounds', to the line's end."
+  (let ((colours (alist-get (if (eq (frame-parameter nil 'background-mode) 'dark) 'dark 'light)
+                            org-graph-cluster-backgrounds)))
+    (list :background (nth (mod index (length colours)) colours) :extend t)))
+
+(defvar org-graph--cluster-index 0
+  "The index of the cluster `org-graph--match-cluster' last matched.")
+
+(defun org-graph--match-cluster (limit)
+  "Font-lock matcher: the next #+begin_cluster line up to LIMIT, in a graph, matched through its own #+end_cluster line,
+nesting counted; `org-graph--cluster-index' then holds its index, for `org-graph--cluster-face'."
+  (let (found)
+    (while (and (not found) (re-search-forward "^[ \t]*#\\+begin_cluster\\_>" limit t))
+      (save-match-data
+        (-when-let (cluster (save-excursion (beginning-of-line) (org-graph--cluster-at-line)))
+          (setq found cluster))))
+    (when found
+      (-let [(begin end index) found]
+        (setq org-graph--cluster-index index)
+        (set-match-data (list begin (save-excursion (goto-char end) (min (point-max) (1+ (line-end-position))))))
+        (goto-char (save-excursion (goto-char begin) (line-end-position)))
+        t))))
+
+(defun org-graph--extend-to-clusters ()
+  "Widen font-lock's region to the clusters it cuts through, so each is painted whole; for
+`font-lock-extend-region-functions'."
+  (defvar font-lock-beg) (defvar font-lock-end)
+  (let ((changed nil))
+    (-when-let (bounds (save-excursion (goto-char font-lock-beg) (org-graph--graph-bounds)))
+      (pcase-dolist (`(,begin ,end ,_) (org-graph--clusters bounds))
+        (when (and (< begin font-lock-beg) (> end font-lock-beg))
+          (setq font-lock-beg begin changed t))))
+    changed))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Every Org buffer
 
 (defun org-graph--setup-org-buffer ()
-  "In this Org buffer's graph blocks: show links verbatim, and complete and explain keys, with C-M-i and eldoc."
+  "In this Org buffer's graph blocks: show links verbatim, paint each cluster's background, and complete and explain
+keys, with C-M-i and eldoc."
+  (font-lock-add-keywords nil '((org-graph--match-cluster 0 (org-graph--cluster-face org-graph--cluster-index) prepend)) 'append)
+  (add-hook 'font-lock-extend-region-functions #'org-graph--extend-to-clusters nil t)
   (font-lock-add-keywords nil (cons '(org-graph--reveal-links)
                                     (--map `(,(lambda (limit) (org-graph--match-tags it limit)) 1 'org-tag prepend)
                                            org-graph--tag-res))

@@ -364,9 +364,9 @@ x
   \"Vim's :wq:\" [ label=<Vim's <FONT FACE=\"monospace\">:wq:</FONT>> ];
 }")
 
-(deftest "a tag naming no #+name: template is a user error, rather than silently vanishing"
+(deftest "under `:unknown-tags error', a tag naming no #+name: template is a user error, rather than silently vanishing"
   (should-error (org--graph-raw->dot "
-+ a :typo:" nil) :type 'user-error))
++ a :typo:" nil '(:unknown-tags error)) :type 'user-error))
 
 (org-deftest "an item's trailing tags get Org's `org-tag' face in a graph, inside clusters too, but not elsewhere"
   :text "
@@ -669,10 +669,16 @@ Languages, by influence.
 + λ-calculus :theory:
   + Lisp :language:" nil '(:unknown-tags random-templates)))))
 
-(deftest "by default an unknown tag is a user error, pointing at `:unknown-tags random-templates'"
-  (should (string-match-p "random-templates"
+(deftest "under `:unknown-tags error', an unknown tag is a user error, naming it"
+  (should (string-match-p "‘language’ names no #\\+name: template, as ‘:unknown-tags error’ requires"
                           (cadr (should-error (org--graph-raw->dot "
-+ Lisp :language:" nil) :type 'user-error)))))
++ Lisp :language:" nil '(:unknown-tags error)) :type 'user-error)))))
+
+(deftest "by default, an unknown tag gets a made-up template, as under `:unknown-tags random-templates'"
+  (should (equal (org--graph-raw->dot "
++ Lisp :language:" nil)
+                 (org--graph-raw->dot "
++ Lisp :language:" nil '(:unknown-tags random-templates)))))
 
 ;;; `:unflatten N' staggers a wide row of leaves
 
@@ -978,3 +984,44 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 }")
 
 (provide 'org-graph-org-syntax-tests)
+
+;;; Several tags, several colours; and :cluster_TITLE: tags
+
+(deftest "a node's tags of several colours show them all, as tinted stripes; an arc's, as parallel lines" [graph tags]
+  (let ((dot (org--graph-raw->dot "
+#+name: red
+| color | #ff0000 |
+| shape | box     |
+#+name: blue
+| color | #0000ff |
++ a :red:blue:
+  + b :red:blue: :: c" nil)))
+    (should (string-search "a [ color=\"#ff0000\" shape=box style=striped fillcolor=\"#ffbfbf:#bfbfff\" label=a ];" dot))
+    (should (string-match-p "a -> c \\[ label=b [^]]*color=\"#ff0000:#0000ff\"" dot))))
+
+(deftest "a round node's several colours are wedges; one colour, or an explicit fillcolor, needs no stripes" [graph tags]
+  (let ((dot (org--graph-raw->dot "
+#+name: red
+| color | #ff0000 |
+#+name: blue
+| color | #0000ff |
++ round :red:blue:
++ single :red:
++ chosen :red:blue:
+  | fillcolor | gold |" nil)))
+    (should (string-search "round [ color=\"#ff0000\" style=wedged fillcolor=\"#ffbfbf:#bfbfff\" label=round ];" dot))
+    (should (string-search "single [ color=\"#ff0000\" label=single ];" dot))
+    (should (string-match-p "chosen \\[ color=\"#ff0000\" fillcolor=gold label=chosen \\]" dot))))
+
+(deftest "a :cluster_TITLE: tag puts its node in the cluster TITLE, its underscores spaces; a block of that title is the same box" [graph tags cluster]
+  (should (equal (org--graph-cluster-tag "Cluster_Holy_Land") "Holy Land"))
+  (should-not (org--graph-cluster-tag "prophet"))
+  (let ((dot (org--graph-raw->dot "
+#+begin_cluster Islam
++ Ali
+#+end_cluster
++ Mohammad :cluster_Islam:
++ Jesus :Cluster_Holy_Land:" nil)))
+    (should (string-search "subgraph cluster_Islam {\n    label=Islam;\n    Mohammad;\n  }" dot))
+    (should (string-search "subgraph cluster_Holy_Land {\n    label=\"Holy Land\";\n    Jesus;\n  }" dot))
+    (should (string-search "Mohammad [ label=Mohammad ];" dot))))

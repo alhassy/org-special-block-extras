@@ -141,10 +141,10 @@
     ;; template shape=box is preserved
     (should (s-contains-p "shape=box" dot))))
 
-(deftest "an `:inherit' row naming no #+name: template is a user error, rather than silently contributing nothing"
+(deftest "under `:unknown-tags error', an `:inherit' row naming no #+name: template is a user error, rather than silently contributing nothing"
   (should-error (org--graph-raw->dot "
 #+name: real
 | color | blue |
 
 + A
-  | :inherit | typo |" nil) :type 'user-error))
+  | :inherit | typo |" nil '(:unknown-tags error)) :type 'user-error))

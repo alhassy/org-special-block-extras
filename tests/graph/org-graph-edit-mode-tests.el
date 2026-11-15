@@ -135,7 +135,7 @@
   :at ":notes i"
   (should (equal '("tooltip" "inline") (tests-graph--candidates)))
   (search-forward ":unknown-tags r")
-  (should (equal '("error" "random-templates") (tests-graph--candidates))))
+  (should (equal '("random-templates" "error") (tests-graph--candidates))))
 
 (deftest "on the #+begin_graph line, eldoc explains the key at point"
   (dolist (case '((":rankdir"    . "Sets direction of graph layout. dot only.  Default: TB.")

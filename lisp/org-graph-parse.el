@@ -76,7 +76,8 @@ A graph's, or the buffer's, own #+name: template of the same name wins; see `org
   (lines (make-hash-table :test #'equal))    ; node or cluster id ↦ the body line of the item declaring it
   wrap                                       ; the width labels fill to, from `#+begin_graph :wrap N'; else nil
   inline                                     ; non-nil under `:notes inline': notes show in labels, not tooltips
-  compound)                                  ; non-nil once an arc is clipped at a cluster
+  compound                                   ; non-nil once an arc is clipped at a cluster
+  (tag-clusters (make-hash-table :test #'equal))) ; cluster title ↦ the ids its :cluster_TITLE: tag gathers, last first
 
 (defvar org--graph-random-templates nil
   "While a graph reads `:unknown-tags random-templates', how many templates it has made up so far; else nil.")
@@ -93,7 +94,7 @@ A graph's, or the buffer's, own #+name: template of the same name wins; see `org
   "The fonts `:unknown-tags random-templates' gives made-up templates, in turn.")
 
 (defun org--graph-random-template (name name-tables)
-  "Under `:unknown-tags random-templates', NAME ↦ the rows of a made-up template, kept in NAME-TABLES so that every use
+  "Under `:unknown-tags random-templates', the default, NAME ↦ the rows of a made-up template, kept in NAME-TABLES so that every use
 of NAME ---a legend entry's too--- looks alike; else nil.  The Nth unknown name takes the Nth colour, shape, and font.
   \"lazy\", the first  ↦  ((\"color\" \"#d20f39\") (\"fontcolor\" \"#d20f39\") (\"shape\" \"box\") (\"fontname\" \"Helvetica\"))"
   (when org--graph-random-templates
@@ -116,8 +117,8 @@ silently contributing nothing."
         (dolist (row (org--graph-expand-inherit
                       (or (gethash name name-tables)
                           (org--graph-random-template name name-tables)
-                          (user-error "graph: `%s' names no #+name: template; for literal text ending in \
-`:%s:', write =:%s:= or a | label | row; to prototype, `#+begin_graph :unknown-tags random-templates'" name name name))
+                          (user-error "graph: `%s' names no #+name: template, as `:unknown-tags error' requires; for literal text \
+ending in `:%s:', write =:%s:= or a | label | row" name name name))
                       name-tables (cons name seen)))
           (unless (or (assoc (car row) explicit) (assoc (car row) inherited))
             (push row inherited)))))
@@ -522,17 +523,52 @@ does a `\\\\' break the label's line, even mid-line."
         (plist-get text :target)
         (org--graph-unquote (plist-get text :name)))))
 
+(defun org--graph-cluster-tag (tag)
+  "Returns the cluster title TAG names, when it is :cluster_TITLE:, its underscores spaces; else nil.
+  \"cluster_Holy_Land\"  ⇒  \"Holy Land\";  \"Cluster_Islam\"  ⇒  \"Islam\";  \"prophet\"  ⇒  nil"
+  (let ((case-fold-search t))
+    (and (string-match "\\`cluster_\\(.+\\)\\'" tag) (s-replace "_" " " (match-string 1 tag)))))
+
+(defun org--graph-tint (colour)
+  "Returns COLOUR, a #RRGGBB, blended three parts in four with white, so text stays legible atop it; else COLOUR."
+  (if (not (string-match-p "\\`#[0-9a-fA-F]\\{6\\}\\'" colour)) colour
+    (apply #'format "#%02x%02x%02x"
+           (--map (+ it (/ (* 3 (- 255 it)) 4))
+                  (list (string-to-number (substring colour 1 3) 16) (string-to-number (substring colour 3 5) 16)
+                        (string-to-number (substring colour 5 7) 16))))))
+
+(defun org--graph-tag-colours (tags name-tables)
+  "Returns the distinct colours TAGS' templates set, in order; e.g., one per made-up template."
+  (-uniq (--keep (cadr (assoc "color" (org--graph-template-rows (list it) name-tables))) tags)))
+
+(defun org--graph-several-colours (node-tags arc-tags explicit name-tables)
+  "Returns the rows that show every colour of several tags, sans keys EXPLICIT sets: a node's as stripes ---wedges, if
+round--- of its NODE-TAGS' colours, tinted; an arc's as parallel lines, one per colour of its ARC-TAGS.  A single tag,
+several of one colour, or a node's own fillcolor or style, needs none; the earlier tag wins every other clash."
+  (let ((node (org--graph-tag-colours node-tags name-tables))
+        (arc (org--graph-tag-colours arc-tags name-tables))
+        (shape (or (cadr (assoc "shape" explicit))
+                   (cadr (assoc "shape" (org--graph-template-rows node-tags name-tables))))))
+    (--remove (assoc (car it) explicit)
+              (append (when (and (cdr node) (not (assoc "fillcolor" explicit)) (not (assoc "style" explicit)))
+                        `(("style" ,(if (member shape '(nil "ellipse" "oval" "circle" "doublecircle")) "wedged" "striped"))
+                          ("fillcolor" ,(s-join ":" (mapcar #'org--graph-tint node)))))
+                      (when (cdr arc) `((":edge.color" ,(s-join ":" arc))))))))
+
 (defun org--graph-item-table (text pre name-tables)
   "An item's parsed TEXT and PREAMBLE ↦ its `org--graph-item-rows', its tags inheriting their #+name: templates.
 A tag applies a template to whatever its line describes: after an item, its node; after a reference, or in a
-description term, its arc.  Explicit rows still win."
-  (let ((arc-tags (org--graph-arc-tags text))
-        (node-tags (unless (plist-get text :reference)
-                     (append (plist-get text :tags)
-                             (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it)))))))
+description term, its arc.  Explicit rows still win.  A :cluster_TITLE: tag is no template, but a cluster to join;
+see `org--graph-cluster-tag'.  Several tags of several colours show them all; see `org--graph-several-colours'."
+  (let* ((arc-tags (org--graph-arc-tags text))
+         (node-tags (unless (plist-get text :reference)
+                      (append (-remove #'org--graph-cluster-tag (plist-get text :tags))
+                              (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it))))))
+         (explicit (plist-get pre :attr-rows)))
     (org--graph-item-rows (append (when node-tags (list (list ":inherit" (s-join " " node-tags))))
                                   (when arc-tags (list (list ":edge.:inherit" (s-join " " arc-tags))))
-                                  (plist-get pre :attr-rows))
+                                  (org--graph-several-colours node-tags arc-tags explicit name-tables)
+                                  explicit)
                           name-tables)))
 
 (defun org--graph-ordered-rank (kind children)
@@ -672,6 +708,9 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (rows     (org--graph-item-table text pre tables))
           (id       (or (plist-get rows :id) (plist-get text :target) name))
           (reference (plist-get text :reference))
+          (_        (unless reference
+                      (dolist (title (-keep #'org--graph-cluster-tag (plist-get text :tags)))
+                        (push id (gethash title (org--graph-ctx-tag-clusters ctx))))))
           ((node-notes . arc-notes) (org--graph-item-notes pre reference))
           (wrap     (org--graph-ctx-wrap ctx))
           ;; Under `:notes inline', notes are label bodies; else, tooltips.
@@ -806,7 +845,7 @@ A template is the graph's own #+name: table, else the buffer's, else one of `org
 A note outside every item is the graph's own; PREAMBLE's :body holds it under `:notes inline'."
   (let* ((wrap     (-some--> (plist-get kwdargs :wrap) (if (numberp it) it (string-to-number (format "%s" it)))))
          (inline   (equal "inline" (org--graph-option kwdargs :notes "tooltip" '("tooltip" "inline"))))
-         (org--graph-random-templates (and (equal "random-templates" (org--graph-option kwdargs :unknown-tags "error"
+         (org--graph-random-templates (and (equal "random-templates" (org--graph-option kwdargs :unknown-tags "random-templates"
                                                                                         '("error" "random-templates")))
                                            0))
          (buffer   (org--graph-buffer-templates))

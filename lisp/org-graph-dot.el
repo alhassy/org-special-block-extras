@@ -157,6 +157,18 @@ of its own.  A node no arc enters is a root, of depth 0; else its depth is one m
                             nodes))))
              nodes)))
 
+(defun org--graph-tag-clusters->dot (ctx)
+  "Returns a subgraph per cluster that :cluster_TITLE: tags gather in CTX, naming its nodes; one of the same title
+that a #+begin_cluster declares is the same subgraph, which Graphviz merges, so the tagged nodes join it.
+  + Jesus :cluster_Christianity:  ⇒  subgraph cluster_Christianity { label=Christianity; Jesus; }"
+  (let (subgraphs)
+    (maphash (lambda (title ids)
+               (push (format "subgraph %s {\n    label=%s;\n    %s\n  }" (org--graph-cluster-id title)
+                             (org--graph-dot-id title) (s-join " " (--map (concat (org--graph-dot-id it) ";") (reverse ids))))
+                     subgraphs))
+             (org--graph-ctx-tag-clusters ctx))
+    (nreverse subgraphs)))
+
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
   "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
 
@@ -190,7 +202,8 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
       (setq preamble (plist-put preamble key (org--graph-override (plist-get header key) (plist-get preamble key)))))
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))
       (org--graph-note-ranks ctx preamble stmts))
-    (let ((body (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)))
+    (let ((body (append (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)
+                        (org--graph-tag-clusters->dot ctx))))
       (when (org--graph-ctx-compound ctx)
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("compound" "true"))))))
       (org-graph--unflatten (format "%s {\n  %s\n}" (if directed "digraph" "graph")

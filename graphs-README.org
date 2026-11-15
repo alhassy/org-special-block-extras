@@ -363,7 +363,9 @@ the node:
 #+end_graph
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
-~:token:rule:~, each a template, the earlier winning on a clash. The same rule reaches every other line a
+~:token:rule:~, each a template, the earlier winning on a clash ---save colours: when the tags' templates
+colour it differently, a node shows every colour as stripes, tinted, or wedges if it is round, and an arc
+as parallel lines; a node's own ~fillcolor~ or ~style~ turns the stripes off. The same rule reaches every other line a
 template could apply to; after a reference, or a description term, a tag styles the arc:
 
 | Line                                     | What its tags style                                           |
@@ -410,7 +412,7 @@ still win:
 
 - A template may inherit others; one that, directly or not, inherits itself contributes nothing the
   second time.
-- A name that no ~#+name:~ defines is an error, rather than a silent nothing.
+- A name that no ~#+name:~ defines gets a made-up template; see [[*Prototype first, name later][Prototype first, name later]].
 
 As with Babel's named tables, a ~#+name:~ table anywhere in the buffer, outside any graph, is a template
 every graph in the buffer may use; so a house style is named once per file rather than once per graph.
@@ -444,17 +446,15 @@ trailing ~:word:~ of its own ---Smalltalk's ~at:put:~ selector, say--- puts it i
 + a token, read at 12:30 :faint:
 #+end_graph
 
-Unlike Org's, our tags may be kebab-case: ~:rule-arc:~. A tag naming no template is an error, rather than
-a typo silently becoming part of the label.
+Unlike Org's, our tags may be kebab-case: ~:rule-arc:~. A tag is never part of the label, even one naming
+no template.
 
 ** Prototype first, name later
 
-That strictness is right for a finished graph, and in the way of a sketch: while prototyping, we want
-shapes before names. ~#+begin_graph :unknown-tags random-templates~ makes up a template for each unknown
-tag ---a colour, a shape, a font--- the same at every use, so the tags read at a glance. A legend entry
-gives each its meaning; when the design settles, ~#+name:~ tables replace the made-up templates, one tag
-at a time:
-#+begin_graph Prototype first, name later :unknown-tags random-templates :demo live
+While prototyping, we want shapes before names. So a tag naming no template gets a made-up one ---a
+colour, a shape, a font--- the same at every use, so the tags read at a glance. A legend entry gives each
+its meaning; when the design settles, ~#+name:~ tables replace the made-up templates, one tag at a time:
+#+begin_graph Prototype first, name later :demo live
 #+begin_cluster Legend
 - :rule: :: a grammar rule
 - :token: :: a token
@@ -797,7 +797,39 @@ being a block, it folds with ~TAB~:
 + STAR
 #+end_cluster
 #+end_graph
-- ~C-c C-c~, ~C-M-i~, and eldoc work inside a cluster block just as anywhere else in the graph.
+- ~C-c C-c~, ~C-M-i~, and eldoc work inside a cluster block just as anywhere else in the graph; on the
+  ~#+begin_cluster~ line, ~C-M-i~ completes a cluster's attributes, and eldoc explains it.
+
+Clusters nest, each in the one around it. Org pairs a block with the first end of its name, so we pair
+nested clusters ourselves: ~TAB~ folds each down to its /own/ ~#+end_cluster~, and in Emacs each cluster
+wears a background of its own ---from ~org-graph-cluster-backgrounds~--- so where it begins and ends shows
+at a glance. Unknown tags such as ~:Prophet:~ get made-up templates, as in [[*Prototype first, name later][Prototype first, name later]]:
+#+begin_graph :demo live
+#+begin_cluster Islam
+#+begin_cluster Christianity
++ Jesus :Prophet:
+  + Simon :Heir:
+#+begin_cluster Judaism
++ Moses :Prophet:
+  + Aaron :Heir:
+#+end_cluster
+#+end_cluster
++ Mohammad :Prophet:
+  + Ali :Heir:
+#+end_cluster
+#+end_graph
+
+A node may also join a cluster by a tag: ~:cluster_TITLE:~ puts it in the cluster ~TITLE~, its
+underscores spaces, so ~:cluster_Holy_Land:~ is ~Holy Land~. A ~#+begin_cluster~ of that title is the same
+box, so the tag adds a node to it from anywhere in the graph; else the tags alone make the box. Several
+tags of other kinds colour the node in stripes, as above:
+#+begin_graph :demo live
++ Moses :Prophet:Judaism:Christianity:Islam:
++ Jesus :Prophet:Christianity:Islam:cluster_Gospels:
++ Mohammad :Prophet:Islam:
++ Mark :cluster_Gospels:
++ John :cluster_Gospels:
+#+end_graph
 
 ** Records: a #+record: table
 
