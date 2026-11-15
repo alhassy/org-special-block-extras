@@ -133,3 +133,29 @@
     Hasan [ label=Hasan ];
   }
 }")
+
+(define-graph-test "An ordered legend is a row along the graph's foot: its entries' ends share a rank, beneath every sink"
+  :input "
+#+name: red color=red
+#+name: blue fillcolor=blue
++ A
+  + [[B][:red:]]
++ B
++ Legend :container:
+  1. reds :red:
+  2. blues :blue:"
+  :output "digraph {
+  graph [ newrank=true ]
+  A [ label=A ];
+  A -> B [ color=red ];
+  B [ label=B ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ shape=point style=invis ];
+    legend_1_end [ shape=point style=invis ];
+    legend_1 -> legend_1_end [ color=red label=reds ];
+    legend_2 [ fillcolor=blue label=blues style=filled ];
+  }
+  { rank=same; legend_1_end; legend_2 }
+  B -> legend_1 [ style=invis weight=0 ];
+}")

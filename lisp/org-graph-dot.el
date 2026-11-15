@@ -151,6 +151,7 @@ and those a :container_ID: tag gathers."
                    (format "%s [ shape=point style=invis ];" end)
                    (format "%s %s %s%s;" id op end (org--graph-attrs->dot rows))))
          (list (format "%s%s;" id (org--graph-attrs->dot (org--graph-filled rows 'node)))))))
+    (`(:legend-row) nil)
     (`(:rank ,kind ,ids)
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
     (`(:scope ,scope ,stmts)
@@ -214,20 +215,32 @@ is one more than its shallowest parent's."
                    (puthash id (append entry `(("fillcolor" ,(nth (mod depth (length colors)) colors)))) nodes))))
              nodes)))
 
-(defun org--graph-legend-chain (stmts op ctx)
+(defun org--graph-legend-chain (stmts op ctx &optional all)
   "Returns invisible arcs, by OP, chaining each run of legend entries in STMTS ---and in each cluster's, its own---
 from one entry's end to the next's start, so a legend stacks as a column rather than spreading as a row.
-An entry sampling an arc template ends at its sample's far point, legend_N_end; any other, at itself."
-  (let ((end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
-                              (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates) (concat id "_end") id))))
-        chain)
+An entry sampling an arc template ends at its sample's far point, legend_N_end; any other, at itself.
+STMTS holding (:legend-row) instead set their entries' ends on one rank, a row, beneath every node that no arc of
+ALL, the whole graph's statements, leaves; Graphviz's rank=max would not move a box's nodes."
+  (let* ((all (or all stmts))
+         (end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
+                               (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates) (concat id "_end") id))))
+         (entries (--filter (eq (car-safe it) :legend) stmts))
+         (row (and entries (member '(:legend-row) stmts)))
+         (chain (when row
+                  (let* ((every (org--graph-all-stmts all))
+                         (sources (--keep (pcase it (`(:edge ,src . ,_) (org--graph-endpoint-node src ctx))) every))
+                         (sinks (--filter (not (member it sources)) (--keep (pcase it (`(:node ,id) id)) every))))
+                    (reverse
+                     (cons (format "{ rank=same; %s }" (s-join "; " (-map end entries)))
+                           (--map (format "%s %s %s [ style=invis weight=0 ];" (org--graph-dot-id it) op (cadr (car entries)))
+                                  sinks)))))))
     (cl-loop for (a b) on stmts
-             do (when (and (eq (car-safe a) :legend) (eq (car-safe b) :legend))
+             do (when (and (not row) (eq (car-safe a) :legend) (eq (car-safe b) :legend))
                   (push (format "%s %s %s [ style=invis ];" (funcall end a) op (cadr b)) chain))
                 (pcase a
-                  (`(:cluster ,_ . ,props) (setq chain (append (reverse (org--graph-legend-chain (plist-get props :stmts) op ctx))
+                  (`(:cluster ,_ . ,props) (setq chain (append (reverse (org--graph-legend-chain (plist-get props :stmts) op ctx all))
                                                                chain)))
-                  (`(:scope ,_ ,inner) (setq chain (append (reverse (org--graph-legend-chain inner op ctx)) chain)))))
+                  (`(:scope ,_ ,inner) (setq chain (append (reverse (org--graph-legend-chain inner op ctx all)) chain)))))
     (nreverse chain)))
 
 (defun org--graph-tag-clusters->dot (ctx)
@@ -245,6 +258,7 @@ that a `+ TITLE :container:' item declares is the same subgraph, which Graphviz 
 (defun org--graph-boxed-ranks-p (ctx stmts)
   "Returns whether a top-level rank statement of STMTS, from `:@X:' tags, names a node inside a box, whether a
 container's item or a :container_TITLE: tag puts it there; Graphviz would otherwise pull the node out of its box.
+So too for a legend row, whose rank=max names its box's entries.
   + Box :container:  + a :@pals:  …  + b :@pals:  ⇒  t"
   (let ((boxed (-uniq (append (--mapcat (pcase it
                                           (`(:cluster ,_ . ,props)
@@ -252,7 +266,9 @@ container's item or a :container_TITLE: tag puts it there; Graphviz would otherw
                                                    (org--graph-all-stmts (plist-get props :stmts)))))
                                         (org--graph-all-stmts stmts))
                               (-flatten (hash-table-values (org--graph-ctx-tag-clusters ctx)))))))
-    (--some (pcase it (`(:rank ,_ ,ids) (-intersection ids boxed))) stmts)))
+    (or (--some (pcase it (`(:rank ,_ ,ids) (-intersection ids boxed))) stmts)
+        ;; A legend row's rank=max sits in its box, so it too needs newrank.
+        (member '(:legend-row) (org--graph-all-stmts stmts)))))
 
 (defvar org--graph-node-defaults nil
   "While a graph prints, its graph-wide node defaults: the rows of its node [ … ] line, a theme's included.")

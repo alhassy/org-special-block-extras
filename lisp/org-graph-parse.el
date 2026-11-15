@@ -173,6 +173,7 @@ from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey
 ;;   (:cluster ID :label L :attrs ROWS :scope PREAMBLE :stmts STATEMENTS)
 ;;   (:scope PREAMBLE STATEMENTS)  ---an anonymous subgraph: an item's defaults, reaching its descendants
 ;;   (:legend ID ROWS LABEL TEMPLATES)  ---a sample of TEMPLATES' ROWS, captioned LABEL
+;;   (:legend-row)                      ---its legend's entries are a row along the graph's foot
 
 (cl-defstruct (org--graph-ctx (:constructor org--graph-ctx-create))
   "What a parse accumulates, and what printing its statements consults."
@@ -1004,8 +1005,11 @@ record; if each key names an attribute, check its spelling" id))
       ;; Its children are its members; but a reference, `+ [[T]]', is an arc from the box, drawn outside it, lest T,
       ;; first met there, be drawn inside it.
       (-let* (((refs members) (--separate (plist-get (car (org--graph-item-parts it)) :reference) children))
-              (stmts (let ((org--graph-legend (equal (downcase (format "%s" name)) "legend")))
-                       (append (--mapcat (org--graph-parse-item it nil ctx) members) ranked)))
+              (legend (equal (downcase (format "%s" name)) "legend"))
+              ;; An ordered legend, 1. 2. 3., is a row along the graph's foot, rather than a column.
+              (stmts (let ((org--graph-legend legend))
+                       (append (--mapcat (org--graph-parse-item it nil ctx) members)
+                               (if (and legend ranked) '((:legend-row)) ranked))))
               (arcs (append arcs (--mapcat (org--graph-parse-item it id ctx) refs))))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
