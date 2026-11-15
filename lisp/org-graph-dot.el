@@ -133,18 +133,28 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
   "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
 
-It is a digraph, unless KWDARGS has `:directed nil'; `:wrap', `:notes', and `:unknown-tags' are as
+It is a digraph, unless KWDARGS has `:directed nil', or `:mindmap t': an undirected graph, radiating from its first
+item, by Graphviz's twopi layout, its nodes rounded boxes.  `:wrap', `:notes', and `:unknown-tags' are as
 `org--graph-parse' reads them; and `:unflatten N' staggers leaves, see `org-graph--unflatten'.
 MAIN-ARG is the graph's title, its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
 Header attributes come before the block's own #+graph:, #+node:, and #+edge: tables, so those tables win."
   (-let* (((preamble stmts ctx) (org--graph-parse raw-contents kwdargs))
-          (directed (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed)))
+          (mindmap  (plist-get kwdargs :mindmap))
+          (directed (and (not mindmap) (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed))))
           ;; Under `:notes inline', the graph's own notes sit beneath its title.
           ;; The title is labelled as an item's text is, its markup, colours, and maths so too.
           (title    (org--graph-with-body (unless (s-blank-str-p main-arg) (org--graph-title-label main-arg))
                                           (plist-get preamble :body)))
           (header   (org--graph-header-rows kwdargs)))
     (setq header (plist-put header :graph-rows (append (when title `(("label" ,title))) (plist-get header :graph-rows))))
+    ;; An outline is a mindmap already: its first item at the centre, the rest radiating out; the header's own rows win.
+    (when mindmap
+      (setq header (plist-put header :graph-rows
+                              (org--graph-override `(("layout" "twopi") ("overlap" "false") ("ranksep" "1.0")
+                                                     ,@(-some--> (org--graph-first-node stmts) `(("root" ,it))))
+                                                   (plist-get header :graph-rows))))
+      (setq header (plist-put header :node-rows
+                              (org--graph-override '(("shape" "box") ("style" "rounded")) (plist-get header :node-rows)))))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
       (setq preamble (plist-put preamble key (org--graph-override (plist-get header key) (plist-get preamble key)))))
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))

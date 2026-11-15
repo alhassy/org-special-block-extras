@@ -29,6 +29,30 @@ A graph's own #+name: template of the same name wins; a checkbox whose template 
   :type '(alist :key-type string :value-type (repeat (list string string)))
   :group 'org-special-block-extras)
 
+(defcustom org-graph-builtin-templates
+  '(;; UML class diagrams: an arc's tag, as in “+ inherits :: [[Animal]]”; the arrow points at what is inherited, owned …
+    ("inherits"   ("arrowhead" "empty"))
+    ("implements" ("arrowhead" "empty") ("style" "dashed"))
+    ("composes"   ("dir" "both") ("arrowtail" "diamond") ("arrowhead" "none"))
+    ("aggregates" ("dir" "both") ("arrowtail" "odiamond") ("arrowhead" "none"))
+    ("depends"    ("arrowhead" "vee") ("style" "dashed"))
+    ;; State machines: a node's tag; composite states are clusters.
+    ("state"      ("shape" "box") ("style" "rounded"))
+    ("start"      ("shape" "point") ("width" "0.2") ("label" ""))
+    ("final"      ("shape" "point") ("width" "0.2") ("peripheries" "2") ("label" ""))
+    ("choice"     ("shape" "diamond") ("width" "0.3") ("height" "0.3") ("fixedsize" "true") ("label" ""))
+    ;; Entity–relationship cardinalities, crow's-foot style: an arc's tag, read from the parent's end to the child's.
+    ("one-to-one"   ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "teetee"))
+    ("one-to-many"  ("dir" "both") ("arrowtail" "teetee") ("arrowhead" "crowtee"))
+    ("many-to-one"  ("dir" "both") ("arrowtail" "crowtee") ("arrowhead" "teetee"))
+    ("many-to-many" ("dir" "both") ("arrowtail" "crowtee") ("arrowhead" "crowtee")))
+  "The #+name: templates every graph has, sans defining them: UML arcs, state-machine nodes, and ER cardinalities.
+  + Dog :state:            ;; a node's tag styles the node
+    + inherits :: [[Animal]] :inherits:   ;; …and a reference's, or a description term's, its arc
+A graph's, or the buffer's, own #+name: template of the same name wins; see `org--graph-parse'."
+  :type '(alist :key-type string :value-type (repeat (list string string)))
+  :group 'org-special-block-extras)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing: Org list ⟶ graph statements
 ;;
@@ -777,7 +801,8 @@ named tables, a house style is named once per file rather than once per graph.
   "RAW-CONTENTS of a #+begin_graph block ↦ (PREAMBLE STATEMENTS CTX), as the header's KWDARGS say:
 `:wrap N' fills labels to N characters; `:notes inline' shows notes in labels, rather than as tooltips; and
 `:unknown-tags random-templates' makes up a template for each tag that names none, rather than erring.
-A template is the graph's own #+name: table, else the buffer's, else one of `org-graph-checkbox-templates'.
+A template is the graph's own #+name: table, else the buffer's, else one of `org-graph-checkbox-templates', or of
+`org-graph-builtin-templates'.
 A note outside every item is the graph's own; PREAMBLE's :body holds it under `:notes inline'."
   (let* ((wrap     (-some--> (plist-get kwdargs :wrap) (if (numberp it) it (string-to-number (format "%s" it)))))
          (inline   (equal "inline" (org--graph-option kwdargs :notes "tooltip" '("tooltip" "inline"))))
@@ -791,7 +816,7 @@ A note outside every item is the graph's own; PREAMBLE's :body holds it under `:
          ;; Before `org--graph-expand-scope' expands them away, `#+edge: :faint:' style arcs.
          (edge-uses (--map (cons (concat ":edge." (car it)) (cdr it)) (plist-get raw :edge-rows)))
          (_        (maphash (lambda (name rows) (unless (gethash name tables) (puthash name rows tables))) buffer))
-         (_        (pcase-dolist (`(,name . ,rows) org-graph-checkbox-templates)
+         (_        (pcase-dolist (`(,name . ,rows) (append org-graph-checkbox-templates org-graph-builtin-templates))
                      (unless (gethash name tables) (puthash name rows tables))))
          (preamble (org--graph-expand-scope raw tables))
          (preamble (-let [(notes . edge-notes) (org--graph-item-notes preamble nil)]

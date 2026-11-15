@@ -74,7 +74,12 @@ else nil.  Then tooltips are Org, not plain text, and dot sees only their keys; 
         id))))
 
 (defun org--graph-attr-pairs (rows)
-  "ROWS ↦ \"k₁=v₁ k₂=v₂ …\", each value quoted as needed by `org--graph-dot-id'."
+  "ROWS ↦ \"k₁=v₁ k₂=v₂ …\", each value quoted as needed by `org--graph-dot-id'.
+A reserved :KEY is never Graphviz's, so one reaching here is an error, rather than dot's own syntax error; e.g., an
+arc template's :edge.style, where the template already styles the arc, and so wants plain style."
+  (-when-let (reserved (--first (string-prefix-p ":" (format "%s" (car it))) rows))
+    (user-error "graph: ‘%s’ is no Graphviz attribute here; a template that a tag applies to an arc styles the arc \
+itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge\\(?:\\[[^]]*\\]\\)?\\." "" (format "%s" (car reserved)))))
   (s-join " " (--map (format "%s=%s" (car it) (org--graph-dot-id (org--graph-tip-key (car it) (cadr it)))) rows)))
 
 (defun org--graph-attrs->dot (rows)
@@ -282,7 +287,7 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                                    (org-element-map tree 'radio-target (lambda (o) (org-element-property :value o))))))
               (org--graph-read-scope (org-element-contents tree) templates)))))
 
-(defconst org--graph-header-keys '(:file :svg :directed :wrap :notes :unflatten :unknown-tags :C-c_C-c
+(defconst org--graph-header-keys '(:file :svg :directed :mindmap :wrap :notes :unflatten :unknown-tags :C-c_C-c
                                          :contents-occur-as-link-description :exports :results)
   "Header keywords the `graph' block consumes itself, or Babel habits such as :exports, rather than handing to Graphviz.")
 

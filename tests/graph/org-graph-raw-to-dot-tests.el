@@ -202,3 +202,71 @@
   :output "digraph {
   A [ shape=ellipse color=red label=A ];
 }")
+
+(deftest "a reserved :KEY reaching dot is an error naming the plain key it wants, rather than dot's own syntax error" [graph]
+  (should (string-match-p "‘:edge.dir’ is no Graphviz attribute here.*wants ‘dir’"
+                          (cadr (should-error (org--graph-raw->dot "
+#+name: reply
+| :edge.dir | back |
++ a
+  + hi :reply: :: [[b]]
++ <<b>> b" nil) :type 'user-error)))))
+
+;;; Built-in templates: UML arcs, state-machine nodes, ER cardinalities; and :mindmap
+
+(deftest "a reference's UML tag draws its arc as UML does: a hollow triangle, a dashed one, diamonds, a dashed vee" [graph]
+  (let ((dot (org--graph-raw->dot "
++ Dog
+  + [[Animal]] :inherits:
+  + [[Pet]] :implements:
+  + [[Tail]] :composes:
+  + [[Owner]] :aggregates:
+  + [[Bone]] :depends:
++ <<Animal>> Animal
++ <<Pet>> Pet
++ <<Tail>> Tail
++ <<Owner>> Owner
++ <<Bone>> Bone" nil)))
+    (should (string-search "Dog -> Animal [ arrowhead=empty ];" dot))
+    (should (string-search "Dog -> Pet [ arrowhead=empty style=dashed ];" dot))
+    (should (string-search "Dog -> Tail [ dir=both arrowtail=diamond arrowhead=none ];" dot))
+    (should (string-search "Dog -> Owner [ dir=both arrowtail=odiamond arrowhead=none ];" dot))
+    (should (string-search "Dog -> Bone [ arrowhead=vee style=dashed ];" dot))))
+
+(deftest "a state machine's tags draw a start dot, rounded states, a choice diamond, and a ringed final dot" [graph]
+  (let ((dot (org--graph-raw->dot "
++ <<start>> :start:
+  + Idle :state:
+    + coin :: <<check>> :choice:
+      + done :: <<end>> :final:" nil)))
+    (should (string-search "start [ shape=point width=0.2 label=\"\" ];" dot))
+    (should (string-search "Idle [ shape=box style=rounded label=Idle ];" dot))
+    (should (string-search "check [ shape=diamond width=0.3 height=0.3 fixedsize=true label=\"\" ];" dot))
+    (should (string-search "end [ shape=point width=0.2 peripheries=2 label=\"\" ];" dot))))
+
+(deftest "an ER cardinality tag, on a description term, draws crow's feet and bars, read from parent to child" [graph]
+  (let ((dot (org--graph-raw->dot "
++ Customer
+  + places :one-to-many: :: Order
+  + has :one-to-one: :: Account" nil)))
+    (should (string-search "Customer -> Order [ label=places dir=both arrowtail=teetee arrowhead=crowtee ];" dot))
+    (should (string-search "Customer -> Account [ label=has dir=both arrowtail=teetee arrowhead=teetee ];" dot))))
+
+(deftest "a graph's own template of a built-in's name wins" [graph]
+  (should (string-search "Dog -> Animal [ color=red ];"
+                         (org--graph-raw->dot "
+#+name: inherits
+| color | red |
++ Dog
+  + [[Animal]] :inherits:
++ <<Animal>> Animal" nil))))
+
+(deftest "a :mindmap t graph is undirected, by twopi, rooted at its first item, its nodes rounded; the header wins" [graph]
+  (let ((dot (org--graph-raw->dot "
++ Org mode
+  + Tables
+  + Babel" nil '(:mindmap t :ranksep 2))))
+    (should (string-prefix-p "graph {" dot))
+    (should (string-search "Org -- Tables" (s-replace "\"Org mode\"" "Org" dot)))
+    (should (string-search "layout=twopi overlap=false root=\"Org mode\" ranksep=2" dot))
+    (should (string-search "node [ shape=box style=rounded ]" dot))))

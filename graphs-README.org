@@ -927,6 +927,148 @@ ranks, so the graph is a block rather than a ribbon:
   + EOF
 #+end_graph
 
+* Diagrams we draw: sequences, classes, states, entities, mindmaps
+
+Many diagrams are graphs in disguise; they differ only in how their nodes and arcs look. So rather than a
+syntax per kind, every graph has a few templates already, in ~org-graph-builtin-templates~; a tag applies
+one, as with any ~#+name:~ template of our own, and our own of the same name wins.
+
+| Diagram          | Node tags                                      | Arc tags                                                                  |
+|------------------+------------------------------------------------+---------------------------------------------------------------------------|
+| Class (UML)      | ---a class is a ~#+record:~ with hlines        | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~       |
+| State machine    | ~:state:~ ~:start:~ ~:final:~ ~:choice:~       | ---a guard is the description term                                        |
+| Entity–relation  | ---an entity is any node                       | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~           |
+| Mindmap          | ~#+begin_graph :mindmap t~, sans tags           |                                                                           |
+
+** A class diagram: records and UML arcs
+
+A class is the table we would write anyway, as in [[*Records: a #+record: table][Records]]; its relations are references, each tagged
+with its kind. The arrow points at what is inherited, implemented, or depended on; a diamond sits at the
+owner's end:
+#+begin_graph :rankdir BT :demo live
++ <<Animal>> Animal
+  #+record:
+  | <l>               |
+  | *Animal*          |
+  |-------------------|
+  | name: =String=    |
+  |-------------------|
+  | speak(): =String= |
++ Dog
+  #+record:
+  | <l>             |
+  | *Dog*           |
+  |-----------------|
+  | fetch(): =Bone= |
+  + [[Animal]] :inherits:
+  + [[Pet]] :implements:
+  + [[Tail]] :composes:
+  + [[Owner]] :aggregates:
+  + [[Bone]] :depends:
++ <<Pet>> «interface» Pet
++ <<Tail>> Tail
++ <<Owner>> Owner
++ <<Bone>> Bone
+#+end_graph
+
+** A state machine: pseudo-states as tags
+
+A state machine is an outline of what follows what; the description term is the event, or the guard,
+that takes us along the arc. An unnamed ~:start:~, ~:final:~, or ~:choice:~ item needs a ~<<target>>~ only
+to be told apart; a composite state is a [[*Clusters draw boxes][cluster]]:
+#+begin_graph :rankdir LR :demo live
++ <<start>> :start:
+  + <<idle>> Idle :state:
+    + coin :: Paid :state:
+      + push :: <<check>> :choice:
+        + [stock] :: Vending :state:
+          + done :: [[idle]]
+        + [empty] :: Refunding :state:
+          + done :: <<end>> :final:
+#+end_graph
+
+** An entity–relationship diagram: cardinalities as tags
+
+Each relationship is a description term, its cardinality a tag on that term, read from the parent's end
+to the child's: a customer places /many/ orders, each order placed by /one/ customer. Graphviz draws the
+crow's foot for “many” and the bar for “one”:
+#+begin_graph :rankdir LR :node.shape box :demo live
++ Customer
+  + places :one-to-many: :: Order
+    + contains :one-to-many: :: Line item
+      + names :many-to-one: :: Product
+  + has :one-to-one: :: Account
+#+end_graph
+
+** A mindmap: an outline, radiating
+
+An Org outline already is a mindmap; ~:mindmap t~ merely draws it so: undirected, its first item at the
+centre, the rest radiating out by Graphviz's ~twopi~ layout, every node a rounded box. The header's own
+attributes still win; e.g., ~:ranksep 2~ spreads it out:
+#+begin_graph :mindmap t :demo live
++ Org mode
+  + Outlines
+    + Folding
+    + Tags
+  + Tables
+    + Spreadsheet
+  + Babel
+    + Tangling
+    + Results
+  + Export
+    + HTML
+    + LaTeX
+#+end_graph
+
+** A sequence diagram: lifelines, ranks, and a turned arrow
+
+No template draws a sequence diagram, yet ranks and templates do. Each actor's lifeline is a chain of
+/moments/: points, whose arcs a ~moment~ template dashes, greys, and ---by a heavy ~weight~--- keeps
+straight. A ~#+rank:~ line puts the moments of one instant side by side, and a message is a reference
+from one moment to another. Graphviz orders a rank's nodes by its arcs' direction, so every message hangs
+off the left lifeline, and a ~reply~ template turns its arrow back:
+#+begin_graph Ordering a latte :labelloc t :demo live
+#+name: actor
+| shape | box     |
+| style | rounded |
+
+#+name: moment
+| shape           | point  |
+| width           | 0.04   |
+| :edge.style     | dashed |
+| :edge.arrowhead | none   |
+| :edge.color     | gray   |
+| :edge.weight    | 100    |
+
+#+name: reply
+| dir   | back   |
+| style | dashed |
+
++ Customer :actor:
+  + <<c1>> :moment:
+    + order a latte :: [[b1]]
+    + <<c2>> :moment:
+      + “that’s $5” :reply: :: [[b2]]
+      + <<c3>> :moment:
+        + pay :: [[b3]]
+        + <<c4>> :moment:
+          + here you go :reply: :: [[b4]]
++ Barista :actor:
+  + <<b1>> :moment:
+    + <<b2>> :moment:
+      + <<b3>> :moment:
+        + <<b4>> :moment:
+#+rank: Customer Barista
+#+rank: c1 b1
+#+rank: c2 b2
+#+rank: c3 b3
+#+rank: c4 b4
+#+end_graph
+
+The ~moment~ template styles the arc /into/ each point, by its ~:edge.KEY~ rows, being a node's template;
+~reply~ styles an arc itself, being a description term's, so its keys are plain. For a long conversation,
+~#+begin_image mermaid~ or ~plantuml~ says it more tersely; see [[https://alhassy.com/org-special-block-extras#images][Images]].
+
 * Graphs in their document
 
 A graph rarely stands alone: prose refers to it, and an outline may already /be/ one. Org's own document
@@ -1152,6 +1294,7 @@ Once the demo is over, this is the page we keep open.
 | ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                         |
 | ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes    |
 | ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                   |
+| ~#+begin_graph :mindmap t~                   | an undirected ~twopi~ layout, radiating from the first item, its nodes rounded  |
 | ~#+name: N~ above ~#+begin_graph~            | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions    |
 | ~* HEADING :graph:~, with ~:PROPERTIES:~     | the section's text is a graph; ~:RANKDIR: LR~ is ~:rankdir LR~, and so on       |
 | ~:NAME:~ … ~:END:~ drawer                    | the directives inside, folded away                                              |
@@ -1175,6 +1318,7 @@ Once the demo is over, this is the page we keep open.
 | ~+ NAME \\ MORE~                             | node ~NAME MORE~, its label broken over two lines; likewise in table cells      |
 | ~+ NAME [[https://…]]~, ~[[file:x.png]]~     | node NAME, with ~URL="https://…"~, or ~image="x.png"~                           |
 | ~+ [X] NAME~, ~[-]~, ~[ ]~                   | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined       |
+| ~:inherits:~, ~:state:~, ~:one-to-many:~, …  | templates every graph has; see ~org-graph-builtin-templates~                    |
 | ~{{{M}}}~, after ~#+macro: M V~              | ~V~, anywhere in the block                                                      |
 | ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=          | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                       |
 | ~∣ key ∣ value ∣~                            | node attribute; values are quoted for you                                       |
