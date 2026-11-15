@@ -511,6 +511,59 @@ x
   (search-forward "hot:st")
   (should (string-match-p "rounded box" (org-graph--builtin-tag-doc (org-graph--tag-at-point)))))
 
+;;; Containers: an item whose children are its members
+
+(define-graph-test "a :container: item is a box around its children; a reference in it is an arc from the box"
+  :input "
++ me :container:
+  + brings me joy :: [[Emacs]]
+  + family
++ Emacs :container:
+  + Org"
+  :output "digraph {
+  graph [ compound=true ]
+  subgraph cluster_me {
+    label=me
+    family [ label=family ];
+  }
+  family -> Org [ label=\"brings me joy\" ltail=cluster_me lhead=cluster_Emacs ];
+  subgraph cluster_Emacs {
+    label=Emacs
+    Org [ label=Org ];
+  }
+}")
+
+(define-graph-test "an item of tags alone is anonymous: an unlabelled node, such as a start state, or an untitled box"
+  :input "
++ :start:
+  + Idle :state:
++ :container:
+  + Busy"
+  :output "digraph {
+  \"anonymous 2\" [ shape=point width=0.2 label=\"\" ];
+  \"anonymous 2\" -> Idle;
+  Idle [ shape=box style=rounded label=Idle ];
+  subgraph cluster_anonymous_4 {
+    label=\"\"
+    Busy [ label=Busy ];
+  }
+}")
+
+(deftest "a tag amid an item's text is an error, since only trailing tags count; verbatim and links stay literal"
+  (should-error (org--graph-raw->dot "+ me :container: [[Emacs]]" nil nil) :type 'user-error)
+  (should (string-match-p "\"me :x:\" -> Emacs" (org--graph-raw->dot "+ me =:x:= [[Emacs][:y:]]" nil nil))))
+
+(org-deftest "an item of tags alone gets its tags' faces too"
+  :text "
+#+begin_graph
++ :container:
+  + Busy
+#+end_graph"
+  (font-lock-ensure)
+  (goto-char (point-min))
+  (search-forward "+ :")
+  (should (memq 'org-graph-builtin-tag (ensure-list (get-text-property (point) 'face)))))
+
 ;;; Footnotes are tooltips
 
 (define-graph-test "an inline footnote is the node's tooltip, vanishing from its label; an explicit tooltip row wins"

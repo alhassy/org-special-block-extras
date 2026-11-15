@@ -321,12 +321,23 @@ footnotes become the node's tooltip."
                       (prog1 (s-split ":" (match-string 1 term) t) (setq term (substring term 0 (match-beginning 0))))))
           (arc-label (unless (s-blank-str-p term) (plist-get (org--graph-item-text-sans-tags term) :label)))
           ((text . tags) (org--graph-split-tags text))
+          (_ (org--graph-check-stray-tags text))
           (parts (org--graph-item-text-sans-tags text)))
     (append parts (list :arc-label arc-label :arc-tags arc-tags :tags tags :checkbox checkbox))))
 
+(defun org--graph-check-stray-tags (text)
+  "Signals a user error when TEXT, an item's sans its trailing tags, still holds a tag, such as :x: in \"a :x: [[b]]\";
+since only tags at the end of an item's text count, a stray one would silently become part of its name.  Verbatim
+text, =:x:= or ~:x:~, and links are literal, so they are skipped."
+  (let ((plain (replace-regexp-in-string (concat "=[^=\n]+=\\|~[^~\n]+~\\|" org-link-bracket-re) " " text)))
+    (when (string-match (concat "\\(?:\\`\\|[ \t]\\)" org--graph-tag-group-re "\\(?:[ \t]\\|\\'\\)") plain)
+      (user-error "graph: ‘%s’ in ‘%s’ is a tag, yet only tags at the end of an item's text count; move it there, or write =%s= for literal text"
+                  (match-string 1 plain) (s-trim text) (match-string 1 plain)))))
+
 (defun org--graph-split-tags (text)
-  "TEXT ↦ (TEXT′ . TAGS), its trailing `:t₁:t₂:' tags split off: \"a :x:y:\" ↦ (\"a\" \"x\" \"y\"); TAGS is nil sans tags."
-  (if (string-match org--graph-tags-re text)
+  "TEXT ↦ (TEXT′ . TAGS), its trailing `:t₁:t₂:' tags split off: \"a :x:y:\" ↦ (\"a\" \"x\" \"y\"); TAGS is nil sans tags.
+A TEXT of tags alone splits too: \":start:\" ↦ (\"\" \"start\")."
+  (if (string-match (concat "\\(?:\\`\\|[ \t]+\\)" org--graph-tag-group-re "[ \t]*$") text)
       (cons (substring text 0 (match-beginning 0)) (s-split ":" (match-string 1 text) t))
     (list text)))
 
@@ -551,9 +562,13 @@ has no [[link]]; for literal text ending in `:%s:', write =:%s:=" text (car tags
 (defun org--graph-item-parts (item)
   "A read ITEM ↦ (TEXT PREAMBLE CHILDREN KIND): its parsed text, its tables and directives, its sub-items, and their KIND.
 As in Org, an item's text is its first paragraph, so a long line of [[links]] may wrap; its lines join, and only then
-does a `\\\\' break the label's line, even mid-line."
-  (list (->> (plist-get item :text) s-trim s-lines (-map #'s-trim) (s-join " ") org--graph-break-lines org--graph-item-text)
-        (plist-get item :pre) (plist-get item :children) (plist-get item :kind)))
+does a `\\\\' break the label's line, even mid-line.  An item of tags alone, such as `+ :start:', is anonymous: unlabelled,
+its id made of its line, so `+ :container:' is an untitled box."
+  (let ((text (->> (plist-get item :text) s-trim s-lines (-map #'s-trim) (s-join " ")
+                   org--graph-break-lines org--graph-item-text)))
+    (when (and (s-blank-str-p (plist-get text :name)) (plist-get text :tags) (not (plist-get text :target)))
+      (setq text (plist-put (plist-put text :name (format "anonymous %d" (plist-get item :line))) :label "")))
+    (list text (plist-get item :pre) (plist-get item :children) (plist-get item :kind))))
 
 (defun org--graph-item-id (item)
   "A read ITEM ↦ its node id: its | :id | row, else its <<target>>, else its text."
@@ -827,8 +842,12 @@ just tags: `- :T: :: %s', or, in a cluster titled Legend, `- %s :T:'" id id id))
                                                           rank-stmts))))
      ((and fresh (equal shape "cluster"))
       (org--graph-declare ctx id name nil)
-      (let ((stmts (let ((org--graph-legend (equal (downcase (format "%s" name)) "legend")))
-                     (append (--mapcat (org--graph-parse-item it nil ctx) children) ranked))))
+      ;; Its children are its members; but a reference, `+ [[T]]', is an arc from the box, drawn outside it, lest T,
+      ;; first met there, be drawn inside it.
+      (-let* (((refs members) (--separate (plist-get (car (org--graph-item-parts it)) :reference) children))
+              (stmts (let ((org--graph-legend (equal (downcase (format "%s" name)) "legend")))
+                       (append (--mapcat (org--graph-parse-item it nil ctx) members) ranked)))
+              (arcs (append arcs (--mapcat (org--graph-parse-item it id ctx) refs))))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
         (cons (list :cluster id

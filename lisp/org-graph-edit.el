@@ -343,7 +343,7 @@ A buffer with no graph block pays only one search per fontification, rather than
 
 (defconst org-graph--tag-res
   (let ((bullet "^[ \t]*\\(?:[-+*]\\|[0-9]+[.)]\\)[ \t]+"))
-    (list (concat bullet ".*?" org--graph-tags-re)
+    (list (concat bullet "\\(?:.*?[ \t]\\)?" org--graph-tag-group-re "[ \t]*$")
           (concat bullet "\\(?:.*?[ \t]\\)?" org--graph-tag-group-re "[ \t]+::\\(?:[ \t]\\|$\\)")
           (concat "^[ \t]*#\\+\\(?:graph\\|node\\|edge\\|name\\):.*?[ \t]" org--graph-tag-group-re "[ \t]*$")
           (concat "\\]\\][ \t]+" org--graph-tag-group-re "[ \t]*|")))
