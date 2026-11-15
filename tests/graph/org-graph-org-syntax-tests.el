@@ -525,6 +525,34 @@ x
   C [ label=C ];
 }")
 
+(define-graph-test "shape tags draw nodes by what they mean, as D2's shapes do: :database: is a cylinder"
+  :input "
++ App :component:
+  + Users :database:
+  + README :note:"
+  :output "digraph {
+  App [ shape=component label=App ];
+  App -> Users;
+  Users [ shape=cylinder label=Users ];
+  App -> README;
+  README [ shape=note label=README ];
+}")
+
+(deftest "a fillcolor fills, Graphviz's style=filled implied, unless the style, or the graph-wide defaults, fill already" [graph]
+  (should (string-match-p "A \\[ fillcolor=gold label=A style=filled \\]" (org--graph-raw->dot "
++ A
+  | fillcolor | gold |" nil nil)))
+  (should (string-match-p "A \\[ fillcolor=gold label=A style=\"dashed,filled\" \\]" (org--graph-raw->dot "
++ A :dashed:
+  | fillcolor | gold |" nil nil)))
+  (should (string-match-p "A \\[ fillcolor=gold label=A \\]" (org--graph-raw->dot "
+#+node: style=filled
++ A
+  | fillcolor | gold |" nil nil)))
+  (should (string-match-p "edge \\[ fillcolor=red \\]" (org--graph-raw->dot "
+#+edge: fillcolor=red
++ A" nil nil))))
+
 (deftest "a style's flags join across templates, an item's own row, and the theme; other keys still override" [graph]
   (should (equal (org--graph-override '(("style" "filled") ("color" "red")) '(("style" "dashed") ("color" "blue")))
                  '(("style" "filled,dashed") ("color" "blue"))))
@@ -1144,7 +1172,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
   | fillcolor | gold |" nil)))
     (should (string-search "round [ color=\"#ff0000\" style=wedged fillcolor=\"#ffbfbf:#bfbfff\" label=round ];" dot))
     (should (string-search "single [ color=\"#ff0000\" label=single ];" dot))
-    (should (string-match-p "chosen \\[ color=\"#ff0000\" fillcolor=gold label=chosen \\]" dot))))
+    (should (string-match-p "chosen \\[ color=\"#ff0000\" fillcolor=gold label=chosen style=filled \\]" dot))))
 
 (deftest "a :container_TITLE: tag puts its node in the box TITLE, its underscores spaces; a container of that title is the same box" [graph tags]
   (should (equal (org--graph-container-tag "Container_Holy_Land") "Holy Land"))

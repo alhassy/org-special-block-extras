@@ -122,6 +122,32 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 (org-defgraph-tag black "color=\"#000000\" fontcolor=\"#000000\""
   "Colours a node's outline and text, or an arc and its label, black: #000000.")
 
+;; Shapes: Graphviz's, named by what they draw; D2's cylinder is :database:.
+(org-defgraph-tag database "shape=cylinder"
+  "Draws a node as a database: a cylinder.")
+(org-defgraph-tag note "shape=note"
+  "Draws a node as a note, or document: a page with a folded corner.")
+(org-defgraph-tag folder "shape=folder"
+  "Draws a node as a folder: a box with a tab atop.")
+(org-defgraph-tag component "shape=component"
+  "Draws a node as a UML component: a box with two prongs.")
+(org-defgraph-tag tab "shape=tab"
+  "Draws a node as a tab: a box with a small tab atop.")
+(org-defgraph-tag circle "shape=circle"
+  "Draws a node as a circle.")
+(org-defgraph-tag diamond "shape=diamond"
+  "Draws a node as a diamond, say a decision.")
+(org-defgraph-tag hexagon "shape=hexagon"
+  "Draws a node as a hexagon.")
+(org-defgraph-tag star "shape=star"
+  "Draws a node as a star.")
+(org-defgraph-tag oval "shape=ellipse"
+  "Draws a node as an oval, Graphviz's own default.")
+(org-defgraph-tag rectangle "shape=box"
+  "Draws a node as a rectangle.")
+(org-defgraph-tag text "shape=plaintext"
+  "Draws a node as its label alone, sans outline.")
+
 ;; Sizes; :size_N: is any size, by `org--graph-pattern-template'.
 (org-defgraph-tag small "fontsize=10"
   "Writes a node's, or an arc's, label small: 10pt.  :size_N: writes it at N points.")
@@ -260,6 +286,29 @@ ending in `:%s:', write =:%s:= or a | label | row" name name name))
   "Returns the union of STYLES' flags, in order, as one Graphviz style; else nil.  Since a style is a set of flags,
 \"filled\" and \"dashed,bold\" give \"filled,dashed,bold\": a theme's fill survives a :dashed: tag, and tags compose."
   (-some--> (-uniq (--mapcat (and it (split-string it "[ \t]*,[ \t]*" t)) styles)) (s-join "," it)))
+
+(defvar org--graph-filled-by-default nil
+  "While a graph prints, the kinds, `node' and `graph', whose graph-wide defaults fill already, as a theme's do.")
+
+(defun org--graph-fills-p (rows)
+  "Returns whether ROWS' style fills: filled, radial, striped, or wedged."
+  (seq-intersection (split-string (or (cadr (assoc "style" rows)) "") "[ \t]*,[ \t]*" t) '("filled" "radial" "striped" "wedged")))
+
+(defun org--graph-filling-kinds (scope)
+  "Returns SCOPE's kinds, `node' and `graph', whose defaults fill: by a style that fills, or a fillcolor, which
+`org--graph-filled' then fills; atop those that already fill, `org--graph-filled-by-default'."
+  (-uniq (append (--keep (let ((rows (plist-get scope (cdr it))))
+                           (and (or (org--graph-fills-p rows) (assoc "fillcolor" rows)) (car it)))
+                         '((node . :node-rows) (graph . :graph-rows)))
+                 org--graph-filled-by-default)))
+
+(defun org--graph-filled (rows &optional kind)
+  "Returns ROWS with the style flag `filled' when they set a fillcolor, which Graphviz silently ignores otherwise;
+unless their style fills already, or ---for a node's or cluster's ROWS, by KIND `node' or `graph'--- the graph-wide
+defaults do, since a style of its own would replace theirs, say a mindmap's rounded.  Never for an arc's rows."
+  (if (and (assoc "fillcolor" rows) (not (org--graph-fills-p rows)) (not (memq kind org--graph-filled-by-default)))
+      (org--graph-override rows '(("style" "filled")))
+    rows))
 
 (defun org--graph-override (rows over)
   "Returns ROWS with OVER's rows replacing those of the same key, e.g. ((a 1) (b 2)) and ((a 3)) give ((b 2) (a 3));

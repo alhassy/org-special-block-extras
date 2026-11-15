@@ -442,7 +442,6 @@ itself keeps its own ~| key | value |~ rows; its ~#+rank:~ lines apply there too
     + *
       | xlabel | folds to 2 |
       #+node:
-      | style     | filled    |
       | fillcolor | lightgrey |
       #+edge:
       | style | dotted |
@@ -484,7 +483,6 @@ the node:
 #+begin_graph :demo live
 #+name: token
 | shape     | box       |
-| style     | filled    |
 | fillcolor | lightblue |
 #+name: rule
 | style | bold |
@@ -501,7 +499,7 @@ the node:
 #+end_graph
 
 A short template fits on its name's line, as ~KEY=VALUE~ pairs ---as [[*When the preamble outgrows the line][#+edge: lines]] take them--- so the
-two above are, tersely, ~#+name: token shape=box style=filled fillcolor=lightblue~ and
+two above are, tersely, ~#+name: token shape=box fillcolor=lightblue~ and
 ~#+name: rule style=bold~. Several such lines in a row are several templates, and a table below one adds
 rows to it. In Emacs, each template of a graph ---its name's line, and the table below it--- wears
 a background of its own, from ~org-graph-template-backgrounds~, so where one ends and the next begins
@@ -545,6 +543,8 @@ Some looks are wanted so often that every graph has them, sans a ~#+name:~:
 | ~:red:~ ~:orange:~ ~:yellow:~ ~:green:~ ~:teal:~ ~:blue:~     | a node's outline and text, or an arc and its label, so coloured |
 | ~:purple:~ ~:magenta:~ ~:pink:~ ~:brown:~ ~:gray:~ ~:black:~  | likewise                                        |
 | ~:small:~ ~:large:~ ~:size_N:~                                | a label at 10pt, 20pt, or N points              |
+| ~:database:~ ~:note:~ ~:folder:~ ~:component:~ ~:tab:~         | a node drawn as a cylinder, a dog-eared page, a folder, a UML component, a tab |
+| ~:circle:~ ~:diamond:~ ~:hexagon:~ ~:star:~ ~:oval:~ ~:rectangle:~ ~:text:~ | a node so shaped; ~:text:~ is its label alone, sans outline |
 #+begin_graph :direction right :demo live
 + Org :large:green:
   + exports to :dashed:bidirectional: :: HTML :blue:
@@ -552,7 +552,8 @@ Some looks are wanted so often that every graph has them, sans a ~#+name:~:
 + LaTeX :size_9:
 #+end_graph
 A style is a set of flags, so they join rather than override: ~:dashed:bold:~ is both, and a theme's fill
-survives ~:dashed:~. Every other key overrides, the earlier tag winning, as ever.
+survives ~:dashed:~. Every other key overrides, the earlier tag winning, as ever. A ~fillcolor~ fills by
+itself: Graphviz would ignore it, silently, sans ~style=filled~, so we add that flag for it.
 
 In Emacs, each tag wears a colour of its own name's ---the same on its ~#+name:~ line--- boxed as
 org-modern draws tags. So a typo stands out: ~:hott:~ differs in colour from ~:hot:~, as does a
@@ -647,7 +648,6 @@ explains:
 #+begin_graph :demo live
 #+name: token
 | shape     | box       |
-| style     | filled    |
 | fillcolor | lightblue |
 #+name: recursion
 | color | red    |
@@ -1846,7 +1846,6 @@ it repeats are named once, by Org's own macros:
 + Legend :container:
   | fontcolor | #cdd6f4       |
   | color     | {{{surface}}} |
-  | style     | filled        |
   | fillcolor | #181825       |
   | fontsize  | 11            |
   - :lineage: :: direct lineage
@@ -1976,7 +1975,6 @@ of plain-text nodes. Comparing the two is demonstrative of what each feature sav
 + Legend :container:
   | fontcolor | #8b008b |
   | color     | #45475a |
-  | style     | filled  |
   | fillcolor | #181825 |
   | fontsize  | 11      |
   #+node:
@@ -2013,7 +2011,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 
 #+node:
 | shape     | ellipse |
-| style     | filled  |
 | fillcolor | #d4a96a |
 | fontname  | Georgia |
 | fontcolor | #2b1a00 |
@@ -2053,7 +2050,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 | style | dashed  |
 
 + Prophets (عليهم السلام) :container:
-  | style     | filled  |
   | fillcolor | #ddeeff |
   | color     | #3355aa |
   | fontcolor | #003388 |
@@ -2136,7 +2132,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 
 # Hadith: the four greatest women of paradise — Khadija, Fatimah, Maryam, Asiya
 + Ladies of Heaven (سيدات الجنة) :container:
-  | style     | filled  |
   | fillcolor | #fff0f5 |
   | color     | #aa3366 |
   | fontcolor | #660033 |
@@ -2287,7 +2282,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # nodes; this cluster adds Imams 5–12 as a chain descending from Ali Al-Sajjad.
 # All 12 are descendants of Ali ibn Abi Talib through the line of Hussain.
 + The Twelve Imams (عليهم السلام) :container:
-  | style     | filled  |
   | fillcolor | #eeffee |
   | color     | #006600 |
   | fontcolor | #004400 |
@@ -2330,7 +2324,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # Salman's hadith ("Salman is from us, Ahl al-Bayt"), Ammar's martyrdom at Siffin, and
 # Malik al-Ashtar's generalship are cornerstones of Shia historical memory.
 + Companions of Ali :container:
-  | style     | filled  |
   | fillcolor | #fef3c7 |
   | color     | #92400e |
   | fontcolor | #78350f |
@@ -2355,7 +2348,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # Aisha (daughter of Abu Bakr, wife of Muhammad) was a major hadith transmitter and
 # political figure — she led opposition to Ali at the Battle of the Camel (656 CE).
 + Rashidun Caliphs (الخلفاء الراشدون) :container:
-  | style     | filled  |
   | fillcolor | #fff8e1 |
   | color     | #aa7700 |
   | fontcolor | #664400 |
@@ -2376,7 +2368,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # Umayyad caliphs who oppressed the early Imams after the Karbala period.
 # The Umayyad dynasty (661–750 CE) persecuted Imams 4–6.
 + Umayyad Caliphs (الأمويون) :container:
-  | style     | filled  |
   | fillcolor | #fff3e0 |
   | color     | #b34700 |
   | fontcolor | #7a2e00 |
@@ -2400,7 +2391,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # persecution of the Imams, shifting from open warfare to imprisonment and poisoning.
 # Each node here is the primary oppressor of the corresponding Imam.
 + Abbasid Caliphs (العباسيون) :container:
-  | style     | filled  |
   | fillcolor | #f3e5f5 |
   | color     | #6a0dad |
   | fontcolor | #3d0066 |
@@ -2452,7 +2442,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 # The four key battles of the Prophet's life — each a turning point in the narrative arc from
 # persecuted minority in Mecca to unified force that transformed the Arabian peninsula.
 + Battles of the Prophet :container:
-  | style     | filled  |
   | fillcolor | #f0f4ff |
   | color     | #334499 |
   | fontcolor | #1a2266 |
@@ -2476,7 +2465,6 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
 #+rank: badr uhud khandaq fath
 
 + Antagonists :container:
-  | style     | filled  |
   | fillcolor | #ffeeee |
   | color     | #cc0000 |
   | fontcolor | #990000 |
@@ -2539,13 +2527,11 @@ multi-line labels, footnote tooltips, and templates for the pink marriage arcs a
     | :edge.arrowhead | dot  |
 
 + Legend — Edge Types :container:
-  | style     | filled  |
   | fillcolor | #f5f5dc |
   | color     | #555555 |
   | fontsize  | 11      |
   #+node:
   | shape     | plaintext |
-  | style     | filled    |
   | fillcolor | #f5f5dc   |
   + <<leg-marriage>> Pink bidirectional arrow = Marriage
   + <<leg-mother>> Green arrow = Motherhood

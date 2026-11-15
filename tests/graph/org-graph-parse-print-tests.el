@@ -62,7 +62,7 @@
   | color     | \"#ff0000\" |
   | fillcolor | #00ff00     |"
   :output "digraph {
-  A [ label=\"Two words\" color=\"#ff0000\" fillcolor=\"#00ff00\" ];
+  A [ label=\"Two words\" color=\"#ff0000\" fillcolor=\"#00ff00\" style=filled ];
 }")
 
 (deftest "an undirected graph uses --, without touching any -> inside a label"

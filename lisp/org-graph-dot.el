@@ -70,7 +70,7 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
   (append
    (-keep (-lambda ((kind . key))
             (-when-let (rows (plist-get scope key))
-              (concat kind (org--graph-attrs->dot rows))))
+              (concat kind (org--graph-attrs->dot (if (equal kind "edge") rows (org--graph-filled rows))))))
           '(("graph" . :graph-rows) ("node" . :node-rows) ("edge" . :edge-rows)))
    (--map (format "{ rank=same; %s }" (s-join "; " (-map #'org--graph-dot-id (org--graph-rank-ids it))))
           (plist-get scope :ranks))))
@@ -88,33 +88,37 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
      (-let [(name . attrs) (gethash id (org--graph-ctx-nodes ctx))]
        (list (format "%s%s;" (org--graph-dot-id id)
                      (org--graph-attrs->dot
-                      (org--graph-href id (if (assoc "label" attrs) attrs (append attrs `(("label" ,name)))) ctx))))))
+                      (org--graph-href id (org--graph-filled (if (assoc "label" attrs) attrs (append attrs `(("label" ,name)))) 'node)
+                                       ctx))))))
     (`(:edge ,src ,dst ,attrs)
      (list (org--graph-edge->dot src dst attrs op ctx)))
     ;; A template that styles arcs is shown as a captioned arc between invisible points; any other, as a captioned node.
     ;; The arc runs along the graph's direction, as a same-rank one may lose its caption; e.g., under splines=curved.
     (`(:legend ,id ,rows ,label ,templates)
      ;; Sans `constraint', which shapes the layout rather than the arc, and would let the sample drift out of line.
-     (let ((attrs (org--graph-attrs->dot (org--graph-override (--remove (equal (car it) "constraint") rows)
-                                                              `(("label" ,label))))))
+     (let ((rows (org--graph-override (--remove (equal (car it) "constraint") rows) `(("label" ,label)))))
        (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates)
            (let ((end (concat id "_end")))
              (list (format "%s [ shape=point style=invis ];" id)
                    (format "%s [ shape=point style=invis ];" end)
-                   (format "%s %s %s%s;" id op end attrs)))
-         (list (format "%s%s;" id attrs)))))
+                   (format "%s %s %s%s;" id op end (org--graph-attrs->dot rows))))
+         (list (format "%s%s;" id (org--graph-attrs->dot (org--graph-filled rows 'node)))))))
     (`(:rank ,kind ,ids)
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
     (`(:scope ,scope ,stmts)
-     (list (format "subgraph {\n    %s\n  }"
-                   (s-join "\n    " (append (org--graph-scope->dot scope)
-                                            (--mapcat (org--graph-stmt->dot it op ctx) stmts))))))
+     (let ((org--graph-filled-by-default (org--graph-filling-kinds scope)))
+       (list (format "subgraph {\n    %s\n  }"
+                     (s-join "\n    " (append (org--graph-scope->dot scope)
+                                              (--mapcat (org--graph-stmt->dot it op ctx) stmts)))))))
     (`(:cluster ,id . ,props)
      ;; A theme's container fills shade each depth apart, outermost first; the container's own fillcolor wins.
      (let* ((fill (and org--graph-container-fills
                        (nth (mod org--graph-container-depth (length org--graph-container-fills)) org--graph-container-fills)))
-            (attrs (if fill (org--graph-override `(("fillcolor" ,fill)) (plist-get props :attrs)) (plist-get props :attrs)))
-            (org--graph-container-depth (1+ org--graph-container-depth)))
+            (attrs (org--graph-filled (if fill (org--graph-override `(("fillcolor" ,fill)) (plist-get props :attrs))
+                                        (plist-get props :attrs))
+                                      'graph))
+            (org--graph-container-depth (1+ org--graph-container-depth))
+            (org--graph-filled-by-default (org--graph-filling-kinds (plist-get props :scope))))
        (list (format "subgraph %s {\n    %s\n  }" (org--graph-cluster-id id)
                      (s-join "\n    "
                              (append (list (concat "label=" (org--graph-dot-id (plist-get props :label))))
@@ -271,6 +275,7 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))
       (org--graph-note-ranks ctx preamble stmts))
     (let* ((org--graph-container-fills fills)
+           (org--graph-filled-by-default (org--graph-filling-kinds preamble))
            (body (append (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)
                         (org--graph-tag-clusters->dot ctx)
                         ;; A legend is a column: top-down, its entries are chained; left-right, they share a rank already.
