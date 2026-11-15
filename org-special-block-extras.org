@@ -5776,6 +5776,13 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
     Mermaid diagram stays live, and needs no tool at all, in a web page or a README.
   + [[https://d2lang.com][D2]], by =d2=, to SVG, then =rsvg-convert=; =:layout elk= chooses its layout engine, =:theme 200=
     its theme, and =:sketch t= its hand-drawn look.
+    By way of example, [[https://github.com/xcapaldi/ob-d2][ob-d2]]'s =#+begin_src d2 :file flags.png :flags -t 101 -s= is, here,
+    #+begin_src org :tangle no
+,#+begin_image d2 :file flags :theme 101 :sketch t
+High Mem Instance -> EC2 <- High CPU Instance: Hosted By
+,#+end_image
+    #+end_src
+    ---=flags.{svg,pdf,png}= within ~org-image-block-directory~, each backend taking its own.
   None of SVG, dot, PlantUML, Mermaid, or D2 has a preamble, so a line of dashes in one is an error.
 
   =C-c C-c=, and export, need each language's tools; a missing one is an error saying how to
