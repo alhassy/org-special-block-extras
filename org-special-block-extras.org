@@ -5153,7 +5153,8 @@ p -> q &== \neg p \lor q
 | ->       | \Rightarrow |
 | ==       | \equiv      |
   #+end_example
-  The rows above the rule are a header, and are skipped. A Lisp variable serves too, across
+  The rows above the rule are a header, and are skipped; so too is every column past the
+  second, which may then hold notes on each shorthand. A Lisp variable serves too, across
   documents: =(setq logic '(-> "\\Rightarrow"))= and then =:let logic=.
 
 ** Calculational proofs ---=REL{ HINT }= in a math block, folded by =TAB=
@@ -5827,7 +5828,8 @@ High Mem Instance -> EC2 <- High CPU Instance: Hosted By
   | =:noexport t=    | Nothing at all; e.g., notes to self                                          |
   | =:when FORM=     | Nothing at all, unless the Lisp =FORM= is non-nil; it may mention =backend= |
   | =:let (VAR VAL …)= | Each whole-word =VAR=, or operator such as =->=, in the contents becomes its value, beforehand |
-  | =:let NAME=      | Likewise, for the =VAR= and =VAL= of each row of the table =#+name: NAME=, else of the variable =NAME= |
+  | ~:let VAR=VAL …~ | Likewise, in Babel's spelling, up to the next =:KEY=; see [[#why-not-babel-names][Why not Babel's names?]] |
+  | =:let NAME=      | Likewise, for the first two columns of each row of the table =#+name: NAME=, else for the variable =NAME= |
   | =:ignore t=      | The contents, as plain Org; i.e., the block's own behaviour is bypassed      |
   | =:boxed TITLE=   | The result, within a [[doc:org--box-block][box]] titled =TITLE=; =t= for untitled               |
   | =:folded TITLE=  | The result, folded within [[doc:org--details-block][details]] titled =TITLE=; =t= for the block's name |
@@ -6006,11 +6008,7 @@ Most students guess =2N=; ask for a counterexample.
   outermost. Since a heading's drawer takes every switch, =:within: (details "Proof")=
   folds a section's text away.
 
-  Why not =:wrap=? Babel has it already: =#+begin_src python :wrap example= wraps the
-  block's /results/, not the block. A src block's language keeps every header argument
-  Babel declares for it ---its common ones, such as =:wrap=, and those of
-  =org-babel-header-args:LANG=--- just as a block of ours keeps a keyword it declares;
-  so =ob-elvish='s own =:log=, say, stays its own.
+  Why not =:wrap=? Babel has it already, for a block's results; see [[#why-not-babel-names][Why not Babel's names?]]
 
 *** Code: =:filename=, =:copy=, =:highlight=, =:tab=
 
@@ -6072,6 +6070,43 @@ sum(range(1, 11))
   applied; =:log FILE= writes it to =FILE= instead. Moreover, =C-c C-c= within a =:log=
   block shows its rendering at once, along each of ~org-demo-backends~, sans exporting
   the document; save within a src block, whose =C-c C-c= stays Babel's.
+
+*** Why not Babel's names?: =:var=, =:wrap=, =:results=
+  :PROPERTIES:
+  :CUSTOM_ID: why-not-babel-names
+  :END:
+
+  Our switches apply to every block, src blocks included, and are axed from its header before
+  Babel runs. So a switch named as a Babel header argument would steal it from every src block:
+  #+begin_src org :tangle no
+,#+begin_src python :var x=3 :wrap example :results output
+x += 1
+print(x)
+,#+end_src
+  #+end_src
+  Here, Babel binds Python's =x=, collects what the program prints, and wraps that in an example
+  block. Had our switches taken these names, Babel would never see them: our =:var= would replace
+  the text =x= rather than bind it ---so the code would read ~3 += 1~, which Python rejects--- and
+  our =:wrap= would wrap the block's source, not its output. Leaving such a name to Babel, on src
+  blocks alone, is no better: =:wrap= would then mean one thing on a src block and another on any
+  other block. Hence, our names differ:
+
+  | Ours       | Means                                       | Babel's     | Means                                     |
+  |------------+---------------------------------------------+-------------+-------------------------------------------|
+  | =:let=     | Replace words in the text, before export    | =:var=      | Bind a variable of the program, as it runs |
+  | =:within=  | Wrap the block itself                       | =:wrap=     | Wrap the block's results                  |
+  | =:log=     | Show what the block transpiles to           | =:results=  | Collect, and insert, the program's results |
+
+  Our =:let= is closer to Org's own =#+macro:= than to =:var=, and is =let*= at heart: each value
+  may use those before it. As for the names Babel's packages declare, which no list of ours can
+  foresee, a src block's language keeps every header argument Babel declares for it ---its common
+  ones, and those of =org-babel-header-args:LANG=--- just as a block of ours keeps a keyword it
+  declares; so =ob-elvish='s own =:log=, say, stays its own.
+
+  =:let= borrows Babel's spelling nonetheless, as shorthand for its list:
+  | ~:let N=3 WHO="Jasim" SUM=(* N N)~ | ≡ ~:let (N 3 WHO "Jasim" SUM (* N N))~ |
+  Each value is Lisp, as in the list, and the pairs run up to the next =:KEY=, as Babel's do. A
+  variable has no ~=~, so an operator such as ~==~ needs the list: ~:let (== "\\equiv")~.
 
 ** Demos ---a block, then what it exports to, and a test that it still does
   :PROPERTIES:

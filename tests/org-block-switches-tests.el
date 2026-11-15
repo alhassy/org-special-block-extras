@@ -67,6 +67,37 @@ Both p ⇒ q ≡ ¬p ∨ q and p⇒q≡¬p∨q read as implications.
 </span>
 ")
 
+(deftest "a block's :let takes Babel's VAR=VALUE pairs too, up to the next :KEY; later values see earlier ones" [switches]
+  (let ((html (org-export-string "
+#+begin_box Exercise :let N=6 WHO=\"Jasim\" ANSWER=(* N 7) :folded \"Peek\"
+WHO says N × 7 is ANSWER.
+#+end_box")))
+    (should (string-match-p "Jasim says 6 × 7 is 42." html))
+    (should (string-match-p "Peek" html))))
+
+(deftest "a heading's :let takes VAR=VALUE pairs too, as its drawer's string" [switches sections]
+  (should (string-match-p "p ⇒ q, 3 times" (org-export-string "
+* Logic
+:PROPERTIES:
+:let: ->=\"⇒\" N=3
+:END:
+p -> q, N times"))))
+
+(deftest "a :let of VAR=VALUE pairs lacking a value is an error naming the switch" [switches]
+  (should-error (org--block-let-pairs "N=3 WHO=") :type 'user-error)
+  (should-error (org--block-let-pairs "N=3 stray") :type 'user-error))
+
+(deftest "a block's :let NAME reads only a table's first two columns, so a third may hold notes" [switches]
+  (should (string-match-p "p ⇒ q" (org-export-string "
+#+begin_red :let logic
+p -> q
+#+end_red
+
+#+name: logic
+| Variable | Value | Note        |
+|----------+-------+-------------|
+| ->       | ⇒     | implication |"))))
+
 (define-org-export-test "a block's :let NAME takes its variables from the table #+name: NAME, sans the header above its rule; even a :noexport: one" [switches]
   :input "
           #+begin_red :let logic

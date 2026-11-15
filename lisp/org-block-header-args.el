@@ -55,11 +55,18 @@
 (require 'org)
 (require 'org-element)
 
+(defun org--header-pairs-end (header pos)
+  "Returns where the VAR=VALUE pairs opening at POS of HEADER end, at the next :KEY, as Babel's :var a=1 b=2; else nil.
+By way of example, \"N=3 WHO=Jasim :folded t\" from 0 gives 13; a (list) or \"string\" opens no pairs."
+  (and (eq pos (string-match "[^ \t\n=(\"][^ \t\n=]*=" header pos))
+       (if (string-match "[ \t]+:[^ \t\n]" header pos) (match-beginning 0) (length header))))
+
 (defun org--read-header (header)
   "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole, or reads only by unescaping, staying a string.
   \"Title :n 2 :color #6c7086 :font Helvetica,Arial\"  ↦  (Title :n 2 :color \"#6c7086\" :font \"Helvetica,Arial\")
 So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp.
-An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][the folds]] :n 2\" ↦ (\"[[*Folds][the folds]]\" :n 2)."
+An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][the folds]] :n 2\" ↦ (\"[[*Folds][the folds]]\" :n 2).
+So too are a :KEY's VAR=VALUE pairs, up to the next :KEY; see `org--header-pairs-end'."
   (let ((header (or header "")) (pos 0) values)
     (while (string-match "[^ \t\n]+" header pos)
       (let* ((beg (match-beginning 0)) (end (match-end 0))
@@ -67,8 +74,10 @@ An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][th
              (link-end (and (eq ?\[ (aref header beg)) (< (1+ beg) (length header)) (eq ?\[ (aref header (1+ beg)))
                             (eq beg (string-match (concat "\\(?:" org-link-bracket-re "\\)[^ \t\n]*") header beg))
                             (match-end 0)))
-             (word-end (or link-end end))
-             (read (unless link-end (condition-case nil (read-from-string header beg) (error nil)))))
+             ;; After a :KEY, Babel's VAR=VALUE pairs run to the next :KEY, as one string.
+             (pairs-end (and (keywordp (car values)) (org--header-pairs-end header beg)))
+             (word-end (or link-end pairs-end end))
+             (read (unless (or link-end pairs-end) (condition-case nil (read-from-string header beg) (error nil)))))
         ;; A symbol the reader unescaped, such as `\\' read as `\', stays as written.
         (when (and read (symbolp (car read))
                    (not (equal (symbol-name (car read)) (substring header beg (cdr read)))))

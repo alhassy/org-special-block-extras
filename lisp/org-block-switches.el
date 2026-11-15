@@ -124,7 +124,8 @@ The switch fires only when VALUE is non-nil; e.g., :folded nil leaves a block be
 (defun org--header-sans-switches (header switch?)
   "(HEADER, SWITCH?) ↦ (SWITCHES . REST): the plist of HEADER's :KEY VALUE pairs whose KEY satisfies SWITCH?, and HEADER sans them.
   \"emacs-lisp :folded \\\"See it\\\" :exports code\"  ↦  ((:folded \"See it\") . \"emacs-lisp :exports code\")
-A VALUE reads as Lisp, as `org--read-header' reads it; a KEY followed by another :KEY, or by nothing, is t."
+A VALUE reads as Lisp, as `org--read-header' reads it; a KEY followed by another :KEY, or by nothing, is t.
+A VALUE of VAR=VALUE pairs, as in Babel's :var a=1 b=2, runs to the next :KEY and stays a string."
   (let ((pos 0) switches spans)
     (while (string-match "[^ \t\n]+" header pos)
       (let* ((beg (match-beginning 0)) (end (match-end 0))
@@ -134,10 +135,14 @@ A VALUE reads as Lisp, as `org--read-header' reads it; a KEY followed by another
           (let* ((vbeg (and (string-match "[^ \t\n]+" header end) (not (eq ?: (aref header (match-beginning 0))))
                             (match-beginning 0)))
                  (vend (and vbeg (match-end 0)))
-                 (read (and vbeg (condition-case nil (read-from-string header vbeg) (error nil))))
+                 (pairs-end (and vbeg (org--header-pairs-end header vbeg)))
+                 (read (and vbeg (not pairs-end) (condition-case nil (read-from-string header vbeg) (error nil))))
                  (whole? (and read (>= (cdr read) vend)))
-                 (stop (cond ((null vbeg) end) (whole? (cdr read)) (t vend))))
-            (setq switches (append switches (list key (cond ((null vbeg) t) (whole? (car read)) (t (substring header vbeg vend)))))
+                 (stop (cond ((null vbeg) end) (pairs-end) (whole? (cdr read)) (t vend))))
+            (setq switches (append switches (list key (cond ((null vbeg) t)
+                                                             (pairs-end (substring header vbeg pairs-end))
+                                                             (whole? (car read))
+                                                             (t (substring header vbeg vend)))))
                   spans (cons (cons beg stop) spans)
                   pos stop)))))
     ;; Last span first, so the earlier ones' positions stay put.
@@ -173,9 +178,10 @@ Lisp written in a document runs with your privileges; as with Babel's
   (eval form `((backend . ,backend))))
 
 (defun org--block-let-named (name)
-  "NAME ↦ the (VAR VALUE …) of the table #+name: NAME, row by row, sans any header above its rule; else NAME's value.
-  | -> | \\Rightarrow |  ↦  (-> \"\\\\Rightarrow\")
-Cells stay strings: Babel's reading of a table, `org-babel-ref-resolve', would evaluate a cell such as (f x)."
+  "Returns the (VAR VALUE …) of the table #+name: NAME, row by row, sans any header above its rule; else NAME's value.
+By way of example, the row | -> | \\Rightarrow | gives (-> \"\\\\Rightarrow\").  Only the first two columns count, so a
+third may hold notes.  Cells stay strings: Babel's reading of a table, `org-babel-ref-resolve', would evaluate a
+cell such as (f x)."
   (let ((rows (save-excursion
                 (goto-char (point-min))
                 (when (re-search-forward (format "^[ \t]*#\\+name:[ \t]*%s[ \t]*$" (regexp-quote (symbol-name name))) nil t)
@@ -186,13 +192,32 @@ Cells stay strings: Babel's reading of a table, `org-babel-ref-resolve', would e
           ((boundp name) (symbol-value name))
           (t (user-error "‘:let %s’ names neither a table, by #+name:, nor a Lisp variable" name)))))
 
+(defun org--block-let-pairs (string)
+  "Returns the (VAR VALUE …) that STRING's VAR=VALUE pairs denote, each VALUE read as Lisp, as in Babel's :var.
+By way of example, \"N=3 WHO=\\\"Jasim\\\" SUM=(* N N)\" gives (N 3 WHO \"Jasim\" SUM (* N N)).  A VAR has no =,
+so an operator such as == needs the list form, (== \"≡\")."
+  (let ((string (string-trim string)) (pos 0) pairs)
+    (while (< pos (length string))
+      (unless (eq pos (string-match "[ \t\n]*\\([^ \t\n=]+\\)=" string pos))
+        (user-error "‘:let %s’ wants VAR=VALUE pairs, or a list (VAR VALUE …)" string))
+      (pcase-let ((var (intern (match-string 1 string)))
+                  (`(,value . ,end) (condition-case nil (read-from-string string (match-end 0))
+                                      (error (user-error "‘:let %s’ gives %s no Lisp value" string (match-string 1 string))))))
+        (setq pairs (append pairs (list var value)) pos end)))
+    pairs))
+
 (defun org--block-let (bindings contents backend)
   "(BINDINGS, CONTENTS, BACKEND) ↦ CONTENTS with each whole-word VAR replaced by its value, for BINDINGS (VAR VALUE …).
   (N (+ 1 2) WHO \"Jasim\"), \"WHO scored N\"  ↦  \"Jasim scored 3\"
   (-> \"⇒\"), \"p->q\"                    ↦  \"p⇒q\"
-Each VALUE may refer to the VARs before it, as with `let*'.  BINDINGS may instead be a symbol, naming a table
-of them, or a variable holding them; see `org--block-let-named'."
-  (let* ((pairs (-partition 2 (if (symbolp bindings) (org--block-let-named bindings) bindings)))
+Each VALUE may refer to the VARs before it, as with `let*'.  BINDINGS may instead be Babel-style VAR=VALUE
+pairs, as `org--block-let-pairs' reads them; or a symbol, naming a table of them, or a variable holding them; see
+`org--block-let-named'."
+  (let* ((bindings (cond ((or (stringp bindings) (and (symbolp bindings) (string-search "=" (symbol-name bindings))))
+                          (org--block-let-pairs (format "%s" bindings)))
+                         ((symbolp bindings) (org--block-let-named bindings))
+                         (t bindings)))
+         (pairs (-partition 2 bindings))
          (values (org--block-eval `(let* ,pairs (list ,@(mapcar #'car pairs))) backend))
          ;; Case matters: a variable SUM leaves the word “sum” be.
          (case-fold-search nil))
@@ -321,8 +346,10 @@ For :permalink t, ID is the block's #+name:, else its title; see `org--permalink
   (org--box-block backend (funcall render contents) (if (eq title t) "" (format "%s" title))))
 
 (org-defswitch :let (bindings &key render contents backend)
-  "Each whole-word VAR in the contents, or operator such as ->, becomes its VALUE, for BINDINGS (VAR VALUE …).
-BINDINGS may instead name a #+name: table of them, else a variable holding them.  See `org--block-let'."
+  "Each whole-word VAR, or operator such as ->, becomes its VALUE: (VAR VALUE …), VAR=VALUE …, or a #+name: table.
+By way of example, :let (N 3 -> \"⇒\") and :let N=3 SUM=(* N N) bind Lisp values, each seeing those before it.
+:let NAME takes the first two columns of each row of the table #+name: NAME, sans any header above its rule, as
+strings; else the variable NAME's (VAR VALUE …).  See `org--block-let'."
   :depth -20
   (funcall render (org--block-let bindings contents backend)))
 
