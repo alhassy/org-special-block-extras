@@ -147,7 +147,7 @@ PORT=\"top\">3</TD><TD>2</TD><TD>1</TD></TR></TABLE>> ];
 
 ;;; Which tables are records
 
-(define-graph-test "a table is | key | value | rows only when each row is two cells keyed by an attribute or a :key; \
+(define-graph-test "a table is | key | value | rows only when each row is two cells keyed by an attribute or :edge.ATTR; \
 else a record: so a misspelt key shows, and =label= writes an attribute's name as a field"
   :input "
 + a
@@ -155,14 +155,14 @@ else a record: so a misspelt key shows, and =label= writes an attribute's name a
 + b
   | =label= | color |
 + c
-  | label | C |
-  | :id   | see |"
+  | label        | C   |
+  | :edge.colour | red |"
   :output "digraph {
   a [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\"
 CELLSPACING=\"0\"><TR><TD>colour</TD><TD>red</TD></TR></TABLE>> ];
   b [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD><FONT
 FACE=\"monospace\">label</FONT></TD><TD>color</TD></TR></TABLE>> ];
-  see [ label=C ];
+  c [ shape=plain label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\"><TR><TD>label</TD><TD>C</TD></TR><TR><TD>:edge.colour</TD><TD>red</TD></TR></TABLE>> ];
 }")
 
 (deftest "a container with a record table is an error: a box of nodes cannot also be a table"
@@ -174,12 +174,12 @@ FACE=\"monospace\">label</FONT></TD><TD>color</TD></TR></TABLE>> ];
 
 ;;; Tags on a cell style its arcs
 
-(define-graph-test "a cell's trailing tags style its arcs, as a reference's style its arc; legends see them as arc templates"
+(define-graph-test "a cell's link tags style its arc, as a reference's style its arc; legends see them as arc templates"
   :input "
 #+name: dashed
 | style | dashed |
 + struct1
-  | left | <<mid>> middle [[struct2::one][calls]] :dashed: | right |
+  | left | <<mid>> middle [[struct2::one][calls :dashed:]] | right |
 + struct2
   | <<one>> one | two |
 + Legend :container:
@@ -205,7 +205,7 @@ PORT=\"one\">one</TD><TD>two</TD></TR></TABLE>> ];
 + s
   | :edge[t].color | blue |
 
-  | <<p>> [[t]] :hot: |
+  | <<p>> [[t][:hot:]] |
 + t"
   :output "digraph {
   s:p -> t [ color=blue ];
@@ -214,12 +214,19 @@ PORT=\"p\"></TD></TR></TABLE>> ];
   t [ label=t ];
 }")
 
-(deftest "a cell with tags but no link is an error, rather than its tags silently vanishing"
+(deftest "a cell's trailing tags are an error, rather than silently vanishing: an arc's tags go in its link"
   (should-error (org--graph-raw->dot "
 #+name: x
-| a | b |
+| color | red |
 + s
   | Vim's :x: |" nil)
-                :type 'user-error))
+                :type 'user-error)
+  (should (s-contains-p "[[TARGET][:x:]]" (cadr (should-error (org--graph-raw->dot "
+#+name: x
+| color | red |
++ s
+  | <<p>> [[t]] :x: |
++ t" nil)
+                                                               :type 'user-error)))))
 
 (provide 'org-graph-record-nodes-tests)

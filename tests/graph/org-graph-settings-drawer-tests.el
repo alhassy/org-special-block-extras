@@ -20,18 +20,18 @@
   A [ label=A ];
 }")
 
-(define-graph-test ":SETTINGS: drawer with #+rank: and #+edge:"
+(define-graph-test ":SETTINGS: drawer with #+node: and #+edge:"
   :input "
 :SETTINGS:
 #+edge:
 | color | red |
-#+rank: A B
+#+node: shape=box
 :END:
 + A
 + B"
   :output "digraph {
+  node [ shape=box ]
   edge [ color=red ]
-  { rank=same; A; B }
   A [ label=A ];
   B [ label=B ];
 }")

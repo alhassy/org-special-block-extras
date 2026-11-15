@@ -7,8 +7,7 @@
 
 (define-graph-test "shape=cluster emits inline cluster block with attrs"
   :input "
-+ G
-  | :id   | grp     |
++ <<grp>> G
   | shape | cluster |
   | color | red     |
   + A
@@ -49,16 +48,13 @@
 
 (define-graph-test "shape=cluster: children carry their own attrs"
   :input "
-+ Legend
-  | :id   | legend  |
++ <<legend>> Legend
   | shape | cluster |
   | style | filled  |
   + leg_solid
-    | :id   | leg_solid                  |
     | label | \"solid = direct lineage\" |
     | shape | plaintext                  |
   + leg_dashed
-    | :id   | leg_dashed               |
     | label | \"dashed = inspiration\" |
     | shape | plaintext                |"
   :output "digraph {

@@ -66,20 +66,11 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
             (org--graph-attrs->dot (append attrs clips)))))
 
 (defun org--graph-scope->dot (scope)
-  "SCOPE's :graph-rows, :node-rows, :edge-rows, and :ranks ↦ the dot directives for its scope."
-  (append
-   (-keep (-lambda ((kind . key))
-            (-when-let (rows (plist-get scope key))
-              (concat kind (org--graph-attrs->dot (if (equal kind "edge") rows (org--graph-filled rows))))))
-          '(("graph" . :graph-rows) ("node" . :node-rows) ("edge" . :edge-rows)))
-   (--map (format "{ rank=same; %s }" (s-join "; " (-map #'org--graph-dot-id (org--graph-rank-ids it))))
-          (plist-get scope :ranks))))
-
-(defun org--graph-rank-ids (ranks)
-  "A #+rank: line's RANKS ↦ its ids, each a bare word or a link, e.g. \"a [[Org mode]] b\" ↦ (\"Org mode\" \"a\" \"b\")."
-  (let ((link-re "\\[\\[\\([^]]+\\)\\]\\(?:\\[[^]]*\\]\\)?\\]"))
-    (append (-map #'cadr (s-match-strings-all link-re ranks))
-            (s-split "[ \t]+" (s-trim (replace-regexp-in-string link-re " " ranks)) t))))
+  "SCOPE's :graph-rows, :node-rows, and :edge-rows ↦ the dot directives for its scope."
+  (-keep (-lambda ((kind . key))
+           (-when-let (rows (plist-get scope key))
+             (concat kind (org--graph-attrs->dot (if (equal kind "edge") rows (org--graph-filled rows))))))
+         '(("graph" . :graph-rows) ("node" . :node-rows) ("edge" . :edge-rows))))
 
 (defun org--graph-stmt->dot (stmt op ctx)
   "STMT, a parsed graph statement, ↦ its dot lines; OP is the edge operator, \"->\" or \"--\"."
@@ -128,16 +119,10 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
                                      (org--graph-scope->dot (plist-get props :scope))
                                      (--mapcat (org--graph-stmt->dot it op ctx) (plist-get props :stmts))))))))))
 
-(defun org--graph-note-ranks (ctx preamble stmts)
-  "Record in CTX each node's rank group, from PREAMBLE's #+rank: lines and STMTS' ranks, clusters' included.
-  #+rank: church turing  ↦  church ↦ 0, turing ↦ 0"
-  (let ((groups (append (-map #'org--graph-rank-ids (plist-get preamble :ranks))
-                        (--mapcat (pcase it
-                                    (`(:rank ,_ ,ids) (list ids))
-                                    (`(:cluster ,_ . ,props)
-                                     (-map #'org--graph-rank-ids (plist-get (plist-get props :scope) :ranks)))
-                                    (`(:scope ,scope ,_) (-map #'org--graph-rank-ids (plist-get scope :ranks))))
-                                  (org--graph-all-stmts stmts)))))
+(defun org--graph-note-ranks (ctx stmts)
+  "Record in CTX each node's rank group, from STMTS' ranks, clusters' included.
+  + church :@pioneers:  + turing :@pioneers:  ↦  church ↦ 0, turing ↦ 0"
+  (let ((groups (--keep (pcase it (`(:rank ,_ ,ids) ids)) (org--graph-all-stmts stmts))))
     (--each-indexed groups (dolist (id it) (puthash id it-index (org--graph-ctx-ranks ctx))))))
 
 (defcustom org-graph-mindmap-palette '("#c9a7f5" "#f78fc4" "#8be9fd" "#69f07a" "#ffb86c" "#ff7b7b" "#a8e6a3")
@@ -194,6 +179,18 @@ that a `+ TITLE :container:' item declares is the same subgraph, which Graphviz 
                      subgraphs))
              (org--graph-ctx-tag-clusters ctx))
     (nreverse subgraphs)))
+
+(defun org--graph-boxed-ranks-p (ctx stmts)
+  "Returns whether a top-level rank statement of STMTS, from `:@X:' tags, names a node inside a box, whether a
+container's item or a :container_TITLE: tag puts it there; Graphviz would otherwise pull the node out of its box.
+  + Box :container:  + a :@pals:  …  + b :@pals:  ⇒  t"
+  (let ((boxed (-uniq (append (--mapcat (pcase it
+                                          (`(:cluster ,_ . ,props)
+                                           (--keep (pcase it (`(:node ,id) id))
+                                                   (org--graph-all-stmts (plist-get props :stmts)))))
+                                        (org--graph-all-stmts stmts))
+                              (-flatten (hash-table-values (org--graph-ctx-tag-clusters ctx)))))))
+    (--some (pcase it (`(:rank ,_ ,ids) (-intersection ids boxed))) stmts)))
 
 (defvar org--graph-node-defaults nil
   "While a graph prints, its graph-wide node defaults: the rows of its node [ … ] line, a theme's included.")
@@ -307,7 +304,7 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
     (dolist (key '(:graph-rows :node-rows :edge-rows))
       (setq preamble (plist-put preamble key (org--graph-override (plist-get header key) (plist-get preamble key)))))
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))
-      (org--graph-note-ranks ctx preamble stmts))
+      (org--graph-note-ranks ctx stmts))
     (let* ((org--graph-container-fills fills)
            (org--graph-filled-by-default (org--graph-filling-kinds preamble))
            (org--graph-node-defaults (plist-get preamble :node-rows))
@@ -318,6 +315,9 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
                           (org--graph-legend-chain stmts (if directed "->" "--") ctx)))))
       (when (org--graph-ctx-compound ctx)
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("compound" "true"))))))
+      ;; One global ranking, so an `:@X:' group may align nodes in boxes, and leave them there.
+      (when (and (org--graph-boxed-ranks-p ctx stmts) (not (assoc "newrank" (plist-get preamble :graph-rows))))
+        (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("newrank" "true"))))))
       (org-graph--unflatten (format "%s {\n  %s\n}" (if directed "digraph" "graph")
                                     (s-join "\n  " (append (org--graph-scope->dot preamble) body)))
                             (plist-get kwdargs :unflatten)))))

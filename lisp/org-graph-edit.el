@@ -175,11 +175,8 @@ table, or on a #+graph:, #+node:, #+edge:, or #+name: line, as `org-graph--direc
 ;;; Completion and eldoc for table keys, and the #+begin_graph line
 
 (defconst org-graph--reserved-key-docs
-  '((":id"            . "This node's dot id, so other items can refer to it; also spelled <<ID>> in the item's text.")
-    (":edge."         . "An attribute of the arc from the parent; e.g., | :edge.label | calls |, also spelled + calls :: CHILD.")
-    (":edge[TARGET]." . "An attribute of this node's arc to TARGET, from a [[TARGET]] link; e.g., | :edge[church].style | dotted |.")
-    (":inherit"       . "Inherit the rows of #+name: templates N₁ … Nₖ; this item's own rows win.  Also spelled :N₁:…:Nₖ: after the item.")
-    (":children-rank" . "Put this item's immediate children on one rank: same, min, max, source, or sink."))
+  '((":edge."         . "An attribute of the arc from the parent; e.g., | :edge.label | calls |, also spelled + calls :: CHILD.")
+    (":edge[TARGET]." . "An attribute of this node's arc to TARGET, from a [[TARGET]] link; e.g., | :edge[church].style | dotted |."))
   "The table keys meaningful to the `graph' block itself ↦ what they do; shown by completion and eldoc.")
 
 (defconst org-graph--header-key-docs

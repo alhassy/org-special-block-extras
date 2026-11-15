@@ -1,9 +1,9 @@
-;;; org-graph-cluster-directives-tests.el --- Cluster-scoped directives (#+node: / #+edge: / #+graph: / #+rank: inside cluster item)  -*- lexical-binding: t; -*-
+;;; org-graph-cluster-directives-tests.el --- Cluster-scoped directives (#+node: / #+edge: / #+graph: inside cluster item)  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-graph-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/graph/org-graph-test-utils.el")))
 
-;;; Cluster-scoped directives (#+node: / #+edge: / #+graph: / #+rank: inside cluster item)
+;;; Cluster-scoped directives (#+node: / #+edge: / #+graph: inside cluster item)
 
 (define-graph-test "cluster: #+node: inside item sets default node attrs for children"
   :input "
@@ -55,20 +55,20 @@
   }
 }")
 
-(define-graph-test "cluster: #+rank: inside item emits rank constraint within subgraph"
+(define-graph-test "cluster: its members' :@X: tags align them, under newrank=true, lest Graphviz pull them out of the box"
   :input "
 + G
   | shape | cluster |
-  #+rank: A B
-  + A
-  + B"
+  + A :@pair:
+  + B :@pair:"
   :output "digraph {
+  graph [ newrank=true ]
   subgraph cluster_G {
     label=G
-    { rank=same; A; B }
     A [ label=A ];
     B [ label=B ];
   }
+  { rank=same; A; B }
 }")
 
 (define-graph-test "cluster: #+node: and #+edge: together inside item"
@@ -111,3 +111,12 @@
     Y [ label=Y ];
   }
 }")
+
+(deftest "a :container_TITLE: tag's member, aligned with a node outside its box, sets newrank=true too; the graph's own wins"
+  (should (s-contains-p "graph [ newrank=true ]" (org--graph-raw->dot "
++ a :container_Box:@pals:
++ b :@pals:" nil)))
+  (should (s-contains-p "graph [ newrank=false ]" (org--graph-raw->dot "
+#+graph: newrank=false
++ a :container_Box:@pals:
++ b :@pals:" nil))))

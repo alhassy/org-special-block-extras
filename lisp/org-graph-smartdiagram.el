@@ -120,9 +120,8 @@ own sources.  Each is a plist: its :name, :description, :default when it has one
 (defconst org-graph-smartdiagram-item-keys
   '(("color"     . "This item's colour; for the planet or middle bubble, that of the planet or bubble.")
     ("fontcolor" . "The colour of this item's text; e.g., white, on a dark planet.")
-    ("fontsize"  . "The size of this item's text, in points; e.g., 17.")
-    (":inherit"  . "Inherit the rows of #+name: templates N₁ … Nₖ; this item's own rows win.  Also spelled :N₁:…:Nₖ: after the item."))
-  "The keys of a smartdiagram item's table ↦ what they do; the first three are Graphviz's names for the same things.")
+    ("fontsize"  . "The size of this item's text, in points; e.g., 17."))
+  "The keys of a smartdiagram item's table ↦ what they do; Graphviz's names for the same things.")
 
 (defconst org-graph-smartdiagram-latex-head '("smartdiagram" "varwidth")
   "What a LaTeX document needs, to typeset a smartdiagram graph: smartdiagram, and varwidth, which centres src blocks.")
@@ -229,7 +228,7 @@ beneath.  The #+graph: rows are \\smartdiagramset's; the items are the diagram's
   constellation, connected-constellation, bubble  ↦  one item, the planet; its children, the satellites
   descriptive                                     ↦  `+ TERM :: DESCRIPTION' items
   otherwise                                       ↦  the items, in order
-#+node:, #+edge:, and #+rank: are Graphviz's, so they are errors here; as is any nesting TYPE does not read."
+#+node: and #+edge: are Graphviz's, so they are errors here; as is any nesting TYPE does not read."
   (let* ((type   (org--smartdiagram-type (plist-get kwdargs :smartdiagram)))
          (raw    (org--graph-read raw-contents))
          (tables (plist-get raw :name-tables))
@@ -245,8 +244,8 @@ beneath.  The #+graph: rows are \\smartdiagramset's; the items are the diagram's
          (set    (--map (list (car it) (cadr it)) (org--graph-expand-inherit (plist-get raw :graph-rows) tables)))
          (colors (if hub (cdr cells) cells))
          (prose  (org--smartdiagram-prose raw-contents)))
-    (when (or (plist-get raw :node-rows) (plist-get raw :edge-rows) (plist-get raw :ranks))
-      (user-error "graph: #+node:, #+edge:, and #+rank: are Graphviz's; a smartdiagram's settings are its #+graph: rows"))
+    (when (or (plist-get raw :node-rows) (plist-get raw :edge-rows))
+      (user-error "graph: #+node: and #+edge: are Graphviz's; a smartdiagram's settings are its #+graph: rows"))
     (-each (if hub (cdr members) members)
       (lambda (it) (when (plist-get it :children)
                      (user-error "graph: a %s nests no deeper than %s; `%s' has children" type

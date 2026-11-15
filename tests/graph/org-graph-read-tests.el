@@ -30,12 +30,11 @@
     (should (equal '(("shape" "box")) (plist-get p :node-rows)))
     (should (equal '(("color" "red")) (plist-get p :edge-rows)))))
 
-(deftest "`org--graph-read' collects #+rank: lines"
-  (let* ((p (org--graph-read "
+(deftest "a #+rank: line is no graph syntax: an item's `:@X:' tag aligns it"
+  (should-error (org--graph-raw->dot "
 #+rank: A B
-#+rank: C D
-+ A")))
-    (should (equal '("A B" "C D") (plist-get p :ranks)))))
++ A
++ B" nil) :type 'user-error))
 
 (deftest "`org--graph-read' parses #+name: tables into name-tables, a #+caption: by the #+name: notwithstanding"
   (let* ((p (org--graph-read
@@ -73,8 +72,8 @@
 (deftest "`org--graph-expand-inherit' splices template rows, explicit rows win"
   (let* ((nt (make-hash-table :test #'equal)))
     (puthash "wife" '(("fillcolor" "\"#f8d7e8\"") ("color" "\"#aa3366\"")) nt)
-    (should (equal '(("fillcolor" "\"#f8d7e8\"") (":id" "x") ("color" "\"#ff0000\""))
-                   (org--graph-expand-inherit '((":id" "x") (":inherit" "wife") ("color" "\"#ff0000\"")) nt)))))
+    (should (equal '(("fillcolor" "\"#f8d7e8\"") ("shape" "box") ("color" "\"#ff0000\""))
+                   (org--graph-expand-inherit '(("shape" "box") (":inherit" "wife") ("color" "\"#ff0000\"")) nt)))))
 
 (deftest "`org--graph-expand-inherit' expands templates within templates, but a template including itself adds nothing"
   (let* ((nt (make-hash-table :test #'equal)))
@@ -84,38 +83,59 @@
     (should (equal '(("shape" "box") ("color" "pink")) (org--graph-expand-inherit '((":inherit" "wife")) nt)))
     (should (equal '(("color" "red")) (org--graph-expand-inherit '((":inherit" "loop")) nt)))))
 
-(deftest "#+name: template expands inside #+node: tables too"
+(deftest "#+name: template expands inside #+node: lines too, by a :T: tag"
   (should (s-contains-p "node [ shape=box ]"
                         (org--graph-raw->dot "
 #+name: t
 | shape | box |
 
-#+node:
-| :inherit | t |
+#+node: :t:
 + A" nil))))
 
-(deftest "#+name: template expands into node attrs via | :inherit |"
+(deftest "an :inherit row is no Graphviz attribute: under #+node: an error, in an item's table a record field"
+  (should-error (org--graph-raw->dot "
+#+name: t
+| shape | box |
+
+#+node:
+| :inherit | t |
++ A" nil) :type 'user-error)
+  (should (s-contains-p "<TD>:inherit</TD>" (org--graph-raw->dot "
+#+name: t
+| shape | box |
+
++ A
+  | :inherit | t |" nil))))
+
+(deftest "a graph's template sets only Graphviz attributes, and is never named @X, which aligns nodes"
+  (should-error (org--graph-raw->dot "
+#+name: wife
+| :inherit | base |
++ A :wife:" nil) :type 'user-error)
+  (should-error (org--graph-raw->dot "
+#+name: @pals color=red
++ A" nil) :type 'user-error))
+
+(deftest "#+name: template expands into node attrs via a :T: tag"
   (let* ((dot (org--graph-raw->dot
                "
 #+name: wife
 | fillcolor | \"#f8d7e8\" |
 | color | \"#aa3366\" |
 
-+ Khadija
-  | :inherit | wife |"
++ Khadija :wife:"
                nil)))
     (should (s-contains-p "fillcolor=\"#f8d7e8\"" dot))
     (should (s-contains-p "color=\"#aa3366\"" dot))))
 
-(define-graph-test "#+name: template expands into a lone-link child's arc via | :edge.:inherit |, and explicit :edge. rows win"
+(define-graph-test "#+name: template expands into a lone-link child's arc via [[B][:married:]], and explicit :edge. rows win"
   :input "
 #+name: married
 | color | \"#cc3399\" |
 | dir   | both        |
 
 + A
-  + [[B]]
-    | :edge.:inherit | married |
+  + [[B][:married:]]
     | :edge.dir   | back    |
 + B"
   :output "digraph {
@@ -124,15 +144,14 @@
   B [ label=B ];
 }")
 
-(deftest "#+name: explicit node attr overrides template via | :inherit |"
+(deftest "#+name: explicit node attr overrides template via a :T: tag"
   (let* ((dot (org--graph-raw->dot
                "
 #+name: base
 | color | blue |
 | shape | box |
 
-+ A
-  | :inherit  | base  |
++ A :base:
   | color | red   |"
                nil)))
     ;; explicit color=red wins over template color=blue
@@ -141,13 +160,12 @@
     ;; template shape=box is preserved
     (should (s-contains-p "shape=box" dot))))
 
-(deftest "under `:unknown-tags error', an `:inherit' row naming no #+name: template is a user error, rather than silently contributing nothing"
+(deftest "under `:unknown-tags error', a tag naming no #+name: template is a user error, rather than silently contributing nothing"
   (should-error (org--graph-raw->dot "
 #+name: real
 | color | blue |
 
-+ A
-  | :inherit | typo |" nil '(:unknown-tags error)) :type 'user-error))
++ A :typo:" nil '(:unknown-tags error)) :type 'user-error))
 
 (deftest "a #+graph:, #+node:, or #+edge: line may hold KEY=VALUE pairs, as Graphviz's own edge [ … ] does, beside tags" [graph]
   (should (equal (org--graph-keyword-rows 'edge "fontsize=10 color=gray") '(("fontsize" "10") ("color" "gray"))))

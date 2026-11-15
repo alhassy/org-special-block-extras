@@ -16,21 +16,21 @@
     | :edge.label    | calls  |
     | :edge[A].style | dotted |")))))
 
-(deftest "`org--graph-item-rows' routes reserved keys away from node attributes"
-  (should (equal '(:id "x" :attrs (("shape" "box")) :children-rank "same"
+(deftest "`org--graph-item-rows' routes :edge. keys away from node attributes"
+  (should (equal '(:attrs (("shape" "box"))
                    :edge (("label" "a") ("color" "red"))
                    :targeted (("z" ("color" "red") ("label" "zed"))))
-                 (org--graph-item-rows '((":id" "x") ("shape" "box") (":children-rank" "same")
+                 (org--graph-item-rows '(("shape" "box")
                                          (":edge.label" "a") (":edge.color" "red")
                                          (":edge[z].color" "red") (":edge[z].label" "zed"))
                                        (make-hash-table :test #'equal)))))
 
-;;; Reserved keys
+;;; Unknown keys
 
-(deftest "an unknown reserved key is a user error rather than a silent attribute"
-  (should-error (org--graph-raw->dot "
+(deftest "an unknown :key is no attribute, so its table is a record, and the typo shows rather than vanishing"
+  (should (s-contains-p "<TD>:colour</TD><TD>red</TD>" (org--graph-raw->dot "
 + A
-  | :colour | red |" nil) :type 'user-error))
+  | :colour | red |" nil))))
 
 (deftest "a lone-link item is a reference: node attributes on it are a user error"
   (should-error (org--graph-raw->dot "
@@ -42,8 +42,7 @@
 (define-graph-test "a lone-link child may refer forward; the target's own item still names and labels it"
   :input "
 + Lisp
-  + inspired by :: [[lam]]
-    | :edge.:inherit | faint |
+  + inspired by :: [[lam][:faint:]]
 + <<lam>> λ-calculus
 #+name: faint
 | style | dotted |"
@@ -88,14 +87,13 @@
 
 ;;; Ids and labels
 
-(define-graph-test "`+ L', `+ <<L>> L', and `+ L' with `:id L' and `label L' rows all declare one and the same node"
+(define-graph-test "`+ L', `+ <<L>> L', and `+ L' with a `label L' row all declare one and the same node"
   :input "
 + Lisp
 
 + <<Lisp>> Lisp
 
 + Lisp
-  | :id   | Lisp |
   | label | Lisp |"
   :output "digraph {
   Lisp [ label=Lisp ];

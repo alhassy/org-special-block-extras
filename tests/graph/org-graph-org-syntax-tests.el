@@ -250,21 +250,11 @@ x
   { rank=same; a; b; box }
 }")
 
-(define-graph-test "an explicit `:children-rank' beats an ordered list's rank=same, and a lone ordered child is left alone"
+(define-graph-test "a lone ordered child is left alone"
   :input "
-+ p
-  | :children-rank | min |
-  1. a
-  2. b
 + q
   1. only"
   :output "digraph {
-  p [ ordering=out label=p ];
-  p -> a;
-  a [ label=a ];
-  p -> b;
-  b [ label=b ];
-  { rank=min; a; b }
   q [ label=q ];
   q -> only;
   only [ label=only ];
@@ -412,7 +402,7 @@ x
   (search-forward "Org :")
   (should (memq 'org-tag (ensure-list (get-text-property (point) 'face)))))
 
-(define-graph-test "a reference's tags style its arc, as one arc rather than parallel ones; explicit `:edge.KEY' rows win"
+(define-graph-test "a reference's link tags style its arc, as one arc rather than parallel ones; explicit `:edge.KEY' rows win"
   :input "
 #+name: married
 | color | \"#cc3399\" |
@@ -422,7 +412,7 @@ x
 
 + Muhammad
 + Khadija
-  + [[Muhammad]] :married:faint:
+  + [[Muhammad][:married:faint:]]
     | :edge.color | red |"
   :output "digraph {
   Muhammad [ label=Muhammad ];
@@ -467,18 +457,16 @@ x
   Khadija [ label=Khadija ];
 }")
 
-(org-deftest "tags in a description term, on keyword lines, and after a record cell's link get the `org-tag' face too"
+(org-deftest "tags in a description term, and on keyword lines, get the `org-tag' face too"
   :text "
 #+begin_graph
 #+name: wife :base:
 #+node: :wife:
 + Muhammad
   + wed :married: :: Khadija :wife:
-+ s
-  | <<p>> [[Muhammad]] :faint: |
 #+end_graph"
   (font-lock-ensure)
-  (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :" "[[Muhammad]] :"))
+  (dolist (at '("wife :" "#+node: :" "wed :" "Khadija :"))
     (goto-char (point-min))
     (search-forward at)
     (should (memq 'org-tag (ensure-list (get-text-property (point) 'face))))))
@@ -829,16 +817,15 @@ Languages, by influence.
   (should-error (org--graph-raw->dot "
 + a" nil '(:notes hover)) :type 'user-error))
 
-;;; #+node:, #+edge:, and #+rank: under an item reach its whole subtree
+;;; #+node: and #+edge: under an item reach its whole subtree
 
-(define-graph-test "an item's #+node:, #+edge:, and #+rank: lines style its descendants, inherited as Org's properties are"
+(define-graph-test "an item's #+node: and #+edge: lines style its descendants, inherited as Org's properties are"
   :input "
 + Weather
   #+node:
   | shape | box |
   #+edge:
   | style | dotted |
-  #+rank: Rain Sun
   + Rain
     + Umbrella
   + Sun
@@ -848,7 +835,6 @@ Languages, by influence.
   subgraph {
     node [ shape=box ]
     edge [ style=dotted ]
-    { rank=same; Rain; Sun }
     Weather -> Rain;
     Rain [ label=Rain ];
     Rain -> Umbrella;
@@ -915,19 +901,44 @@ Languages, by influence.
   Lisp -> Closure [ label=captures ];
 }")
 
-;;; #+rank: takes links
+;;; :@X: tags align multi-word ids too
 
-(define-graph-test "`#+rank:' takes [[links]] as well as bare ids, so multi-word ids need no quotes"
+(define-graph-test "an :@X: tag aligns a multi-word id, quoted as dot needs; :@X: tags join several groups"
   :input "
-#+rank: a [[Org mode]] [[b][the b]]
-+ a
-+ Org mode
-+ b"
++ a :@row:
++ Org mode :@row:@col:
++ b :@col:"
   :output "digraph {
-  { rank=same; \"Org mode\"; b; a }
   a [ label=a ];
   \"Org mode\" [ label=\"Org mode\" ];
   b [ label=b ];
+  { rank=same; a; \"Org mode\" }
+  { rank=same; \"Org mode\"; b }
+}")
+
+(deftest "an :@X: tag aligns nodes only: on an arc, a container, or a template, it is an error"
+  (should-error (org--graph-raw->dot "+ a\n  + calls :@row: :: b" nil) :type 'user-error)
+  (should-error (org--graph-raw->dot "+ a\n  + [[b][:@row:]]\n+ b" nil) :type 'user-error)
+  (should-error (org--graph-raw->dot "+ Box :container: :@row:\n  + a" nil) :type 'user-error)
+  (should-error (org--graph-raw->dot "#+node: :@row:\n+ a" nil) :type 'user-error))
+
+(deftest "tags after a reference style nothing, so they are an error naming the link spelling"
+  (should (s-contains-p "[[b][:faint:]]"
+                        (cadr (should-error (org--graph-raw->dot "+ a\n  + [[b]] :faint:\n+ b" nil) :type 'user-error)))))
+
+(define-graph-test "a link's description labels and styles its arc, mid-text too; its tags alone leave the arc unlabelled"
+  :input "
+#+name: faint
+| style | dashed |
++ <<church>> Church
++ Lisp, after [[church][encodes :faint:]]
++ Scheme, after [[church][:faint:]]"
+  :output "digraph {
+  church [ label=Church ];
+  \"Lisp, after\" -> church [ label=encodes style=dashed ];
+  \"Lisp, after\" [ label=\"Lisp, after\" ];
+  \"Scheme, after\" -> church [ style=dashed ];
+  \"Scheme, after\" [ label=\"Scheme, after\" ];
 }")
 
 ;;; Containers, styled and nested
@@ -990,13 +1001,13 @@ Languages, by influence.
   + Hud
   + Salih
   # Both were sent to Arabian tribes.
-  #+rank: Hud Salih
-  | style | dashed |"
+  | style | dashed |
+  #+node: shape=box"
   :output "digraph {
   subgraph cluster_Prophets {
     label=Prophets
     style=dashed
-    { rank=same; Hud; Salih }
+    node [ shape=box ]
     Hud [ label=Hud ];
     Salih [ label=Salih ];
   }
@@ -1090,7 +1101,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 | shape | box |
 + Muhammad
 + Khadija :wife:
-  + [[Muhammad]] :married:
+  + [[Muhammad][:married:]]
 + Legend :container:
   - :married: :: marriage
   - :wife: :: /wife/"
@@ -1137,15 +1148,13 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
   :input "
 #+graph:
 | splines | curved |
-#+rank: church turing
 + λ
-  + church
-  + turing
+  + church :@pals:
+  + turing :@pals:
     + Church \\\\ Turing thesis :: [[church]]
   + plain :: other"
   :output "digraph {
   graph [ splines=curved ]
-  { rank=same; church; turing }
   \"λ\" [ label=\"λ\" ];
   \"λ\" -> church;
   church [ label=church ];
@@ -1154,19 +1163,19 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
   turing -> church [ xlabel=<Church<BR/>Turing thesis> ];
   \"λ\" -> other [ label=plain ];
   other [ label=other ];
+  { rank=same; church; turing }
 }")
 
 (define-graph-test "without splines=curved, a same-rank arc keeps its label"
   :input "
-#+rank: church turing
-+ church
-+ turing
++ church :@pals:
++ turing :@pals:
   + thesis :: [[church]]"
   :output "digraph {
-  { rank=same; church; turing }
   church [ label=church ];
   turing [ label=turing ];
   turing -> church [ label=thesis ];
+  { rank=same; church; turing }
 }")
 
 (provide 'org-graph-org-syntax-tests)
@@ -1222,7 +1231,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 | shape | box |
 + Muhammad
 + Khadija :wife:
-  + [[Muhammad]] :married:
+  + [[Muhammad][:married:]]
 + Legend :container:
   - marriage :married:
   - /wife/ :wife:"

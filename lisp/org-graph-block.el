@@ -38,28 +38,26 @@
 ;;
 ;;   #+edge: color=#6c7086 penwidth=2   ; the same, tersely, as KEY=VALUE pairs; likewise #+graph:, #+node:
 ;;
-;;   #+rank: lam [[combinatory]]   ; { rank=same; lam; combinatory }
-;;
-;;   #+name: faint                 ; a style template, for :faint: tags and :inherit rows; also outside graphs
+;;   #+name: faint                 ; a style template, for :faint: tags; also outside graphs
 ;;   | style | dotted |
 ;;
 ;;   - :faint: :: inferred         ; a legend entry: a sample of template faint, captioned inferred
 ;;
-;;   + <<lam>> *lambda*             ; <<id>>; *bold* /italic/ _u_ +s+ =code= ~pre~ ⇒ HTML label
-;;     | shape          | ellipse |  ; node attrs; values are quoted for you; | :id | lam | ≡ <<lam>>
-;;     | :children-rank | same    |  ; { rank=same; <immediate children> }
+;;   + <<lam>> *lambda* :@start:    ; <<id>>; *bold* /italic/ _u_ +s+ =code= ~pre~ ⇒ HTML label; :@start: ⇒ rank=min
+;;     | shape | ellipse |          ; node attrs; values are quoted for you
 ;;     + church \\ ℕ, Bool, Pairs    ; nesting = edge lambda→church; \\ breaks the label's line
 ;;       | :edge.style | dotted |    ; arc attrs; a parallel arc is a second child item
-;;     + lisp [[church][cross]]     ; [[TARGET]] or [[TARGET][LABEL]]: an extra arc
+;;     + lisp [[church][cross :faint:]] :@pals:  ; [[TARGET]] or [[TARGET][LABEL :T:]]: an extra arc, styled by T;
+;;                                              ; :@pals: ⇒ rank=same with every other :@pals: node; :@end: ⇒ rank=max
 ;;     + calls :: eval :faint:      ; arc lambda→eval labelled calls; :faint: splices that template
 ;;     + apply [fn::of a closure]   ; an inline footnote is the node's tooltip
 ;;
 ;;       Applies a /closure/.       ; so is a note: a later paragraph; `#+begin_note :edge' … #+end_note, the arc's
-;;       #+node:                    ; an item's #+node:, #+edge:, and #+rank: reach its whole subtree
+;;       #+node:                    ; an item's #+graph:, #+node:, and #+edge: reach its whole subtree
 ;;       | shape | box |
 ;;       | :edge[church].style | dotted |  ; attrs of this item's arc to church
 ;;       + [[combinatory]]          ; a lone link is a reference: an arc to a node declared elsewhere
-;;       + [[combinatory]] :faint:  ; a reference's tags style its arc; "rec::port" reaches a record's port
+;;       + [[combinatory][:faint:]] ; a reference's link tags style its arc; "rec::port" reaches a record's port
 ;;     + [X] Org [[https://orgmode.org]]  ; a web or [[*Section]] link is the node's URL; [[file:x.png]] its image;
 ;;                                        ; [X] applies :checked:
 ;;   + combinatory
@@ -453,8 +451,7 @@ Within the block body:
   #+graph: table  ↦ global graph[ ] attributes
   #+node:  table  ↦ default node[ ] attributes
   #+edge:  table  ↦ default edge[ ] attributes
-  #+rank:  n1 n2  ↦ { rank=same; n1; n2 } for nodes without a common parent; ids may be [[links]]
-  Under an item, #+graph:, #+node:, #+edge:, and #+rank: reach its whole subtree, as Org's inherited properties do.
+  Under an item, #+graph:, #+node:, and #+edge: reach its whole subtree, as Org's inherited properties do.
   :NAME: … :END:  ↦ a drawer of any name, folding such directives away
   - :T: :: MEANING  ↦ at the top, a legend entry: a sample of template T, captioned MEANING
 
@@ -466,7 +463,9 @@ in the order written.  An item's text may hold a <<target>>, its id; [[TARGET]] 
 and *bold*, /italic/, _underline_, +strike+, =code=, or ~pre~, a braced x^{2} or H_{2}O, or a @@dot:…@@ snippet,
 which make its label an HTML-like one; an entity, \\alpha, is its character.  A <<<radio target>>> is a node, every
 item mentioning it having an arc to it.  Other Org syntax in a block, such as a headline or #+begin_quote, is an error.
-A description tag, `+ L :: CHILD', labels the arc into CHILD; trailing `:T:' tags splice #+name: templates;
+A description tag, `+ L :T: :: CHILD', labels the arc into CHILD, its tags styling it; so does a link's description,
+[[TARGET][L :T:]]; trailing `:T:' tags splice #+name: templates; trailing `:@X:' tags align: `:@start:' sets the node
+on the first rank, rank=min; `:@end:', on the last, rank=max; any other, on one rank with every node sharing it;
 an inline footnote, [fn::NOTE], is the node's tooltip, as is a note: a paragraph past the item's first, or a
 #+begin_note block ---with `#+begin_note :edge', the arc's---, shown beneath the label instead under :notes inline;
 a web, file, or [[*Section]] link, its URL; an [[file:IMAGE.png]], its image;
@@ -476,19 +475,14 @@ Org's {{{macros}}} expand, by the buffer's #+macro: lines.
 A two-column inline table on a list item supplies node attributes.
 
   | key        | val    |  ↦ a Graphviz attribute of the node; values are quoted for you.
-  | :id        | alias  |  ↦ cross-reference name for this node.
   | :edge.KEY  | val    |  ↦ attribute of the arc from the parent; a parallel arc is a second child item.
   | :edge[T].KEY | val  |  ↦ attribute of this item's arc to T, from a [[T]] link; \"rec::port\" reaches a record's port.
-  | :inherit   | T₁ T₂  |  ↦ inherit the #+name: templates' rows; explicit rows win.  Also :edge.:inherit, and :T₁:T₂: tags:
-                            after an item, its node's; after a reference, or a description term, its arc's.
   A child item that is a lone [[T]] link is a reference to T: an arc to it, styled by the child's :edge.KEY rows.
-  | :children-rank | same | ↦ constrain immediate children to the same rank;
-                            also accepts min, max, source, sink.
   | shape | cluster |      ↦ make this node an inline subgraph cluster_ID { … }, its children its members; as does the
                             :container: tag; a :container_TITLE: tag puts a node in the box TITLE.
   | any | other | table | ↦ a record: the node's <TABLE> label, as laid out; a cell's <<p>> is port p, its [[T]] an
                             arc from there; ^ or an empty cell spans, a <l>/<c>/<r> row aligns, and hlines rule.  A
-                            table is a record unless each row is two cells, its key an attribute or a :key.
+                            table is a record unless each row is two cells, its key an attribute or :edge.ATTR.
 
 Example:
 

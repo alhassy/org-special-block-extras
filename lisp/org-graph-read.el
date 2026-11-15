@@ -93,7 +93,7 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
 ;;; Reading: a graph's body ⟶ plain data, via `org-element'
 ;;
 ;; Org parses the body once; we read its elements into plain data, so nothing after this section needs a buffer:
-;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :ranks :attr-rows :table :notes :items :kind)
+;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :attr-rows :table :notes :items :kind)
 ;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND :line LINE)
 ;; An item's TEXT is its raw first paragraph, bullet aside; its SCOPE, its directives and tables; its ITEMS, its
 ;; sub-items; its KIND, its sub-list's type: `ordered', `unordered', or `descriptive';
@@ -139,12 +139,15 @@ So a line may say what a two-column table below it would; anything else on it is
                            key (s-trim value) (car (split-string (substring value pos)))))))
     (nreverse rows)))
 
-(defun org--graph-add-template (templates name rows)
+(defun org--graph-add-template (templates name rows &optional check)
   "(TEMPLATES, NAME, ROWS) ↦ (template . ID), having appended ROWS to template ID in TEMPLATES; from a `#+name: NAME'.
   \"wife :base:\"           ↦  (template . \"wife\"), template wife now inheriting template base
-  \"red color=red :base:\"  ↦  (template . \"red\"), its rows color=red, then base's; as a table below would say"
-  (-let [(_ id rest) (s-match "\\`[ \t]*\\([^ \t]*\\)\\(.*\\)\\'" name)]
-    (puthash id (append (gethash id templates) (org--graph-keyword-rows 'name rest) rows) templates)
+  \"red color=red :base:\"  ↦  (template . \"red\"), its rows color=red, then base's; as a table below would say
+With CHECK, for a graph's own template, see `org--graph-check-template'."
+  (-let* (((_ id rest) (s-match "\\`[ \t]*\\([^ \t]*\\)\\(.*\\)\\'" name))
+          (pairs (org--graph-keyword-rows 'name rest)))
+    (when check (org--graph-check-template id (append (--remove (equal (car it) ":inherit") pairs) rows)))
+    (puthash id (append (gethash id templates) pairs rows) templates)
     (cons 'template id)))
 
 (defconst org--graph-name-pairs-re "^\\([ \t]*\\)#\\+name:\\([ \t]+[^ \t\n]+[^\n]*?[^ \t\n=:\"]=[^\n]*\\)$"
@@ -164,15 +167,30 @@ line, which a node's click leads back to, is unchanged.
             (-map #'s-trim (s-lines (buffer-substring-no-properties (org-element-property :post-affiliated table)
                                                                     (org-element-property :end table))))))
 
+(defun org--graph-attribute-key-p (key)
+  "Returns whether KEY names a Graphviz attribute, as `org-graph-attributes' lists them: ATTR itself, or :edge.ATTR or
+:edge[TARGET].ATTR, for an arc.  \"shape\" and \":edge[b].style\" do; \":edge.colour\" and \":id\" do not."
+  (let ((attr (if (string-match "\\`:edge\\(?:\\[.+?\\]\\)?\\.\\(.+\\)\\'" key) (match-string 1 key) key)))
+    (--any? (equal (plist-get it :name) attr) org-graph-attributes)))
+
+(defun org--graph-check-template (id rows)
+  "Signals a user error when a graph's own template ID is spelt `@X', which aligns nodes instead, or its ROWS set a key
+that names no Graphviz attribute, as `org--graph-attribute-key-p' says; e.g. | :inherit | base |, since a template
+inherits by tags, `#+name: wife :base:'.  The buffer's #+name: tables, Babel's data among them, go unchecked."
+  (when (s-starts-with-p "@" id)
+    (user-error "graph: `#+name: %s' cannot name a template, since `:%s:' aligns nodes" id id))
+  (-when-let (row (--first (not (org--graph-attribute-key-p (car it))) rows))
+    (user-error "graph: template `%s' sets `%s', which is no Graphviz attribute; to inherit template T, write \
+`#+name: %s :T:'" id (car row) id)))
+
 (defun org--graph-attribute-table-p (lines)
-  "Returns whether a table's LINES are | key | value | rows: two cells apiece, each key a Graphviz attribute, as
-`org-graph-attributes' lists them, or a :key of ours.  Any other table is a record: one column, or three; an hline; or
-an unknown key, such as | left | right |.  So a record whose first cell names an attribute writes it =label=."
+  "Returns whether a table's LINES are | key | value | rows: two cells apiece, each key an attribute, as
+`org--graph-attribute-key-p' says.  Any other table is a record: one column, or three; an hline; or an unknown key,
+such as | left | right |, or a misspelt | :edge.colour | red |.  So a record whose first cell names an attribute writes
+it =label=."
   (--all? (let ((cells (cdr (s-split "|" it))))
             (when (s-blank-str-p (car (last cells))) (setq cells (butlast cells)))
-            (and (= (length cells) 2)
-                 (let ((key (s-trim (car cells))))
-                   (or (s-starts-with-p ":" key) (--any? (equal (plist-get it :name) key) org-graph-attributes)))))
+            (and (= (length cells) 2) (org--graph-attribute-key-p (s-trim (car cells)))))
           lines))
 
 (defun org--graph-table-rows (table)
@@ -192,9 +210,8 @@ an unknown key, such as | left | right |.  So a record whose first cell names an
 A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, or #+name: ---Org's
 own affiliated keyword---; else, it holds the item's own | key | value | rows, or, when it holds anything else, it
 is a record, drawn as written: its lines are the item's :table; see `org--graph-attribute-table-p'.
-#+rank: lines are id groups.
 A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see `org--graph-keyword-rows'."
-  (let (rows ranks notes items kind owner)
+  (let (rows notes items kind owner)
     (dolist (el (org--graph-elements elements))
       (pcase (org-element-type el)
         ('keyword
@@ -204,18 +221,24 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
              ((or 'graph 'node 'edge)
               (setq owner key)
               (dolist (row (org--graph-keyword-rows key value)) (push row (alist-get key rows))))
-             ('rank (unless (s-blank-str-p value) (push (s-trim value) ranks)))
-             ((or 'name 'template) (setq owner (org--graph-add-template templates value nil)))
+             ((or 'name 'template) (setq owner (org--graph-add-template templates value nil t)))
              (_ (org--graph-stray el (format "#+%s:" key))))))
         ('table
-         (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil)))
+         (-some--> (org-element-property :name el) (setq owner (org--graph-add-template templates it nil t)))
          (pcase owner
-           (`(template . ,id) (puthash id (append (gethash id templates) (org--graph-table-rows el)) templates))
+           (`(template . ,id) (let ((rows (org--graph-table-rows el)))
+                                (org--graph-check-template id rows)
+                                (puthash id (append (gethash id templates) rows) templates)))
            ('nil (let ((lines (org--graph-table-lines el)))
                    (if (org--graph-attribute-table-p lines)
                        (dolist (row (org--graph-table-rows el)) (push row (alist-get 'attr rows)))
                      (dolist (line lines) (push line (alist-get 'table rows))))))
-           (_ (dolist (row (org--graph-table-rows el)) (push row (alist-get owner rows))))))
+           (_ (let ((table (org--graph-table-rows el)))
+                ;; A smartdiagram's #+graph: rows are its own keys; a Graphviz graph's, Graphviz's.
+                (-when-let (row (and org--graph-strict (--first (not (org--graph-attribute-key-p (car it))) table)))
+                  (user-error "graph: a #+%s: table sets `%s', which is no Graphviz attribute; a template applies by \
+its tag, `#+%s: :T:'" owner (car row) owner))
+                (dolist (row table) (push row (alist-get owner rows)))))))
         ('plain-list
          (setq owner nil kind (or kind (org-element-property :type el)))
          (dolist (item (org-element-contents el)) (push (org--graph-read-item item templates) items)))
@@ -234,7 +257,6 @@ A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see 
     (list :graph-rows (nreverse (alist-get 'graph rows))
           :node-rows  (nreverse (alist-get 'node rows))
           :edge-rows  (nreverse (alist-get 'edge rows))
-          :ranks      (nreverse ranks)
           :attr-rows  (nreverse (alist-get 'attr rows))
           :table      (nreverse (alist-get 'table rows))
           :notes      (nreverse notes)

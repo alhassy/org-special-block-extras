@@ -36,7 +36,7 @@
         (should (member (concat prefix "label") candidates))
         (should-not (member (concat prefix "shape") candidates))))))
 
-(org-deftest "an item's key cell offers node attributes and the reserved keys, but not edge-only attributes"
+(org-deftest "an item's key cell offers node attributes and the :edge. prefixes, but not edge-only attributes"
   :mode #'org-graph-edit-mode
   :text "
 + A
@@ -44,7 +44,8 @@
   :at "sha"
   (let ((candidates (tests-graph--candidates)))
     (should (member "shape" candidates))
-    (should (member ":children-rank" candidates))
+    (should (member ":edge." candidates))
+    (should-not (member ":id" candidates))
     (should (member ":edge[TARGET]." candidates))
     (should-not (member "arrowhead" candidates))))
 
@@ -74,9 +75,8 @@
 
 ;;; Eldoc
 
-(deftest "eldoc describes the key on the row at point: attributes sans their edge prefix, with their default, and reserved keys"
+(deftest "eldoc describes the key on the row at point: attributes sans their edge prefix, with their default"
   (dolist (case '(("| :edge[x].arrowhead | vee |" . "Style of arrowhead on the head node of an edge.  Default: normal.")
-                  ("| :children-rank | same |"    . "Put this item's immediate children on one rank: same, min, max, source, or sink.")
                   ("| shape | box |"              . "Sets the shape of a node.  Default: ellipse.")))
     (with-org-test-buffer (:mode #'org-graph-edit-mode
                            :text (format "

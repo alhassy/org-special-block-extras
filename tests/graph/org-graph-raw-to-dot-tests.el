@@ -72,10 +72,9 @@
 + A
   + B :hot:cold:" nil))))
 
-(define-graph-test "id row makes cross-reference alias"
+(define-graph-test "a <<target>> is the node's id, apart from its label"
   :input "
-+ lambda
-  | :id | lam |
++ <<lam>> lambda
   + church
     | :edge.label | encodes |"
   :output "digraph {
@@ -107,30 +106,30 @@
 }"
                  (org--graph-raw->dot
                   "
-+ A
-  | :id | a |
++ <<a>> A
 + B
   + back :: [[a]]"
                   nil))))
 
-(define-graph-test "#+rank: emits rank=same block for nodes without a common parent"
+(define-graph-test "an :@X: tag aligns its nodes, rank=same, though they share no parent"
   :input "
-#+rank: A B
-+ A
-+ B"
++ A :@pals:
+  + C
++ B :@pals:"
   :output "digraph {
-  { rank=same; A; B }
   A [ label=A ];
+  A -> C;
+  C [ label=C ];
   B [ label=B ];
+  { rank=same; A; B }
 }")
 
-(define-graph-test "rank=same on a node constrains its immediate children"
+(define-graph-test "an :@X: tag on each child aligns the children"
   :input "
 + root
-  | :children-rank | same |
-  + A
-  + B
-  + C"
+  + A :@row:
+  + B :@row:
+  + C :@row:"
   :output "digraph {
   root [ label=root ];
   root -> A;
@@ -142,29 +141,29 @@
   { rank=same; A; B; C }
 }")
 
-(define-graph-test "rank=source on a node constrains its immediate children"
+(define-graph-test ":@start: sets nodes on the first rank, rank=min, and :@end: on the last, rank=max"
   :input "
 + entry
-  | :children-rank | source |
-  + X
-  + Y"
+  + X :@start:
+  + Y :@start:
+  + Z :@end:"
   :output "digraph {
   entry [ label=entry ];
   entry -> X;
   X [ label=X ];
   entry -> Y;
   Y [ label=Y ];
-  { rank=source; X; Y }
+  entry -> Z;
+  Z [ label=Z ];
+  { rank=min; X; Y }
+  { rank=max; Z }
 }")
 
-(define-graph-test "rank row respects child id aliases"
+(define-graph-test "an :@X: group names its nodes by their ids, <<targets>> included"
   :input "
 + root
-  | :children-rank | same |
-  + alpha
-    | :id | a |
-  + beta
-    | :id | b |"
+  + <<a>> alpha :@row:
+  + <<b>> beta :@row:"
   :output "digraph {
   root [ label=root ];
   root -> a;
@@ -217,11 +216,11 @@
 (deftest "a reference's UML tag draws its arc as UML does: a hollow triangle, a dashed one, diamonds, a dashed vee" [graph]
   (let ((dot (org--graph-raw->dot "
 + Dog
-  + [[Animal]] :inherits:
-  + [[Pet]] :implements:
-  + [[Tail]] :composes:
-  + [[Owner]] :aggregates:
-  + [[Bone]] :depends:
+  + [[Animal][:inherits:]]
+  + [[Pet][:implements:]]
+  + [[Tail][:composes:]]
+  + [[Owner][:aggregates:]]
+  + [[Bone][:depends:]]
 + <<Animal>> Animal
 + <<Pet>> Pet
 + <<Tail>> Tail
@@ -258,7 +257,7 @@
 #+name: inherits
 | color | red |
 + Dog
-  + [[Animal]] :inherits:
+  + [[Animal][:inherits:]]
 + <<Animal>> Animal" nil))))
 
 (deftest "a :mindmap t graph is undirected, by twopi, rooted at its first item, its nodes rounded and filled; the header wins" [graph]

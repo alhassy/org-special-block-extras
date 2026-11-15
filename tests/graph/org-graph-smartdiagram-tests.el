@@ -154,7 +154,7 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
     (should (member "planet color" candidates))
     (should-not (member "rankdir" candidates)))
   (search-forward "| col")
-  (should (equal '("color" "fontcolor" "fontsize" ":inherit") (nth 2 (org-graph--completion-at-point)))))
+  (should (equal '("color" "fontcolor" "fontsize") (nth 2 (org-graph--completion-at-point)))))
 
 (org-deftest "in a smartdiagram, eldoc explains a #+graph: row's key with smartdiagram's default"
   :text "
