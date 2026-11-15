@@ -252,3 +252,23 @@ graph LR
       (org--image-mermaid-pdf "" "graph LR\n  a --> b" nil "out.pdf"))
     (should (equal (reverse programs) '("mmdc" "pdfcrop"))))
   (should-error (org--image-mermaid-raw 'mermaid "x" "graph LR" 'html) :type 'user-error))
+
+;;; d2; and how to install a missing tool
+
+(deftest "a d2 image block is rendered by d2, to SVG, then rsvg-convert to PDF; its :layout, :theme, and :sketch, d2's flags" [image]
+  (let (calls)
+    (cl-letf (((symbol-function 'org--image-run) (lambda (prog &rest args) (push (cons prog args) calls))))
+      (org--image-d2-pdf "" "x -> y: hi" '(:layout elk :theme 200 :sketch t) "out.pdf"))
+    (setq calls (reverse calls))
+    (should (equal (mapcar #'car calls) '("d2" "rsvg-convert")))
+    (should (equal (-take 4 (cdar calls)) '("--layout=elk" "--theme=200" "--sketch" "--pad=4")))
+    (should (string-suffix-p "image.svg" (car (last (cdar calls))))))
+  (should-not (plist-get (alist-get 'd2 org-image-block-languages) :native))
+  (should-error (org--image-d2-pdf "vars: {}" "x -> y" nil "out.pdf") :type 'user-error))
+
+(deftest "an image block whose tool is not installed says how to install it" [image]
+  (cl-letf (((symbol-function 'executable-find) (lambda (&rest _) nil)))
+    (should (string-match-p "needs ‘d2’, which is not installed; brew install d2"
+                            (cadr (should-error (org--image-run "d2" "x.d2") :type 'user-error))))
+    (should (string-match-p "needs ‘mmdc’, which is not installed; npm install -g @mermaid-js/mermaid-cli"
+                            (cadr (should-error (org--image-run "mmdc") :type 'user-error))))))

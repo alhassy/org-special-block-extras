@@ -1,4 +1,4 @@
-;;; org-image-block.el --- #+begin_image LANG: LaTeX, HTML, SVG, dot, PlantUML, Mermaid; itself, else an image  -*- lexical-binding: t; -*-
+;;; org-image-block.el --- #+begin_image LANG: LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2; itself, else an image  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -26,9 +26,9 @@
 ;; Along its own backend, a block is itself, raw; along any other, it is an image of itself: an SVG in
 ;; HTML, inlined so the page needs no image files; a PDF in LaTeX, so it stays vector; else a PNG.
 ;; Each language is made into a cropped PDF ---LaTeX by pdflatex and the standalone class, HTML by a
-;; headless Chrome, SVG by rsvg-convert, dot by Graphviz, PlantUML by plantuml, Mermaid by mmdc--- whence
-;; pdftocairo makes the SVG and PNG; see `org-image-block-languages'.  An SVG is itself in HTML; Mermaid,
-;; in HTML and on GitHub, which draw it; dot and PlantUML are images everywhere.
+;; headless Chrome, SVG by rsvg-convert, dot by Graphviz, PlantUML by plantuml, Mermaid by mmdc, D2 by d2---
+;; whence pdftocairo makes the SVG and PNG; see `org-image-block-languages'.  An SVG is itself in HTML;
+;; Mermaid, in HTML and on GitHub, which draw it; dot, PlantUML, and D2 are images everywhere.
 ;;
 ;; Above a line of five dashes is the block's own preamble: LaTeX's, before \begin{document}; or HTML's
 ;; <head>.  C-c C-c renders the images, and shows one atop the block; export uses them.  Their names
@@ -84,7 +84,8 @@ Off by default: -shell-escape lets the LaTeX run any shell command, so a strange
     (svg      :render org--image-svg-pdf      :native (html))
     (dot      :render org--image-dot-pdf)
     (plantuml :render org--image-plantuml-pdf)
-    (mermaid  :render org--image-mermaid-pdf  :native (html md) :raw org--image-mermaid-raw))
+    (mermaid  :render org--image-mermaid-pdf  :native (html md) :raw org--image-mermaid-raw)
+    (d2       :render org--image-d2-pdf))
   "Each (LANGUAGE :render RENDER :native BACKENDS :raw RAW) of #+begin_image: along one of BACKENDS ---md, Markdown,
 being one apart from html--- the block is itself, by (RAW LANGUAGE PREAMBLE BODY BACKEND), else `org--image-raw';
 along any other, RENDER writes its PREAMBLE and BODY, see `org--image-split', as a cropped PDF, by (RENDER PREAMBLE
@@ -109,9 +110,19 @@ The preamble is LaTeX's, before \\begin{document}; or HTML's, within <head>, suc
 
 ;;;; Rendering: SOURCE ⟶ cropped PDF ⟶ SVG, PNG
 
+(defconst org--image-installs
+  '(("d2" . "brew install d2") ("dot" . "brew install graphviz") ("plantuml" . "brew install plantuml")
+    ("mmdc" . "npm install -g @mermaid-js/mermaid-cli") ("rsvg-convert" . "brew install librsvg")
+    ("pdftocairo" . "brew install poppler") ("pdfcrop" . "it comes with TeX Live, as pdflatex does")
+    ("pdflatex" . "install TeX Live; e.g., brew install --cask mactex"))
+  "How to install each tool #+begin_image calls; an error naming a missing tool says so.")
+
 (defun org--image-run (program &rest args)
-  "Runs PROGRAM on ARGS, in `default-directory'; an error, quoting its output's tail, should it fail."
-  (unless (executable-find program) (user-error "#+begin_image needs ‘%s’, which is not installed" program))
+  "Runs PROGRAM on ARGS, in `default-directory'; an error, quoting its output's tail, should it fail.
+A PROGRAM that is not installed is an error saying how to install it, by `org--image-installs'."
+  (unless (executable-find program)
+    (user-error "#+begin_image needs ‘%s’, which is not installed%s" program
+                (-if-let (how (cdr (assoc (file-name-nondirectory program) org--image-installs))) (format "; %s" how) "")))
   (with-temp-buffer
     (unless (eq 0 (apply #'call-process program nil t nil args))
       (user-error "‘%s’ failed on this #+begin_image block:\n%s" (file-name-nondirectory program)
@@ -225,6 +236,22 @@ in the browser; in Markdown, a fenced mermaid block, which GitHub draws.  It has
   (if (eq backend 'md) (format "```mermaid\n%s\n```" body)
     (format "<pre class=\"mermaid\">\n%s\n</pre>\n%s" (org-html-encode-plain-text body) org--mermaid-script)))
 
+(defun org--image-d2-pdf (preamble body args pdf)
+  "Writes D2 BODY, such as x -> y: hi, as PDF: by d2, to SVG, then rsvg-convert; d2's own PDF would fetch a browser
+on first use.  ARGS' :layout, such as elk, chooses the layout engine; :theme N, the theme; :sketch t, the hand-drawn
+look.  It has no PREAMBLE."
+  (org--image-sans-preamble 'd2 preamble)
+  (let* ((dir (make-temp-file "org-image-" t))
+         (d2 (expand-file-name "image.d2" dir))
+         (svg (expand-file-name "image.svg" dir)))
+    (write-region body nil d2)
+    (apply #'org--image-run "d2" `(,@(-some->> (plist-get args :layout) (format "--layout=%s") list)
+                                   ,@(-some->> (plist-get args :theme) (format "--theme=%s") list)
+                                   ,@(and (plist-get args :sketch) '("--sketch"))
+                                   "--pad=4" ,d2 ,svg))
+    (org--image-run "rsvg-convert" "--format" "pdf" "--output" pdf svg)
+    (delete-directory dir t)))
+
 (defun org--image-hash (language source args)
   "Returns the hash that names the renderings of a LANGUAGE block of SOURCE and ARGS; for LaTeX, of its preamble too."
   (substring (secure-hash 'sha1 (prin1-to-string (list language source (org-plist-delete (copy-sequence args) :file)
@@ -284,7 +311,7 @@ document's preamble; in HTML, PREAMBLE then BODY, as a <style> or <script> works
              body)
     (string-trim (concat preamble "\n" body))))
 
-(org-defblock image (&optional (language "latex") &key file css width layout alt resolution as-image
+(org-defblock image (&optional (language "latex") &key file css width layout theme sketch alt resolution as-image
                      :latex-head ("graphicx") :manual "#images"
                      :hover "Above a line of five dashes, -----, is the block's preamble: LaTeX's, or HTML's <head>.
 Naming its renderings, images/NAME.{svg,pdf,png}:
@@ -297,18 +324,19 @@ of the document's; yet a PDF picture's text is not searchable, nor in the docume
 HTML one is not interactive.  :resolution 300 sharpens its PNG; `org-image-block-shell-escape' allows
 minted and the like, at the price of letting the LaTeX run shell commands."
                      &context backend raw-contents anchor)
-  "LaTeX, HTML, SVG, dot, PlantUML, or Mermaid LANGUAGE: itself along a backend that reads it; else an image of itself.
+  "LaTeX, HTML, SVG, dot, PlantUML, Mermaid, or D2 LANGUAGE: itself along a backend that reads it; else an image.
 In HTML, an SVG, inlined; in LaTeX, a PDF; in Markdown, and elsewhere, a PNG.  C-c C-c renders them, else export
 does, within `org-image-block-directory'; see `org--image-base'.  Above a line of dashes is the block's preamble,
 see `org--image-split'.  For HTML, CSS styles it and WIDTH, such as 600px, fixes its width; ALT describes the image,
 for screen readers; RESOLUTION, in pixels per inch, sharpens its PNG; AS-IMAGE t makes it an image along its own
-backend too.  For dot, LAYOUT, such as neato, chooses the layout engine.  See `org-image-block-languages'."
+backend too.  For dot and d2, LAYOUT, such as neato or elk, chooses the layout engine; for d2, THEME N its theme,
+and SKETCH t its hand-drawn look.  See `org-image-block-languages'."
   (let* ((language (intern (downcase (format "%s" language))))
          (source (string-trim raw-contents))
-         (args (list :file file :css css :width width :layout layout :resolution resolution))
+         (args (list :file file :css css :width width :layout layout :theme theme :sketch sketch :resolution resolution))
          (markdown? (org-export-markdown-p))
          (alt (or alt (format "%s" (or anchor (format "Rendered %s" (pcase language ('latex "LaTeX") ('dot "Graphviz") ('plantuml "PlantUML")
-                                                             ('mermaid "Mermaid") (_ (upcase (symbol-name language)))))))))
+                                                             ('mermaid "Mermaid") ('d2 "D2") (_ (upcase (symbol-name language)))))))))
          (extension (cond (markdown? "png") ((eq backend 'html) "svg") ((eq backend 'latex) "pdf") (t "png"))))
     (if (and (memq (if markdown? 'md backend) (plist-get (alist-get language org-image-block-languages) :native))
              (not as-image))
@@ -354,10 +382,10 @@ is shown already, remove it instead.  An edit to the block removes it too."
         (message "Rendered %s.{svg,pdf,png}" (file-relative-name base))))
     t))
 
-(org-def-action image (&optional (language "latex") &key file css width layout resolution)
+(org-def-action image (&optional (language "latex") &key file css width layout theme sketch resolution)
   "Render the block as SVG, PDF, and PNG; show the PNG atop it; again, to remove it.  See `org--image-preview'."
   (org--image-preview (intern (downcase (format "%s" language))) (string-trim raw-contents)
-                      (list :file file :css css :width width :layout layout :resolution resolution)
+                      (list :file file :css css :width width :layout layout :theme theme :sketch sketch :resolution resolution)
                       (org-element-property :name (org-special-block-at-point))))
 
 (provide 'org-image-block)

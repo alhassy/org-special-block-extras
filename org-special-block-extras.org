@@ -5696,7 +5696,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   every graph has, in ~org-graph-builtin-templates~--- and =#+begin_graph :mindmap t= draw them; see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#diagrams-we-draw-sequences-classes-states-entities-mindmaps][Diagrams we draw]].
 
-** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid: itself where read natively, else a picture
+** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2: itself where read natively, else a picture
   :PROPERTIES:
   :CUSTOM_ID: images
   :END:
@@ -5724,6 +5724,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   | =#+begin_image dot=   | an SVG, inlined        | a PDF, by =\includegraphics= | a PNG                  |
   | =#+begin_image plantuml= | an SVG, inlined     | a PDF, by =\includegraphics= | a PNG                  |
   | =#+begin_image mermaid=  | itself, drawn by the browser | a PDF, by =\includegraphics= | itself, drawn by GitHub |
+  | =#+begin_image d2=       | an SVG, inlined     | a PDF, by =\includegraphics= | a PNG                  |
   The SVG and PDF are vector, so they stay crisp at any zoom; the SVG is inlined, as a =data:=
   URI, so a page carries its images along, wherever it is published.
 
@@ -5773,7 +5774,22 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
     =pdfcrop=; yet only for LaTeX and the rest. In HTML, a =<pre class="mermaid">= is drawn by
     Mermaid itself, from a CDN; in Markdown, a fenced =mermaid= block is drawn by GitHub. So a
     Mermaid diagram stays live, and needs no tool at all, in a web page or a README.
-  None of SVG, dot, PlantUML, or Mermaid has a preamble, so a line of dashes in one is an error.
+  + [[https://d2lang.com][D2]], by =d2=, to SVG, then =rsvg-convert=; =:layout elk= chooses its layout engine, =:theme 200=
+    its theme, and =:sketch t= its hand-drawn look.
+  None of SVG, dot, PlantUML, Mermaid, or D2 has a preamble, so a line of dashes in one is an error.
+
+  =C-c C-c=, and export, need each language's tools; a missing one is an error saying how to
+  install it. On macOS, by [[https://brew.sh][Homebrew]]:
+  | Language | Its tools                | Installed by                                                    |
+  |----------+--------------------------+-----------------------------------------------------------------|
+  | Every one | =pdftocairo=, =pdfcrop=  | =brew install poppler=; =pdfcrop= comes with TeX Live            |
+  | =latex=   | =pdflatex=               | TeX Live; e.g., =brew install --cask mactex=                     |
+  | =html=    | Chrome, or Chromium      | ~org-image-block-browser~ finds it                               |
+  | =svg=     | =rsvg-convert=           | =brew install librsvg=                                           |
+  | =dot=     | =dot=                    | =brew install graphviz=                                          |
+  | =plantuml= | =plantuml=              | =brew install plantuml=                                          |
+  | =mermaid= | =mmdc=, for LaTeX alone  | =npm install -g @mermaid-js/mermaid-cli=                         |
+  | =d2=      | =d2=, =rsvg-convert=     | =brew install d2 librsvg=                                        |
 
   *Why not Babel's own =ob-dot=, =ob-plantuml=, or =ob-mermaid=?* They render a src block to its
   =:file= on =C-c C-c=, and =:exports results= shows it; that is the core of the job, and they do
