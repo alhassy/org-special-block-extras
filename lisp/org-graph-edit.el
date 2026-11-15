@@ -98,15 +98,20 @@ The new row is inserted below the current line and the table is aligned."
       (insert (format "\n| %s | %s |" key value))
       (org-table-align))))
 
+(defconst org-graph--return-commands '(org-return org-return-indent org-return-and-maybe-indent)
+  "The commands that RET may run in Org, each calling `org-return'; e.g., a config's (local-set-key [return]
+\='org-return-indent).  Only these hand C-u to `org-graph--maybe-insert-attribute-row' by `current-prefix-arg'.")
+
 (defun org-graph--maybe-insert-attribute-row (&optional _indent arg _interactive)
   "Advice for `org-return': intercept C-u RET inside graph block tables.
 
-When ARG is non-nil and point is on an Org table row inside a
-#+begin_graph block, run `org-graph--insert-attribute-row' and return
-non-nil to suppress the normal `org-return' behaviour."
-  (when (and arg (org-graph--at-key-table-p))
-    (org-graph--insert-attribute-row arg)
-    t))
+When ARG ---or, when RET runs one of `org-graph--return-commands', which may call `org-return' sans it,
+`current-prefix-arg'--- is non-nil and point is on an Org table row inside a #+begin_graph block, run
+`org-graph--insert-attribute-row' and return non-nil to suppress the normal `org-return' behaviour."
+  (let ((arg (or arg (and (memq this-command org-graph--return-commands) current-prefix-arg))))
+    (when (and arg (org-graph--at-key-table-p))
+      (org-graph--insert-attribute-row arg)
+      t)))
 
 (advice-add 'org-return :before-until #'org-graph--maybe-insert-attribute-row)
 

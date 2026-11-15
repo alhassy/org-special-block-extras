@@ -120,3 +120,21 @@
       ;; The new attribute row must have been inserted
       (should (s-contains-p "| style" (buffer-string)))
       (should (s-contains-p "filled" (buffer-string))))))
+
+(org-deftest "C-u RET works when RET runs org-return-indent, as a config's (local-set-key [return] 'org-return-indent) has it"
+  :text "
+#+begin_graph
+#+node:
+| shape | box |
+#+end_graph"
+  :at "| shape |"
+  (cl-letf (((symbol-function 'completing-read)
+             (lambda (prompt choices &rest _)
+               (if (string-match-p "Attribute" prompt) (car (--filter (string-prefix-p "style" it) choices)) (car choices)))))
+    ;; org-return-indent calls org-return sans the prefix argument; the keypress's C-u is current-prefix-arg.
+    (let ((this-command 'org-return-indent) (current-prefix-arg '(4)))
+      (call-interactively #'org-return-indent))
+    (should (s-contains-p "| style" (buffer-string))))
+  ;; A plain RET, sans C-u, is left to Org.
+  (let ((this-command 'org-return-indent) (current-prefix-arg nil))
+    (should-not (org-graph--maybe-insert-attribute-row t nil nil))))
