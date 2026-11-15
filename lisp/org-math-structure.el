@@ -84,10 +84,10 @@ As an Org table is a matrix; a line that begins “- x” sans “ :: ” stays 
         (insert (format "\\begin{cases} %s \\end{cases}\n" (string-join cases " \\\\ ")))))
     (buffer-string)))
 
-;;;; Tags ---a line's coloured name, and the label citations reach
+;;;; Tags ---a line's colored name, and the label citations reach
 
 (defconst org--math-tag-re "\\(?:\\(?2:[[:alpha:]]+\\):\\)?<<\\(?1:[^<>\n]+\\)>>"
-  "A tag, “<<NAME>>” or “COLOUR:<<NAME>>”, Org's own target, coloured as maths is; e.g., “x = y   teal:<<Base Case>>”.
+  "A tag, “<<NAME>>” or “COLOR:<<NAME>>”, Org's own target, colored as maths is; e.g., “x = y   teal:<<Base Case>>”.
 Its brackets delimit it, so maths may follow it, as a nested calculation's \\] does.")
 
 (defconst org--math-symbol-re "[Ͱ-Ͽ℀-⅏←-⇿∀-⋿⌀-⏿⟀-⟿⤀-⫿𝐀-𝟿]"
@@ -113,9 +113,9 @@ name is its own label; a citation, [[NAME]], cites the same."
   (concat "mjx-eqn:" (replace-regexp-in-string "[ \t]" "_" (org--math-label name))))
 
 (defun org--math-tags (math &optional nested)
-  "MATH ↦ MATH whose each tag, “COLOUR:<<NAME>>” of `org--math-tag-re', is NAME as a COLOUR \\tag, labelled NAME, and,
+  "MATH ↦ MATH whose each tag, “COLOR:<<NAME>>” of `org--math-tag-re', is NAME as a COLOR \\tag, labelled NAME, and,
 ending its line, \\\\; e.g., “x blue:<<Id>>” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id}”.  A line's later tags
-are aliases, which vanish here; their citations cite its first.  Sans COLOUR, it is plain.  A NESTED calculation's tag, as a hint's \\[ … \\], is no \\tag, which an aligned forbids, but NAME in brackets
+are aliases, which vanish here; their citations cite its first.  Sans COLOR, it is plain.  A NESTED calculation's tag, as a hint's \\[ … \\], is no \\tag, which an aligned forbids, but NAME in brackets
 there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
   (with-temp-buffer
     (insert math)
@@ -127,12 +127,12 @@ there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
           (progn (delete-region (match-beginning 0) (match-end 0))
                  (delete-horizontal-space))
       (setq tagged (line-number-at-pos))
-      (let* ((name (match-string 1)) (colour (match-string 2)) (text (org--math-tag-text name))
+      (let* ((name (match-string 1)) (color (match-string 2)) (text (org--math-tag-text name))
              (tag (cond ((not nested) (format "\\tag{%s} \\label{%s}"
-                                             (if colour (format "$\\color{%s}{\\text{%s}}$" colour text) text)
+                                             (if color (format "$\\color{%s}{\\text{%s}}$" color text) text)
                                              (org--math-label name)))
                         (t (let ((shown (format "\\text{(%s)}" text)))
-                             (when colour (setq shown (format "{\\color{%s}%s}" colour shown)))
+                             (when color (setq shown (format "{\\color{%s}%s}" color shown)))
                              (format "\\qquad %s" (pcase org--math-backend
                                                      ('latex (format "\\hypertarget{%s}{%s}" (org--math-label name) shown))
                                                      ('html (format "\\cssId{%s}{%s}" (org--math-tag-anchor name) shown))
@@ -142,13 +142,13 @@ there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
     (buffer-string)))
 
 (defun org--math-match-tag (limit)
-  "Font-lock matcher: up to LIMIT, the next tag, “COLOUR:<<NAME>>”; see `org--math-tag-face'."
+  "Font-lock matcher: up to LIMIT, the next tag, “COLOR:<<NAME>>”; see `org--math-tag-face'."
   (re-search-forward org--math-tag-re limit t))
 
 (defun org--math-tag-face ()
-  "↦ The face of the tag just matched: Org's target, in its COLOUR when Emacs knows that colour."
-  (let ((colour (match-string 2)))
-    (if (and colour (color-defined-p colour)) (list :inherit 'org-target :foreground colour) 'org-target)))
+  "↦ The face of the tag just matched: Org's target, in its COLOR when Emacs knows that color."
+  (let ((color (match-string 2)))
+    (if (and color (color-defined-p color)) (list :inherit 'org-target :foreground color) 'org-target)))
 
 ;;;; Definitions, and the marks that set a display's environment
 

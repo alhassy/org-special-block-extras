@@ -309,18 +309,20 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                                    (org-element-map tree 'radio-target (lambda (o) (org-element-property :value o))))))
               (org--graph-read-scope (org-element-contents tree) templates)))))
 
-(defconst org--graph-header-keys '(:file :svg :directed :mindmap :wrap :notes :unflatten :unknown-tags :theme :C-c_C-c
+(defconst org--graph-header-keys '(:file :wrap :notes :unflatten :unknown-tags :theme :C-c_C-c
                                          :contents-occur-as-link-description :exports :results)
   "Header keywords the `graph' block consumes itself, or Babel habits such as :exports, rather than handing to Graphviz.")
 
 (defconst org--graph-directions '(("down" . "TB") ("up" . "BT") ("right" . "LR") ("left" . "RL"))
-  "The values of `:direction', a readable `:rankdir', and the rankdir each means: which way the arcs flow.")
+  "The values of `:direction', and the rankdir each means: which way the arcs flow.")
 
 (defun org--graph-header-rows (kwdargs)
-  "KWDARGS, from the #+begin_graph line, ↦ (:graph-rows :node-rows :edge-rows); keys in `org--graph-header-keys' are skipped.
-`:direction right' is `:rankdir LR', and so on, as `org--graph-directions' says.
+  "Returns the (:graph-rows :node-rows :edge-rows) KWDARGS, from the #+begin_graph line, set; keys in
+`org--graph-header-keys' are skipped.  `:direction right' sets rankdir=LR, and so on, as `org--graph-directions' says;
+the header has no `:rankdir', since `:direction' reads better, and #+graph: rankdir=LR remains for Graphviz's spelling.
 
-  (:rankdir LR :node.shape box :edge.color \"#f00\")  ↦  (:graph-rows ((\"rankdir\" \"LR\")) :node-rows ((\"shape\" \"box\")) :edge-rows ((\"color\" \"#f00\")))"
+  (:direction right :node.shape box :edge.color \"#f00\")
+  ⇒ (:graph-rows ((\"rankdir\" \"LR\")) :node-rows ((\"shape\" \"box\")) :edge-rows ((\"color\" \"#f00\")))"
   (let (graph node edge)
     (pcase-dolist (`(,key ,val) (-partition 2 kwdargs))
       (unless (memq key org--graph-header-keys)
@@ -330,10 +332,32 @@ Org parses RAW in a buffer of its own, so the elements' positions are those of R
                                            (user-error "graph: `:direction %s' should be one of %s" val
                                                        (s-join ", " (mapcar #'car org--graph-directions)))))
                        graph))
+                ((equal key "rankdir")
+                 (user-error "graph: the header sets the direction by `:direction %s'; else, #+graph: rankdir=%s"
+                             (s-join "|" (mapcar #'car org--graph-directions)) val))
                 ((s-starts-with-p "node." key) (push (list (substring key 5) val) node))
                 ((s-starts-with-p "edge." key) (push (list (substring key 5) val) edge))
                 (t (push (list key val) graph))))))
     (list :graph-rows (nreverse graph) :node-rows (nreverse node) :edge-rows (nreverse edge))))
+
+(defun org--graph-expand-macros (raw)
+  "RAW with each {{{NAME(ARGS)}}} ↦ its expansion by this buffer's #+macro: lines; e.g. {{{gold}}} ↦ \"#f9e2af\".
+Textually, so that they expand in table cells and #+name: lines too."
+  (if (not (s-contains-p "{{{" raw))
+      raw
+    (require 'org-macro)
+    (org-macro-initialize-templates)
+    (let ((templates org-macro-templates))
+      (replace-regexp-in-string
+       "{{{\\([[:alpha:]][-[:alnum:]_]*\\)\\(?:(\\([^\0]*?\\))\\)?}}}"
+       (lambda (macro)
+         (let ((key (downcase (match-string 1 macro))) (args (match-string 2 macro)))
+           ;; Expanding matches regexps of its own; the replacement needs ours.
+           (save-match-data
+             (or (org-macro-expand (list 'macro (list :key key :args (and args (org-macro-extract-arguments args))))
+                                   templates)
+                 (user-error "graph: {{{%s}}} names no #+macro:" key)))))
+       raw t t))))
 
 (provide 'org-graph-read)
 ;;; org-graph-read.el ends here

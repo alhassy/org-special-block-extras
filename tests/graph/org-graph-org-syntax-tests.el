@@ -114,7 +114,7 @@
           (should-error (org--graph-raw->dot "+ Me [[file:~/nope.png]]" nil nil) :type 'user-error))
       (delete-directory home t))))
 
-(deftest "a :person:, or :actor:, is a stick figure in its colour above its label, as Graphviz has no such shape"
+(deftest "a :person:, or :actor:, is a stick figure in its color above its label, as Graphviz has no such shape"
   (let ((dot (org--graph-raw->dot "+ Alice :person:pink:" nil nil)))
     (should (string-match-p "Alice \\[ color=\"#ea76cb\" fontcolor=\"#ea76cb\" shape=none" dot))
     (string-match "IMG SRC=\"\\([^\"]+\\)\"" dot)
@@ -263,7 +263,7 @@ x
 ;;; The #+begin_graph line
 
 (deftest "the header's title labels the graph, its keys are graph attributes, and :node.KEY / :edge.KEY set defaults"
-  (should (equal "graph {
+  (should (equal "digraph {
   graph [ label=\"Lambda calculus\" rankdir=LR ]
   node [ shape=box ]
   edge [ color=\"#f00\" ]
@@ -271,8 +271,8 @@ x
 }"
                  (org--graph-raw->dot "
 + a" "Lambda calculus"
-                                      '(:directed nil :rankdir LR :node.shape box :edge.color "#f00"
-                                        :file "x.png" :svg t :C-c_C-c dot :exports svg)))))
+                                      '(:direction right :node.shape box :edge.color "#f00"
+                                        :file "x.png" :C-c_C-c dot :exports svg)))))
 
 (deftest "the block's own #+graph: and #+node: tables override the header"
   (should (equal "digraph {
@@ -286,9 +286,9 @@ x
 #+node:
 | shape | ellipse |
 + a" nil
-                                      '(:rankdir LR :node.shape box)))))
+                                      '(:direction right :node.shape box)))))
 
-(deftest "the header line reads as #+attr_html: does: a hex colour, or a word Lisp cannot read, needs no quotes"
+(deftest "the header line reads as #+attr_html: does: a hex color, or a word Lisp cannot read, needs no quotes"
   ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
   (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
     (should (s-contains-p "graph [ bgcolor=\"#6c7086\" fontname=\"Helvetica,Arial\" ]"
@@ -299,7 +299,7 @@ x
 (deftest "exporting reads the header line: a title and attributes reach the dot source"
   ;; Without Graphviz, the HTML export falls back to the dot source in a <pre>.
   (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
-    (let ((html (org-export-string "#+begin_graph Lambda calculus :rankdir LR :node.shape box
+    (let ((html (org-export-string "#+begin_graph Lambda calculus :direction right :node.shape box
 + a
 #+end_graph" 'html)))
       (should (s-contains-p "graph [ label=\"Lambda calculus\" rankdir=LR ]" html))
@@ -524,9 +524,9 @@ x
   (search-forward "hot:st")
   (should (string-match-p "rounded box" (org-graph--builtin-tag-doc (org-graph--tag-at-point)))))
 
-;;; Everyday tags: lines, colours, sizes; and :direction
+;;; Everyday tags: lines, colors, sizes; and :direction
 
-(define-graph-test "everyday tags every graph has: lines, arrowheads, colours, and sizes, :size_N: any size; style flags join"
+(define-graph-test "everyday tags every graph has: lines, arrowheads, colors, and sizes, :size_N: any size; style flags join"
   :input "
 + A :pink:dashed:bold:size_24:
   + B :large:
@@ -575,26 +575,27 @@ x
 + A :dashed:
   | style | rounded |" nil nil))))
 
-(deftest ":direction is a readable :rankdir: down, up, right, or left; anything else is a user error" [graph]
+(deftest ":direction sets rankdir: down, up, right, or left; anything else, or a header :rankdir, is a user error" [graph]
   (should (string-match-p "rankdir=LR" (org--graph-raw->dot "+ A" nil '(:direction right))))
   (should (string-match-p "rankdir=BT" (org--graph-raw->dot "+ A" nil '(:direction up))))
-  (should (string-match-p "rankdir=RL" (org--graph-raw->dot "+ A" nil '(:rankdir RL))))
+  (should (string-match-p "rankdir=RL" (org--graph-raw->dot "#+graph: rankdir=RL\n+ A" nil)))
+  (should-error (org--graph-raw->dot "+ A" nil '(:rankdir RL)) :type 'user-error)
   (should-error (org--graph-raw->dot "+ A" nil '(:direction sideways)) :type 'user-error))
 
-(org-deftest "each tag wears a colour of its name's own, as does its #+name: line; so a typo stands out"
+(org-deftest "each tag wears a color of its name's own, as does its #+name: line; so a typo stands out"
   :text "
 #+begin_graph
 #+name: hot color=red
 + A :hot:hott:
 #+end_graph"
   (font-lock-ensure)
-  (let ((colour (lambda (needle)
+  (let ((color (lambda (needle)
                   (goto-char (point-min)) (search-forward needle)
                   (--some (and (listp it) (plist-get it :foreground))
                           (ensure-list (get-text-property (match-beginning 0) 'face))))))
-    (should (funcall colour "hot color"))
-    (should (equal (funcall colour "hot color") (funcall colour "hot:hott")))
-    (should-not (equal (funcall colour "hot:hott") (funcall colour "hott:")))))
+    (should (funcall color "hot color"))
+    (should (equal (funcall color "hot color") (funcall color "hot:hott")))
+    (should-not (equal (funcall color "hot:hott") (funcall color "hott:")))))
 
 (deftest "an undefined tag's docs say a template is made up for it, and how to forbid that"
   (should (string-match-p ":unknown-tags error" (org-graph--unknown-tag-doc "hott")))
@@ -1180,9 +1181,9 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
 
 (provide 'org-graph-org-syntax-tests)
 
-;;; Several tags, several colours; and :container_TITLE: tags
+;;; Several tags, several colors; and :container_TITLE: tags
 
-(deftest "a node's tags of several colours show them all, as tinted stripes; an arc's, as parallel lines" [graph tags]
+(deftest "a node's tags of several colors show them all, as tinted stripes; an arc's, as parallel lines" [graph tags]
   (let ((dot (org--graph-raw->dot "
 #+name: red
 | color | #ff0000 |
@@ -1194,7 +1195,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
     (should (string-search "a [ color=\"#ff0000\" shape=box style=striped fillcolor=\"#ffbfbf:#bfbfff\" label=a ];" dot))
     (should (string-match-p "a -> c \\[ label=b [^]]*color=\"#ff0000:#0000ff\"" dot))))
 
-(deftest "a round node's several colours are wedges; one colour, or an explicit fillcolor, needs no stripes" [graph tags]
+(deftest "a round node's several colors are wedges; one color, or an explicit fillcolor, needs no stripes" [graph tags]
   (let ((dot (org--graph-raw->dot "
 #+name: red
 | color | #ff0000 |
@@ -1263,4 +1264,4 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
   - a :x:
   - b :y:"))
     (should (string-search "legend_1 -> legend_2 [ style=invis ];" (org--graph-raw->dot legend nil)))
-    (should-not (string-search "style=invis" (org--graph-raw->dot legend nil '(:rankdir LR))))))
+    (should-not (string-search "style=invis" (org--graph-raw->dot legend nil '(:direction right))))))

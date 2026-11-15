@@ -169,20 +169,20 @@ come from, bring `org--latex-margin-head'; by the output itself, as some are mad
                   (mapconcat (lambda (item) (format (if (funcall package? item) "\\usepackage{%s}\n" "%s\n") item)) missing "")
                   (substring output (length preamble))))))))
 
-(defun org--latex-define-color (name colour)
-  "(NAME, COLOUR) ↦ LaTeX defining NAME as COLOUR: via \\definecolor when COLOUR is a hex code such as #e5f5e5, or a
+(defun org--latex-define-color (name color)
+  "(NAME, COLOR) ↦ LaTeX defining NAME as COLOR: via \\definecolor when COLOR is a hex code such as #e5f5e5, or a
 name xcolor lacks but Emacs knows, such as navy; else \\colorlet, as for red or red!5!white.
-COLOUR may be a symbol, as block arguments such as “:color red!5!white” are read as Lisp."
-  (setq colour (format "%s" colour))
-  (-if-let (rgb (and (not (string-prefix-p "#" colour))
-                     (not (string-match-p "!" colour))       ; A mix, such as red!5!white, is xcolor's own.
-                     (not (and (boundp 'org--named-colors) (memq (intern colour) org--named-colors)))
-                     ;; Emacs's X11 colour table, which a display-less batch Emacs reads too; e.g., navy, gold.
-                     (tty-color-standard-values colour)))
+COLOR may be a symbol, as block arguments such as “:color red!5!white” are read as Lisp."
+  (setq color (format "%s" color))
+  (-if-let (rgb (and (not (string-prefix-p "#" color))
+                     (not (string-match-p "!" color))       ; A mix, such as red!5!white, is xcolor's own.
+                     (not (and (boundp 'org--named-colors) (memq (intern color) org--named-colors)))
+                     ;; Emacs's X11 color table, which a display-less batch Emacs reads too; e.g., navy, gold.
+                     (tty-color-standard-values color)))
       (apply #'format "\\definecolor{%s}{rgb}{%.3f,%.3f,%.3f}" name (--map (/ it 65535.0) rgb))
-    (if (string-prefix-p "#" colour)
-        (format "\\definecolor{%s}{HTML}{%s}" name (substring colour 1))
-      (format "\\colorlet{%s}{%s}" name colour))))
+    (if (string-prefix-p "#" color)
+        (format "\\definecolor{%s}{HTML}{%s}" name (substring color 1))
+      (format "\\colorlet{%s}{%s}" name color))))
 
 ;;;; HTML <head> items, loaded as needed
 

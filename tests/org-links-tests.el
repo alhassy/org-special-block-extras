@@ -83,7 +83,7 @@ See the subroutine ‘basic-save-buffer’ for more information.
   :text "See badge:key|value|blue here."
   (let ((tooltip (funcall (org-link-get-parameter "badge" :help-echo) nil nil 7)))
     (should (s-contains-p "Key    : key" tooltip))
-    (should (s-contains-p "Colour : blue" tooltip))))
+    (should (s-contains-p "Color : blue" tooltip))))
 
 (deftest "in HTML, <<X>> is a visible permalink #X to itself, which [[X]] reaches; sans the mode, it is Org's own" [target]
   (org-special-block-extras-mode 1)

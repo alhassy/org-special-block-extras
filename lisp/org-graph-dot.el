@@ -125,15 +125,10 @@ into a file; otherwise RAW names a node, sans PORT, such as \"std::vector\"."
   (let ((groups (--keep (pcase it (`(:rank ,_ ,ids) ids)) (org--graph-all-stmts stmts))))
     (--each-indexed groups (dolist (id it) (puthash id it-index (org--graph-ctx-ranks ctx))))))
 
-(defcustom org-graph-mindmap-palette '("#c9a7f5" "#f78fc4" "#8be9fd" "#69f07a" "#ffb86c" "#ff7b7b" "#a8e6a3")
-  "The fill colours of a `:mindmap t' graph's nodes, by depth: the root the first, its children the second, …; the
-palette repeats past its end.  A node's own fillcolor wins."
-  :type '(repeat color)
-  :group 'org-special-block-extras)
-
-(defun org--graph-mindmap-paint (ctx stmts)
-  "Fills each node CTX declares by its depth in STMTS' arcs, from `org-graph-mindmap-palette', save one with a fillcolor
-of its own.  A node no arc enters is a root, of depth 0; else its depth is one more than its shallowest parent's."
+(defun org--graph-paint-by-depth (ctx stmts colors)
+  "Fills each node CTX declares by its depth in STMTS' arcs, from COLORS, cycling, save one with a fillcolor of its
+own; so a theme's :node-colors color a mindmap's rings.  A node no arc enters is a root, of depth 0; else its depth
+is one more than its shallowest parent's."
   (let* ((nodes (org--graph-ctx-nodes ctx))
          (arcs (--keep (pcase it (`(:edge ,src ,dst ,_) (cons (car (org--graph-endpoint src ctx))
                                                              (car (org--graph-endpoint dst ctx)))))
@@ -147,9 +142,7 @@ of its own.  A node no arc enters is a root, of depth 0; else its depth is one m
     (maphash (lambda (id entry)
                (-when-let (depth (gethash id depths))
                  (unless (assoc "fillcolor" (cdr entry))
-                   (puthash id (append entry `(("fillcolor" ,(nth (mod depth (length org-graph-mindmap-palette))
-                                                                   org-graph-mindmap-palette))))
-                            nodes))))
+                   (puthash id (append entry `(("fillcolor" ,(nth (mod depth (length colors)) colors)))) nodes))))
              nodes)))
 
 (defun org--graph-legend-chain (stmts op ctx)
@@ -195,38 +188,38 @@ container's item or a :container_TITLE: tag puts it there; Graphviz would otherw
 (defvar org--graph-node-defaults nil
   "While a graph prints, its graph-wide node defaults: the rows of its node [ … ] line, a theme's included.")
 
-(defun org--graph-person-icon (colour)
-  "Returns the file of a stick figure drawn in COLOUR, written once, to a directory of the system's temporary files;
+(defun org--graph-person-icon (color)
+  "Returns the file of a stick figure drawn in COLOR, written once, to a directory of the system's temporary files;
 for Graphviz reads an image only from a file.  The SVG opens with an XML declaration, sans which Graphviz misses it."
   (let* ((dir (expand-file-name "org-graph-icons" temporary-file-directory))
-         (file (expand-file-name (format "person-%s.svg" (replace-regexp-in-string "[^[:alnum:]]" "" colour)) dir)))
+         (file (expand-file-name (format "person-%s.svg" (replace-regexp-in-string "[^[:alnum:]]" "" color)) dir)))
     (unless (file-exists-p file)
       (make-directory dir t)
       (with-temp-file file
         (insert "<?xml version=\"1.0\"?>\n"
                 "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"30\" height=\"45\" viewBox=\"0 0 36 54\">\n"
-                (format "  <g fill=\"none\" stroke=\"%s\" stroke-width=\"3\" stroke-linecap=\"round\">\n" colour)
+                (format "  <g fill=\"none\" stroke=\"%s\" stroke-width=\"3\" stroke-linecap=\"round\">\n" color)
                 "    <circle cx=\"18\" cy=\"9\" r=\"7\"/><path d=\"M18 16v18M4 23h28M18 34 7 52M18 34l11 18\"/>\n"
                 "  </g>\n</svg>\n")))
     file))
 
 (defun org--graph-person (attrs)
   "Returns ATTRS, a node's, drawn as a person when their shape is person, which Graphviz lacks: a stick figure in the
-node's colour, else its defaults', above its label, in an HTML-like table; else ATTRS as they are.
+node's color, else its defaults', above its label, in an HTML-like table; else ATTRS as they are.
   ((\"shape\" \"person\") (\"label\" \"Alice\"))  ↦  ((\"shape\" \"none\") (\"label\" \"<<TABLE …><IMG SRC=…/>…Alice…>\"))"
   (if (not (equal (cadr (assoc "shape" attrs)) "person"))
       attrs
-    (let* ((colour (or (cadr (assoc "color" attrs)) (cadr (assoc "color" org--graph-node-defaults)) "black"))
+    (let* ((color (or (cadr (assoc "color" attrs)) (cadr (assoc "color" org--graph-node-defaults)) "black"))
            (label (or (cadr (assoc "label" attrs)) ""))
            (body (if (string-match "\\`<\\(.*\\)>\\'" label) (match-string 1 label) (org--graph-html-escape label))))
       (append (--remove (member (car it) '("shape" "label" "style")) attrs)
               `(("shape" "none") ("style" "solid") ("margin" "0")
                 ("label" ,(format (concat "<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"1\">"
                                           "<TR><TD><IMG SRC=\"%s\"/></TD></TR><TR><TD>%s</TD></TR></TABLE>>")
-                                  (org--graph-person-icon colour) body)))))))
+                                  (org--graph-person-icon color) body)))))))
 
 (defvar org--graph-container-fills nil
-  "While a themed graph prints, its theme's :containers fills, one per depth of nesting, outermost first; else nil.")
+  "While a themed graph prints, its theme's :container-colors, one per depth of nesting, outermost first; else nil.")
 
 (defvar org--graph-container-depth 0
   "While a graph prints, how many containers enclose the statement printing.")
@@ -236,16 +229,24 @@ node's colour, else its defaults', above its label, in an HTML-like table; else 
      :graph "bgcolor=white style=filled fillcolor=\"#FABA8A\" color=\"#311602\" penwidth=2 fontname=Helvetica fontsize=20 fontcolor=\"#170206\""
      :node "shape=box style=filled fillcolor=\"#FFE0C7\" color=\"#311602\" penwidth=2 fontname=\"Helvetica Bold\" fontcolor=\"#170206\" margin=\"0.3,0.15\""
      :edge "color=\"#311602\" penwidth=2 fontname=\"Helvetica Oblique\" fontcolor=\"#535152\" arrowsize=0.8"
-     :containers "#FABA8A #FFE0C7 #FFF6EF #FFFFFF"))
-  "The (NAME :graph PAIRS :node PAIRS :edge PAIRS :containers FILLS) of each theme a graph may wear, by `:theme NAME' or `org-graph-theme'.
+     :container-colors "#FABA8A #FFE0C7 #FFF6EF #FFFFFF")
+    (mindmap
+     :graph "layout=twopi overlap=false ranksep=1.0"
+     :node "shape=box style=\"rounded,filled\" color=gray40"
+     :edge "color=gray50 dir=none"
+     :node-colors "#c9a7f5 #f78fc4 #8be9fd #69f07a #ffb86c #ff7b7b #a8e6a3"))
+  "The (NAME :graph PAIRS :node PAIRS :edge PAIRS :node-colors COLORS :container-colors COLORS) of each theme a graph
+may wear, by `:theme NAME' or `org-graph-theme'.
 Each PAIRS is a #+graph:, #+node:, or #+edge: line's KEY=VALUE pairs; the graph's own attributes win over them all.
 The :graph pairs style containers too, since a Graphviz cluster inherits the graph's attributes; the root graph
-draws only its bgcolor.  FILLS, colours apart by spaces, fill containers by depth: the outermost the first, a
-container within it the second, and so on, cycling.  `creamsicle' follows D2's theme 101, Orange Creamsicle: cream boxes, orange containers.
+draws only its bgcolor.  Each COLORS, apart by spaces, fills by depth, cycling: :container-colors, containers, the
+outermost the first, a container within it the second; :node-colors, nodes, a root the first, its children the
+second.  A node's, or container's, own fillcolor wins.  `creamsicle' follows D2's theme 101, Orange Creamsicle: cream
+boxes, orange containers.  `mindmap' radiates from the first item, by twopi, its rings colored by depth.
 A theme is data, so a new one is a `push' away:
   (push \='(ink :node \"shape=box\" :edge \"color=gray30\") org-graph-themes)"
   :type '(alist :key-type symbol :value-type (plist :key-type (choice (const :graph) (const :node) (const :edge)
-                                                                     (const :containers))
+                                                                     (const :node-colors) (const :container-colors))
                                                     :value-type string))
   :group 'org-special-block-extras)
 
@@ -255,7 +256,7 @@ A theme is data, so a new one is a `push' away:
   :group 'org-special-block-extras)
 
 (defun org--graph-theme-rows (kwdargs)
-  "Returns the (:graph-rows :node-rows :edge-rows :containers) of the theme KWDARGS' :theme names, else
+  "Returns the (:graph-rows :node-rows :edge-rows :node-colors :container-colors) of the theme KWDARGS' :theme names, else
 `org-graph-theme''s; nil when that is nil, or none.  An unknown theme is a user error."
   (let ((name (format "%s" (if (plist-member kwdargs :theme) (plist-get kwdargs :theme) org-graph-theme))))
     (unless (member name '("nil" "none"))
@@ -264,61 +265,54 @@ A theme is data, so a new one is a `push' away:
         (list :graph-rows (org--graph-keyword-rows 'graph (or (plist-get theme :graph) ""))
               :node-rows (org--graph-keyword-rows 'node (or (plist-get theme :node) ""))
               :edge-rows (org--graph-keyword-rows 'edge (or (plist-get theme :edge) ""))
-              :containers (split-string (or (plist-get theme :containers) "")))))))
+              :node-colors (split-string (or (plist-get theme :node-colors) ""))
+              :container-colors (split-string (or (plist-get theme :container-colors) "")))))))
 
 (defun org--graph-raw->dot (raw-contents main-arg &optional kwdargs)
-  "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block.
+  "(RAW-CONTENTS, MAIN-ARG, KWDARGS) ↦ the dot source of a #+begin_graph block: a digraph, whose #+edge: :undirected:
+makes its arcs arrowless.
 
-It is a digraph, unless KWDARGS has `:directed nil', or `:mindmap t': an undirected graph, radiating from its first
-item, by Graphviz's twopi layout, its nodes rounded boxes filled by depth, see `org--graph-mindmap-paint'.  `:wrap', `:notes', and `:unknown-tags' are as
-`org--graph-parse' reads them; `:unflatten N' staggers leaves, see `org-graph--unflatten'; and `:theme NAME' styles
-the graph by `org-graph-themes', beneath everything else.
+`:wrap', `:notes', and `:unknown-tags' are as `org--graph-parse' reads them; `:unflatten N' staggers leaves, see
+`org-graph--unflatten'; and `:theme NAME' styles the graph by `org-graph-themes', beneath everything else.  Under
+layout=twopi, sans a root, the first item is the root, so an outline radiates from its top.
 MAIN-ARG is the graph's title, its label; other KWDARGS are graph attributes, or node and edge defaults when spelled `:node.KEY' and `:edge.KEY'.
 Header attributes come before the block's own #+graph:, #+node:, and #+edge: tables, so those tables win."
   (-let* (((preamble stmts ctx) (org--graph-parse raw-contents kwdargs))
-          (mindmap  (plist-get kwdargs :mindmap))
-          (directed (and (not mindmap) (or (not (plist-member kwdargs :directed)) (plist-get kwdargs :directed))))
           ;; Under `:notes inline', the graph's own notes sit beneath its title.
-          ;; The title is labelled as an item's text is, its markup, colours, and maths so too.
+          ;; The title is labelled as an item's text is, its markup, colors, and maths so too.
           (title    (org--graph-with-body (unless (s-blank-str-p main-arg) (org--graph-title-label main-arg))
                                           (plist-get preamble :body)))
           (header   (org--graph-header-rows kwdargs))
           (fills    nil))
     (setq header (plist-put header :graph-rows (append (when title `(("label" ,title))) (plist-get header :graph-rows))))
-    ;; An outline is a mindmap already: its first item at the centre, the rest radiating out; the header's own rows win.
-    (when mindmap
-      (setq header (plist-put header :graph-rows
-                              (org--graph-override `(("layout" "twopi") ("overlap" "false") ("ranksep" "1.0")
-                                                     ,@(-some--> (org--graph-first-node stmts) `(("root" ,it))))
-                                                   (plist-get header :graph-rows))))
-      (setq header (plist-put header :node-rows
-                              (org--graph-override '(("shape" "box") ("style" "rounded,filled") ("color" "gray40"))
-                                                   (plist-get header :node-rows))))
-      (setq header (plist-put header :edge-rows
-                              (org--graph-override '(("color" "gray50")) (plist-get header :edge-rows))))
-      (org--graph-mindmap-paint ctx stmts))
     (-when-let (theme (org--graph-theme-rows kwdargs))
-      (setq fills (plist-get theme :containers))
+      (setq fills (plist-get theme :container-colors))
+      (-some->> (plist-get theme :node-colors) (org--graph-paint-by-depth ctx stmts))
       (dolist (key '(:graph-rows :node-rows :edge-rows))
         (setq header (plist-put header key (org--graph-override (plist-get theme key) (plist-get header key))))))
     (dolist (key '(:graph-rows :node-rows :edge-rows))
       (setq preamble (plist-put preamble key (org--graph-override (plist-get header key) (plist-get preamble key)))))
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))
       (org--graph-note-ranks ctx stmts))
+    ;; An outline radiates from its top: twopi's root, else, is whichever node it finds most central.
+    (-when-let (root (and (equal "twopi" (cadr (assoc "layout" (plist-get preamble :graph-rows))))
+                          (not (assoc "root" (plist-get preamble :graph-rows)))
+                          (org--graph-first-node stmts)))
+      (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) `(("root" ,root))))))
     (let* ((org--graph-container-fills fills)
            (org--graph-filled-by-default (org--graph-filling-kinds preamble))
            (org--graph-node-defaults (plist-get preamble :node-rows))
-           (body (append (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)
+           (body (append (--mapcat (org--graph-stmt->dot it "->" ctx) stmts)
                         (org--graph-tag-clusters->dot ctx)
                         ;; A legend is a column: top-down, its entries are chained; left-right, they share a rank already.
                         (unless (member (cadr (assoc "rankdir" (plist-get preamble :graph-rows))) '("LR" "RL"))
-                          (org--graph-legend-chain stmts (if directed "->" "--") ctx)))))
+                          (org--graph-legend-chain stmts "->" ctx)))))
       (when (org--graph-ctx-compound ctx)
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("compound" "true"))))))
       ;; One global ranking, so an `:@X:' group may align nodes in boxes, and leave them there.
       (when (and (org--graph-boxed-ranks-p ctx stmts) (not (assoc "newrank" (plist-get preamble :graph-rows))))
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("newrank" "true"))))))
-      (org-graph--unflatten (format "%s {\n  %s\n}" (if directed "digraph" "graph")
+      (org-graph--unflatten (format "digraph {\n  %s\n}"
                                     (s-join "\n  " (append (org--graph-scope->dot preamble) body)))
                             (plist-get kwdargs :unflatten)))))
 

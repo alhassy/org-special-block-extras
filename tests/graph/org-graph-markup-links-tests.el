@@ -5,7 +5,7 @@
 
 ;;; Our links mean in a label what they mean in prose; see `org-markup-links'
 
-(define-graph-test "a colour link colours its node's label, as red:x colours x in prose"
+(define-graph-test "a color link colors its node's label, as red:x colors x in prose"
   :input "
 + red:Church
   + [[blue:][Turing]] machines"

@@ -45,11 +45,11 @@
 #+end_%s" begin body (car (split-string begin))) backend)
        backend))))
 
-(defconst org-markup-tests--own-syntax '(graph tree math documentation image)
-  "Blocks whose contents are no prose ---a graph, maths, a glossary, an image's code---; each has its own test.")
+(defconst org-markup-tests--own-syntax '(graph smartdiagram tree math documentation image)
+  "Blocks whose contents are no prose ---a graph, a smartdiagram, maths, a glossary, an image's code---; each has its own test.")
 
 (deftest "every block's contents render our links, Org's links, its targets, and maths, as prose does"
-  ;; A quote, and a colour block, show their contents only given a citation key, or a colour.
+  ;; A quote, and a color block, show their contents only given a citation key, or a color.
   (dolist (begin (--map (pcase it ('quote "quote Knuth") ('color "color teal") (_ (symbol-name it)))
                         (--remove (memq it org-markup-tests--own-syntax) org--supported-blocks)))
     (org-markup-tests--check begin (format "See %s." org-markup-tests--prose))))
@@ -94,7 +94,7 @@ See [[qed][the conclusion]]." 'html)))
   (should (equal (org--read-header "[[*Folds][the folds]] :n 2") '("[[*Folds][the folds]]" :n 2)))
   (should (equal (org--read-header "[[https://orgmode.org][Org]], too") '("[[https://orgmode.org][Org]]," too))))
 
-(deftest "a proof tree's lines are maths, as a math block's: red:x colours, and [[tooltip:x][tip]] hovers"
+(deftest "a proof tree's lines are maths, as a math block's: red:x colors, and [[tooltip:x][tip]] hovers"
   (let ((out (org-markup-tests--export "
 #+begin_tree
 + [[tooltip:MP][modus ponens]] :: red:q

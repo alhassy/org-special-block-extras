@@ -177,7 +177,7 @@ A PROGRAM that is not installed is an error saying how to install it, by `org--i
 (defun org--image-html-pdf (preamble body args pdf)
   "Writes HTML BODY as PDF, by `org-image-block-browser', headless, cropped by pdfcrop; the block's PREAMBLE, and
 ARGS' :css, join its <head>, and ARGS' :width, such as 600px, fixes its width.  The page is transparent, sans
-margins, its colours printed as shown."
+margins, its colors printed as shown."
   (unless org-image-block-browser (user-error "#+begin_image html needs Chrome, or Chromium; see `org-image-block-browser'"))
   (let* ((dir (make-temp-file "org-image-" t))
          (html (expand-file-name "image.html" dir))
@@ -469,7 +469,8 @@ of the document's; yet a PDF picture's text is not searchable, nor in the docume
 HTML one is not interactive.  :resolution 300 sharpens its PNG; `org-image-block-shell-escape' allows
 minted and the like, at the price of letting the LaTeX run shell commands.
 A p5js block is a p5.js sketch: it runs in HTML, and atop the block upon C-c C-c, in an Emacs with
-xwidgets; elsewhere, it is a still a second in.  For what a sketch can do, see https://p5js.org/examples/"
+xwidgets; elsewhere, it is a still a second in.  For what a sketch can do, see https://p5js.org/examples/
+For LaTeX's smartdiagram drawn from an Org list, rather than written by hand, see #+begin_smartdiagram."
                      &context backend raw-contents anchor)
   "LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or p5js LANGUAGE: itself along a backend that reads it; else an image.
 In HTML, an SVG, inlined; in LaTeX, a PDF; in Markdown, and elsewhere, a PNG.  C-c C-c renders them, else export

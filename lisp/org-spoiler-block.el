@@ -51,7 +51,7 @@ blanks with the answers folded away beneath them."
                  "@@latex:\\\\fbox{\\\\phantom{\\1}}\\\\footnote{\\1}@@"
                  contents))
                (t
-                ;; The styling depends only on COLOR, so a class per colour serves every spoiler of that colour.
+                ;; The styling depends only on COLOR, so a class per color serves every spoiler of that color.
                 (-let [class (format "spoiler-%s" color)]
                   (concat
                    ;; In HTML, a ‘style’ can be, technically, almost anywhere...
@@ -68,7 +68,7 @@ blanks with the answers folded away beneath them."
 The capital of Canada is ((Ottawa)); of Australia, ((Canberra)).
 #+end_spoiler
 
-# :left and :right change the delimiters, :left \"[[\" :right \"]]\"; COLOR is the hiding colour.")
+# :left and :right change the delimiters, :left \"[[\" :right \"]]\"; COLOR is the hiding color.")
 
 (provide 'org-spoiler-block)
 ;;; org-spoiler-block.el ends here

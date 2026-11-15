@@ -59,7 +59,7 @@ content
 \\end{tcolorbox}
 #+end_export")
 
-(deftest "box block names hex colours via \\definecolor in LaTeX, since tcolorbox options reject #RRGGBB."
+(deftest "box block names hex colors via \\definecolor in LaTeX, since tcolorbox options reject #RRGGBB."
   (let ((latex (org--box-block 'latex "content" nil :background-color "#CCFFCC" :frame-color 'blue)))
     (should (s-contains? "\\definecolor{osbe-box-back}{HTML}{CCFFCC}" latex))
     (should (s-contains? "\\colorlet{osbe-box-frame}{blue}" latex))
@@ -75,15 +75,15 @@ content
 
 ;;; Shadows
 
-(define-org-call-test "a box's shadow may be a single colour, given as a string, without quoting it into the CSS"
+(define-org-call-test "a box's shadow may be a single color, given as a string, without quoting it into the CSS"
   :call (org--box-shadow "pink")
   :returns "box-shadow: 10px 10px 20px 0px pink; width: 50%; margin: auto")
 
-(define-org-call-test "a box's shadow may be a plist of placed colours"
+(define-org-call-test "a box's shadow may be a plist of placed colors"
   :call (org--box-shadow '(:left cyan :right pink))
   :returns "width: 50%; margin: auto; box-shadow: 8px 6px 13px 8px pink,-16px 12px 20px 16px cyan")
 
-(define-org-call-test "a box's inset shadow prefixes each of its preset colours with inset"
+(define-org-call-test "a box's inset shadow prefixes each of its preset colors with inset"
   :call (org--box-shadow 'inset)
   :returns "width: 50%; margin: auto; box-shadow: 8px 6px 13px 8px inset hsl(1, 100%, 50%),-16px 12px 20px 16px
 inset hsl(60, 100%, 50%),48px 36px 71px 28px inset hsl(180, 100%, 50%)")

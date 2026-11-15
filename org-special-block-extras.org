@@ -94,7 +94,7 @@
 # Perhaps the implementation can be replace “ ” with “ ”, and “\n” with “@@html: <br>@@”,
 # then invoke built-in `org-export-string-as`?
 # 
-# orange:Going orange:forward, it would be nice to get full code colouring of
+# orange:Going orange:forward, it would be nice to get full code coloring of
 # source blocks in the HTML tooltips ---which can be done using
 # doc:org-export-string-as, just need the time.
 
@@ -241,7 +241,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 #+latex_header: \newunicodechar{𝓃}{\ensuremath{n}}
 #+latex_header: \newunicodechar{⋯}{\ensuremath{\cdots}}
 
-# +LATEX_HEADER: \usepackage[dvipsnames]{xcolor} % named colours
+# +LATEX_HEADER: \usepackage[dvipsnames]{xcolor} % named colors
 #+latex_header: \definecolor{darkblue}{rgb}{0.0, 0.0, 0.55}
 #+LATEX_HEADER: \hypersetup{colorlinks,linkcolor=darkblue,citecolor=darkblue,urlcolor=darkblue}
 
@@ -287,7 +287,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;;
 ;; 0. A unified interface, the ‘defblock’ macro, for making new block and link types.
 ;;
-;; 1. Colours: Regions of text and inline text can be coloured using 19 colours;
+;; 1. Colors: Regions of text and inline text can be colored using 19 colors;
 ;;  easily extendable; below is an example.
 ;;
 ;;             #+begin_red org
@@ -305,7 +305,7 @@ pre.src-C:before { content: 'Org-mode Example!'; }
 ;; 4. Details: Regions of text can be folded away in HTML
 ;;
 ;; 5. Badges: SVG badges have the pleasant syntax
-;; badge:key|value|colour|url|logo; only the first two are necessary.
+;; badge:key|value|color|url|logo; only the first two are necessary.
 ;;
 ;; 6. Tooltips: Full access to Lisp documentation as tooltips, or any other
 ;; documentation-backend, including user-defined entries; e.g., doc:thread-first
@@ -712,7 +712,7 @@ and the result looks nice. “Look ma, no HTML required!”
 # in the process ---the average Org user should not have to do so.
 #
 # Similarly, we provide a number of ‘link types’ ~[[linktype:label][description]]~
-# for producing in-line coloured text and SVG “badges”.
+# for producing in-line colored text and SVG “badges”.
 #
 # We begin with the first two sections serving as mini-tutorials on special blocks
 # and on link types. The special block setup we use is /extensible/ in that a new
@@ -721,7 +721,7 @@ and the result looks nice. “Look ma, no HTML required!”
 # sections are literate implementation matter, along with examples and
 # screenshots.*
 #
-# In summary, we provide 20 colour block types and 20 colour link types,
+# In summary, we provide 20 color block types and 20 color link types,
 # an ‘editor comment’ block type as well as a link type,
 # a ‘details’ block type, a ‘parallel’ multiple columns view block type,
 # a ‘link here’ link type, 8 badge link types,
@@ -960,7 +960,7 @@ A ~div~ tag defines a division or a section in an HTML document that is styled i
 a particular fashion or has JavaScript code applied to it.  For example
 ---placing the following in an ~#+begin_export html ⋯ #+end_export~--- results in
 a section of text that is editable by the user ---i.e., one can just alter text
-in-place--- and its foreground colour is red, while its background colour is
+in-place--- and its foreground color is red, while its background color is
 light blue, and it has an uninformative tooltip.
 #+begin_parallel
 _Source_
@@ -1046,7 +1046,7 @@ this, we use Org's link mechanism./
   #+html: <br>
 
 + Textual expansions :: Org's own =src_elisp[:results raw]{user-full-name}= expands, upon export, to /Musa
-  Al-hassy/ on my machine. Or maybe we want a splash of colour in our lives:
+  Al-hassy/ on my machine. Or maybe we want a splash of color in our lives:
   =*<pink: super neato stuff>*= becomes *<pink: super neato stuff>*.
 
   Similarly, Org's own target ~<<usefulness-of-links>>~ becomes:
@@ -1181,7 +1181,7 @@ consistent with doc:defun--- and so let's take a look at it first.
     The syntax for a raw link is =example:path=
     and for the bracketed descriptive form ~[[example:path][description]]~.
 
-    - Some of my intended uses for links including colouring text and doing
+    - Some of my intended uses for links including coloring text and doing
       nothing else, as such the terminology ‘path’ is not sufficiently generic and
       so I use the designation ‘label’ instead.
 
@@ -2761,7 +2761,7 @@ Define a block [[doc:org--spoiler][spoiler]] so that the following examples beha
 #+begin_solution
 Rather than having auxiliary ~#+html_head:~ styling settings, we have moved the
 styling information to the ~defblock~ declaration /and/ are using the main argument
-to colour the spoiler ---which defaults to grey ;-)
+to color the spoiler ---which defaults to grey ;-)
 
 --------------------------------------------------------------------------------
 
@@ -2961,7 +2961,7 @@ somewhere /besides/ the ~tree~ blocks; just ~\[\]~ suffices. )
    :END:
 
 The rest of the article showcases the special blocks declared with ~defblock~ to
-allow the above presentation ---with folded regions, coloured boxes, tooltips,
+allow the above presentation ---with folded regions, colored boxes, tooltips,
 parallel columns of text, etc.
 
 Enjoy ;-)
@@ -3101,7 +3101,7 @@ with all ‘:kᵢ:’ lines stripped out.
  in a =parallel= block and which person is making editorial remarks in an
  =remark= block.
 
- Why the =:𝒳:= notation? At the start of a line, a string of this form is coloured
+ Why the =:𝒳:= notation? At the start of a line, a string of this form is colored
  ---I don't recall why that is--- and that's a good enough reason to make use of
  such an existing support.
 
@@ -3110,7 +3110,7 @@ with all ‘:kᵢ:’ lines stripped out.
  =:my_drawer_name:= on a line by itself and end with =:end:= on a line by itself, and
  these delimiters allow us to fold away such regions and possibly exclude them
  from export. That is, drawers act as a light-weight form of blocks. Anyhow, Org
- colours drawer delimiters,
+ colors drawer delimiters,
  #+end_remark
 
 *** An Example Special Block ---=foo=
@@ -3349,7 +3349,7 @@ creating /custom Org-mode blocks/ and /links/ that work seamlessly
 across backends ---without diving into the dark arts of raw HTML or
 LaTeX!
 
-Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the eyes.
+Reading in glare?  [[palette:][Pick a background]] ---a pale color soothes the eyes.
 
 ** 🎁  What Does It Do?
   :PROPERTIES:
@@ -3358,7 +3358,7 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
 
 - *🎨 Style with ease* --- add colors, badges, tooltips (from a dictionary, Emacs
   Help, or custom file), keystroke notations, inline editorial comments, or even
-  colourful ASCII cows with fortune cookies.
+  colorful ASCII cows with fortune cookies.
 - *📚 Glossary support* --- embed hoverable documentation with =doc:= links and auto-generated glossaries.
 - *📦 Add interactive content*: from collapsible detail sections and parallel columns to spoiler tags and equational proofs.
 - *🎛 Switch any block*: =:when (eq backend 'html)=, =:noexport t=, =:let (N 7)=, =:boxed "Title"=, =:folded t=, and
@@ -3395,29 +3395,30 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale colour soothes the 
   | =tree=                      | Display proof trees and logical derivations --- fantastic for formal logic.           |
   | =stutter=                   | Repeat content multiple times --- e.g., for emphasis or stylistic flair.              |
   | =solution=                  | Reveal answers in stages --- perfect for educational content.                         |
-  | =math=                      | Display maths wherein =red:𝒳= colours a symbol; calculational proofs, with hints.     |
+  | =math=                      | Display maths wherein =red:𝒳= colors a symbol; calculational proofs, with hints.      |
   | =graph=                     | Draw nested Org lists as Graphviz diagrams --- =C-c C-c= renders a PNG in place.      |
+  | =smartdiagram=              | Typeset an Org list as LaTeX's smartdiagram: a planet amid satellites, a flow, …      |
   | =image LANG=                | LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or p5.js: itself, else a picture.       |
-  | =note=, =tip=, =warning=, … | GitHub-style callouts ---a coloured rule and a titled heading.                        |
-  | =highlight=                 | Colour a paragraph's background, rather than its text.                                |
+  | =note=, =tip=, =warning=, … | GitHub-style callouts ---a colored rule and a titled heading.                         |
+  | =highlight=                 | Color a paragraph's background, rather than its text.                                 |
   # | =documentation=      | Define glossary/tooltips --- enrich your articles with inline help.                   |
   # | =remark= / =rremark= | Editorial comments --- provide in-place or top-level reviewer feedback.               |
 
 --------------------------------------------------------------------------------
   
 *Ready-to-Use Custom Links*
-    | Link                 | Purpose                                                                                         |
-    |----------------------+-------------------------------------------------------------------------------------------------|
-    | =doc:label=          | Glossary tooltips ---e.g., doc:cl-loop; our own terms, even =<<<radio targets>>>=, too          |
-    | =kbd:=               | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=; in Emacs, 〔C-x C-e〕, click to run |
-    | =color:= or =red:=   | Inline text colouring --- supports both names and hex codes.                                    |
-    | =highlight:=         | Colour the background instead ---so highlighted in Emacs too.                                   |
-    | =palette:=           | A button for readers to pick the page's background colour.                                      |
-    | =toggle-details:=    | A button to unfold, or fold, every =details= block at once.                                     |
-    | =badge:=             | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
-    | =fortune:=           | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
-    | =<<X>>=             | Permalinks --- Org's own targets, made a visible 🔗 in HTML.                                      |
-    | =elisp:=             | Make clickable actions --- buttons that run Emacs Lisp.                                         |
+    | Link               | Purpose                                                                                         |
+    |--------------------+-------------------------------------------------------------------------------------------------|
+    | =doc:label=        | Glossary tooltips ---e.g., doc:cl-loop; our own terms, even =<<<radio targets>>>=, too          |
+    | =kbd:=             | Stylized keybindings with tooltips --- e.g., =kbd:C-x_C-e=; in Emacs, 〔C-x C-e〕, click to run |
+    | =color:= or =red:= | Inline text coloring --- supports both names and hex codes.                                     |
+    | =highlight:=       | Color the background instead ---so highlighted in Emacs too.                                    |
+    | =palette:=         | A button for readers to pick the page's background color.                                       |
+    | =toggle-details:=  | A button to unfold, or fold, every =details= block at once.                                     |
+    | =badge:=           | Embed project badges --- e.g., GitHub stars, Reddit subs, versioning.                           |
+    | =fortune:=         | Insert ASCII animals saying jokes or phrases --- joy in your docs!                              |
+    | =<<X>>=            | Permalinks --- Org's own targets, made a visible 🔗 in HTML.                                    |
+    | =elisp:=           | Make clickable actions --- buttons that run Emacs Lisp.                                         |
     
 
     Org's own =elisp:= links evaluate Lisp; e.g., =[[elisp:(find-file user-init-file)][Init]]= is a
@@ -3459,9 +3460,10 @@ again/.
   :END:
 
 Every node below leads to its section; hover, or tap, one for its gist. The map is itself a [[#graphs][graph]]
-block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ drawer, and laid out radially by ~:layout twopi~.
+block ---an Org list, colored by ~#+name:~ tables folded in its ~:TEMPLATES:~ drawer, and laid out radially by ~:layout twopi~.
 
-#+begin_graph :svg t :size "10,10" :layout twopi :root osbe :ranksep 1.6 :wrap 16 :directed nil :node.fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :edge.color gray50 :overlap false
+#+begin_graph :size "10,10" :layout twopi :root osbe :ranksep 1.6 :wrap 16 :node.fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :edge.color gray50 :overlap false
+#+edge: :undirected:
 :TEMPLATES:
 #+name: glance_write
 | fillcolor | "#e5f5e5" |
@@ -3474,12 +3476,12 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
 :END:
 + <<osbe>> [[https://github.com/alhassy/org-special-block-extras][*org-special-block-extras*]] [fn::Blocks, links, and switches for Org, exported alike to HTML, LaTeX, and Markdown.]
   + Blocks to write :glance_write:
-    + [[#callouts][Callouts]] \\ note · tip · important · warning · caution [fn::GitHub's alerts: a coloured rule and a titled heading; Markdown gets the alerts themselves.] :glance_write:
+    + [[#callouts][Callouts]] \\ note · tip · important · warning · caution [fn::GitHub's alerts: a colored rule and a titled heading; Markdown gets the alerts themselves.] :glance_write:
     + [[#boxed-text][Folding & framing]] \\ box · details · solution · spoiler · parallel [fn::Draw attention to text, fold it away, or set ideas side by side.] :glance_write:
     + [[#tooltip][Remarks]] \\ margin · tooltip · remark [fn::Notes that stay out of the reader's way: in the margin in LaTeX, hovered or tapped in HTML. Org's own footnotes join them.] :glance_write:
-    + [[#highlights][Colour]] \\ red · blue · … · highlight [fn::19 named colours, each a block and a link, and a highlight that colours the background.] :glance_write:
-    + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colours a symbol, aligned at =&=, with coloured tags that =[[𝒳]]= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
-    + [[#graphs][Graphs]] \\ graph [fn::Org lists drawn by Graphviz; this very map is one.] :glance_write:
+    + [[#highlights][Color]] \\ red · blue · … · highlight [fn::19 named colors, each a block and a link, and a highlight that colors the background.] :glance_write:
+    + [[#math][Maths & proofs]] \\ math · tree [fn::Display maths wherein =red:𝒳= colors a symbol, aligned at =&=, with colored tags that =[[𝒳]]= cites; calculational proofs, their hints folded by =TAB=; and proof trees, as Org lists.] :glance_write:
+    + [[#graphs][Graphs]] \\ graph · smartdiagram [fn::Org lists drawn by Graphviz ---this very map is one--- or typeset by LaTeX's smartdiagram.] :glance_write:
     + [[#images][Images]] \\ image [fn::LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or a p5.js sketch: itself where read natively, else a picture; a sketch runs in the page, and atop the block upon C-c C-c.] :glance_write:
     + [[#glossaries][Glossaries]] \\ documentation [fn::Define a term once ---even as Org's own =<<<radio target>>>=, whose every mention is then a tooltip--- and cite it everywhere with =doc:𝒳=; =#+print_glossary:= lists every citation.] :glance_write:
   + Links to cite :glance_read:
@@ -3512,7 +3514,7 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
 :PROPERTIES:
 :CUSTOM_ID:   org-special-block-extras-blocks-and-links
 :TITLE:       org-special-block-extras: The block and link types
-:DESCRIPTION: Boxes, details, tooltips, glossaries, graphs, callouts, colours, and more ---each shown beside its export.
+:DESCRIPTION: Boxes, details, tooltips, glossaries, graphs, callouts, colors, and more ---each shown beside its export.
 :END:
 ** Boxed Text —Calling out super duper info
    :PROPERTIES:
@@ -3540,8 +3542,8 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
    for LaTeX, there are also FRAME-COLOR and TITLE-BACKGROUND-COLOR.
    
    SHADOW is an alternate style of boxing: It shows the contents in a centred
-   box with a shadow colour being the given non-nil value of SHADOW.
-   If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.
+   box with a shadow color being the given non-nil value of SHADOW.
+   If SHADOW is a hexadecimal color, it should be a string enclosed in double quotes.
    More accurately, the following are all valid uses:
    
        ,#+begin_box title :shadow t
@@ -3554,11 +3556,11 @@ block ---an Org list, coloured by ~#+name:~ tables folded in its ~:TEMPLATES:~ d
        ,#+begin_box title :shadow (cyan "inset pink" orange)
        ,#+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
    
-   Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+   Notice that prefixing colors with ‘inset’ causes the color to be within the box,
    rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
    
    The HTML export uses a padded div, whereas the LaTeX export
-   requires the tcolorbox package; Markdown, sans colours, gets a quote opening with TITLE in bold.
+   requires the tcolorbox package; Markdown, sans colors, gets a quote opening with TITLE in bold.
    
    Regarding the Lisp function:
    + BACKEND refers to the current export backend.
@@ -3631,17 +3633,17 @@ Or, with the header option ~:shadow (:left "inset cyan" :right "inset pink"
 
  For further header options, see the documentation of [[doc:org--box-block][box]].
 
-**** Subtle Colours
+**** Subtle Colors
  #+html: <br>
  In the first example above, /how did we get that nice light blue? What
  is its HTML code?/ That's not something I care to remember, so let's
- make a handy dandy utility … Now when users request a colour to ~box~
- their text, it will be a ‘subtle colour’ ;-)
+ make a handy dandy utility … Now when users request a color to ~box~
+ their text, it will be a ‘subtle color’ ;-)
 
- #+begin_details Implementation for Subtle Colours
+ #+begin_details Implementation for Subtle Colors
  #+begin_src emacs-lisp -r -n
 (defun org-subtle-colors (c)
-  "HTML codes for common colours.
+  "HTML codes for common colors.
 
 Names are very rough approximates.
 
@@ -3663,7 +3665,7 @@ Names are very rough approximates.
   ))
  #+end_src
 
-To use these colour names, you will need the following incantations in
+To use these color names, you will need the following incantations in
 your Org file.
 
 #+begin_src org :tangle no
@@ -3685,7 +3687,7 @@ your Org file.
 #+latex_header: \definecolor{cyan}{HTML}{00FFFF}
 #+end_src
 
-In the future, it'd be nice to account for colours for LaTeX as well.  ( E.g.,
+In the future, it'd be nice to account for colors for LaTeX as well.  ( E.g.,
 src_latex[:exports code]{\color{blue}} is a nightmare. )
  #+end_details
 
@@ -3724,7 +3726,7 @@ src_latex[:exports code]{\color{blue}} is a nightmare. )
    By default, the TITLE of such blocks is “Details”,
    its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
    
-   In HTML, we show folded, details, regions with a nice greenish colour.
+   In HTML, we show folded, details, regions with a nice greenish color.
    
    Regarding the Lisp function:
    + BACKEND refers to the current export backend.
@@ -4065,7 +4067,7 @@ attention, and so a tooltip via [[doc:org--remark-block][remark]] suffices.
    The block is one-off, “inline footnotes”; Org’s own [fn::…] are such remarks too.  For a note used repeatedly, consider
    declaring it with ‘documentation’ and citing it with ‘doc’.
    
-   WIDTH, COUNTER, and COLOR are LaTeX’s: the note is WIDTH wide, coloured COLOR, its number in black.  Since verbatim
+   WIDTH, COUNTER, and COLOR are LaTeX’s: the note is WIDTH wide, colored COLOR, its number in black.  Since verbatim
    environments fail as arguments to \marginpar, CONTENTS is saved in a minipage within a LaTeX box, then unfolded in the
    margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For LaTeX, a ‘#+resize:’ line has the rest of the
    note resized, to 1.3 the margin’s width ---requiring \usepackage{adjustbox}.
@@ -4721,7 +4723,7 @@ from∘to m = {! try it! }
      “bar”. /This style allows text to freely move between columns,
      depending on the size of the browser, which may dynamically shrink
      and grow./ The value ~BAR~ can either be ~t~, ~nil~, or any
-     (backend)-valid colour specification; such as ~red~ or ~green~.
+     (backend)-valid color specification; such as ~red~ or ~green~.
      #+end_parallel
 
      ----------------------------------------------------------------------
@@ -4748,7 +4750,7 @@ from∘to m = {! try it! }
      /[[doc:org--parallel-block][parallel]] columns of text/.
      #+end_org
 
-     #+RESULTS[f2dde1a0f0]:
+     #+RESULTS[3a479ffb16]:
      :results:
      #+begin_export html
      <p>
@@ -4756,10 +4758,10 @@ from∘to m = {! try it! }
      <abbr class="tooltip" tabindex="0">parallel<template><pre>Place ideas side-by-side, possibly with a separator.
      
      There are COLS many columns, and they may be separated by solid
-     vertical rules if BAR is a non-nil (colour) value.
+     vertical rules if BAR is a non-nil (color) value.
      
      + COLS is either a number or a sequence of the shape: 10% 20% 30%.
-     + BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.
+     + BAR is either ‘t’, ‘nil’, or a color such as ‘red’ or ‘blue’.
      
      ----------------------------------------------------------------------
      
@@ -4768,7 +4770,7 @@ from∘to m = {! try it! }
      “bar”. This style allows text to freely move between columns,
      depending on the size of the browser, which may dynamically
      shrink and grow.  BAR can either be ‘t’, ‘nil’, or
-     any (backend)-valid colour specification; such as ‘red’ or
+     any (backend)-valid color specification; such as ‘red’ or
      ‘green’.
      
      “Hard Columns”: Alternatively, for non-uniform column widths,
@@ -4822,7 +4824,7 @@ from∘to m = {! try it! }
      “bar”. <i>This style allows text to freely move between columns,
      depending on the size of the browser, which may dynamically shrink
      and grow.</i> The value <code>BAR</code> can either be <code>t</code>, <code>nil</code>, or any
-     (backend)-valid colour specification; such as <code>red</code> or <code>green</code>.
+     (backend)-valid color specification; such as <code>red</code> or <code>green</code>.
      </p>
      </div>
      
@@ -4853,10 +4855,10 @@ from∘to m = {! try it! }
      <i><abbr class="tooltip" tabindex="0">parallel<template><pre>Place ideas side-by-side, possibly with a separator.
      
      There are COLS many columns, and they may be separated by solid
-     vertical rules if BAR is a non-nil (colour) value.
+     vertical rules if BAR is a non-nil (color) value.
      
      + COLS is either a number or a sequence of the shape: 10% 20% 30%.
-     + BAR is either ‘t’, ‘nil’, or a colour such as ‘red’ or ‘blue’.
+     + BAR is either ‘t’, ‘nil’, or a color such as ‘red’ or ‘blue’.
      
      ----------------------------------------------------------------------
      
@@ -4865,7 +4867,7 @@ from∘to m = {! try it! }
      “bar”. This style allows text to freely move between columns,
      depending on the size of the browser, which may dynamically
      shrink and grow.  BAR can either be ‘t’, ‘nil’, or
-     any (backend)-valid colour specification; such as ‘red’ or
+     any (backend)-valid color specification; such as ‘red’ or
      ‘green’.
      
      “Hard Columns”: Alternatively, for non-uniform column widths,
@@ -4924,7 +4926,7 @@ from∘to m = {! try it! }
      “bar”. \emph{This style allows text to freely move between columns,
      depending on the size of the browser, which may dynamically shrink
      and grow.} The value \texttt{BAR} can either be \texttt{t}, \texttt{nil}, or any
-     (backend)-valid colour specification; such as \texttt{red} or \texttt{green}.
+     (backend)-valid color specification; such as \texttt{red} or \texttt{green}.
      
      \end{multicols}\end{minipage}
      
@@ -4952,15 +4954,15 @@ from∘to m = {! try it! }
      #+end_export
      :end:
 
-** Display maths ---=#+begin_math=, wherein =red:𝒳= colours a symbol
+** Display maths ---=#+begin_math=, wherein =red:𝒳= colors a symbol
   :PROPERTIES:
   :CUSTOM_ID: math
   :END:
 
-  To colour a formula, LaTeX ---and MathJax, which typesets it in HTML--- would have us write
-  ={\color{red} x}=; yet our prose colours by =red:x=. A [[doc:org--math-block][math]] block is display maths
-  wherein our links are LaTeX's: =red:ATOM= colours a ={group}=, =\left(…\right)=, a
-  =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colours =a + b=. So too
+  To color a formula, LaTeX ---and MathJax, which typesets it in HTML--- would have us write
+  ={\color{red} x}=; yet our prose colors by =red:x=. A [[doc:org--math-block][math]] block is display maths
+  wherein our links are LaTeX's: =red:ATOM= colors a ={group}=, =\left(…\right)=, a
+  =\command{with}{arguments}=, a word, else one character; =[[red:][a + b]]= colors =a + b=. So too
   for =color:#ff0066=, =highlight:=, web links, and =tooltip:= and =doc:=, which hover in
   HTML; as does a footnote, =x[fn::the current element]=, or =x[fn:elt]=, whose =[fn:elt] …= definition
   sits elsewhere, as in prose ---so one long tip serves many atoms. A tooltip in maths is as one in prose: the
@@ -5038,7 +5040,7 @@ from∘to m = {! try it! }
   + An Org table is a matrix ---a =pmatrix=, or whichever environment =:matrix= names--- whose
     columns =TAB= aligns for us. As in Org, a line that begins =|= is a table; so we write
     =\lvert x \rvert= for an absolute value.
-  + A line ending =COLOUR:<<NAME>>=, Org's own target, is tagged ---see [[#aligned-equations][aligned equations]]--- and
+  + A line ending =COLOR:<<NAME>>=, Org's own target, is tagged ---see [[#aligned-equations][aligned equations]]--- and
     =[[NAME]]= cites it; =:numbered t= numbers the rest. Org's own =#+name: NAME= labels the
     block's last line, so =[[NAME]]= cites a single equation sans a tag; unnumbered, it is tagged =NAME=.
   + A description list is a =cases= environment, each term a value and each description its
@@ -5062,7 +5064,7 @@ n! =
   + Inline maths, =$red:x$= or =\(red:x\)=, reads our links and Org's markup just as the block does.
   + In Emacs, the block looks as a =#+begin_src latex= block does, with each =red:ATOM= in red, as
     the maths reads it; =C-c C-c= shows the maths as an image atop the block, until =C-c C-c= again,
-    or an edit; and =C-c '= edits it in =latex-mode=, its hints, tags, and colours shown as in the Org buffer. Org's own =C-c C-x C-l=, and
+    or an edit; and =C-c '= edits it in =latex-mode=, its hints, tags, and colors shown as in the Org buffer. Org's own =C-c C-x C-l=, and
     =#+startup: latexpreview=, show math blocks as images too.
   + With =org-cdlatex-mode=, a math block reads as maths, as =$…$= does: =_= and =^= open braces, =`a=
     is =\alpha=, and =TAB= expands cdlatex's templates; a hint's prose is prose, save its own =$…$=.
@@ -5084,8 +5086,8 @@ R_{teal:\theta} =
   :END:
 
   A [[#math][math]] block whose lines have an =&= is LaTeX's =align=: its lines line up at each =&=. As
-  in LaTeX, a line ends in =\\=, unless it ends in a tag =COLOUR:<<NAME>>=, which is =NAME= in that
-  colour, as =red:x= colours maths; =<<NAME>>= is plain. It is Org's own target, so =NAME= may hold
+  in LaTeX, a line ends in =\\=, unless it ends in a tag =COLOR:<<NAME>>=, which is =NAME= in that
+  color, as =red:x= colors maths; =<<NAME>>= is plain. It is Org's own target, so =NAME= may hold
   spaces, and a =_= is a subscript: =<<Base Case_1>>= is tagged “Base Case₁”. Its brackets delimit it, so
   a hint's nested calculation, =\[ … \]=, may hold one too. We cite it as Org cites any
   named thing: =[[NAME]]= is its number, or name, as LaTeX's =\eqref=
@@ -5101,7 +5103,7 @@ R_{teal:\theta} =
   are welcome too: the [[#switches-for-every-block][:let switch]] gives them, as below.
 
   #+begin_org :ignore t :demo t
-  A ~math~ block aligns its lines at each =&=; a line may end in a coloured tag,
+  A ~math~ block aligns its lines at each =&=; a line may end in a colored tag,
   which a link, =[[Golden Rule]]=, cites. Shorthands, such as =->= below, come from the =:let= switch every block has.
 
   #+begin_math :let (-> "\\Rightarrow" == "\\equiv")
@@ -5112,11 +5114,11 @@ R_{teal:\theta} =
   By [[Golden Rule]], conjunction is defined by equivalence and disjunction.
   #+end_org
 
-  #+RESULTS[aea107c8b7]:
+  #+RESULTS[87b87c1db1]:
   :results:
   #+begin_export html
   <p>
-  A <code>math</code> block aligns its lines at each <code>&amp;</code>; a line may end in a coloured tag,
+  A <code>math</code> block aligns its lines at each <code>&amp;</code>; a line may end in a colored tag,
   which a link, <code>[[Golden Rule]]</code>, cites. Shorthands, such as <code>-&gt;</code> below, come from the <code>:let</code> switch every block has.
   </p>
   
@@ -5130,7 +5132,7 @@ R_{teal:\theta} =
   </p>
   #+end_export
   #+begin_export latex
-  A \texttt{math} block aligns its lines at each \texttt{\&}; a line may end in a coloured tag,
+  A \texttt{math} block aligns its lines at each \texttt{\&}; a line may end in a colored tag,
   which a link, \texttt{[[Golden Rule]]}, cites. Shorthands, such as \texttt{->} below, come from the \texttt{:let} switch every block has.
   
   \begin{align*}
@@ -5592,8 +5594,8 @@ $r$; read the key beneath, then hover, click, and =TAB= away.
 
 Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
-+ Colour tells where to look: red:red, the factor a step distributes; teal:teal, the sum it
-  reindexes; violet:violet, the two terms that survive. Inline maths is coloured alike: $red:r ≠ 1$.
++ Color tells where to look: red:red, the factor a step distributes; teal:teal, the sum it
+  reindexes; violet:violet, the two terms that survive. Inline maths is colored alike: $red:r ≠ 1$.
 + Org's =+strike+= is LaTeX's =\cancel=, so the telescoping cancellation is drawn as one.
 + =\Sn[fn::…]= is a tooltip: hover over $\mathcal{S}_n$ in the first line. =\def\Sn= names it once.
 + =:let (Σ "\\sum_{i=0}^{n-1}")= is a shorthand, so each line writes =Σ r^i=; it reaches the nested
@@ -5660,8 +5662,8 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
   The [[doc:org--graph-block][graph]] block is opt-in, so we load it separately with
   ~(require 'org-graph-block)~. Rendering needs the =dot= executable from [[https://graphviz.org][Graphviz]]:
-  HTML export embeds an inline SVG, whose tooltips hover as any other's do ---or a PNG, sans
-  tooltips, via =:svg nil=--- whereas other backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
+  HTML export embeds an inline SVG, whose tooltips hover as any other's do, whereas other
+  backends receive the dot source. Inside the block, =#+graph:=, =#+node:= and =#+edge:=
   tables set Graphviz's defaults; =C-h o org--graph-block= documents every option.
 
   A graph of many boxes, whose arcs mostly run among their members, may read better as
@@ -5672,9 +5674,10 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 
   #+begin_org :ignore t :demo live
   Some lists want a picture rather than a graph: a centre and what orbits it, or a flow of steps.
-  ~:smartdiagram TYPE~ hands the very same list to LaTeX's smartdiagram package instead of Graphviz:
+  ~#+begin_smartdiagram TITLE :type TYPE~ hands the very same list to LaTeX's smartdiagram package
+  instead of Graphviz:
 
-  #+begin_graph One Org source, rich HTML and LaTeX :smartdiagram constellation
+  #+begin_smartdiagram One Org source, rich HTML and LaTeX :type constellation
   #+graph:
   | planet color              | black!75        |
   | planet font               | \bfseries       |
@@ -5691,20 +5694,21 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
     + =details= =parallel= \\ =proof= =margin=
     + =doc:= =kbd:= \\ =badge:= =fortune:=
     + HTML & LaTeX \\ one Org source
-  #+end_graph
+  #+end_smartdiagram
 
-  Press =C-c C-c= inside the block to render it with =pdflatex=; LaTeX export typesets it in place.
+  Press =C-c C-c= inside the block to render it atop the block; LaTeX export typesets it in place.
   #+end_org
 
-  Under =:smartdiagram TYPE=, the =#+graph:= rows are LaTeX's =\smartdiagramset= keys, and
-  =C-M-i= completes those rather than Graphviz's; rendering needs =pdflatex=, with the
-  smartdiagram package, and =pdftoppm=. Org's own markup ---=#+macro:=, =~code~=, colour
+  The [[doc:org--smartdiagram-block][smartdiagram]] block is a thin facade over [[#images][=#+begin_image latex=]]: the
+  list becomes LaTeX, which that block typesets, or renders, as it would any picture of ours.
+  Its =#+graph:= rows are LaTeX's =\smartdiagramset= keys, and =C-M-i= completes those rather
+  than Graphviz's; rendering needs =pdflatex=, with the smartdiagram package, and =pdftocairo=. Org's own markup ---=#+macro:=, =~code~=, color
   links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
   hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
 
   Class diagrams, state machines, entity-relationship diagrams, mindmaps, and even sequence
   diagrams are graphs too: tags such as =:inherits:=, =:start:=, and =:one-to-many:= ---templates
-  every graph has, by ~org-defgraph-tag~--- and =#+begin_graph :mindmap t= draw them; see
+  every graph has, by ~org-defgraph-tag~--- and =#+begin_graph :theme mindmap= draw them; see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#diagrams-we-draw-sequences-classes-states-entities-mindmaps][Diagrams we draw]].
 
 ** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, p5.js: itself where read natively, else a picture
@@ -6251,7 +6255,7 @@ Hi *there*
   :CUSTOM_ID: callouts
   :END:
 
-  Five blocks, after GitHub's alerts, call out a paragraph with a coloured rule down its
+  Five blocks, after GitHub's alerts, call out a paragraph with a colored rule down its
   left under a titled heading; the title defaults to the block's name.
 
   #+begin_org :ignore t :demo t
@@ -6296,7 +6300,7 @@ Hi *there*
   #+end_export
   :end:
 
-  The colours, icons, and intended uses live in ~org-callouts~. Since a heading tagged
+  The colors, icons, and intended uses live in ~org-callouts~. Since a heading tagged
   =:note:= is common enough to mean something else entirely, callouts claim neither tags nor
   link types.
 
@@ -6304,15 +6308,15 @@ Hi *there*
   => [!WARNING]=; since alerts are untitled, a custom title becomes its bold first paragraph.
   See [[#markdown-export][Markdown export]] for what the other blocks become.
 
-** Colours ---=red:𝒳=, =[[color:#ff0066][𝒳]]=, and =#+begin_red=
+** Colors ---=red:𝒳=, =[[color:#ff0066][𝒳]]=, and =#+begin_red=
   :PROPERTIES:
   :CUSTOM_ID: colours-links
   :END:
 
-  Each of the 19 colours that HTML and LaTeX's =xcolor= share ---black, blue, brown, cyan, darkgray, gray,
+  Each of the 19 colors that HTML and LaTeX's =xcolor= share ---black, blue, brown, cyan, darkgray, gray,
   green, lightgray, lime, magenta, olive, orange, pink, purple, red, teal, violet, white, and yellow--- is a
   block, a link, and a tag; =color= takes any other, by name or hex code. In Emacs, too, each such link
-  shows its text in its colour, as soon as =org-special-block-extras-mode= is on.
+  shows its text in its color, as soon as =org-special-block-extras-mode= is on.
 
   #+begin_org :ignore t :demo t
   #+begin_red
@@ -6331,10 +6335,10 @@ Hi *there*
   blue:Here
   orange:Buddo!
 
-  [[color:#ff0066][Any hex colour]], [[color:navy][any colour's name]], and [[red:][a described red link]].
+  [[color:#ff0066][Any hex color]], [[color:navy][any color's name]], and [[red:][a described red link]].
   #+end_org
 
-  #+RESULTS[37ebeb6a51]:
+  #+RESULTS[ec4385338e]:
   :results:
   #+begin_export html
   <span style="color:red;">
@@ -6362,7 +6366,7 @@ Hi *there*
   </p>
   
   <p>
-  <span style="color:#ff0066;">Any hex colour</span>, <span style="color:navy;">any colour's name</span>, and <span style="color:red;">a described red link</span>.
+  <span style="color:#ff0066;">Any hex color</span>, <span style="color:navy;">any color's name</span>, and <span style="color:red;">a described red link</span>.
   </p>
   #+end_export
   #+begin_export latex
@@ -6382,7 +6386,7 @@ Hi *there*
   \begingroup\color{blue}Here\endgroup\,
   \begingroup\color{orange}Buddo\endgroup\,!
   
-  \definecolor{osbe-color}{HTML}{ff0066}\begingroup\color{osbe-color}Any hex colour\endgroup\,, \definecolor{osbe-color}{rgb}{0.000,0.000,0.502}\begingroup\color{osbe-color}any colour's name\endgroup\,, and \begingroup\color{red}a described red link\endgroup\,.
+  \definecolor{osbe-color}{HTML}{ff0066}\begingroup\color{osbe-color}Any hex color\endgroup\,, \definecolor{osbe-color}{rgb}{0.000,0.000,0.502}\begingroup\color{osbe-color}any color's name\endgroup\,, and \begingroup\color{red}a described red link\endgroup\,.
   #+end_export
   :end:
 
@@ -6413,12 +6417,12 @@ the fundamental notions of number, order, and function.
   An inline quotation needs nothing of ours: Org's own ="to be" [cite:@shakespeare]= serves,
   smart quotes and all. A section tagged =:quote:= is a quote of its text.
 
-** Highlights ---Colour the background, not the text
+** Highlights ---Color the background, not the text
   :PROPERTIES:
   :CUSTOM_ID: highlights
   :END:
 
-  Where =red:𝒳= colours text, =[[highlight:pink][𝒳]]= colours its background; the colour
+  Where =red:𝒳= colors text, =[[highlight:pink][𝒳]]= colors its background; the color
   defaults to yellow, and the link shows so highlighted in Emacs too.
 
   #+begin_org :ignore t :demo org--highlight-block
@@ -6451,8 +6455,8 @@ the fundamental notions of number, order, and function.
   #+end_export
   :end:
 
-  For the reader who would rather pick the page's background colour themself,
-  =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colours,
+  For the reader who would rather pick the page's background color themself,
+  =[[palette:][Pick a background]]= is a button that unfolds a palette of pale colors,
   ~org-palette-colors~; clicking one makes it the background ---try it: [[palette:][Pick a background]].
 
 ** Markdown export ---What survives GitHub, and how to change it
@@ -6466,24 +6470,24 @@ the fundamental notions of number, order, and function.
   keeps =<details>=, =<kbd>=, =<mark>=, =<ins>=, =<abbr title>=, =<img>=, and =$$= maths.
 
   + Work as-is :: =badge=, =melpa=, =kbd=, =details=, and =solution= export
-    just as they do to HTML, and so render on GitHub ---sans colours.
+    just as they do to HTML, and so render on GitHub ---sans colors.
 
   + Markdown of their own :: these blocks export to Markdown idioms, rather than HTML.
-    | Block                   | Markdown export                                                 |
-    |-------------------------+-----------------------------------------------------------------|
-    | =note=, =tip=, …        | GitHub's own alert, => [!TIP]=; a custom title is a bold line    |
-    | =box=                   | a quote, opening with its title in bold                         |
-    | =remark=                | a => [!NOTE]= alert, titled by its editor                        |
-    | =highlight=             | =<mark>=, which GitHub shows yellow, whatever the colour        |
-    | =spoiler=               | numbered blanks, with the answers folded away beneath           |
-    | =tree=                  | =$$…$$= displays, as GitHub's maths knows no =\[…\]=           |
-    | =:demo=                 | the source as a code block, then its rendering                  |
-    | =doc=, =tooltip=, =kbd= | =<abbr>= with a plain-text =title=, as there is no tooltipster  |
-    | =math=                  | a fenced math block, its definitions within                     |
+    | Block                   | Markdown export                                                   |
+    |-------------------------+-------------------------------------------------------------------|
+    | =note=, =tip=, …        | GitHub's own alert, => [!TIP]=; a custom title is a bold line     |
+    | =box=                   | a quote, opening with its title in bold                           |
+    | =remark=                | a => [!NOTE]= alert, titled by its editor                         |
+    | =highlight=             | =<mark>=, which GitHub shows yellow, whatever the color           |
+    | =spoiler=               | numbered blanks, with the answers folded away beneath             |
+    | =tree=                  | =$$…$$= displays, as GitHub's maths knows no =\[…\]=              |
+    | =:demo=                 | the source as a code block, then its rendering                    |
+    | =doc=, =tooltip=, =kbd= | =<abbr>= with a plain-text =title=, as there is no tooltipster    |
+    | =math=                  | a fenced math block, its definitions within                       |
     | =graph=                 | its image, written to its =:file= (else =graph-HASH.png=), linked |
 
   + Plain HTML :: every other block emits the HTML it always does, which a given Markdown
-    renderer may not honour; e.g., on GitHub, colours ---=red:𝒳=, =#+begin_color=--- and
+    renderer may not honour; e.g., on GitHub, colors ---=red:𝒳=, =#+begin_color=--- and
     =parallel='s columns are stripped, leaving plain, stacked text. Then there are =palette=,
     =#+html_export_style:=, and =toggle-details=, which are HTML-only by design: they
     dress the page itself, and Markdown has no say over the page.
@@ -6581,14 +6585,14 @@ Mind the gap.
   Our markup works in every block, for free: ~contents~ is Org, exported as prose is, so =red:fire=,
   =[[tooltip:x][a tip]]=, =$\alpha$=, =[[https://orgmode.org][Org]]=, =[[file:notes.org][notes]]=,
   =[[*Heading]]=, =[[target]]=, and =<<target>>= all render within it. An argument is a different matter:
-  only the block knows whether its ~title~ is prose, or whether its ~color~ is a colour's name; so we
+  only the block knows whether its ~title~ is prose, or whether its ~color~ is a color's name; so we
   hand a prose argument to ~(org-inline title)~, as the ~note~ above does, and its markup renders too
   ---links to the document's sections and targets included, and its own =<<target>>= joins the document,
   so a =[[target]]= elsewhere reaches the block. The package's own titles all do so.
 
   Wherever the output is no prose, the same links mean the same things: in a math block, a proof tree,
   and inline =$…$=, =red:x= is ={\color{red}x}= and =[[tooltip:x][a tip]]= hovers; in a graph, =red:x=
-  colours its node's label, a =tooltip:= is the node's tooltip, a web link its URL, and =$\lambda_{x}$=
+  colors its node's label, a =tooltip:= is the node's tooltip, a web link its URL, and =$\lambda_{x}$=
   shows as λ subscripted x. Each link says what it means once, in ~org-markup-links~; a link of our own
   joins that list to reach maths and graphs alike.
 
@@ -6660,7 +6664,7 @@ Mind the gap.
   #+end_example
   Likewise, the package's own blocks are links and tags too; e.g., =:details_Hint:= folds a
   section's text away under the title /Hint/. Try tagging a heading =:red:= ---or =:blue:=,
-  =:teal:=, … any of the 19 colours--- and its text exports in that colour.
+  =:teal:=, … any of the 19 colors--- and its text exports in that color.
 
   Should we not want all three, the options =:link nil= and =:tag nil= decline the link and
   the tag, whereas =:block nil= keeps only the link and tag ---e.g.,
@@ -6733,7 +6737,7 @@ Mind the gap.
 
   #+begin_src emacs-lisp
 (org-deftag quote (&optional (color "black") &key cite)
-  "HTML export a section as a <blockquote>, its text coloured COLOR, crediting CITE."
+  "HTML export a section as a <blockquote>, its text colored COLOR, crediting CITE."
   (insert "\n#+html:" (format "<blockquote style=\"color: %s\">" color))
   (org-next-visible-heading 1)
   (insert (if cite (format "\n#+html: <cite>%s</cite>" cite) "") "\n#+html: </blockquote>"))
@@ -6967,22 +6971,22 @@ Hush, *now*.
   block's name beside the first line of its docstring, and Org's own blocks beside them; a popup's
   documentation pane shows the block's whole docstring.
 
-* Colours
+* Colors
   :PROPERTIES:
   :CUSTOM_ID: colours
   :END:
 
-Let's develop blocks for colouring text and link types for inline colouring;
+Let's develop blocks for coloring text and link types for inline coloring;
 e.g., [[doc:org--color-block][color]] and [[doc:org--teal-block][teal]].
  + E.g., ~[[brown: Hello, World!]]~ ⇒ [[brown: Hello, World!]]
  + E.g., ~brown:Friends!~
-   ⇒ brown:Friends! ( Note the ‘!’ is not coloured; use ~[[...]]~ ! )
+   ⇒ brown:Friends! ( Note the ‘!’ is not colored; use ~[[...]]~ ! )
 
  #+begin_box :background-color custard
- Use kbd:M-x_list-colors-display to see a list of defined colour names in Emacs
+ Use kbd:M-x_list-colors-display to see a list of defined color names in Emacs
    ---see [[http://muug.ca/mirror/ctan/macros/latex/contrib/xcolor/xcolor.pdf][xcolor]] for the LaTeX side and [[https://htmlcolorcodes.com/color-names/][htmlcolorcodes.com]] for the HTML side, or
    just visit http://latexcolor.com/ for both.
-   # Use =M-: (defined-colors)= to see all colours that are supported on your Emacs.
+   # Use =M-: (defined-colors)= to see all colors that are supported on your Emacs.
  #+end_box
 
   #+html: <br>
@@ -7083,26 +7087,26 @@ e.g., [[doc:org--color-block][color]] and [[doc:org--teal-block][teal]].
   :Header:
 #+BEGIN_SRC emacs-lisp
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Load support for 20 colour custom blocks and 20 colour link types
+;; Load support for 20 color custom blocks and 20 color link types
   #+END_SRC
   :End:
   #+html: <br>
-#+begin_details Implementation of numerous colour blocks/links
+#+begin_details Implementation of numerous color blocks/links
   We declare a list of colors that should be available on most systems.  Then
   using this list, we evaluate the code necessary to produce the necessary
   functions that format special blocks.
 
-  # - To add support for a colour =𝒞=, simply
+  # - To add support for a color =𝒞=, simply
   #   ~(push '𝒞 org--named-colors)~.
   # #
 
-  By default, Org uses the ~graphicx~ LaTeX package which let's us colour text
+  By default, Org uses the ~graphicx~ LaTeX package which let's us color text
   ---see its documentation [[http://ctan.mirror.rafal.ca/macros/latex/required/graphics/grfguide.pdf][here]].  For example, in an ~#+begin_export latex~ block,
-  the following produces blue coloured text.
+  the following produces blue colored text.
   #+begin_example latex
 {  \color{blue}  This is a sample text in blue.  }
   #+end_example
-  # Below, we format colour block types to essentially format block contents like
+  # Below, we format color block types to essentially format block contents like
   # this.
 
   #+BEGIN_SRC emacs-lisp
@@ -7110,18 +7114,18 @@ e.g., [[doc:org--color-block][color]] and [[doc:org--teal-block][teal]].
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
-  "Colours that should be available on all systems.")
+  "Colors that should be available on all systems.")
 
-(cl-loop for colour in org--named-colors
-         do (eval `(org-defblock ,colour
+(cl-loop for color in org--named-colors
+         do (eval `(org-defblock ,color
                      (&optional (the-color "black") &context backend contents)
-                     (vector :face `(:foreground ,(format "%s" (quote ,colour))))
-                     ,(format "Show text in %s color." colour)
+                     (vector :face `(:foreground ,(format "%s" (quote ,color))))
+                     ,(format "Show text in %s color." color)
                      (let ()
                        (format (pcase backend
                                  (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
                                  (_  "<span style=\"color:%s;\">%s</span>"))
-                               (quote ,colour) contents)))))
+                               (quote ,color) contents)))))
                               #+END_SRC
 
   #+RESULTS:
@@ -7158,16 +7162,16 @@ Let's have some sanity tests...
   '(black blue brown cyan darkgray gray green lightgray lime
           magenta olive orange pink purple red teal violet white
           yellow)
-  "Colours that should be available on all systems.")
+  "Colors that should be available on all systems.")
 
-(cl-loop for colour in org--named-colors
+(cl-loop for color in org--named-colors
       do (eval (read (format
                       "(defun org--%s (backend contents)
                      (format (pcase backend
                      (`latex \"\\\\begingroup\\\\color{%s}%%s\\\\endgroup\\\\,\")
                      (_  \"<span style=\\\"color:%s;\\\">%%s</span>\"))
                      contents))"
-                      colour colour colour))))
+                      color color color))))
   #+END_SRC
   :End:
 
@@ -7176,13 +7180,13 @@ Let's have some sanity tests...
 
   #+html: <br>
   #+begin_details Implementation of ‘color’
-  For faster experimentation between colours, we provide a generic =color= block
+  For faster experimentation between colors, we provide a generic =color= block
   that consumes a color argument.
 
     #+begin_src emacs-lisp
 (org-defblock color
   (&optional (color black) &context backend contents)
-  (vector :face (lambda (colour) `(:foreground ,(format "%s" colour))))
+  (vector :face (lambda (color) `(:foreground ,(format "%s" color))))
   "Format text according to a given COLOR, which is black by default."
   (format (pcase backend
             (`latex "\\begingroup\\color{%s}%s\\endgroup\\,")
@@ -7190,11 +7194,11 @@ Let's have some sanity tests...
           color contents))
   #+end_src
 
-[Posterity] Old version which did /not/ allow ~wombo~ colour:
+[Posterity] Old version which did /not/ allow ~wombo~ color:
     #+begin_src emacs-lisp :tangle no
-(org-defblock color (&optional (color black) :face (lambda (colour)
-           (if (member (intern colour) org--named-colors)
-               `(:foreground ,(format "%s" colour))
+(org-defblock color (&optional (color black) :face (lambda (color)
+           (if (member (intern color) org--named-colors)
+               `(:foreground ,(format "%s" color))
              `(:height 300
                :underline (:color "red" :style wave)
                :overline  "red" :strike-through "red")))) nil
@@ -7217,38 +7221,38 @@ Let's have some sanity tests...
           (intern (format "org--%s" (s-trim color)))))
     (if (member (intern (s-trim color)) org--named-colors)
         (funcall block-coloring backend contents′)
-      (error "Error: “#+begin_color:%s” ⇒ Unsupported colour!" color))))
+      (error "Error: “#+begin_color:%s” ⇒ Unsupported color!" color))))
   #+end_src
   :End:
   #+end_details
 
-  Moreover, we have that the syntax =red:text= /renders/ ‘text’ with the colour red
+  Moreover, we have that the syntax =red:text= /renders/ ‘text’ with the color red
   in *both* the Emacs interface and in exported backends.
 
    [[file:images/colour_links.png]]
 
   :Old:
    #+begin_src emacs-lisp :tangle no
-;; [[𝒞:text₀][text₁]] ⇒ Colour ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
+;; [[𝒞:text₀][text₁]] ⇒ Color ‘textₖ’ by 𝒞, where k is 1, if present, otherwise 0.
 ;; If text₁ is present, it is suggested to use ‘color:𝒞’, defined below.
-(cl-loop for colour in org--named-colors
+(cl-loop for color in org--named-colors
          do (org-link-set-parameters
-             (format "%s" colour)
-              :follow `(lambda (path) (message "Colouring “%s” %s." path (quote ,colour)))
+             (format "%s" color)
+              :follow `(lambda (path) (message "Coloring “%s” %s." path (quote ,color)))
               :export `(lambda (label description backend)
-                        (-let [block-colouring
-                               (intern (format "org--%s" (quote ,colour)))]
-                          (funcall block-colouring backend (or description label))))
-              :face `(:foreground ,(format "%s" colour))))
+                        (-let [block-coloring
+                               (intern (format "org--%s" (quote ,color)))]
+                          (funcall block-coloring backend (or description label))))
+              :face `(:foreground ,(format "%s" color))))
 
-;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Colour ‘text’ by 𝒞.
-;; If 𝒞 is an unsupported colour, ‘text’ is rendered in large font
+;; Generic ‘color’ link type [[color:𝒞][text]] ⇒ Color ‘text’ by 𝒞.
+;; If 𝒞 is an unsupported color, ‘text’ is rendered in large font
 ;; and surrounded by red lines.
 (org-link-set-parameters "color"
    :follow (lambda (_))
-   :face (lambda (colour)
-           (if (member (intern colour) org--named-colors)
-               `(:foreground ,(format "%s" colour))
+   :face (lambda (color)
+           (if (member (intern color) org--named-colors)
+               `(:foreground ,(format "%s" color))
              `(:height 300
                :underline (:color "red" :style wave)
                :overline  "red" :strike-through "red")))
@@ -7257,38 +7261,38 @@ Let's have some sanity tests...
                 (goto-char position)
                 (-let* (((&plist :path) (cadr (org-element-context))))
                   (if (member (intern path) org--named-colors)
-                      "Colour links just colour the descriptive text"
-                    (format "Error: “color:%s” ⇒ Unsupported colour!" path)))))
-   :export (lambda (colour description backend)
-             (-let [block-colouring
-                    (intern (format "org--%s-block" colour))]
-               (if (member (intern colour) org--named-colors)
-                   (funcall block-colouring backend description)
-                 (error "Error: “color:%s” ⇒ Unsupported colour!" colour)))))
+                      "Color links just color the descriptive text"
+                    (format "Error: “color:%s” ⇒ Unsupported color!" path)))))
+   :export (lambda (color description backend)
+             (-let [block-coloring
+                    (intern (format "org--%s-block" color))]
+               (if (member (intern color) org--named-colors)
+                   (funcall block-coloring backend description)
+                 (error "Error: “color:%s” ⇒ Unsupported color!" color)))))
    #+end_src
   :End:
 
   #+begin_center
   Observe: red:this green:is cyan:super teal:neato, purple:amigos! and [[color:brown][this is brown ‘color’ link]] and [[color:orange][this one is an orange ‘color’ link!]]
 
-   +Also: If we try to use an unsupported colour ‘wombo’, we render the+
+   +Also: If we try to use an unsupported color ‘wombo’, we render the+
    +descriptive text larger in Emacs along with a tooltip explaining why this is
    the case; e.g., =[[color:wombo][hi]]=.+
 
-  ~[[color:#fad][Using Hex colour code!]]~ ⇒ [[color:#fad][Using Hex colour code!]]  ;-)
+  ~[[color:#fad][Using Hex color code!]]~ ⇒ [[color:#fad][Using Hex color code!]]  ;-)
   #+end_center
 
  #+latex: \vspace{1em}
  [[color:orange][Moreover,]] it would be nice to extend the =color= block type to take multiple
  arguments, say, =c₁ c₂ … cₙ= such that:
 
- | /n/ | Behaviour                                                                          |
- |---+------------------------------------------------------------------------------------|
- | 0 | No colouring; likewise if no arguments altogether                                  |
- | 1 | Colour all entries using the given colour c₁                                       |
- | /n/ | Paragraph --region separated by a new line-- =i= is coloured by =cₖ= where =k = i mod n= |
+ | /n/ | Behaviour                                                                               |
+ |-----+-----------------------------------------------------------------------------------------|
+ |   0 | No coloring; likewise if no arguments altogether                                        |
+ |   1 | Color all entries using the given color c₁                                              |
+ | /n/ | Paragraph --region separated by a new line-- =i= is colored by =cₖ= where =k = i mod n= |
 
- Besides having a colourful article, another usage I envision for this
+ Besides having a colorful article, another usage I envision for this
  generalisation would be when rendering text in multiple languages; e.g., use red
  and blue to interleave Arabic poetry with its English translation.
   
@@ -7769,9 +7773,9 @@ The =:permalink= switch gives a block, or a section, a permalink sans writing =<
   :CUSTOM_ID: badge-links
   :END:
 
-Badges provide a quick and colourful summary of key features of a project,
+Badges provide a quick and colorful summary of key features of a project,
 such as whether it's maintained, its license, and if it's documented.
-# Badges are little coloured boxes; e.g., those found all over Github.  Such
+# Badges are little colored boxes; e.g., those found all over Github.  Such
 # eye-candy can be obtained from https://shields.io/, which has many examples.
 
 #+caption: An Emacs interface to https://shields.io/
@@ -7889,7 +7893,7 @@ Let's have some sanity tests...
      "<a id=\"example_with_spaces,_-,_and_%\" href=\"#example_with_spaces,_-,_and_%\">"
      "<img src=\"https://img.shields.io/badge/example_with_spaces%2C_--%2C_and_%25-points_right_here-orange?logo=nil\"></a>"))
 
-(deftest "It works when only first 2 arguments are given: Default colour & logo are green & no logo shown"
+(deftest "It works when only first 2 arguments are given: Default color & logo are green & no logo shown"
   [badge]
   (⇝ (⟰ "badge:key|value")
      "<img src=\"https://img.shields.io/badge/key-value-nil?logo=nil\">"))
@@ -7929,18 +7933,18 @@ Let's have some sanity tests...
    :END:
 
 The general syntax is as follows, with *only the first 2* are mandatory,
-with the colour defaulting to green, and the url and logo both to nil.
+with the color defaulting to green, and the url and logo both to nil.
 We can thus have ~badge:label|message~
 :Hide:
 #+begin_example org
 # Standard template
-badge:key|value|colour|url|logo
+badge:key|value|color|url|logo
 
 # Minimal template
 badge:key|value
 
-# Only show a coloured logo pointed to its location
-badge:||colour||logo
+# Only show a colored logo pointed to its location
+badge:||color||logo
 #+end_example
 :End:
 
@@ -7953,7 +7957,7 @@ badge:||colour||logo
  ⇐ ~badge:example_with_spaces,_-,_and_%|points_right_here|orange~
   #  - Use ‘_’ to denote spaces
 
-+ badge:no_colour|given
++ badge:no_color|given
   ⇐ =badge:key|value=.
 
 + badge:empty_value||informational
@@ -8023,7 +8027,7 @@ Then the following exports nicely from an Org file:
 
      go:key|value|blue||gnu-emacs"
   `(org-deflink ,(intern name) (label &optional _description backend)
-    "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
+    "Export a Shields.io badge, with general Syntax:  badge:key|value|color|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
     [:display 'full
      :follow (--> (s-split "|" path)
@@ -8032,15 +8036,15 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
     :help-echo
       (-let [ (key value color url logo)  (mapcar #'s-trim (s-split "|" label)) ]
         (lf-string "${label}
-                    \nGeneral Syntax:  badge:key|value|colour|url|logo
+                    \nGeneral Syntax:  badge:key|value|color|url|logo
                            Key    : ${key}
                            Value  : ${(or value \"\")}
-                           Colour : ${(or color \"green\")}
+                           Color : ${(or color \"green\")}
                            URL    : ${(or url \"\")}
                            Logo   : ${(or logo \"\")}
 
                     This results in an SVG badge “[key∣value]”, where the ‘key’
-                    is coloured grey and the ‘value’ is coloured ‘color’;
+                    is colored grey and the ‘value’ is colored ‘color’;
                     for the HTML backend, and otherwise are silently omitted.
                     Descriptions are ignored; i.e., ‘[[badge:label][description]]’
                     is the same as ‘[[badge:label]]’.
@@ -8060,7 +8064,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                                          ‘lightgrey’   or ‘inactive’,
                                          ‘blue’        or ‘informational’,
                          or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
-                         Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
+                         Consult https://htmlcolorcodes.com/ to see the HEX codes of other colors.
                        ⇒ ‘logo’ examples and how they look can be found at
                           https://alhassy.com/org-special-block-extras#Example-Badge-Icons
 
@@ -8098,9 +8102,9 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
 
 Notice that we can have special ~%~-HTML characters in URLs; e.g.,
 ~<badge:my key|my value| my
-colour|https://www.google.com/search?q=hello%20world|gnu-emacs>~
+color|https://www.google.com/search?q=hello%20world|gnu-emacs>~
 ⇒
-<badge:my key|my value| my colour|https://www.google.com/search?q=hello%20world|gnu-emacs>.
+<badge:my key|my value| my color|https://www.google.com/search?q=hello%20world|gnu-emacs>.
 
 #+end_details
 :OLD:
@@ -8111,7 +8115,7 @@ colour|https://www.google.com/search?q=hello%20world|gnu-emacs>~
 
 The LABEL should be of the shape ‘key|value|color|url|logo’
 resulting in a badge “|key|value|” where the ‘key’
-is coloured grey and the ‘value’ is coloured ‘color’.
+is colored grey and the ‘value’ is colored ‘color’.
 
 The optional SOCIAL toggle indicates if we want an icon for
 Twitter, Reddit, Github, etc, instead of a badge.
@@ -8282,7 +8286,7 @@ Here are some examples.
 + My profile:
   github-followers:alhassy
 
-** Example Colours
+** Example Colors
    :PROPERTIES:
    :CUSTOM_ID: example-colours
    :END:
@@ -8301,11 +8305,11 @@ Here are some examples.
 + badge:|9cf|9cf
 + ...
 
-Consult https://htmlcolorcodes.com/ to see the HEX code of any other colour you
+Consult https://htmlcolorcodes.com/ to see the HEX code of any other color you
 wish to use; e.g., badge:|1d8348|1d8348
 #+end_org
 
-#+RESULTS[122950e850]:
+#+RESULTS[f6ac4f87ef]:
 :results:
 #+begin_export html
 <ul class="org-ul">
@@ -8324,7 +8328,7 @@ wish to use; e.g., badge:|1d8348|1d8348
 </ul>
 
 <p>
-Consult <a href="https://htmlcolorcodes.com/">https://htmlcolorcodes.com/</a> to see the HEX code of any other colour you
+Consult <a href="https://htmlcolorcodes.com/">https://htmlcolorcodes.com/</a> to see the HEX code of any other color you
 wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
 </p>
 #+end_export
@@ -8344,7 +8348,7 @@ wish to use; e.g., <img src="https://img.shields.io/badge/-1d8348-1d8348">
 \item \ldots{}
 \end{itemize}
 
-Consult \url{https://htmlcolorcodes.com/} to see the HEX code of any other colour you
+Consult \url{https://htmlcolorcodes.com/} to see the HEX code of any other color you
 wish to use; e.g.,
 #+end_export
 :end:
@@ -8542,7 +8546,7 @@ wish to use; e.g.,
 
 [[color:orange][Going forward,]] it would be desirable to provide non-whitespace alternatives for
 the LaTeX backend. {{{newline}}} [[remark:Author][That is why no examples are shown in the PDF]] It
-may be useful to colour the =|=-separated fields of a badge link.
+may be useful to color the =|=-separated fields of a badge link.
 # This would make the interface more welcoming to new users.
 * Tooltips for Glossaries, Dictionaries, and Documentation
   :PROPERTIES:
@@ -9229,7 +9233,7 @@ since otherwise things don't look as nice in a markdown readme file.
 [[file:images/details.png]]
 
 
-  ( Markdown does not support colour; go look at the HTML or PDF! )
+  ( Markdown does not support color; go look at the HTML or PDF! )
 * COMMENT Case Studies
 ** In doubt, a block's main argument should be enclosed in quotes
 :PROPERTIES:
@@ -9302,18 +9306,18 @@ Let =𝒞= be any of the following: =black=, =blue=, =brown=, =cyan=, =darkgray=
 =lightgray=, =lime=, =magenta=, =olive orange=, =pink=, =purple=, =red=, =teal=, =violet=, =white=,
 =yellow=.
 
-| Idea                   | Documentation                                                    | Link only?          |
-|------------------------+------------------------------------------------------------------+---------------------|
-| Colours                | =𝒞=, [[doc:org--math-block][math]], [[doc:org--color][color]]                                      |                     |
-| Parallel               | [[doc:org--parallel-block][parallel]]                             |                     |
-| Editorial Comments     | [[doc:org--remark-block][remark]]                                 |                     |
-| Folded Details         | [[doc:org--details-block][details]] ,  [[doc:org--box-block][box]] |                     |
-| Keystrokes             |                                                                  | ~kbd~                 |
-| Permalinks             |                                                                  | ~<<X>>~                 |
-| Documentation-Glossary | [[doc:org--documentation-block][documentation]]                   | ~doc~               |
-| Marginal remarks       | [[doc:org--margin-block][margin]]                                 |                     |
-| Badges                 | [[doc:org-make-badge][badge]]                                    |                     |
-| Equational proofs      | [[doc:org--math-block][math]]                                     |                     |
+| Idea                   | Documentation    | Link only? |
+|------------------------+------------------+------------|
+| Colors                 | =𝒞=, [[doc:org--math-block][math]], [[doc:org--color][color]] |            |
+| Parallel               | [[doc:org--parallel-block][parallel]]         |            |
+| Editorial Comments     | [[doc:org--remark-block][remark]]           |            |
+| Folded Details         | [[doc:org--details-block][details]] ,  [[doc:org--box-block][box]]   |            |
+| Keystrokes             |                  | ~kbd~      |
+| Permalinks             |                  | ~<<X>>~    |
+| Documentation-Glossary | [[doc:org--documentation-block][documentation]]    | ~doc~      |
+| Marginal remarks       | [[doc:org--margin-block][margin]]           |            |
+| Badges                 | [[doc:org-make-badge][badge]]            |            |
+| Equational proofs      | [[doc:org--math-block][math]]             |            |
 
 Other fun stuff: [[doc:org--solution-block][solution]], [[#demos][:demo]], [[doc:org--stutter-block][stutter]], [[doc:org--rename-block][rename]], [[doc:org--spoiler-block][spoiler]], [[doc:org--tree-block][tree]] :grin:
 
@@ -9566,7 +9570,7 @@ badge:|buy_me_a coffee|gray|https://www.buymeacoffee.com/alhassy|buy-me-a-coffe
          "<span style=\"border-width:1px;border-style:solid;padding:5px\"><strong>]</strong></span>"
          ))
 
-(deftest "The aqua-coloured ‘spoiler’ appears within a magenta coloured piece of text"
+(deftest "The aqua-colored ‘spoiler’ appears within a magenta colored piece of text"
   [mwe spoiler color magenta gensym]
 
   (⇝ mwe "<details"

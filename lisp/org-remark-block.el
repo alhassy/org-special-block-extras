@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; A remark block is an editor's comment, shown in colour; `org-hide-editor-comments' hides them all.
+;; A remark block is an editor's comment, shown in color; `org-hide-editor-comments' hides them all.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 

@@ -155,7 +155,7 @@ By (Symmetry).
 
 ;;; Bugs found en route
 
-(define-org-call-test "a badge sans colour is green, and sans logo asks for none"
+(define-org-call-test "a badge sans color is green, and sans logo asks for none"
   :call (org--badge-link "key|value" nil 'html)
   :returns "<img src=\"https://img.shields.io/badge/key-value-green\">")
 

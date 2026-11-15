@@ -54,14 +54,16 @@
 
 ;;; A #+name: on the block: a figure that [[links]] reach
 
-(deftest "a named graph renders to NAME.png and exports as an image link, which its #+name: and #+caption: label"
+(deftest "a named graph renders to NAME.png, else its :file, and exports as an image link, which its #+name: and #+caption: label"
   (let (rendered)
     (cl-letf (((symbol-function 'org-graph--run-dot) (lambda (_dot kind file) (setq rendered (list kind file)) '(0 . ""))))
       ;; It opens with the link, so the #+name: above the block labels the link rather than an empty export block.
       (should (s-starts-with-p "[[file:lineage.png]]\n"
                                (let ((org--handler-anchor "lineage")) (org--graph-block 'latex "+ λ" nil))))
       (should (equal '("png" "lineage.png") rendered))
-      (let ((org--handler-anchor "lineage")) (org--graph-block 'html "+ λ" nil :svg t))
+      ;; :file picks the format, and the graph stays a figure its #+name: labels.
+      (should (s-starts-with-p "[[file:lineage.svg]]\n"
+                               (let ((org--handler-anchor "lineage")) (org--graph-block 'html "+ λ" nil :file "lineage.svg"))))
       (should (equal '("svg" "lineage.svg") rendered))
       (let ((org--handler-anchor "lineage")) (org--graph-block 'html "+ λ" nil :file "elsewhere.png"))
       (should (equal '("png" "elsewhere.png") rendered)))))

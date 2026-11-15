@@ -115,7 +115,7 @@ In Markdown, each tree is a $$…$$ display, since GitHub's maths knows no \\[�
   - Assumption :: p ⇒ q
 #+end_tree
 
-# The text is maths, as a math block's is: red:p colours p.")
+# The text is maths, as a math block's is: red:p colors p.")
 
 (provide 'org-proof-block)
 ;;; org-proof-block.el ends here

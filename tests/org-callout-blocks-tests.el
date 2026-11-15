@@ -4,7 +4,7 @@
   (load-file (expand-file-name "~/org-special-block-extras/tests/org-test-utils.el")))
 (require 'ox-md)
 
-(define-org-export-test "a warning callout, given a title, shows it beside its icon above a coloured rule, in HTML" [callout]
+(define-org-export-test "a warning callout, given a title, shows it beside its icon above a colored rule, in HTML" [callout]
   :input "
           #+begin_warning Mind the gap
           Trains do *not* wait.

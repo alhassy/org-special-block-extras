@@ -16,7 +16,7 @@
 
 (require 'org-graph-dot)
 (require 'org-graph-attributes)
-(require 'org-graph-smartdiagram)
+(require 'org-smartdiagram-block)
 (require 'org-special-block-at-point)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,7 +85,7 @@ aborts — allowing the caller to fall back to `read-string'."
 
 (defun org-graph--read-attribute (context)
   "Prompts for an attribute valid on CONTEXT, such as `edges', then its value; returns (KEY . VALUE).
-A key's description shows beside it; an attribute of few values completes them; a colour opens a helm colour picker,
+A key's description shows beside it; an attribute of few values completes them; a color opens a helm color picker,
 when available, else `read-string'."
   (let* ((valid   (org-graph--attributes-on context))
          (chosen  (completing-read (format "Attribute (%s): " context)
@@ -127,7 +127,7 @@ see `org-graph--directive-at-point'.  The attributes offered are those valid the
           (insert " " key "=" (org-graph--pair-value value))))))))
 
 (defun org-graph--pair-value (value)
-  "Returns VALUE as a KEY=VALUE pair writes it: bare when a single word, else \"quoted\"; a colour picked by
+  "Returns VALUE as a KEY=VALUE pair writes it: bare when a single word, else \"quoted\"; a color picked by
 `org-graph--pick-color', \"\\\"#ff0000\\\" # Red\", is its hex alone, #ff0000."
   (let ((value (if (string-match "\\`\"\\(#[[:xdigit:]]+\\)\"" value) (match-string 1 value) value)))
     (if (string-match-p "\\`[^ \t\"]+\\'" value) value
@@ -181,48 +181,50 @@ table, or on a #+graph:, #+node:, #+edge:, or #+name: line, as `org-graph--direc
 
 (defconst org-graph--header-key-docs
   '((":file"     . "The image file C-c C-c and export write; else graph-HASH.png.")
-    (":svg"      . "HTML export embeds an inline <svg>, its tooltips as prose's; with nil, a base64 PNG.")
-    (":directed" . "With nil, an undirected graph, whose arcs are --; else a digraph.")
-    (":mindmap"  . "With t, a mindmap: undirected, radiating from the first item, by twopi; its nodes coloured by depth.")
     (":wrap"     . "With N, node and arc labels fill to lines of N characters; one broken by \\\\ stays as written.")
     (":notes"    . "With inline, notes ---an item's later paragraphs, #+begin_note blocks--- show in labels; else tooltips.")
     (":unflatten" . "With N, a node's many leaves stagger over N ranks, via Graphviz's unflatten, not one wide row.")
     (":unknown-tags" . "With error, a tag naming no #+name: template is an error; by default, it gets a made-up one.")
-    (":direction" . "Which way arcs flow: down, up, right, or left; a readable :rankdir, TB, BT, LR, or RL.  Default: down.")
+    (":direction" . "Which way arcs flow: down, up, right, or left; Graphviz's rankdir TB, BT, LR, or RL.  Default: down.")
     (":theme"    . "With NAME, the graph wears that theme of org-graph-themes; with nil, Graphviz's look.  Default: org-graph-theme.")
     (":C-c_C-c"  . "With dot, C-c C-c shows the dot source, and C-u C-c C-c renders; else the reverse.")
-    (":smartdiagram" . "With TYPE, such as constellation, LaTeX's smartdiagram typesets the list, rather than Graphviz.")
-    (":dpi"      . "Under :smartdiagram, the dots per inch of the PNG; 300 by default.")
     (":node."    . "A default attribute of every node; e.g., :node.shape box.")
     (":edge."    . "A default attribute of every edge; e.g., :edge.color grey."))
   "The #+begin_graph keys that are not graph attributes ↦ what they do; shown by completion and eldoc.")
 
 (defconst org-graph--header-key-values
-  `((":directed" "nil" "t") (":svg" "t" "nil") (":C-c_C-c" "dot" "png")
+  `((":C-c_C-c" "dot" "png")
     (":notes" "tooltip" "inline") (":unknown-tags" "random-templates" "error")
     (":direction" "down" "right" "up" "left")
-    (":theme" "nil" ,@(--map (symbol-name (car it)) org-graph-themes))
-    (":smartdiagram" ,@(mapcar #'car org-graph-smartdiagram-types)))
+    (":theme" "nil" ,@(--map (symbol-name (car it)) org-graph-themes)))
   "The #+begin_graph keys that are not graph attributes ↦ the values completion offers them.")
 
+(defconst org-graph--begin-re "^[ \t]*#\\+begin_\\(?:graph\\|smartdiagram\\)\\_>"
+  "The first line of a block whose body is a graph's Org: a #+begin_graph, or a #+begin_smartdiagram.")
+
 (defun org-graph--block-at-point ()
-  "The innermost #+begin_graph block element around point, looking past the #+begin_note blocks within it; else nil."
+  "Returns the innermost #+begin_graph, or #+begin_smartdiagram, block element around point, looking past the
+#+begin_note blocks within it; else nil."
   (let ((block (org-special-block-at-point)) found)
     (while (and block (not found))
       (pcase (downcase (org-element-property :type block))
-        ("graph"   (setq found block))
+        ((or "graph" "smartdiagram") (setq found block))
         ("note"    (setq block (org-element-lineage block '(special-block))))
         (_         (setq block nil))))
     found))
 
-(defconst org-graph--smartdiagram-header-keys '(":smartdiagram" ":file" ":svg" ":dpi" ":C-c_C-c")
-  "The #+begin_graph keys that mean something under :smartdiagram; Graphviz's attributes do not.")
+(defconst org-graph--smartdiagram-header-key-docs
+  '((":type"       . "The diagram: circular, flow, descriptive, priority-descriptive, bubble, constellation, …")
+    (":file"       . "The name of the images it renders to, images/NAME.{svg,pdf,png}, exactly; see #+begin_image.")
+    (":resolution" . "The PNG's pixels per inch; else org-image-block-png-resolution.")
+    (":as-image"   . "With t, an image along LaTeX too, rather than typeset in place."))
+  "The #+begin_smartdiagram keys ↦ what they do; shown by completion and eldoc.")
 
 (defun org-graph--smartdiagram-p ()
-  "Non-nil when the graph around point ---or the one this `org-graph-edit-mode' buffer edits--- has :smartdiagram on
-its #+begin_graph line; so completion and eldoc offer smartdiagram's keys, not Graphviz's."
-  (let ((check (lambda () (-some--> (org-graph--block-at-point) (org-element-property :parameters it)
-                                    (string-match-p ":smartdiagram\\_>" it)))))
+  "Returns non-nil when the block around point ---or the one this `org-graph-edit-mode' buffer edits--- is a
+#+begin_smartdiagram; so completion and eldoc offer smartdiagram's keys, not Graphviz's."
+  (let ((check (lambda () (-some--> (org-graph--block-at-point)
+                            (equal "smartdiagram" (downcase (org-element-property :type it)))))))
     ;; The marker is local to the edit buffer, so we hold it before leaving.
     (-if-let (origin (and (derived-mode-p 'org-graph-edit-mode) (bound-and-true-p org-src--beg-marker)))
         (with-current-buffer (marker-buffer origin)
@@ -249,7 +251,7 @@ or containers, since a #+name: template styles any of them."
   (if (string-match "\\`:\\(?:edge\\(?:\\[[^]]*\\]\\)?\\|node\\)\\.\\(.*\\)\\'" key) (match-string 1 key) key))
 
 (defun org-graph--header->table-key (key)
-  "A #+begin_graph KEY ↦ the table key setting the same attribute: \":rankdir\" ↦ \"rankdir\", \":node.shape\" unchanged."
+  "A #+begin_graph KEY ↦ the table key setting the same attribute: \":bgcolor\" ↦ \"bgcolor\", \":node.shape\" unchanged."
   (if (string-match-p "\\`:\\(?:node\\|edge\\)\\." key) key (substring key 1)))
 
 (defun org-graph--attribute (key)
@@ -260,10 +262,10 @@ or containers, since a #+name: template styles any of them."
 (defun org-graph--key-doc (key)
   "A table KEY ↦ its one-line description, from `org-graph--reserved-key-docs' or `org-graph-attributes'; else nil.
 An attribute's description ends with its default, when Graphviz states one.  In a smartdiagram, the key is
-smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's, from `org-graph-smartdiagram-item-keys'."
+smartdiagram's: a #+graph: row's, from `org-smartdiagram-keys'; an item's, from `org-smartdiagram-item-keys'."
   (if (org-graph--smartdiagram-p)
-      (or (cdr (assoc key org-graph-smartdiagram-item-keys))
-          (-when-let (entry (org-graph--smartdiagram-key key))
+      (or (cdr (assoc key org-smartdiagram-item-keys))
+          (-when-let (entry (org-smartdiagram--key key))
             (concat (plist-get entry :description) (-some->> (plist-get entry :default) (format "  Default: %s.")))))
     (org-graph--graphviz-key-doc key)))
 
@@ -275,13 +277,15 @@ smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's,
                 (-some->> (plist-get attr :default) (format "  Default: %s."))))))
 
 (defun org-graph--header-key-doc (key)
-  "A #+begin_graph KEY, such as \":rankdir\" or \":node.shape\", ↦ its one-line description; else nil."
-  (or (cdr (assoc key org-graph--header-key-docs))
-      (org-graph--graphviz-key-doc (org-graph--header->table-key key))))
+  "A #+begin_graph KEY, such as \":bgcolor\" or \":node.shape\", ↦ its one-line description; else nil.
+On a #+begin_smartdiagram line, its own keys' only."
+  (if (org-graph--smartdiagram-p) (cdr (assoc key org-graph--smartdiagram-header-key-docs))
+    (or (cdr (assoc key org-graph--header-key-docs))
+        (org-graph--graphviz-key-doc (org-graph--header->table-key key)))))
 
 (defun org-graph--header-token-at-point ()
   "On a #+begin_graph line ↦ (BEG END PREVIOUS): the bounds of the word at point, and the word before it; else nil."
-  (when (save-excursion (beginning-of-line) (looking-at-p "[ \t]*#\\+begin_graph\\_>"))
+  (when (save-excursion (beginning-of-line) (looking-at-p (substring org-graph--begin-re 1)))
     (let* ((bol (line-beginning-position))
            (beg (save-excursion (skip-chars-backward "^ \t" bol) (point)))
            (end (save-excursion (skip-chars-forward "^ \t" (line-end-position)) (point))))
@@ -295,16 +299,19 @@ smartdiagram's: a #+graph: row's, from `org-graph-smartdiagram-keys'; an item's,
      ((eq (char-after beg) ?:)
       (list beg end
             (cond
-             ((org-graph--smartdiagram-p) org-graph--smartdiagram-header-keys)
+             ((org-graph--smartdiagram-p) (mapcar #'car org-graph--smartdiagram-header-key-docs))
              (t
               (append (--remove (s-ends-with-p "." it) (mapcar #'car org-graph--header-key-docs))
-                      (--map (concat ":" (plist-get it :name)) (org-graph--attributes-on 'graphs))
+                      ;; The header spells rankdir as :direction.
+                      (--map (concat ":" (plist-get it :name))
+                             (--remove (equal "rankdir" (plist-get it :name)) (org-graph--attributes-on 'graphs)))
                       (--map (concat ":node." (plist-get it :name)) (org-graph--attributes-on 'nodes))
                       (--map (concat ":edge." (plist-get it :name)) (org-graph--attributes-on 'edges)))))
             :annotation-function (lambda (candidate) (-some->> (org-graph--header-key-doc candidate) (concat "  ")))
             :exclusive 'no))
      ((s-starts-with-p ":" previous)
-      (-some--> (or (cdr (assoc previous org-graph--header-key-values))
+      (-some--> (or (and (org-graph--smartdiagram-p) (equal previous ":type") (mapcar #'car org-smartdiagram-types))
+                    (cdr (assoc previous org-graph--header-key-values))
                     (plist-get (org-graph--attribute (org-graph--header->table-key previous)) :values))
         (list beg end it :exclusive 'no))))))
 
@@ -339,15 +346,15 @@ On a #+begin_graph line, complete its keys and values instead; in a smartdiagram
 
 (defun org-graph--smartdiagram-completion (column beg end key)
   "In a smartdiagram's table, at COLUMN between BEG and END, on KEY's row ↦ completion: a #+graph: row's key from
-`org-graph-smartdiagram-keys', an item's from `org-graph-smartdiagram-item-keys'; or a value, for keys with few."
+`org-smartdiagram-keys', an item's from `org-smartdiagram-item-keys'; or a value, for keys with few."
   (pcase column
     (1 (-some--> (pcase (org-graph--table-context)
-                   ('graphs (--map (plist-get it :name) org-graph-smartdiagram-keys))
-                   ('nodes  (mapcar #'car org-graph-smartdiagram-item-keys)))
+                   ('graphs (--map (plist-get it :name) org-smartdiagram-keys))
+                   ('nodes  (mapcar #'car org-smartdiagram-item-keys)))
          (list beg end it
                :annotation-function (lambda (candidate) (-some->> (org-graph--key-doc candidate) (concat "  ")))
                :exclusive 'no)))
-    (2 (-some--> (plist-get (org-graph--smartdiagram-key key) :values) (list beg end it :exclusive 'no)))))
+    (2 (-some--> (plist-get (org-smartdiagram--key key) :values) (list beg end it :exclusive 'no)))))
 
 (defun org-graph--eldoc (callback &rest _)
   "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, of the key on this graph-table row, of the
@@ -398,7 +405,7 @@ Those come from `org-graph--setup-org-buffer', as in any Org buffer; here, the w
 Org hides a described link's brackets and target via `invisible'; this always returns nil, so it adds no face itself.
 A buffer with no graph block pays only one search per fontification, rather than one parse per link."
   (when (or (derived-mode-p 'org-graph-edit-mode)
-            (save-excursion (goto-char (point-min)) (re-search-forward "^[ \t]*#\\+begin_graph\\_>" nil t)))
+            (save-excursion (goto-char (point-min)) (re-search-forward org-graph--begin-re nil t)))
     (while (re-search-forward org-link-bracket-re limit t)
       ;; Bounds first: parsing, to ask whether we are in a graph, clobbers the match data.
       (let ((beg (match-beginning 0)) (end (match-end 0)))
@@ -420,10 +427,10 @@ A buffer with no graph block pays only one search per fontification, rather than
   "The face of a graph's tag naming a template every graph has, from `org-defgraph-tag', which no #+name: shadows."
   :group 'org-special-block-extras)
 
-(defun org-graph--tag-colour-face (name)
-  "Returns the face of the graph tag, or template, NAME: a box in a colour of NAME's own, as org-modern draws tags.
-The colour comes from NAME's very spelling, so every :hot: matches its #+name: hot line, whereas a typo, :hott:, or
-#+name: hott, stands out in a colour of its own: colours as type checking."
+(defun org-graph--tag-color-face (name)
+  "Returns the face of the graph tag, or template, NAME: a box in a color of NAME's own, as org-modern draws tags.
+The color comes from NAME's very spelling, so every :hot: matches its #+name: hot line, whereas a typo, :hott:, or
+#+name: hott, stands out in a color of its own: colors as type checking."
   (require 'color)
   (let* ((hue (/ (mod (string-to-number (substring (md5 name) 0 6) 16) 360) 360.0))
          (dark (eq (frame-parameter nil 'background-mode) 'dark))
@@ -474,12 +481,12 @@ else one outside every graph; else nil.  Since a graph's own templates win, as `
 (defun org-graph--unknown-tag-doc (name)
   "Returns what the tag NAME means when no template of that name exists: one made up for it."
   (format ":%s: names no #+name: template, nor one every graph has; so the graph makes one up: the Nth unknown tag
-gets the Nth colour, shape, and font, and every :%s: of the graph alike.
+gets the Nth color, shape, and font, and every :%s: of the graph alike.
 
 So we may sketch first and name later: tag what belongs together, see the groups at once, and a legend,
 - :%s: :: MEANING, explains them; define #+name: %s only once the look matters.
 
-Was it a typo?  Its colour here differs from the tag meant, as each name has its own.  To make an unknown tag an
+Was it a typo?  Its color here differs from the tag meant, as each name has its own.  To make an unknown tag an
 error instead, give the block `:unknown-tags error'." name name name name))
 
 (defun org-graph-follow-tag (&optional event)
@@ -560,18 +567,18 @@ those every graph has, by `org-defgraph-tag'; a nearer definition shadows a fart
 
 (defun org-graph--tag-face (name)
   "Returns the font-lock face, and properties, of the graph tag NAME: clickable, by `org-graph-tag-map'; wearing
-`org-graph-builtin-tag' when it is one every graph has, which no #+name: shadows; else a colour of its own, by
-`org-graph--tag-colour-face'."
+`org-graph-builtin-tag' when it is one every graph has, which no #+name: shadows; else a color of its own, by
+`org-graph--tag-color-face'."
   (list 'face (if (and (or (assoc name org-graph-builtin-templates) (org--graph-pattern-template name))
                        (not (org-graph--template-definition name)))
                   'org-graph-builtin-tag
-                (list (org-graph--tag-colour-face name) 'org-tag))
+                (list (org-graph--tag-color-face name) 'org-tag))
         'keymap org-graph-tag-map 'mouse-face 'highlight 'follow-link t
         'help-echo (or (-some--> (org-graph--builtin-tag-doc name) (cadr (s-lines it)))
                        "mouse-1: jump to this template's #+name: line, or say what an undefined tag means")))
 
 (defun org-graph--match-template-name (limit)
-  "Font-lock matcher: the next #+name: line's name up to LIMIT, in a graph, as group 1; it wears its tags' colour."
+  "Font-lock matcher: the next #+name: line's name up to LIMIT, in a graph, as group 1; it wears its tags' color."
   (let (found)
     (while (and (not found) (re-search-forward "^[ \t]*#\\+name:[ \t]+\\([^ \t\n]+\\)" limit t))
       (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p)))
@@ -615,10 +622,10 @@ for `org-graph--pair-key-face'."
 (defun org-graph--pair-key-face ()
   "Returns `org-graph-key' when the KEY just matched, group 1, means something on its `org-graph--directive' line: a
 graph's, node's, or arc's Graphviz attribute on #+graph:, #+node:, or #+edge:; any on #+name:, a template's; under
-:smartdiagram, smartdiagram's own.  Else nil: an unknown key stays plain, so a typo stands out by not standing out."
+ a #+begin_smartdiagram, smartdiagram's own.  Else nil: an unknown key stays plain, so a typo stands out by not standing out."
   (let ((key (match-string 1)))
     (when (if (org-graph--smartdiagram-p)
-              (or (org-graph--smartdiagram-key key) (assoc key org-graph-smartdiagram-item-keys))
+              (or (org-smartdiagram--key key) (assoc key org-smartdiagram-item-keys))
             (-when-let (attribute (org-graph--attribute key))
               (or (equal org-graph--directive "name")
                   (memq (intern (concat org-graph--directive "s"))
@@ -633,9 +640,9 @@ graph's, node's, or arc's Graphviz attribute on #+graph:, #+node:, or #+edge:; a
   (save-excursion
     (let ((at (point)) (case-fold-search t))
       (end-of-line)
-      (when (re-search-backward "^[ \t]*#\\+begin_graph\\_>" nil t)
+      (when (re-search-backward org-graph--begin-re nil t)
         (let ((begin (line-beginning-position)))
-          (when (re-search-forward "^[ \t]*#\\+end_graph\\_>" nil t)
+          (when (re-search-forward "^[ \t]*#\\+end_\\(?:graph\\|smartdiagram\\)\\_>" nil t)
             (and (<= at (line-end-position)) (cons begin (line-beginning-position)))))))))
 
 (defcustom org-graph-template-backgrounds
@@ -663,9 +670,9 @@ ends the table right below it, else that line; INDEX counts the templates before
 (defun org-graph--template-face (index)
   "Returns the face of a graph's INDEXth template: its background, from `org-graph-template-backgrounds', to the
 line's end."
-  (let ((colours (alist-get (if (eq (frame-parameter nil 'background-mode) 'dark) 'dark 'light)
+  (let ((colors (alist-get (if (eq (frame-parameter nil 'background-mode) 'dark) 'dark 'light)
                             org-graph-template-backgrounds)))
-    (list :background (nth (mod index (length colours)) colours) :extend t)))
+    (list :background (nth (mod index (length colors)) colors) :extend t)))
 
 (defvar org-graph--template-index 0
   "The index of the template `org-graph--match-template' last matched.")
@@ -721,7 +728,7 @@ complete and explain keys, with C-M-i and eldoc."
                                            org-graph--tag-res))
                           'append)
   (font-lock-add-keywords nil '((org-graph--match-template-name
-                                 (1 (list (org-graph--tag-colour-face (match-string-no-properties 1))) prepend)))
+                                 (1 (list (org-graph--tag-color-face (match-string-no-properties 1))) prepend)))
                           'append)
   (dolist (prop '(keymap mouse-face follow-link help-echo))
     (add-to-list (make-local-variable 'font-lock-extra-managed-props) prop))

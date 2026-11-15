@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; The generic `color' block and 19 named colour blocks (red, blue, green, …).
+;; The generic `color' block and 19 named color blocks (red, blue, green, …).
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -23,41 +23,41 @@
 
 (require 'org-defblock)
 
-;;;;;; Color  ---Load support for 19 named colour blocks and links, and a generic one
+;;;;;; Color  ---Load support for 19 named color blocks and links, and a generic one
 
 (defvar org--named-colors
   '(black blue brown cyan darkgray gray green lightgray lime
      magenta olive orange pink purple red teal violet white
           yellow)
-  "The colours that are each a block and a link; e.g., #+begin_red and red:𝒳.  Each is named alike in HTML and LaTeX.")
+  "The colors that are each a block and a link; e.g., #+begin_red and red:𝒳.  Each is named alike in HTML and LaTeX.")
 
-(defun org--color-text (backend colour text)
-  "(BACKEND, COLOUR, TEXT) ↦ TEXT shown in COLOUR; LaTeX via \\color, and HTML (the default) via a styled span.
-In LaTeX, a COLOUR beyond xcolor's own `org--named-colors', such as #ff0066 or navy, is named first."
+(defun org--color-text (backend color text)
+  "(BACKEND, COLOR, TEXT) ↦ TEXT shown in COLOR; LaTeX via \\color, and HTML (the default) via a styled span.
+In LaTeX, a COLOR beyond xcolor's own `org--named-colors', such as #ff0066 or navy, is named first."
   (pcase backend
-    ('latex (if (memq (intern (format "%s" colour)) org--named-colors)
-                (format "\\begingroup\\color{%s}%s\\endgroup\\," colour text)
+    ('latex (if (memq (intern (format "%s" color)) org--named-colors)
+                (format "\\begingroup\\color{%s}%s\\endgroup\\," color text)
               (format "%s\\begingroup\\color{osbe-color}%s\\endgroup\\,"
-                      (org--latex-define-color "osbe-color" colour) text)))
-    (_ (format "<span style=\"color:%s;\">%s</span>" colour text))))
+                      (org--latex-define-color "osbe-color" color) text)))
+    (_ (format "<span style=\"color:%s;\">%s</span>" color text))))
 
-(dolist (colour org--named-colors)
-  (eval `(org-defblock ,colour (&allow-other-keys :link [:face '(:foreground ,(symbol-name colour))]
+(dolist (color org--named-colors)
+  (eval `(org-defblock ,color (&allow-other-keys :link [:face '(:foreground ,(symbol-name color))]
                                  :latex-head ("xcolor") :manual "#Colours-links" &context backend contents)
-           ,(format "Show text in %s color." colour)
-           (org--color-text backend ',colour contents)))
-  (eval `(org-defblock-attribute ,colour :example ,(format "
-# A block colours its every paragraph, *markup* and all.
+           ,(format "Show text in %s color." color)
+           (org--color-text backend ',color contents)))
+  (eval `(org-defblock-attribute ,color :example ,(format "
+# A block colors its every paragraph, *markup* and all.
 #+begin_%1$s
 Lo, a %1$s paragraph.
 #+end_%1$s
 
-# A link colours a word, %1$s:word; or a phrase, as [[%1$s:][these few words]].
-Only the %1$s:key words are %1$s; Emacs hides “%1$s:”, until point is in the link." colour)))
-  (org-link-set-parameters (symbol-name colour) :activate-func #'org--color-link-hide-type))
+# A link colors a word, %1$s:word; or a phrase, as [[%1$s:][these few words]].
+Only the %1$s:key words are %1$s; Emacs hides “%1$s:”, until point is in the link." color)))
+  (org-link-set-parameters (symbol-name color) :activate-func #'org--color-link-hide-type))
 
 (defun org--color-link-hide-type (start end _path _bracket?)
-  "Hide the “red:” of the colour link from START to END, since its colour says as much.
+  "Hide the “red:” of the color link from START to END, since its color says as much.
   [[red: hello world]]  ↦  hello world, in red; with point in it, `org--reveal-link-at-point' shows it in full.
 As with Org's hidden brackets, `org-toggle-link-display' shows it all."
   (save-excursion
@@ -73,14 +73,14 @@ As with Org's hidden brackets, `org-toggle-link-display' shows it all."
               (org--color-text backend color contents))
 
 (org-defblock-attribute color :example "
-# COLOR is any colour HTML and LaTeX know by name, or a hex #RRGGBB.
+# COLOR is any color HTML and LaTeX know by name, or a hex #RRGGBB.
 #+begin_color #ff0066
 A paragraph in hot pink.
 #+end_color
 
-# As a link, the colour is its path, shown so in Emacs too: [[color:navy][in navy]].")
+# As a link, the color is its path, shown so in Emacs too: [[color:navy][in navy]].")
 
-;;;;;; Highlight ---colour the background, rather than the text
+;;;;;; Highlight ---color the background, rather than the text
 
 (org-defblock highlight
               (&optional (color "yellow") &allow-other-keys :latex-head ("xcolor") :manual "#Highlights"
@@ -115,13 +115,13 @@ A paragraph we should not miss.
 
 # As a link, it highlights a phrase, in Emacs too: [[highlight:pink][Read this twice.]]")
 
-;;;;;; Palette ---let readers pick the page's background colour
+;;;;;; Palette ---let readers pick the page's background color
 
 (defvar org-palette-colors
   '(snow ghostwhite whitesmoke floralwhite oldlace linen antiquewhite papayawhip blanchedalmond bisque
     cornsilk ivory lemonchiffon seashell honeydew mintcream azure aliceblue lavender lavenderblush
     mistyrose beige lightyellow lightcyan white)
-  "The pale CSS colour names that a palette: link offers as page backgrounds.")
+  "The pale CSS color names that a palette: link offers as page backgrounds.")
 
 (org-deflink palette (_label &optional (description "🎨") backend)
   "A button, labelled DESCRIPTION, that unfolds a palette of `org-palette-colors'; clicking one makes it the page's background.

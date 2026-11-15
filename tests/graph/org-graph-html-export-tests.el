@@ -5,27 +5,6 @@
 
 ;;; HTML export
 
-(deftest "`#+begin_graph' :svg nil HTML export produces an <img> tag"
-  ;; Call the graph block handler directly: simulate what org-export-string
-  ;; does for a #+begin_graph block, bypassing the full export pipeline
-  ;; (which triggers org-defblock docstring enrichment and breaks in batch).
-  (cl-letf (((symbol-function 'org-graph--render)
-             (lambda (_dot _kind pngfile)
-               ;; Write a minimal 1×1 white PNG so base64 encoding succeeds.
-               (with-temp-file pngfile
-                 (set-buffer-multibyte nil)
-                 (insert "
-\x89PNG\r
-\x1a"))
-               t)))
-    (let ((html (org--graph-block 'html "
-+ A
-  + B
-    | :edge.label | calls |"
-                                 nil :svg nil)))
-      (should (s-contains-p "<img" html))
-      (should (s-contains-p "base64" html)))))
-
 (deftest "`#+begin_graph' HTML export: node and edge appear in underlying dot"
   ;; Verify the dot source that gets embedded is structurally correct
   ;; by checking the raw->dot output directly.
@@ -38,8 +17,8 @@
     (should (s-contains-p "A -> B [ label=calls ];" dot))
     (should (s-contains-p "digraph" dot))))
 
-(deftest "`#+begin_graph' :svg t — HTML export embeds inline <svg>"
-  ;; With :svg t the handler calls org-graph--render and returns
+(deftest "`#+begin_graph' HTML export embeds an inline <svg>"
+  ;; The handler calls org-graph--render and returns
   ;; the raw <svg>…</svg> string for inline embedding (no base64, no <img>).
   (cl-letf (((symbol-function 'org-graph--render)
              (lambda (_dot _kind svgfile)
@@ -50,14 +29,14 @@
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g><title>A</title></g></svg>"))
                svgfile)))
     (let ((html (org--graph-block 'html "
-+ A" nil :svg t)))
++ A" nil)))
       (should (s-contains-p "<svg" html))
       ;; Graphviz's <title>s would hover natively, competing with our tooltips.
       (should-not (s-contains-p "<title>" html))
       (should-not (s-contains-p "<img" html))
       (should-not (s-contains-p "base64" html)))))
 
-(deftest "`#+begin_graph' :svg t — XML preamble is stripped"
+(deftest "`#+begin_graph' HTML export strips the inline <svg>'s XML preamble"
   ;; org-graph--svg-contents must strip the <?xml …?> and <!DOCTYPE> lines
   ;; so only the <svg>…</svg> element is embedded in the HTML.
   (cl-letf (((symbol-function 'org-graph--render)
@@ -69,40 +48,25 @@
 <svg xmlns=\"http://www.w3.org/2000/svg\"><g/></svg>"))
                svgfile)))
     (let ((html (org--graph-block 'html "
-+ A" nil :svg t)))
++ A" nil)))
       (should-not (s-contains-p "<?xml" html))
       (should-not (s-contains-p "<!DOCTYPE" html))
       (should (s-contains-p "<svg" html)))))
 
-(deftest "`#+begin_graph' :svg t — falls back to <pre> when dot unavailable"
+(deftest "`#+begin_graph' HTML export falls back to <pre> when dot is unavailable"
   ;; If org-graph--render returns nil (dot not installed), the
   ;; handler must fall back to a <pre> block with escaped dot source.
   (cl-letf (((symbol-function 'org-graph--render)
              (lambda (_dot _kind _svgfile) nil)))
     (let ((html (org--graph-block 'html "
 + A
-  + B" nil :svg t)))
+  + B" nil)))
       (should (s-contains-p "<pre>" html))
-      (should-not (s-contains-p "<svg" html)))))
-
-(deftest "`#+begin_graph' :svg nil — HTML export produces a base64 PNG"
-  (cl-letf (((symbol-function 'org-graph--render)
-             (lambda (_dot _kind pngfile)
-               (with-temp-file pngfile
-                 (set-buffer-multibyte nil)
-                 (insert "
-\x89PNG\r
-\x1a"))
-               t)))
-    (let ((html (org--graph-block 'html "
-+ A" nil :svg nil)))
-      (should (s-contains-p "<img" html))
-      (should (s-contains-p "base64" html))
       (should-not (s-contains-p "<svg" html)))))
 
 ;;; Tooltips: an inline <svg>'s hover by tooltips.js, as prose's do
 
-(deftest "`#+begin_graph' HTML export inlines an <svg> sans :svg, so its tooltips hover"
+(deftest "`#+begin_graph' HTML export inlines an <svg>, so its tooltips hover"
   (let (kind)
     (cl-letf (((symbol-function 'org-graph--render)
                (lambda (_dot k file) (setq kind k) (with-temp-file file (insert "<svg width=\"1\"></svg>")) file)))

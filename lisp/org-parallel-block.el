@@ -31,10 +31,10 @@
               "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be separated by solid
-vertical rules if BAR is a non-nil (colour) value.
+vertical rules if BAR is a non-nil (color) value.
 
 + COLS is either a number or a sequence of the shape: 10% 20% 30%.
-+ BAR is either `t', `nil', or a colour such as `red' or `blue'.
++ BAR is either `t', `nil', or a color such as `red' or `blue'.
 
 ----------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ vertical rules if BAR is a non-nil (colour) value.
 “bar”. This style allows text to freely move between columns,
 depending on the size of the browser, which may dynamically
 shrink and grow.  BAR can either be `t', `nil', or
-any (backend)-valid colour specification; such as `red' or
+any (backend)-valid color specification; such as `red' or
 `green'.
 
 “Hard Columns”: Alternatively, for non-uniform column widths,
@@ -72,7 +72,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
               (let* ((widths (split-string cols))
                      ;; Hard columns have their widths given; e.g., 20% 60% 20%, or 5em 20px.
                      (hard? (--any? (not (string-match-p "\\`[0-9]+\\'" it)) widths))
-                     (colour (if (equal (format "%s" bar) "t") "black" bar))
+                     (color (if (equal (format "%s" bar) "t") "black" bar))
                      ;; A line of its own, so that mentions such as ~#+columnbreak:~ are left alone.
                      (column-break "^[ \t]*#\\+columnbreak:[ \t]*$"))
                 (pcase backend
@@ -85,12 +85,12 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                   (replace-regexp-in-string column-break "\\\\columnbreak" contents)))
                   ((guard (not hard?))
                    (format "<div style=\"column-count: %s;%s\">%s</div>"
-                           cols (if bar (format " column-rule: 1px solid %s;" colour) "") contents))
+                           cols (if bar (format " column-rule: 1px solid %s;" color) "") contents))
                   ;; Each width begins a column, separated by a bar unless it is the last; CONTENTS is Org
                   ;; between export fences, so the columns after the first begin within @@html:…@@.
                   (_ (let ((columns (cl-loop for (width . more) on widths
                                              collect (format "<div style=\"width: %s; margin: 10px; border-right: %s;\">"
-                                                             width (if (and bar more) (format "4px solid %s" colour) "none"))))
+                                                             width (if (and bar more) (format "4px solid %s" color) "none"))))
                            (chunks (split-string contents column-break)))
                        (format "<div style=\"display: flex; justify-content: space-between; align-items: flex-start;\">%s</div>"
                                (concat (car columns)
@@ -101,7 +101,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                        "</div>")))))))
 
 (org-defblock-attribute parallel :example "
-# Two columns, by default; :bar rules them apart, in a colour; #+columnbreak: ends a column.
+# Two columns, by default; :bar rules them apart, in a color; #+columnbreak: ends a column.
 #+begin_parallel 2 :bar green
 *Lisp:* code is data.
 

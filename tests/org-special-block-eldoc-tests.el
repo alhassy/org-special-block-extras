@@ -139,7 +139,7 @@ C-c '" doc))
   (should-not (org-test--eldoc-at "#+begin_details Hi\nbody\n#+end_details\n" "body")))
 
 (deftest "eldoc on a link shows its block's signature, else its `org-deflink' docstring"
-  ;; A colour's example shows its link too.
+  ;; A color's example shows its link too.
   (should (equal (car (org-test--eldoc-at "Some red:hello text" "red:"))
                  (format "Show text in red color.\n\n%s\n\nDocs · See the manual" (org--hover-example 'org--red-block))))
   (should (equal (plist-get (cdr (org-test--eldoc-at "Some red:hello text" "red:")) :thing) "#+begin_red"))

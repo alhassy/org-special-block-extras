@@ -84,7 +84,7 @@ it before loading `org-special-block-extras', whose own blocks are defined then.
 The costs are slight: per block, one function and one link type or export hook;
 and each export scans once for each tag, walking the headings only when the tag
 appears.  The real concern is namespacing: every block claims the link type
-NAME: and the tag :NAME:.  By way of example, the built-in colour blocks claim
+NAME: and the tag :NAME:.  By way of example, the built-in color blocks claim
 :red:, :blue:, … ; so, with this on, a section you have tagged :red: for your
 own reasons exports in red.  Set this to nil to make blocks only, then make
 links with `org-deflink' and tags with `org-deftag' just where wanted."

@@ -29,7 +29,7 @@
 
 (defun org--latex-margin-note (marker width color contents &optional step sans-mark)
   "(MARKER, WIDTH, COLOR, CONTENTS, STEP, SANS-MARK) ↦ LaTeX for MARKER in the text, and CONTENTS in the margin under
-MARKER, WIDTH wide and COLOR coloured; STEP, such as \\stepcounter{footnote}, runs first, so a MARKER of \\thefootnote
+MARKER, WIDTH wide and COLOR colored; STEP, such as \\stepcounter{footnote}, runs first, so a MARKER of \\thefootnote
 is the new number.  SANS-MARK omits MARKER from the text, which has marked the spot itself; e.g., within maths.
 CONTENTS is saved in a minipage, then unfolded in the margin, since verbatim environments, such as src blocks', fail
 as an argument of \\marginpar."
@@ -70,7 +70,7 @@ slides have no margins, a footnote.  Sans MARKER, the note's number alone in LaT
 The block is one-off, “inline footnotes”; Org's own [fn::…] are such remarks too.  For a note used repeatedly, consider
 declaring it with ‘documentation’ and citing it with ‘doc’.
 
-WIDTH, COUNTER, and COLOR are LaTeX's: the note is WIDTH wide, coloured COLOR, its number in black.  Since verbatim
+WIDTH, COUNTER, and COLOR are LaTeX's: the note is WIDTH wide, colored COLOR, its number in black.  Since verbatim
 environments fail as arguments to \\marginpar, CONTENTS is saved in a minipage within a LaTeX box, then unfolded in the
 margin; hence, src blocks may appear within margin notes (•̀ᴗ•́)و  For LaTeX, a ‘#+resize:’ line has the rest of the
 note resized, to 1.3 the margin's width ---requiring \\usepackage{adjustbox}.
@@ -141,7 +141,7 @@ is typeset with “An aside.” in the margin, numbered as footnotes are.  A foo
     ;; Org fills the two %s with the definition and its \label; stepping with \refstepcounter lets that \label name it.
     (plist-put info :latex-default-footnote-command
                (org--latex-margin-note "{\\thefootnote}" "\\marginparwidth" "gray!80" "%s%s" "\\refstepcounter{footnote}"))
-    ;; A margin note is coloured; so, when there are footnotes, xcolor is loaded, as a block's :latex-head are.
+    ;; A margin note is colored; so, when there are footnotes, xcolor is loaded, as a block's :latex-head are.
     (when (save-excursion (goto-char (point-min)) (re-search-forward "\\[fn:" nil t))
       (cl-pushnew "xcolor" org--latex-head-used :test #'equal)))
   info)

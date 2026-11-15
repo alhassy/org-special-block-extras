@@ -262,7 +262,7 @@ Then the following exports nicely from an Org file:
 
      go:key|value|blue||gnu-emacs"
   `(org-deflink ,(intern name) (label &optional _description backend)
-     "Export a Shields.io badge, with general Syntax:  badge:key|value|colour|url|logo.
+     "Export a Shields.io badge, with general Syntax:  badge:key|value|color|url|logo.
 Precise details for each argument are shown in the Emacs tooltip for this badge."
      :display 'full
      :manual "https://alhassy.com/org-special-block-extras#what-does-it-do"
@@ -272,15 +272,15 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
      :help-echo
      ;; `format', not `lf-string': the latter sees only dynamic variables, and these are lexical.
      (format (lf-unindent "%s
-          \nGeneral Syntax:  badge:key|value|colour|url|logo
+          \nGeneral Syntax:  badge:key|value|color|url|logo
                  Key    : %s
                  Value  : %s
-                 Colour : %s
+                 Color : %s
                  URL    : %s
                  Logo   : %s
 
           This results in an SVG badge “[key∣value]”, where the 'key'
-          is coloured grey and the ‘value’ is coloured ‘color’;
+          is colored grey and the ‘value’ is colored ‘color’;
           for the HTML backend, and otherwise are silently omitted.
           Descriptions are ignored; i.e., ‘[[badge:label][description]]’
           is the same as ‘[[badge:label]]’.
@@ -299,7 +299,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                                ‘lightgrey’   or ‘inactive’,
                                ‘blue’        or ‘informational’,
                or ‘green’, ‘yellowgreen’, ‘yellow’, ‘blueviolet’, ‘ff69b4’, etc.
-               Consult https://htmlcolorcodes.com/ to see the HEX codes of other colours.
+               Consult https://htmlcolorcodes.com/ to see the HEX codes of other colors.
              ⇒ ‘logo’ examples and how they look can be found at
                 https://alhassy.com/org-special-block-extras#Example-Badge-Icons
 
@@ -311,7 +311,7 @@ Precise details for each argument are shown in the Emacs tooltip for this badge.
                        (if social-shields-url
                            `(format ,social-shields-url label)
                          `(format "<img src=\"https://img.shields.io/%s/%s?style=social\">" ,social-shields-name label))
-                     ;; An omitted, or blank, colour is green; an omitted logo is no logo at all.
+                     ;; An omitted, or blank, color is green; an omitted logo is no logo at all.
                      '(format "<img src=\"https://img.shields.io/badge/%s-%s-%s%s\">"
                               (url-hexify-string (s-replace "-" "--" key))
                               (url-hexify-string (s-replace "-" "--" (or value "")))

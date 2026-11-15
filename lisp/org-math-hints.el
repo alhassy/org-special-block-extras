@@ -46,7 +46,7 @@ to show no hints.  A math block binds it by its :hints; nil is as the layout has
 
 (defface org-math-hint '((t :inherit font-lock-comment-face))
   "How a math block's hint, “REL{ HINT }”, looks: muted, as a comment, since it says why a step holds, not what it is.
-Not `shadow', which some themes make the colour of all text."
+Not `shadow', which some themes make the color of all text."
   :group 'org-special-block-extras)
 
 (defconst org--math-relation-re
@@ -77,7 +77,7 @@ ends; e.g., “x ={ by IH } y” ↦ ((2 3 12)).  The { must hug REL, and a spac
 (defun org--math-hint (text &optional between)
   "(TEXT, BETWEEN) ↦ the LaTeX of a hint: its lines, top-aligned with its step, a blank one a gap; and each
 \\[ CALCULATION \\] within, a nested calculation, whose hints are read alike, so they may nest too, set BETWEEN its
-expressions as the block's are; see `org--math-hints'; its tags, “COLOUR:<<NAME>>”, are anchored in place, as an
+expressions as the block's are; see `org--math-hints'; its tags, “COLOR:<<NAME>>”, are anchored in place, as an
 aligned has no \\tag; see `org--math-tags'.  A hint of one line is a \\text{…}.
 E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the aligned x &\\quad = \\quad y && \\text{h}."
   (let ((pos 0) rows)
@@ -107,7 +107,7 @@ E.g., “Why:⏎\\[ x ={ h } y \\]” ↦ a column of \\text{Why:} atop the alig
 A link within it is followed instead.</p></template>
 <style>
   .osbe-hint { cursor: pointer; }
-  /* A hint is plainly a hint ---prose, maybe coloured--- so it wears no tooltip's dotted underline. */
+  /* A hint is plainly a hint ---prose, maybe colored--- so it wears no tooltip's dotted underline. */
   .tooltip.osbe-hint { border-bottom: none; }
   .osbe-hint-fold, .osbe-hint.osbe-folded .osbe-hint-body { display: none; }
   .osbe-hint.osbe-folded .osbe-hint-fold { display: inline-block; }
@@ -137,7 +137,7 @@ sets it apart already.  E.g., between, “\\text{h}” ↦ “{\\color[RGB]{128,
     (cond ((equal format "none") "")
           ;; In HTML, a click folds the hint to [⋯], as TAB folds it to {…} in Emacs; its tooltip says so.  The whole
           ;; hint folds, its format too, whose tall bracket would else keep its room.  The fold is closed, as folded code
-          ;; is shown, its ⋯ level with the relation; in the hint's colour, or a format of our own about a lone ⋯.  The
+          ;; is shown, its ⋯ level with the relation; in the hint's color, or a format of our own about a lone ⋯.  The
           ;; page's head, which serves these, the block asks for: we are within a temporary buffer, whose buffer-local
           ;; requests are lost.
           ((and (eq org--math-backend 'html) (not (org-export-markdown-p)))

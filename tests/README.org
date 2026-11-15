@@ -62,5 +62,5 @@ Write a =:demo= block in the manual ---say, =#+begin_org :ignore t :demo org--NA
 - =(package-initialize)= must come /before/ =-L .=; otherwise your installed MELPA copy of
   =org-special-block-extras= shadows the working tree, and we silently test the wrong code.
 - Snapshots compare modulo whitespace and case (=org-demo--normalise=), and pin =gensym=, Org's ids, and htmlize's
-  colours (=org-demo--export=), so they agree across machines.
+  colors (=org-demo--export=), so they agree across machines.
 - =org-element= warnings about non-Org buffers are benign.

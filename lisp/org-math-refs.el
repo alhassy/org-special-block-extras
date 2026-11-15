@@ -15,7 +15,7 @@
 
 ;;; Commentary:
 
-;; A math block's line tagged “COLOUR:<<NAME>>”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
+;; A math block's line tagged “COLOR:<<NAME>>”, or a block “#+name: NAME”, is cited by NAME, as Org cites a named
 ;; element; by way of example,
 ;;
 ;;     #+begin_math
@@ -57,7 +57,7 @@ its own target, and a block's “#+name: NAME”.  A function of `org-execute-fi
 
 (defun org--math-ref-names ()
   "↦ each name a math block of the buffer gives its maths to cite, as (NAME NESTED . PRIMARY): its tags,
-“COLOUR:<<NAME>>”, and its #+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag
+“COLOR:<<NAME>>”, and its #+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag
 nor \\eqref.  A line's later tags are aliases of its first, PRIMARY, whose label they cite; else PRIMARY is NAME."
   (save-excursion
     (goto-char (point-min))

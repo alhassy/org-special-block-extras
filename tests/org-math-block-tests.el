@@ -5,7 +5,7 @@
 
 ;;; Links
 
-(deftest "in maths, COLOUR:ATOM colours a {group}, a \\command with its {arguments}, or a word; a group's own links too"
+(deftest "in maths, COLOR:ATOM colors a {group}, a \\command with its {arguments}, or a word; a group's own links too"
   (should (equal (org--math-markup "red:x + blue:{y + green:z}" 'latex)
                  "{\\color{red}x} + {\\color{blue}{y + {\\color{green}z}}}"))
   (should (equal (org--math-markup "teal:\\bigoplus_{violet:x = red:ab}" 'latex)
@@ -13,11 +13,11 @@
   (should (equal (org--math-markup "red:\\frac{a}{b} + blue:\\mathbb{N}" 'latex)
                  "{\\color{red}\\frac{a}{b}} + {\\color{blue}\\mathbb{N}}")))
 
-(deftest "in maths, COLOUR:ATOM right after a $ is a link too, as in a hint's inline maths"
+(deftest "in maths, COLOR:ATOM right after a $ is a link too, as in a hint's inline maths"
   (should (equal (org--math-markup "\\text{Distribute $red:{(1 - r)}$ over}" 'latex)
                  "\\text{Distribute ${\\color{red}{(1 - r)}}$ over}")))
 
-(deftest "in maths, a COLOUR: sans atom is no link, and a word merely ending in a colour's name is no link either"
+(deftest "in maths, a COLOR: sans atom is no link, and a word merely ending in a color's name is no link either"
   (should (equal (org--math-markup "f : A \\to B, Fred:x" 'latex) "f : A \\to B, Fred:x")))
 
 (deftest "in maths, [[TYPE:PATH][DESC]] is TYPE's LaTeX; an unknown TYPE shows its DESC alone"
@@ -153,7 +153,7 @@ red:0 < 1" nil)
 By \\eqref{Distributivity of meet}.
 ")
 
-(define-org-call-test "a math block whose lines have an & is an align; its COLOUR:<<NAME>> a \\tag; its last \\ dropped"
+(define-org-call-test "a math block whose lines have an & is an align; its COLOR:<<NAME>> a \\tag; its last \\ dropped"
   :call (org--math-block 'latex "x &= x + 0 \\\\
 x + 0 &= 0 + x   blue:<<Symmetry>>" nil)
   :returns "#+begin_export latex
@@ -260,12 +260,12 @@ b = 2
 
 ;;; Atoms
 
-(deftest "in maths, red:\\left(…\\right) colours the whole bracketing, as a group of \\left( alone is an error"
+(deftest "in maths, red:\\left(…\\right) colors the whole bracketing, as a group of \\left( alone is an error"
   (should (equal (org--math-markup "red:\\left( x \\right) + y" 'latex) "{\\color{red}\\left( x \\right)} + y"))
   (should (equal (org--math-markup "red:\\left( \\left[ x \\right] \\right) + y" 'latex)
                  "{\\color{red}\\left( \\left[ x \\right] \\right)} + y")))
 
-(deftest "in maths, a sizer's atom holds its delimiter; and a COLOUR: sans word or group colours one character"
+(deftest "in maths, a sizer's atom holds its delimiter; and a COLOR: sans word or group colors one character"
   (should (equal (org--math-markup "red:\\big( x blue:\\Big\\langle" 'latex)
                  "{\\color{red}\\big(} x {\\color{blue}\\Big\\langle}"))
   (should (equal (org--math-markup "a red:+ b red:→ c" 'latex) "a {\\color{red}+} b {\\color{red}→} c")))
@@ -432,7 +432,7 @@ c = d
 \\end{gather}
 #+end_export")
 
-(define-org-call-test "a math block's COLOUR:<<NAME>> is a coloured \\tag, labelled NAME; tagged lines are gathered"
+(define-org-call-test "a math block's COLOR:<<NAME>> is a colored \\tag, labelled NAME; tagged lines are gathered"
   :call (org--math-block 'latex "
 a = b   blue:<<One>>
 c = d   red:<<Two>>" nil)
@@ -452,7 +452,7 @@ By [[Base Case_1]]." 'html t)))
     (should (string-match-p (regexp-quote "\\tag{Base Case$_1$} \\label{Base Caseu005f1}") html))
     (should (string-match-p (regexp-quote "By \\eqref{Base Caseu005f1}.") html))))
 
-(deftest "a math block's <<NAME>> sans colour is a plain \\tag; its brackets delimit it, so a hint's \\[ … \\] may hold one"
+(deftest "a math block's <<NAME>> sans color is a plain \\tag; its brackets delimit it, so a hint's \\[ … \\] may hold one"
   (should (string-match-p (regexp-quote "a = b   \\tag{One} \\label{One}") (org--math-block 'latex "a = b   <<One>>" nil)))
   ;; Within a hint's nested calculation, an aligned, a tag is no \\tag but NAME in brackets, anchored as MathJax's are.
   (let ((html (org-export-string-as "
@@ -479,7 +479,7 @@ e^{i\\pi} + 1 = 0
 \\end{equation}
 #+end_export")
 
-(org-deftest "C-c C-o on [[NAME]] visits the line tagged COLOUR:<<NAME>>, as Org's own target; else a \\tag{…NAME…}; else Org's own search"
+(org-deftest "C-c C-o on [[NAME]] visits the line tagged COLOR:<<NAME>>, as Org's own target; else a \\tag{…NAME…}; else Org's own search"
   :text "
 By [[Golden Rule]], [[⊑-Definition]], and [[Leibniz]].
 #+begin_math
@@ -765,7 +765,7 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
     (should (string-match-p "shiftKey" head))
     (should (string-match-p "shift-click" head))))
 
-(deftest "a math block's hint colour is LaTeX's and MathJax's alike: #RRGGBB as RGB, since MathJax has no HTML model"
+(deftest "a math block's hint color is LaTeX's and MathJax's alike: #RRGGBB as RGB, since MathJax has no HTML model"
   (should (equal (org--math-color "#800000") "[RGB]{128,0,0}"))
   (should (equal (org--math-color "teal") "{teal}")))
 
@@ -773,7 +773,7 @@ b && \\text{inmost} \\end{aligned} \\end{aligned}
   (should (string-match-p (regexp-quote "= & \\quad {\\color[RGB]{128,0,0} \\left[ \\text{h} \\right.}")
                           (org--math-block 'latex "x ={ h } y" nil)))
   (should (string-match-p (regexp-quote "&& \\text{h}\n") (org--math-block 'latex "x ={ h } y" nil :hints 'beside)))
-  ;; A list gives the layout a format of our own, its %s the hint; a colour is LaTeX's, within it.
+  ;; A list gives the layout a format of our own, its %s the hint; a color is LaTeX's, within it.
   (should (string-match-p (regexp-quote "&& {\\color{teal} \\langle \\text{h} \\rangle}")
                           (org--math-block 'latex "x ={ h } y" nil :hints '(beside "{\\color{teal} \\langle %s \\rangle}"))))
   ;; none hides hints from the export; their steps remain, as a compact chain.
@@ -902,7 +902,7 @@ We have \\({\\color{red}x}\\).</p>
 
 ;;; In Emacs
 
-(org-deftest "a math block shows each COLOUR:ATOM in its colour, as the maths reads it, and each tag in its colour" [fontify]
+(org-deftest "a math block shows each COLOR:ATOM in its color, as the maths reads it, and each tag in its color" [fontify]
   :text "
 #+begin_math
 teal:\\bigoplus_{violet:x = red:a}^{cyan:b}   blue:<<Fold>>
@@ -968,7 +968,7 @@ red:x^2 + y^2 = z^2
 #+end_math"
   :at "y^2"
   (skip-unless (and (executable-find "latex") (executable-find "dvipng")))
-  ;; Sans a display, as in batch, Org's colours are unspecified; we name them.
+  ;; Sans a display, as in batch, Org's colors are unspecified; we name them.
   (setq-local org-format-latex-options (org-combine-plists org-format-latex-options '(:foreground "Black" :background "White")))
   (org-ctrl-c-ctrl-c)
   (let ((image (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
@@ -998,11 +998,11 @@ a &= b
   (org-clear-latex-preview (point-min) (point-max))
   (should-not (--first (overlay-get it 'org-math-preview) (overlays-in (point-min) (point-max)))))
 
-(org-deftest "a math block's COLOUR:<<NAME>> shows as Org's target, in COLOUR; plain sans one Emacs knows" [fontify]
+(org-deftest "a math block's COLOR:<<NAME>> shows as Org's target, in COLOR; plain sans one Emacs knows" [fontify]
   :text "
 #+begin_math
 x &= y   blue:<<Symmetry>>
-y &= z   notacolour:<<Mystery>>
+y &= z   notacolor:<<Mystery>>
 z &= w   <<Plain>>
 #+end_math
 blue:<<Symmetry>> outside a math block is left be."

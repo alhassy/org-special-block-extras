@@ -53,14 +53,14 @@ text
 \\endgroup\\,
 #+end_export")
 
-(deftest "All 19 named colour blocks are registered as handler functions."
-  (dolist (colour '(black blue brown cyan darkgray gray green lightgray lime
+(deftest "All 19 named color blocks are registered as handler functions."
+  (dolist (color '(black blue brown cyan darkgray gray green lightgray lime
                           magenta olive orange pink purple red teal violet white yellow))
-    (should (fboundp (intern (format "org--%s-block" colour))))))
+    (should (fboundp (intern (format "org--%s-block" color))))))
 
 ;;; Highlight
 
-(define-org-export-test "a highlight link colours the background of its description in HTML" [highlight]
+(define-org-export-test "a highlight link colors the background of its description in HTML" [highlight]
   :input "
           [[highlight:pink][Read this twice.]]"
   :equals "<p>
@@ -74,7 +74,7 @@ text
   :equals "\\colorlet{osbe-highlight}{pink}\\colorbox{osbe-highlight}{Read this twice.}
            ")
 
-(define-org-export-test "a highlight block, of a hex colour, is a full-width paragraph box in LaTeX" [highlight]
+(define-org-export-test "a highlight block, of a hex color, is a full-width paragraph box in LaTeX" [highlight]
   :input "
           #+begin_highlight #e5f5e5
           A whole paragraph.
@@ -86,7 +86,7 @@ A whole paragraph.
 \\ifhmode\\unskip\\fi}}
 ")
 
-(org-deftest "a highlight link shows, in Emacs, with its colour as background" [highlight]
+(org-deftest "a highlight link shows, in Emacs, with its color as background" [highlight]
   :text "
 Do [[highlight:pink][read this]] twice."
   :at "read"
@@ -103,36 +103,36 @@ Do [[highlight:pink][read this]] twice."
   (should (string-match-p ">🎨</button>" (org-export-string "\n[[palette:]]")))
   (should (equal "" (org-export-string "\n[[palette:][Pick a background]]" 'latex))))
 
-(org-deftest "a palette link shows, in Emacs, with a colour name as background, a string as htmlize needs" [palette]
+(org-deftest "a palette link shows, in Emacs, with a color name as background, a string as htmlize needs" [palette]
   :text "
 Do [[palette:][Pick a background]] now."
   :at "Pick"
   (font-lock-ensure)
   (should (equal (get-text-property (point) 'face) '(:background "white" :box t))))
 
-(org-deftest "in Emacs, a colour link shows its text in its colour: a named one, color: by name or hex; issue #58" [color]
+(org-deftest "in Emacs, a color link shows its text in its color: a named one, color: by name or hex; issue #58" [color]
   :text "
 [[color:red][this is red text]]
 [[color:#ff0066][pinkish text]]
 [[red:][hey]]
 [[red:This will appear red]]"
   (font-lock-ensure)
-  (pcase-dolist (`(,text ,colour) '(("this is red" "red") ("pinkish" "#ff0066") ("hey" "red") ("This will" "red")))
+  (pcase-dolist (`(,text ,color) '(("this is red" "red") ("pinkish" "#ff0066") ("hey" "red") ("This will" "red")))
     (goto-char (point-min))
     (search-forward text)
-    (should (equal (plist-get (get-text-property (1- (point)) 'face) :foreground) colour))))
+    (should (equal (plist-get (get-text-property (1- (point)) 'face) :foreground) color))))
 
 (provide 'org-color-links-tests)
 ;;; org-color-links-tests.el ends here
 
-;;; Colour links, as displayed in Emacs
+;;; Color links, as displayed in Emacs
 
 (defun org-color-links-tests--visible ()
   "↦ The current buffer's text sans its invisible parts."
   (apply #'concat (cl-loop for pos from (point-min) below (point-max)
                            unless (get-text-property pos 'invisible) collect (string (char-after pos)))))
 
-(org-deftest "a link shows in full while point is in it: a colour link's “red:” too, and a described link's target" [color]
+(org-deftest "a link shows in full while point is in it: a color link's “red:” too, and a described link's target" [color]
   :text "See [[red: hello world]], teal:there, and [[https://alhassy.com][my blog]] now."
   (org-special-block-extras-mode 1)
   (font-lock-add-keywords nil '((org--reveal-link-at-point)) 'append)

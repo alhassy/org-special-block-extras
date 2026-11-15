@@ -36,7 +36,7 @@ For LaTeX, this is just a boring, but centered, box.
 By default, the TITLE of such blocks is “Details”,
 its TITLE-COLOR is green, and BACKGROUND-COLOR is “#e5f5e5”.
 
-In HTML, we show folded, details, regions with a nice greenish colour."
+In HTML, we show folded, details, regions with a nice greenish color."
               (pcase backend
                 ('latex (concat (org--latex-define-color "osbe-bg" background-color)
                                 (org--latex-define-color "osbe-fg" title-color)

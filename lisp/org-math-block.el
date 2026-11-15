@@ -23,7 +23,7 @@
 ;;     teal:\bigoplus_{violet:x[fn::the current element] = \xstart}^{cyan:b} brown:f(violet:x)   teal:<<Fold>>
 ;;     #+end_math
 ;;
-;; colours ⊕ teal, x violet, a red, and b cyan, as red:𝒳 colours prose; hovering over x shows its footnote; the
+;; colors ⊕ teal, x violet, a red, and b cyan, as red:𝒳 colors prose; hovering over x shows its footnote; the
 ;; equation is tagged “(Fold)”, in teal, which [[Fold]] cites.  The \def line is a definition, declared but not
 ;; shown: in LaTeX, in the preamble; in HTML, for MathJax, hidden.  An Org table is a matrix; lines that end in \\ are
 ;; gathered; lines with an & are aligned at it, as in a textbook derivation.  In Emacs, C-c C-c shows the maths as an
@@ -49,7 +49,7 @@
 
 (defconst org--math-fontify-keywords
   '((org--math-unlink 0 nil)
-    ;; A tag, “COLOUR:<<NAME>>”, shows as Org's target, in COLOUR.
+    ;; A tag, “COLOR:<<NAME>>”, shows as Org's target, in COLOR.
     (org--math-match-tag 0 org--math-tag-face)
     (org--math-match-plain-link 0 org--math-link-face)
     ;; Each & is where lines may align; an escaped \& is a mere ampersand.
@@ -122,8 +122,8 @@ all that its lines imply; sans star, it is numbered."
 
 Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link to it.
 
-+ red:ATOM colours an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
-  delimiter, \\big(; a word; else one character.  [[red:][a + b]] colours a + b.  So too for any colour,
++ red:ATOM colors an ATOM: a {group}; \\left(…\\right); a \\command{with}{arguments}, or a sizer with its
+  delimiter, \\big(; a word; else one character.  [[red:][a + b]] colors a + b.  So too for any color,
   [[color:#ff0066][…]], highlight:, web links, and tooltip: and doc:, which hover in HTML; see `org-markup-links'.
 + ATOM[fn::TIP], or ATOM[[tooltip:TIP]], is a tooltip, as [[tooltip:ATOM][TIP]] is, and as in prose: in HTML, TIP hovers over ATOM, by
   tooltips.js; in LaTeX, TIP is a margin note, its number on ATOM.  ATOM[fn:NAME]'s TIP is its “[fn:NAME] TIP”
@@ -133,8 +133,8 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
 + An Org table is a MATRIX, pmatrix by default; as in Org, a line that begins | is a table, so write \\lvert x \\rvert.
 + A description list, “- VALUE :: CONDITION” lines, is a cases environment; a CONDITION of mere words, such as
   otherwise, is prose.
-+ A line ending “COLOUR:<<NAME>>”, Org's own target, is tagged NAME, in COLOUR, which [[NAME]] cites, as Org cites
-  a target, and C-c C-o on it visits; sans COLOUR, “<<NAME>>” is plain.  NAME may hold maths, as \\meet, ⊑, or a
++ A line ending “COLOR:<<NAME>>”, Org's own target, is tagged NAME, in COLOR, which [[NAME]] cites, as Org cites
+  a target, and C-c C-o on it visits; sans COLOR, “<<NAME>>” is plain.  NAME may hold maths, as \\meet, ⊑, or a
   subscript, as <<Base Case_1>>.  A hint's \\[ … \\] may be tagged too: “\\[ 0 + n = n teal:<<Base Case>> \\]”.
   NUMBERED numbers the rest.  A block's “#+name: NAME” labels its last line, so [[NAME]] cites it too; it is
   tagged NAME when unnumbered.
@@ -163,7 +163,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
   preamble; in HTML, MathJax reads it hidden, and then knows it page-wide.
 + In Markdown, the block is a fenced math block, its definitions within, since GitHub forgets them between blocks.
 + In Emacs, C-c C-c shows the maths as an image atop the block, until C-c C-c again, or an edit; C-c ' edits the
-  block in `latex-mode', its hints, tags, and colours shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
+  block in `latex-mode', its hints, tags, and colors shown as in the Org buffer.  C-c C-x C-l, which shows Org's own maths as images, shows math blocks too."
   (pcase-let ((`(,layout ,format ,folded) (org--math-hints-switch hints)))
     (let ((org--math-tips nil) (org--math-hint-format format) (org--math-hint-folded folded))
       (pcase-let ((`(,definitions . ,shown)
@@ -194,7 +194,7 @@ Then [[Fold]] cites the equation, as (Fold) in teal; [[Fold][these words]] link 
 #+begin_math
 # A line “# …” is a comment; a \\def is declared, page-wide, yet not shown.
 \\def\\Sn{\\mathcal{S}_n}
-# red:ATOM colours an atom, a {group} or a \\command; ATOM[fn::TIP] hovers TIP over it.
+# red:ATOM colors an atom, a {group} or a \\command; ATOM[fn::TIP] hovers TIP over it.
   red:{(1 - r)} · \\Sn[fn::the first $n$ powers of $r$, summed]
 # “={ HINT }” says why a step holds; TAB folds it here, as a click does in HTML.
 ={ Distribute $red:{(1 - r)}$; all but the first and last terms cancel }

@@ -17,8 +17,8 @@
     (should (string-match-p "node \\[ shape=box \\]" (org--graph-raw->dot "+ A" nil '(:theme ink))))
     (should-error (org--graph-raw->dot "+ A" nil '(:theme nope)) :type 'user-error)))
 
-(deftest "a theme's :containers fill containers by depth, cycling; a container's own fillcolor wins" [graph theme]
-  (let* ((org-graph-themes '((nest :containers "red blue")))
+(deftest "a theme's :container-colors fill containers by depth, cycling; a container's own fillcolor wins" [graph theme]
+  (let* ((org-graph-themes '((nest :container-colors "red blue")))
          (dot (org--graph-raw->dot "
 + Outer :container:
   + Inner :container:

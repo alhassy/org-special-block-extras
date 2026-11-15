@@ -21,7 +21,7 @@ These are red:squares! <<squares>> We [[*Why squares?][prove it below]].
 * How the loop accumulates
 
 Each step adds the next odd number to the running sum:
-#+begin_graph :rankdir LR
+#+begin_graph :direction right
 + 0
   + add 1 :: 1
     + add 3 :: 4

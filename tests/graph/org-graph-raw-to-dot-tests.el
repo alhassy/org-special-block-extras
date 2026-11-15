@@ -12,13 +12,8 @@
   A [ label=A ];
 }")
 
-(deftest "`org--graph-raw->dot' undirected graph uses -- arrows and graph keyword"
-  (should (equal "graph {
-  A [ label=A ];
-  A -- B;
-  B [ label=B ];
-}"
-                 (org--graph-raw->dot "
+(deftest "`org--graph-raw->dot' is always a digraph; a header's :directed is no key of ours, so it is a graph attribute"
+  (should (string-prefix-p "digraph {\n  graph [ directed=nil ]" (org--graph-raw->dot "
 + A
   + B" nil (quote (:directed nil))))))
 
@@ -211,7 +206,7 @@
   + hi :reply: :: [[b]]
 + <<b>> b" nil) :type 'user-error)))))
 
-;;; Built-in templates: UML arcs, state-machine nodes, ER cardinalities; and :mindmap
+;;; Built-in templates: UML arcs, state-machine nodes, ER cardinalities; and the mindmap theme
 
 (deftest "a reference's UML tag draws its arc as UML does: a hollow triangle, a dashed one, diamonds, a dashed vee" [graph]
   (let ((dot (org--graph-raw->dot "
@@ -260,25 +255,35 @@
   + [[Animal][:inherits:]]
 + <<Animal>> Animal" nil))))
 
-(deftest "a :mindmap t graph is undirected, by twopi, rooted at its first item, its nodes rounded and filled; the header wins" [graph]
+(deftest "the mindmap theme is arrowless, by twopi, rooted at its first item, its nodes rounded and filled; the header wins" [graph theme]
   (let ((dot (org--graph-raw->dot "
 + Org mode
   + Tables
-  + Babel" nil '(:mindmap t :ranksep 2))))
-    (should (string-prefix-p "graph {" dot))
-    (should (string-search "Org -- Tables" (s-replace "\"Org mode\"" "Org" dot)))
-    (should (string-search "layout=twopi overlap=false root=\"Org mode\" ranksep=2" dot))
+  + Babel" nil '(:theme mindmap :ranksep 2))))
+    (should (string-search "Org -> Tables" (s-replace "\"Org mode\"" "Org" dot)))
+    (should (string-search "edge [ color=gray50 dir=none ]" dot))
+    (should (string-search "layout=twopi overlap=false ranksep=2 root=\"Org mode\"" dot))
     (should (string-search "node [ shape=box style=\"rounded,filled\" color=gray40 ]" dot))))
 
-(deftest "a :mindmap t graph fills each node by its depth, from `org-graph-mindmap-palette'; a node's own fillcolor wins" [graph]
-  (let* ((org-graph-mindmap-palette '("red" "green" "blue"))
+(deftest "under layout=twopi, sans a root, the first item is the root; a root of the graph's own wins" [graph]
+  (should (string-search "graph [ layout=twopi root=Hub ]" (org--graph-raw->dot "
+#+graph: layout=twopi
++ Hub
+  + Spoke" nil)))
+  (should (string-search "graph [ layout=twopi root=Spoke ]" (org--graph-raw->dot "
+#+graph: layout=twopi root=Spoke
++ Hub
+  + Spoke" nil))))
+
+(deftest "a theme's :node-colors fill each node by its depth, cycling; a node's own fillcolor wins" [graph theme]
+  (let* ((org-graph-themes `((rings :node "shape=box style=\"rounded,filled\" color=gray40" :node-colors "red green blue")))
          (dot (org--graph-raw->dot "
 + Root
   + Child
     + Grandchild
       + Great
   + Own
-    | fillcolor | gold |" nil '(:mindmap t))))
+    | fillcolor | gold |" nil '(:theme rings))))
     (should (string-match-p "Root \\[ fillcolor=red label=Root \\]" dot))
     (should (string-match-p "Child \\[ fillcolor=green label=Child \\]" dot))
     (should (string-match-p "Grandchild \\[ fillcolor=blue label=Grandchild \\]" dot))

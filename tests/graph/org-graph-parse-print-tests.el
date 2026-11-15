@@ -64,16 +64,18 @@
   A [ label=\"Two words\" color=\"#ff0000\" fillcolor=\"#00ff00\" style=filled ];
 }")
 
-(deftest "an undirected graph uses --, without touching any -> inside a label"
-  (should (equal "graph {
+(deftest "an undirected graph is #+edge: :undirected:, arrowless arcs; a -> inside a label stays as written"
+  (should (equal "digraph {
+  edge [ dir=none ]
   a [ label=\"x -> y\" ];
-  a -- b;
+  a -> b;
   b [ label=b ];
 }"
                  (org--graph-raw->dot "
+#+edge: :undirected:
 + a
   | label | x -> y |
-  + b" nil (quote (:directed nil))))))
+  + b" nil))))
 
 (define-graph-test "\"Org mode\" and Org mode name the same node"
   :input "

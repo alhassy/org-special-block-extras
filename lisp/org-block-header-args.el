@@ -64,7 +64,7 @@ By way of example, \"N=3 WHO=Jasim :folded t\" from 0 gives 13; a (list) or \"st
 (defun org--read-header (header)
   "HEADER ↦ its words as Lisp values, a word Lisp cannot read whole, or reads only by unescaping, staying a string.
   \"Title :n 2 :color #6c7086 :font Helvetica,Arial\"  ↦  (Title :n 2 :color \"#6c7086\" :font \"Helvetica,Arial\")
-So hex colours need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp.
+So hex colors need no quotes, as with Org's own #+attr_html: lines; \"quoted strings\" and (lists) read as Lisp.
 An Org link is a word, spaces and all, rather than Lisp's vector: \"[[*Folds][the folds]] :n 2\" ↦ (\"[[*Folds][the folds]]\" :n 2).
 So too are a :KEY's VAR=VALUE pairs, up to the next :KEY; see `org--header-pairs-end'."
   (let ((header (or header "")) (pos 0) values)

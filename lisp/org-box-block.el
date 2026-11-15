@@ -16,7 +16,7 @@
 ;;; Commentary:
 
 ;; The `box' special block (styled div in HTML, tcolorbox in LaTeX)
-;; and the `org-subtle-colors' colour-name→hex helper.
+;; and the `org-subtle-colors' color-name→hex helper.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -29,7 +29,7 @@
 (defun org--box-shadow (shadow)
   "SHADOW, as given to the `box' block, ↦ its CSS; nil when SHADOW is.
 
-A single colour sits behind the box; otherwise up to four colours, as a list or a
+A single color sits behind the box; otherwise up to four colors, as a list or a
 plist with keys :left, :right, :deep-right and :deep-left, spread with blur around
 it ---or within it, when prefixed with ‘inset’.  In CSS, “box-shadow: SPEC, …”
 has each SPEC of the shape “[inset] x_offset y_offset [blur [spread]] color”."
@@ -60,8 +60,8 @@ By default, the box's BACKGROUND-COLOR is green for HTML and red for LaTeX;
 for LaTeX, there are also FRAME-COLOR and TITLE-BACKGROUND-COLOR.
 
 SHADOW is an alternate style of boxing: It shows the contents in a centred
-box with a shadow colour being the given non-nil value of SHADOW.
-If SHADOW is a hexadecimal colour, it should be a string enclosed in double quotes.
+box with a shadow color being the given non-nil value of SHADOW.
+If SHADOW is a hexadecimal color, it should be a string enclosed in double quotes.
 More accurately, the following are all valid uses:
 
     #+begin_box title :shadow t
@@ -74,16 +74,16 @@ More accurately, the following are all valid uses:
     #+begin_box title :shadow (cyan \"inset pink\" orange)
     #+begin_box title :shadow (:left cyan :right pink :deep-right orange :deep-left yellow)
 
-Notice that prefixing colours with ‘inset’ causes the colour to be within the box,
+Notice that prefixing colors with ‘inset’ causes the color to be within the box,
 rather than spread, with blur, around the box. The use of ‘inset’ swaps left and right.
 
 The HTML export uses a padded div, whereas the LaTeX export
-requires the tcolorbox package; Markdown, sans colours, gets a quote opening with TITLE in bold."
+requires the tcolorbox package; Markdown, sans colors, gets a quote opening with TITLE in bold."
               (pcase (if (org-export-markdown-p) 'md backend)
                 ('md (org-parse (format "#+begin_quote\n%s%s\n#+end_quote"
                                         (if (org-string-nw-p (format "%s" title)) (format "*%s*\n\n" title) "")
                                         raw-contents)))
-                ;; Colours are named first, since tcolorbox options cannot take hex codes such as #CCFFCC.
+                ;; Colors are named first, since tcolorbox options cannot take hex codes such as #CCFFCC.
                 ('latex
                  (concat (org--latex-define-color "osbe-box-back" (or background-color "red!5!white"))
                          (org--latex-define-color "osbe-box-frame" (or frame-color "red!75!black"))
@@ -107,14 +107,14 @@ requires the tcolorbox package; Markdown, sans colours, gets a quote opening wit
 Any Org goes in a box: *markup*, lists, src blocks.
 #+end_box
 
-# :shadow is another look: a centred box, its shadows coloured; an “inset” one falls within.
+# :shadow is another look: a centred box, its shadows colored; an “inset” one falls within.
 #+begin_box Mind the invariant :shadow (cyan \"inset pink\")
 It holds before and after every iteration.
 #+end_box")
 
 ;;;;;;; org-subtle-colors
 (defun org-subtle-colors (c)
-  "HTML codes for common colours.
+  "HTML codes for common colors.
 
 Names are very rough approximates.
 

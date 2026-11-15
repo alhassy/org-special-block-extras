@@ -93,31 +93,31 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 (org-defgraph-tag undirected "dir=none"
   "Draws an arc with no arrowhead, in a directed graph.")
 
-;; Colours: Catppuccin Latte's accents, legible on light backgrounds, a theme's included.
+;; Colors: Catppuccin Latte's accents, legible on light backgrounds, a theme's included.
 (org-defgraph-tag red "color=\"#d20f39\" fontcolor=\"#d20f39\""
-  "Colours a node's outline and text, or an arc and its label, red: #d20f39.")
+  "Colors a node's outline and text, or an arc and its label, red: #d20f39.")
 (org-defgraph-tag orange "color=\"#fe640b\" fontcolor=\"#fe640b\""
-  "Colours a node's outline and text, or an arc and its label, orange: #fe640b.")
+  "Colors a node's outline and text, or an arc and its label, orange: #fe640b.")
 (org-defgraph-tag yellow "color=\"#df8e1d\" fontcolor=\"#df8e1d\""
-  "Colours a node's outline and text, or an arc and its label, yellow: #df8e1d.")
+  "Colors a node's outline and text, or an arc and its label, yellow: #df8e1d.")
 (org-defgraph-tag green "color=\"#40a02b\" fontcolor=\"#40a02b\""
-  "Colours a node's outline and text, or an arc and its label, green: #40a02b.")
+  "Colors a node's outline and text, or an arc and its label, green: #40a02b.")
 (org-defgraph-tag teal "color=\"#179299\" fontcolor=\"#179299\""
-  "Colours a node's outline and text, or an arc and its label, teal: #179299.")
+  "Colors a node's outline and text, or an arc and its label, teal: #179299.")
 (org-defgraph-tag blue "color=\"#1e66f5\" fontcolor=\"#1e66f5\""
-  "Colours a node's outline and text, or an arc and its label, blue: #1e66f5.")
+  "Colors a node's outline and text, or an arc and its label, blue: #1e66f5.")
 (org-defgraph-tag purple "color=\"#8839ef\" fontcolor=\"#8839ef\""
-  "Colours a node's outline and text, or an arc and its label, purple: #8839ef.")
+  "Colors a node's outline and text, or an arc and its label, purple: #8839ef.")
 (org-defgraph-tag magenta "color=\"#c2148e\" fontcolor=\"#c2148e\""
-  "Colours a node's outline and text, or an arc and its label, magenta: #c2148e.")
+  "Colors a node's outline and text, or an arc and its label, magenta: #c2148e.")
 (org-defgraph-tag pink "color=\"#ea76cb\" fontcolor=\"#ea76cb\""
-  "Colours a node's outline and text, or an arc and its label, pink: #ea76cb.")
+  "Colors a node's outline and text, or an arc and its label, pink: #ea76cb.")
 (org-defgraph-tag brown "color=\"#8b4513\" fontcolor=\"#8b4513\""
-  "Colours a node's outline and text, or an arc and its label, brown: #8b4513.")
+  "Colors a node's outline and text, or an arc and its label, brown: #8b4513.")
 (org-defgraph-tag gray "color=\"#7c7f93\" fontcolor=\"#7c7f93\""
-  "Colours a node's outline and text, or an arc and its label, gray: #7c7f93.")
+  "Colors a node's outline and text, or an arc and its label, gray: #7c7f93.")
 (org-defgraph-tag black "color=\"#000000\" fontcolor=\"#000000\""
-  "Colours a node's outline and text, or an arc and its label, black: #000000.")
+  "Colors a node's outline and text, or an arc and its label, black: #000000.")
 
 ;; Shapes: Graphviz's, named by what they draw; D2's cylinder is :database:.
 (org-defgraph-tag database "shape=cylinder"
@@ -147,9 +147,9 @@ PAIRS may name other tags too, as in \":hot: style=dashed\".  A graph's, or the 
 
 ;; People: Graphviz has no such shape, so `org--graph-person' draws one, from a stick figure of its own.
 (org-defgraph-tag person "shape=person"
-  "Draws a node as a person: a stick figure, in the node's colour, above its name.")
+  "Draws a node as a person: a stick figure, in the node's color, above its name.")
 (org-defgraph-tag actor "shape=person"
-  "Draws a node as a UML actor: a stick figure, in the node's colour, above its name; as :person: does.")
+  "Draws a node as a UML actor: a stick figure, in the node's color, above its name; as :person: does.")
 
 ;; Sizes; :size_N: is any size, by `org--graph-pattern-template'.
 (org-defgraph-tag small "fontsize=10"
@@ -196,9 +196,9 @@ from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey
 (defvar org--graph-random-templates nil
   "While a graph reads `:unknown-tags random-templates', how many templates it has made up so far; else nil.")
 
-(defconst org-graph-random-template-colours
+(defconst org-graph-random-template-colors
   '("#d20f39" "#1e66f5" "#40a02b" "#df8e1d" "#8839ef" "#179299" "#fe640b" "#ea76cb")
-  "The colours `:unknown-tags random-templates' gives made-up templates, in turn: Catppuccin Latte's accents.")
+  "The colors `:unknown-tags random-templates' gives made-up templates, in turn: Catppuccin Latte's accents.")
 
 (defconst org-graph-random-template-shapes
   '("box" "ellipse" "hexagon" "diamond" "octagon" "parallelogram" "house" "cylinder")
@@ -209,13 +209,13 @@ from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey
 
 (defun org--graph-random-template (name name-tables)
   "Under `:unknown-tags random-templates', the default, NAME ↦ the rows of a made-up template, kept in NAME-TABLES so that every use
-of NAME ---a legend entry's too--- looks alike; else nil.  The Nth unknown name takes the Nth colour, shape, and font.
+of NAME ---a legend entry's too--- looks alike; else nil.  The Nth unknown name takes the Nth color, shape, and font.
   \"lazy\", the first  ↦  ((\"color\" \"#d20f39\") (\"fontcolor\" \"#d20f39\") (\"shape\" \"box\") (\"fontname\" \"Helvetica\"))"
   (when org--graph-random-templates
     (let* ((n (1- (cl-incf org--graph-random-templates)))
            (pick (lambda (xs) (nth (mod n (length xs)) xs)))
-           (colour (funcall pick org-graph-random-template-colours)))
-      (puthash name `(("color" ,colour) ("fontcolor" ,colour)
+           (color (funcall pick org-graph-random-template-colors)))
+      (puthash name `(("color" ,color) ("fontcolor" ,color)
                       ("shape" ,(funcall pick org-graph-random-template-shapes))
                       ("fontname" ,(funcall pick org-graph-random-template-fonts)))
                name-tables))))
@@ -387,7 +387,7 @@ It is noted on O, as a label's every reader asks for it, and a doc: link's meani
   "Non-nil when object O needs an HTML-like label: markup, a line break, a braced a_{b} or a^{b}, or a @@dot:…@@ snippet."
   (pcase (org-element-type o)
     ((or 'subscript 'superscript) (org-element-property :use-brackets-p o))
-    ;; A colour is a <FONT COLOR>; else a link needs one only for the description it shows, not, say, a tooltip's tip.
+    ;; A color is a <FONT COLOR>; else a link needs one only for the description it shows, not, say, a tooltip's tip.
     ('link (let ((meaning (org--graph-link-meaning o)))
              (or (plist-get meaning :color)
                  (and (not (plist-get meaning :text)) (org--graph-html-label-p (org-element-contents o))))))
@@ -579,15 +579,15 @@ label HTML, any other snippet vanishing."
           (concat (if (eq type 'subscript) "_" "^") (org--graph-item-render html? (org-element-contents o))))
          ((or (eq type 'radio-target) (equal "radio" (org-element-property :type o)))
           (org--graph-item-render html? (org-element-contents o)))
-         ;; A markup link shows its text, a colour's as <FONT COLOR>; its tip and URL are the node's.
+         ;; A markup link shows its text, a color's as <FONT COLOR>; its tip and URL are the node's.
          ((-when-let (meaning (org--graph-link-meaning o))
-            (let* ((text (plist-get meaning :text)) (colour (plist-get meaning :color))
+            (let* ((text (plist-get meaning :text)) (color (plist-get meaning :color))
                    (shown (cond (text (org--graph-text html? text))
                                 ((org-element-contents o) (org--graph-item-render html? (org-element-contents o)))
                                 ;; A path such as \\lambda, in $red:\\lambda$, is Org: here, an entity.
                                 (t (org--graph-item-render html? (org--graph-parse-objects (org-element-property :path o)
                                                                                            org--graph-objects))))))
-              (if (and html? colour) (format "<FONT COLOR=\"%s\">%s</FONT>" colour shown) shown))))
+              (if (and html? color) (format "<FONT COLOR=\"%s\">%s</FONT>" color shown) shown))))
          ;; Maths not spliced, such as a bare \\frac{a}{b}, is its LaTeX.
          ((eq type 'latex-fragment) (org--graph-text html? (org-element-property :value o)))
          ((eq type 'link) (if (or (not (org--graph-external-link-p o)) (org--graph-image-link-p o)) ""
@@ -728,24 +728,24 @@ its id made of its line, so `+ :container:' is an untitled box."
   (let ((case-fold-search t))
     (and (string-match "\\`container_\\(.+\\)\\'" tag) (s-replace "_" " " (match-string 1 tag)))))
 
-(defun org--graph-tint (colour)
-  "Returns COLOUR, a #RRGGBB, blended three parts in four with white, so text stays legible atop it; else COLOUR."
-  (if (not (string-match-p "\\`#[0-9a-fA-F]\\{6\\}\\'" colour)) colour
+(defun org--graph-tint (color)
+  "Returns COLOR, a #RRGGBB, blended three parts in four with white, so text stays legible atop it; else COLOR."
+  (if (not (string-match-p "\\`#[0-9a-fA-F]\\{6\\}\\'" color)) color
     (apply #'format "#%02x%02x%02x"
            (--map (+ it (/ (* 3 (- 255 it)) 4))
-                  (list (string-to-number (substring colour 1 3) 16) (string-to-number (substring colour 3 5) 16)
-                        (string-to-number (substring colour 5 7) 16))))))
+                  (list (string-to-number (substring color 1 3) 16) (string-to-number (substring color 3 5) 16)
+                        (string-to-number (substring color 5 7) 16))))))
 
-(defun org--graph-tag-colours (tags name-tables)
-  "Returns the distinct colours TAGS' templates set, in order; e.g., one per made-up template."
+(defun org--graph-tag-colors (tags name-tables)
+  "Returns the distinct colors TAGS' templates set, in order; e.g., one per made-up template."
   (-uniq (--keep (cadr (assoc "color" (org--graph-template-rows (list it) name-tables))) tags)))
 
-(defun org--graph-several-colours (node-tags arc-tags explicit name-tables)
-  "Returns the rows that show every colour of several tags, sans keys EXPLICIT sets: a node's as stripes ---wedges, if
-round--- of its NODE-TAGS' colours, tinted; an arc's as parallel lines, one per colour of its ARC-TAGS.  A single tag,
-several of one colour, or a node's own fillcolor or style, needs none; the earlier tag wins every other clash."
-  (let ((node (org--graph-tag-colours node-tags name-tables))
-        (arc (org--graph-tag-colours arc-tags name-tables))
+(defun org--graph-several-colors (node-tags arc-tags explicit name-tables)
+  "Returns the rows that show every color of several tags, sans keys EXPLICIT sets: a node's as stripes ---wedges, if
+round--- of its NODE-TAGS' colors, tinted; an arc's as parallel lines, one per color of its ARC-TAGS.  A single tag,
+several of one color, or a node's own fillcolor or style, needs none; the earlier tag wins every other clash."
+  (let ((node (org--graph-tag-colors node-tags name-tables))
+        (arc (org--graph-tag-colors arc-tags name-tables))
         (shape (or (cadr (assoc "shape" explicit))
                    (cadr (assoc "shape" (org--graph-template-rows node-tags name-tables))))))
     (--remove (assoc (car it) explicit)
@@ -759,7 +759,7 @@ several of one colour, or a node's own fillcolor or style, needs none; the earli
 A tag applies a template to whatever its line describes: after an item, its node; in a link's description, or a
 description term, its arc.  Explicit rows still win.  Neither a :container_TITLE: tag nor an `:@X:' one is a
 template: the one is a box to join, see `org--graph-container-tag'; the other, a group to align.  Several tags of
-several colours show them all; see `org--graph-several-colours'."
+several colors show them all; see `org--graph-several-colors'."
   (let* ((arc-tags (org--graph-arc-tags text))
          (node-tags (unless (plist-get text :reference)
                       (append (--remove (or (org--graph-container-tag it) (org--graph-align-tag-p it)) (plist-get text :tags))
@@ -767,7 +767,7 @@ several colours show them all; see `org--graph-several-colours'."
          (explicit (plist-get pre :attr-rows)))
     (org--graph-item-rows (append (when node-tags (list (list ":inherit" (s-join " " node-tags))))
                                   (when arc-tags (list (list ":edge.:inherit" (s-join " " arc-tags))))
-                                  (org--graph-several-colours node-tags arc-tags explicit name-tables)
+                                  (org--graph-several-colors node-tags arc-tags explicit name-tables)
                                   explicit)
                           name-tables)))
 
@@ -1042,10 +1042,10 @@ named tables, a house style is named once per file rather than once per graph.
       (save-excursion
         (goto-char (point-min))
         (let ((case-fold-search t))
-          (while (re-search-forward "^[ \t]*#\\+\\(?:\\(begin_graph\\_>\\)\\|name:\\)" nil t)
+          (while (re-search-forward "^[ \t]*#\\+\\(?:begin_\\(graph\\|smartdiagram\\)\\_>\\|name:\\)" nil t)
             (if (match-beginning 1)
-                ;; A graph's own templates are its own.
-                (re-search-forward "^[ \t]*#\\+end_graph" nil 'move)
+                ;; A graph's own templates are its own; a smartdiagram's, likewise.
+                (re-search-forward (format "^[ \t]*#\\+end_%s" (match-string 1)) nil 'move)
               (let ((table (save-match-data (org-element-at-point))))
                 (cond ((eq (org-element-type table) 'table)
                        (org--graph-add-template templates (org-element-property :name table)

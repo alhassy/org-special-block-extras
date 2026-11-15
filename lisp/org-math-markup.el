@@ -19,7 +19,7 @@
 ;;
 ;;     red:x + [[tooltip:y][the unknown]] + *z* + w[fn::a tip]   ↦   {\color{red}x} + \class{tooltip …}{y} + \boldsymbol{z} + …
 ;;
-;; An ATOM ---a {group}, a \command{with}{arguments}, a word, else one character--- is what red:ATOM colours and what
+;; An ATOM ---a {group}, a \command{with}{arguments}, a word, else one character--- is what red:ATOM colors and what
 ;; ATOM[fn::TIP] hovers TIP over.  See `org--math-markup', and `org--math-inline' for $…$ in prose.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
@@ -34,7 +34,7 @@
 (declare-function org--tooltip-template "org-links")
 (declare-function org--latex-margin-note "org-margin-blocks")
 
-;;;; Atoms ---what red:ATOM colours, and what an ATOM[fn::…] tip hovers over
+;;;; Atoms ---what red:ATOM colors, and what an ATOM[fn::…] tip hovers over
 
 (defconst org--math-syntax
   (let ((s (make-syntax-table)))
@@ -89,16 +89,16 @@ a word, else one character.  E.g., before the [fn::…] of “a + \\frac{x}{y}[f
               ((not (memq (char-before) '(nil ?\s ?\t ?\n))) (backward-char)))
         (and (< (point) end) (point))))))
 
-;;;; Links and tooltips ---colours, doc:, tooltip:, and the like, as LaTeX
+;;;; Links and tooltips ---colors, doc:, tooltip:, and the like, as LaTeX
 
 (defvar org--math-backend nil "The backend a math block is exporting to, for the links that differ by it.")
 
-(defun org--math-color (colour)
-  "COLOUR ↦ the argument of \\color for it, in maths: “#ff0066” ↦ “[RGB]{255,0,102}”, “teal” ↦ “{teal}”.
+(defun org--math-color (color)
+  "COLOR ↦ the argument of \\color for it, in maths: “#ff0066” ↦ “[RGB]{255,0,102}”, “teal” ↦ “{teal}”.
 RGB, as LaTeX's xcolor and MathJax both know it; MathJax knows no HTML model."
-  (if (string-prefix-p "#" colour)
-      (apply #'format "[RGB]{%d,%d,%d}" (--map (string-to-number (substring colour it (+ it 2)) 16) '(1 3 5)))
-    (format "{%s}" colour)))
+  (if (string-prefix-p "#" color)
+      (apply #'format "[RGB]{%d,%d,%d}" (--map (string-to-number (substring color it (+ it 2)) 16) '(1 3 5)))
+    (format "{%s}" color)))
 
 (defvar org--math-tips nil
   "What follows the maths being exported, for its tooltips, newest first: in HTML, their <template>s; in LaTeX, their
@@ -280,7 +280,7 @@ DESC, the heading shows, as text; Markdown's maths has no links, so there DESC a
         (goto-char (match-beginning 1)))
       (buffer-string))))
 
-;;;; In Emacs ---a TYPE:ATOM link shows in its colour, as the maths reads it
+;;;; In Emacs ---a TYPE:ATOM link shows in its color, as the maths reads it
 
 (defun org--math-link-type-face (type path)
   "(TYPE, PATH) ↦ the face Org shows a TYPE:PATH link in, by TYPE's :face; e.g., red ↦ (:foreground \"red\")."

@@ -195,7 +195,7 @@ Mind the gap.
           #+begin_strict :boxed Strictly
           Rules.
           #+end_strict"
-  :using (org-defblock strict (&key colour &context contents) (format "STRICT %s" contents))
+  :using (org-defblock strict (&key color &context contents) (format "STRICT %s" contents))
   :equals "<div style=\"padding: 1em;background-color: #CCFFCC;border-radius: 15px;font-size: 0.9em;\">
 <h3>Strictly</h3>
 STRICT
@@ -373,7 +373,7 @@ Less is more.
 ;;; :verbatim
 
 (deftest "a block marked :verbatim t is shown as the Org source it is, sans its switches" [switches verbatim]
-  ;; Sans htmlize, whose colours vary by machine.
+  ;; Sans htmlize, whose colors vary by machine.
   (let ((org-html-htmlize-output-type nil))
     (should (equal (org-export-string "
 #+begin_tip Mind :verbatim t :folded nil

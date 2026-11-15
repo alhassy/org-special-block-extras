@@ -110,7 +110,7 @@ Other backends, Markdown included, have no buttons, so they get the block as eve
 .osbe-tab[role=tabpanel] pre { margin: 0.5em 0; }
 "
   "The CSS of a tabset: tabs atop a rule, the selected one raised and joined to its bordered panel, as tabs look
-everywhere; in the page's own colours, `Canvas' and translucent greys, so a dark page suits it too.")
+everywhere; in the page's own colors, `Canvas' and translucent greys, so a dark page suits it too.")
 
 (defconst org--tab-script
   (format "<script>

@@ -129,7 +129,7 @@ last subsection's text ---before its snapshot, if any, which C-c C-c leaves just
 
 (defun org-demo--export (source backend)
   "(SOURCE, BACKEND) ↦ Org SOURCE's body-only BACKEND export, as a document of its own, the same on every machine:
-headings sans table of contents or numbers, src blocks sans htmlize's colours, `gensym' and Org's ids numbered.
+headings sans table of contents or numbers, src blocks sans htmlize's colors, `gensym' and Org's ids numbered.
 What its blocks need atop the document is left in `org-demo--heads'."
   (let ((seed 0)
         (org-html-htmlize-output-type nil)
@@ -320,7 +320,7 @@ A primitive, written in C, has none for us; nor does a symbol that is defined no
 
 (defun org-demo--show (backend source rendering symbols)
   "↦ Org showing SOURCE, then its BACKEND RENDERING, then the definition of each of SYMBOLS, folded away.
-In HTML, ﴾What You Write﴿ and ﴾What You Get﴿ are coloured panels, side by side when the source is thin enough to leave
+In HTML, ﴾What You Write﴿ and ﴾What You Get﴿ are colored panels, side by side when the source is thin enough to leave
 the rendering 20em, else one above the other; in Markdown, bold labels; else, boxes."
   (let ((definitions (-non-nil (mapcar #'org-demo--definition symbols))))
     (cond
@@ -331,10 +331,10 @@ the rendering 20em, else one above the other; in Markdown, bold labels; else, bo
       (let ((title (lambda (it) (format "<h6 style=\"text-align:center; font-family: Lorna; padding: 0; margin: 0;\"> ﴾%s﴿ </h6>" it)))
             ;; A flex row that wraps: the source is as wide as its longest line; the rendering, at least 20em, takes
             ;; the rest, its huge grow factor leaving the source no more than it needs; else it wraps beneath.
-            (panel (lambda (colour flex body)
+            (panel (lambda (color flex body)
                      (format "<div style=\"flex: %s; min-width: 0; overflow-x: auto; \
 padding: 1em;background-color: %s;border-radius: 15px;font-size: 0.9em;\"> %s </div>"
-                             flex (org-subtle-colors colour) body))))
+                             flex (org-subtle-colors color) body))))
         (format "#+begin_export html\n%s\n#+end_export"
                 (org-escape-code-in-string
                  (concat

@@ -49,10 +49,10 @@ it in HTML; PATH joins the glossary that #+print_glossary: lists, as a doc: link
 
 (defvar org-markup-links
   (append
-   (--map (let ((colour (symbol-name it))) (cons colour (lambda (_path _desc) (list :color colour))))
+   (--map (let ((color (symbol-name it))) (cons color (lambda (_path _desc) (list :color color))))
           org--named-colors)
    `(("color"     . ,(lambda (path _desc) (list :color path)))
-     ;; A plain highlight:x has no colour of its own, x being what shows.
+     ;; A plain highlight:x has no color of its own, x being what shows.
      ("highlight" . ,(lambda (path desc) (list :background (or (and desc (org-string-nw-p path)) "yellow"))))
      ("tooltip"   . org--markup-tooltip)
      ("margin"    . org--markup-tooltip)
@@ -65,8 +65,8 @@ it in HTML; PATH joins the glossary that #+print_glossary: lists, as a doc: link
   "Link types that maths and graph labels know, each TYPE paired with a function of PATH and DESC, the latter nil for
 TYPE:PATH and [[TYPE:PATH]], that returns the link's meaning, a plist:
 + :text        what shows, raw; sans it, the sink's rendering of DESC, else PATH.
-+ :color       the colour of what shows, a name or #RRGGBB.
-+ :background  the colour behind what shows.
++ :color       the color of what shows, a name or #RRGGBB.
++ :background  the color behind what shows.
 + :url         where what shows leads.
 + :tip         Org text hovering over what shows; :plain, when it is plain text instead, such as a docstring.
 + :glossary    non-nil when the :tip is a glossary's, which LaTeX lists at the end rather than in a margin note.

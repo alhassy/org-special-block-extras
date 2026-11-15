@@ -15,7 +15,7 @@ click it for its section below:
 #+begin_org :ignore t :demo live
 #+macro: tint lightyellow
 
-#+begin_graph =#+begin_graph=, at a glance ---hover a node for how, click it for more :rankdir LR
+#+begin_graph =#+begin_graph=, at a glance ---hover a node for how, click it for more :direction right
 #+name: syntax shape=box style="rounded,filled" fillcolor={{{tint}}}
 #+name: topic penwidth=2 :syntax:
 #+node: fontname=Courier
@@ -104,7 +104,7 @@ click it for its section below:
       A table under an item is its label, a record of fields; a <<P>> cell is a port, which =[[node::P]]= reaches.
     + mind maps :: [[*Mind maps: :layout twopi][:layout twopi]] :syntax:
 
-      A radial layout; :mindmap t gives an undirected one, radiating from the first item.
+      A radial layout; :theme mindmap gives an arrowless one, radiating from the first item.
   + documents :: [[*#+name: and #+caption: make a figure][#+name: N]] :topic:
 
     Above the block, it makes a figure that =[[N]]= reaches, and #+caption: captions it; a :graph: tag on a
@@ -181,7 +181,7 @@ A bare arc says “related”, and little else. Explaining how our expression be
 arc to say /how/: the source text is /lexed/ into tokens, which are /parsed/ into a tree. Org's description
 list, ~- TERM :: DEFINITION~, already attaches a word to an item; in a graph, that word sits on the arc
 into the item. Read left to right, the line /is/ the arc ---source, then /lexed into/, then tokens:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + ="1 * 2 + 3 - 4"=
   + lexed into :: tokens
     + parsed into :: syntax tree
@@ -191,7 +191,7 @@ into the item. Read left to right, the line /is/ the arc ---source, then /lexed 
 
 Two arcs between the same nodes are just two items. A parser both /consumes/ its tokens and /peeks/ at the
 next one, unconsumed; two arcs, one stream:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + parser
   + consumes :: token stream
   + /peeks at/ :: token stream
@@ -337,7 +337,7 @@ the picture, rather than silently vanishing.
 An arc is drawn from parent to child, so the child's table is where it is styled: an ~:edge.KEY~ row there
 is attribute ~KEY~ of the arc into the item. Every attribute is its own row, exactly like a node's. Peeking
 consumes nothing, so its arc should look tentative:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + parser
   + consumes :: token stream
     | :edge.penwidth | 2 |
@@ -375,15 +375,16 @@ attribute; a parse tree laid out left to right, every node boxed, every arc grey
   + 4
 #+end_graph
 
-- The title, the words before the first ~:key~, is the graph's ~label~; ~:directed nil~ makes the graph
-  undirected, with ~--~ arcs.
+- The title, the words before the first ~:key~, is the graph's ~label~. Every graph is directed; a
+  ~#+edge: :undirected:~ line makes all its arcs arrowless, an undirected graph.
 - ~:direction~ says which way arcs flow: ~down~, the default, ~up~, ~right~, or ~left~. It is Graphviz's
-  ~:rankdir~ ---~TB~, ~BT~, ~LR~, ~RL~--- spelled to be read; ~:rankdir~ works too.
+  ~rankdir~ ---~TB~, ~BT~, ~LR~, ~RL~--- spelled to be read; the header has no ~:rankdir~, while
+  ~#+graph: rankdir=LR~ keeps Graphviz's spelling.
 - ~:KEY V~ is a graph attribute; ~:node.KEY V~ and ~:edge.KEY V~ are node and edge defaults ---the same
   ~KEY~, ~node.KEY~, ~edge.KEY~ spelling as table rows.
 - As on Org's own ~#+attr_html:~ lines, values need no quotes: ~:bgcolor #6c7086~,
   ~:fontname Helvetica,Arial~. A value with spaces does: ~:fontname "Helvetica Neue"~.
-- ~:file~, ~:svg~, ~:directed~, ~:direction~, ~:theme~, ~:wrap~, ~:notes~, ~:unflatten~, ~:unknown-tags~, ~:smartdiagram~, ~:dpi~,
+- ~:file~, ~:direction~, ~:theme~, ~:wrap~, ~:notes~, ~:unflatten~, ~:unknown-tags~,
   and ~:C-c_C-c~ belong to the block itself, never to Graphviz; each is met below. So do the Babel habits
   ~:exports~ and ~:results~, which the block ignores; and ~:demo~, which every block of this package
   understands.
@@ -462,10 +463,10 @@ arc labels. ~:theme NAME~ picks another of ~org-graph-themes~, and ~:theme nil~ 
   + exports to :: HTML
 #+end_graph
 
-A theme is data, ~#+graph:~, ~#+node:~, and ~#+edge:~ lines' pairs, plus a fill per depth of container; so a
-new one is a ~push~ away, and a new default a ~setq~:
+A theme is data, ~#+graph:~, ~#+node:~, and ~#+edge:~ lines' pairs, plus a fill per depth of node and of
+container; so a new one is a ~push~ away, and a new default a ~setq~:
 #+begin_src emacs-lisp
-(push '(ink :node "shape=box fontname=Helvetica" :edge "color=gray30" :containers "#eeeeee #ffffff")
+(push '(ink :node "shape=box fontname=Helvetica" :edge "color=gray30" :container-colors "#eeeeee #ffffff")
       org-graph-themes)
 (setq org-graph-theme 'ink)
 #+end_src
@@ -502,8 +503,8 @@ a background of its own, from ~org-graph-template-backgrounds~, so where one end
 shows at a glance.
 
 Explicit rows win over a template's, so ~PLUS~ above is pink. A line may carry several tags,
-~:token:rule:~, each a template, the earlier winning on a clash ---save colours: when the tags' templates
-colour it differently, a node shows every colour as stripes, tinted, or wedges if it is round, and an arc
+~:token:rule:~, each a template, the earlier winning on a clash ---save colors: when the tags' templates
+color it differently, a node shows every color as stripes, tinted, or wedges if it is round, and an arc
 as parallel lines; a node's own ~fillcolor~ or ~style~ turns the stripes off. The same rule reaches every other line a
 template could apply to; in a link's description, or a description term, a tag styles the arc:
 
@@ -532,16 +533,16 @@ template could apply to; in a link's description, or a description term, a tag s
 ** Everyday tags every graph has
 
 Some looks are wanted so often that every graph has them, sans a ~#+name:~:
-| Tags                                                          | What they do                                    |
-|---------------------------------------------------------------+-------------------------------------------------|
-| ~:dashed:~ ~:dotted:~ ~:bold:~                                | a node's outline, or an arc, so drawn            |
-| ~:bidirectional:~ ~:undirected:~                              | an arc's arrowheads: at either end, or none      |
-| ~:red:~ ~:orange:~ ~:yellow:~ ~:green:~ ~:teal:~ ~:blue:~     | a node's outline and text, or an arc and its label, so coloured |
-| ~:purple:~ ~:magenta:~ ~:pink:~ ~:brown:~ ~:gray:~ ~:black:~  | likewise                                        |
-| ~:small:~ ~:large:~ ~:size_N:~                                | a label at 10pt, 20pt, or N points              |
-| ~:database:~ ~:note:~ ~:folder:~ ~:component:~ ~:tab:~         | a node drawn as a cylinder, a dog-eared page, a folder, a UML component, a tab |
-| ~:circle:~ ~:diamond:~ ~:hexagon:~ ~:star:~ ~:oval:~ ~:rectangle:~ ~:text:~ | a node so shaped; ~:text:~ is its label alone, sans outline |
-| ~:person:~ ~:actor:~                                           | a stick figure, in the node's colour, above its label |
+| Tags                                                                        | What they do                                                                   |
+|-----------------------------------------------------------------------------+--------------------------------------------------------------------------------|
+| ~:dashed:~ ~:dotted:~ ~:bold:~                                              | a node's outline, or an arc, so drawn                                          |
+| ~:bidirectional:~ ~:undirected:~                                            | an arc's arrowheads: at either end, or none                                    |
+| ~:red:~ ~:orange:~ ~:yellow:~ ~:green:~ ~:teal:~ ~:blue:~                   | a node's outline and text, or an arc and its label, so colored                 |
+| ~:purple:~ ~:magenta:~ ~:pink:~ ~:brown:~ ~:gray:~ ~:black:~                | likewise                                                                       |
+| ~:small:~ ~:large:~ ~:size_N:~                                              | a label at 10pt, 20pt, or N points                                             |
+| ~:database:~ ~:note:~ ~:folder:~ ~:component:~ ~:tab:~                      | a node drawn as a cylinder, a dog-eared page, a folder, a UML component, a tab |
+| ~:circle:~ ~:diamond:~ ~:hexagon:~ ~:star:~ ~:oval:~ ~:rectangle:~ ~:text:~ | a node so shaped; ~:text:~ is its label alone, sans outline                    |
+| ~:person:~ ~:actor:~                                                        | a stick figure, in the node's color, above its label                           |
 #+begin_graph :direction right :demo live
 + Musa :person:
   + writes :: Org :large:green:
@@ -553,8 +554,8 @@ A style is a set of flags, so they join rather than override: ~:dashed:bold:~ is
 survives ~:dashed:~. Every other key overrides, the earlier tag winning, as ever. A ~fillcolor~ fills by
 itself: Graphviz would ignore it, silently, sans ~style=filled~, so we add that flag for it.
 
-In Emacs, each tag wears a colour of its own name's ---the same on its ~#+name:~ line--- boxed as
-org-modern draws tags. So a typo stands out: ~:hott:~ differs in colour from ~:hot:~, as does a
+In Emacs, each tag wears a color of its own name's ---the same on its ~#+name:~ line--- boxed as
+org-modern draws tags. So a typo stands out: ~:hott:~ differs in color from ~:hot:~, as does a
 ~#+name: hott~. A tag every graph has wears a face of its own, ~org-graph-builtin-tag~.
 
 ** Templates build on templates
@@ -575,7 +576,7 @@ tags':
 
 - A template that, directly or not, inherits itself contributes nothing the second time.
 - A graph's own template sets only Graphviz attributes, and ~:edge.KEY~ ones; any other key, as a misspelt
-  ~colour~, is an error.
+  ~color~, is an error.
 - A name that no ~#+name:~ defines gets a made-up template; see [[*Prototype first, name later][Prototype first, name later]].
 
 As with Babel's named tables, a ~#+name:~ table anywhere in the buffer, outside any graph, is a template
@@ -616,7 +617,7 @@ no template.
 ** Prototype first, name later
 
 While prototyping, we want shapes before names. So a tag naming no template gets a made-up one ---a
-colour, a shape, a font--- the same at every use, so the tags read at a glance. A legend entry gives each
+color, a shape, a font--- the same at every use, so the tags read at a glance. A legend entry gives each
 its meaning; when the design settles, ~#+name:~ tables replace the made-up templates, one tag at a time:
 #+begin_graph Prototype first, name later :demo live
 + Legend :container:
@@ -631,7 +632,7 @@ its meaning; when the design settles, ~#+name:~ tables replace the made-up templ
   + PLUS :token:
 #+end_graph
 
-The Nth unknown tag takes the Nth of ~org-graph-random-template-colours~, ~-shapes~, and ~-fonts~, so
+The Nth unknown tag takes the Nth of ~org-graph-random-template-colors~, ~-shapes~, and ~-fonts~, so
 renders are stable, and the first eight tags differ in every way.
 
 ** Legends: a glossary of templates
@@ -705,15 +706,15 @@ Templates name whole bundles of rows; sometimes we want to name one value. A pal
 Org's ~#+macro:~ names a value once, so ~{{{name}}}~ uses it ---in a table, an item, a container's title,
 anywhere in the block:
 #+begin_org :ignore t :demo live
-#+macro: token-colour #a6e3a1
+#+macro: token-color #a6e3a1
 
-#+begin_graph Tokens, in one colour
+#+begin_graph Tokens, in one color
 + 1 * 2
   + NUMBER
-    | color | {{{token-colour}}} |
+    | color | {{{token-color}}} |
   + STAR
-    | :edge.color | {{{token-colour}}} |
-    | color       | {{{token-colour}}} |
+    | :edge.color | {{{token-color}}} |
+    | color       | {{{token-color}}} |
 #+end_graph
 #+end_org
 
@@ -729,7 +730,7 @@ Again, Org already has the syntax.
 
 ~*bold*~, ~/italic/~, ~_underline_~, ~+strike+~, ~=code=~, and =~pre~= in an item's text make its label an
 HTML-like one, while its id stays the plain text:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + *expr* is =term= /op/ =term=
   + _left_ operand :: =term=
   + +ambiguous+ :: /fixed by precedence/
@@ -744,7 +745,7 @@ monospace. A record's cells keep their markup too. Names such as ~a_b~, ~C++~, a
 Org's entities are their characters, and braced sub- and superscripts are Graphviz's own; as under Org's
 ~#+options: ^:{}~, an unbraced ~a_b~ stays text, so ~snake_case~ ids are safe. For whatever Org has no
 markup for, a ~@@dot:…@@~ export snippet is raw label HTML; a snippet for any other backend vanishes:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + x^{2} \to pow(x, 2)
 + parse : String \to Tree \times String
 + token_stream
@@ -777,7 +778,7 @@ record's cell.
 Breaking every long label by hand is tedious, though. ~#+begin_graph :wrap N~ fills node and arc labels to
 lines of ~N~ characters, so long item text needs no ~\\~ at all; a label already broken by ~\\~ stays as
 written:
-#+begin_graph :wrap 20 :rankdir LR :demo live
+#+begin_graph :wrap 20 :direction right :demo live
 + A parser turns a flat stream of tokens into a tree
   + by repeatedly asking which grammar rule the next token can begin :: recursive descent
 #+end_graph
@@ -829,7 +830,7 @@ The blank line matters: without it, the second paragraph continues the first, an
 Tooltips need a hover, and a PNG pasted into an email has none. ~#+begin_graph :notes inline~ shows every
 note beneath its label instead, in a smaller font, its markup kept and its lines filled to ~:wrap~ ---else
 40--- characters:
-#+begin_graph How a parser works :notes inline :wrap 28 :rankdir LR :demo live
+#+begin_graph How a parser works :notes inline :wrap 28 :direction right :demo live
 + parser [fn::Recursive descent.]
 
   One function per grammar rule; each calls the others, as the rules /mention/ each other.
@@ -852,7 +853,7 @@ A link to anything but a node keeps its Org meaning. A web or file link makes th
 HTML export, its description staying in the label; a description-less link to an image draws that image.
 So a graph of parsing techniques doubles as a reading list, and a typing judgement may appear as a
 picture of the rules it follows:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + parsing
   + [[https://en.wikipedia.org/wiki/Recursive_descent_parser][Recursive descent]]
   + [[https://en.wikipedia.org/wiki/LR_parser][LR]] parsing
@@ -873,7 +874,7 @@ A link to a section, ~[[*Heading]]~, is a URL too ---not an arc, since nodes are
 In an HTML export it leads to that section's anchor, which only Org knows; and in Emacs, a click on the
 rendered node opens the section. So a graph may be a map of its own document; click a node below:
 #+begin_org :ignore t :demo live
-#+begin_graph This document :rankdir LR
+#+begin_graph This document :direction right
 + [[#lexing][Lexing]]
   + [[#parsing]]
 #+end_graph
@@ -947,7 +948,7 @@ Some nodes belong together ---a compiler's front end, say--- and a box around th
 ~:container:~ is such a box: its children are its /members/, inside it, rather than the targets of its
 arcs. Indentation says what is in the box, as D2's braces do, and an item folds with ~TAB~, as ever. Its
 table styles the box, and its ~#+node:~ and ~#+edge:~ set defaults within it:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + compiler
   + Front end :container:
     | bgcolor | lightgrey |
@@ -986,7 +987,7 @@ Containers nest, each in the one around it. Unknown tags such as ~:Prophet:~ get
 A node may also join a container by a tag: ~:container_TITLE:~ puts it in the box ~TITLE~, its underscores
 spaces, so ~:container_Holy_Land:~ is ~Holy Land~. A ~+ TITLE :container:~ item is the same box, so the
 tag adds a node to it from anywhere in the graph; else the tags alone make the box. Several
-tags of other kinds colour the node in stripes, as above:
+tags of other kinds color the node in stripes, as above:
 #+begin_graph :demo live
 + Moses :Prophet:Judaism:Christianity:Islam:
 + Jesus :Prophet:Christianity:Islam:container_Gospels:
@@ -1053,7 +1054,7 @@ markup:
   ~:key~ of ours; any other table is a record. So a misspelt ~| colour | red |~ shows itself, drawn as a
   record, rather than vanishing; and a record whose first field names an attribute writes it ~=label=~.
 - A record is otherwise an ordinary node: its children are nodes of their own, and its attributes, tags,
-  and templates apply as usual; ~color~, ~fillcolor~, and ~fontcolor~ colour the table. An item may carry
+  and templates apply as usual; ~color~, ~fillcolor~, and ~fontcolor~ color the table. An item may carry
   both tables, a blank line between, since Org reads adjacent rows as one table.
 - A record is ~shape=plain~, the table being its whole outline; an explicit ~shape~ row wins.
 - A cell with a link but no target is ported by its text, spaces as underscores; ~<<left operand>>~ is
@@ -1070,7 +1071,8 @@ markup:
 Every graph so far flows top to bottom; a mind map grows outward from its centre. Graphviz's ~layout~
 attribute picks its engine, so the header line turns a tree into a mind map: ~twopi~ places ~root~ in the
 middle and each generation on a ring around it. With ~:wrap~, long labels stay compact:
-#+begin_graph Parsing, radially :layout twopi :root Parsing :wrap 12 :directed nil :node.shape box :node.style rounded :demo live
+#+begin_graph Parsing, radially :layout twopi :root Parsing :wrap 12 :node.shape box :node.style rounded :demo live
+#+edge: :undirected:
 + Parsing
   + Top-down
     + Recursive descent
@@ -1134,19 +1136,19 @@ redefines the tag; so our own tags, used across documents, live in our init file
 #+end_src
 Its pairs read as a ~#+name: hot color=red penwidth=2~ line does.
 
-| Diagram          | Node tags                                      | Arc tags                                                                  |
-|------------------+------------------------------------------------+---------------------------------------------------------------------------|
-| Class (UML)      | ---a class is a record table with hlines      | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~       |
-| State machine    | ~:state:~ ~:start:~ ~:final:~ ~:choice:~       | ---a guard is the description term                                        |
-| Entity-relation  | ---an entity is any node                       | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~           |
-| Mindmap          | ~#+begin_graph :mindmap t~, sans tags           |                                                                           |
+| Diagram         | Node tags                                 | Arc tags                                                            |
+|-----------------+-------------------------------------------+---------------------------------------------------------------------|
+| Class (UML)     | ---a class is a record table with hlines  | ~:inherits:~ ~:implements:~ ~:composes:~ ~:aggregates:~ ~:depends:~ |
+| State machine   | ~:state:~ ~:start:~ ~:final:~ ~:choice:~  | ---a guard is the description term                                  |
+| Entity-relation | ---an entity is any node                  | ~:one-to-one:~ ~:one-to-many:~ ~:many-to-one:~ ~:many-to-many:~     |
+| Mindmap         | ~#+begin_graph :theme mindmap~, sans tags |                                                                     |
 
 ** A class diagram: records and UML arcs
 
 A class is the table we would write anyway, as in [[*Records: a table of fields][Records]]; its relations are references, each link
 tagged with its kind. The arrow points at what is inherited, implemented, or depended on; a diamond sits at the
 owner's end:
-#+begin_graph :rankdir BT :demo live
+#+begin_graph :direction up :demo live
 + <<Animal>> Animal
   | <l>               |
   | *Animal*          |
@@ -1175,7 +1177,7 @@ owner's end:
 A state machine is an outline of what follows what; the description term is the event, or the guard,
 that takes us along the arc. An unnamed ~:start:~, ~:final:~, or ~:choice:~ item needs a ~<<target>>~ only
 to be told apart; a composite state is a [[*Containers draw boxes][container]]:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + <<start>> :start:
   + <<idle>> Idle :state:
     + coin :: Paid :state:
@@ -1191,7 +1193,7 @@ to be told apart; a composite state is a [[*Containers draw boxes][container]]:
 Each relationship is a description term, its cardinality a tag on that term, read from the parent's end
 to the child's: a customer places /many/ orders, each order placed by /one/ customer. Graphviz draws the
 crow's foot for “many” and the bar for “one”:
-#+begin_graph :rankdir LR :node.shape box :demo live
+#+begin_graph :direction right :node.shape box :demo live
 + Customer
   + places :one-to-many: :: Order
     + contains :one-to-many: :: Line item
@@ -1201,10 +1203,11 @@ crow's foot for “many” and the bar for “one”:
 
 ** A mindmap: an outline, radiating
 
-An Org outline already is a mindmap; ~:mindmap t~ merely draws it so: undirected, its first item at the
+An Org outline already is a mindmap; ~:theme mindmap~ merely draws it so: arrowless, its first item at the
 centre, the rest radiating out by Graphviz's ~twopi~ layout, every node a rounded box filled by its depth,
-from ~org-graph-mindmap-palette~. The header's own attributes still win; e.g., ~:ranksep 2~ spreads it out:
-#+begin_graph :mindmap t :demo live
+from the theme's ~:node-colors~. Any ~layout=twopi~ graph sans a ~root~ radiates from its first item, themed
+or not. The header's own attributes still win; e.g., ~:ranksep 2~ spreads it out:
+#+begin_graph :theme mindmap :demo live
 + Org mode
   + Outlines
     + Folding
@@ -1219,10 +1222,10 @@ from ~org-graph-mindmap-palette~. The header's own attributes still win; e.g., ~
     + LaTeX
 #+end_graph
 
-A mindmap may instead grow one way, as a tree: ~:layout dot :rankdir LR~ overrides the radial layout,
-~:splines curved~ softens its arcs, and ~:wrap 40~ keeps long thoughts narrow. Each depth keeps its colour,
+A mindmap may instead grow one way, as a tree: ~:layout dot :direction right~ overrides the radial layout,
+~:splines curved~ softens its arcs, and ~:wrap 40~ keeps long thoughts narrow. Each depth keeps its color,
 and a label's Org markup is shown as markup:
-#+begin_graph :mindmap t :layout dot :rankdir LR :splines curved :wrap 40 :demo live
+#+begin_graph :theme mindmap :layout dot :direction right :splines curved :wrap 40 :demo live
 + Projects
   + Defined as:
     + Anything that can
@@ -1323,7 +1326,7 @@ As [[parse-tree]] shows, =*= binds tighter than =+=.
 - The graph renders to ~parse-tree.png~ ---both on ~C-c C-c~ and on export--- and exports as that image,
   numbered and captioned: ~[[parse-tree]]~ reads “Figure 1” in HTML, and ~\ref~ in LaTeX.
 - An explicit ~:file~ still wins: ~#+begin_graph :file elsewhere.png~ renders there, and the ~#+name:~
-  still labels it. With ~:svg t~, the figure is ~parse-tree.svg~.
+  still labels it; its extension picks the format, so ~:file parse-tree.svg~ makes the figure an SVG.
 - An unnamed graph exports as before: inlined into HTML, or as dot source elsewhere.
 
 ** Sections are graphs: the :graph: tag
@@ -1331,12 +1334,12 @@ As [[parse-tree]] shows, =*= binds tighter than =+=.
 Sometimes a whole section is nothing but the outline we want drawn; wrapping it in a block is ceremony.
 A ~#+begin_graph~ block is a function on a region; a ~:graph:~ tag is the same function on a section. The
 section's text is the graph, and its ~:PROPERTIES:~ drawer ---Org's own home for key-value settings--- is
-the ~#+begin_graph~ line: ~:RANKDIR: LR~ is ~:rankdir LR~, ~:NODE.SHAPE: box~ is ~:node.shape box~, and
+the ~#+begin_graph~ line: ~:DIRECTION: right~ is ~:direction right~, ~:NODE.SHAPE: box~ is ~:node.shape box~, and
 ~:FILE:~ is ~:file~:
 #+begin_org :ignore t :demo live
 ,* Our grammar :graph_The_Grammar:
 :PROPERTIES:
-:RANKDIR: LR
+:DIRECTION: right
 :NODE.SHAPE: box
 :END:
 + <<expr>> expr
@@ -1356,26 +1359,28 @@ the ~#+begin_graph~ line: ~:RANKDIR: LR~ is ~:rankdir LR~, ~:NODE.SHAPE: box~ is
 Graphviz lays out a graph; but a slide or a README's opening often wants something more posed than a
 layout. LaTeX's [[https://ctan.org/pkg/smartdiagram][smartdiagram]] package typesets a handful of fixed pictures ---a planet amid its
 satellites, a flow of boxes, a column of terms and their descriptions--- that suit it better than any
-graph. ~:smartdiagram TYPE~ hands the very same list to smartdiagram instead; ~C-c C-c~ renders it with
-~pdflatex~, and LaTeX export typesets it in place. Our compiler's pipeline is a flow:
-#+begin_graph From text to value :smartdiagram flow:horizontal :demo live
+graph. ~#+begin_smartdiagram TITLE :type TYPE~ hands the very same list to smartdiagram instead: it is a
+thin facade over ~#+begin_image latex~, so LaTeX export typesets it in place, any other backend shows its
+image, and ~C-c C-c~ renders it atop the block. Our compiler's pipeline is a flow:
+#+begin_smartdiagram From text to value :type flow:horizontal :demo live
 + characters
 + tokens
 + syntax tree
 + value
-#+end_graph
+#+end_smartdiagram
 
 - ~TYPE~ is one of ~constellation~, ~connected-constellation~, ~bubble~, ~flow~, ~flow:horizontal~,
   ~circular~, ~circular:clockwise~, ~descriptive~, ~priority-descriptive~, or ~sequence~.
 - A constellation or bubble has one top item, its centre; that item's children orbit it. A descriptive
   diagram's items are ~+ TERM :: DESCRIPTION~. Every other type reads the top items, in order.
 - The ~#+graph:~ rows are ~\smartdiagramset~'s, in smartdiagram's own words: ~| planet color | black!75 |~.
-- An item's ~| color |~, ~| fontcolor |~, and ~| fontsize |~ rows ---Graphviz's names for them--- colour
+- An item's ~| color |~, ~| fontcolor |~, and ~| fontsize |~ rows ---Graphviz's names for them--- color
   its shape and its text, and size its text; its ~:tags:~ splice ~#+name:~ templates of those rows, as in
   any graph. An item's later paragraphs sit beneath its text.
 - The title sits above the diagram; prose before the list, between the two; prose after it, beneath.
-- ~:dpi N~ sets the PNG's resolution, 300 by default. ~C-u C-c C-c~ shows the LaTeX.
-- ~C-M-i~ and eldoc know which kind of graph they are in: under ~:smartdiagram~, they offer
+- ~:file~, ~:resolution~, and ~:as-image~ are ~#+begin_image~'s: they name its images, sharpen its PNG,
+  and make it an image along LaTeX too.
+- ~C-M-i~ and eldoc know which block they are in: in a ~#+begin_smartdiagram~, they offer
   smartdiagram's keys, with their defaults, rather than Graphviz's.
 - Graphviz's own syntax ---~#+node:~, ~#+edge:~, links between items, records--- draws nothing
   here, so it is an error rather than silently dropped.
@@ -1384,11 +1389,11 @@ graph. ~:smartdiagram TYPE~ hands the very same list to smartdiagram instead; ~C
 
 Why bother, when LaTeX could draw it directly? Here is a richer diagram, one that began life as a
 ~#+begin_src latex-as-png~ block, via [[https://github.com/alhassy/ob-latex-as-png][ob-latex-as-png]]: a constellation of how one syntax,
-~(key map)~, replaces many. Its ~#+graph:~ rows, macro, and colour links are where the LaTeX went:
+~(key map)~, replaces many. Its ~#+graph:~ rows, macro, and color links are where the LaTeX went:
 #+begin_org :ignore t :demo live
 #+macro: replaces \\ [[color:gray][replaces]] \\ [[color:gray][=$1=]]
 
-#+begin_graph One syntax =(key map)= \\ where =key= is =number=, =:keyword=, ='symbol=, or ="string"=! :smartdiagram constellation
+#+begin_smartdiagram One syntax =(key map)= \\ where =key= is =number=, =:keyword=, ='symbol=, or ="string"=! :type constellation
 #+graph:
 | planet color              | black!75        |
 | planet size               | 3.5cm           |
@@ -1422,27 +1427,27 @@ Why bother, when LaTeX could draw it directly? Here is a richer diagram, one tha
              person-names)
          2)
 #+end_src
-#+end_graph
+#+end_smartdiagram
 #+end_org
 
 Every LaTeX incantation it needed has an Org counterpart that we already write daily:
 
-| LaTeX                                                     | Org                                               |
-|-----------------------------------------------------------+---------------------------------------------------|
-| ~\smartdiagram[constellation diagram]{…}~                 | ~:smartdiagram constellation~, over a nested list |
-| ~\smartdiagramset{planet color=black!75, …}~              | a ~#+graph:~ table, one row a key                 |
-| ~\newcommand{\old}[1]{\textcolor{black!70}{\texttt{#1}}}~ | ~#+macro: old [[color:gray][=$1=]]~               |
-| ~\texttt{(:k plist)}~, ~\textbf{…}~                       | ~=(:k plist)=~, ~*…*~                             |
-| ~\mbox{\texttt{…}}~, lest code break mid-circle           | nothing: code never breaks                        |
-| ~\textcolor{black!70}{replaces}~                          | ~[[color:gray][replaces]]~                        |
-| ~{\color{white}…}~ on the planet                          | a ~fontcolor~ row of ~white~                      |
-| ~\centering{One syntax … \\ …}~ above the diagram         | the block's title                                 |
-| ~\vspace{1em}{\textcolor{black!44}\hrule}\vspace{1em}~    | ~-----~                                           |
-| ~\hspace{7em} (map-elt :school)~, line by line            | a ~#+begin_src~ block, indented as we read it     |
-| ~% \new{(N xs)} \replaces …~                              | ~# + =(N xs)= …~                                  |
-| ~\resizebox~, ~\vspace~, ~{\color{white} Bye!}~ padding   | nothing: the image is cropped to a small border   |
+| LaTeX                                                     | Org                                             |
+|-----------------------------------------------------------+-------------------------------------------------|
+| ~\smartdiagram[constellation diagram]{…}~                 | ~:type constellation~, over a nested list       |
+| ~\smartdiagramset{planet color=black!75, …}~              | a ~#+graph:~ table, one row a key               |
+| ~\newcommand{\old}[1]{\textcolor{black!70}{\texttt{#1}}}~ | ~#+macro: old [[color:gray][=$1=]]~             |
+| ~\texttt{(:k plist)}~, ~\textbf{…}~                       | ~=(:k plist)=~, ~*…*~                           |
+| ~\mbox{\texttt{…}}~, lest code break mid-circle           | nothing: code never breaks                      |
+| ~\textcolor{black!70}{replaces}~                          | ~[[color:gray][replaces]]~                      |
+| ~{\color{white}…}~ on the planet                          | a ~fontcolor~ row of ~white~                    |
+| ~\centering{One syntax … \\ …}~ above the diagram         | the block's title                               |
+| ~\vspace{1em}{\textcolor{black!44}\hrule}\vspace{1em}~    | ~-----~                                         |
+| ~\hspace{7em} (map-elt :school)~, line by line            | a ~#+begin_src~ block, indented as we read it   |
+| ~% \new{(N xs)} \replaces …~                              | ~# + =(N xs)= …~                                |
+| ~\resizebox~, ~\vspace~, ~{\color{white} Bye!}~ padding   | nothing: the image is cropped to a small border |
 
-The LaTeX column is a second language inside our Org file: its macros, its colour syntax, and hand-tuned
+The LaTeX column is a second language inside our Org file: its macros, its color syntax, and hand-tuned
 ~\hspace~'s that drift the moment a line changes. The Org column is the language the rest of the file is
 already in; it folds, links, exports, and completes like everything around it. The only backslashes that
 survive the move are ~\\~ ---which Org itself reads as a line break--- and the font names, such as
@@ -1458,9 +1463,9 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
      or ~:edge[T].~, it offers only edge attributes, prefix and all. In a value cell, it offers the
      values of that row's attribute, such as ~vee~ for ~:edge.arrowhead~. Each candidate is annotated
      with its description.
-   - On the ~#+begin_graph~ line, ~:r C-M-i~ offers ~:rankdir~ and the other graph attributes, every
-     ~:node.KEY~ and ~:edge.KEY~, and the block's own ~:file~, ~:svg~, ~:directed~, and ~:C-c_C-c~;
-     ~:rankdir L C-M-i~ then offers ~LR~.
+   - On the ~#+begin_graph~ line, ~:r C-M-i~ offers ~:ratio~ and the other graph attributes, every
+     ~:node.KEY~ and ~:edge.KEY~, and the block's own ~:file~, ~:direction~, and ~:C-c_C-c~;
+     ~:direction r C-M-i~ then offers ~right~.
    - Eldoc shows the description of the key on the current row, or at point on the ~#+begin_graph~ line,
      ending with Graphviz's default; e.g., ~| :edge.arrowhead | vee |~ shows “Style of arrowhead on the
      head node of an edge.  Default: normal.”
@@ -1479,8 +1484,8 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
    - Table under ~#+edge:~ ⟶ default edge attributes (~arrowhead~, ~dir~, ~penwidth~, …)
    - Table on a list item ⟶ node attributes, as above
 
-   For a colour ---~bgcolor~, ~fillcolor~, ~fontcolor~, or ~color~--- the value is picked from Helm's
-   colour list, when Helm is installed; ~RET~ inserts the colour's hex code, and its name as a comment.
+   For a color ---~bgcolor~, ~fillcolor~, ~fontcolor~, or ~color~--- the value is picked from Helm's
+   color list, when Helm is installed; ~RET~ inserts the color's hex code, and its name as a comment.
    (This replaces our old ritual of ~M-x helm-colors~, then ~C-z~, then ~C-c r~.) ~C-u RET~ works in the
    ~C-c '~ buffer too.
 
@@ -1526,54 +1531,54 @@ Once the demo is over, this is the page we keep open.
 
 ** Syntax at a glance
 
-| Construct                                    | Dot equivalent                                                                  |
-|----------------------------------------------+---------------------------------------------------------------------------------|
-| ~#+begin_graph TITLE~                        | ~graph [ label=TITLE ]~                                                         |
-| ~#+begin_graph :KEY V~                       | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes    |
-| ~#+begin_graph :directed nil~                | ~graph { … }~, with ~--~ arcs                                                   |
-| ~#+begin_graph :direction right~             | ~graph [ rankdir=LR ]~; likewise ~down~ ~TB~, ~up~ ~BT~, ~left~ ~RL~           |
-| ~:dashed:~ ~:pink:~ ~:large:~ ~:size_N:~, …   | everyday templates every graph has; see [[*Everyday tags every graph has][Everyday tags]]  |
-| ~#+begin_graph :theme NAME~                  | the theme ~NAME~ of ~org-graph-themes~, beneath all else; ~nil~ for Graphviz's look |
-| ~#+begin_graph :mindmap t~                   | an undirected ~twopi~ layout, radiating from the first item, its nodes rounded  |
-| ~#+name: N~ above ~#+begin_graph~            | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions    |
-| ~* HEADING :graph:~, with ~:PROPERTIES:~     | the section's text is a graph; ~:RANKDIR: LR~ is ~:rankdir LR~, and so on       |
-| ~:NAME:~ … ~:END:~ drawer                    | the directives inside, folded away                                              |
-| ~#+graph:~ table                             | ~graph [ … ]~                                                                   |
-| ~#+node:~ table                              | ~node [ … ]~                                                                    |
-| ~#+edge:~ table                              | ~edge [ … ]~                                                                    |
-| ~#+edge: fontsize=10 color=gray :T:~         | ~edge [ fontsize=10 color=gray … ]~, with template ~T~; likewise ~#+graph:~, ~#+node:~ |
-| ~#+name: T~ + table                          | style template ~T~, used via ~:T:~ tags; in or out of graphs                    |
-| ~#+name: T :S:~                              | template ~T~, inheriting template ~S~                                           |
-| ~#+name: T color=red shape=box~              | template ~T~ on one line, of ~KEY=VALUE~ pairs; with or without a table below   |
-| top-level ~- :T: :: MEANING~                 | a legend entry: a sample of template ~T~, captioned ~MEANING~                   |
-| ~- MEANING :T:~ in a ~Legend~ container       | the same legend entry, in prose                                                 |
-| ~+ TITLE :container:~, then children         | ~subgraph cluster_TITLE { label=TITLE … }~, the children inside; its table styles it |
-| ~+ NAME :container_TITLE:~                   | node NAME, inside the box ~TITLE~                                               |
-| ~+ NAME~ list item                           | node ~NAME~ declaration                                                         |
-| indent ~+ CHILD~ under ~+ PARENT~            | edge PARENT → CHILD                                                             |
-| ~+ L :: CHILD~ under ~+ PARENT~              | edge PARENT → CHILD, labelled ~L~                                               |
-| ~1. A~, ~2. B~ under ~+ PARENT~              | edges PARENT → A, B; ~{ rank=same; A; B }~, in that order                       |
-| ~+ <<ID>> NAME~                              | node ~ID~, labelled ~NAME~                                                      |
-| ~+ <<<NAME>>>~                               | node ~NAME~; every item mentioning ~NAME~ arcs to it                            |
-| ~+ NAME [[T]]~, ~+ NAME [[T][L]]~            | edge NAME → T, labelled ~L~                                                     |
-| ~+ NAME [[T][L :S:]]~                        | edge NAME → T, labelled ~L~, with template ~S~; ~L~ is optional                 |
-| ~+ NAME :T₁:T₂:~                             | node NAME, with templates ~T₁~ and ~T₂~ spliced in                              |
-| ~+ NAME :@X:~                                | node NAME, in group ~X~: ~{ rank=same; NAME; … }~                               |
-| ~+ NAME :@start:~, ~+ NAME :@end:~           | ~{ rank=min; NAME; … }~, ~{ rank=max; NAME; … }~                                |
-| ~+ NAME [fn::NOTE]~                          | node NAME, with ~tooltip=NOTE~                                                  |
-| a later paragraph of ~+ NAME~                | a note: NAME's tooltip, or beneath its label under ~:notes inline~              |
-| ~+ NAME \\ MORE~                             | node ~NAME MORE~, its label broken over two lines; likewise in table cells      |
-| ~+ NAME [[https://…]]~, ~[[file:x.png]]~     | node NAME, with ~URL="https://…"~, or ~image="x.png"~                           |
-| ~+ [X] NAME~, ~[-]~, ~[ ]~                   | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined       |
-| ~:inherits:~, ~:state:~, ~:one-to-many:~, …  | templates every graph has; see ~org-defgraph-tag~                               |
-| ~{{{M}}}~, after ~#+macro: M V~              | ~V~, anywhere in the block                                                      |
-| ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=          | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                       |
-| ~∣ key ∣ value ∣~                            | node attribute; values are quoted for you                                       |
-| ~∣ :edge.KEY ∣ value ∣~                      | attribute of the arc from the parent; each KEY at most once                     |
-| ~+ [[T][L :S:]]~ under ~+ PARENT~            | edge PARENT → T, a node declared elsewhere; ~record::port~ targets a port       |
-| ~∣ :edge[T].KEY ∣ value ∣~                   | attribute of this item's arc to ~T~, from a ~[[T]]~ link; see Strictly tables   |
-| ~∣ shape ∣ cluster ∣~                        | ~subgraph cluster_ID { … }~ around the children; see Strictly tables            |
-| any other table under ~+ NAME~               | node NAME, labelled by that table, a record; ~<<P>>~ in a cell is port ~P~      |
+| Construct                                   | Dot equivalent                                                                         |
+|---------------------------------------------+----------------------------------------------------------------------------------------|
+| ~#+begin_graph TITLE~                       | ~graph [ label=TITLE ]~                                                                |
+| ~#+begin_graph :KEY V~                      | ~graph [ KEY=V ]~; also ~:node.KEY V~ and ~:edge.KEY V~; ~V~ needs no quotes           |
+| ~#+edge: :undirected:~                      | ~edge [ dir=none ]~: arrowless arcs, an undirected graph                               |
+| ~#+begin_graph :direction right~            | ~graph [ rankdir=LR ]~; likewise ~down~ ~TB~, ~up~ ~BT~, ~left~ ~RL~                   |
+| ~:dashed:~ ~:pink:~ ~:large:~ ~:size_N:~, … | everyday templates every graph has; see [[*Everyday tags every graph has][Everyday tags]]                                  |
+| ~#+begin_graph :theme NAME~                 | the theme ~NAME~ of ~org-graph-themes~, beneath all else; ~nil~ for Graphviz's look    |
+| ~#+begin_graph :theme mindmap~              | an arrowless ~twopi~ layout, radiating from the first item, nodes filled by depth      |
+| ~#+name: N~ above ~#+begin_graph~           | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions           |
+| ~* HEADING :graph:~, with ~:PROPERTIES:~    | the section's text is a graph; ~:DIRECTION: right~ is ~:direction right~, and so on    |
+| ~:NAME:~ … ~:END:~ drawer                   | the directives inside, folded away                                                     |
+| ~#+graph:~ table                            | ~graph [ … ]~                                                                          |
+| ~#+node:~ table                             | ~node [ … ]~                                                                           |
+| ~#+edge:~ table                             | ~edge [ … ]~                                                                           |
+| ~#+edge: fontsize=10 color=gray :T:~        | ~edge [ fontsize=10 color=gray … ]~, with template ~T~; likewise ~#+graph:~, ~#+node:~ |
+| ~#+name: T~ + table                         | style template ~T~, used via ~:T:~ tags; in or out of graphs                           |
+| ~#+name: T :S:~                             | template ~T~, inheriting template ~S~                                                  |
+| ~#+name: T color=red shape=box~             | template ~T~ on one line, of ~KEY=VALUE~ pairs; with or without a table below          |
+| top-level ~- :T: :: MEANING~                | a legend entry: a sample of template ~T~, captioned ~MEANING~                          |
+| ~- MEANING :T:~ in a ~Legend~ container     | the same legend entry, in prose                                                        |
+| ~+ TITLE :container:~, then children        | ~subgraph cluster_TITLE { label=TITLE … }~, the children inside; its table styles it   |
+| ~+ NAME :container_TITLE:~                  | node NAME, inside the box ~TITLE~                                                      |
+| ~+ NAME~ list item                          | node ~NAME~ declaration                                                                |
+| indent ~+ CHILD~ under ~+ PARENT~           | edge PARENT → CHILD                                                                    |
+| ~+ L :: CHILD~ under ~+ PARENT~             | edge PARENT → CHILD, labelled ~L~                                                      |
+| ~1. A~, ~2. B~ under ~+ PARENT~             | edges PARENT → A, B; ~{ rank=same; A; B }~, in that order                              |
+| ~+ <<ID>> NAME~                             | node ~ID~, labelled ~NAME~                                                             |
+| ~+ <<<NAME>>>~                              | node ~NAME~; every item mentioning ~NAME~ arcs to it                                   |
+| ~+ NAME [[T]]~, ~+ NAME [[T][L]]~           | edge NAME → T, labelled ~L~                                                            |
+| ~+ NAME [[T][L :S:]]~                       | edge NAME → T, labelled ~L~, with template ~S~; ~L~ is optional                        |
+| ~+ NAME :T₁:T₂:~                            | node NAME, with templates ~T₁~ and ~T₂~ spliced in                                     |
+| ~+ NAME :@X:~                               | node NAME, in group ~X~: ~{ rank=same; NAME; … }~                                      |
+| ~+ NAME :@start:~, ~+ NAME :@end:~          | ~{ rank=min; NAME; … }~, ~{ rank=max; NAME; … }~                                       |
+| ~+ NAME [fn::NOTE]~                         | node NAME, with ~tooltip=NOTE~                                                         |
+| a later paragraph of ~+ NAME~               | a note: NAME's tooltip, or beneath its label under ~:notes inline~                     |
+| ~+ NAME \\ MORE~                            | node ~NAME MORE~, its label broken over two lines; likewise in table cells             |
+| ~+ NAME [[https://…]]~, ~[[file:x.png]]~    | node NAME, with ~URL="https://…"~, or ~image="x.png"~                                  |
+| ~+ [X] NAME~, ~[-]~, ~[ ]~                  | node NAME, with template ~checked~, ~partial~, or ~unchecked~, if defined              |
+| ~:inherits:~, ~:state:~, ~:one-to-many:~, … | templates every graph has; see ~org-defgraph-tag~                                      |
+| ~{{{M}}}~, after ~#+macro: M V~             | ~V~, anywhere in the block                                                             |
+| ~*b*~ ~/i/~ ~_u_~ ~+s+~ ~=c=~ =~p~=         | an HTML-like label: ~<B>~, ~<I>~, ~<U>~, ~<S>~, monospace                              |
+| ~∣ key ∣ value ∣~                           | node attribute; values are quoted for you                                              |
+| ~∣ :edge.KEY ∣ value ∣~                     | attribute of the arc from the parent; each KEY at most once                            |
+| ~+ [[T][L :S:]]~ under ~+ PARENT~           | edge PARENT → T, a node declared elsewhere; ~record::port~ targets a port              |
+| ~∣ :edge[T].KEY ∣ value ∣~                  | attribute of this item's arc to ~T~, from a ~[[T]]~ link; see Strictly tables          |
+| ~∣ shape ∣ cluster ∣~                       | ~subgraph cluster_ID { … }~ around the children; see Strictly tables                   |
+| any other table under ~+ NAME~              | node NAME, labelled by that table, a record; ~<<P>>~ in a cell is port ~P~             |
 
 ** Strictly tables: :edge[T].KEY and | shape | cluster |
 
@@ -1592,7 +1597,7 @@ An inline link's arc is styled by ~:edge[T].KEY~, naming the arc by where it goe
 
 A ~| shape | cluster |~ row makes an item a container, as the ~:container:~ tag does. Its children are then its
 members rather than arc targets, so arcs out of them are inline links, styled as above:
-#+begin_graph :rankdir LR :demo live
+#+begin_graph :direction right :demo live
 + compiler
   + Front end
     | shape | cluster |
@@ -1610,7 +1615,7 @@ and change things. Each fits the page; click one to see it full size.
 A decision tree is a tree whose nodes come in kinds: decisions we make (boxes), chances we take (circles),
 and outcomes (bare text), with each chance's arcs labelled by how likely it is. Templates name the kinds,
 description terms label the arcs, and an item's ~#+edge:~ dashes every arc of chance beneath it:
-#+begin_graph Should our package go lexical? :rankdir LR :demo live
+#+begin_graph Should our package go lexical? :direction right :demo live
 #+name: decision
 | shape | box |
 #+name: chance
@@ -1636,7 +1641,8 @@ The chance node is all target: ~<<specials>>~ names it, and its template's empty
 A chapter of Sönke Ahrens' /How to Take Smart Notes/, as we would outline it while reading. Each
 connective, such as “is an aid for”, sits on its arc, as a description term; ordered steps are numbered
 arcs; ~:smart_kind:~ marks the three kinds of note; and ~[[fleeting]]~ arcs back to a note met earlier:
-#+begin_graph How to Take Smart Notes ---Sönke Ahrens :rankdir LR :wrap 24 :directed nil :fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :node.fontname Helvetica :edge.fontname Helvetica :edge.fontsize 10 :edge.fontcolor gray30 :edge.color gray60 :demo live
+#+begin_graph How to Take Smart Notes ---Sönke Ahrens :direction right :wrap 24 :fontname Helvetica :node.shape box :node.style "rounded,filled" :node.fillcolor white :node.fontname Helvetica :edge.fontname Helvetica :edge.fontsize 10 :edge.fontcolor gray30 :edge.color gray60 :demo live
+#+edge: :undirected:
 #+name: smart_kind
 | shape     | note      |
 | fillcolor | "#fff5cc" |
@@ -1703,7 +1709,7 @@ own, lest the prose become part of the graph.
 
 ** A section is a graph :graph_Lineage:
 :PROPERTIES:
-:RANKDIR: LR
+:DIRECTION: right
 :NODE.SHAPE: box
 :EDGE.COLOR: grey
 :END:
@@ -1715,7 +1721,7 @@ own, lest the prose become part of the graph.
 ** From λ-calculus to Emacs Lisp
 
 Now everything at once: ~#+graph:~, ~#+node:~, and ~#+edge:~ tables; ~:@X:~ alignments; arc templates by
-tags, sampled in a legend; containers; and labels broken by ~\\~. Its palette is Catppuccin's; the colours
+tags, sampled in a legend; containers; and labels broken by ~\\~. Its palette is Catppuccin's; the colors
 it repeats are named once, by Org's own macros:
 #+begin_org :ignore t :demo live
 #+macro: yellow #f9e2af
@@ -1843,7 +1849,7 @@ it repeats are named once, by Org's own macros:
 ** The same, spelled long-hand
 
 The graph above, as it was first written, before templates and legends existed: every arc styled by its
-own ~:edge.KEY~ rows, every colour spelled out, its settings folded in a ~:SETTINGS:~ drawer, and a legend
+own ~:edge.KEY~ rows, every color spelled out, its settings folded in a ~:SETTINGS:~ drawer, and a legend
 of plain-text nodes. Comparing the two is demonstrative of what each feature saves.
 #+begin_graph :file images/lambda-to-emacs.png :demo live
 :SETTINGS:

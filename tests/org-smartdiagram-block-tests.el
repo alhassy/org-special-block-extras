@@ -1,16 +1,16 @@
-;;; org-graph-smartdiagram-tests.el --- #+begin_graph :smartdiagram TYPE: an Org list ↦ LaTeX's smartdiagram  -*- lexical-binding: t; -*-
+;;; org-smartdiagram-block-tests.el --- #+begin_smartdiagram TITLE :type TYPE: an Org list ↦ LaTeX's smartdiagram  -*- lexical-binding: t; -*-
 
 (unless (fboundp 'define-graph-test)
   (load-file (expand-file-name "~/org-special-block-extras/tests/graph/org-graph-test-utils.el")))
 
-(defun tests-graph--smartdiagram (type body &optional title)
-  "The LaTeX a `#+begin_graph TITLE :smartdiagram TYPE' block with BODY typesets."
-  (org--smartdiagram body title (list :smartdiagram type)))
+(defun tests-smartdiagram--latex (type body &optional title)
+  "Returns the LaTeX a `#+begin_smartdiagram TITLE :type TYPE' block with BODY typesets."
+  (org--smartdiagram body title type))
 
 ;;; Types and shapes
 
 (deftest "a constellation's one top item is its planet, and that item's children its satellites, in order"
-  (let ((latex (tests-graph--smartdiagram 'constellation "
+  (let ((latex (tests-smartdiagram--latex 'constellation "
 + =easy-access.el=
   + =(:k plist)= \\\\ replaces =(plist-get plist :k)=
   + =(:k hash)= \\\\ replaces =(gethash :k hash)=")))
@@ -29,18 +29,18 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
 (deftest "a descriptive diagram's items are `+ TERM :: DESCRIPTION', each part braced, so commas stay text"
   (should (s-contains-p "{{Read},{=org--graph-read= turns the body into a tree, of items}}"
                         (s-replace "\\mbox{\\texttt{org-{}-{}graph-read}}" "=org--graph-read="
-                                   (tests-graph--smartdiagram 'descriptive "
+                                   (tests-smartdiagram--latex 'descriptive "
 + Read :: =org--graph-read= turns the body into a tree, of items
 + Parse :: =org--graph-parse= resolves ids")))))
 
 (deftest "a flow's items are its top items; nesting, or a constellation of two planets, is an error"
-  (should (s-contains-p "{Read},\n  {Parse}" (tests-graph--smartdiagram 'flow "
+  (should (s-contains-p "{Read},\n  {Parse}" (tests-smartdiagram--latex 'flow "
 1. Read
 2. Parse")))
-  (should-error (tests-graph--smartdiagram 'flow "
+  (should-error (tests-smartdiagram--latex 'flow "
 + Read
   + Parse") :type 'user-error)
-  (should-error (tests-graph--smartdiagram 'constellation "
+  (should-error (tests-smartdiagram--latex 'constellation "
 + Sun
 + Moon") :type 'user-error))
 
@@ -48,23 +48,23 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
 
 (deftest "#+graph: rows are \\smartdiagramset's, each value braced; an unknown key, or #+node:, is an error"
   (should (s-contains-p "\\smartdiagramset{planet color={black!75},\n  font={\\small\\sffamily}}"
-                        (tests-graph--smartdiagram 'constellation "
+                        (tests-smartdiagram--latex 'constellation "
 #+graph:
 | planet color | black!75        |
 | font         | \\small\\sffamily |
 + Sun
   + Earth")))
-  (should-error (tests-graph--smartdiagram 'constellation "
+  (should-error (tests-smartdiagram--latex 'constellation "
 #+graph:
 | plant color | black!75 |
 + Sun") :type 'user-error)
-  (should-error (tests-graph--smartdiagram 'flow "
+  (should-error (tests-smartdiagram--latex 'flow "
 #+node:
 | shape | box |
 + A") :type 'user-error))
 
-(deftest "an item's color takes its slot of the colour list, the planet's is the planet color; fontcolor colours its text"
-  (let ((latex (tests-graph--smartdiagram 'constellation "
+(deftest "an item's color takes its slot of the color list, the planet's is the planet color; fontcolor colors its text"
+  (let ((latex (tests-smartdiagram--latex 'constellation "
 + Sun
   | color     | black!75 |
   | fontcolor | white    |
@@ -76,18 +76,18 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
     (should (s-contains-p "{\\color{white}Sun}" latex))))
 
 (deftest "an item's tags splice #+name: templates, as in any graph; a Graphviz attribute on an item is an error"
-  (should (s-contains-p "{\\color{gray}Venus}" (tests-graph--smartdiagram 'flow "
+  (should (s-contains-p "{\\color{gray}Venus}" (tests-smartdiagram--latex 'flow "
 #+name: faint
 | fontcolor | gray |
 + Venus :faint:")))
-  (should-error (tests-graph--smartdiagram 'flow "
+  (should-error (tests-smartdiagram--latex 'flow "
 + Venus
   | shape | box |") :type 'user-error))
 
 ;;; Title and prose
 
 (deftest "the title sits above the diagram, a \\\\ breaking it; prose after the list sits beneath, rules and src blocks too"
-  (let ((latex (tests-graph--smartdiagram 'flow "
+  (let ((latex (tests-smartdiagram--latex 'flow "
 + A
 + B
 
@@ -102,53 +102,77 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
     (should (s-contains-p "\\begin{varwidth}{\\linewidth}\n\\begin{verbatim}\n(seq-elt xs\n         2)" latex))
     (should (< (s-index-of "\\usebox" latex) (s-index-of "\\rule" latex)))))
 
-;;; Rendering and export
+;;; Rendering and export: a thin facade over #+begin_image latex
 
-(deftest "C-c C-c's PNG comes from pdflatex, when it is installed"
-  (skip-unless (and (executable-find "pdflatex") (executable-find "pdftoppm")
+(deftest "a smartdiagram sans :type is a user error naming the types"
+  (should-error (tests-smartdiagram--latex nil "
++ A") :type 'user-error))
+
+(deftest "C-c C-c's images come from #+begin_image latex, when pdflatex and smartdiagram are installed"
+  (skip-unless (and (executable-find "pdflatex") (executable-find "pdftocairo")
                     (zerop (call-process "kpsewhich" nil nil nil "smartdiagram.sty"))))
-  (let ((png (make-temp-file "org-graph-test-" nil ".png")))
+  (let ((default-directory (make-temp-file "org-smartdiagram-test-" t)))
     (unwind-protect
-        (progn (should (equal '(0 . "") (org-graph--run-latex (tests-graph--smartdiagram 'flow "
+        (progn (org--image-render 'latex (org--smartdiagram-image-source (tests-smartdiagram--latex 'flow "
 + A
-+ B") "png" png 72)))
-               (should (< 0 (file-attribute-size (file-attributes png)))))
-      (delete-file png))))
++ B")) nil "flow")
+               (should (< 0 (file-attribute-size (file-attributes "flow.png"))))
+               (should (file-exists-p "flow.svg")))
+      (delete-directory default-directory t))))
 
 (deftest "LaTeX export typesets a smartdiagram in place, and asks for smartdiagram in the preamble"
   (with-temp-buffer
     (let ((org--latex-head-used nil))
-      (should (s-contains-p "\\begin{center}\n{" (org--graph-block 'latex "\n+ A\n+ B" nil :smartdiagram 'flow)))
-      (should (member "smartdiagram" org--latex-head-used)))))
+      (should (s-contains-p "\\begin{center}\n{" (org--smartdiagram-block 'latex "\n+ A\n+ B" nil :type 'flow)))
+      (should (member org-smartdiagram-latex-head org--latex-head-used)))))
+
+(deftest "a smartdiagram's {{{macros}}} expand by the buffer's #+macro: lines, as a graph's do"
+  (with-temp-buffer
+    (org-mode)
+    (insert "#+macro: hi Hello\n")
+    (let ((org--latex-head-used nil))
+      (should (s-contains-p "{Hello},\n  {B}" (org--smartdiagram-block 'latex "\n+ {{{hi}}}\n+ B" nil :type 'flow))))))
+
+(deftest "HTML export is #+begin_image latex's: an inline SVG of the LaTeX, its packages above a line of dashes"
+  (let ((svg (make-temp-file "org-smartdiagram-test-" nil ".svg" "<svg/>")) seen)
+    (unwind-protect
+        (cl-letf (((symbol-function 'org--image-file)
+                   (lambda (language source _args _anchor extension) (setq seen (list language source extension)) svg)))
+          (with-temp-buffer
+            (should (s-contains-p "<img class=\"osbe-image\" alt=\"Steps\" src=\"data:image/svg+xml;base64,"
+                                  (org--smartdiagram-block 'html "\n+ A\n+ B" "Steps" :type 'flow))))
+          (should (eq 'latex (car seen)))
+          (should (s-starts-with-p (concat org-smartdiagram-latex-head "\n-----\n{") (cadr seen)))
+          (should (equal "svg" (caddr seen))))
+      (delete-file svg))))
 
 ;;; Completion and eldoc
 
-(org-deftest "on a smartdiagram's #+begin_graph line, a :KEY completes to the keys smartdiagrams take, not Graphviz's"
+(org-deftest "on a #+begin_smartdiagram line, a :KEY completes to the block's own keys, not Graphviz's"
   :text "
-#+begin_graph :smartdiagram constellation :d
+#+begin_smartdiagram :type constellation :r
 + A
-#+end_graph"
-  :at ":d"
+#+end_smartdiagram"
+  :at ":r"
   (let ((candidates (nth 2 (org-graph--completion-at-point))))
-    (should (member ":dpi" candidates))
-    (should-not (member ":rankdir" candidates))))
+    (should (equal '(":type" ":file" ":resolution" ":as-image") candidates))))
 
-(org-deftest "on any #+begin_graph line, :smartdiagram completes to the diagram types"
+(org-deftest "on a #+begin_smartdiagram line, :type completes to the diagram types"
   :text "
-#+begin_graph :smartdiagram con
+#+begin_smartdiagram :type con
 + A
-#+end_graph"
+#+end_smartdiagram"
   :at "con"
   (should (member "constellation" (nth 2 (org-graph--completion-at-point)))))
 
 (org-deftest "in a smartdiagram, the #+graph: table completes smartdiagram's keys and an item's table its few"
   :text "
-#+begin_graph :smartdiagram constellation
+#+begin_smartdiagram :type constellation
 #+graph:
 | planet |
 + Sun
   | col |
-#+end_graph"
+#+end_smartdiagram"
   :at "planet"
   (let ((candidates (nth 2 (org-graph--completion-at-point))))
     (should (member "planet color" candidates))
@@ -158,23 +182,23 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
 
 (org-deftest "in a smartdiagram, eldoc explains a #+graph: row's key with smartdiagram's default"
   :text "
-#+begin_graph :smartdiagram constellation
+#+begin_smartdiagram :type constellation
 #+graph:
 | planet color | black!75 |
 + Sun
-#+end_graph"
+#+end_smartdiagram"
   :at "planet color"
   (let (doc)
     (org-graph--eldoc (lambda (d &rest _) (setq doc d)))
-    (should (equal "The colour of a constellation's planet.  Default: lightgray!60." doc))))
+    (should (equal "The color of a constellation's planet.  Default: lightgray!60." doc))))
 
 (org-deftest "C-c ' on a smartdiagram edits it in a buffer that completes smartdiagram's keys"
   :text "
-#+begin_graph :smartdiagram flow
+#+begin_smartdiagram :type flow
 #+graph:
 | font |
 + A
-#+end_graph"
+#+end_smartdiagram"
   :at "+ A"
   (org-edit-special)
   (unwind-protect
@@ -182,5 +206,5 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
              (should (member "font" (nth 2 (org-graph--completion-at-point)))))
     (org-edit-src-abort)))
 
-(provide 'org-graph-smartdiagram-tests)
-;;; org-graph-smartdiagram-tests.el ends here
+(provide 'org-smartdiagram-block-tests)
+;;; org-smartdiagram-block-tests.el ends here

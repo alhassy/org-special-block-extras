@@ -35,7 +35,7 @@ These are red:squares! <<squares>> We [[*Why squares?][prove it below]].
 * How the loop accumulates
 
 Each step adds the next odd number to the running sum:
-#+begin_graph :rankdir LR
+#+begin_graph :direction right
 + 0
   + add 1 :: 1
     + add 3 :: 4
@@ -62,7 +62,7 @@ Hence, by [[Odd]], =(sum-odds n)= is $n^2$. badge:sum-odds|n²|teal
 </details>
 
 **Use the Org markup you already know ---in any block.** Our new `math`, `graph`, and `details` blocks read
-Org just as prose does: colours `red:hello`, permalinks `<<here>>` cited by `[[here]]`, hoverable docs
+Org just as prose does: colors `red:hello`, permalinks `<<here>>` cited by `[[here]]`, hoverable docs
 `doc:cl-loop`, keystrokes `kbd:C-x_C-e`, footnotes as tooltips, and `:let (N 7)` substitution ---which works
 on every block, Org's own `src` blocks included. One Org source exports to HTML, LaTeX, and Markdown; no raw
 HTML or LaTeX required.
@@ -80,17 +80,18 @@ Each block is demoed in [the guide](https://alhassy.com/org-special-block-extras
 
 | Block                         | Use Case                                                                                      |
 |-------------------------------|-----------------------------------------------------------------------------------------------|
-| [`math`](https://alhassy.com/org-special-block-extras-blocks-and-links#math) | Display maths wherein `red:𝒳` colours a symbol, Org tables are matrices, and `<<X>>` tags an equation; [calculational proofs](https://alhassy.com/org-special-block-extras-blocks-and-links#equational-proofs), with foldable hints. |
+| [`math`](https://alhassy.com/org-special-block-extras-blocks-and-links#math) | Display maths wherein `red:𝒳` colors a symbol, Org tables are matrices, and `<<X>>` tags an equation; [calculational proofs](https://alhassy.com/org-special-block-extras-blocks-and-links#equational-proofs), with foldable hints. |
 | [`graph`](https://alhassy.com/org-special-block-extras-graphs) | Draw nested Org lists as Graphviz diagrams ---`C-c C-c` renders a PNG in place. |
+| [`smartdiagram`](https://alhassy.com/org-special-block-extras-graphs) | Typeset an Org list as LaTeX's smartdiagram ---a planet amid satellites, a flow, bubbles--- as `image latex` would. |
 | [`image LANG`](https://alhassy.com/org-special-block-extras-blocks-and-links#images) | LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, or a [p5.js](https://p5js.org) sketch: itself where read natively, else a picture ---a TikZ drawing in a web page, an HTML widget in a PDF. `C-c C-c` shows it in place; a p5.js sketch, running. |
 | [`details`](https://alhassy.com/org-special-block-extras-blocks-and-links#folded-details) | Foldable sections ---perfect for hiding spoilers, proofs, or long explanations. |
 | [`parallel`](https://alhassy.com/org-special-block-extras-blocks-and-links#parallel) | Display content in multiple columns ---great for comparisons or saving space. |
 | [`box`](https://alhassy.com/org-special-block-extras-blocks-and-links#boxed-text) | Emphasize content with nicely styled borders ---great for callouts or side notes. |
-| [`note`, `tip`, `warning`, …](https://alhassy.com/org-special-block-extras-blocks-and-links#callouts) | GitHub-style callouts ---a coloured rule and a titled heading. |
-| [`highlight`](https://alhassy.com/org-special-block-extras-blocks-and-links#highlights) | Colour a paragraph's background, rather than its text. |
+| [`note`, `tip`, `warning`, …](https://alhassy.com/org-special-block-extras-blocks-and-links#callouts) | GitHub-style callouts ---a colored rule and a titled heading. |
+| [`highlight`](https://alhassy.com/org-special-block-extras-blocks-and-links#highlights) | Color a paragraph's background, rather than its text. |
 | [`quote KEY`](https://alhassy.com/org-special-block-extras-blocks-and-links#quote-citations) | Quotations, cited by an `org-cite` key. |
 | [`documentation`](https://alhassy.com/tooltips-for-glossaries-dictionaries-and-documentation) | Define a glossary term once; cite it anywhere with `doc:`, and print a glossary with `#+print_glossary:`. |
-| [`remark`](https://alhassy.com/editor-comments) | Editorial comments, shown in colour; `org-hide-editor-comments` hides them all from the export. |
+| [`remark`](https://alhassy.com/editor-comments) | Editorial comments, shown in color; `org-hide-editor-comments` hides them all from the export. |
 | `margin`                      | Subtle explanatory tooltips or side remarks ---delightful for scholarly writing.               |
 | `spoiler`                     | Hide content visually until the reader chooses to see it ---useful in teaching.               |
 | `tree`                        | Display proof trees and logical derivations ---fantastic for formal logic.                    |
@@ -117,11 +118,11 @@ See [switches](https://alhassy.com/org-special-block-extras-blocks-and-links#swi
 | [`doc:label`](https://alhassy.com/tooltips-for-glossaries-dictionaries-and-documentation) | Glossary tooltips ---from our own `documentation` blocks, else Emacs Help; e.g., <abbr title="The Common Lisp ‘loop’ macro. Valid clauses include: for, repeat, while, collect, sum, …">cl-loop</abbr>. |
 | `tooltip:`             | An ad-hoc tooltip: `[[tooltip:odd][An integer 2i - 1]]` shows *odd*, and hovers the rest.     |
 | [`kbd:`](https://alhassy.com/org-special-block-extras-blocks-and-links#nice-keystroke-renditions) | Stylized keybindings with tooltips ---e.g., `kbd:C-x_C-e`; in Emacs, 〔C-x C-e〕, click to run. |
-| [`color:` or `red:`](https://alhassy.com/colours) | Inline text colouring ---supports both names and hex codes.                       |
-| `highlight:`           | Colour the background instead ---so highlighted in Emacs too.                                 |
+| [`color:` or `red:`](https://alhassy.com/colours) | Inline text coloring ---supports both names and hex codes.                       |
+| `highlight:`           | Color the background instead ---so highlighted in Emacs too.                                 |
 | [`badge:`](https://alhassy.com/badge-links) | Embed project badges ---e.g., GitHub stars, Reddit subs, versioning.                     |
 | [`<<X>>`](https://alhassy.com/permalinks) | Permalinks ---Org's own targets, made a visible 🔗 in HTML.                                |
-| `palette:`             | A button for readers to pick the page's background colour.                                   |
+| `palette:`             | A button for readers to pick the page's background color.                                   |
 | `toggle-details:`      | A button to unfold, or fold, every `details` block at once.                                  |
 | `fortune:`             | Insert ASCII animals saying jokes or phrases ---joy in our docs!                              |
 | `elisp:`               | Make clickable actions ---buttons that run Emacs Lisp.                                        |
@@ -175,7 +176,7 @@ All articles on the package live under [#org-special-block-extras](https://alhas
 - [Org lists, drawn as Graphviz graphs](https://alhassy.com/org-special-block-extras-graphs) ---the `graph` block, a feature at a time.
 - [Make your own blocks and links](https://alhassy.com/org-special-block-extras-developers-guide) ---the developer's guide.
 - [Tooltips for glossaries, dictionaries, and documentation](https://alhassy.com/tooltips-for-glossaries-dictionaries-and-documentation) ---`doc:` and `documentation`.
-- [Colours](https://alhassy.com/colours), [Badge links](https://alhassy.com/badge-links), [Permalinks](https://alhassy.com/permalinks), [Editor comments](https://alhassy.com/editor-comments), and [HTML export styles](https://alhassy.com/html-export-styles-as-links).
+- [Colors](https://alhassy.com/colours), [Badge links](https://alhassy.com/badge-links), [Permalinks](https://alhassy.com/permalinks), [Editor comments](https://alhassy.com/editor-comments), and [HTML export styles](https://alhassy.com/html-export-styles-as-links).
 - [Demos that are tests, rather than docs](https://alhassy.com/org-special-block-extras-demos).
 - [Powering-up Special Blocks](https://alhassy.com/emacs-conf-2020) ---our EmacsConf 2020 talk; its
   [slides](emacs-conf-2020.org) are no pictures, just Org: “Look ma, no HTML required!”

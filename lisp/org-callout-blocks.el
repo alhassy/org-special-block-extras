@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; Five callout blocks, after GitHub's alerts: a coloured rule down the left, under a titled heading.
+;; Five callout blocks, after GitHub's alerts: a colored rule down the left, under a titled heading.
 ;;
 ;;   #+begin_warning Mind the gap
 ;;   Trains do not wait.
@@ -41,13 +41,13 @@
     (important "#8250df" "❗" "Key information readers need to achieve their goal.")
     (warning   "#9a6700" "⚠️" "Urgent information that needs immediate attention, to avoid problems.")
     (caution   "#cf222e" "🛑" "Advises about risks or negative outcomes of certain actions."))
-  "The callout blocks, as (NAME COLOUR ICON PURPOSE) entries; the colours and purposes are GitHub's.")
+  "The callout blocks, as (NAME COLOR ICON PURPOSE) entries; the colors and purposes are GitHub's.")
 
-(defun org--callout (backend colour icon title contents)
-  "(BACKEND, COLOUR, ICON, TITLE, CONTENTS) ↦ CONTENTS under TITLE, with a COLOUR rule down its left.
+(defun org--callout (backend color icon title contents)
+  "(BACKEND, COLOR, ICON, TITLE, CONTENTS) ↦ CONTENTS under TITLE, with a COLOR rule down its left.
 HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, and uses tcolorbox."
   (pcase backend
-    ('latex (concat (org--latex-define-color "osbe-callout" colour)
+    ('latex (concat (org--latex-define-color "osbe-callout" color)
                     (format (concat "\\begin{tcolorbox}[colframe=osbe-callout,colback=osbe-callout!5!white,"
                                     "colbacktitle=osbe-callout!5!white,coltitle=osbe-callout,fonttitle=\\bfseries,"
                                     "title={%s},sharp corners,leftrule=3pt,toprule=0pt,rightrule=0pt,bottomrule=0pt]\n"
@@ -55,18 +55,18 @@ HTML prefixes TITLE with ICON; LaTeX, whose fonts rarely have emoji, does not, a
                             title contents)))
     (_ (format (concat "<div class=\"callout\" style=\"border-left: 0.25em solid %s; padding: 0.5em 1em; margin: 1em 0;\">\n"
                        "<p style=\"color: %s; font-weight: bold; margin: 0;\">%s %s</p>\n%s\n</div>")
-               colour colour icon title contents))))
+               color color icon title contents))))
 
 ;; No links or tags: a callout is a whole paragraph, and a section tagged :note: is too common to claim.
 ;; In Markdown, a callout is GitHub's own alert; being untitled, it shows only a TITLE other than its default.
-(pcase-dolist (`(,name ,colour ,icon ,purpose) org-callouts)
+(pcase-dolist (`(,name ,color ,icon ,purpose) org-callouts)
   (let ((default-title (capitalize (symbol-name name))))
     (eval `(org-defblock ,name (&optional (title ,default-title) :link nil :tag nil :latex-head ("xcolor" "tcolorbox")
                                          :manual "#Callouts" &context backend raw-contents contents)
-             ,(format "%s\nA callout, titled TITLE, with a %s rule down its left; see `org-callouts'." purpose colour)
+             ,(format "%s\nA callout, titled TITLE, with a %s rule down its left; see `org-callouts'." purpose color)
              (if (org-export-markdown-p)
                  (org-parse (org--markdown-alert ,(symbol-name name) (unless (equal title ,default-title) title) raw-contents))
-               (org--callout backend ,colour ,icon (org-inline title) contents)))
+               (org--callout backend ,color ,icon (org-inline title) contents)))
           t)
     (eval `(org-defblock-attribute ,name :example ,(format "
 # The title is optional; sans one, it is “%2$s”.

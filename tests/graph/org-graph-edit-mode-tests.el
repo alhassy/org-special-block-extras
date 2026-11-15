@@ -103,27 +103,30 @@
   (search-forward ":edge.arr")
   (should (member ":edge.arrowhead" (tests-graph--candidates))))
 
-(org-deftest "on the #+begin_graph line, a :KEY completes to the block's keys, graph attributes, :node.KEY, and :edge.KEY"
+(org-deftest "on the #+begin_graph line, a :KEY completes to the block's keys, graph attributes bar rankdir, :node.KEY, and :edge.KEY"
   :text "
 #+begin_graph Title :r
 + A
 #+end_graph"
   :at ":r"
   (let ((candidates (tests-graph--candidates)))
-    (should (member ":rankdir" candidates))
+    (should (member ":direction" candidates))
+    (should (member ":ratio" candidates))
     (should (member ":node.shape" candidates))
     (should (member ":edge.arrowhead" candidates))
-    (should (member ":directed" candidates))
+    ;; The header spells rankdir as :direction; the axed keys are gone, and :dpi is Graphviz's own.
+    (should-not (--any (member it candidates) '(":rankdir" ":directed" ":svg" ":mindmap" ":smartdiagram")))
+    (should (member ":dpi" candidates))
     (should-not (member ":shape" candidates))
     (should-not (member ":node." candidates))))
 
 (org-deftest "on the #+begin_graph line, a key's value completes to that attribute's values"
   :text "
-#+begin_graph :rankdir L :node.shape b
+#+begin_graph :direction r :node.shape b
 + A
 #+end_graph"
-  :at ":rankdir L"
-  (should (equal '("TB" "LR" "BT" "RL") (tests-graph--candidates)))
+  :at ":direction r"
+  (should (equal '("down" "right" "up" "left") (tests-graph--candidates)))
   (search-forward ":node.shape b")
   (should (member "box" (tests-graph--candidates))))
 
@@ -138,9 +141,9 @@
   (should (equal '("random-templates" "error") (tests-graph--candidates))))
 
 (deftest "on the #+begin_graph line, eldoc explains the key at point"
-  (dolist (case '((":rankdir"    . "Sets direction of graph layout. dot only.  Default: TB.")
+  (dolist (case '((":ratio"      . "Sets the aspect ratio (drawing height/drawing width) for the drawing.")
                   (":node.shape" . "Sets the shape of a node.  Default: ellipse.")
-                  (":svg"        . "HTML export embeds an inline <svg>, its tooltips as prose's; with nil, a base64 PNG.")))
+                  (":direction"  . "Which way arcs flow: down, up, right, or left; Graphviz's rankdir TB, BT, LR, or RL.  Default: down.")))
     (with-org-test-buffer (:text (format "
 #+begin_graph Title %s x
 + A
@@ -152,7 +155,7 @@
 
 (org-deftest "on the #+begin_graph line, but not on a key, eldoc defers to the block's signature"
   :text "
-#+begin_graph Title :rankdir LR
+#+begin_graph Title :direction right
 + A
 #+end_graph"
   :at "Tit"
