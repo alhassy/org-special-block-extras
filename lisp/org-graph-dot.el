@@ -157,6 +157,22 @@ of its own.  A node no arc enters is a root, of depth 0; else its depth is one m
                             nodes))))
              nodes)))
 
+(defun org--graph-legend-chain (stmts op ctx)
+  "Returns invisible arcs, by OP, chaining each run of legend entries in STMTS ---and in each cluster's, its own---
+from one entry's end to the next's start, so a legend stacks as a column rather than spreading as a row.
+An entry sampling an arc template ends at its sample's far point, legend_N_end; any other, at itself."
+  (let ((end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
+                              (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates) (concat id "_end") id))))
+        chain)
+    (cl-loop for (a b) on stmts
+             do (when (and (eq (car-safe a) :legend) (eq (car-safe b) :legend))
+                  (push (format "%s %s %s [ style=invis ];" (funcall end a) op (cadr b)) chain))
+                (pcase a
+                  (`(:cluster ,_ . ,props) (setq chain (append (reverse (org--graph-legend-chain (plist-get props :stmts) op ctx))
+                                                               chain)))
+                  (`(:scope ,_ ,inner) (setq chain (append (reverse (org--graph-legend-chain inner op ctx)) chain)))))
+    (nreverse chain)))
+
 (defun org--graph-tag-clusters->dot (ctx)
   "Returns a subgraph per cluster that :cluster_TITLE: tags gather in CTX, naming its nodes; one of the same title
 that a #+begin_cluster declares is the same subgraph, which Graphviz merges, so the tagged nodes join it.
@@ -203,7 +219,10 @@ Header attributes come before the block's own #+graph:, #+node:, and #+edge: tab
     (when (equal "curved" (cadr (assoc "splines" (plist-get preamble :graph-rows))))
       (org--graph-note-ranks ctx preamble stmts))
     (let ((body (append (--mapcat (org--graph-stmt->dot it (if directed "->" "--") ctx) stmts)
-                        (org--graph-tag-clusters->dot ctx))))
+                        (org--graph-tag-clusters->dot ctx)
+                        ;; A legend is a column: top-down, its entries are chained; left-right, they share a rank already.
+                        (unless (member (cadr (assoc "rankdir" (plist-get preamble :graph-rows))) '("LR" "RL"))
+                          (org--graph-legend-chain stmts (if directed "->" "--") ctx)))))
       (when (org--graph-ctx-compound ctx)
         (setq preamble (plist-put preamble :graph-rows (append (plist-get preamble :graph-rows) '(("compound" "true"))))))
       (org-graph--unflatten (format "%s {\n  %s\n}" (if directed "digraph" "graph")

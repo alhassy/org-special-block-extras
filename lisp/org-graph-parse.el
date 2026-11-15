@@ -79,6 +79,9 @@ A graph's, or the buffer's, own #+name: template of the same name wins; see `org
   compound                                   ; non-nil once an arc is clipped at a cluster
   (tag-clusters (make-hash-table :test #'equal))) ; cluster title ↦ the ids its :cluster_TITLE: tag gathers, last first
 
+(defvar org--graph-legend nil
+  "Non-nil while reading the items of a cluster titled Legend, wherein `- MEANING :T:' is a legend entry, not a node.")
+
 (defvar org--graph-random-templates nil
   "While a graph reads `:unknown-tags random-templates', how many templates it has made up so far; else nil.")
 
@@ -730,7 +733,11 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
           (targeted (plist-get rows :targeted))
           (to-arc   (lambda (target attrs)
                       (list :edge id target (org--graph-override attrs (alist-get target targeted nil nil #'equal)))))
-          (legend?  (and (not parent) (plist-get text :arc-tags)))
+          ;; A legend entry: a top-level `- :T: :: MEANING', Org's glossary; or, in a cluster titled Legend, `- MEANING :T:'.
+          (legend-tags (cond ((and (not parent) (plist-get text :arc-tags)))
+                             ((and org--graph-legend (not parent) (not reference) (not (plist-get text :arc-label)))
+                              (plist-get text :tags))))
+          (legend?  (and legend-tags t))
           (ranked   (org--graph-ordered-rank kind children))
           (rank-stmts (-if-let (rank (plist-get rows :children-rank))
                           (list (list :rank rank (-map #'org--graph-item-id children)))
@@ -761,7 +768,7 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
       (user-error "graph: a note on `%s' describes the arc from a parent, but there is none" id))
     (when (and (not parent) (plist-get text :arc-label))
       (user-error "graph: a `TERM ::' describes the arc from a parent, but `%s' has none; for a legend entry, the TERM is \
-just tags: `- :T: :: %s'" id id))
+just tags: `- :T: :: %s', or, in a cluster titled Legend, `- %s :T:'" id id id))
     ;; A legend entry's tags style its sample, not the graph's arcs.
     (unless legend?
       (org--graph-note-arc-templates ctx (append (org--graph-arc-tags text) (-mapcat #'cadddr (cdr table)))
@@ -774,17 +781,18 @@ just tags: `- :T: :: %s'" id id))
     (when (and (plist-get text :reference) (or attrs (plist-get rows :id)))
       (user-error "graph: `[[%s]]' refers to a node declared elsewhere; give it node attributes there, not here" id))
     (cond
-     ;; `- :married: :: marriage', with no parent to arc from, is a legend entry.
+     ;; `- :married: :: marriage', with no parent to arc from, is a legend entry; so is a Legend cluster's `- marriage :married:'.
      (legend?
       (list (list :legend (format "legend_%d" (cl-incf (org--graph-ctx-legends ctx)))
-                  (org--graph-template-rows (plist-get text :arc-tags) tables)
-                  label (plist-get text :arc-tags))))
+                  (org--graph-template-rows legend-tags tables)
+                  label legend-tags)))
      (reference
       (append arcs (org--graph-subtree pre tables (append (--mapcat (org--graph-parse-item it id ctx) children)
                                                           rank-stmts))))
      ((and fresh (equal shape "cluster"))
       (org--graph-declare ctx id name nil)
-      (let ((stmts (append (--mapcat (org--graph-parse-item it nil ctx) children) ranked)))
+      (let ((stmts (let ((org--graph-legend (equal (downcase (format "%s" name)) "legend")))
+                     (append (--mapcat (org--graph-parse-item it nil ctx) children) ranked))))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
         (cons (list :cluster id

@@ -662,6 +662,7 @@ Languages, by influence.
   \"λ-calculus\" [ color=\"#d20f39\" fontcolor=\"#d20f39\" shape=box fontname=Helvetica label=\"λ-calculus\" ];
   \"λ-calculus\" -> Lisp;
   Lisp [ color=\"#1e66f5\" fontcolor=\"#1e66f5\" shape=ellipse fontname=Times label=Lisp ];
+  legend_1 -> legend_2 [ style=invis ];
 }"
                  (org--graph-raw->dot "
 - :theory: :: a calculus
@@ -920,6 +921,7 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
     legend_1 -> legend_1_end [ color=pink dir=both label=marriage ];
     legend_2 [ shape=box label=<<I>wife</I>> ];
   }
+  legend_1_end -> legend_2 [ style=invis ];
 }")
 
 (define-graph-test "a template styles arcs when an #+edge: line's tags name it, too; its sample sans `constraint', which is layout"
@@ -1025,3 +1027,51 @@ CELLSPACING=\"0\"><TR><TD>hello<BR/>world</TD><TD PORT=\"p\">b</TD></TR></TABLE>
     (should (string-search "subgraph cluster_Islam {\n    label=Islam;\n    Mohammad;\n  }" dot))
     (should (string-search "subgraph cluster_Holy_Land {\n    label=\"Holy Land\";\n    Jesus;\n  }" dot))
     (should (string-search "Mohammad [ label=Mohammad ];" dot))))
+
+;;; Legends, in prose: a Legend cluster's `- MEANING :T:'
+
+(define-graph-test "in a cluster titled Legend, `- MEANING :T:' is a legend entry, as `- :T: :: MEANING' is anywhere"
+  :input "
+#+name: married
+| color | pink |
+| dir   | both |
+#+name: wife
+| shape | box |
++ Muhammad
++ Khadija :wife:
+  + [[Muhammad]] :married:
+#+begin_cluster Legend
+- marriage :married:
+- /wife/ :wife:
+#+end_cluster"
+  :output "digraph {
+  Muhammad [ label=Muhammad ];
+  Khadija [ shape=box label=Khadija ];
+  Khadija -> Muhammad [ color=pink dir=both ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ shape=point style=invis ];
+    legend_1_end [ shape=point style=invis ];
+    legend_1 -> legend_1_end [ color=pink dir=both label=marriage ];
+    legend_2 [ shape=box label=<<I>wife</I>> ];
+  }
+  legend_1_end -> legend_2 [ style=invis ];
+}")
+
+(deftest "outside a cluster titled Legend, `- MEANING :T:' is a node styled T, as ever" [graph]
+  (should (string-search "\"a token\" [ shape=box label=\"a token\" ];"
+                         (org--graph-raw->dot "
+#+name: token
+| shape | box |
+#+begin_cluster Glossary
+- a token :token:
+#+end_cluster" nil))))
+
+(deftest "a legend stacks as a column: top-down, its entries are chained invisibly; left-right, they share a rank" [graph]
+  (let ((legend "
+#+begin_cluster Legend
+- a :x:
+- b :y:
+#+end_cluster"))
+    (should (string-search "legend_1 -> legend_2 [ style=invis ];" (org--graph-raw->dot legend nil)))
+    (should-not (string-search "style=invis" (org--graph-raw->dot legend nil '(:rankdir LR))))))
