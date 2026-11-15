@@ -69,3 +69,13 @@ too. Its only gains are short names and =random=. We wrote it for fun; either it
 of its own (=org-html-themes=, say) or we axe it and the manual lists the =#+SETUPFILE:= lines instead.
 - [ ] Decide: keep, spin off, or axe.
 - [ ] If kept: complete =THEME= after =#+html_export_style:= with C-M-i, as the link's =?= key once chose one.
+
+* TODO Declare more of what our definers and pure functions are
+
+Once in the main file's Commentary, now here. See [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Declare-Form.html][Declare Form]].
+- [ ] =(declare (doc-string N))= on =org-defblock=, =org-defblock-only=, and =org-deflink=, as =org-deftag= has;
+  then check that a sloppy docstring there draws the same byte-compiler and flycheck warnings as in a =cl-defun=.
+- [ ] =(declare (ftype (function (ARG-TYPE …) RETURN-TYPE)))= on our helpers; =C-h f= then shows the type.
+  Beware: a wrong type may crash natively compiled code.
+- [ ] =(declare (pure t) (side-effect-free t))=, or =(important-return-value t)=, where apt: the byte compiler
+  then warns when such a call's value is ignored, and folds calls on constant arguments.
