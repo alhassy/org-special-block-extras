@@ -272,3 +272,118 @@ graph LR
                             (cadr (should-error (org--image-run "d2" "x.d2") :type 'user-error))))
     (should (string-match-p "needs ‘mmdc’, which is not installed; npm install -g @mermaid-js/mermaid-cli"
                             (cadr (should-error (org--image-run "mmdc") :type 'user-error))))))
+
+;;; p5js: a sketch, running in HTML; a still of it elsewhere
+
+(defconst org-image-test--p5js "
+#+begin_image p5js
+function setup() {
+  createCanvas(200, 100);
+  noStroke();
+}
+
+function draw() {
+  background(250, 245, 235, 40);
+  fill(230, 120, 60);
+  circle(noise(frameCount * 0.01) * width, height / 2, 24);
+}
+#+end_image")
+
+(deftest "a p5js image block, along HTML, is its sketch running in an <iframe> of its own, p5 from a CDN" [image]
+  (let ((html (org-export-string org-image-test--p5js)))
+    (should (string-match-p "^<iframe class=\"osbe-p5js\" style=\"border: 0\" srcdoc=\"&lt;!DOCTYPE html&gt;" html))
+    (should (string-search "&lt;script src=&quot;https://cdn.jsdelivr.net/npm/p5@" html))
+    (should (string-search "createCanvas(200, 100);" html))
+    (should (string-search "fill(230, 120, 60);" html))
+    (should-not (string-match-p "srcdoc=\"[^\"]*<script" html))))
+
+(deftest "a p5js image block's preamble joins its page's <head>, after p5 itself" [image]
+  (let ((page (org--image-p5js-page "<script src=\"p5.sound.min.js\"></script>" "function setup() {}")))
+    (should (string-match-p "p5\\.min\\.js\"></script>\n.*\n<script src=\"p5\\.sound\\.min\\.js\"></script>\n<script>\nfunction setup() {}\n</script>"
+                            page))))
+
+(defun org-image-test--png-size (png)
+  "Returns (WIDTH HEIGHT), in pixels, of PNG, read from its header's IHDR chunk: big-endian 4-byte integers, from byte 16."
+  (with-temp-buffer
+    (set-buffer-multibyte nil)
+    (insert-file-contents-literally png nil 0 24)
+    (mapcar (lambda (at) (--reduce-from (+ (* acc 256) it) 0 (append (buffer-substring (+ 1 at) (+ 5 at)) nil)))
+            '(16 20))))
+
+(deftest "a p5js image block's canvas size is read from its createCanvas, when that is in numbers" [image]
+  (should (equal '(400 200) (org--image-p5js-declared-size "function setup() {\n  createCanvas(400, 200);\n}")))
+  (should (equal '(300 300) (org--image-p5js-declared-size "createCanvas(300,300, WEBGL);")))
+  (should-not (org--image-p5js-declared-size "createCanvas(windowWidth, 200);"))
+  (should-not (org--image-p5js-declared-size "createCanvas(400, 200 * 2);")))
+
+(deftest "a p5js image block renders, by a headless Chrome's screenshot, to a PNG its canvas's size, after draw() runs" [image]
+  (skip-unless (and org-image-block-browser (executable-find "rsvg-convert") (executable-find "pdftocairo")))
+  (org-image-test--in-temp-directory
+    (should (string-match-p "^\\\\includegraphics{images/image-[0-9a-f]\\{10\\}\\.pdf}$"
+                            (org-export-string org-image-test--p5js 'latex)))
+    ;; 200×100 CSS pixels, at 96 per inch, make 300×150 at the default 144.
+    (should (equal '(300 150) (org-image-test--png-size (car (directory-files "images" t "\\.png\\'")))))))
+
+(deftest "a p5js image block that draws no canvas is an error saying so" [image]
+  (skip-unless org-image-block-browser)
+  (should-error (org--image-p5js-pdf "" "function setup() { noCanvas(); }" nil "out.pdf") :type 'user-error))
+
+(deftest "C-c C-c on a p5js image block, in an Emacs with xwidgets, runs it live, rendering nothing; so, no Chrome" [image]
+  (let (rendered)
+    (with-temp-buffer
+      (insert org-image-test--p5js)
+      (org-mode)
+      (search-backward "noStroke")
+      (cl-letf (((symbol-function 'display-graphic-p) #'always)
+                ((symbol-function 'make-xwidget) #'ignore)
+                ((symbol-function 'org--image-p5js-live) (lambda (&rest _) 'a-running-sketch))
+                ((symbol-function 'org--image-render) (lambda (&rest _) (setq rendered t))))
+        (should (org--block-cc-dispatcher))
+        (should (equal '(xwidget :xwidget a-running-sketch)
+                       (--some (overlay-get it 'display) (overlays-in (point-min) (point-max)))))
+        (should-not rendered)))))
+
+;;; How an image block looks in Org buffers: as its language
+
+(org-deftest "a p5js image block looks as JavaScript, its preamble as HTML; sans Org's emphasis and links" [image fontify]
+  :text "
+#+begin_image p5js
+<script src=\"p5.sound.min.js\"></script>
+-----
+function draw() {
+  circle(noise(frameCount *0.01* 2) * width, height / 2, 24); // [[x]] is no link
+}
+#+end_image"
+  (font-lock-ensure)
+  (cl-flet ((faces-at (word) (goto-char (point-min)) (search-forward word)
+                      (ensure-list (get-text-property (match-beginning 0) 'face))))
+    (should (memq 'font-lock-function-name-face (faces-at "script")))
+    (should (memq 'font-lock-keyword-face (faces-at "function")))
+    (should-not (memq 'bold (faces-at "0.01")))
+    (should (memq 'font-lock-comment-face (faces-at "[[x]]")))
+    (should-not (memq 'org-link (faces-at "[[x]]")))
+    (should-not (get-text-property (match-beginning 0) 'mouse-face))))
+
+(org-deftest "a latex image block, and one naming no language, look as LaTeX" [image fontify]
+  :text "
+#+begin_image latex
+\\begin{tikzpicture}\\draw (0,0) -- (1,1);\\end{tikzpicture}
+#+end_image
+
+#+begin_image :file arrow
+\\begin{tikzpicture}\\fill (0,0) circle (1pt);\\end{tikzpicture}
+#+end_image"
+  (font-lock-ensure)
+  (search-forward "\\draw")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face))))
+  (search-forward "\\fill")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
+
+(org-deftest "an html image block looks as HTML" [image fontify]
+  :text "
+#+begin_image html
+<button>Click me</button>
+#+end_image"
+  (font-lock-ensure)
+  (search-forward "<button")
+  (should (memq 'font-lock-function-name-face (ensure-list (get-text-property (1- (point)) 'face)))))

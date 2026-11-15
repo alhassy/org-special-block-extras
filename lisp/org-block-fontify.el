@@ -67,7 +67,10 @@
   :keywords ((REGEXP GROUP FACE) …)  ↦  each REGEXP match in the contents shows its GROUP in FACE, atop all else;
                                        a function FACE is called, with the match data at hand, for the face;
                                        a function REGEXP is a font-lock matcher, called with the contents' end
-  :language LANG ↦  the contents show as a #+begin_src LANG block's do; see `org--fontify-block-languages'"
+  :language LANG ↦  the contents show as a #+begin_src LANG block's do; a function LANG fontifies them itself;
+                    see `org--fontify-block-languages'
+  :code t        ↦  the contents are code, not Org: they show as their :language alone, sans Org's links and
+                    emphasis; see `org--fontify-block-code'"
   (when org--block-fontifications
     (let ((case-fold-search t)
           (delimiter (format "^[ \t]*\\(#\\+\\(begin\\|end\\)_\\(%s\\)\\)\\(?:[ \t]\\|$\\)"
@@ -79,23 +82,53 @@
           (-when-let (shown (plist-get spec (if begin? :begin :end)))
             (org--display-as (match-beginning 1) (match-end 1) shown))
           (when (and begin? (or (plist-get spec :face) (plist-get spec :keywords)))
-            (org--fontify-block-contents name spec))))))
+            (org--fontify-block-contents name spec))
+          (when (and begin? (plist-get spec :code))
+            (org--fontify-block-code name spec))))))
   nil)
+
+(defconst org--fontify-org-markup '(org-emphasis nil invisible nil mouse-face nil keymap nil help-echo nil
+                                    htmlize-link nil org-linked-text nil)
+  "The text properties, besides faces, that Org's links and emphasis leave; `org--fontify-block-code' axes them.")
+
+(defun org--fontify-block-code (name spec)
+  "Show the contents of the NAME block, whose #+begin_ line point is on, as SPEC's :language alone: Org's links and
+emphasis, fontified before, are axed; so, in code, a*b*c is no bold b, nor [[x]] a link, nor are markers hidden."
+  (let ((argument (save-excursion (beginning-of-line)
+                                     (and (looking-at "[ \t]*#\\+begin_[^ \t\n]+[ \t]+\\([^ \t\n]+\\)")
+                                          (match-string-no-properties 1))))
+        (contents-start (min (1+ (line-end-position)) (point-max))))
+    (save-excursion
+      (when (re-search-forward (format "^[ \t]*#\\+end_%s[ \t]*$" (regexp-quote name)) nil t)
+        (let ((contents-end (line-beginning-position)))
+          (remove-text-properties contents-start contents-end org--fontify-org-markup)
+          (org--fontify-block-language (plist-get spec :language) argument contents-start contents-end))))))
+
+(defun org--fontify-block-language (language argument beg end)
+  "Show BEG to END as a #+begin_src LANGUAGE block's contents; a function LANGUAGE does so itself, by
+(LANGUAGE ARGUMENT BEG END), ARGUMENT being the first word after the block's name."
+  (save-match-data
+    (if (functionp language) (funcall language argument beg end)
+      (org-src-font-lock-fontify-block language beg end))))
 
 (defun org--fontify-block-languages (limit)
   "Font-lock matcher: up to LIMIT, show the contents of each block whose `:fontify' names a :language LANG as a
 #+begin_src LANG block shows; then nil.  It runs ahead of Org's own fontification, whose links and
-emphasis so land atop; by way of example, a math block's \\def shows as in `latex-mode', and its red:x in red."
-  (-when-let (names (--keep (and (plist-get (cdr it) :language) (car it)) org--block-fontifications))
+emphasis so land atop; by way of example, a math block's \\def shows as in `latex-mode', and its red:x in red.
+A function LANG fontifies the contents itself; see `org--fontify-block-language'.  A :code block is left to
+`org--fontify-block-code', which runs after Org's own fontification instead."
+  (-when-let (names (--keep (and (plist-get (cdr it) :language) (not (plist-get (cdr it) :code)) (car it))
+                            org--block-fontifications))
     (let ((case-fold-search t)
-          (begin (format "^[ \t]*#\\+begin_\\(%s\\)\\(?:[ \t].*\\)?$" (regexp-opt names))))
+          (begin (format "^[ \t]*#\\+begin_\\(%s\\)\\(?:[ \t]+\\([^ \t\n]+\\)?.*\\)?$" (regexp-opt names))))
       (while (re-search-forward begin limit t)
         (let ((name (downcase (match-string 1)))
+              (argument (match-string-no-properties 2))
               (contents-start (min (1+ (line-end-position)) (point-max))))
           (save-excursion
             (when (re-search-forward (format "^[ \t]*#\\+end_%s[ \t]*$" (regexp-quote name)) nil t)
-              (org-src-font-lock-fontify-block (plist-get (cdr (assoc name org--block-fontifications)) :language)
-                                               contents-start (line-beginning-position))))))))
+              (org--fontify-block-language (plist-get (cdr (assoc name org--block-fontifications)) :language)
+                                           argument contents-start (line-beginning-position))))))))
   nil)
 
 (defun osbe--block-fontifications ()

@@ -5705,7 +5705,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   every graph has, by ~org-defgraph-tag~--- and =#+begin_graph :mindmap t= draw them; see
   [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#diagrams-we-draw-sequences-classes-states-entities-mindmaps][Diagrams we draw]].
 
-** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2: itself where read natively, else a picture
+** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid, D2, p5.js: itself where read natively, else a picture
   :PROPERTIES:
   :CUSTOM_ID: images
   :END:
@@ -5734,6 +5734,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   | =#+begin_image plantuml= | an SVG, inlined     | a PDF, by =\includegraphics= | a PNG                  |
   | =#+begin_image mermaid=  | itself, drawn by the browser | a PDF, by =\includegraphics= | itself, drawn by GitHub |
   | =#+begin_image d2=       | an SVG, inlined     | a PDF, by =\includegraphics= | a PNG                  |
+  | =#+begin_image p5js=     | itself, running, in an =<iframe>= | a PDF, by =\includegraphics= | a PNG      |
   The SVG and PDF are vector, so they stay crisp at any zoom; the SVG is inlined, as a =data:=
   URI, so a page carries its images along, wherever it is published.
 
@@ -5750,6 +5751,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   Five dashes, since three alone are LaTeX's em-dash.
 
   =C-c C-c= within the block renders it, and shows its PNG atop the block; again, to remove it.
+  A p5.js sketch, in an Emacs built with xwidgets, is shown running instead.
   The renderings are =images/NAME.{svg,pdf,png}=, by ~org-image-block-directory~; each way of
   naming them has its price:
   | Naming       | =NAME=                                  | Upon an edit                     | Link to it from elsewhere? |
@@ -5801,6 +5803,52 @@ Emacs {
     #+end_src
     Two boxes, =me= and =Emacs=, and four edges, in nine lines, with no ceremony beyond what
     the picture says.
+  + [[https://p5js.org][p5.js]], a sketch: its =setup()= and =draw()=, in p5's global mode. In HTML, it runs, in an
+    =<iframe>= of its own ---so sketches on one page do not clash--- that fits itself to the
+    canvas; p5 comes from a CDN, by ~org-image-block-p5js-src~. In Emacs, =C-c C-c= runs it
+    atop the block, at once, when Emacs has xwidgets. Elsewhere, it is a still, a second in: a
+    headless Chrome screenshots the canvas, then =rsvg-convert= makes the PDF; a =createCanvas=
+    sized in numbers spares a second Chrome, which would learn the size by running the sketch.
+    The preamble joins the page's =<head>=; say, a =<script>= loading a p5 add-on. By way of
+    example, a circle drifting by Perlin noise, and twenty balls bouncing off the walls:
+    #+begin_src org :tangle no :tab "Drifting circle"
+,#+begin_image p5js
+function setup() {
+  createCanvas(400, 200);
+  noStroke();
+}
+
+function draw() {
+  background(250, 245, 235, 40);   // A translucent wash leaves fading trails.
+  fill(230, 120, 60, 180);
+  const x = noise(frameCount * 0.01) * width;
+  const y = noise(frameCount * 0.01 + 100) * height;
+  circle(x, y, 24);
+}
+,#+end_image
+    #+end_src
+    #+begin_src org :tangle no :tab "Bouncing balls"
+,#+begin_image p5js
+let balls = [];
+
+function setup() {
+  createCanvas(400, 400);
+  for (let i = 0; i < 20; i++)
+    balls.push({ x: random(width), y: random(height), vx: random(-2, 2), vy: random(-2, 2) });
+}
+
+function draw() {
+  background(20);
+  for (const b of balls) {
+    b.x += b.vx; b.y += b.vy;                      // Update the state …
+    if (b.x < 0 || b.x > width)  b.vx *= -1;       // … bounce off the walls …
+    if (b.y < 0 || b.y > height) b.vy *= -1;
+    circle(b.x, b.y, 12);                          // … then draw from it.
+  }
+}
+,#+end_image
+    #+end_src
+    For what else a sketch can do, see [[https://p5js.org/examples/][p5.js's examples]].
   None of SVG, dot, PlantUML, Mermaid, or D2 has a preamble, so a line of dashes in one is an error.
 
   =C-c C-c=, and export, need each language's tools; a missing one is an error saying how to
@@ -5810,6 +5858,7 @@ Emacs {
   | Every one | =pdftocairo=, =pdfcrop=  | =brew install poppler=; =pdfcrop= comes with TeX Live            |
   | =latex=   | =pdflatex=               | TeX Live; e.g., =brew install --cask mactex=                     |
   | =html=    | Chrome, or Chromium      | ~org-image-block-browser~ finds it                               |
+  | =p5js=    | Chrome, =rsvg-convert=   | as for =html= and =svg=; HTML needs neither                     |
   | =svg=     | =rsvg-convert=           | =brew install librsvg=                                           |
   | =dot=     | =dot=                    | =brew install graphviz=                                          |
   | =plantuml= | =plantuml=              | =brew install plantuml=                                          |
