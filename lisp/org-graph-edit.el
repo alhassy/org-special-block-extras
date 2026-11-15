@@ -354,6 +354,42 @@ Org gives tags their `org-tag' face only on headlines; in a graph, tags name tem
     found))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Directives, and their KEY=VALUE pairs, stand out; a key Graphviz does not know there stays plain
+
+(defface org-graph-directive '((t :inherit font-lock-keyword-face :weight bold))
+  "The face of a graph's #+graph:, #+node:, #+edge:, and #+name: keywords."
+  :group 'org-special-block-extras)
+
+(defface org-graph-key '((t :inherit font-lock-variable-name-face :weight bold))
+  "The face of a KEY=VALUE pair's KEY on a graph's directive line, when the key means something there; see
+`org-graph--pair-key-face'.  A key with no face is one Graphviz does not know there: a typo, say.")
+
+(defvar org-graph--directive nil
+  "The directive, such as \"edge\", whose line `org-graph--match-directive' last matched.")
+
+(defun org-graph--match-directive (limit)
+  "Font-lock matcher: the next #+graph:, #+node:, #+edge:, or #+name: keyword up to LIMIT, in a graph, as group 1;
+`org-graph--directive' then names it, for `org-graph--pair-key-face'."
+  (let (found)
+    (while (and (not found) (re-search-forward "^[ \t]*\\(#\\+\\(graph\\|node\\|edge\\|name\\):\\)" limit t))
+      (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p)))
+        (setq found t org-graph--directive (downcase (match-string 2)))))
+    found))
+
+(defun org-graph--pair-key-face ()
+  "Returns `org-graph-key' when the KEY just matched, group 1, means something on its `org-graph--directive' line: a
+graph's, node's, or arc's Graphviz attribute on #+graph:, #+node:, or #+edge:; any on #+name:, a template's; under
+:smartdiagram, smartdiagram's own.  Else nil: an unknown key stays plain, so a typo stands out by not standing out."
+  (let ((key (match-string 1)))
+    (when (if (org-graph--smartdiagram-p)
+              (or (org-graph--smartdiagram-key key) (assoc key org-graph-smartdiagram-item-keys))
+            (-when-let (attribute (org-graph--attribute key))
+              (or (equal org-graph--directive "name")
+                  (memq (intern (concat org-graph--directive "s"))
+                        (plist-get attribute :valid-on)))))
+      'org-graph-key)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Nested clusters: Org pairs a block with the first end of its name, so we pair them ourselves
 ;;
 ;; Within one graph, #+begin_cluster … #+end_cluster blocks nest; Org's own TAB, and its parser, would end the outer
@@ -455,6 +491,10 @@ nesting counted; `org-graph--cluster-index' then holds its index, for `org-graph
   "In this Org buffer's graph blocks: show links verbatim, paint each cluster's background, and complete and explain
 keys, with C-M-i and eldoc."
   (font-lock-add-keywords nil '((org-graph--match-cluster 0 (org-graph--cluster-face org-graph--cluster-index) prepend)) 'append)
+  (font-lock-add-keywords nil '((org-graph--match-directive
+                                 (1 'org-graph-directive prepend)
+                                 ("[ \t]\\([^ \t=:\"]+\\)=" (line-end-position) nil (1 (org-graph--pair-key-face) prepend t))))
+                          'append)
   (add-hook 'font-lock-extend-region-functions #'org-graph--extend-to-clusters nil t)
   (font-lock-add-keywords nil (cons '(org-graph--reveal-links)
                                     (--map `(,(lambda (limit) (org-graph--match-tags it limit)) 1 'org-tag prepend)

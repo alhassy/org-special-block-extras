@@ -317,7 +317,11 @@ The ~:SETTINGS:~ above is then three lines:
 ,#+node: shape=box style=rounded fontname=Helvetica
 ,#+edge: fontsize=10 color=gray
 #+end_src
-Anything else on such a line is an error, rather than silently ignored.
+Anything else on such a line is an error, rather than silently ignored. In Emacs, the keyword stands out,
+and so does each key that means something on its line ---a graph's attribute on ~#+graph:~, a node's on
+~#+node:~, an arc's on ~#+edge:~, any on ~#+name:~. A key left plain is one Graphviz does not know there,
+so a mistake shows before we export: a typo, as ~colour=red~, or a misplaced key, as ~shape=box~ on an
+~#+edge:~ line.
 
 ** Subtrees inherit #+node:, #+edge:, and #+rank:
 
@@ -1318,7 +1322,11 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
      ending with Graphviz's default; e.g., ~| :edge.arrowhead | vee |~ shows “Style of arrowhead on the
      head node of an edge.  Default: normal.”
 
-2. When we would rather pick than type, ~C-u RET~ on any table row inside a graph inserts a new
+2. A directive's line validates itself as we type: ~#+graph:~, ~#+node:~, ~#+edge:~, and ~#+name:~
+   stand out, and so does each ~KEY~ of a ~KEY=VALUE~ pair that Graphviz knows on that line. A key left
+   plain is a typo, or a misplaced key; see [[*When the preamble outgrows the line][When the preamble outgrows the line]].
+
+3. When we would rather pick than type, ~C-u RET~ on any table row inside a graph inserts a new
    ~| key | value |~ row interactively: a completion menu for the key, then one for the value ---or a
    free-text prompt, when the attribute accepts arbitrary strings. Plain ~RET~ is unaffected. The menu
    shows only the attributes valid where the table sits:
@@ -1332,7 +1340,7 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
    (This replaces our old ritual of ~M-x helm-colors~, then ~C-z~, then ~C-c r~.) ~C-u RET~ works in the
    ~C-c '~ buffer too.
 
-3. Where do the descriptions come from? ~org-graph-attributes~, which lives on its own in
+4. Where do the descriptions come from? ~org-graph-attributes~, which lives on its own in
    ~org-graph-attributes.el~: every Graphviz attribute, scraped from [[https://graphviz.org/doc/info/attrs.html][Graphviz's attribute table]]. To add
    or adjust one, edit its entry there, or ~M-x customize-variable RET org-graph-attributes~; each entry
    has the form:
@@ -1344,23 +1352,23 @@ Graphviz has 177 attributes, and nobody remembers them. So the block helps as we
    Reserved keys are described by ~org-graph--reserved-key-docs~, and the header's own keys by
    ~org-graph--header-key-docs~.
 
-4. When the picture is wrong, we want to see what we built. ~C-u C-c C-c~ shows the generated dot in a
+5. When the picture is wrong, we want to see what we built. ~C-u C-c C-c~ shows the generated dot in a
    ~*org-graph dot*~ buffer instead of rendering a PNG, and inserts ---or replaces--- a ~#+RESULTS:~
    holding it as a ~#+begin_src dot~ block, so the source is preserved. For a block where we always want
    dot, ~:C-c_C-c dot~ in its header makes plain ~C-c C-c~ show dot, and ~C-u C-c C-c~ toggles back to PNG:
    the prefix always flips whatever the block's default is.
 
-5. The image ~C-c C-c~ renders is clickable. Hovering over a node or cluster shows its tooltip ---its
+6. The image ~C-c C-c~ renders is clickable. Hovering over a node or cluster shows its tooltip ---its
    footnotes and notes--- and a click follows it: to its link's target, when its item has a web, file, or
    ~[[*Heading]]~ link; else to the item itself, in the ~#+begin_graph~ block. Graphviz writes an image map
    (~-Tcmapx~) beside the PNG, from the same layout, and its areas become the image's ~:map~; it is scaled
    as the image is, say by ~org-image-actual-width~. The map lives only as long as the image does: an image
    Org redisplays itself, say on reopening the file, is clickable again after another ~C-c C-c~.
 
-6. Big graphs make big PNGs; ~(setq org-image-actual-width 700)~ keeps them on screen. In an HTML export,
+7. Big graphs make big PNGs; ~(setq org-image-actual-width 700)~ keeps them on screen. In an HTML export,
    a graph shrinks to the page's width by itself, and a click toggles its full size.
 
-7. In a ~:demo live~ graph, as throughout this README, ~C-c C-c~ still renders the graph: a live demo keeps
+8. In a ~:demo live~ graph, as throughout this README, ~C-c C-c~ still renders the graph: a live demo keeps
    no snapshot to take.
 
 * Reference
