@@ -191,3 +191,7 @@ Untouched."
 
 (provide 'org-demo-tests)
 ;;; org-demo-tests.el ends here
+
+(deftest "a demo's numbered gensyms are symbols still, as macros expanding a handler first called within it need" [demo]
+  (using (org-defblock gensym-check (&context raw-contents) (format "symbol? %s" (symbolp (gensym))))
+    (should (string-search "symbol? t" (org-demo--export "#+begin_gensym-check\n#+end_gensym-check" 'html)))))

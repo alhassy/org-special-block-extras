@@ -29,7 +29,7 @@
 (defun org-math-tests--tips (math backend)
   "(MATH, BACKEND) ↦ (MATH in LaTeX . its tooltips' <template>s, oldest first), each gensym numbered from g1."
   (let ((seed 0) org--math-tips)
-    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (format "g%s" (cl-incf seed)))))
+    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (make-symbol (format "g%s" (cl-incf seed))))))
       (cons (org--math-markup math backend) (reverse org--math-tips)))))
 
 (deftest "in maths, a tooltip: is one of tooltips.js', as in prose, its tip a <template> beside the maths; in LaTeX, none"
@@ -302,7 +302,7 @@ x[fn::the current element]
 #+end_math" 'html)))))
 
 (define-org-call-test "a math block's tooltips' <template>s follow its display, outside the maths MathJax reads"
-  :call (cl-letf (((symbol-function 'gensym) (lambda (&rest _) "g1")))
+  :call (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (make-symbol "g1"))))
           (org--math-block 'html "
 x[fn::the current element] < 1" nil))
   :returns "#+begin_export html

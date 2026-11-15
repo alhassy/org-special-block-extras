@@ -141,7 +141,8 @@ What its blocks need atop the document is left in `org-demo--heads'."
          (append org-export-before-parsing-functions
                  (list (lambda (_) (setq org-demo--heads (list org--latex-head-used org--html-head-used)))))))
     (setq org-demo--heads nil)
-    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (format "g%s" (cl-incf seed))))
+    ;; Numbered, yet symbols still: a handler first called here is macroexpanded here, and macros' gensyms must be symbols.
+    (cl-letf (((symbol-function 'gensym) (lambda (&rest _) (make-symbol (format "g%s" (cl-incf seed)))))
               ((symbol-function 'org-export-new-reference) (lambda (references) (1+ (length references)))))
       (string-trim (org-export-string-as (format "\n%s\n" source) backend t)))))
 
