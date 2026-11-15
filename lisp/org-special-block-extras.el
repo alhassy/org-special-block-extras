@@ -25,8 +25,8 @@
 ;;; Commentary:
 
 ;; Org markup all the way down: details, graph, math, callouts, and more.  Graphs from lists, folds from blocks,
-;; colours from red:links.  We offer 42 block types and 48 link types, and `org-defblock', a `cl-defun' for making
-;; our own.
+;; colours from red:links.  We offer folds, graphs, maths, callouts, colours, tooltips, and badges; and
+;; `org-defblock', a `cl-defun' for making our own.
 ;;
 ;; Some text is tangential: a run of import statements, the gory steps of a proof, a worked solution to an
 ;; exercise.  We want it folded away until the reader asks for it; so we declare a block that does so, as we would
