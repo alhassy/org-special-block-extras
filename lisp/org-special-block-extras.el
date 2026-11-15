@@ -24,17 +24,26 @@
 
 ;;; Commentary:
 
-;; Org exports `#+begin_aside' as a bare <div class="aside">, or \begin{aside}, and leaves its meaning to us.
-;; This package lets us give it one, as we would define a Lisp function:
+;; Some text is tangential: a run of import statements, the gory steps of a proof, a worked solution to an
+;; exercise.  We want it folded away until the reader asks for it; so we declare a block that does so, as we would
+;; a Lisp function:
 ;;
-;;     (org-defblock aside (&optional (title "Aside"))
-;;       "Set CONTENTS apart, under TITLE."
+;;     (org-defblock details (&optional (title "Details") &context backend contents)
+;;       "Fold CONTENTS away beneath TITLE, until the reader clicks it."
 ;;       (pcase backend
-;;         ('html (format "<aside><b>%s</b> %s</aside>" title contents))
-;;         (_     (format "\\paragraph{%s} %s" title contents))))
+;;         ('html (format "<details><summary>%s</summary>%s</details>" title contents))
+;;         (_     (format "\\begin{quote}\\textbf{%s}\n%s\\end{quote}" title contents))))
 ;;
-;; Now `#+begin_aside Careful!' exports to HTML and LaTeX alike; moreover, `aside:text' is a link that does
-;; the same, and a section tagged `:aside:' exports as an aside around its text.  Atop that one idea, we provide:
+;; Now we write
+;;
+;;     #+begin_details Why does this terminate?
+;;     Each step *shrinks* the list, and no list is shorter than the empty one.
+;;     #+end_details
+;;
+;; and HTML folds it away, while LaTeX, sans clicks, sets it apart.  CONTENTS arrives already exported, so the
+;; Org within ---*bold*, [[links]], red:text--- works as it does anywhere.  Moreover, a section tagged
+;; `:details_Hint:' folds its text away under the title Hint.  Our own `details' is just this, plus colours.
+;; Atop that one idea, we provide:
 ;;
 ;; - Definers: `org-defblock', `org-deflink', and `org-deftag', each declared as a `cl-defun' is.
 ;; - Switches that every block understands ---ours, yours, or Org's own src and quote blocks---:
