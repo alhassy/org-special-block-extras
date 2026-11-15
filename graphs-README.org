@@ -95,7 +95,7 @@ next one, unconsumed; two arcs, one stream:
 - The term may be marked up, as ~/peeks at/~ is; it is then an HTML-like label.
 - It is the terse spelling of ~| :edge.label | consumes |~, met [[*An arc's table: :edge.KEY][below]]; an explicit ~:edge.label~ row wins.
 - A top-level item has no arc into it, so a term there is an error ---except for a legend entry, met
-  [[*Legends are description lists][later]].
+  [[*Legends: a glossary of templates][later]].
 - As in Org, the ~::~ needs whitespace on both sides: ~std::vector~ is a name, not a description, and so
   is BNF's ~expr ::= term~, as ~::=~ is not ~::~.
 
