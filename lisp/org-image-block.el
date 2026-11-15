@@ -28,9 +28,11 @@
 ;; Each language is made into a cropped PDF ---LaTeX by pdflatex and the standalone class, HTML by a
 ;; headless Chrome--- whence pdftocairo makes the SVG and PNG; see `org-image-block-languages'.
 ;;
-;; C-c C-c renders the images, and shows one atop the block; export uses them.  Their names hold a hash
-;; of the block, so an edited block is rendered afresh; one never rendered is rendered upon export, when
-;; the tools are at hand, else shown as source with a warning.
+;; Above a line of five dashes is the block's own preamble: LaTeX's, before \begin{document}; or HTML's
+;; <head>.  C-c C-c renders the images, and shows one atop the block; export uses them.  Their names
+;; hold a hash of the block, so an edited block is rendered afresh ---unless :file names them exactly,
+;; a figure to link to; one never rendered is rendered upon export, when the tools are at hand, else
+;; shown as source with a warning.  :as-image t is an image along its own backend too.
 ;;
 ;; Full documentation at https://alhassy.com/org-special-block-extras
 
@@ -63,15 +65,39 @@
   :group 'org-special-block-extras)
 
 (defcustom org-image-block-png-resolution 144
-  "The resolution, in pixels per inch, of the PNGs that #+begin_image blocks render to; 144 is crisp on HiDPI."
+  "The resolution, in pixels per inch, of the PNGs that #+begin_image blocks render to; 144 is crisp on HiDPI.
+A block's own :resolution wins."
   :type 'integer
+  :group 'org-special-block-extras)
+
+(defcustom org-image-block-shell-escape nil
+  "Whether #+begin_image latex blocks compile with -shell-escape; as minted, or gnuplottex, need.
+Off by default: -shell-escape lets the LaTeX run any shell command, so a stranger's document could too."
+  :type 'boolean
   :group 'org-special-block-extras)
 
 (defvar org-image-block-languages
   '((latex . org--image-latex-pdf)
     (html . org--image-html-pdf))
-  "Each (LANGUAGE . RENDER) of #+begin_image: RENDER writes the block, SOURCE, as a cropped PDF, by (RENDER SOURCE
-ARGS PDF), ARGS being the block's keyword arguments; whence the SVG and PNG are made.  A new language is one entry.")
+  "Each (LANGUAGE . RENDER) of #+begin_image: RENDER writes the block's PREAMBLE and BODY, see `org--image-split', as
+a cropped PDF, by (RENDER PREAMBLE BODY ARGS PDF), ARGS being the block's keyword arguments; whence the SVG and PNG
+are made.  A new language is one entry.")
+
+;;;; A block's preamble: what is above its first line of dashes
+
+(defconst org--image-rule "^[ \t]*-\\{5,\\}[ \t]*$"
+  "A line of five or more dashes, as Org's horizontal rule: it parts a #+begin_image block's preamble from its body.
+Five, since a line of three, ---, is LaTeX's em-dash.")
+
+(defun org--image-split (source)
+  "Returns (PREAMBLE . BODY) of an image block's SOURCE, parted by its first line of dashes; else (\"\" . SOURCE).
+  \\usepackage{smartdiagram}
+  -----                              ⇒  (\"\\\\usepackage{smartdiagram}\" . \"\\\\smartdiagram[…]{…}\")
+  \\smartdiagram[…]{…}
+The preamble is LaTeX's, before \\begin{document}; or HTML's, within <head>, such as a <style> or <script>."
+  (if (string-match org--image-rule source)
+      (cons (string-trim (substring source 0 (match-beginning 0))) (string-trim (substring source (match-end 0))))
+    (cons "" source)))
 
 ;;;; Rendering: SOURCE ⟶ cropped PDF ⟶ SVG, PNG
 
@@ -88,23 +114,28 @@ ARGS PDF), ARGS being the block's keyword arguments; whence the SVG and PNG are 
   (mapconcat (lambda (it) (string-join (cdr it) "\n"))
              (org-collect-keywords '("LATEX_HEADER" "LATEX_HEADER_EXTRA")) "\n"))
 
-(defun org--image-latex-pdf (source _args pdf)
-  "Writes LaTeX SOURCE as PDF, cropped to it by the standalone class: `org-image-block-latex-preamble', then the
-document's #+latex_header: lines; by its #+latex_compiler:, else `org-latex-compiler'."
+(defun org--image-latex-pdf (preamble body _args pdf)
+  "Writes LaTeX BODY as PDF, cropped to it by the standalone class: `org-image-block-latex-preamble', the document's
+#+latex_header: lines, then the block's PREAMBLE; by its #+latex_compiler:, else `org-latex-compiler'; with
+-shell-escape, if `org-image-block-shell-escape'."
   (let* ((dir (make-temp-file "org-image-" t))
          (compiler (or (cadar (org-collect-keywords '("LATEX_COMPILER"))) org-latex-compiler "pdflatex"))
+         ;; Read here, in the document, not within the .tex file's buffer below.
          (headers (org--image-latex-headers)))
     (with-temp-file (expand-file-name "image.tex" dir)
-      (insert "\\documentclass[border=2pt,varwidth]{standalone}\n" org-image-block-latex-preamble "\n" headers
-              "\n\\begin{document}\n" source "\n\\end{document}\n"))
+      (insert "\\documentclass[border=2pt,varwidth]{standalone}\n" org-image-block-latex-preamble "\n"
+              headers "\n" preamble "\n\\begin{document}\n" body "\n\\end{document}\n"))
     (let ((default-directory (file-name-as-directory dir)))
-      (org--image-run compiler "-interaction=nonstopmode" "-halt-on-error" "image.tex"))
+      (apply #'org--image-run compiler
+             `(,@(and org-image-block-shell-escape '("-shell-escape")) "-interaction=nonstopmode" "-halt-on-error"
+               "image.tex")))
     (copy-file (expand-file-name "image.pdf" dir) pdf t)
     (delete-directory dir t)))
 
-(defun org--image-html-pdf (source args pdf)
-  "Writes HTML SOURCE as PDF, by `org-image-block-browser', headless, cropped by pdfcrop; ARGS' :css styles it, and
-its :width, such as 600px, fixes its width.  The page is transparent, sans margins, its colours printed as shown."
+(defun org--image-html-pdf (preamble body args pdf)
+  "Writes HTML BODY as PDF, by `org-image-block-browser', headless, cropped by pdfcrop; the block's PREAMBLE, and
+ARGS' :css, join its <head>, and ARGS' :width, such as 600px, fixes its width.  The page is transparent, sans
+margins, its colours printed as shown."
   (unless org-image-block-browser (user-error "#+begin_image html needs Chrome, or Chromium; see `org-image-block-browser'"))
   (let* ((dir (make-temp-file "org-image-" t))
          (html (expand-file-name "image.html" dir))
@@ -116,7 +147,7 @@ its :width, such as 600px, fixes its width.  The page is transparent, sans margi
               (format " body { display: inline-block; padding: 4px; %s }"
                       (-if-let (width (plist-get args :width)) (format "width: %s" width) ""))
               (format "%s" (or (plist-get args :css) ""))
-              "</style></head><body>\n" source "\n</body></html>"))
+              "</style>\n" preamble "\n</head><body>\n" body "\n</body></html>"))
     (org--image-run org-image-block-browser "--headless=new" "--disable-gpu" "--no-pdf-header-footer"
                     (concat "--print-to-pdf=" printed) (concat "file://" html))
     (org--image-run "pdfcrop" "--margins" "0" printed pdf)
@@ -130,25 +161,30 @@ its :width, such as 600px, fixes its width.  The page is transparent, sans margi
              0 10))
 
 (defun org--image-base (language source args anchor)
-  "Returns the path, sans extension, of the renderings of a LANGUAGE block of SOURCE, ARGS, and #+name: ANCHOR:
-its :file, else ANCHOR, else “image”, then the block's hash; within `org-image-block-directory', unless :file has a
-directory of its own.  E.g., \"images/tree-1a2b3c4d5e\"."
-  (let ((name (format "%s-%s" (file-name-sans-extension (format "%s" (or (plist-get args :file) anchor "image")))
-                      (org--image-hash language source args))))
+  "Returns the path, sans extension, of the renderings of a LANGUAGE block of SOURCE, ARGS, and #+name: ANCHOR;
+within `org-image-block-directory', unless the name has a directory of its own:
++ :file tree  ⇒  images/tree, exactly; a figure we mean to link to, which an edit leaves stale till C-c C-c.
++ else ANCHOR, else “image”, then the block's hash  ⇒  images/arrow-1a2b3c4d5e, rendered afresh upon each edit."
+  (let ((name (-if-let (file (plist-get args :file)) (file-name-sans-extension (format "%s" file))
+                (format "%s-%s" (or anchor "image") (org--image-hash language source args)))))
     (if (file-name-directory name) name (concat (file-name-as-directory org-image-block-directory) name))))
 
 (defun org--image-render (language source args base)
-  "Renders a LANGUAGE block of SOURCE and ARGS as BASE.pdf, .svg, and .png; axing the renderings of its former
-selves, BASE sans its hash, so edits leave no stale files behind."
+  "Renders a LANGUAGE block of SOURCE and ARGS as BASE.pdf, .svg, and .png; the PNG at ARGS' :resolution, else
+`org-image-block-png-resolution'.  Sans :file, the renderings of its former selves ---BASE with another hash--- are
+axed, so edits leave no stale files behind."
   (let ((render (or (alist-get language org-image-block-languages)
                     (user-error "#+begin_image knows no %s; see `org-image-block-languages'" language)))
         (pdf (expand-file-name (concat base ".pdf"))))
     (make-directory (file-name-directory pdf) t)
-    (dolist (stale (file-expand-wildcards (concat (substring (expand-file-name base) 0 -10) "??????????.*")))
-      (unless (string-prefix-p (expand-file-name base) stale) (delete-file stale)))
-    (funcall render source args pdf)
+    (unless (plist-get args :file)
+      (dolist (stale (file-expand-wildcards (concat (substring (expand-file-name base) 0 -10) "??????????.*")))
+        (unless (string-prefix-p (expand-file-name base) stale) (delete-file stale))))
+    (pcase-let ((`(,preamble . ,body) (org--image-split source)))
+      (funcall render preamble body args pdf))
     (org--image-run "pdftocairo" "-svg" pdf (expand-file-name (concat base ".svg")))
-    (org--image-run "pdftocairo" "-png" "-singlefile" "-r" (format "%s" org-image-block-png-resolution)
+    (org--image-run "pdftocairo" "-png" "-singlefile" "-r"
+                    (format "%s" (or (plist-get args :resolution) org-image-block-png-resolution))
                     pdf (expand-file-name base))))
 
 (defun org--image-file (language source args anchor extension)
@@ -167,20 +203,42 @@ need be.  Should the tools be lacking, nil, with a warning, during export; else 
 
 ;;;; The block
 
-(org-defblock image (&optional (language "latex") &key file css width alt
+(defun org--image-raw (language preamble body)
+  "Returns a LANGUAGE block's PREAMBLE and BODY along its own backend, raw: in LaTeX, BODY, with PREAMBLE in the
+document's preamble; in HTML, PREAMBLE then BODY, as a <style> or <script> works within <body> too."
+  (if (eq language 'latex)
+      (progn (unless (string-empty-p preamble) (cl-pushnew preamble org--latex-head-used :test #'equal))
+             body)
+    (string-trim (concat preamble "\n" body))))
+
+(org-defblock image (&optional (language "latex") &key file css width alt resolution as-image
                      :latex-head ("graphicx") :manual "#images"
+                     :hover "Above a line of five dashes, -----, is the block's preamble: LaTeX's, or HTML's <head>.
+Naming its renderings, images/NAME.{svg,pdf,png}:
++ Sans :file, NAME is the #+name:, else image, then the block's hash: an edit renders it afresh, its
+  former renderings axed; yet the name changes with each edit, so link to it from nowhere else.
++ :file tree names them exactly, a figure we mean to link to, from a README, say; yet an edit leaves
+  it stale till C-c C-c renders it anew.
+:as-image t is an image even along its own backend: its preamble, such as a heavy package, stays out
+of the document's; yet a PDF picture's text is not searchable, nor in the document's font, and an
+HTML one is not interactive.  :resolution 300 sharpens its PNG; `org-image-block-shell-escape' allows
+minted and the like, at the price of letting the LaTeX run shell commands."
                      &context backend raw-contents anchor)
   "LaTeX, or HTML, LANGUAGE: itself, raw, along its own backend; else an image of itself.
 In HTML, an SVG, inlined; in LaTeX, a PDF; in Markdown, and elsewhere, a PNG.  C-c C-c renders them, else export
-does, as `org-image-block-directory' FILE, else the block's #+name:, then its hash.  For HTML, CSS styles it and
-WIDTH, such as 600px, fixes its width; ALT describes the image, for screen readers."
+does, within `org-image-block-directory'; see `org--image-base'.  Above a line of dashes is the block's preamble,
+see `org--image-split'.  For HTML, CSS styles it and WIDTH, such as 600px, fixes its width; ALT describes the image,
+for screen readers; RESOLUTION, in pixels per inch, sharpens its PNG; AS-IMAGE t makes it an image along its own
+backend too."
   (let* ((language (intern (downcase (format "%s" language))))
          (source (string-trim raw-contents))
-         (args (list :file file :css css :width width))
+         (args (list :file file :css css :width width :resolution resolution))
          (markdown? (org-export-markdown-p))
          (alt (or alt (format "%s" (or anchor (format "Rendered %s" (if (eq language 'latex) "LaTeX" (upcase (symbol-name language))))))))
          (extension (cond (markdown? "png") ((eq backend 'html) "svg") ((eq backend 'latex) "pdf") (t "png"))))
-    (if (and (eq language backend) (not markdown?)) raw-contents
+    (if (and (eq language backend) (not markdown?) (not as-image))
+        (pcase-let ((`(,preamble . ,body) (org--image-split source)))
+          (org--image-raw language preamble body))
       (-if-let (path (org--image-file language source args anchor extension))
           (pcase extension
             ("svg" (format "<img class=\"osbe-image\" alt=\"%s\" src=\"data:image/svg+xml;base64,%s\">"
@@ -193,11 +251,11 @@ WIDTH, such as 600px, fixes its width; ALT describes the image, for screen reade
         (org-parse (format "#+begin_example\n%s\n#+end_example" (org-escape-code-in-string raw-contents)))))))
 
 (org-defblock-attribute image :example "
-# In HTML, a crisp SVG of the picture; in a PDF, the picture itself.  C-c C-c shows it here.
+# In HTML, a crisp SVG of the diagram; in a PDF, the diagram itself, its package in the PDF's preamble.
 #+begin_image latex
-\\begin{tikzpicture}
-  \\draw[->, thick] (0,0) -- (2,1) node[right] {$f(x)$};
-\\end{tikzpicture}
+\\usepackage{smartdiagram}
+-----
+\\smartdiagram[bubble diagram]{Emacs, Org, \\LaTeX, HTML}
 #+end_image")
 
 ;;;; C-c C-c ---render, and show the image atop the block
@@ -220,9 +278,10 @@ is shown already, remove it instead.  An edit to the block removes it too."
         (message "Rendered %s.{svg,pdf,png}" (file-relative-name base))))
     t))
 
-(org-def-action image (&optional (language "latex") &key file css width)
+(org-def-action image (&optional (language "latex") &key file css width resolution)
   "Render the block as SVG, PDF, and PNG; show the PNG atop it; again, to remove it.  See `org--image-preview'."
-  (org--image-preview (intern (downcase (format "%s" language))) (string-trim raw-contents) (list :file file :css css :width width)
+  (org--image-preview (intern (downcase (format "%s" language))) (string-trim raw-contents)
+                      (list :file file :css css :width width :resolution resolution)
                       (org-element-property :name (org-special-block-at-point))))
 
 (provide 'org-image-block)

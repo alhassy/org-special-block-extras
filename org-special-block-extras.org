@@ -5718,16 +5718,40 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   The SVG and PDF are vector, so they stay crisp at any zoom; the SVG is inlined, as a =data:=
   URI, so a page carries its images along, wherever it is published.
 
+  Above a line of five or more dashes ---Org's horizontal rule--- is the block's own preamble:
+  LaTeX's, before =\begin{document}=, or HTML's =<head>=. Along its own backend, a LaTeX
+  block's preamble joins the document's; an HTML block's precedes it.
+  #+begin_src org :tangle no
+,#+begin_image latex
+\usepackage{smartdiagram}
+-----
+\smartdiagram[bubble diagram]{Emacs, Org, \LaTeX, HTML}
+,#+end_image
+  #+end_src
+  Five dashes, since three alone are LaTeX's em-dash.
+
   =C-c C-c= within the block renders it, and shows its PNG atop the block; again, to remove it.
-  The renderings are =images/NAME-HASH.{svg,pdf,png}=, by ~org-image-block-directory~: =NAME=
-  is the block's =:file=, else its =#+name:=, else =image=; =HASH= is the block's own, so an
-  edited block is rendered afresh, its former renderings axed. A block never rendered is
-  rendered upon export, when the tools are at hand; else it is shown as source, with a warning.
+  The renderings are =images/NAME.{svg,pdf,png}=, by ~org-image-block-directory~; each way of
+  naming them has its price:
+  | Naming       | =NAME=                                  | Upon an edit                     | Link to it from elsewhere? |
+  |--------------+-----------------------------------------+----------------------------------+----------------------------|
+  | Sans =:file= | =#+name:=, else =image=, then its hash  | rendered afresh; the former axed | No: the name changes       |
+  | =:file tree= | =tree=, exactly                         | stale, till =C-c C-c=            | Yes: an intentional figure |
+  A block never rendered is rendered upon export, when the tools are at hand; else it is shown
+  as source, with a warning.
+
+  Moreover:
+  + =:as-image t= is an image even along its own backend. Its preamble ---a heavy package, say---
+    then stays out of the document's; yet a PDF's picture of text is neither searchable nor in
+    the document's font, and an HTML picture is no longer interactive.
+  + =:resolution 300= sharpens its PNG; by default, ~org-image-block-png-resolution~, 144.
+  + ~org-image-block-shell-escape~ compiles LaTeX with =-shell-escape=, as =minted= needs; it is
+    off by default, since it lets a document's LaTeX run any shell command.
 
   Each language becomes a PDF, cropped, whence =pdftocairo= makes the SVG and PNG:
   + LaTeX, by =pdflatex= ---else the document's =#+latex_compiler:=--- and the =standalone=
     class; ~org-image-block-latex-preamble~ loads =amsmath= and TikZ, then the document's own
-    =#+latex_header:= lines.
+    =#+latex_header:= lines, then the block's preamble.
   + HTML, by a headless Chrome, ~org-image-block-browser~, then =pdfcrop=; =:css= styles it and
     =:width 600px= fixes its width. It sees none of the page's own CSS, being rendered alone.
   A new language, such as Mermaid, is one entry of ~org-image-block-languages~: a function

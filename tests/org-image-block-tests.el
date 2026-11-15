@@ -27,11 +27,12 @@
 
 ;;; Naming the renderings
 
-(deftest "`org--image-base' names renderings by :file, else #+name:, else image; then the block's hash" [image]
+(deftest "`org--image-base' names renderings by :file, exactly; else by #+name:, else image, then the block's hash" [image]
   (let ((org-image-block-directory "images"))
     (should (string-match-p "\\`images/image-[0-9a-f]\\{10\\}\\'" (org--image-base 'latex "x" nil nil)))
     (should (string-match-p "\\`images/arrow-[0-9a-f]\\{10\\}\\'" (org--image-base 'latex "x" nil "arrow")))
-    (should (string-match-p "\\`figs/tree-[0-9a-f]\\{10\\}\\'" (org--image-base 'latex "x" '(:file "figs/tree.png") "arrow")))
+    (should (equal "figs/tree" (org--image-base 'latex "x" '(:file "figs/tree.png") "arrow")))
+    (should (equal "images/tree" (org--image-base 'latex "x" '(:file tree) "arrow")))
     (should-not (equal (org--image-base 'latex "x" nil nil) (org--image-base 'latex "y" nil nil)))
     (should (equal (org--image-base 'html "x" '(:file "a") nil) (org--image-base 'html "x" '(:file "a") nil)))))
 
@@ -86,7 +87,7 @@
 
 ;;; The preamble, compiler, :css, and :width reach the renderers
 
-(deftest "a latex image is rendered with `org-image-block-latex-preamble', then the document's #+latex_header: lines, by its #+latex_compiler:" [image]
+(deftest "a latex image is rendered with `org-image-block-latex-preamble', the document's #+latex_header: lines, then its own preamble; by its #+latex_compiler:" [image]
   (let (program tex)
     (cl-letf (((symbol-function 'org--image-run)
                (lambda (prog &rest args)
@@ -97,24 +98,78 @@
         (insert "#+latex_compiler: xelatex\n#+latex_header: \\newcommand{\\Ring}{\\mathcal{R}}\n")
         (org-mode)
         (let ((pdf (make-temp-file "osbe-image-" nil ".pdf")))
-          (org--image-latex-pdf "$\\Ring$" nil pdf)
+          (org--image-latex-pdf "\\usepackage{xcolor}" "$\\Ring$" nil pdf)
           (delete-file pdf))))
     (should (equal program "xelatex"))
-    (should (string-match-p "\\`\\\\documentclass\\[border=2pt,varwidth\\]{standalone}\n\\\\usepackage{amsmath,amssymb}\n\\\\usepackage{tikz}\n\\\\newcommand{\\\\Ring}{\\\\mathcal{R}}\n\\\\begin{document}\n\\$\\\\Ring\\$" tex))))
+    (should (string-match-p "\\`\\\\documentclass\\[border=2pt,varwidth\\]{standalone}\n\\\\usepackage{amsmath,amssymb}\n\\\\usepackage{tikz}\n\\\\newcommand{\\\\Ring}{\\\\mathcal{R}}\n\\\\usepackage{xcolor}\n\\\\begin{document}\n\\$\\\\Ring\\$" tex))))
 
-(deftest "an html image is rendered with its :css, and :width, atop a transparent page sans margins" [image]
+(deftest "an html image is rendered with its :css, :width, and preamble in <head>, atop a transparent page sans margins" [image]
   (let (html)
     (cl-letf (((symbol-function 'org--image-run)
                (lambda (_prog &rest args)
                  (-when-let (page (--first (string-prefix-p "file://" it) args))
                    (setq html (with-temp-buffer (insert-file-contents (string-remove-prefix "file://" page)) (buffer-string))))))
               (org-image-block-browser "chrome"))
-      (org--image-html-pdf "<b>Hi</b>" '(:css "b { color: red }" :width "600px") (make-temp-file "osbe-image-" nil ".pdf")))
+      (org--image-html-pdf "<script>let x;</script>" "<b>Hi</b>" '(:css "b { color: red }" :width "600px") (make-temp-file "osbe-image-" nil ".pdf")))
     (should (string-match-p "@page { margin: 0 }" html))
     (should (string-match-p "body { display: inline-block; padding: 4px; width: 600px }b { color: red }</style>" html))
-    (should (string-match-p "<body>\n<b>Hi</b>\n</body>" html))))
+    (should (string-match-p "</style>\n<script>let x;</script>\n</head><body>\n<b>Hi</b>\n</body>" html))))
 
 (deftest "a latex image's hash covers the document's #+latex_header: lines, so a new header renders it afresh" [image]
   (let ((plain (with-temp-buffer (org-mode) (org--image-hash 'latex "x" nil)))
         (headed (with-temp-buffer (insert "#+latex_header: \\usepackage{xcolor}\n") (org-mode) (org--image-hash 'latex "x" nil))))
     (should-not (equal plain headed))))
+
+;;; The preamble, above a line of dashes; :file; :as-image; :resolution; -shell-escape
+
+(deftest "`org--image-split' parts a block's preamble from its body by its first line of five or more dashes" [image]
+  (should (equal (org--image-split "\\usepackage{x}\n-----\nbody\n------\nmore")
+                 '("\\usepackage{x}" . "body\n------\nmore")))
+  (should (equal (org--image-split "a---b\n---\nc") '("" . "a---b\n---\nc"))))
+
+(deftest "a latex image block, along LaTeX, puts its preamble in the document's preamble, and its body in place" [image]
+  (let ((latex (with-temp-buffer
+                 (insert "#+begin_image latex\n\\usepackage{smartdiagram}\n-----\n\\smartdiagram[bubble diagram]{A, B}\n#+end_image")
+                 (org-mode)
+                 (org-special-block-extras-mode)
+                 (org-export-as 'latex))))
+    (should (< (string-search "\\usepackage{smartdiagram}\n" latex)
+               (string-search "\\begin{document}" latex)
+               (string-search "\n\\smartdiagram[bubble diagram]{A, B}\n" latex)))
+    (should-not (string-match-p "^-----" latex))))
+
+(deftest "an html image block, along HTML, is its preamble then its body, raw" [image]
+  (should (string-match-p "^<style>b { color: red }</style>\n<b>Hi</b>$"
+                          (org-export-string "#+begin_image html\n<style>b { color: red }</style>\n-----\n<b>Hi</b>\n#+end_image"))))
+
+(deftest "an image block's :as-image t is an image even along its own backend" [image]
+  (org-image-test--in-temp-directory
+    (cl-letf (((symbol-function 'org--image-render)
+               (lambda (_language _source _args base)
+                 (make-directory (file-name-directory base) t)
+                 (write-region "" nil (concat base ".pdf")))))
+      (should (string-match-p "^\\\\includegraphics{images/arrow-[0-9a-f]\\{10\\}\\.pdf}$"
+                              (org-export-string (s-replace "#+begin_image latex" "#+begin_image latex :as-image t"
+                                                            org-image-test--tikz)
+                                                 'latex))))))
+
+(deftest "an image block's :resolution renders its PNG so; :file names it exactly, axing no other renderings" [image]
+  (org-image-test--in-temp-directory
+    (let (calls)
+      (make-directory "images")
+      (write-region "" nil "images/tree-0123456789.png")
+      (cl-letf (((symbol-function 'org--image-run) (lambda (&rest args) (push args calls)))
+                ((symbol-function 'org--image-latex-pdf) #'ignore))
+        (org--image-render 'latex "x" '(:file "tree" :resolution 300) "images/tree"))
+      (should (member "300" (--first (member "-png" it) calls)))
+      (should (file-exists-p "images/tree-0123456789.png")))))
+
+(deftest "with `org-image-block-shell-escape', a latex image compiles with -shell-escape; else not" [image]
+  (dolist (escape '(nil t))
+    (let ((org-image-block-shell-escape escape) args)
+      (cl-letf (((symbol-function 'org--image-run)
+                 (lambda (_prog &rest given) (setq args given) (write-region "" nil (expand-file-name "image.pdf")))))
+        (let ((pdf (make-temp-file "osbe-image-" nil ".pdf")))
+          (with-temp-buffer (org-mode) (org--image-latex-pdf "" "x" nil pdf))
+          (delete-file pdf)))
+      (should (eq escape (and (member "-shell-escape" args) t))))))
