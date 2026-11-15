@@ -5691,7 +5691,7 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
   hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
 
-** Images ---LaTeX, HTML, SVG, or dot: itself where read natively, else a picture of itself
+** Images ---LaTeX, HTML, SVG, dot, PlantUML, Mermaid: itself where read natively, else a picture
   :PROPERTIES:
   :CUSTOM_ID: images
   :END:
@@ -5717,6 +5717,8 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   | =#+begin_image html=  | itself, raw            | a PDF, by =\includegraphics= | a PNG                  |
   | =#+begin_image svg=   | itself, raw            | a PDF, by =\includegraphics= | a PNG                  |
   | =#+begin_image dot=   | an SVG, inlined        | a PDF, by =\includegraphics= | a PNG                  |
+  | =#+begin_image plantuml= | an SVG, inlined     | a PDF, by =\includegraphics= | a PNG                  |
+  | =#+begin_image mermaid=  | itself, drawn by the browser | a PDF, by =\includegraphics= | itself, drawn by GitHub |
   The SVG and PDF are vector, so they stay crisp at any zoom; the SVG is inlined, as a =data:=
   URI, so a page carries its images along, wherever it is published.
 
@@ -5760,7 +5762,24 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   + Graphviz's dot, such as =digraph { Org -> HTML }=, by =dot=, then =pdfcrop=; =:layout neato=
     chooses the layout engine. It is the escape hatch for raw Graphviz; the [[#graphs][graph]] block stays
     the Org-native way to draw one.
-  Neither SVG nor dot has a preamble, so a line of dashes in either is an error.
+  + PlantUML, by =plantuml=, then =pdfcrop=; a body sans =@startuml= is put within =@startuml= …
+    =@enduml=, so =Alice -> Bob: Hi= alone suffices.
+  + Mermaid, by =mmdc=, the Mermaid CLI ---=npm install -g @mermaid-js/mermaid-cli=--- then
+    =pdfcrop=; yet only for LaTeX and the rest. In HTML, a =<pre class="mermaid">= is drawn by
+    Mermaid itself, from a CDN; in Markdown, a fenced =mermaid= block is drawn by GitHub. So a
+    Mermaid diagram stays live, and needs no tool at all, in a web page or a README.
+  None of SVG, dot, PlantUML, or Mermaid has a preamble, so a line of dashes in one is an error.
+
+  *Why not Babel's own =ob-dot=, =ob-plantuml=, or =ob-mermaid=?* They render a src block to its
+  =:file= on =C-c C-c=, and =:exports results= shows it; that is the core of the job, and they do
+  it well. An image block adds three things:
+  1. *A format per backend:* an SVG, inlined, in HTML; a PDF, vector, in LaTeX; a PNG elsewhere.
+     Babel's =:file= is one format for every backend.
+  2. *Freshness:* renderings are named by the block's hash, so an edited block is rendered afresh;
+     Babel's =:file= keeps exporting the former image till the block is run again.
+  3. *No boilerplate:* no =:file=, nor =:exports results=, on every block.
+  For Mermaid, a fourth: =ob-mermaid= always renders by =mmdc= to a static file, whereas an image
+  block lets the browser, and GitHub, draw it live.
   A new language, such as Mermaid, is one entry of ~org-image-block-languages~: a function
   writing the block as a PDF.
 

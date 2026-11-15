@@ -211,3 +211,44 @@ A gold bar:
 (deftest "an svg, or dot, image block has no preamble; a line of dashes in one is an error" [image]
   (should-error (org--image-svg-pdf "<defs/>" "<svg/>" nil "out.pdf") :type 'user-error)
   (should-error (org--image-dot-pdf "rankdir=LR" "digraph {}" nil "out.pdf") :type 'user-error))
+
+;;; plantuml and mermaid
+
+(deftest "a plantuml image block is an image everywhere, its body put within @startuml … @enduml if need be" [image]
+  (let (puml)
+    (cl-letf (((symbol-function 'org--image-run)
+               (lambda (prog &rest args)
+                 (when (equal prog "plantuml") (setq puml (with-temp-buffer (insert-file-contents (car (last args))) (buffer-string)))))))
+      (org--image-plantuml-pdf "" "Alice -> Bob: Hi" nil "out.pdf")
+      (should (equal puml "@startuml\nAlice -> Bob: Hi\n@enduml"))
+      (org--image-plantuml-pdf "" "@startmindmap\n* Org\n@endmindmap" nil "out.pdf")
+      (should (equal puml "@startmindmap\n* Org\n@endmindmap"))))
+  (should-not (plist-get (alist-get 'plantuml org-image-block-languages) :native)))
+
+(deftest "a plantuml image block renders, by plantuml, to an SVG, inlined, in HTML" [image]
+  (skip-unless (and (executable-find "plantuml") (executable-find "pdfcrop") (executable-find "pdftocairo")))
+  (org-image-test--in-temp-directory
+    (should (string-match-p "<img class=\"osbe-image\" alt=\"Rendered PlantUML\" src=\"data:image/svg\\+xml;base64,"
+                            (org-export-string "#+begin_image plantuml\nAlice -> Bob: Hi\n#+end_image")))))
+
+(defconst org-image-test--mermaid "
+#+begin_image mermaid
+graph LR
+  Org --> HTML
+#+end_image")
+
+(deftest "a mermaid image block, along HTML, is drawn in the browser, by Mermaid from a CDN; no tool is needed" [image]
+  (let ((html (org-export-string org-image-test--mermaid)))
+    (should (string-match-p "^<pre class=\"mermaid\">\ngraph LR\n  Org --&gt; HTML\n</pre>$" html))
+    (should (string-search "mermaid.esm.min.mjs" html))))
+
+(deftest "a mermaid image block, along Markdown, is a fenced mermaid block, which GitHub draws" [image]
+  (require 'ox-md)
+  (should (string-match-p "^```mermaid\ngraph LR\n  Org --> HTML\n```$" (org-export-string org-image-test--mermaid 'md))))
+
+(deftest "a mermaid image block, along LaTeX, is rendered by mmdc, the Mermaid CLI, then cropped" [image]
+  (let (programs)
+    (cl-letf (((symbol-function 'org--image-run) (lambda (prog &rest _) (push prog programs))))
+      (org--image-mermaid-pdf "" "graph LR\n  a --> b" nil "out.pdf"))
+    (should (equal (reverse programs) '("mmdc" "pdfcrop"))))
+  (should-error (org--image-mermaid-raw 'mermaid "x" "graph LR" 'html) :type 'user-error))
