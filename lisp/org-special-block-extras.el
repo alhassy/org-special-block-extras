@@ -1,4 +1,4 @@
-;;; org-special-block-extras.el --- Org, extended as Lisp is: blocks, links, tags, maths, graphs  -*- lexical-binding: t; -*-
+;;; org-special-block-extras.el --- Org markup all the way down: details, graph, math, callouts…  -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Musa Al-hassy
 
@@ -24,6 +24,9 @@
 
 ;;; Commentary:
 
+;; Folds, graphs, maths, and callouts that read *bold*, [[links]], and red:text, as the rest of our Org does.
+;; We offer 42 block types and 48 link types, and `org-defblock', a `cl-defun' for making our own.
+;;
 ;; Some text is tangential: a run of import statements, the gory steps of a proof, a worked solution to an
 ;; exercise.  We want it folded away until the reader asks for it; so we declare a block that does so, as we would
 ;; a Lisp function:
@@ -40,8 +43,8 @@
 ;;     Each step *shrinks* the list, and no list is shorter than the empty one.
 ;;     #+end_details
 ;;
-;; and HTML folds it away, while LaTeX, sans clicks, sets it apart.  CONTENTS arrives already exported, so the
-;; Org within ---*bold*, [[links]], red:text--- works as it does anywhere.  Moreover, a section tagged
+;; and HTML folds it away, while LaTeX, sans clicks, sets it apart.  CONTENTS arrives already exported, which is
+;; why the Org within ---*bold*, [[links]], red:text--- works as it does anywhere.  Moreover, a section tagged
 ;; `:details_Hint:' folds its text away under the title Hint.  Our own `details' is just this, plus colours.
 ;; Atop that one idea, we provide:
 ;;
