@@ -25,7 +25,8 @@
 (defun org-graph--table-context ()
   "The table at point ↦ what its rows describe, by the directive above it, past any tables between, as
 `org--graph-read-scope' reads it: `graphs' under #+graph:, `edges' under #+edge:, `nodes' under #+node: or a #+name:
-template; under an item, `nodes' too, unless its other rows make it a record ---cells, not keys---, then `record'.
+template; under an item, `nodes' too, unless its other rows make it a record ---cells, not keys---, then `record';
+or it is a container, as :container: or a | shape | cluster | row says, then `containers', which style its box.
 The row at point does not count, so a key half typed is still a key."
   (save-excursion
     ;; At a row, Org's element at point is that row; we want its table.
@@ -42,6 +43,15 @@ The row at point does not count, so a key half typed is still a key."
         ((guard (and here (not (org-element-property :name here)) (not (eq (org-element-type el) 'keyword))
                      (not (org--graph-attribute-table-p (org-graph--table-lines-sans here row)))))
          'record)
+        ;; A container's table styles its box: an item tagged :container:, or, strictly, a | shape | cluster | row.
+        ((guard (and here (eq (org-element-type el) 'paragraph)
+                     (or (member "container" (cdr (org--graph-split-tags
+                                                   (s-collapse-whitespace
+                                                    (buffer-substring-no-properties (org-element-property :begin el)
+                                                                                    (org-element-property :end el))))))
+                         (--any? (equal (org--graph-parse-row it) '("shape" "cluster"))
+                                 (org-graph--table-lines-sans here 0)))))
+         'containers)
         (_ 'nodes)))))
 
 (defun org-graph--table-lines-sans (table line)
@@ -73,45 +83,73 @@ aborts — allowing the caller to fall back to `read-string'."
       (when selected-hex
         (format "\"%s\" # %s" selected-hex selected-name)))))
 
+(defun org-graph--read-attribute (context)
+  "Prompts for an attribute valid on CONTEXT, such as `edges', then its value; returns (KEY . VALUE).
+A key's description shows beside it; an attribute of few values completes them; a colour opens a helm colour picker,
+when available, else `read-string'."
+  (let* ((valid   (org-graph--attributes-on context))
+         (chosen  (completing-read (format "Attribute (%s): " context)
+                                   (--map (format "%s — %s" (plist-get it :name) (plist-get it :description)) valid)
+                                   nil t))
+         (key     (car (s-split " — " chosen)))
+         (values  (plist-get (--first (equal (plist-get it :name) key) valid) :values)))
+    (cons key
+          (cond (values (completing-read (format "Value for %s: " key) values nil t))
+                ((and (member key '("color" "fillcolor" "fontcolor" "bgcolor")) (fboundp 'helm-colors-init))
+                 (or (org-graph--pick-color) (read-string (format "Value for %s: " key))))
+                (t (read-string (format "Value for %s: " key)))))))
+
 (defun org-graph--insert-attribute-row (&optional arg)
-  "Interactively insert a | key | value | row into the table at point.
+  "Inserts a | key | value | row, prompting for both, below the table row at point; on a #+graph:, #+node:, #+edge:,
+or #+name: line, adds it to the table beneath, else appends KEY=VALUE to the line.
 
-Only acts when ARG (prefix argument) is non-nil, point is on an Org
-table row, and point is inside a #+begin_graph block.
-
-Filters `org-graph-attributes' to entries valid for the current table
-context, prompts for a key via `completing-read', then prompts for a
-value.  For color attributes (color, fillcolor, fontcolor, bgcolor),
-a helm color picker opens when available — select a color and press RET;
-the hex code and name are inserted automatically.  Falls back to
-`read-string' when helm is unavailable or the user aborts.
-The new row is inserted below the current line and the table is aligned."
+Only acts when ARG, the prefix argument, is non-nil, and point is on a graph's key table or on such a directive line;
+see `org-graph--directive-at-point'.  The attributes offered are those valid there, by `org-graph--read-attribute'."
   (interactive "P")
-  (when (and arg (org-graph--at-key-table-p))
-    (let* ((context (org-graph--table-context))
-           (valid   (org-graph--attributes-on context))
-           (choices (--map (format "%s — %s"
-                                   (plist-get it :name)
-                                   (plist-get it :description))
-                           valid))
-           (chosen  (completing-read
-                     (format "Attribute (%s): " context)
-                     choices nil t))
-           (key     (car (s-split " — " chosen)))
-           (entry   (--first (equal (plist-get it :name) key) valid))
-           (values  (plist-get entry :values))
-           (value   (cond
-                     (values
-                      (completing-read (format "Value for %s: " key) values nil t))
-                     ((and (member key '("color" "fillcolor" "fontcolor" "bgcolor"))
-                           (fboundp 'helm-colors-init))
-                      (or (org-graph--pick-color)
-                          (read-string (format "Value for %s: " key))))
-                     (t
-                      (read-string (format "Value for %s: " key))))))
-      (end-of-line)
-      (insert (format "\n| %s | %s |" key value))
-      (org-table-align))))
+  (when arg
+    (cond
+     ((org-graph--at-key-table-p)
+      (-let [(key . value) (org-graph--read-attribute (org-graph--table-context))]
+        (end-of-line)
+        (insert (format "\n| %s | %s |" key value))
+        (org-table-align)))
+     ((org-graph--directive-at-point)
+      (-let* ((context (org-graph--directive-at-point))
+              ((key . value) (org-graph--read-attribute context))
+              (table (save-excursion (forward-line) (and (org-at-table-p) (point)))))
+        (if table
+            (progn (goto-char table)
+                   (goto-char (org-table-end))
+                   (skip-chars-backward " \t\n")
+                   (insert (format "\n| %s | %s |" key value))
+                   (org-table-align))
+          (end-of-line)
+          (insert " " key "=" (org-graph--pair-value value))))))))
+
+(defun org-graph--pair-value (value)
+  "Returns VALUE as a KEY=VALUE pair writes it: bare when a single word, else \"quoted\"; a colour picked by
+`org-graph--pick-color', \"\\\"#ff0000\\\" # Red\", is its hex alone, #ff0000."
+  (let ((value (if (string-match "\\`\"\\(#[[:xdigit:]]+\\)\"" value) (match-string 1 value) value)))
+    (if (string-match-p "\\`[^ \t\"]+\\'" value) value
+      (format "\"%s\"" (replace-regexp-in-string "\"" "\\\"" value t t)))))
+
+(defun org-graph--directive-at-point ()
+  "Returns the attributes' context a #+graph:, #+node:, #+edge:, or #+name: line at point sets: `graphs', `nodes',
+`edges', or `templates'; else nil.  A #+name: line counts in a graph, or, outside, when it names a template: it holds
+KEY=VALUE pairs, or a | key | value | table follows it; so a named data table keeps C-u RET as Org's."
+  (save-excursion
+    (beginning-of-line)
+    (let ((case-fold-search t))
+      (when (looking-at "[ \t]*#\\+\\(graph\\|node\\|edge\\|name\\):\\(.*\\)$")
+        (let ((key (downcase (match-string 1))) (value (match-string 2)))
+          (when (or (org-graph--in-graph-p)
+                    (and (equal key "name")
+                         (or (string-match-p "[^ \t=]=" value)
+                             (progn (forward-line)
+                                    (and (org-at-table-p)
+                                         (org--graph-attribute-table-p
+                                          (org--graph-table-lines (org-element-at-point))))))))
+            (pcase key ("graph" 'graphs) ("node" 'nodes) ("edge" 'edges) ("name" 'templates))))))))
 
 (defconst org-graph--return-commands '(org-return org-return-indent org-return-and-maybe-indent)
   "The commands that RET may run in Org, each calling `org-return'; e.g., a config's (local-set-key [return]
@@ -121,10 +159,11 @@ The new row is inserted below the current line and the table is aligned."
   "Advice for `org-return': intercept C-u RET inside graph block tables.
 
 When ARG ---or, when RET runs one of `org-graph--return-commands', which may call `org-return' sans it,
-`current-prefix-arg'--- is non-nil and point is on an Org table row inside a #+begin_graph block, run
+`current-prefix-arg'--- is non-nil and point is on a graph's key table, or on a #+graph:, #+node:, #+edge:, or
+#+name: line, as `org-graph--directive-at-point' says, run
 `org-graph--insert-attribute-row' and return non-nil to suppress the normal `org-return' behaviour."
   (let ((arg (or arg (and (memq this-command org-graph--return-commands) current-prefix-arg))))
-    (when (and arg (org-graph--at-key-table-p))
+    (when (and arg (or (org-graph--at-key-table-p) (org-graph--directive-at-point)))
       (org-graph--insert-attribute-row arg)
       t)))
 
@@ -201,8 +240,10 @@ its #+begin_graph line; so completion and eldoc offer smartdiagram's keys, not G
   (and (org-at-table-p) (org-graph--in-graph-p) (not (eq (org-graph--table-context) 'record))))
 
 (defun org-graph--attributes-on (context)
-  "CONTEXT, such as `edges', ↦ the `org-graph-attributes' entries valid on it."
-  (--filter (memq context (plist-get it :valid-on)) org-graph-attributes))
+  "CONTEXT, such as `edges', ↦ the `org-graph-attributes' entries valid on it; `templates' ↦ those of nodes, edges,
+or containers, since a #+name: template styles any of them."
+  (let ((contexts (if (eq context 'templates) '(nodes edges containers) (list context))))
+    (--filter (-intersection contexts (plist-get it :valid-on)) org-graph-attributes)))
 
 (defun org-graph--key-attribute (key)
   "A table KEY ↦ the attribute it sets: \":edge[x].color\" ↦ \"color\", \":node.shape\" ↦ \"shape\", and \"shape\" ↦ \"shape\"."
@@ -310,17 +351,38 @@ On a #+begin_graph line, complete its keys and values instead; in a smartdiagram
     (2 (-some--> (plist-get (org-graph--smartdiagram-key key) :values) (list beg end it :exclusive 'no)))))
 
 (defun org-graph--eldoc (callback &rest _)
-  "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, or of the key on this graph-table row, or
-of the built-in tag at point; else nil."
+  "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, of the key on this graph-table row, of the
+built-in tag at point, or of the KEY=VALUE pair at point on a #+graph:, #+node:, #+edge:, or #+name: line ---elsewhere
+on such a line, the hint that C-u RET adds an attribute; else nil."
   (-if-let ((beg end) (org-graph--header-token-at-point))
       (let ((key (buffer-substring beg end)))
         (when (and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
           (funcall callback (org-graph--header-key-doc key) :thing key :face 'font-lock-variable-name-face)))
     (-if-let (doc (and (org-graph--in-graph-p) (-some->> (org-graph--tag-at-point) org-graph--builtin-tag-doc)))
         (funcall callback doc)
-      (-when-let* (((_ _ _ key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
-                   (doc (and key (org-graph--key-doc key))))
-        (funcall callback doc :thing key :face 'font-lock-variable-name-face)))))
+      (-if-let (context (org-graph--directive-at-point))
+          (-if-let* ((key (org-graph--pair-key-at-point)) (doc (org-graph--key-doc key)))
+              (funcall callback doc :thing key :face 'font-lock-variable-name-face)
+            (funcall callback (org-graph--directive-hint context)))
+        (-when-let* (((_ _ _ key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
+                     (doc (and key (org-graph--key-doc key))))
+          (funcall callback doc :thing key :face 'font-lock-variable-name-face))))))
+
+(defun org-graph--directive-hint (context)
+  "Returns eldoc's hint on a directive line of CONTEXT, such as `edges': C-u RET picks from its Graphviz attributes."
+  (format "C-u RET adds an attribute: pick from all %d Graphviz attributes of %s, each described%s."
+          (length (org-graph--attributes-on context))
+          (if (eq context 'templates) "nodes, edges, and containers" context)
+          (if (org-graph--smartdiagram-p) "; but a smartdiagram takes few of them" "")))
+
+(defun org-graph--pair-key-at-point ()
+  "Returns the KEY of the KEY=VALUE pair at point, on a directive line; else nil."
+  (save-excursion
+    (let ((bol (line-beginning-position)) (point (point)))
+      (skip-chars-backward "^ \t" bol)
+      (when (and (looking-at "\\([^ \t=:\"]+\\)=\\(?:\"\\(?:[^\"\\\\]\\|\\\\.\\)*\"\\|[^ \t]*\\)")
+                 (<= point (match-end 0)))
+        (match-string-no-properties 1)))))
 
 (define-derived-mode org-graph-edit-mode org-mode "Org-Graph"
   "Org mode for a graph block's body, as C-c ' opens it: `completion-at-point' offers attributes, and eldoc explains them.
@@ -468,7 +530,7 @@ Org gives tags their `org-tag' face only on headlines; in a graph, tags name tem
 ;;; Directives, and their KEY=VALUE pairs, stand out; a key Graphviz does not know there stays plain
 
 (defface org-graph-directive '((t :inherit font-lock-keyword-face :weight bold))
-  "The face of a graph's #+graph:, #+node:, #+edge:, and #+name: keywords."
+  "The face of a graph's #+graph:, #+node:, #+edge:, and #+name: keywords; and of a #+name: template's outside graphs."
   :group 'org-special-block-extras)
 
 (defface org-graph-key '((t :inherit font-lock-variable-name-face :weight bold))
@@ -480,10 +542,11 @@ Org gives tags their `org-tag' face only on headlines; in a graph, tags name tem
 
 (defun org-graph--match-directive (limit)
   "Font-lock matcher: the next #+graph:, #+node:, #+edge:, or #+name: keyword up to LIMIT, in a graph, as group 1;
-`org-graph--directive' then names it, for `org-graph--pair-key-face'."
+or a #+name: template's outside one, as `org-graph--directive-at-point' says.  `org-graph--directive' then names it,
+for `org-graph--pair-key-face'."
   (let (found)
     (while (and (not found) (re-search-forward "^[ \t]*\\(#\\+\\(graph\\|node\\|edge\\|name\\):\\)" limit t))
-      (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--in-graph-p)))
+      (when (save-match-data (save-excursion (goto-char (match-beginning 0)) (org-graph--directive-at-point)))
         (setq found t org-graph--directive (downcase (match-string 2)))))
     found))
 

@@ -138,3 +138,117 @@
   ;; A plain RET, sans C-u, is left to Org.
   (let ((this-command 'org-return-indent) (current-prefix-arg nil))
     (should-not (org-graph--maybe-insert-attribute-row t nil nil))))
+
+;;; C-u RET on #+graph:, #+node:, #+edge:, and #+name: lines
+
+(defmacro org-graph-test--answering (key value &rest body)
+  "Runs BODY with the attribute prompt answering KEY, and the value prompt VALUE; returns the attributes offered."
+  (declare (indent 2))
+  `(let (offered)
+     (cl-letf (((symbol-function 'completing-read)
+                (lambda (prompt choices &rest _)
+                  (if (string-match-p "Attribute" prompt)
+                      (progn (setq offered (--map (car (s-split " — " it)) choices))
+                             (--first (equal (car (s-split " — " it)) ,key) choices))
+                    ,value)))
+               ((symbol-function 'read-string) (lambda (&rest _) ,value))
+               ((symbol-function 'org-graph--pick-color) (lambda () nil)))
+       ,@body)
+     offered))
+
+(org-deftest "C-u RET on a lone #+edge: line offers edge attributes alone, and appends the pair to the line"
+  :text "
+#+begin_graph
+#+edge: fontsize=10
++ a
+  + b
+#+end_graph"
+  :at "#+edge:"
+  (let ((offered (org-graph-test--answering "color" "red" (org-graph--insert-attribute-row '(4)))))
+    (should (member "arrowhead" offered))
+    (should-not (member "shape" offered)))
+  (should (s-contains-p "#+edge: fontsize=10 color=red\n" (buffer-string))))
+
+(org-deftest "C-u RET on a #+node: line with a table beneath adds the row to that table"
+  :text "
+#+begin_graph
+#+node:
+| shape | box |
++ a
+#+end_graph"
+  :at "#+node:"
+  (org-graph-test--answering "style" "filled" (org-graph--insert-attribute-row '(4)))
+  (should (s-contains-p "#+node:\n| shape | box    |\n| style | filled |\n+ a" (buffer-string))))
+
+(org-deftest "C-u RET on a #+graph: line quotes a value of several words"
+  :text "
+#+begin_graph
+#+graph:
++ a
+#+end_graph"
+  :at "#+graph:"
+  (org-graph-test--answering "label" "Our \"best\" graph" (org-graph--maybe-insert-attribute-row nil '(4) t))
+  (should (s-contains-p "#+graph: label=\"Our \\\"best\\\" graph\"\n" (buffer-string))))
+
+(org-deftest "C-u RET on a #+name: template, in a graph or out, offers node and edge attributes"
+  :text "
+#+name: hot color=red
+
+#+begin_graph
+#+name: faint
++ a :hot:faint:
+#+end_graph"
+  :at "#+name: hot"
+  (let ((offered (org-graph-test--answering "penwidth" "2" (org-graph--insert-attribute-row '(4)))))
+    (should (member "arrowhead" offered))
+    (should (member "shape" offered)))
+  (should (s-contains-p "#+name: hot color=red penwidth=2\n" (buffer-string)))
+  (search-forward "#+name: faint")
+  (should (eq (org-graph--directive-at-point) 'templates)))
+
+(org-deftest "outside a graph, a #+name: of a data table is no template: C-u RET stays Org's"
+  :text "
+#+name: data
+| x | 1 | 2 |"
+  :at "#+name: data"
+  (should-not (org-graph--directive-at-point))
+  (should-not (org-graph--maybe-insert-attribute-row nil '(4) t)))
+
+(org-deftest "eldoc on a directive line hints that C-u RET adds an attribute; on a KEY=VALUE pair, it describes the key"
+  :text "
+#+begin_graph
+#+edge: color=red
++ a
+#+end_graph"
+  :at "#+edge:"
+  (let (doc)
+    (org-graph--eldoc (lambda (d &rest _) (setq doc d)))
+    (should (s-contains-p "C-u RET" doc))
+    (should (s-contains-p "edges" doc))
+    (search-forward "colo")
+    (org-graph--eldoc (lambda (d &rest _) (setq doc d)))
+    (should (equal doc (org-graph--key-doc "color")))))
+
+(org-deftest "a container's table styles its box: C-u RET offers container attributes, such as pencolor, not shape"
+  :text "
+#+begin_graph
++ Front end :container:
+  | bgcolor | grey |
+  + lexer
+#+end_graph"
+  :at "| bgcolor"
+  (should (eq (org-graph--table-context) 'containers))
+  (let ((offered (org-graph-test--answering "pencolor" "red" (org-graph--insert-attribute-row '(4)))))
+    (should (member "pencolor" offered))
+    (should-not (member "shape" offered)))
+  (should (s-contains-p "| pencolor | red  |" (buffer-string))))
+
+(org-deftest "strictly, a | shape | cluster | row makes an item's table a container's, too"
+  :text "
+#+begin_graph
++ Front end
+  | shape | cluster |
+  + lexer
+#+end_graph"
+  :at "| shape"
+  (should (eq (org-graph--table-context) 'containers)))

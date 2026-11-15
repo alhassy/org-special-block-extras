@@ -20,7 +20,7 @@
 (defcustom org-graph-attributes
   '((:name "_background" :valid-on (graphs)
      :description "A string in the xdot format specifying an arbitrary background.")
-    (:name "area" :valid-on (nodes clusters) :default "1.0"
+    (:name "area" :valid-on (nodes containers) :default "1.0"
      :description "Indicates the preferred area for a node or empty cluster. patchwork only.")
     (:name "arrowhead" :valid-on (edges) :default "normal"
      :values ("normal" "inv" "dot" "invdot" "odot" "invodot" "none" "tee" "empty" "invempty" "diamond" "odiamond"
@@ -32,35 +32,35 @@
      :values ("normal" "inv" "dot" "invdot" "odot" "invodot" "none" "tee" "empty" "invempty" "diamond" "odiamond"
               "ediamond" "crow" "box" "obox" "open" "halfopen" "vee")
      :description "Style of arrowhead on the tail node of an edge.")
-    (:name "bb" :valid-on (clusters graphs)
+    (:name "bb" :valid-on (containers graphs)
      :description "Bounding box of drawing in points. write only.")
     (:name "beautify" :valid-on (graphs) :default "false"
      :values ("true" "false")
      :description "Whether to draw leaf nodes uniformly in a circle around the root node in sfdp. sfdp only.")
-    (:name "bgcolor" :valid-on (graphs clusters)
+    (:name "bgcolor" :valid-on (graphs containers)
      :description "Canvas background color.")
     (:name "center" :valid-on (graphs) :default "false"
      :values ("true" "false")
      :description "Whether to center the drawing in the output canvas.")
     (:name "charset" :valid-on (graphs) :default "\"UTF-8\""
      :description "Character encoding used when interpreting string input as a text label.")
-    (:name "class" :valid-on (edges nodes clusters graphs) :default "\"\""
+    (:name "class" :valid-on (edges nodes containers graphs) :default "\"\""
      :description "Classnames to attach to the node, edge, graph, or cluster's SVG element. svg only.")
-    (:name "cluster" :valid-on (clusters) :default "false"
+    (:name "cluster" :valid-on (containers) :default "false"
      :values ("true" "false")
      :description "Whether the subgraph is a cluster.")
     (:name "clusterrank" :valid-on (graphs) :default "local"
      :values ("local" "global" "none")
-     :description "Mode used for handling clusters. dot only.")
-    (:name "color" :valid-on (edges nodes clusters) :default "black"
+     :description "Mode used for handling containers, Graphviz's clusters. dot only.")
+    (:name "color" :valid-on (edges nodes containers) :default "black"
      :description "Basic drawing color for graphics, not text.")
-    (:name "colorscheme" :valid-on (edges nodes clusters graphs) :default "\"\""
+    (:name "colorscheme" :valid-on (edges nodes containers graphs) :default "\"\""
      :description "A color scheme namespace: the context for interpreting color names.")
     (:name "comment" :valid-on (edges nodes graphs) :default "\"\""
      :description "Comments are inserted into output.")
     (:name "compound" :valid-on (graphs) :default "false"
      :values ("true" "false")
-     :description "If true, allow edges between clusters. dot only.")
+     :description "If true, allow edges between containers. dot only.")
     (:name "concentrate" :valid-on (graphs) :default "false"
      :values ("true" "false")
      :description "If true, use edge concentrators.")
@@ -99,25 +99,25 @@
      :description "Terminating condition. neato only.")
     (:name "esep" :valid-on (graphs) :default "+3"
      :description "Margin used around polygons for purposes of spline edge routing. neato, fdp, sfdp, osage, circo, twopi only.")
-    (:name "fillcolor" :valid-on (nodes edges clusters) :default "lightgrey (nodes) black (clusters)"
+    (:name "fillcolor" :valid-on (nodes edges containers) :default "lightgrey (nodes) black (containers)"
      :description "Color used to fill the background of a node or cluster.")
     (:name "fixedsize" :valid-on (nodes) :default "false"
      :values ("true" "false")
      :description "Whether to use the specified width and height attributes to choose node size (rather than sizing to fit the node contents).")
-    (:name "fontcolor" :valid-on (edges nodes graphs clusters) :default "black"
+    (:name "fontcolor" :valid-on (edges nodes graphs containers) :default "black"
      :description "Color used for text.")
-    (:name "fontname" :valid-on (edges nodes graphs clusters) :default "\"Times-Roman\""
+    (:name "fontname" :valid-on (edges nodes graphs containers) :default "\"Times-Roman\""
      :description "Font used for text.")
     (:name "fontnames" :valid-on (graphs) :default "\"\""
      :description "Allows user control of how basic fontnames are represented in SVG output. svg only.")
     (:name "fontpath" :valid-on (graphs) :default "<system-dependent>"
      :description "Directory list used by libgd to search for bitmap fonts.")
-    (:name "fontsize" :valid-on (edges nodes graphs clusters) :default "14.0"
+    (:name "fontsize" :valid-on (edges nodes graphs containers) :default "14.0"
      :description "Font size, in points, used for text.")
     (:name "forcelabels" :valid-on (graphs) :default "true"
      :values ("true" "false")
      :description "Whether to force placement of all xlabels, even if overlapping.")
-    (:name "gradientangle" :valid-on (nodes clusters graphs) :default "0"
+    (:name "gradientangle" :valid-on (nodes containers graphs) :default "0"
      :description "If a gradient fill is being used, this determines the angle of the fill.")
     (:name "group" :valid-on (nodes) :default "\"\""
      :description "Name for a group of nodes, for bundling edges avoiding crossings. dot only.")
@@ -141,9 +141,9 @@
      :description "If defined, headURL is output as part of the head label of the edge. map, svg only.")
     (:name "height" :valid-on (nodes) :default "0.5"
      :description "Height of node, in inches.")
-    (:name "href" :valid-on (graphs clusters nodes edges) :default "\"\""
+    (:name "href" :valid-on (graphs containers nodes edges) :default "\"\""
      :description "Synonym for URL. map, postscript, svg only.")
-    (:name "id" :valid-on (graphs clusters nodes edges) :default "\"\""
+    (:name "id" :valid-on (graphs containers nodes edges) :default "\"\""
      :description "Identifier for graph objects. map, postscript, svg only.")
     (:name "image" :valid-on (nodes) :default "\"\""
      :description "Gives the name of a file containing an image to be displayed inside a node.")
@@ -156,9 +156,9 @@
      :description "Controls how an image fills its containing node.")
     (:name "inputscale" :valid-on (graphs)
      :description "Scales the input positions to convert between length units. neato, fdp only.")
-    (:name "K" :valid-on (graphs clusters) :default "0.3"
+    (:name "K" :valid-on (graphs containers) :default "0.3"
      :description "Spring constant used in virtual physical model. fdp, sfdp only.")
-    (:name "label" :valid-on (edges nodes graphs clusters) :default "\"\\N\" (nodes) \"\" (otherwise)"
+    (:name "label" :valid-on (edges nodes graphs containers) :default "\"\\N\" (nodes) \"\" (otherwise)"
      :description "Text label attached to objects.")
     (:name "label_scheme" :valid-on (graphs) :default "0"
      :description "Whether to treat a node whose name has the form |edgelabel|* as a special node representing an edge label. sfdp only.")
@@ -177,12 +177,12 @@
      :description "Font size of headlabel and taillabel.")
     (:name "labelhref" :valid-on (edges) :default "\"\""
      :description "Synonym for labelURL. map, svg only.")
-    (:name "labeljust" :valid-on (graphs clusters) :default "\"c\""
+    (:name "labeljust" :valid-on (graphs containers) :default "\"c\""
      :values ("l" "r" "c")
      :description "Justification for graph & cluster labels.")
-    (:name "labelloc" :valid-on (nodes graphs clusters) :default "\"t\" (clusters) \"b\" (root graphs) \"c\" (nodes)"
+    (:name "labelloc" :valid-on (nodes graphs containers) :default "\"t\" (containers) \"b\" (root graphs) \"c\" (nodes)"
      :values ("t" "b" "c")
-     :description "Vertical placement of labels for nodes, root graphs and clusters.")
+     :description "Vertical placement of labels for nodes, root graphs and containers.")
     (:name "labeltarget" :valid-on (edges)
      :description "Browser window to open labelURL links in. map, svg only.")
     (:name "labeltooltip" :valid-on (edges) :default "\"\""
@@ -192,7 +192,7 @@
     (:name "landscape" :valid-on (graphs) :default "false"
      :values ("true" "false")
      :description "If true, the graph is rendered in landscape mode.")
-    (:name "layer" :valid-on (edges nodes clusters) :default "\"\""
+    (:name "layer" :valid-on (edges nodes containers) :default "\"\""
      :description "Specifies layers in which the node, edge or cluster is present.")
     (:name "layerlistsep" :valid-on (graphs) :default "\",\""
      :description "The separator characters used to split attributes of type layerRange into a list of ranges.")
@@ -212,17 +212,17 @@
      :description "strictness of neato level constraints. neato only.")
     (:name "lhead" :valid-on (edges) :default "\"\""
      :description "Logical head of an edge. dot only.")
-    (:name "lheight" :valid-on (graphs clusters)
+    (:name "lheight" :valid-on (graphs containers)
      :description "Height of graph or cluster label, in inches. write only.")
     (:name "linelength" :valid-on (graphs) :default "128"
      :description "How long strings should get before overflowing to next line, for text output.")
-    (:name "lp" :valid-on (edges graphs clusters)
+    (:name "lp" :valid-on (edges graphs containers)
      :description "Label center position. write only.")
     (:name "ltail" :valid-on (edges) :default "\"\""
      :description "Logical tail of an edge. dot only.")
-    (:name "lwidth" :valid-on (graphs clusters)
+    (:name "lwidth" :valid-on (graphs containers)
      :description "Width of graph or cluster label, in inches. write only.")
-    (:name "margin" :valid-on (nodes clusters graphs) :default "<device-dependent>"
+    (:name "margin" :valid-on (nodes containers graphs) :default "<device-dependent>"
      :description "For graphs, this sets x and y margins of canvas, in inches.")
     (:name "maxiter" :valid-on (graphs) :default "100 * # nodes (mode == KK) 200 (mode == major) 30 (mode == sgd) 600 (fdp)"
      :description "Sets the number of iterations used. neato, fdp only.")
@@ -240,10 +240,10 @@
      :description "Specifies how the distance matrix is computed for the input graph. neato only.")
     (:name "newrank" :valid-on (graphs) :default "false"
      :values ("true" "false")
-     :description "Whether to use a single global ranking, ignoring clusters. dot only.")
+     :description "Whether to use a single global ranking, ignoring containers. dot only.")
     (:name "nodesep" :valid-on (graphs) :default "0.25"
      :description "In dot, nodesep specifies the minimum space between two adjacent nodes in the same rank, in inches.")
-    (:name "nojustify" :valid-on (graphs clusters nodes edges) :default "false"
+    (:name "nojustify" :valid-on (graphs containers nodes edges) :default "false"
      :values ("true" "false")
      :description "Whether to justify multiline text vs the previous text line (rather than the side of the container).")
     (:name "normalize" :valid-on (graphs) :default "false"
@@ -287,11 +287,11 @@
     (:name "pagedir" :valid-on (graphs) :default "BL"
      :values ("BL" "BR" "TL" "TR" "RB" "RT" "LB" "LT")
      :description "The order in which pages are emitted.")
-    (:name "pencolor" :valid-on (clusters) :default "black"
+    (:name "pencolor" :valid-on (containers) :default "black"
      :description "Color used to draw the bounding box around a cluster.")
-    (:name "penwidth" :valid-on (clusters nodes edges) :default "1.0"
+    (:name "penwidth" :valid-on (containers nodes edges) :default "1.0"
      :description "Specifies the width of the pen, in points, used to draw lines and curves.")
-    (:name "peripheries" :valid-on (nodes clusters) :default "<shape default> (nodes) 1 (clusters)"
+    (:name "peripheries" :valid-on (nodes containers) :default "<shape default> (nodes) 1 (containers)"
      :description "Set number of peripheries used in polygonal shapes and cluster boundaries.")
     (:name "pin" :valid-on (nodes) :default "false"
      :values ("true" "false")
@@ -305,7 +305,7 @@
      :description "If quantum > 0.0, node label dimensions will be rounded to integral multiples of the quantum.")
     (:name "radius" :valid-on (edges) :default "0"
      :description "Radius of rounded corners on orthogonal edges.")
-    (:name "rank" :valid-on (clusters)
+    (:name "rank" :valid-on (containers)
      :values ("same" "min" "max" "source" "sink")
      :description "Rank constraints on the nodes in a subgraph. dot only.")
     (:name "rankdir" :valid-on (graphs) :default "TB"
@@ -322,7 +322,7 @@
      :description "If true, force polygon to be regular.")
     (:name "remincross" :valid-on (graphs) :default "true"
      :values ("true" "false")
-     :description "If there are multiple clusters, whether to run edge crossing minimization a second time. dot only.")
+     :description "If there are multiple containers, whether to run edge crossing minimization a second time. dot only.")
     (:name "repulsiveforce" :valid-on (graphs) :default "1.0"
      :description "The power of the repulsive force used in an extended Fruchterman-Reingold. sfdp only.")
     (:name "resolution" :valid-on (graphs) :default "96.0"
@@ -367,7 +367,7 @@
     (:name "smoothing" :valid-on (graphs) :default "\"none\""
      :values ("none" "avg_dist" "graph_dist" "power_dist" "rng" "spring" "triangle")
      :description "Specifies a post-processing step used to smooth out an uneven distribution of nodes. sfdp only.")
-    (:name "sortv" :valid-on (graphs clusters nodes) :default "0"
+    (:name "sortv" :valid-on (graphs containers nodes) :default "0"
      :description "Sort order of graph components for ordering packmode packing.")
     (:name "splines" :valid-on (graphs)
      :values ("spline" "line" "polyline" "curved" "ortho" "none")
@@ -375,7 +375,7 @@
     (:name "start" :valid-on (graphs) :default "\"\""
      :values ("regular" "self" "random")
      :description "Parameter used to determine the initial layout of nodes. neato, fdp, sfdp only.")
-    (:name "style" :valid-on (edges nodes clusters graphs) :default "\"\""
+    (:name "style" :valid-on (edges nodes containers graphs) :default "\"\""
      :values ("filled" "rounded" "filled,rounded" "dashed" "dotted" "solid" "bold" "invis" "striped" "wedged"
               "diagonals" "radial" "tapered")
      :description "Set style information for components of the graph.")
@@ -399,16 +399,16 @@
      :description "Tooltip annotation attached to the tail of an edge. cmap, svg only.")
     (:name "tailURL" :valid-on (edges) :default "\"\""
      :description "If defined, tailURL is output as part of the tail label of the edge. map, svg only.")
-    (:name "target" :valid-on (edges nodes graphs clusters)
+    (:name "target" :valid-on (edges nodes graphs containers)
      :description "If the object has a URL, this attribute determines which window of the browser is used for the URL. map, svg only.")
     (:name "TBbalance" :valid-on (graphs) :default "''"
      :description "Which rank to move floating (loose) nodes to. dot only.")
-    (:name "tooltip" :valid-on (nodes edges clusters graphs) :default "\"\""
+    (:name "tooltip" :valid-on (nodes edges containers graphs) :default "\"\""
      :description "Tooltip (mouse hover text) attached to the node, edge, cluster, or graph. cmap, svg only.")
     (:name "truecolor" :valid-on (graphs)
      :values ("true" "false")
      :description "Whether internal bitmap rendering relies on a truecolor color model or uses. bitmap output only.")
-    (:name "URL" :valid-on (edges nodes graphs clusters)
+    (:name "URL" :valid-on (edges nodes graphs containers)
      :description "Hyperlinks incorporated into device-dependent output. map, postscript, svg only.")
     (:name "vertices" :valid-on (nodes)
      :description "Sets the coordinates of the vertices of the node's polygon, in inches. write only.")
@@ -436,7 +436,8 @@ of each attribute's type, per https://graphviz.org/docs/attr-types/.  Each entry
   :description ↦ one-line human description, ending with the layouts it is limited to, if any
   :values      ↦ list of completion candidates, or nil for free-text entry
   :default     ↦ Graphviz's default, as its docs state it; nil when it has none
-  :valid-on    ↦ context symbols: any subset of (nodes edges graphs clusters); subgraph attributes count as clusters."
+  :valid-on    ↦ context symbols: any subset of (nodes edges graphs containers); Graphviz's cluster and subgraph
+                 attributes count as containers', since a :container: item is the graph's only cluster."
   :type '(repeat
           (plist :options
                  ((:name        string)
@@ -446,7 +447,7 @@ of each attribute's type, per https://graphviz.org/docs/attr-types/.  Each entry
                   (:valid-on    (repeat (choice (const nodes)
                                                 (const edges)
                                                 (const graphs)
-                                                (const clusters)))))))
+                                                (const containers)))))))
   :group 'org-special-block-extras)
 
 (provide 'org-graph-attributes)

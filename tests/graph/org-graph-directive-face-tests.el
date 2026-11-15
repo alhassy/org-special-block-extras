@@ -37,3 +37,20 @@
   ;; Outside a graph, nothing is ours.
   (should-not (save-excursion (goto-char (point-max)) (search-backward "#+node:")
                               (memq 'org-graph-directive (ensure-list (get-text-property (point) 'face))))))
+
+(org-deftest "outside a graph, a #+name: template stands out, its keys too; a named data table does not" [graph faces]
+  :text "
+#+name: hot color=red
+
+#+name: faint
+| color | grey |
+
+#+name: data
+| x | 1 | 2 |"
+  :at "#+name: hot"
+  (org-graph--setup-org-buffer)
+  (font-lock-ensure)
+  (should (org-graph-face-test--has "#+name: hot" 'org-graph-directive))
+  (should (org-graph-face-test--has "color=" 'org-graph-key))
+  (should (org-graph-face-test--has "#+name: faint" 'org-graph-directive))
+  (should-not (org-graph-face-test--has "#+name: data" 'org-graph-directive)))

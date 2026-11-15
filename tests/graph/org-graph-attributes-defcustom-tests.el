@@ -33,7 +33,7 @@
     (should (memq 'nodes    (plist-get attr :valid-on)))
     (should (memq 'edges    (plist-get attr :valid-on)))
     (should (memq 'graphs   (plist-get attr :valid-on)))
-    (should (memq 'clusters (plist-get attr :valid-on)))
+    (should (memq 'containers (plist-get attr :valid-on)))
     (should (null (plist-get attr :values)))))
 
 (deftest "`org-graph-attributes' arrowhead is valid-on edges only"
