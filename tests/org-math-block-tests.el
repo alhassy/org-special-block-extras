@@ -1243,3 +1243,23 @@ a + b
 
 (provide 'org-math-block-tests)
 ;;; org-math-block-tests.el ends here
+
+;;; Several tags on one line: aliases of its first
+
+(deftest "a line's later tags are aliases of its first: one \\tag, and a citation of any name cites it" [math tags]
+  (let ((latex (org-export-string "
+#+begin_math
+p ⊑ q ≡ p ⊓ q = p   blue:<<⊑-Definition>> <<Order>> <<Meet law>>
+#+end_math
+By [[⊑-Definition]], [[Order]], and [[Meet law][the meet law]]." 'latex)))
+    (should (equal 1 (s-count-matches "\\\\tag{" latex)))
+    (should-not (string-search "<<Order>>" latex))
+    (should (equal 2 (s-count-matches (regexp-quote (format "\\eqref{%s}" (org--math-label "⊑-Definition"))) latex)))
+    (should (string-search (format "\\hyperref[%s]{the meet law}" (org--math-label "⊑-Definition")) latex)))
+  (let ((html (org-export-string "
+#+begin_math
+x = y   <<First>> <<Second>>
+#+end_math
+See [[Second]].")))
+    (should (equal 1 (s-count-matches "\\\\tag{" html)))
+    (should (string-search "\\eqref{First}" html))))

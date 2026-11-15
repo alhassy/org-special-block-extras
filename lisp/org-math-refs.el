@@ -56,8 +56,9 @@ its own target, and a block's “#+name: NAME”.  A function of `org-execute-fi
 ;;;; Exporting citations ---[[NAME]] as \eqref, before Org parses
 
 (defun org--math-ref-names ()
-  "↦ each name a math block of the buffer gives its maths to cite, as (NAME . NESTED): its tags, “COLOUR:<<NAME>>”, and its
-#+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag nor \\eqref."
+  "↦ each name a math block of the buffer gives its maths to cite, as (NAME NESTED . PRIMARY): its tags,
+“COLOUR:<<NAME>>”, and its #+name:; a NESTED one is within a hint's \\[ … \\], whose maths is an aligned, sans \\tag
+nor \\eqref.  A line's later tags are aliases of its first, PRIMARY, whose label they cite; else PRIMARY is NAME."
   (save-excursion
     (goto-char (point-min))
     (let ((case-fold-search t) names)
@@ -66,13 +67,17 @@ its own target, and a block's “#+name: NAME”.  A function of `org-execute-fi
           (beginning-of-line)
           ;; Its affiliated keywords, #+name: among them, are the lines just above it.
           (while (and (zerop (forward-line -1)) (looking-at "[ \t]*#\\+\\([[:alnum:]_]+\\):[ \t]*\\(.*?\\)[ \t]*$"))
-            (when (equal (downcase (match-string 1)) "name") (push (list (match-string 2)) names))))
-        (let ((start (point)) (end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point)))))
+            (when (equal (downcase (match-string 1)) "name") (push (list (match-string 2) nil) names))))
+        (let ((start (point)) (end (save-excursion (and (re-search-forward "^[ \t]*#\\+end_math\\b" nil t) (point))))
+              line primary)
           (while (and end (re-search-forward org--math-tag-re end t))
             ;; Nested: within a \[ that no \] has closed yet; a \\[ is a line break, not one.
             (let ((name (match-string 1)) (at (match-beginning 0)))
-              (push (cons name (< (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\]" start at))
-                                  (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\[" start at))))
+              ;; The first tag of a line is its equation's; the rest, aliases citing it.
+              (unless (eq line (line-number-at-pos at)) (setq line (line-number-at-pos at) primary name))
+              (push (cl-list* name (< (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\]" start at))
+                                     (save-match-data (how-many "\\(?:^\\|[^\\]\\)\\\\\\[" start at)))
+                              primary)
                     names)))))
       names)))
 
@@ -121,7 +126,9 @@ verbatim text, such as a src block's or =this=, is left be; so is one to anythin
                                 (and block (equal (downcase (org-element-property :type block)) "math"))))))
               (delete-region start end)
               (goto-char start)
-              (insert (org--math-ref name desc backend in-maths (cdr (assoc name names)))))))))))
+              (pcase-let ((`(,_ ,nested . ,primary) (assoc name names)))
+                ;; An alias cites its line's first tag: its label, and, sans words of its own, its number.
+                (insert (org--math-ref (or primary name) desc backend in-maths nested))))))))))
 
 (provide 'org-math-refs)
 ;;; org-math-refs.el ends here

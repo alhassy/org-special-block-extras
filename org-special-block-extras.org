@@ -5089,7 +5089,9 @@ R_{teal:\theta} =
   named thing: =[[NAME]]= is its number, or name, as LaTeX's =\eqref=
   shows it; and =[[NAME][these words]]= links the words to it. =C-c C-o= on the link, in Emacs, visits
   the line; failing that, any =\tag{…NAME…}=. A =NAME= may hold maths, such as =⊑-Definition= or
-  =Distributivity of \meet=, which shows as maths in the tag, and is cited by the very same name. With
+  =Distributivity of \meet=, which shows as maths in the tag, and is cited by the very same name. A line
+  may have several names, =blue:<<⊑-Definition>> <<Order>>=: the first is its tag, and the rest are
+  aliases, which cite it just as well ---one equation, one number, many names. With
   =:numbered t=, the untagged lines are numbered too. Only the block's
   own =&= counts: one within a ={group}= or a =\begin{cases}…\end{cases}= belongs to it, so a
   piecewise definition is one equation, unless its line aligns at an =&= of its own. A hint,

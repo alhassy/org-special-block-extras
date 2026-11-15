@@ -114,13 +114,19 @@ name is its own label; a citation, [[NAME]], cites the same."
 
 (defun org--math-tags (math &optional nested)
   "MATH ↦ MATH whose each tag, “COLOUR:<<NAME>>” of `org--math-tag-re', is NAME as a COLOUR \\tag, labelled NAME, and,
-ending its line, \\\\; e.g., “x blue:<<Id>>” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id}”.  Sans COLOUR, it is
-plain.  A NESTED calculation's tag, as a hint's \\[ … \\], is no \\tag, which an aligned forbids, but NAME in brackets
+ending its line, \\\\; e.g., “x blue:<<Id>>” ↦ “x \\tag{$\\color{blue}{\\text{Id}}$} \\label{Id}”.  A line's later tags
+are aliases, which vanish here; their citations cite its first.  Sans COLOUR, it is plain.  A NESTED calculation's tag, as a hint's \\[ … \\], is no \\tag, which an aligned forbids, but NAME in brackets
 there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
   (with-temp-buffer
     (insert math)
     (goto-char (point-min))
-    (while (re-search-forward org--math-tag-re nil t)
+    (let (tagged)
+     (while (re-search-forward org--math-tag-re nil t)
+      ;; A line's later tags are aliases of its first, cited as it is; see `org--math-ref-names'.
+      (if (eq tagged (line-number-at-pos))
+          (progn (delete-region (match-beginning 0) (match-end 0))
+                 (delete-horizontal-space))
+      (setq tagged (line-number-at-pos))
       (let* ((name (match-string 1)) (colour (match-string 2)) (text (org--math-tag-text name))
              (tag (cond ((not nested) (format "\\tag{%s} \\label{%s}"
                                              (if colour (format "$\\color{%s}{\\text{%s}}$" colour text) text)
@@ -132,7 +138,7 @@ there, anchored as MathJax anchors a \\tag; `org--math-ref' links to it alike."
                                                      ('html (format "\\cssId{%s}{%s}" (org--math-tag-anchor name) shown))
                                                      (_ shown))))))))
         (delete-region (match-beginning 0) (match-end 0))
-        (insert tag (if (looking-at "[ \t]*\n") " \\\\" ""))))
+        (insert tag (if (looking-at "[ \t]*\\(?:\\(?:[[:alpha:]]+:\\)?<<[^<>\n]+>>[ \t]*\\)*\n") " \\\\" ""))))))
     (buffer-string)))
 
 (defun org--math-match-tag (limit)
