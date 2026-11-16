@@ -159,3 +159,33 @@
   { rank=same; legend_1_end; legend_2 }
   B -> legend_1 [ style=invis weight=0 ];
 }")
+
+(define-graph-test "A legend's untitled boxes, each ordered, are rows stacked beneath one another"
+  :input "
+#+name: blue fillcolor=blue
+#+name: green fillcolor=green
++ A
++ Legend :container:
+  + :container:
+    1. blues :blue:
+  + :container:
+    1. greens :green:"
+  :output "digraph {
+  graph [ newrank=true ]
+  A [ label=A ];
+  subgraph cluster_Legend {
+    label=Legend
+    subgraph cluster_anonymous_6 {
+    label=\"\"
+    legend_1 [ fillcolor=blue label=blues style=filled ];
+  }
+    subgraph cluster_anonymous_8 {
+    label=\"\"
+    legend_2 [ fillcolor=green label=greens style=filled ];
+  }
+  }
+  { rank=same; legend_1 }
+  A -> legend_1 [ style=invis weight=0 ];
+  { rank=same; legend_2 }
+  legend_1 -> legend_2 [ style=invis weight=0 ];
+}")

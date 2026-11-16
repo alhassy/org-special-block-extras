@@ -937,7 +937,8 @@ An item that is a lone [[link]] is a reference: it draws arcs to its target, but
                       (list :edge id target (org--graph-override attrs (alist-get target targeted nil nil #'equal)))))
           ;; A legend entry: a top-level `- :T: :: MEANING', Org's glossary; or, in a container titled Legend, `- MEANING :T:'.
           (legend-tags (cond ((and (not parent) (plist-get text :arc-tags)))
-                             ((and org--graph-legend (not parent) (not reference) (not (plist-get text :arc-label)))
+                             ((and org--graph-legend (not parent) (not reference) (not (plist-get text :arc-label))
+                                   (not (equal shape "cluster")))
                               (plist-get text :tags))))
           (legend?  (and legend-tags t))
           (ranked   (org--graph-ordered-rank kind children))
@@ -1005,11 +1006,13 @@ record; if each key names an attribute, check its spelling" id))
       ;; Its children are its members; but a reference, `+ [[T]]', is an arc from the box, drawn outside it, lest T,
       ;; first met there, be drawn inside it.
       (-let* (((refs members) (--separate (plist-get (car (org--graph-item-parts it)) :reference) children))
-              (legend (equal (downcase (format "%s" name)) "legend"))
+              ;; A legend's untitled boxes, `+ :container:', are legends too: its rows, when ordered.
+              (legend (or (equal (downcase (format "%s" name)) "legend")
+                          (and org--graph-legend (string-prefix-p "anonymous " (format "%s" name)))))
               ;; An ordered legend, 1. 2. 3., is a row along the graph's foot, rather than a column.
               (stmts (let ((org--graph-legend legend))
                        (append (--mapcat (org--graph-parse-item it nil ctx) members)
-                               (if (and legend ranked) '((:legend-row)) ranked))))
+                               (if legend (when (eq kind 'ordered) '((:legend-row))) ranked))))
               (arcs (append arcs (--mapcat (org--graph-parse-item it id ctx) refs))))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.

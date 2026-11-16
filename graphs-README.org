@@ -656,8 +656,9 @@ legend entry. The two legends below are one and the same:
 - A legend stacks as a column: in a top-down graph its entries are chained by invisible arcs, and in a
   left-right one they share a rank already. An ordered legend, ~1. 2. 3.~, is a row along the graph's foot
   instead: its entries share one rank, as ordered children do, beneath every other node. Graphviz's ~rankdir~
-  is the whole graph's, so a container
-  cannot have one of its own; the chain does that job for a legend.
+  is the whole graph's, so a container cannot have one of its own; the chain does that job for a legend.
+- A legend's untitled boxes, ~+ :container:~, are legends too; so a legend of several ordered boxes is several rows,
+  each beneath the one before ---say, its arcs, then its nodes.
 
 ** Checkboxes are templates
 

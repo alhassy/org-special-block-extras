@@ -215,32 +215,45 @@ is one more than its shallowest parent's."
                    (puthash id (append entry `(("fillcolor" ,(nth (mod depth (length colors)) colors)))) nodes))))
              nodes)))
 
-(defun org--graph-legend-chain (stmts op ctx &optional all)
+(defun org--graph-legend-rows (stmts)
+  "Returns the entries of each legend row in STMTS, clusters' included, in order: those of each statement list
+holding (:legend-row)."
+  (append (when (member '(:legend-row) stmts) (list (--filter (eq (car-safe it) :legend) stmts)))
+          (--mapcat (pcase it
+                      (`(:cluster ,_ . ,props) (org--graph-legend-rows (plist-get props :stmts)))
+                      (`(:scope ,_ ,inner) (org--graph-legend-rows inner)))
+                    stmts)))
+
+(defun org--graph-legend-chain (stmts op ctx &optional nested)
   "Returns invisible arcs, by OP, chaining each run of legend entries in STMTS ---and in each cluster's, its own---
 from one entry's end to the next's start, so a legend stacks as a column rather than spreading as a row.
 An entry sampling an arc template ends at its sample's far point, legend_N_end; any other, at itself.
-STMTS holding (:legend-row) instead set their entries' ends on one rank, a row, beneath every node that no arc of
-ALL, the whole graph's statements, leaves; Graphviz's rank=max would not move a box's nodes."
-  (let* ((all (or all stmts))
-         (end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
+A legend row, see `org--graph-legend-rows', instead sets its entries' ends on one rank; the first row lies beneath
+every node that no arc leaves, and each later row beneath the one before; Graphviz's rank=max would not move a box's
+nodes.  NESTED says STMTS are a cluster's, whose rows the outermost call has chained already."
+  (let* ((end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
                                (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates) (concat id "_end") id))))
-         (entries (--filter (eq (car-safe it) :legend) stmts))
-         (row (and entries (member '(:legend-row) stmts)))
-         (chain (when row
-                  (let* ((every (org--graph-all-stmts all))
+         (row (member '(:legend-row) stmts))
+         (chain (unless nested
+                  (let* ((every (org--graph-all-stmts stmts))
                          (sources (--keep (pcase it (`(:edge ,src . ,_) (org--graph-endpoint-node src ctx))) every))
-                         (sinks (--filter (not (member it sources)) (--keep (pcase it (`(:node ,id) id)) every))))
-                    (reverse
-                     (cons (format "{ rank=same; %s }" (s-join "; " (-map end entries)))
-                           (--map (format "%s %s %s [ style=invis weight=0 ];" (org--graph-dot-id it) op (cadr (car entries)))
-                                  sinks)))))))
+                         (sinks (--filter (not (member it sources)) (--keep (pcase it (`(:node ,id) id)) every)))
+                         (above sinks)
+                         lines)
+                    (dolist (entries (--filter it (org--graph-legend-rows stmts)))
+                      (push (format "{ rank=same; %s }" (s-join "; " (-map end entries))) lines)
+                      (dolist (node above)
+                        (push (format "%s %s %s [ style=invis weight=0 ];" (org--graph-dot-id node) op (cadr (car entries)))
+                              lines))
+                      (setq above (list (funcall end (car entries)))))
+                    lines))))
     (cl-loop for (a b) on stmts
              do (when (and (not row) (eq (car-safe a) :legend) (eq (car-safe b) :legend))
                   (push (format "%s %s %s [ style=invis ];" (funcall end a) op (cadr b)) chain))
                 (pcase a
-                  (`(:cluster ,_ . ,props) (setq chain (append (reverse (org--graph-legend-chain (plist-get props :stmts) op ctx all))
+                  (`(:cluster ,_ . ,props) (setq chain (append (reverse (org--graph-legend-chain (plist-get props :stmts) op ctx t))
                                                                chain)))
-                  (`(:scope ,_ ,inner) (setq chain (append (reverse (org--graph-legend-chain inner op ctx all)) chain)))))
+                  (`(:scope ,_ ,inner) (setq chain (append (reverse (org--graph-legend-chain inner op ctx t)) chain)))))
     (nreverse chain)))
 
 (defun org--graph-tag-clusters->dot (ctx)
