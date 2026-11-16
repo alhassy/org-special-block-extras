@@ -189,3 +189,23 @@
   { rank=same; legend_2 }
   legend_1 -> legend_2 [ style=invis weight=0 ];
 }")
+
+(define-graph-test "A legend samples a backward arc, dir=back, pointing forward, its arrow the arc's arrowtail"
+  :input "
+#+name: killed color=red dir=back arrowhead=dot
++ A
+  + [[B][:killed:]]
++ B
++ Legend :container:
+  - killed :killed:"
+  :output "digraph {
+  A [ label=A ];
+  A -> B [ color=red dir=back arrowhead=dot ];
+  B [ label=B ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ shape=point style=invis ];
+    legend_1_end [ shape=point style=invis ];
+    legend_1 -> legend_1_end [ color=red arrowhead=normal label=killed ];
+  }
+}")

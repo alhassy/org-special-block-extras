@@ -652,7 +652,8 @@ legend entry. The two legends below are one and the same:
 - A template that styles some arc in the graph ---by a link's or a term's tags, or an ~#+edge:~ line--- is
   sampled as an arc; any other, as a node.
 - Several tags, ~- … :token:faint:~ or ~- :token:faint: :: …~, sample their templates together.
-- The sample drops ~constraint~, which shapes the layout rather than the arc.
+- The sample drops ~constraint~, which shapes the layout rather than the arc; and a backward arc's sample, ~dir=back~,
+  points forward, its arrow the arc's ~arrowtail~, so a legend's arrows all point one way.
 - A legend stacks as a column: in a top-down graph its entries are chained by invisible arcs, and in a
   left-right one they share a rank already. An ordered legend, ~1. 2. 3.~, is a row along the graph's foot
   instead: its entries share one rank, as ordered children do, beneath every other node. Graphviz's ~rankdir~

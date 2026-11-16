@@ -144,7 +144,13 @@ and those a :container_ID: tag gathers."
     ;; The arc runs along the graph's direction, as a same-rank one may lose its caption; e.g., under splines=curved.
     (`(:legend ,id ,rows ,label ,templates)
      ;; Sans `constraint', which shapes the layout rather than the arc, and would let the sample drift out of line.
-     (let ((rows (org--graph-override (--remove (equal (car it) "constraint") rows) `(("label" ,label)))))
+     ;; A backward arc, dir=back, draws its arrow at its start; its sample points it forward instead, as every other
+     ;; sample does, so a legend's arrows all point one way.
+     (let* ((rows (--remove (equal (car it) "constraint") rows))
+            (rows (if (not (equal (cadr (assoc "dir" rows)) "back")) rows
+                    (append (--remove (member (car it) '("dir" "arrowhead" "arrowtail")) rows)
+                            `(("arrowhead" ,(or (cadr (assoc "arrowtail" rows)) "normal"))))))
+            (rows (org--graph-override rows `(("label" ,label)))))
        (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates)
            (let ((end (concat id "_end")))
              (list (format "%s [ shape=point style=invis ];" id)
