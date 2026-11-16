@@ -209,3 +209,22 @@
     legend_1 -> legend_1_end [ color=red arrowhead=normal label=killed ];
   }
 }")
+
+(define-graph-test "A legend tagged :@start: sits atop the graph: nothing holds its rows down beneath the sinks"
+  :input "
+#+name: blue fillcolor=blue
++ A
+  + B
++ Legend :container:@start:
+  1. blues :blue:"
+  :output "digraph {
+  graph [ newrank=true ]
+  A [ label=A ];
+  A -> B;
+  B [ label=B ];
+  subgraph cluster_Legend {
+    label=Legend
+    legend_1 [ fillcolor=blue label=blues style=filled ];
+  }
+  { rank=same; legend_1 }
+}")

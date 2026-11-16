@@ -157,7 +157,7 @@ and those a :container_ID: tag gathers."
                    (format "%s [ shape=point style=invis ];" end)
                    (format "%s %s %s%s;" id op end (org--graph-attrs->dot rows))))
          (list (format "%s%s;" id (org--graph-attrs->dot (org--graph-filled rows 'node)))))))
-    (`(:legend-row) nil)
+    ((or `(:legend-row) `(:legend-top)) nil)
     (`(:rank ,kind ,ids)
      (list (format "{ rank=%s; %s }" kind (s-join "; " (-map #'org--graph-dot-id ids)))))
     (`(:scope ,scope ,stmts)
@@ -236,15 +236,17 @@ from one entry's end to the next's start, so a legend stacks as a column rather 
 An entry sampling an arc template ends at its sample's far point, legend_N_end; any other, at itself.
 A legend row, see `org--graph-legend-rows', instead sets its entries' ends on one rank; the first row lies beneath
 every node that no arc leaves, and each later row beneath the one before; Graphviz's rank=max would not move a box's
-nodes.  NESTED says STMTS are a cluster's, whose rows the outermost call has chained already."
+nodes.  Under (:legend-top), nothing holds the rows down, so the first rises to the graph's top rank; arcs from each
+node that nothing enters would hold them up there too, but they drag the whole layout about.  NESTED says STMTS are a cluster's, whose rows the outermost call has chained already."
   (let* ((end (lambda (stmt) (pcase-let ((`(:legend ,id ,_ ,_ ,templates) stmt))
                                (if (--some (gethash it (org--graph-ctx-arc-templates ctx)) templates) (concat id "_end") id))))
          (row (member '(:legend-row) stmts))
          (chain (unless nested
                   (let* ((every (org--graph-all-stmts stmts))
                          (sources (--keep (pcase it (`(:edge ,src . ,_) (org--graph-endpoint-node src ctx))) every))
-                         (sinks (--filter (not (member it sources)) (--keep (pcase it (`(:node ,id) id)) every)))
-                         (above sinks)
+                         (nodes (--keep (pcase it (`(:node ,id) id)) every))
+                         (top (member '(:legend-top) every))
+                         (above (unless top (--filter (not (member it sources)) nodes)))
                          lines)
                     (dolist (entries (--filter it (org--graph-legend-rows stmts)))
                       (push (format "{ rank=same; %s }" (s-join "; " (-map end entries))) lines)

@@ -660,6 +660,7 @@ legend entry. The two legends below are one and the same:
   is the whole graph's, so a container cannot have one of its own; the chain does that job for a legend.
 - A legend's untitled boxes, ~+ :container:~, are legends too; so a legend of several ordered boxes is several rows,
   each beneath the one before ---say, its arcs, then its nodes.
+- A legend tagged ~:@start:~, ~+ Legend :container:@start:~, sits atop the graph rather than at its foot.
 
 ** Checkboxes are templates
 

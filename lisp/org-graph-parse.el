@@ -174,6 +174,7 @@ from, it is clipped at its border.  Its own table rows, such as | bgcolor | grey
 ;;   (:scope PREAMBLE STATEMENTS)  ---an anonymous subgraph: an item's defaults, reaching its descendants
 ;;   (:legend ID ROWS LABEL TEMPLATES)  ---a sample of TEMPLATES' ROWS, captioned LABEL
 ;;   (:legend-row)                      ---its legend's entries are a row along the graph's foot
+;;   (:legend-top)                      ---its legend's rows sit atop the graph instead
 
 (cl-defstruct (org--graph-ctx (:constructor org--graph-ctx-create))
   "What a parse accumulates, and what printing its statements consults."
@@ -973,6 +974,9 @@ just tags: `- :T: :: %s', or, in a container titled Legend, `- %s :T:'" id id id
     (when (and reference (plist-get text :tags))
       (user-error "graph: `[[%s]]' refers to a node declared elsewhere, so tags after it style nothing; to style the \
 arc, write them in the link: [[%s][:%s:]]" id id (s-join ":" (plist-get text :tags))))
+    ;; A legend's `:@start:' sets it atop the graph, rather than at its foot.
+    (when (and aligns (equal shape "cluster") (equal (downcase (format "%s" name)) "legend") (equal aligns '("@start")))
+      (setq aligns nil))
     (when aligns
       (when (or legend? (equal shape "cluster"))
         (user-error "graph: `%s' is no node, so `:%s:' cannot align it" id (car aligns)))
@@ -1009,10 +1013,12 @@ record; if each key names an attribute, check its spelling" id))
               ;; A legend's untitled boxes, `+ :container:', are legends too: its rows, when ordered.
               (legend (or (equal (downcase (format "%s" name)) "legend")
                           (and org--graph-legend (string-prefix-p "anonymous " (format "%s" name)))))
-              ;; An ordered legend, 1. 2. 3., is a row along the graph's foot, rather than a column.
+              ;; An ordered legend, 1. 2. 3., is a row along the graph's foot, rather than a column; or, tagged
+              ;; `:@start:', atop it.
               (stmts (let ((org--graph-legend legend))
                        (append (--mapcat (org--graph-parse-item it nil ctx) members)
-                               (if legend (when (eq kind 'ordered) '((:legend-row))) ranked))))
+                               (if legend (when (eq kind 'ordered) '((:legend-row))) ranked)
+                               (when (and legend (member "@start" (plist-get text :tags))) '((:legend-top))))))
               (arcs (append arcs (--mapcat (org--graph-parse-item it id ctx) refs))))
         (-some--> (org--graph-first-node stmts) (puthash id it (org--graph-ctx-clusters ctx)))
         ;; The cluster comes first, so that its first node is declared inside it before any arc mentions that node.
