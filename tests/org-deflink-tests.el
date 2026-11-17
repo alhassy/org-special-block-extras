@@ -113,3 +113,11 @@
 
 (provide 'org-deflink-tests)
 ;;; org-deflink-tests.el ends here
+
+(deftest "C-h, C-n, and C-p keep their usual meaning in an Org buffer, off our links; issue #63"
+  (with-temp-buffer
+    (org-mode)
+    (org-special-block-extras-mode 1)
+    (should-not (eq (key-binding (kbd "C-h")) #'org-this-link-show-docs))
+    (should-not (eq (key-binding (kbd "C-n")) #'org-this-link-next))
+    (should-not (eq (key-binding (kbd "C-p")) #'org-this-link-previous))))

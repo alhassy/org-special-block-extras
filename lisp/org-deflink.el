@@ -24,7 +24,7 @@
 ;;; Commentary:
 
 ;; The `org-deflink' macro for defining new Org link types, along with the
-;; parent keymap `org-special-block-extras-mode-map', nav helpers
+;; parent keymap `org-deflink-map', nav helpers
 ;; (`org-link-at-point', `org-this-link-next', `org-this-link-previous',
 ;; `org-this-link-show-docs'), and the default C-n/C-p/C-h bindings.
 ;;
@@ -69,33 +69,33 @@ The marker is a paragraph of its own, lest ox-gfm, which unfills paragraphs, joi
 ;; We define a parent keymap that org-deflink keymaps inherit from.
 ;; We also define a few useful functions that we then bind to this parent map.
 
-(defvar org-special-block-extras-mode-map (make-keymap)
+(defvar org-deflink-map (make-keymap)
   "A keymap of actions, on link types, that is inherited by all `org-deflink' link keymaps.
 
 To learn about keymap inheritance, run:  C-h i m elisp RETURN m Inheritance and Keymaps RETURN.
 
 This keymap has the following bindings setup:
 
-    (define-key org-special-block-extras-mode-map (kbd \"C-n\") #'org-this-link-next)
-    (define-key org-special-block-extras-mode-map (kbd \"C-p\") #'org-this-link-previous)
-    (define-key org-special-block-extras-mode-map (kbd \"C-h\") #'org-this-link-show-docs)
+    (define-key org-deflink-map (kbd \"C-n\") #'org-this-link-next)
+    (define-key org-deflink-map (kbd \"C-p\") #'org-this-link-previous)
+    (define-key org-deflink-map (kbd \"C-h\") #'org-this-link-show-docs)
 
 The use of `C-n' and `C-p' may be a nuisance to some users, since they override `forward-line'
 and `previous-line' when the cursor is on an org-link type. As such, place something like the following
 in your initialisation file.
 
     ;; Use  C-c C-f  to move to the next link of the same link-type as the one under the cursor
-    (define-key org-special-block-extras-mode-map (kbd \"C-c C-f\") #'org-this-link-next)
+    (define-key org-deflink-map (kbd \"C-c C-f\") #'org-this-link-next)
 
 Alternatively, if you don't find much value in these basic bindings, you can remove them all:
 
     ;; Disable basic org-special-block-extras link keybindings
-    (setcdr org-special-block-extras-mode-map nil)
+    (setcdr org-deflink-map nil)
 
     ;; Or, remove a single binding
-    (define-key org-special-block-extras-mode-map (kbd \"C-n\") nil)")
+    (define-key org-deflink-map (kbd \"C-n\") nil)")
 
-(defvar org-special-block-extras-mode-map--link-keymap-docs nil
+(defvar org-deflink-map--link-keymap-docs nil
   "An alist referencing key bindings for Org links; used in `org-this-link-show-docs'.")
 
 (defun org--link-at-point ()
@@ -137,11 +137,11 @@ a whole symbol; e.g., \"kbd:\" but not \"xkbd:\"."
               "\n\tC-h: Shows this helpful message buffer"
               "\n\tC-n/C-p on the link to jump to next/previous links of this type;"
               "\n\tC-c C-x C-n/p for moving between arbitrary link types.\n\n"
-              (pp-to-string (cdr (assoc link org-special-block-extras-mode-map--link-keymap-docs))))))))
+              (pp-to-string (cdr (assoc link org-deflink-map--link-keymap-docs))))))))
 
-(define-key org-special-block-extras-mode-map (kbd "C-n") #'org-this-link-next)
-(define-key org-special-block-extras-mode-map (kbd "C-p") #'org-this-link-previous)
-(define-key org-special-block-extras-mode-map (kbd "C-h") #'org-this-link-show-docs)
+(define-key org-deflink-map (kbd "C-n") #'org-this-link-next)
+(define-key org-deflink-map (kbd "C-p") #'org-this-link-previous)
+(define-key org-deflink-map (kbd "C-h") #'org-this-link-show-docs)
 
 (defun org--deflink-mentions-p (form names)
   "Non-nil iff FORM mentions any of the symbols NAMES, anywhere within it."
@@ -338,7 +338,7 @@ flat top-level plist with no enclosing vector:
                ,@body))
            ;; Which bindings this link type adds, for `org-this-link-show-docs'.
            ,@(when keymap
-               `((setf (alist-get ,(symbol-name name) org-special-block-extras-mode-map--link-keymap-docs nil nil #'equal)
+               `((setf (alist-get ,(symbol-name name) org-deflink-map--link-keymap-docs nil nil #'equal)
                        ',keymap)))
            ;; Whether following these links does anything, and what more to say of them, for eldoc; see
            ;; `org--special-block-eldoc'.
@@ -355,9 +355,9 @@ flat top-level plist with no enclosing vector:
             ;; E.g., 'full: such links are never folded in descriptive display; i.e.,
             ;; “[[example:label][description]]” appears verbatim.
             :display ,(plist-get display :display)
-            ;; On NAME: links, C-n/C-p go to the next/previous such links; see `org-special-block-extras-mode-map'.
+            ;; On NAME: links, C-n/C-p go to the next/previous such links; see `org-deflink-map'.
             :keymap (let ((o-keymap (copy-keymap org-mouse-map)))
-                      (set-keymap-parent o-keymap org-special-block-extras-mode-map)
+                      (set-keymap-parent o-keymap org-deflink-map)
                       ,@(cl-loop for (key action) on keymap by #'cddr
                                  collect `(define-key o-keymap (kbd ,(format "%s" key)) (lambda () (interactive) ,action)))
                       o-keymap)
