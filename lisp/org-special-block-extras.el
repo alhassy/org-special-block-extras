@@ -359,6 +359,7 @@ A doc buffer, for a completion popup's documentation pane, holds the block's sig
 All relevant Lisp functions are prefixed ‘org-’; e.g., `org-docs-insert'.
 
 On a #+begin_NAME line, or a NAME: link, eldoc shows the block's arguments and gist;
+on its #+begin_NAME or #+end_NAME, as on the link, C-h shows its docs and C-n/C-p go to the next/previous one;
 C-c ' edits any special block's contents in an Org buffer, or one of its `:edit-indirect-mode';
 C-c C-v C-d splits any special block in two at point; C-c C-v C-j inserts one of its arguments;
 and a heading tagged :red:, or :details_Hint:, exports as that block around its text.
@@ -430,6 +431,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
         (font-lock-add-keywords 'org-mode '((org--fontify-block-languages)))
         ;; Appended, so the link point is in shows in full after Org hides its brackets.
         (font-lock-add-keywords 'org-mode '((org--reveal-link-at-point)) 'append)
+        ;; On a block's #+begin_ and #+end_, C-h, C-n, and C-p act as they do on a link; see `org-defblock-map'.
+        (font-lock-add-keywords 'org-mode '((org--activate-block-delimiters)) 'append)
         ;; Before the rewrite, which consumes the documentation blocks this reads.
         (add-hook 'org-export-before-parsing-functions #'org--docs-prepare -60)
         (add-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
@@ -479,6 +482,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))
+    (font-lock-remove-keywords 'org-mode '((org--activate-block-delimiters)))
     (remove-hook 'org-export-before-parsing-functions #'org--docs-prepare)
     (remove-hook 'eldoc-documentation-functions #'org--special-block-eldoc)
     (remove-hook 'org-mode-hook #'org--special-block-capf-setup)

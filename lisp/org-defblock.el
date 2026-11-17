@@ -59,6 +59,7 @@
 (require 'org-block-export)
 (require 'org-defblock-tag)
 (require 'org-block-fontify)
+(require 'org-block-nav)
 (require 'org-ctrl-c-ctrl-c-for-special-block)
 
 ;;;; org-defblock-links-and-tags

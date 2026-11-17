@@ -1411,6 +1411,11 @@ Alternatively, if you don't find much value in these basic bindings, you can rem
 #+end_src
 #+end_details
 
+ Links are lightweight blocks; so a block's ~#+begin_NAME~ and ~#+end_NAME~ act as its link does: there, ~C-h~
+ shows the block's documentation, and ~C-n~ / ~C-p~ go to the next / previous ~NAME~ block.  Within its contents,
+ these keys keep their usual meaning.  These bindings live in ~org-defblock-map~, as the link's do in
+ ~org-deflink-map~.
+
  #+begin_details Implementation of org-deflink
 #+begin_src emacs-lisp
 (cl-defmacro org-deflink
