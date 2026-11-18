@@ -36,7 +36,7 @@ Body text.
 ]
 ")
 
-(define-org-export-test "a bare tag reads the main argument from the property of the same name, else uses defaults"
+(define-org-export-test "a bare tag reads the main argument from the property of the same name, else a title from the heading"
   :input "* With a property :memo:
           :PROPERTIES:
           :TITLE: From the drawer
@@ -55,7 +55,7 @@ One.
 ]
 \\section{Without}
 \\label{sec:org-id-2}
-[Memo/teal: 
+[Without/teal: 
 Two.
 ]
 ")
@@ -96,6 +96,19 @@ Two.
 
 ;;; Which text is wrapped, and which sections and tags are touched
 
+(define-org-export-test "a bare tag uses the main argument's default when that argument is not a title"
+  :input "* Cheers :cheer:
+          Hip hip."
+  :to latex
+  :using (org-defblock cheer (&optional (reps 2) :tag t &context contents)
+           "Repeat CONTENTS REPS times." (format "[%s×: %s]" reps contents))
+  :equals "\\section{Cheers}
+\\label{sec:org-id-1}
+[2×: 
+Hip hip.
+]
+")
+
 (define-org-export-test "a tagged section keeps its heading and other tags, and wraps only its own text"
   :input "* Outer :draft:memo:
           Outer text.
@@ -107,7 +120,7 @@ Two.
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer\\hfill{}\\textsc{draft}}
 \\label{sec:org-id-1}
-[Memo/teal: 
+[Outer/teal: 
 Outer text.
 ]
 \\subsection{Inner}
@@ -166,7 +179,7 @@ Body text.
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Outer}
 \\label{sec:org-id-1}
-[Memo/teal:
+[Outer/teal:
 Outer text.
 ]
 \\subsection{Inner}
@@ -194,7 +207,7 @@ Inner text.
            (format "[%s/%s: %s]" title color contents))
   :equals "\\section{Lonely}
 \\label{sec:org-id-1}
-[Memo/teal:
+[Lonely/teal:
 Text.
 ]
 \\section{Sibling}
@@ -293,7 +306,7 @@ Plain text.
     ;; Re-enabling the mode re-adds the block rewriter after the tag was hooked.
     (org-special-block-extras-mode -1)
     (org-special-block-extras-mode 1)
-    (should (s-contains-p "[Memo: " (org-export-string "* Heading :memo:\nBody." 'latex)))))
+    (should (s-contains-p "[Heading: " (org-export-string "* Heading :memo:\nBody." 'latex)))))
 
 (deftest "disabling the mode removes every hook and advice that enabling it installs"
   (unwind-protect

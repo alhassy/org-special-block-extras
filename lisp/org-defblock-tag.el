@@ -141,6 +141,11 @@ A subsection tagged :NAME: itself is left to its own tag."
             (forward-line 1))
           (org--wrap-section-text name header backend))))))
 
+(defun org--heading-title (heading)
+  "Returns HEADING's title, sans its stars, TODO keyword, priority, and tags; \"** TODO Heads up :box:\" gives \"Heads up\"."
+  (let ((case-fold-search nil))
+    (and (string-match org-complex-heading-regexp heading) (org-string-nw-p (match-string 4 heading)))))
+
 (defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend
                                             &optional subsections other-keys?)
   "Rewrite the section at point ---its heading line and DRAWER erased by `org-deftag'--- as HEADING atop a NAME block.
@@ -153,7 +158,8 @@ A subsection tagged :NAME: itself is left to its own tag."
                                                Body text…
                                                #+end_details
 
-TAG-ARGS, joined by spaces, form the main argument, else the section's MAIN property; each of the
+TAG-ARGS, joined by spaces, form the main argument, else the section's MAIN property, else ---when MAIN is
+`title'--- the heading's own title; so * Heads up :box: is #+begin_box \"Heads up\".  Each of the
 KEYWORDS found among the section's PROPERTIES becomes a keyword argument ---and, when OTHER-KEYS? since
 the block allows other keys, so does every other property bar Org's own, such as CATEGORY and CUSTOM_ID.
 The section's own text is
@@ -170,7 +176,9 @@ becomes of the section's subsections:
 
 The block is then at once replaced by the result of `org--NAME-block' for BACKEND; so a tag works even
 when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
-  (let* ((main-arg (if tag-args (string-join tag-args " ") (org--section-property properties main)))
+  (let* ((main-arg (cond (tag-args (string-join tag-args " "))
+                         ((org--section-property properties main))
+                         ((eq main 'title) (org--heading-title heading))))
          (header (org--section-block-header properties main-arg
                                              (org--section-block-keywords properties main keywords other-keys?)))
          (level (progn (string-match "\\`\\*+" heading) (match-end 0))))

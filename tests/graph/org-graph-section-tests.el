@@ -195,6 +195,15 @@ Prose." 'html t)))
       (should (s-contains-p "Afterwards" html))
       (should-not (s-contains-p "<h3" html)))))
 
+(deftest "a plain :graph: heading titles its graph, as #+begin_graph TITLE does; :graph_T: retitles it"
+  (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
+    (should (s-contains-p "label=\"Our grammar\"" (org-export-string-as "
+* Our grammar :graph:
+** expr" 'html t)))
+    (should (s-contains-p "label=Lineage" (org-export-string-as "
+* Our grammar :graph_Lineage:
+** expr" 'html t)))))
+
 (deftest "a graph node tagged as another block, :details:, stays a node; the graph's tag runs first"
   (cl-letf (((symbol-function 'org-graph--render) (lambda (&rest _) nil)))
     (let ((html (org-export-string-as "

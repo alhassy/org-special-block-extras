@@ -3369,21 +3369,21 @@ Reading in glare?  [[palette:][Pick a background]] ---a pale color soothes the e
 - *🎛 Switch any block*: =:when (eq backend 'html)=, =:noexport t=, =:let (N 7)=, =:boxed "Title"=, =:folded t=, and
   =:verbatim t=, and =:C-c_C-c ACTION= work on every block ---ours, yours, or Org's own src and quote blocks; and,
   as properties, on every section, e.g., =:when: (eq backend 'html)=; see [[#switches-for-every-block][switches]].
-- *🗂 Every block is a section*: each =#+begin_NAME= is also a heading tag =:NAME:=, its underscored
-  items the main argument and its drawer the keyword arguments. So these two agree, the section's
-  text going into the box:
+- *🗂 Every block is a section*: each =#+begin_NAME= is also a heading tag =:NAME:=, the heading its
+  title and the drawer its keyword arguments. So these two agree, the section's text going into the
+  box:
   #+begin_example
 ,#+begin_box "Heads up" :background-color pink
 Mind the gap.
 ,#+end_box
 
-,* Why bother?        :box_Heads_up:
+,* Heads up        :box:
 :PROPERTIES:
 :BACKGROUND-COLOR: pink
 :END:
 Mind the gap.
   #+end_example
-  Likewise, =:details_Hint:= folds a section away, and a =:graph:= section draws its subheadings as
+  Likewise, =* Hint :details:= folds a section away, and a =:graph:= section draws its subheadings as
   nodes; see [[#make-your-own-blocks][org-defblock]], and [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#sections-are-graphs-the-graph-tag][sections are graphs]].
 - badge:Hello|World Use *badge-style links* to embed GitHub stars, Reddit subs, or custom  project metadata via =shields.io=.
 - *🛠 Use =org-defblock=, =org-deflink= and =org-deftag=* ---Org, extended as one extends Lisp:
@@ -3510,7 +3510,7 @@ block ---an Org list, colored by ~#+name:~ tables folded in its ~:TEMPLATES:~ dr
     + [[#nice-keystroke-renditions][=kbd:C-x_C-s=]] [fn::Keys as keycaps, their command's documentation as a tooltip; click one in Emacs to run it.] :glance_read:
     + [[doc:org-make-badge][Badges]] \\ badge · melpa · github-* [fn::Shields.io badges, for a project's README.] :glance_read:
     + Every block, as a link [fn::=red:𝒳=, =[[box:Title][…]]=, and the like: a block's one-line form.] :glance_read:
-    + [[#make-your-own-blocks][Every block, as a tag]] [fn::=* Answer :details_Hint:= folds its section away; a =:graph:= section draws its subheadings as nodes.] :glance_read:
+    + [[#make-your-own-blocks][Every block, as a tag]] [fn::=* Hint :details:= folds its section away; a =:graph:= section draws its subheadings as nodes.] :glance_read:
   + Switches on any block :glance_act:
     + [[#switches-for-every-block][:when · :noexport]] [fn::Export a block only for some backends, or never.] :glance_act:
     + [[#switches-for-every-block][:let · :ignore]] [fn::Substitute variables beforehand; or drop the block's behaviour, keeping its text.] :glance_act:
@@ -6672,9 +6672,9 @@ By induction on n.
   own =header-args:LANG=. See =C-h f org--block-header-args=.
 
   One definition gives three uses: a block, a link, and a tag. A section tagged =:note:=
-  exports as a =note= block around its own text, up to the next heading; the tag's
-  underscore-separated items form the main argument ---tags cannot hold spaces--- and the
-  section's properties supply keyword arguments by name. So all three of these agree:
+  exports as a =note= block around its own text, up to the next heading; a main argument
+  named =title= is the heading's title, and the section's properties supply keyword arguments
+  by name. So all three of these agree:
   #+begin_example
 #+begin_note "Heads up" :color red
 Mind the gap.
@@ -6682,13 +6682,18 @@ Mind the gap.
 
 [[note:Heads up][Mind the gap.]]
 
-,* Why bother?        :note_Heads_up:
+,* Heads up        :note:
 :PROPERTIES:
 :COLOR: red
 :END:
 Mind the gap.
   #+end_example
-  Likewise, the package's own blocks are links and tags too; e.g., =:details_Hint:= folds a
+  The main argument may come from elsewhere, strongest first: the tag's underscore-separated items, as
+  in =:details_Spoiler_alert:= ---tags cannot hold spaces--- then a property of the argument's own name,
+  such as =:TITLE:=, and lastly the heading. A main argument that is no title, such as =parallel='s
+  column count, keeps its default.
+
+  Likewise, the package's own blocks are links and tags too; e.g., =* Hint :details:= folds a
   section's text away under the title /Hint/. Try tagging a heading =:red:= ---or =:blue:=,
   =:teal:=, … any of the 19 colors--- and its text exports in that color.
 

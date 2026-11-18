@@ -1335,7 +1335,7 @@ Here is a block:
 
 And here is the very same graph, as a section; both draw the same dot, and so the same picture:
 #+begin_org :ignore t :demo live
-,* Our grammar :graph_Our_grammar:
+,* Our grammar :graph:
 :PROPERTIES:
 :DIRECTION: right
 :END:
@@ -1357,7 +1357,7 @@ Every left cell is a block's spelling; the right, what a section says instead.
 
 | Block                                              | Section                                                               |
 |----------------------------------------------------+-----------------------------------------------------------------------|
-| ~#+begin_graph TITLE :direction right~             | ~* HEADING :graph_TITLE:~, its drawer holding ~:DIRECTION: right~     |
+| ~#+begin_graph TITLE :direction right~             | ~* TITLE :graph:~, its drawer holding ~:DIRECTION: right~             |
 | ~+ child~ nested under ~+ parent~                  | ~** child~ under ~* parent~                                           |
 | item text: markup, ~<<id>>~, ~[[T]]~, ~[fn::…]~    | the heading's title: the very same text                               |
 | trailing ~:t₁:t₂:~ tags                            | the heading's own tags ---the very same spelling                      |
@@ -1371,8 +1371,8 @@ Every left cell is a block's spelling; the right, what a section says instead.
 | ~[X]~ / ~[ ]~ checkbox                             | a ~DONE~ / ~TODO~ keyword; a keyword ~K~ applies template ~k~, if any |
 | ~#+graph:~, ~#+name:~, a legend, before the items  | the root's own text, before its first subheading                      |
 
-- ~:graph_The_Grammar:~ titles the graph ~The Grammar~; plain ~:graph:~ leaves it untitled, the heading
-  being title enough.
+- The heading titles the graph, as it does every tagged block; ~:graph_The_Grammar:~ retitles it ~The
+  Grammar~, and a ~:TITLE:~ property does too.
 - The heading stays a heading; its text and subsections become the graph, on export, and the next
   section is untouched. A node's own tags, such as ~:details:~, style it; they never fold its section.
 - A drawer's keys are Graphviz attributes, regardless of case: ~:url:~ is ~URL~. Org's own properties, such
@@ -1757,8 +1757,9 @@ reached by its words, and a reference's ~:edge.KEY~ rows style the arc into it:
 
 Here ~b~ and ~f~ span three columns, and ~hello~, ~g~, and ~h~ three rows.
 
-Next comes a section whose whole text is a graph, by its ~:graph_Lineage:~ tag; so it has no prose of its
-own, lest the prose become part of the graph.
+Next comes a section whose whole text is a graph, by its ~:graph_Lineage:~ tag ---which titles the graph
+/Lineage/, rather than the heading's words; so it has no prose of its own, lest the prose become part of the
+graph.
 
 ** A section is a graph :graph_Lineage:
 :PROPERTIES:

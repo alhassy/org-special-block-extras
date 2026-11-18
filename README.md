@@ -111,20 +111,20 @@ e.g., this section is only in the HTML export:
 ```
 See [switches](https://alhassy.com/org-special-block-extras-blocks-and-links#switches-for-every-block).
 
-**🗂 Every block is a section**: each `#+begin_NAME` is also a heading tag `:NAME:`, its underscored items
-the main argument and its drawer the keyword arguments. So these two agree:
+**🗂 Every block is a section**: each `#+begin_NAME` is also a heading tag `:NAME:`, the heading its title
+and the drawer its keyword arguments. So these two agree:
 ```org
 #+begin_box "Heads up" :background-color pink
 Mind the gap.
 #+end_box
 
-* Why bother?        :box_Heads_up:
+* Heads up        :box:
 :PROPERTIES:
 :BACKGROUND-COLOR: pink
 :END:
 Mind the gap.
 ```
-Likewise, `:details_Hint:` folds a section away, and a [`:graph:` section](graphs-README.org#sections-are-graphs-the-graph-tag)
+Likewise, `* Hint :details:` folds a section away, and a [`:graph:` section](graphs-README.org#sections-are-graphs-the-graph-tag)
 draws its subheadings as nodes.
 
 ## 🔗 Ready-to-Use Custom Links

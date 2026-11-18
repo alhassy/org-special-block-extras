@@ -75,7 +75,7 @@
 ;;
 ;; A section tagged :graph: is the same graph, spelt as an outline: subheadings are items, drawers their tables.
 ;;
-;;   * Our grammar :graph_Our_grammar:   ; ≡ #+begin_graph Our grammar :direction right
+;;   * Our grammar :graph:               ; ≡ #+begin_graph Our grammar :direction right
 ;;   :PROPERTIES:
 ;;   :DIRECTION: right
 ;;   :END:
