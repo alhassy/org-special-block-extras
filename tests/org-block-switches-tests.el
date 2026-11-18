@@ -522,6 +522,87 @@ Try induction.")))
     (should (string-match-p "Stuck?" html))
     (should (string-match-p "Try induction." html))))
 
+(deftest "a heading's :backend keeps its subtree only along those backends; else axes it, heading included" [switches sections]
+  (let ((section "
+* Web only
+:PROPERTIES:
+:backend: html
+:END:
+Hover for more.
+** Details
+Tooltips.
+* Everywhere
+Prose."))
+    (should (string-match-p "Hover for more.*\n\\(.*\n\\)*.*Tooltips" (org-export-string section)))
+    (let ((latex (org-export-string section 'latex)))
+      (should-not (string-match-p "Web only\\|Hover\\|Details\\|Tooltips" latex))
+      (should (string-match-p "Everywhere" latex)))))
+
+(deftest "a heading's :tags, which #+exclude_tags: names, axes its subtree; Org's own TAGS property never shadows it" [switches sections]
+  (let ((html (org-export-string "
+#+exclude_tags: solution
+* Exercise :easy:
+Show that 1 + 1 = 2.
+* Answer :easy:
+:PROPERTIES:
+:tags: solution
+:END:
+By definition.")))
+    (should (string-match-p "Show that" html))
+    (should-not (string-match-p "Answer\\|By definition" html)))
+  (let ((html (org-export-string "
+* Answer :easy:
+:PROPERTIES:
+:tags: solution
+:END:
+By definition.")))
+    (should (string-match-p "Answer.*easy" html))
+    (should (string-match-p "By definition" html))))
+
+(deftest "a heading's :within, :filename, and :copy wrap its text, as they would a block's" [switches sections]
+  (let ((html (org-export-string "
+* Aside
+:PROPERTIES:
+:within: (box \"Note\")
+:END:
+Easily missed.")))
+    (should (string-match-p "<h3>Note</h3>[^<]*<p>\nEasily missed." html)))
+  (let ((html (org-export-string "
+* Setup
+:PROPERTIES:
+:filename: init.el
+:copy: t
+:END:
+Paste this.")))
+    (should (string-match-p "osbe-filename.*<code>init.el</code>" html))
+    (should (string-match-p "osbe-copy-button" html))))
+
+(deftest "adjacent headings' :tab make one tabset of their sections, as adjacent blocks' do" [switches sections]
+  (let ((html (org-export-string "
+* Install
+:PROPERTIES:
+:tab: MELPA
+:END:
+M-x package-install.
+* Install by hand
+:PROPERTIES:
+:tab: Git
+:END:
+git clone.")))
+    (should (string-match-p "osbe-tab" html))
+    (should (string-match-p "MELPA" html))
+    (should (string-match-p "Git" html))))
+
+(deftest "a heading's :log logs its section's rendering, as a block's" [switches sections]
+  (when (get-buffer "*Org Block Log*") (kill-buffer "*Org Block Log*"))
+  (org-export-string "
+* Answer
+:PROPERTIES:
+:log: t
+:END:
+It is *42*.")
+  (should (string-match-p "It is <b>42</b>" (with-current-buffer "*Org Block Log*" (buffer-string)))))
+
 (org-deftest "C-c C-c within a section runs its :C-c_C-c switch, or an ancestor's, where Org's own has nothing to do" [switches sections]
   :text "
 * Quiz

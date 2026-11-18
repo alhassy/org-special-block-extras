@@ -266,10 +266,13 @@ Each switch of `org-block-switches' that SWITCHES gives a non-nil value wraps RE
   :backend html, :backend (latex beamer), :backend md  ;; md: Markdown, which derives from html, is html too
 Sugar for the commonest :when, which needs no Lisp, so no question before it runs; see `org-defblock-evaluate-switches'."
   :depth -80
-  (if (--some (if org-export-current-backend (org-export-derived-backend-p org-export-current-backend it) (eq backend it))
-              (ensure-list backends))
-      (funcall render contents)
-    ""))
+  (if (org--along-backends-p backends backend) (funcall render contents) ""))
+
+(defun org--along-backends-p (backends backend)
+  "Returns whether this export, along BACKEND, is along one of BACKENDS, a symbol or list of them, or one deriving from
+one; e.g., Markdown is along html."
+  (--some (if org-export-current-backend (org-export-derived-backend-p org-export-current-backend it) (eq backend it))
+          (ensure-list backends)))
 
 (defun org--tags-of (tags)
   "Returns the tag names TAGS denotes, a symbol, a string of words, or a list of either; e.g., (solution \"draft\")."
@@ -538,12 +541,23 @@ By way of example, \"(eq backend \='html)\" reads as a form, \"t\" and \"\" as t
         (`(,value . ,end) (if (= end (length string)) value string))
         (_ string)))))
 
+(defun org--heading-drawer-alist ()
+  "Returns the (KEY . VALUE) pairs of the drawer of the heading at point, as written; Org's special keys, such as
+TAGS, included, which `org-entry-properties' leaves out.  \":tags: solution\"  ↦  ((\"tags\" . \"solution\"))"
+  (-when-let (block (org-get-property-block))
+    (save-excursion
+      (goto-char (car block))
+      (cl-loop while (re-search-forward org-property-re (cdr block) t)
+               collect (cons (match-string-no-properties 2) (match-string-no-properties 3))))))
+
 (defun org--heading-switches-at-point ()
   "Returns the plist of `org-block-switches' that the drawer of the heading at point gives, sans inheritance.
-A :folded t is titled by the heading, as a src block's is by its language."
-  (let ((switches (cl-loop for (key) in org-block-switches
-                           for value = (org-entry-get nil (substring (symbol-name key) 1))
-                           when value append (list key (org--heading-switch-value value)))))
+A :folded t is titled by the heading, as a src block's is by its language.  We read the drawer itself, since Org
+reads some keys as its own special properties: `org-entry-get' gives TAGS as the heading's tags, not :tags:'s value."
+  (let* ((drawer (org--heading-drawer-alist))
+         (switches (cl-loop for (key) in org-block-switches
+                            for value = (cdr (assoc-string (substring (symbol-name key) 1) drawer t))
+                            when value append (list key (org--heading-switch-value value)))))
     (if (eq (plist-get switches :folded) t) (plist-put switches :folded (org-get-heading t t t t)) switches)))
 
 (defun org--heading-source (heading contents)
@@ -588,7 +602,8 @@ ALT_TITLE, shows TITLE sans 🔗.  Other backends get the CUSTOM_ID alone; LaTeX
   The answer is N.
 
 The section's contents are its text and subsections, below its drawer; its heading stays put, being its title.
-+ :noexport, or a :when whose form is nil, axes the whole subtree, heading included.
++ :noexport, a :when whose form is nil, a :backend we export along none of, or :tags that #+exclude_tags: names,
+  axes the whole subtree, heading included.
 + :ignore bypasses the section's own behaviour: its tags that an `org-deftag' defines, such as :details_Hint:.
 + :verbatim shows the section as written, heading included, as Org source; :demo too, beside its rendering,
   by `org--rewrite-demos', which runs first.
@@ -616,7 +631,9 @@ Each switch is axed from the drawer once applied, lest the pass after #+INCLUDE:
             (org--heading-permalink id title)
             (setq switches (org-plist-delete switches :permalink)))
           (if (or (plist-get switches :noexport)
-                  (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend))))
+                  (and (plist-member switches :when) (not (org--block-eval (plist-get switches :when) backend)))
+                  (and (plist-member switches :backend) (not (org--along-backends-p (plist-get switches :backend) backend)))
+                  (-intersection (org--tags-of (plist-get switches :tags)) (org--export-exclude-tags)))
               (delete-region (point) (save-excursion (org-end-of-subtree t t) (point)))
             (let* ((line (buffer-substring (line-beginning-position) (line-end-position)))
                    ;; Shown as source, the heading is part of what is shown; else it stays put, atop its contents.

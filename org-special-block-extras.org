@@ -6013,10 +6013,14 @@ function draw() {
 Recall that p -> q.
   #+end_src
   A section's contents are its text and subsections; its heading stays put, being its title.
-  + =:noexport t=, or a =:when= whose form is nil, axes the whole subtree, heading included.
+  + =:noexport t=, a =:when= whose form is nil, a =:backend= we export along none of, or
+    =:tags= that =#+exclude_tags:= names, axes the whole subtree, heading included.
   + =:let= substitutes throughout the subtree, its blocks included.
-  + =:folded= and =:boxed= wrap the contents, which then may not have subsections, as no block
-    can hold a heading; =:folded t= is titled by the heading.
+  + =:folded=, =:boxed=, =:within=, =:copy=, and =:tab= wrap the contents, which then may not
+    have subsections, as no block can hold a heading; =:folded t= is titled by the heading, and
+    adjacent sections' =:tab= make one tabset.
+  + =:filename= sits atop the contents; =:permalink= puts its 🔗 beside the heading; and =:log=
+    logs the section's rendering. Only =:highlight= has nothing to do, as a section has no lines.
   + =:verbatim t= shows the section as written, heading included, as Org source; and =:demo t=
     shows that beside its rendering, =C-c C-c= within the section taking its snapshot.
   + =:ignore t= bypasses the section's own behaviour: its tags that an ~org-deftag~ defines, such
