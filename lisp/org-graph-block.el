@@ -342,44 +342,14 @@ Its #+RESULTS: go on the line after BLOCK's end point; see `org-graph--cc-handle
                                   (org-graph--annotate-dot-error err-str dot)))))
               (delete-file map-file))))))))
 
-(defun org-graph--section-block (root)
-  "Returns (ORIGIN . BLOCK): the :graph: section at ROOT as the `org-special-block' its export reads, its contents the
-section's text and subsections; and a marker at their first line.  The tag's items and the drawer make its header, as
-`org--defblock-section-to-block' says; BLOCK's end point is the drawer's, so #+RESULTS: go right beneath it, where the
-graph skips them; see `org--graph-read-scope'."
-  (save-excursion
-    (goto-char root)
-    (-let* ((line       (buffer-substring (line-beginning-position) (line-end-position)))
-            (case-fold-search t)
-            (items      (and (string-match (org--deftag-regexp 'graph) line) (match-string 2 line)))
-            (tag-args   (cdr (split-string (or items "") "_")))
-            (properties (cl-loop for (key . value) in (org-entry-properties nil 'standard)
-                                 append (list (intern (concat ":" (downcase key))) value)))
-            (spec       (get 'org--graph-block 'org-defblock-args))
-            (main       (or (car (plist-get spec :main)) 'title))
-            (header     (org--section-block-header
-                         properties (if tag-args (string-join tag-args " ") (org--section-property properties main))
-                         (org--section-block-keywords properties main (org--block-declared-keywords spec) t)))
-            (end-pt     (progn (org-end-of-meta-data) (max root (1- (point)))))
-            (_          (when (looking-at-p "[ \t]*#\\+RESULTS:")
-                          (goto-char (org-element-property :end (org-element-at-point)))))
-            (origin     (progn (skip-chars-forward " \t\n") (copy-marker (line-beginning-position) t)))
-            (end        (save-excursion (goto-char root) (org-end-of-subtree t t) (point)))
-            ((positional kwdargs) (--split-with (not (keywordp it)) (org--read-header header))))
-      (cons origin (make-org-special-block
-                    :name "graph" :parameters (string-trim header) :kwdargs kwdargs
-                    :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
-                    :contents (buffer-substring-no-properties origin (max origin end))
-                    :start-point root :end-point end-pt)))))
-
 (defun org-graph--section-cc ()
   "Render the :graph: section around point, as C-c C-c renders a #+begin_graph block; see `org-graph--cc-handler'.
 Only within the section's body: on a heading, C-c C-c stays Org's, setting tags.  In a table, it first aligns it; on
 a checkbox, it first toggles it.  Returns t when it renders, claiming C-c C-c; else nil."
-  (-when-let (root (and (not (org-at-heading-p)) (org-graph--section-root)))
+  (-when-let (root (and (not (org-at-heading-p)) (org--tagged-section-root 'graph)))
     (cond ((org-at-table-p) (org-table-align))
           ((org-at-item-checkbox-p) (org-toggle-checkbox)))
-    (-let [(origin . block) (org-graph--section-block root)]
+    (-let [(origin . block) (org--section-block 'graph root)]
       (org-graph--cc-render origin block))
     t))
 

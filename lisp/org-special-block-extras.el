@@ -427,6 +427,8 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
                     `(menu-item "" org--math-cycle-hints :filter ,(lambda (command) (and (org--math-block-contents-start) command))))
         ;; Appended, so a block's :fontify face lands atop Org's own fontification of its contents.
         (font-lock-add-keywords 'org-mode '((org--fontify-blocks)) 'append)
+        ;; Appended, so a :code block's tagged section shows as its language alone, sans Org's markup.
+        (font-lock-add-keywords 'org-mode '((org--fontify-tagged-sections)) 'append)
         ;; Prepended, so Org's own fontification lands atop a block's :language.
         (font-lock-add-keywords 'org-mode '((org--fontify-block-languages)))
         ;; Appended, so the link point is in shows in full after Org hides its brackets.
@@ -480,6 +482,7 @@ HTML exports carry our tooltips' CSS and JS, inlined; see `org-special-block-add
     (remove-hook 'eldoc-documentation-functions #'org--math-hint-eldoc)
     (define-key org-mode-map (kbd "C-<tab>") nil)
     (font-lock-remove-keywords 'org-mode '((org--fontify-blocks)))
+    (font-lock-remove-keywords 'org-mode '((org--fontify-tagged-sections)))
     (font-lock-remove-keywords 'org-mode '((org--fontify-block-languages)))
     (font-lock-remove-keywords 'org-mode '((org--reveal-link-at-point)))
     (font-lock-remove-keywords 'org-mode '((org--activate-block-delimiters)))

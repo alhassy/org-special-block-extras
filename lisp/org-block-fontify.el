@@ -104,6 +104,32 @@ emphasis, fontified before, are axed; so, in code, a*b*c is no bold b, nor [[x]]
           (remove-text-properties contents-start contents-end org--fontify-org-markup)
           (org--fontify-block-language (plist-get spec :language) argument contents-start contents-end))))))
 
+(declare-function org--deftag-regexp "org-deftag")
+
+(defun org--fontify-tagged-sections (limit)
+  "Font-lock matcher: up to LIMIT, show the text of each section tagged :NAME: or :NAME_ARGUMENT:, for a NAME block
+whose `:fontify' says :code, as that block's contents show; then nil.  The text runs from past the heading's drawer
+up to the next heading, as the tag's block holds it; so in * Our page :image_html:, it shows as HTML.  A chunk that
+begins within such a text starts at its heading, lest the text show as code only when its heading is in view."
+  (-when-let (names (--keep (and (plist-get (cdr it) :code) (car it)) org--block-fontifications))
+    (let ((case-fold-search t)
+          (tags (--map (cons it (org--deftag-regexp it)) names)))
+      (unless (org-before-first-heading-p) (org-back-to-heading t))
+      (while (and (< (point) limit) (re-search-forward org-outline-regexp-bol limit t))
+        (let* ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+               (name (car (--first (string-match (cdr it) line) tags))))
+          (when name
+            (string-match (org--deftag-regexp name) line)
+            (let ((argument (cadr (split-string (or (match-string 2 line) "") "_")))
+                  (beg (save-excursion (org-end-of-meta-data) (point)))
+                  (end (save-excursion (if (re-search-forward org-outline-regexp-bol nil t) (match-beginning 0)
+                                         (point-max)))))
+              (when (< beg end)
+                (remove-text-properties beg end org--fontify-org-markup)
+                (org--fontify-block-language (plist-get (cdr (assoc name org--block-fontifications)) :language)
+                                             argument beg end))))))))
+  nil)
+
 (defun org--fontify-block-language (language argument beg end)
   "Show BEG to END as a #+begin_src LANGUAGE block's contents; a function LANGUAGE does so itself, by
 (LANGUAGE ARGUMENT BEG END), ARGUMENT being the first word after the block's name."

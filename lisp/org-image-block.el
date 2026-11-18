@@ -519,14 +519,16 @@ and SKETCH t its hand-drawn look.  See `org-image-block-languages'."
     (kill-xwidget xw))
   (delete-overlay overlay))
 
-(defun org--image-preview (language source args anchor)
+(defun org--image-preview (language source args anchor &optional region)
   "Renders the block at point, LANGUAGE SOURCE with ARGS and ANCHOR, afresh, and shows its PNG atop the block; if one
-is shown already, remove it instead.  An edit to the block removes it too.  A language with a :live view, in
+is shown already, remove it instead.  An edit to the block removes it too.  REGION, (BEG . END), shows it atop that
+instead; e.g., a tagged section's text.  A language with a :live view, in
 `org-image-block-languages', shows it running instead, in an Emacs with xwidgets ---such as a p5.js sketch--- and
 renders nothing, since export renders what it needs; unless :file names its renderings, which are kept fresh."
-  (let* ((block (org-special-block-at-point))
-         (beg (org-element-property :post-affiliated block))
-         (end (save-excursion (goto-char (org-element-property :end block)) (skip-chars-backward " \t\n") (point)))
+  (let* ((block (unless region (org-special-block-at-point)))
+         (beg (if region (car region) (org-element-property :post-affiliated block)))
+         (end (if region (cdr region)
+                (save-excursion (goto-char (org-element-property :end block)) (skip-chars-backward " \t\n") (point))))
          (shown (--first (overlay-get it 'org-image-preview) (overlays-in beg end)))
          (live (and (fboundp 'make-xwidget) (display-graphic-p)
                     (plist-get (alist-get language org-image-block-languages) :live))))

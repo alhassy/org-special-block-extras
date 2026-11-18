@@ -379,6 +379,31 @@ function draw() {
   (search-forward "\\fill")
   (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
 
+(org-deftest "a section tagged :image_html: shows its text as HTML, up to the next heading, sans Org's markup" [image fontify]
+  :text "
+* Our button :image_html:
+:PROPERTIES:
+:WIDTH: 50%
+:END:
+<button>Click *me*</button>
+* Afterwards
+<button> is prose here."
+  (font-lock-ensure)
+  (cl-flet ((faces-at (word) (goto-char (point-min)) (search-forward word)
+                      (ensure-list (get-text-property (1- (point)) 'face))))
+    (should (memq 'font-lock-function-name-face (faces-at "<button")))
+    (should-not (memq 'bold (faces-at "*me")))
+    (should-not (memq 'font-lock-function-name-face (faces-at "* Afterwards\n<button")))
+    (should-not (memq 'font-lock-function-name-face (faces-at ":WIDTH")))))
+
+(org-deftest "a section tagged :image: shows its text as LaTeX, the image block's default" [image fontify]
+  :text "
+* Arrow :image:
+\\begin{tikzpicture}\\draw (0,0) -- (1,1);\\end{tikzpicture}"
+  (font-lock-ensure)
+  (search-forward "\\draw")
+  (should (memq 'font-lock-keyword-face (ensure-list (get-text-property (1- (point)) 'face)))))
+
 (org-deftest "an html image block looks as HTML" [image fontify]
   :text "
 #+begin_image html

@@ -26,8 +26,34 @@
 
 ;;;;;; parallel
 
-(org-defblock parallel (&optional (cols "2") &key bar &allow-other-keys :latex-head ("multicol") :manual "#Parallel"
-                       &context backend contents)
+(defun org--parallel-columns (raw)
+  "Returns (PREAMBLE COUNT . COLUMNS): RAW's text before its first heading; how many headings are its shallowest; and
+the Org that sets each as a column, #+columnbreak: between them.  Each heading becomes its title in bold, atop its
+text, its property drawer axed; a deeper one's, a paragraph of its own.  \"Intro\\n** Pros\\nFast.\\n** Cons\\nBig.\" gives (\"Intro\\n\" 2 . \"*Pros*\\nFast.\\n#+columnbreak:\\n*Cons*\\nBig.\")."
+  (with-temp-buffer
+    (insert raw)
+    (org-mode)
+    (goto-char (point-min))
+    (let* ((first (if (re-search-forward org-outline-regexp-bol nil t) (match-beginning 0) (point-max)))
+           (preamble (buffer-substring-no-properties (point-min) first))
+           (top (progn (goto-char first) (cl-loop while (re-search-forward org-outline-regexp-bol nil t)
+                                                  minimize (- (match-end 0) (match-beginning 0) 1))))
+           (count 0))
+      (delete-region (point-min) first)
+      (goto-char (point-min))
+      (while (re-search-forward org-complex-heading-regexp nil t)
+        (let ((level (- (match-end 1) (match-beginning 1))) (title (or (match-string-no-properties 4) "")))
+          ;; A column's first heading begins it, after a break; a deeper one, a paragraph of its own.
+          (replace-match (format "%s*%s*" (cond ((> level top) "\n") ((> (cl-incf count) 1) "#+columnbreak:\n") (t ""))
+                                 title)
+                         t t)
+          (forward-line 1)
+          (when (looking-at org-property-drawer-re)
+            (delete-region (match-beginning 0) (min (point-max) (1+ (match-end 0)))))))
+      (cons preamble (cons count (buffer-string))))))
+
+(org-defblock parallel (&optional cols &key bar &allow-other-keys :latex-head ("multicol") :manual "#Parallel"
+                       :tag [:subsections contents] &context backend raw-contents contents)
               "Place ideas side-by-side, possibly with a separator.
 
 There are COLS many columns, and they may be separated by solid
@@ -67,15 +93,32 @@ The specification is 𝒏 measurements denoting widths; which may be
 in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
 I personally advise only the use of percentage measurements.
 
+A section tagged :parallel: sets each subheading as a column, its title in bold atop its text; COLS defaults to
+how many there are, and its drawer's :COLS: and :BAR: are the block's arguments.  Its own text sits above them.
+
+   * Lisp or Haskell? :parallel:          ≡   #+begin_parallel 2
+   ** Lisp                                     *Lisp*
+   Code is data.                              Code is data.
+   ** Haskell                                  #+columnbreak:
+   Types are propositions.                    *Haskell*
+                                              Types are propositions.
+                                              #+end_parallel
+
 In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
 With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break."
-              (let* ((widths (split-string cols))
+              (-let* (((preamble count . columns) (and (string-match-p org-outline-regexp-bol raw-contents)
+                                                        (org--parallel-columns raw-contents)))
+                      (contents (if columns (org-parse columns) contents))
+                      (cols (format "%s" (or cols (and columns count) 2)))
+                      (widths (split-string cols))
                      ;; Hard columns have their widths given; e.g., 20% 60% 20%, or 5em 20px.
                      (hard? (--any? (not (string-match-p "\\`[0-9]+\\'" it)) widths))
                      (color (if (equal (format "%s" bar) "t") "black" bar))
                      ;; A line of its own, so that mentions such as ~#+columnbreak:~ are left alone.
                      (column-break "^[ \t]*#\\+columnbreak:[ \t]*$"))
-                (pcase backend
+                (concat
+                 (and columns (org-parse preamble))
+                 (pcase backend
                   ('latex (format (concat "\\par \\setlength{\\columnseprule}{%s pt}\n"
                                           "\\begin{minipage}[t]{\\linewidth}\n"
                                           "\\begin{multicols}{%s}\n%s\n"
@@ -98,7 +141,7 @@ With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column b
                                        (cl-loop for column in (cdr columns)
                                                 for chunk in (cdr chunks)
                                                 concat (format "@@html:</div>%s@@%s" column chunk))
-                                       "</div>")))))))
+                                       "</div>"))))))))
 
 (org-defblock-attribute parallel :example "
 # Two columns, by default; :bar rules them apart, in a color; #+columnbreak: ends a column.

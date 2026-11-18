@@ -323,6 +323,46 @@ Plain text.
         (should (memq #'org--docs-prepare org-export-before-parsing-functions)))
     (org-special-block-extras-mode 1)))
 
+(deftest "a :parallel: section sets each subheading as a column, as #+columnbreak: does; their count is the default"
+  (should (s-contains-p (string-trim (org-export-string-as "
+#+begin_parallel 2 :bar green
+*Lisp*
+Code is data.
+#+columnbreak:
+*Haskell*
+Types are propositions.
+#+end_parallel" 'latex t))
+                        (org-export-string-as "
+* Lisp or Haskell? :parallel:
+:PROPERTIES:
+:BAR: green
+:END:
+** Lisp
+:PROPERTIES:
+:CUSTOM_ID: lisp
+:END:
+Code is data.
+** Haskell
+Types are propositions." 'latex t))))
+
+(deftest "a :parallel: section's own text sits above its columns, and a sub-subheading is a bold paragraph in its column"
+  (let ((latex (org-export-string-as "
+* Three creeds :parallel:
+Each, a slogan.
+** Lisp
+Code is data.
+*** Macros
+Code that writes code.
+** Haskell
+Types are propositions.
+** Prolog
+Programs are proofs." 'latex t)))
+    (should (s-contains-p "Each, a slogan.\n\n\\par" latex))
+    (should (s-contains-p "\\begin{multicols}{3}" latex))
+    (should (s-contains-p "Code is data.\n\n\\textbf{Macros}\nCode that writes code." latex))
+    (should (= 2 (s-count-matches "columnbreak" latex)))
+    (should-not (s-contains-p "subsection" latex))))
+
 (deftest "details, box, spoiler, solution, and parallel are also tags"
   (dolist (name '(details box spoiler solution parallel))
     (should (fboundp (intern (format "org--%s-tag" name))))))

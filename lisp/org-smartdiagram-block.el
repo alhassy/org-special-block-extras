@@ -222,7 +222,7 @@ and the list itself aside.  \"Intro\\n+ a\\n-----\"  ↦  (\"Intro\\n\" . \"----
     (let (above below seen-list)
       (dolist (el (org--graph-elements (org-element-contents (org-element-parse-buffer))))
         (pcase (org-element-type el)
-          ('plain-list (setq seen-list t))
+          ((or 'plain-list 'headline) (setq seen-list t))
           ((or 'table 'keyword) nil)
           ((and 'special-block (guard (equal (downcase (org-element-property :type el)) "note"))) nil)
           (_ (let ((text (buffer-substring-no-properties (org-element-property :begin el) (org-element-property :end el))))
@@ -292,7 +292,7 @@ of dashes, then LATEX."
   (format "%s\n-----\n%s" org-smartdiagram-latex-head latex))
 
 (org-defblock smartdiagram (&optional title &key type file resolution as-image
-                            :edit-indirect-mode org-graph-edit-mode :manual "#Graphs"
+                            :edit-indirect-mode org-graph-edit-mode :manual "#Graphs" :tag [:subsections contents]
                             :hover "TYPE is circular, flow, descriptive, priority-descriptive, bubble, constellation,
 connected-constellation, or sequence; a :option follows, as in flow:horizontal.  The #+graph: rows are
 \\smartdiagramset's; C-M-i in its table lists them.  For a picture whose arcs we choose, see #+begin_graph."
@@ -322,6 +322,23 @@ image.  FILE, RESOLUTION, and AS-IMAGE are the image block's."
                               (org--smartdiagram (org--graph-expand-macros raw-contents) title type))
                       (list :file file :resolution resolution)
                       (org-element-property :name (org-special-block-at-point))))
+
+(defun org-smartdiagram--section-cc ()
+  "Render the :smartdiagram: section around point, as C-c C-c renders a #+begin_smartdiagram block, showing it atop
+the section's text and subsections; again, to remove it.  Only within the section's body: on a heading, C-c C-c
+stays Org's, setting tags.  Returns t when it renders, claiming C-c C-c; else nil."
+  (-when-let (root (and (not (org-at-heading-p)) (org--tagged-section-root 'smartdiagram)))
+    (-let* (((origin . block) (org--section-block 'smartdiagram root))
+            ((&plist :type type :file file :resolution resolution) (org-special-block-kwdargs block))
+            (end (save-excursion (goto-char root) (org-end-of-subtree t) (point))))
+      (org--image-preview 'latex (org--smartdiagram-image-source
+                                  (org--smartdiagram (org--graph-expand-macros (org-special-block-contents block))
+                                                     (org-special-block-main-arg block) type))
+                          (list :file file :resolution resolution) nil (cons (marker-position origin) end))
+      (set-marker origin nil))
+    t))
+
+(add-hook 'org-ctrl-c-ctrl-c-hook #'org-smartdiagram--section-cc)
 
 (provide 'org-smartdiagram-block)
 ;;; org-smartdiagram-block.el ends here

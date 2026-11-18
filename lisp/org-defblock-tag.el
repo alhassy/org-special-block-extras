@@ -146,6 +146,54 @@ A subsection tagged :NAME: itself is left to its own tag."
   (let ((case-fold-search nil))
     (and (string-match org-complex-heading-regexp heading) (org-string-nw-p (match-string 4 heading)))))
 
+(defun org--section-main-arg (tag-args properties main heading)
+  "Returns the main argument of a section's block: its TAG-ARGS joined by spaces, else its PROPERTIES' MAIN, else
+---when MAIN is `title'--- HEADING's own title."
+  (cond (tag-args (string-join tag-args " "))
+        ((org--section-property properties main))
+        ((eq main 'title) (org--heading-title heading))))
+
+(defun org--tagged-section-root (name)
+  "Returns the start of the nearest heading, at or above point, tagged :NAME: or :NAME_ARGS:; else nil."
+  (save-excursion
+    (unless (org-before-first-heading-p)
+      (org-back-to-heading t)
+      (let ((case-fold-search t) (tag (org--deftag-regexp name)))
+        (cl-loop if (string-match-p tag (buffer-substring (line-beginning-position) (line-end-position)))
+                 return (point)
+                 while (org-up-heading-safe))))))
+
+(defun org--section-block (name root)
+  "Returns (ORIGIN . BLOCK): the section at ROOT, tagged :NAME:, as the `org-special-block' its export reads ---its
+contents the section's text and subsections, as `:tag [:subsections contents]' hands them--- and a marker at their
+first line.  The tag's items, the drawer, and the heading make its header, as `org--defblock-section-to-block' says.
+BLOCK's end point is the drawer's, so #+RESULTS: go right beneath it; ORIGIN skips any there already."
+  (save-excursion
+    (goto-char root)
+    (-let* ((heading    (buffer-substring (line-beginning-position) (line-end-position)))
+            (case-fold-search t)
+            (items      (and (string-match (org--deftag-regexp name) heading) (match-string 2 heading)))
+            (tag-args   (cdr (split-string (or items "") "_")))
+            (properties (cl-loop for (key . value) in (org-entry-properties nil 'standard)
+                                 append (list (intern (concat ":" (downcase key))) value)))
+            (spec       (get (intern (format "org--%s-block" name)) 'org-defblock-args))
+            (main       (or (car (plist-get spec :main)) 'main-arg))
+            (header     (org--section-block-header
+                         properties (org--section-main-arg tag-args properties main heading)
+                         (org--section-block-keywords properties main (org--block-declared-keywords spec)
+                                                      (plist-get spec :other-keys))))
+            (end-pt     (progn (org-end-of-meta-data) (max root (1- (point)))))
+            (_          (when (looking-at-p "[ \t]*#\\+RESULTS:")
+                          (goto-char (org-element-property :end (org-element-at-point)))))
+            (origin     (progn (skip-chars-forward " \t\n") (copy-marker (line-beginning-position) t)))
+            (end        (save-excursion (goto-char root) (org-end-of-subtree t t) (point)))
+            ((positional kwdargs) (--split-with (not (keywordp it)) (org--read-header header))))
+      (cons origin (make-org-special-block
+                    :name (format "%s" name) :parameters (string-trim header) :kwdargs kwdargs
+                    :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
+                    :contents (buffer-substring-no-properties origin (max origin end))
+                    :start-point root :end-point end-pt)))))
+
 (defun org--defblock-section-to-block (name heading drawer tag-args properties main keywords backend
                                             &optional subsections other-keys?)
   "Rewrite the section at point ---its heading line and DRAWER erased by `org-deftag'--- as HEADING atop a NAME block.
@@ -176,9 +224,7 @@ becomes of the section's subsections:
 
 The block is then at once replaced by the result of `org--NAME-block' for BACKEND; so a tag works even
 when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
-  (let* ((main-arg (cond (tag-args (string-join tag-args " "))
-                         ((org--section-property properties main))
-                         ((eq main 'title) (org--heading-title heading))))
+  (let* ((main-arg (org--section-main-arg tag-args properties main heading))
          (header (org--section-block-header properties main-arg
                                              (org--section-block-keywords properties main keywords other-keys?)))
          (level (progn (string-match "\\`\\*+" heading) (match-end 0))))

@@ -4816,6 +4816,17 @@ from∘to m = {! try it! }
      in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
      I personally advise only the use of percentage measurements.
      
+     A section tagged :parallel: sets each subheading as a column, its title in bold atop its text; COLS defaults to
+     how many there are, and its drawer’s :COLS: and :BAR: are the block’s arguments.  Its own text sits above them.
+     
+        ,* Lisp or Haskell? :parallel:          ≡   #+begin_parallel 2
+        ,** Lisp                                     *Lisp*
+        Code is data.                              Code is data.
+        ,** Haskell                                  #+columnbreak:
+        Types are propositions.                    *Haskell*
+                                                   Types are propositions.
+                                                   ,#+end_parallel
+     
      In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
      With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
      
@@ -4913,6 +4924,17 @@ from∘to m = {! try it! }
      in any HTML recognisable units; e.g., “5em 20px 30%” is valid.
      I personally advise only the use of percentage measurements.
      
+     A section tagged :parallel: sets each subheading as a column, its title in bold atop its text; COLS defaults to
+     how many there are, and its drawer’s :COLS: and :BAR: are the block’s arguments.  Its own text sits above them.
+     
+        ,* Lisp or Haskell? :parallel:          ≡   #+begin_parallel 2
+        ,** Lisp                                     *Lisp*
+        Code is data.                              Code is data.
+        ,** Haskell                                  #+columnbreak:
+        Types are propositions.                    *Haskell*
+                                                   Types are propositions.
+                                                   ,#+end_parallel
+     
      In the Soft Columns style above, any ‘#+columnbreak:’ are merely ignored.
      With LaTeX export, the use of ‘#+columnbreak:’ is used to request a column break.
      
@@ -4975,6 +4997,29 @@ from∘to m = {! try it! }
      \emph{\hyperref[o-glossary-org--parallel-block]{parallel}\label{o-glossary-declaration-site-org--parallel-block} columns of text}.
      #+end_export
      :end:
+
+  A section tagged =:parallel:= sets each subheading as a column, its title in bold atop its text; so
+  there are as many columns as subheadings, and no =#+columnbreak:= to write. Its drawer's =:COLS:= and
+  =:BAR:= are the block's arguments, and its own text sits above the columns. These two agree:
+  #+begin_src org :tangle no
+,#+begin_parallel 2 :bar green
+,*Lisp*
+Code is data.
+,#+columnbreak:
+,*Haskell*
+Types are propositions.
+,#+end_parallel
+
+,* Lisp or Haskell?        :parallel:
+:PROPERTIES:
+:BAR: green
+:END:
+,** Lisp
+Code is data.
+,** Haskell
+Types are propositions.
+  #+end_src
+  A deeper subheading is a bold paragraph within its column; =:COLS: 30% 70%= fixes the widths.
 
 ** Display maths ---=#+begin_math=, wherein =red:𝒳= colors a symbol
   :PROPERTIES:
@@ -5728,6 +5773,28 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
   links, src blocks--- replaces LaTeX's =\newcommand=, =\texttt=, =\textcolor=, and
   hand-tuned =\hspace='s; [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org][graphs-README.org]] sets the two side by side.
 
+  A section tagged =:smartdiagram:= is the same diagram, spelt as an outline, as a [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#sections-are-graphs-the-graph-tag][:graph:]]
+  section is: its heading is the title, its drawer's =:TYPE:= the type, and its subheadings the items,
+  their drawers' =:COLOR:=, =:FONTCOLOR:=, and =:FONTSIZE:= their rows. Its own text sits above the
+  diagram, its =#+graph:= table included. These two agree:
+  #+begin_src org :tangle no
+,#+begin_smartdiagram From text to value :type flow:horizontal
++ Read
++ Expand
++ Evaluate
+,#+end_smartdiagram
+
+,* From text to value        :smartdiagram:
+:PROPERTIES:
+:TYPE: flow:horizontal
+:END:
+,** Read
+,** Expand
+,** Evaluate
+  #+end_src
+  =C-c C-c= within the section's text shows its picture atop the section, as within the block; again,
+  to remove it. On a heading, =C-c C-c= stays Org's, setting tags.
+
   Class diagrams, state machines, entity-relationship diagrams, mindmaps, and even sequence
   diagrams are graphs too: tags such as =:inherits:=, =:start:=, and =:one-to-many:= ---templates
   every graph has, by ~org-defgraph-tag~--- and =#+begin_graph :theme mindmap= draw them; see
@@ -5777,6 +5844,17 @@ Hence, by [[Geometric]], $\Sn = {1 - r^n \over 1 - r}$ whenever $red:r ≠ 1$.
 ,#+end_image
   #+end_src
   Five dashes, since three alone are LaTeX's em-dash.
+
+  A section tagged =:image_LANG:= is a =#+begin_image LANG= block of its text, up to the next heading,
+  its drawer holding the block's keyword arguments; and that text shows as =LANG= in our buffer, as
+  the block's contents do, sans Org's markup. Plain =:image:= is LaTeX, as the block is by default:
+  #+begin_src org :tangle no
+,* Our button        :image_html:
+:PROPERTIES:
+:CSS: button { background: gold; padding: 1em }
+:END:
+<button>Click me</button>
+  #+end_src
 
   =C-c C-c= within the block renders it, and shows its PNG atop the block; again, to remove it.
   A p5.js sketch, in an Emacs built with xwidgets, is shown running instead.

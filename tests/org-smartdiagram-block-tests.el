@@ -206,5 +206,68 @@ replaces \\mbox{\\texttt{(gethash :k hash)}}}}" latex))))
              (should (member "font" (nth 2 (org-graph--completion-at-point)))))
     (org-edit-src-abort)))
 
+;;; A :smartdiagram: section: its subheadings are its items
+
+(deftest "a :smartdiagram: section typesets what the block does: its heading the title, subheadings its items"
+  (should (s-contains-p (string-trim (org-export-string-as "
+#+begin_smartdiagram Our editor :type constellation
++ =easy-access.el=
+  | fontcolor | white |
+  + Lookup
+  + Update
+#+end_smartdiagram" 'latex t))
+                        (org-export-string-as "
+* Our editor :smartdiagram:
+:PROPERTIES:
+:TYPE: constellation
+:END:
+** =easy-access.el=
+:PROPERTIES:
+:FONTCOLOR: white
+:END:
+*** Lookup
+*** Update
+* Afterwards
+Prose." 'latex t))))
+
+(deftest "a :smartdiagram: section's own text sits above the diagram, as a block's prose before its list does"
+  (should (s-contains-p "From text to value.\\par\\medskip\n\\usebox"
+                        (org-export-string-as "
+* Our interpreter :smartdiagram:
+:PROPERTIES:
+:TYPE: flow:horizontal
+:END:
+From text to value.
+** Read
+** Evaluate" 'latex t))))
+
+(org-deftest "C-c C-c in a :smartdiagram: section's body shows its picture atop the section; again, removes it"
+  :text "
+* Our interpreter :smartdiagram:
+:PROPERTIES:
+:TYPE: flow:horizontal
+:END:
+From text to value.
+** Read
+** Evaluate
+* Afterwards"
+  :at "From text"
+  (let (sources)
+    (cl-letf (((symbol-function 'org--image-render) (lambda (_ source &rest _) (push source sources)))
+              ((symbol-function 'create-image) (lambda (&rest _) 'a-picture)))
+      (should (org-smartdiagram--section-cc))
+      (should (s-contains-p "\\smartdiagram[flow diagram:horizontal]" (car sources)))
+      (should (s-contains-p "Our interpreter" (car sources)))
+      (should (--some (overlay-get it 'org-image-preview) (overlays-in (point-min) (point-max))))
+      (should (org-smartdiagram--section-cc))
+      (should-not (--some (overlay-get it 'org-image-preview) (overlays-in (point-min) (point-max)))))))
+
+(org-deftest "C-c C-c on a :smartdiagram: section's heading stays Org's, setting tags"
+  :text "
+* Our interpreter :smartdiagram:
+** Read"
+  :at "Our"
+  (should-not (org-smartdiagram--section-cc)))
+
 (provide 'org-smartdiagram-block-tests)
 ;;; org-smartdiagram-block-tests.el ends here

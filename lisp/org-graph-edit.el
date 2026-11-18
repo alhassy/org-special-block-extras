@@ -710,16 +710,6 @@ table below it; `org-graph--template-index' then holds its index, for `org-graph
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; A :graph: section's property drawers: its nodes' attributes
 
-(defun org-graph--section-root ()
-  "Returns the start of the nearest heading, at or above point, tagged :graph: or :graph_TITLE:; else nil."
-  (save-excursion
-    (unless (org-before-first-heading-p)
-      (org-back-to-heading t)
-      (let ((case-fold-search t) (tag (org--deftag-regexp 'graph)))
-        (cl-loop if (string-match-p tag (buffer-substring (line-beginning-position) (line-end-position)))
-                 return (point)
-                 while (org-up-heading-safe))))))
-
 (defun org-graph--drawer-key-at-point ()
   "Returns (BEG END KEY VALUE-BEG) on a property line of a :graph: section's drawer: KEY's bounds, past its opening
 colon, and where its value begins, or nil while KEY lacks its closing colon; else nil.
@@ -729,7 +719,7 @@ colon, and where its value begins, or nil while KEY lacks its closing colon; els
     (-when-let (found (and (looking-at "[ \t]*:\\([^ \t:\n]*\\)\\(:[ \t]*\\)?")
                            (not (member (upcase (match-string 1)) '("PROPERTIES" "END")))
                            (list (match-beginning 1) (match-end 1) (match-string-no-properties 1) (match-end 2))))
-      (when (org-graph--section-root)
+      (when (org--tagged-section-root 'graph)
         (when (and (re-search-backward "^[ \t]*:\\(PROPERTIES\\|END\\):[ \t]*$"
                                        (save-excursion (org-back-to-heading t) (point)) t)
                    (equal "PROPERTIES" (upcase (match-string 1))))
@@ -776,7 +766,7 @@ upper case unless the key typed so far has lower case."
 (defun org-graph--property-allowed-values (property)
   "Returns the values Graphviz allows PROPERTY within a :graph: section, for C-c C-x p to complete and S-→ to cycle;
 else nil, leaving PROPERTY to Org.  \"SHAPE\"  ↦  (\"box\" \"polygon\" … \":ETC\"), since other values are allowed too."
-  (-some--> (and (org-graph--section-root) (org-graph--drawer-table-key property))
+  (-some--> (and (org--tagged-section-root 'graph) (org-graph--drawer-table-key property))
     (org-graph--attribute it) (plist-get it :values) (append it '(":ETC"))))
 
 (add-hook 'org-property-allowed-value-functions #'org-graph--property-allowed-values)
