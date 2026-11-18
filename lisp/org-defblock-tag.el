@@ -37,10 +37,11 @@
 (require 'org-block-export)
 
 (defun org--defblock-tag-subsections (name tag)
-  "(NAME, TAG option) ↦ what NAME's tag does with a section's subsections: `ignore', `error', or `recurse'.
+  "(NAME, TAG option) ↦ what NAME's tag does with a section's subsections: `ignore', `error', `recurse', or `contents'.
 
   t                        ↦  ignore
   [:subsections recurse]   ↦  recurse
+  [:subsections contents]  ↦  contents
   [:subsections sideways]  ↦  an error, at once, naming NAME
 
 See `org--defblock-section-to-block' for what each mode does."
@@ -48,8 +49,8 @@ See `org--defblock-section-to-block' for what each mode does."
          (mode (or (plist-get spec :subsections) 'ignore)))
     (unless (and (cl-evenp (length spec)) (cl-loop for key in spec by #'cddr always (eq key :subsections)))
       (error "‘org-defblock %s’: :tag takes t, nil, or [:subsections MODE], but saw %S" name tag))
-    (unless (memq mode '(ignore error recurse))
-      (error "‘org-defblock %s’: :subsections takes ignore, error, or recurse, but saw %S" name mode))
+    (unless (memq mode '(ignore error recurse contents))
+      (error "‘org-defblock %s’: :subsections takes ignore, error, recurse, or contents, but saw %S" name mode))
     mode))
 
 ;;;; The block's header, from the section's properties
@@ -101,6 +102,22 @@ Point ends after the result."
     (goto-char end)
     (set-marker end nil)))
 
+(defun org--section-as-block (name header backend)
+  "From the start of a section's text, replace its text and subsections by what NAME's handler makes of them, as
+though a NAME block of HEADER held them; for BACKEND.  No block holds a heading, so none is written: the handler reads
+the subtree as its contents.  Point ends after the result."
+  (-let* ((start (point))
+          (end   (save-excursion (org-end-of-subtree t t) (skip-chars-backward " \t\n") (point)))
+          (end   (max start end))
+          ((positional kwdargs) (--split-with (not (keywordp it)) (org--read-header header))))
+    (org-eval-replace-block (make-org-special-block
+                             :name (format "%s" name) :parameters (string-trim header)
+                             :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
+                             :kwdargs kwdargs :contents (buffer-substring-no-properties start end)
+                             :start-point start :end-point end)
+                            (org--base-backend backend))
+    (unless (bolp) (insert "\n"))))
+
 (defun org--refuse-subsections (name heading level)
   "(NAME, HEADING, LEVEL) ↦ nil when the section HEADING, of LEVEL, has no subsection after point; else a `user-error'."
   (save-excursion
@@ -147,6 +164,9 @@ becomes of the section's subsections:
   content would be silently cut short.
 + `recurse': each subsection's own text, at any depth, is wrapped likewise ---same arguments---
   in a NAME block of its own; a subsection tagged :NAME: itself is left to its own tag.
++ `contents': the subsections are the block's contents too, beside the text; e.g., a graph's nodes.
+  No block is written, since none holds a heading: NAME's handler reads the subtree itself; see
+  `org--section-as-block'.
 
 The block is then at once replaced by the result of `org--NAME-block' for BACKEND; so a tag works even
 when NAME is not registered as a block, via `:block nil'.  Point ends after the last result."
@@ -158,7 +178,8 @@ when NAME is not registered as a block, via `:block nil'.  Point ends after the 
     (insert heading "\n" (or drawer ""))
     (unless (bolp) (insert "\n"))
     (when (eq subsections 'error) (org--refuse-subsections name heading level))
-    (org--wrap-section-text name header backend)
+    (if (eq subsections 'contents) (org--section-as-block name header backend)
+      (org--wrap-section-text name header backend))
     (when (eq subsections 'recurse) (org--wrap-subsections name header backend level))))
 
 (provide 'org-defblock-tag)

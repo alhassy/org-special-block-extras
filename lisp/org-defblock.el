@@ -147,13 +147,18 @@ LINK is t, or a display vector such as [:face …]; see `org-defblock'."
 
 (defun org--defblock-tag-form (name spec subsections)
   "(NAME, SPEC, SUBSECTIONS) ↦ the `org-deftag' form whose sections tagged :NAME: export as NAME blocks around their text.
-SPEC is the parsed arglist, see `org--defblock-parse-args'; and `org--defblock-section-to-block', SUBSECTIONS."
-  `(org-deftag ,name ()
-               ,(format "Export each section tagged :%s: as a %s block around its text; see `org-defblock'." name name)
-               (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
-                                               ',(or (car (plist-get spec :main)) 'main-arg)
-                                               ',(org--block-declared-keywords spec)
-                                               o-backend ',subsections ,(plist-get spec :other-keys)))))
+SPEC is the parsed arglist, see `org--defblock-parse-args'; and `org--defblock-section-to-block', SUBSECTIONS.
+A tag whose SUBSECTIONS are `contents' runs before every other tag, lest those rewrite its subheadings first; e.g., a
+graph node tagged :details:."
+  `(prog1 (org-deftag ,name ()
+                      ,(format "Export each section tagged :%s: as a %s block around its text; see `org-defblock'." name name)
+                      (org--defblock-section-to-block ',name o-heading o-drawer o-tag-args o-properties
+                                                      ',(or (car (plist-get spec :main)) 'main-arg)
+                                                      ',(org--block-declared-keywords spec)
+                                                      o-backend ',subsections ,(plist-get spec :other-keys)))
+     ,@(when (eq subsections 'contents)
+         `((remove-hook 'org-export-before-parsing-functions #',(intern (format "org--%s-tag" name)))
+           (add-hook 'org-export-before-parsing-functions #',(intern (format "org--%s-tag" name)) -60))))))
 
 ;;;; What a handler's body calls: org-export, org-parse
 
@@ -361,8 +366,9 @@ KWDS may also carry options, which are not arguments:
   title Hint.  See `org--defblock-section-to-block'.
   A block cannot hold a heading, so `:tag [:subsections MODE]' says what becomes
   of a tagged section's subsections: `ignore' leaves them outside the block, as
-  `:tag t' does; `error' refuses a section that has any; and `recurse' wraps
-  each subsection's text in a block of its own.
+  `:tag t' does; `error' refuses a section that has any; `recurse' wraps
+  each subsection's text in a block of its own; and `contents' hands the
+  whole subtree to the block as its contents, as a graph's nodes.
   The link and tag default to `org-defblock-links-and-tags'; for just one of
   them, see `org-deflink' and `org-deftag'.
 + `:edit-indirect-mode MODE' makes C-c \=' edit the block in MODE.

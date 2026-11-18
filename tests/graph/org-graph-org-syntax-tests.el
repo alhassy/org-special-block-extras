@@ -201,8 +201,8 @@ FACE=\"monospace\">v</FONT> <FONT FACE=\"monospace\">c</FONT>> ];
 
 ;;; Org syntax that means nothing in a graph is an error, not silently dropped
 
-(deftest "a headline, a quote, an unknown #+begin_foo, or an unknown #+key: is a user error; comments are fine"
-  (dolist (raw '("+ a\n* Heading" "#+begin_quote\nx\n#+end_quote" "#+begin_foo\n#+end_foo" "#+rnak: a b"))
+(deftest "a quote, an unknown #+begin_foo, or an unknown #+key: is a user error; comments are fine"
+  (dolist (raw '("#+begin_quote\nx\n#+end_quote" "#+begin_foo\n#+end_foo" "#+rnak: a b"))
     (should-error (org--graph-raw->dot raw nil) :type 'user-error))
   (should (equal (org--graph-raw->dot "
 # a comment

@@ -1312,27 +1312,102 @@ As [[parse-tree]] shows, =*= binds tighter than =+=.
 ** Sections are graphs: the :graph: tag
 
 Sometimes a whole section is nothing but the outline we want drawn; wrapping it in a block is ceremony.
-A ~#+begin_graph~ block is a function on a region; a ~:graph:~ tag is the same function on a section. The
-section's text is the graph, and its ~:PROPERTIES:~ drawer ---Org's own home for key-value settings--- is
-the ~#+begin_graph~ line: ~:DIRECTION: right~ is ~:direction right~, ~:NODE.SHAPE: oval~ is ~:node.shape oval~, and
-~:FILE:~ is ~:file~:
+A ~#+begin_graph~ block is a function on a region; a ~:graph:~ tag is the same function on a section, its
+subsections included. Its subheadings are the items; their ~:PROPERTIES:~ drawers ---Org's own home for
+key-value settings--- are the items' tables; and the root's own drawer is the ~#+begin_graph~ line.
+
+*** The equivalence, by example
+
+Here is a block:
+#+begin_src org
+,#+begin_graph Our grammar :direction right
++ expr
+  | shape | box |
+  + term
+
+    A product of factors.
+
+    + factor
+      1. NUMBER
+      2. ( … ) :: [[expr]]
+,#+end_graph
+#+end_src
+
+And here is the very same graph, as a section; both draw the same dot, and so the same picture:
 #+begin_org :ignore t :demo live
-,* Our grammar :graph_The_Grammar:
+,* Our grammar :graph_Our_grammar:
 :PROPERTIES:
 :DIRECTION: right
-:NODE.SHAPE: oval
 :END:
-+ expr
-  + term
-    + factor
-      + NUMBER
-      + ( … ) :: [[expr]]
+,** expr
+:PROPERTIES:
+:SHAPE: box
+:END:
+,*** term
+A product of factors.
+,**** factor
+:PROPERTIES:
+:ORDERED: t
+:END:
+,***** NUMBER
+,***** ( … ) :: [[expr]]
 #+end_org
 
-- The heading stays a heading; only its text becomes the graph, on export.
-- ~:graph_The_Grammar:~ titles the graph ~The Grammar~, as the words before the first ~:key~ would; plain
-  ~:graph:~ leaves it untitled.
-- Org's own properties, such as ~:CUSTOM_ID:~ and ~:CATEGORY:~, stay Org's; they never reach Graphviz.
+Every left cell is a block's spelling; the right, what a section says instead.
+
+| Block                                              | Section                                                               |
+|----------------------------------------------------+-----------------------------------------------------------------------|
+| ~#+begin_graph TITLE :direction right~             | ~* HEADING :graph_TITLE:~, its drawer holding ~:DIRECTION: right~     |
+| ~+ child~ nested under ~+ parent~                  | ~** child~ under ~* parent~                                           |
+| item text: markup, ~<<id>>~, ~[[T]]~, ~[fn::…]~    | the heading's title: the very same text                               |
+| trailing ~:t₁:t₂:~ tags                            | the heading's own tags ---the very same spelling                      |
+| ~+ LABEL :: CHILD~, labelling the arc into ~CHILD~ | ~** LABEL :: CHILD~                                                   |
+| an item's ~shape~ / ~box~ row                      | ~:SHAPE: box~ in its drawer; the table still works too                |
+| an item's ~:edge.color~ / ~red~ row                | ~:EDGE.COLOR: red~                                                    |
+| an item's ~:edge[T].color~ / ~red~ row             | ~:EDGE[T].COLOR: red~, ~T~ keeping its case                           |
+| ~#+node:~ under an item, for its subtree           | ~:NODE.SHAPE: box~; likewise ~:GRAPH.KEY:~; ~#+edge:~ stays as it is  |
+| an item's later paragraphs, its notes              | the heading's body paragraphs                                         |
+| ~1. 2.~ children, one rank in the order written    | the parent's ~:ORDERED: t~ ---Org's own property, meaning just this   |
+| ~[X]~ / ~[ ]~ checkbox                             | a ~DONE~ / ~TODO~ keyword; a keyword ~K~ applies template ~k~, if any |
+| ~#+graph:~, ~#+name:~, a legend, before the items  | the root's own text, before its first subheading                      |
+
+- ~:graph_The_Grammar:~ titles the graph ~The Grammar~; plain ~:graph:~ leaves it untitled, the heading
+  being title enough.
+- The heading stays a heading; its text and subsections become the graph, on export, and the next
+  section is untouched. A node's own tags, such as ~:details:~, style it; they never fold its section.
+- A drawer's keys are Graphviz attributes, regardless of case: ~:url:~ is ~URL~. Org's own properties, such
+  as ~:CUSTOM_ID:~ and ~:CATEGORY:~, stay Org's ---bar ~:STYLE:~, which Graphviz names too--- and any other
+  key is an error, so a typo never vanishes silently.
+- ~COMMENT~ headings, and those tagged ~:noexport:~ or ~:ARCHIVE:~, are no nodes, their subtrees neither.
+- A ~:graph:~ heading cannot hold another; a ~:container:~ tag draws a box.
+- ~C-c C-c~ anywhere in the section's body renders it, its image right beneath the root's drawer; on a
+  heading, ~C-c C-c~ stays Org's, setting tags.
+
+*** Go only as deep as is comfortable
+
+A section's body may hold a list, read exactly as a block's body is. So the sections need only go as deep
+as is comfortable, and leaves stay terse:
+#+begin_org :ignore t :demo live
+,* Lineage :graph:
+,** λ-calculus
+,*** inspired :: Lisp
++ subset of :: Emacs Lisp
++ dialect :: Scheme
+#+end_org
+
+Hence a section holding a lone list, and no subheadings, is a graph too: as is [[*A section is a graph][this one]], further below.
+
+*** Org is the graph editor
+
+A block's editor is ~C-c '~ and our own commands; a section's is Org itself.
+- ~M-←~ and ~M-→~ re-parent a node, its subtree in tow; ~M-↑~ and ~M-↓~ reorder siblings; ~C-c C-w~ refiles a
+  node into another graph.
+- Folding: a 200-node graph is a page of headings, not a page of nested bullets and tables.
+- Column view, ~C-c C-x C-c~, is a spreadsheet of every node's attributes, editable in place; say, by
+  ~#+columns: %ITEM %SHAPE %COLOR %EDGE.LABEL~.
+- ~C-M-i~ in a drawer completes Graphviz's attributes, then their values, and eldoc explains them;
+  ~C-c C-x p~ completes a value, and ~S-→~ cycles through them, as for any of Org's allowed values.
+- ~TODO~ nodes reach the agenda; ~C-c ;~ comments a node out; ~C-c / m~ sparse-trees the graph by tag.
 
 * Beyond Graphviz: smartdiagram
 
@@ -1521,7 +1596,7 @@ Once the demo is over, this is the page we keep open.
 | ~#+begin_graph :theme NAME~                 | the theme ~NAME~ of ~org-graph-themes~, beneath all else; ~nil~ for Graphviz's look    |
 | ~#+begin_graph :theme mindmap~              | an arrowless ~twopi~ layout, radiating from the first item, nodes filled by depth      |
 | ~#+name: N~ above ~#+begin_graph~           | renders to ~N.png~: a figure that ~[[N]]~ reaches, and ~#+caption:~ captions           |
-| ~* HEADING :graph:~, with ~:PROPERTIES:~    | the section's text is a graph; ~:DIRECTION: right~ is ~:direction right~, and so on    |
+| ~* HEADING :graph:~, with ~:PROPERTIES:~    | subheadings are nodes, drawers their attributes; the root's drawer, the header line    |
 | ~:NAME:~ … ~:END:~ drawer                   | the directives inside, folded away                                                     |
 | ~#+graph:~ table                            | ~graph [ … ]~                                                                          |
 | ~#+node:~ table                             | ~node [ … ]~                                                                           |

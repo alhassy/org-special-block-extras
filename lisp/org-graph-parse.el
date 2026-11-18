@@ -702,6 +702,8 @@ does a `\\\\' break the label's line, even mid-line.  An item of tags alone, suc
 its id made of its line, so `+ :container:' is an untitled box."
   (let ((text (->> (plist-get item :text) s-trim s-lines (-map #'s-trim) (s-join " ")
                    org--graph-break-lines org--graph-item-text)))
+    ;; A heading's TODO keyword is its checkbox, as `org--graph-read-heading' says.
+    (-some--> (plist-get item :todo) (setq text (plist-put text :checkbox it)))
     (when (and (s-blank-str-p (plist-get text :name)) (plist-get text :tags) (not (plist-get text :target)))
       (setq text (plist-put (plist-put text :name (format "anonymous %d" (plist-get item :line))) :label "")))
     (list text (plist-get item :pre) (plist-get item :children) (plist-get item :kind))))
@@ -765,7 +767,7 @@ several colors show them all; see `org--graph-several-colors'."
   (let* ((arc-tags (org--graph-arc-tags text))
          (node-tags (unless (plist-get text :reference)
                       (append (--remove (or (org--graph-container-tag it) (org--graph-align-tag-p it)) (plist-get text :tags))
-                              (-some--> (plist-get text :checkbox) (and (gethash it name-tables) (list it))))))
+                              (-some--> (plist-get text :checkbox) (--first (gethash it name-tables) (-list it)) list))))
          (explicit (plist-get pre :attr-rows)))
     (org--graph-item-rows (append (when node-tags (list (list ":inherit" (s-join " " node-tags))))
                                   (when arc-tags (list (list ":edge.:inherit" (s-join " " arc-tags))))

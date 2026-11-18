@@ -6684,9 +6684,12 @@ Mind the gap.
   example, in =* Abstract :abstract:= with a =** Aside= beneath it, the aside stays outside
   the box. Declaring =:tag [:subsections MODE]= picks what becomes of subsections:
   - =ignore= ---the default, as with =:tag t=--- leaves them outside the block;
-  - =error= refuses a tagged section that has any, naming both headings; and
+  - =error= refuses a tagged section that has any, naming both headings;
   - =recurse= wraps each subsection's own text in a block of its own, with the same
-    arguments, unless the subsection carries the tag itself.
+    arguments, unless the subsection carries the tag itself; and
+  - =contents= hands the whole subtree, subsections and all, to the block as its contents;
+    no block is written, the handler reading the subtree itself. A [[https://github.com/alhassy/org-special-block-extras/blob/master/graphs-README.org#sections-are-graphs-the-graph-tag][:graph:]] section's
+    subheadings are so its nodes.
 
   A block may also say how it looks in our Org buffers, via the option =:fontify=: below,
   =#+begin_proof= shows as /Proof./, =#+end_proof= as ⏹, and the contents in italics too.

@@ -326,9 +326,11 @@ On a #+begin_smartdiagram line, its own keys' only."
 
 (defun org-graph--completion-at-point ()
   "Complete a graph table's key, or value, from `org-graph-attributes'; after `:edge.' or `:edge[T].', only edge ones.
-On a #+begin_graph line, complete its keys and values instead; in a smartdiagram, smartdiagram's keys."
+On a #+begin_graph line, complete its keys and values instead; in a smartdiagram, smartdiagram's keys; in a
+:graph: section's property drawer, its properties, by `org-graph--drawer-completion'."
   (or
    (org-graph--header-completion)
+   (org-graph--drawer-completion)
    (-when-let ((column beg end key) (and (org-graph--at-key-table-p) (org-graph--cell-at-point)))
      (if (org-graph--smartdiagram-p)
          (org-graph--smartdiagram-completion column beg end key)
@@ -359,8 +361,9 @@ On a #+begin_graph line, complete its keys and values instead; in a smartdiagram
 (defun org-graph--eldoc (callback &rest _)
   "Hand eldoc's CALLBACK the description of the #+begin_graph key at point, of the key on this graph-table row, of the
 built-in tag at point, or of the KEY=VALUE pair at point on a #+graph:, #+node:, #+edge:, or #+name: line ---elsewhere
-on such a line, the hint that C-u RET adds an attribute; else nil."
-  (-if-let ((beg end) (org-graph--header-token-at-point))
+on such a line, the hint that C-u RET adds an attribute; or of the attribute a :graph: section's property at point
+sets; else nil."
+  (-if-let ((beg end) (unless (org-graph--drawer-eldoc callback) (org-graph--header-token-at-point)))
       (let ((key (buffer-substring beg end)))
         (when (and (s-starts-with-p ":" key) (org-graph--header-key-doc key))
           (funcall callback (org-graph--header-key-doc key) :thing key :face 'font-lock-variable-name-face)))
@@ -703,6 +706,80 @@ table below it; `org-graph--template-index' then holds its index, for `org-graph
         (when (and (< begin font-lock-beg) (> end font-lock-beg))
           (setq font-lock-beg begin changed t))))
     changed))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; A :graph: section's property drawers: its nodes' attributes
+
+(defun org-graph--section-root ()
+  "Returns the start of the nearest heading, at or above point, tagged :graph: or :graph_TITLE:; else nil."
+  (save-excursion
+    (unless (org-before-first-heading-p)
+      (org-back-to-heading t)
+      (let ((case-fold-search t) (tag (org--deftag-regexp 'graph)))
+        (cl-loop if (string-match-p tag (buffer-substring (line-beginning-position) (line-end-position)))
+                 return (point)
+                 while (org-up-heading-safe))))))
+
+(defun org-graph--drawer-key-at-point ()
+  "Returns (BEG END KEY VALUE-BEG) on a property line of a :graph: section's drawer: KEY's bounds, past its opening
+colon, and where its value begins, or nil while KEY lacks its closing colon; else nil.
+  \":SHAPE: box\"  ↦  (BEG END \"SHAPE\" VALUE-BEG), VALUE-BEG at the b of box"
+  (save-excursion
+    (beginning-of-line)
+    (-when-let (found (and (looking-at "[ \t]*:\\([^ \t:\n]*\\)\\(:[ \t]*\\)?")
+                           (not (member (upcase (match-string 1)) '("PROPERTIES" "END")))
+                           (list (match-beginning 1) (match-end 1) (match-string-no-properties 1) (match-end 2))))
+      (when (org-graph--section-root)
+        (when (and (re-search-backward "^[ \t]*:\\(PROPERTIES\\|END\\):[ \t]*$"
+                                       (save-excursion (org-back-to-heading t) (point)) t)
+                   (equal "PROPERTIES" (upcase (match-string 1))))
+          found)))))
+
+(defun org-graph--drawer-table-key (key)
+  "Returns the graph-table key that a drawer's property KEY means, as `org--graph-drawer-scope' reads it; else nil.
+  \"SHAPE\"  ↦  \"shape\";  \"NODE.SHAPE\"  ↦  \"shape\";  \"EDGE[b].STYLE\"  ↦  \":edge[b].style\";  \"CATEGORY\"  ↦  nil"
+  (let ((case-fold-search t))
+    (cond ((string-match "\\`\\(?:node\\|graph\\)\\.\\(.+\\)\\'" key) (org--graph-attribute-name (match-string 1 key)))
+          ((string-match "\\`edge\\(\\[.+?\\]\\)?\\.\\(.+\\)\\'" key)
+           (let ((target (or (match-string 1 key) "")))
+             (-some--> (org--graph-attribute-name (match-string 2 key)) (format ":edge%s.%s" target it))))
+          (t (org--graph-attribute-name key)))))
+
+(defun org-graph--drawer-completion ()
+  "Complete a :graph: section's property key, such as SHAPE or EDGE.COLOR, or its value, from `org-graph-attributes';
+upper case unless the key typed so far has lower case."
+  (-when-let (found (org-graph--drawer-key-at-point))
+    (-let [(beg end key value-beg) found]
+      (cond ((<= beg (point) end)
+             (let* ((typed   (buffer-substring beg (point)))
+                    (prefix  (let ((case-fold-search t))
+                               (and (string-match "\\`\\(?:node\\|graph\\|edge\\(?:\\[[^]]*\\]\\)?\\)\\." typed)
+                                    (match-string 0 typed))))
+                    (context (pcase (and prefix (downcase (substring prefix 0 1))) ("e" 'edges) ("g" 'graphs) (_ 'nodes)))
+                    (upper   (let (case-fold-search) (not (string-match-p "[[:lower:]]" typed)))))
+               (list beg end
+                     (--map (concat prefix (funcall (if upper #'upcase #'identity) (plist-get it :name)))
+                            (org-graph--attributes-on context))
+                     :annotation-function (lambda (candidate)
+                                            (-some->> (org-graph--drawer-table-key candidate) org-graph--key-doc (concat "  ")))
+                     :exclusive 'no)))
+            ((and value-beg (>= (point) value-beg))
+             (-some--> (org-graph--drawer-table-key key) (org-graph--attribute it) (plist-get it :values)
+               (list value-beg (line-end-position) it :exclusive 'no)))))))
+
+(defun org-graph--drawer-eldoc (callback)
+  "Hands eldoc's CALLBACK the description of the attribute that the :graph: section's property at point sets; else nil."
+  (-when-let* ((key (nth 2 (org-graph--drawer-key-at-point)))
+               (doc (-some-> (org-graph--drawer-table-key key) org-graph--key-doc)))
+    (funcall callback doc :thing key :face 'font-lock-variable-name-face)))
+
+(defun org-graph--property-allowed-values (property)
+  "Returns the values Graphviz allows PROPERTY within a :graph: section, for C-c C-x p to complete and S-→ to cycle;
+else nil, leaving PROPERTY to Org.  \"SHAPE\"  ↦  (\"box\" \"polygon\" … \":ETC\"), since other values are allowed too."
+  (-some--> (and (org-graph--section-root) (org-graph--drawer-table-key property))
+    (org-graph--attribute it) (plist-get it :values) (append it '(":ETC"))))
+
+(add-hook 'org-property-allowed-value-functions #'org-graph--property-allowed-values)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Every Org buffer

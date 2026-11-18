@@ -35,9 +35,12 @@
 A `\\\\' in a value breaks its line, as in an item: \"| label | a \\\\ b |\" ↦ (\"label\" \"a\\nb\")."
   (let ((cols (-remove #'s-blank-str-p (-map #'s-trim (s-split "|" line)))))
     (unless (or (null cols) (s-matches-p "^[-+]+$" (car cols)))
-      (cons (car cols) (--map (if (s-starts-with-p "<" it) it
-                                (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t]*" "\\n" it t t))
-                              (cdr cols))))))
+      (cons (car cols) (-map #'org--graph-cell-value (cdr cols))))))
+
+(defun org--graph-cell-value (value)
+  "Returns VALUE, a table cell or a property's value, with each `\\\\' breaking its line, as dot's `\\n'; an HTML-like
+<label> stays as written.  \"a \\\\ b\"  ↦  \"a\\nb\""
+  (if (s-starts-with-p "<" value) value (replace-regexp-in-string "[ \t]*\\\\\\\\[ \t]*" "\\n" value t t)))
 
 (defun org--graph-dot-id (name)
   "Return NAME as a valid dot identifier or value, quoting if necessary.
@@ -94,10 +97,12 @@ itself, so it wants ‘%s’" (car reserved) (replace-regexp-in-string "\\`:edge
 ;;
 ;; Org parses the body once; we read its elements into plain data, so nothing after this section needs a buffer:
 ;;   SCOPE ≈ (:graph-rows :node-rows :edge-rows :attr-rows :table :notes :items :kind)
-;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND :line LINE)
+;;   ITEM  ≈ (:text TEXT :pre SCOPE :children ITEMS :kind KIND :line LINE :todo TEMPLATES)
 ;; An item's TEXT is its raw first paragraph, bullet aside; its SCOPE, its directives and tables; its ITEMS, its
 ;; sub-items; its KIND, its sub-list's type: `ordered', `unordered', or `descriptive';
-;; and its LINE, where it starts in the body, so a click on its node in the rendered image leads back to it.
+;; its LINE, where it starts in the body, so a click on its node in the rendered image leads back to it; and, for a
+;; heading, its TODO keyword's TEMPLATES, as `org--graph-read-heading' says.  A heading is an item, its subheadings
+;; its children; so a section's text and subsections read as a block's body does.
 
 (defvar org--graph-strict nil
   "Non-nil while a Graphviz graph is read: then Org syntax that means nothing in a graph, such as a headline or a
@@ -210,10 +215,14 @@ it =label=."
 A table belongs to the directive above it, past any tables between: #+graph:, #+node:, #+edge:, or #+name: ---Org's
 own affiliated keyword---; else, it holds the item's own | key | value | rows, or, when it holds anything else, it
 is a record, drawn as written: its lines are the item's :table; see `org--graph-attribute-table-p'.
-A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see `org--graph-keyword-rows'."
+A #+graph:, #+node:, or #+edge: line may hold rows itself, KEY=VALUE pairs; see `org--graph-keyword-rows'.
+A headline is an item, as `org--graph-read-heading' reads it; a #+RESULTS: element, C-c C-c's image, is skipped."
   (let (rows notes items kind owner)
-    (dolist (el (org--graph-elements elements))
+    (dolist (el (--remove (org-element-property :results it) (org--graph-elements elements)))
       (pcase (org-element-type el)
+        ('headline
+         (setq owner nil)
+         (unless (org--graph-skipped-heading-p el) (push (org--graph-read-heading el templates) items)))
         ('keyword
          (let ((key (intern (downcase (org-element-property :key el)))) (value (org-element-property :value el)))
            (setq owner nil)
@@ -280,6 +289,86 @@ included.  #+name: tables within it go to TEMPLATES."
                                                             (t (org-element-property :end item))))
           :pre scope :children (plist-get scope :items) :kind (plist-get scope :kind)
           :line (line-number-at-pos (org-element-property :begin item)))))
+
+;;;; Reading a section: its subheadings are items
+
+(defun org--graph-skipped-heading-p (headline)
+  "Returns whether HEADLINE is no node, as Org exports it not: commented, archived, or tagged by one of
+`org-export-exclude-tags', such as :noexport:."
+  (or (org-element-property :commentedp headline)
+      (org-element-property :archivedp headline)
+      (--any? (member it (if (boundp 'org-export-exclude-tags) org-export-exclude-tags '("noexport")))
+              (org-element-property :tags headline))))
+
+(defun org--graph-attribute-name (key)
+  "Returns the Graphviz attribute KEY names, regardless of case, as `org-graph-attributes' spells it; else nil.
+  \"SHAPE\"  ↦  \"shape\";  \"url\"  ↦  \"URL\";  \"CATEGORY\"  ↦  nil"
+  (-some--> (--first (eq t (compare-strings (plist-get it :name) nil nil key nil nil t)) org-graph-attributes)
+    (plist-get it :name)))
+
+(defun org--graph-ordered-p (drawer)
+  "Returns whether a property DRAWER sets ORDERED, Org's own property for children taken in order."
+  (--any? (and (eq t (compare-strings (org-element-property :key it) nil nil "ORDERED" nil nil t))
+               (not (member (org-element-property :value it) '("" "nil"))))
+          (and drawer (org-element-contents drawer))))
+
+(defun org--graph-drawer-scope (drawer scope)
+  "Returns SCOPE, an item's, with its heading's property DRAWER's rows before the scope's own; each key read regardless
+of case, as Org reads properties:
+  :SHAPE: box            ↦  | shape | box |, in :attr-rows
+  :EDGE.COLOR: red       ↦  | :edge.color | red |, the arc into the node; :EDGE[T].COLOR:, its arc to T
+  :NODE.SHAPE: oval      ↦  #+node: | shape | oval |, for its whole subtree; :GRAPH.KEY: likewise, #+graph:
+Org's own properties, such as CATEGORY and ORDERED, are skipped, bar any naming a Graphviz attribute, such as STYLE;
+under `org--graph-strict', any other key is a user error.  The target T keeps its case, as `org-element' does."
+  (let ((case-fold-search t) attr node graph)
+    (dolist (property (and drawer (org-element-contents drawer)))
+      (let* ((key   (org-element-property :key property))
+             (value (org--graph-cell-value (org-element-property :value property)))
+             (check (lambda (name)
+                      (or (org--graph-attribute-name name)
+                          (when org--graph-strict
+                            (user-error "graph: line %d: property `:%s:' names no Graphviz attribute"
+                                        (line-number-at-pos (org-element-property :begin property)) key))))))
+        (cond ((string-match "\\`\\(node\\|graph\\)\\.\\(.+\\)\\'" key)
+               (-when-let (name (funcall check (match-string 2 key)))
+                 (if (equal "node" (downcase (match-string 1 key))) (push (list name value) node)
+                   (push (list name value) graph))))
+              ((string-match "\\`edge\\(\\[.+?\\]\\)?\\.\\(.+\\)\\'" key)
+               (let ((target (or (match-string 1 key) "")))
+                 (-when-let (name (funcall check (match-string 2 key)))
+                   (push (list (format ":edge%s.%s" target name) value) attr))))
+              ((org--graph-attribute-name key) (push (list (org--graph-attribute-name key) value) attr))
+              ((member (upcase key) (append org-special-properties org-default-properties)))
+              (t (funcall check key)))))
+    (dolist (it `((:attr-rows . ,attr) (:node-rows . ,node) (:graph-rows . ,graph)) scope)
+      (setq scope (plist-put scope (car it) (append (nreverse (cdr it)) (plist-get scope (car it))))))))
+
+(defun org--graph-read-heading (headline templates)
+  "Returns the ITEM a HEADLINE element reads as, as `org--graph-read-item' reads a list item: its title and tags are the
+item's text; its property drawer, its rows, by `org--graph-drawer-scope'; its body, its scope; its subheadings, and
+any list in its body, its children, in the order written, which ORDERED makes one rank, as an ordered list does.
+A TODO keyword K applies the template k, else `checked' when K is a done keyword, else `unchecked', as a checkbox does.
+Only the heading's own tags count, not those it inherits.
+  \"** TODO calls :: B :red:\"  ↦  (:text \"calls :: B :red:\" :todo (\"todo\" \"unchecked\") …)"
+  (let* ((contents (org-element-contents headline))
+         (section  (and (eq (org-element-type (car contents)) 'section) (car contents)))
+         (meta?    (lambda (el) (memq (org-element-type el) '(planning property-drawer))))
+         (drawer   (--first (eq (org-element-type it) 'property-drawer) (org-element-contents section)))
+         (scope    (org--graph-read-scope (append (-remove meta? (org-element-contents section))
+                                                  (if section (cdr contents) contents))
+                                          templates))
+         (tags     (org-element-property :tags headline))
+         (keyword  (org-element-property :todo-keyword headline)))
+    (when (and org--graph-strict (--any? (string-match-p "\\`graph\\(_\\|\\'\\)" it) tags))
+      (user-error "graph: line %d: a :graph: section cannot hold another; a :container: tag draws a box"
+                  (line-number-at-pos (org-element-property :begin headline))))
+    (setq scope (org--graph-drawer-scope drawer scope))
+    (list :text (concat (org-element-property :raw-value headline) (if tags (format " :%s:" (s-join ":" tags)) ""))
+          :todo (when keyword (list (downcase (substring-no-properties keyword))
+                                    (if (eq 'done (org-element-property :todo-type headline)) "checked" "unchecked")))
+          :pre scope :children (plist-get scope :items)
+          :kind (if (org--graph-ordered-p drawer) 'ordered (plist-get scope :kind))
+          :line (line-number-at-pos (org-element-property :begin headline)))))
 
 (defun org--graph-read-note (block)
   "A #+begin_note BLOCK ↦ (:edge EDGE? :text TEXT): its raw body, a tooltip for whatever its scope describes; or, with

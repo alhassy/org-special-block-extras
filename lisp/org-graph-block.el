@@ -72,6 +72,21 @@
 ;; C-M-i completes, and eldoc explains, table keys and #+begin_graph keys; in any Org buffer's graph
 ;; blocks, and in the `org-graph-edit-mode' buffer C-c ' opens.  The attributes live in org-graph-attributes.el.
 ;; Use #+begin_graph :file foo.png, or a #+name: foo line above it, to fix the output filename.
+;;
+;; A section tagged :graph: is the same graph, spelt as an outline: subheadings are items, drawers their tables.
+;;
+;;   * Our grammar :graph_Our_grammar:   ; ≡ #+begin_graph Our grammar :direction right
+;;   :PROPERTIES:
+;;   :DIRECTION: right
+;;   :END:
+;;   ** expr                             ; ≡ + expr
+;;   :PROPERTIES:
+;;   :SHAPE: box                         ; ≡   | shape | box |; :EDGE.KEY:, :EDGE[T].KEY:, :NODE.KEY: likewise
+;;   :ORDERED: t                         ; ≡ its children are 1. 2.
+;;   :END:
+;;   A sum of terms.                     ; a note, the node's tooltip
+;;   *** DONE term :bold:                ; DONE ≡ [X]; tags as an item's
+;;   + factor                            ; a body's list: more children
 
 ;;; Code:
 
@@ -281,9 +296,15 @@ Returns t (claiming C-c C-c)."
   (save-excursion
     ;; The graph around point ---past any #+begin_note within it--- not merely the nearest #+begin_graph above it.
     (-some--> (org-graph--block-at-point) (org-element-property :post-affiliated it) (goto-char it))
-    (let* ((origin     (org-graph--body-origin))
-           (block      (org-special-block-after-point "graph"))
-           (kwdargs    (org-special-block-kwdargs block))
+    (let ((origin (org-graph--body-origin)))
+      (org-graph--cc-render origin (org-special-block-after-point "graph"))))
+  t)
+
+(defun org-graph--cc-render (origin block)
+  "Render the graph BLOCK, an `org-special-block', whose body's first line is at ORIGIN; or show its dot source.
+Its #+RESULTS: go on the line after BLOCK's end point; see `org-graph--cc-handler'."
+  (save-excursion
+    (let* ((kwdargs    (org-special-block-kwdargs block))
            (raw        (org--graph-expand-macros (org-special-block-contents block)))
            (main-arg   (org-special-block-main-arg block))
            (end-pt     (org-special-block-end-point block))
@@ -319,8 +340,50 @@ Returns t (claiming C-c C-c)."
                                 (if (s-blank-str-p err-str)
                                     "is Graphviz installed? (M-x shell-command: dot -V)"
                                   (org-graph--annotate-dot-error err-str dot)))))
-              (delete-file map-file))))))
+              (delete-file map-file))))))))
+
+(defun org-graph--section-block (root)
+  "Returns (ORIGIN . BLOCK): the :graph: section at ROOT as the `org-special-block' its export reads, its contents the
+section's text and subsections; and a marker at their first line.  The tag's items and the drawer make its header, as
+`org--defblock-section-to-block' says; BLOCK's end point is the drawer's, so #+RESULTS: go right beneath it, where the
+graph skips them; see `org--graph-read-scope'."
+  (save-excursion
+    (goto-char root)
+    (-let* ((line       (buffer-substring (line-beginning-position) (line-end-position)))
+            (case-fold-search t)
+            (items      (and (string-match (org--deftag-regexp 'graph) line) (match-string 2 line)))
+            (tag-args   (cdr (split-string (or items "") "_")))
+            (properties (cl-loop for (key . value) in (org-entry-properties nil 'standard)
+                                 append (list (intern (concat ":" (downcase key))) value)))
+            (spec       (get 'org--graph-block 'org-defblock-args))
+            (main       (or (car (plist-get spec :main)) 'title))
+            (header     (org--section-block-header
+                         properties (if tag-args (string-join tag-args " ") (org--section-property properties main))
+                         (org--section-block-keywords properties main (org--block-declared-keywords spec) t)))
+            (end-pt     (progn (org-end-of-meta-data) (max root (1- (point)))))
+            (_          (when (looking-at-p "[ \t]*#\\+RESULTS:")
+                          (goto-char (org-element-property :end (org-element-at-point)))))
+            (origin     (progn (skip-chars-forward " \t\n") (copy-marker (line-beginning-position) t)))
+            (end        (save-excursion (goto-char root) (org-end-of-subtree t t) (point)))
+            ((positional kwdargs) (--split-with (not (keywordp it)) (org--read-header header))))
+      (cons origin (make-org-special-block
+                    :name "graph" :parameters (string-trim header) :kwdargs kwdargs
+                    :main-arg (mapconcat (lambda (it) (format "%s" it)) positional " ")
+                    :contents (buffer-substring-no-properties origin (max origin end))
+                    :start-point root :end-point end-pt)))))
+
+(defun org-graph--section-cc ()
+  "Render the :graph: section around point, as C-c C-c renders a #+begin_graph block; see `org-graph--cc-handler'.
+Only within the section's body: on a heading, C-c C-c stays Org's, setting tags.  In a table, it first aligns it; on
+a checkbox, it first toggles it.  Returns t when it renders, claiming C-c C-c; else nil."
+  (-when-let (root (and (not (org-at-heading-p)) (org-graph--section-root)))
+    (cond ((org-at-table-p) (org-table-align))
+          ((org-at-item-checkbox-p) (org-toggle-checkbox)))
+    (-let [(origin . block) (org-graph--section-block root)]
+      (org-graph--cc-render origin block))
     t))
+
+(add-hook 'org-ctrl-c-ctrl-c-hook #'org-graph--section-cc)
 
 (org-def-action graph ()
   "Render the graph at point, or show its dot source; see `org-graph--cc-handler'."
@@ -394,7 +457,7 @@ within its own box rather than the page.  A click on a node's link, or tooltip, 
           (replace-regexp-in-string "\\`<\\(svg\\|img\\)\\_>" "\\& style=\"max-width: 100%; height: auto\"" image t)))
 
 (org-defblock graph (&optional title &key file &allow-other-keys :edit-indirect-mode org-graph-edit-mode
-                    :manual "#Graphs" &context backend raw-contents args anchor)
+                    :manual "#Graphs" :tag [:subsections contents] &context backend raw-contents args anchor)
   "Render an Org list + tables as a Graphviz dot graph.
 
 TITLE is the graph's label.
@@ -426,7 +489,10 @@ Within the block body:
   - :T: :: MEANING  ↦ at the top, a legend entry: a sample of template T, captioned MEANING
 
 A #+name: table outside any graph is a template every graph in the buffer may use; the graph's own wins.
-A section tagged :graph: exports as a graph of its text, its :PROPERTIES: drawer serving as the header line.
+A section tagged :graph: is a graph of its text and subsections, its :PROPERTIES: drawer serving as the header line:
+each subheading is an item, its title the item's text, its drawer's :KEY: v the item's | key | v | rows, its body
+paragraphs notes, its ORDERED property 1. 2. children, and a TODO keyword its checkbox; a list in its body is more
+children.  C-c C-c in the section's body renders it; see `org--graph-read-heading' and `org-graph--section-cc'.
 
 Each list item declares a node.  Nesting encodes edges (parent → child); ordered children, 1. 2. 3., share a rank
 in the order written.  An item's text may hold a <<target>>, its id; [[TARGET]] or [[TARGET][LABEL]] links, extra arcs;
