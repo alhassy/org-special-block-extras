@@ -1508,6 +1508,17 @@ already in; it folds, links, exports, and completes like everything around it. T
 survive the move are ~\\~ ---which Org itself reads as a line break--- and the font names, such as
 ~\small~, that smartdiagram's own settings take as values.
 
+* Beyond text: drawing by hand
+
+Some pictures resist an outline: a whiteboard sketch, a doodle with arrows wherever we please, a layout
+we would rather place than describe. For those, we put the keyboard down and pick up a pen.
+
+- [[https://excalidraw.com/][Excalidraw]] is a lovely online tool for drawing diagrams easily: boxes, arrows, and text, in a
+  hand-drawn style, with nothing to install. It exports to PNG or SVG, which ~[[file:sketch.svg]]~ then
+  shows in our Org file like any other image.
+- Screenbrush, a macOS app, draws on top of whatever is on screen. When presenting ---say, while screen
+  sharing--- we use it to highlight things, or to draw arrows and boxes around stuff.
+
 * Comforts while editing
 
 Graphviz has 177 attributes, and nobody remembers them. So the block helps as we type, wherever we type.
